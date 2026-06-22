@@ -73,6 +73,32 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  /// Full-text search over merchant/note/category via the FTS5 index
+  /// (PRD §5/§16). Returns newest-first matches for [rawQuery].
+  Future<List<TransactionRow>> search(String vaultId, String rawQuery) {
+    final ftsQuery = _toFtsQuery(rawQuery);
+    if (ftsQuery.isEmpty) return Future.value(const []);
+    return customSelect(
+      'SELECT t.* FROM transactions t '
+      'JOIN transactions_fts f ON f.txn_id = t.id '
+      'WHERE t.vault_id = ?1 AND transactions_fts MATCH ?2 '
+      'ORDER BY t.date DESC',
+      variables: [Variable.withString(vaultId), Variable.withString(ftsQuery)],
+      readsFrom: {transactions},
+    ).map((row) => transactions.map(row.data)).get();
+  }
+
+  /// Builds a safe FTS5 MATCH expression: each token quoted + prefix-matched,
+  /// combined with implicit AND. Avoids injection and `LIKE` scans.
+  static String _toFtsQuery(String raw) {
+    final tokens = raw
+        .toLowerCase()
+        .split(RegExp(r'[^a-z0-9]+'))
+        .where((t) => t.isNotEmpty)
+        .map((t) => '"$t"*');
+    return tokens.join(' ');
+  }
+
   Future<int> countForVault(String vaultId) async {
     final exp = countAll();
     final q = selectOnly(transactions)

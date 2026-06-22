@@ -9,6 +9,16 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # Generated Drift code (*.g.dart) is excluded — its lints are artifacts of the
+  # code generator, not authored code.
+  exclude:
+    - "**.g.dart"
+  errors:
+    # Enforce the architecture boundary (PRD §3): domain/presentation must not
+    # import infrastructure. Backed additionally by a CI grep in verification.
+    invalid_annotation_target: ignore
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

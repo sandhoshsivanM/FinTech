@@ -2,8 +2,8 @@ import 'package:drift/drift.dart';
 
 import '../../domain/entities/transaction.dart';
 import '../../domain/repositories/transaction_repository.dart';
+import '../database/app_database.dart';
 import '../database/transaction_dao.dart';
-import '../models/tables.dart';
 
 /// Drift-backed implementation (PRD §3C: `DriftTransactionRepository`).
 /// Maps between Drift rows and pure-domain [Txn] entities.
@@ -42,6 +42,10 @@ class DriftTransactionRepository implements ITransactionRepository {
 
   @override
   Future<int> count(String vaultId) => _dao.countForVault(vaultId);
+
+  @override
+  Future<List<Txn>> search(String vaultId, String query) async =>
+      (await _dao.search(vaultId, query)).map(_toEntity).toList();
 
   static Txn _toEntity(TransactionRow r) => Txn(
         id: r.id,

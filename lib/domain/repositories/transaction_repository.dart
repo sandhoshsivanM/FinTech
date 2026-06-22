@@ -10,4 +10,7 @@ abstract interface class ITransactionRepository {
   Future<void> save(Txn txn);
   Future<void> delete(String id);
   Future<int> count(String vaultId);
+
+  /// Full-text search over merchant/note/category (PRD §5/§16).
+  Future<List<Txn>> search(String vaultId, String query);
 }

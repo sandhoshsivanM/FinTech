@@ -21,9 +21,11 @@ dependencies:
   go_router: ^17.3.0
 
   # Database — Drift ORM over SQLCipher (AES-256 encrypted SQLite).
-  drift: ^2.34.0
-  sqlite3: ">=3.1.5 <3.3.0"      # raw sqlite3 API; <3.3.0 avoids native build-hook break w/ build_runner
-  sqlcipher_flutter_libs: ^0.7.0+eol # bundles the SQLCipher (AES-256) native library (EOL — accepted risk)
+  # Pinned to the sqlite3 2.x line: 3.x removed the `open` override API and
+  # sqlcipher_flutter_libs became a no-op stub. 2.x is the proven SQLCipher path.
+  drift: ">=2.20.0 <2.23.0"
+  sqlite3: ^2.4.6                # raw sqlite3 `open` override for SQLCipher PRAGMA key
+  sqlcipher_flutter_libs: ^0.6.4 # bundles the SQLCipher (AES-256) native library
   path_provider: ^2.1.4
   path: ^1.9.0
 
@@ -57,8 +59,8 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
 
-  # Codegen for Drift tables/DAOs
-  drift_dev: ^2.34.0
+  # Codegen for Drift tables/DAOs (match the drift runtime line)
+  drift_dev: ">=2.20.0 <2.23.0"
   build_runner: ^2.4.13
 
   # Testing
