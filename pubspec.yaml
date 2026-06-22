@@ -22,7 +22,7 @@ dependencies:
 
   # Database — Drift ORM over SQLCipher (AES-256 encrypted SQLite).
   drift: ^2.34.0
-  sqlite3: ^3.3.3                # raw sqlite3 open API for SQLCipher PRAGMA key injection
+  sqlite3: ">=3.1.5 <3.3.0"      # raw sqlite3 API; <3.3.0 avoids native build-hook break w/ build_runner
   sqlcipher_flutter_libs: ^0.7.0+eol # bundles the SQLCipher (AES-256) native library (EOL — accepted risk)
   path_provider: ^2.1.4
   path: ^1.9.0

@@ -16,7 +16,6 @@ class SecureKeyStore {
               iOptions: IOSOptions(
                 accessibility: KeychainAccessibility.first_unlock_this_device,
               ),
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
             );
 
   final FlutterSecureStorage _storage;
