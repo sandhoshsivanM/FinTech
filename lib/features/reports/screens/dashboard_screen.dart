@@ -8,6 +8,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../domain/services/net_worth_calculator.dart';
 import '../../../presentation/data_gate.dart';
+import '../../transactions/providers/recurring_providers.dart';
 import '../providers/dashboard_providers.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -27,6 +28,8 @@ class _DashboardBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Materialize any due recurring transactions once the DB is ready (PRD §14).
+    ref.watch(recurringProcessorProvider);
     final data = ref.watch(netWorthProvider);
     final window = ref.watch(selectedWindowProvider);
     if (data == null) {
@@ -82,6 +85,7 @@ class _QuickLinks extends StatelessWidget {
       (Routes.investments, Icons.trending_up, 'Investments'),
       (Routes.liabilities, Icons.credit_card, 'Liabilities'),
       (Routes.goals, Icons.flag, 'Goals'),
+      (Routes.recurring, Icons.repeat, 'Recurring'),
     ];
     return Wrap(
       spacing: AppSpacing.md,

@@ -12,6 +12,7 @@ import 'goal_dao.dart';
 import 'holding_dao.dart';
 import 'liability_dao.dart';
 import 'merchant_alias_dao.dart';
+import 'recurring_dao.dart';
 import 'transaction_dao.dart';
 
 part 'app_database.g.dart';
@@ -45,6 +46,7 @@ part 'app_database.g.dart';
     FingerprintDao,
     FxRateDao,
     GoalDao,
+    RecurringDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {

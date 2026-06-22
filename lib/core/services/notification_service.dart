@@ -32,6 +32,33 @@ class NotificationService {
     }
   }
 
+  /// Generic local notification (e.g. recurring transactions added).
+  Future<void> showInfo({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    if (!_initialized) await init();
+    try {
+      await _plugin.show(
+        id,
+        title,
+        body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            importance: Importance.defaultImportance,
+            priority: Priority.defaultPriority,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+      );
+    } on Exception catch (e) {
+      debugPrint('showInfo failed: $e');
+    }
+  }
+
   /// Fires an overspend alert for a category (PRD §7A).
   Future<void> showOverspendAlert({
     required int id,

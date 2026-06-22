@@ -9,6 +9,7 @@ import '../../features/investments/screens/investments_screen.dart';
 import '../../features/liabilities/screens/liabilities_screen.dart';
 import '../../features/reports/screens/dashboard_screen.dart';
 import '../../features/transactions/screens/add_transaction_screen.dart';
+import '../../features/transactions/screens/recurring_screen.dart';
 import '../../features/transactions/screens/search_screen.dart';
 import '../../features/transactions/screens/transactions_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
@@ -29,6 +30,7 @@ abstract final class Routes {
   static const liabilities = '/app/liabilities';
   static const goals = '/app/goals';
   static const bankImport = '/app/import/bank';
+  static const recurring = '/app/recurring';
   static const settings = '/app/settings';
 }
 
@@ -98,6 +100,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.bankImport,
             builder: (context, state) => const BankImportScreen(),
+          ),
+          GoRoute(
+            path: Routes.recurring,
+            builder: (context, state) => const RecurringScreen(),
           ),
           GoRoute(
             path: Routes.settings,

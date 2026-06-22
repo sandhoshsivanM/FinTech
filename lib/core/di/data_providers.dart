@@ -10,6 +10,7 @@ import '../../data/repositories/drift_goal_repository.dart';
 import '../../data/repositories/drift_holding_repository.dart';
 import '../../data/repositories/drift_liability_repository.dart';
 import '../../data/repositories/drift_merchant_alias_repository.dart';
+import '../../data/repositories/drift_recurring_repository.dart';
 import '../../data/repositories/drift_transaction_repository.dart';
 import '../../domain/repositories/budget_repository.dart';
 import '../../domain/repositories/category_repository.dart';
@@ -17,6 +18,7 @@ import '../../domain/repositories/goal_repository.dart';
 import '../../domain/repositories/holding_repository.dart';
 import '../../domain/repositories/liability_repository.dart';
 import '../../domain/repositories/merchant_alias_repository.dart';
+import '../../domain/repositories/recurring_repository.dart';
 import '../../domain/repositories/transaction_repository.dart';
 import '../security/vault_state.dart';
 import '../services/log_service.dart';
@@ -69,6 +71,10 @@ final liabilityRepositoryProvider = Provider<ILiabilityRepository>((ref) {
 
 final goalRepositoryProvider = Provider<IGoalRepository>((ref) {
   return DriftGoalRepository(ref.watch(databaseProvider).goalDao);
+});
+
+final recurringRepositoryProvider = Provider<IRecurringRepository>((ref) {
+  return DriftRecurringRepository(ref.watch(databaseProvider).recurringDao);
 });
 
 /// The id of the currently unlocked vault (PRD multi-vault; single 'default' in v1).
