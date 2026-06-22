@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'biometric_gate.dart';
 import 'key_derivation_service.dart';
 import 'secure_key_store.dart';
+import 'vault_registry.dart';
 import 'vault_session.dart';
 import 'vault_state.dart';
 
@@ -19,16 +20,21 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     required SecureKeyStore keyStore,
     required KeyDerivationService kdf,
     required BiometricGate biometric,
+    VaultRegistry? registry,
     this.vaultId = 'default',
+    this.vaultName = 'My Vault',
   })  : _keyStore = keyStore,
         _kdf = kdf,
         _biometric = biometric,
+        _registry = registry,
         super(const VaultUnlocking());
 
   final SecureKeyStore _keyStore;
   final KeyDerivationService _kdf;
   final BiometricGate _biometric;
+  final VaultRegistry? _registry;
   final String vaultId;
+  final String vaultName;
 
   static const int maxPinFailures = 5;
   static const Duration cooldown = Duration(seconds: 30);
@@ -52,6 +58,7 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     final salt = await _keyStore.createSalt(vaultId);
     final key = await _kdf.deriveKeyAsync(pin: pin, salt: salt);
     await _keyStore.storeDerivedKey(vaultId, key);
+    await _registry?.register(VaultInfo(id: vaultId, name: vaultName));
     state = VaultUnlocked(VaultSession(vaultId: vaultId, key: key));
   }
 

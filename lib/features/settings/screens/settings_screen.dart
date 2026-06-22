@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../core/di/providers.dart';
+import '../../../core/security/vault_registry.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../presentation/data_gate.dart';
 import '../providers/settings_providers.dart';
@@ -55,6 +57,12 @@ class _SettingsBody extends ConsumerWidget {
           title: const Text('Lock now'),
           onTap: () => ref.read(vaultUnlockProvider.notifier).lock(),
         ),
+        ListTile(
+          leading: const Icon(Icons.swap_horiz),
+          title: const Text('Switch / add vault'),
+          subtitle: const Text('Re-authentication required'),
+          onTap: () => _showVaultSwitcher(context, ref),
+        ),
         const Divider(),
         const _SectionHeader('Backup'),
         ListTile(
@@ -81,6 +89,79 @@ class _SettingsBody extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _showVaultSwitcher(BuildContext context, WidgetRef ref) async {
+    final vaults = await ref.read(vaultListProvider.future);
+    if (!context.mounted) return;
+    final current = ref.read(currentVaultIdProvider);
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: Text('Vaults', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            for (final v in vaults)
+              ListTile(
+                leading: Icon(v.id == current
+                    ? Icons.check_circle
+                    : Icons.account_balance_wallet_outlined),
+                title: Text(v.name),
+                enabled: v.id != current,
+                onTap: () {
+                  // Switching re-points the unlock gate → forces re-auth.
+                  ref.read(selectedVaultProvider.notifier).state = v;
+                  ref.read(vaultUnlockProvider.notifier).lock();
+                  Navigator.pop(context);
+                },
+              ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text('Create new vault'),
+              onTap: () {
+                Navigator.pop(context);
+                _createVault(context, ref);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createVault(BuildContext context, WidgetRef ref) async {
+    final name = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('New vault'),
+        content: TextField(
+          controller: name,
+          decoration: const InputDecoration(labelText: 'Vault name'),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () {
+              final n = name.text.trim();
+              if (n.isEmpty) return;
+              // Point the gate at a brand-new vault id → setup flow runs.
+              ref.read(selectedVaultProvider.notifier).state =
+                  VaultInfo(id: const Uuid().v4(), name: n);
+              Navigator.pop(context);
+            },
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
     );
   }
 

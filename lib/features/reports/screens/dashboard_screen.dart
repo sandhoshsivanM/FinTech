@@ -1,7 +1,9 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../domain/services/net_worth_calculator.dart';
@@ -64,6 +66,33 @@ class _DashboardBody extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: AppSpacing.md),
+        const _QuickLinks(),
+      ],
+    );
+  }
+}
+
+/// Navigation to feature areas not on the bottom bar (PRD modules).
+class _QuickLinks extends StatelessWidget {
+  const _QuickLinks();
+  @override
+  Widget build(BuildContext context) {
+    const links = [
+      (Routes.investments, Icons.trending_up, 'Investments'),
+      (Routes.liabilities, Icons.credit_card, 'Liabilities'),
+      (Routes.goals, Icons.flag, 'Goals'),
+    ];
+    return Wrap(
+      spacing: AppSpacing.md,
+      runSpacing: AppSpacing.md,
+      children: [
+        for (final l in links)
+          ActionChip(
+            avatar: Icon(l.$2, size: 18),
+            label: Text(l.$3),
+            onPressed: () => context.go(l.$1),
+          ),
       ],
     );
   }

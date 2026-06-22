@@ -6,6 +6,8 @@ import 'budget_dao.dart';
 import 'category_dao.dart';
 import 'converters.dart';
 import 'encrypted_executor.dart';
+import 'holding_dao.dart';
+import 'liability_dao.dart';
 import 'merchant_alias_dao.dart';
 import 'transaction_dao.dart';
 
@@ -17,8 +19,27 @@ part 'app_database.g.dart';
 /// callback — see `openEncrypted`. A probe query immediately follows so an
 /// incorrect key fails fast (PRD §16 encryption-at-rest, hard CI gate).
 @DriftDatabase(
-  tables: [Categories, Transactions, Budgets, MerchantAliases],
-  daos: [TransactionDao, CategoryDao, BudgetDao, MerchantAliasDao],
+  tables: [
+    Categories,
+    Transactions,
+    Budgets,
+    MerchantAliases,
+    Holdings,
+    Liabilities,
+    Goals,
+    GoalContributions,
+    RecurringRules,
+    FxRates,
+    TransactionFingerprints,
+  ],
+  daos: [
+    TransactionDao,
+    CategoryDao,
+    BudgetDao,
+    MerchantAliasDao,
+    HoldingDao,
+    LiabilityDao,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   /// General constructor (also used by tests with an in-memory executor).

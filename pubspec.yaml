@@ -44,9 +44,13 @@ dependencies:
   # Local notifications (overspend alerts) — no server push (PRD §2).
   flutter_local_notifications: ^19.4.2
 
-  # File parsing (bank/broker import — later phases)
+  # File parsing + picking (bank/broker import)
   excel: ^4.0.6
   csv: ^5.1.1
+  file_picker: ^8.1.4
+
+  # Network (opt-in live market data only — ticker symbols, zero user data)
+  http: ^1.2.2
 
   # Utilities
   uuid: ^4.5.1

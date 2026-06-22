@@ -67,6 +67,110 @@ class Budgets extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Portfolio holdings (PRD §14 portfolio import). Money as TEXT (Decimal).
+@DataClassName('HoldingRow')
+class Holdings extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get symbol => text()();
+  TextColumn get exchange => text().withDefault(const Constant('NSE'))();
+  TextColumn get quantity => text().map(const DecimalConverter())();
+  TextColumn get avgCost => text().map(const DecimalConverter())();
+  IntColumn get firstPurchaseDate => integer()(); // Unix ms
+  TextColumn get assetType =>
+      text().withDefault(const Constant('equity_etf'))();
+  TextColumn get currency => text().withDefault(const Constant('INR'))();
+  TextColumn get lastPrice => text().map(const DecimalConverter()).nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Liabilities — credit cards and loans (PRD §14 liabilities ledger).
+@DataClassName('LiabilityRow')
+class Liabilities extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get name => text()();
+  TextColumn get kind => text()(); // 'credit_card' | 'loan'
+  TextColumn get principal => text().map(const DecimalConverter())();
+  TextColumn get aprPct => text().map(const DecimalConverter())();
+  IntColumn get termMonths => integer().nullable()(); // for loans/EMIs
+  IntColumn get createdAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Goals (PRD §8B) and their contribution ledger.
+@DataClassName('GoalRow')
+class Goals extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get name => text()();
+  TextColumn get goalType => text()();
+  TextColumn get targetAmount => text().map(const DecimalConverter())();
+  TextColumn get currentAmount => text().map(const DecimalConverter())();
+  IntColumn get targetDate => integer().nullable()();
+  TextColumn get notes => text().nullable()();
+  BoolColumn get isAchieved => boolean().withDefault(const Constant(false))();
+  IntColumn get createdAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DataClassName('GoalContributionRow')
+class GoalContributions extends Table {
+  TextColumn get id => text()();
+  TextColumn get goalId => text().references(Goals, #id)();
+  TextColumn get amount => text().map(const DecimalConverter())();
+  TextColumn get note => text().nullable()();
+  IntColumn get contributedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Recurring transaction rules (PRD §14, Phase 3).
+@DataClassName('RecurringRuleRow')
+class RecurringRules extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get amount => text().map(const DecimalConverter())();
+  TextColumn get type => text()(); // expense | income
+  TextColumn get categoryId => text().references(Categories, #id)();
+  TextColumn get merchant => text().nullable()();
+  TextColumn get note => text().nullable()();
+  TextColumn get frequency => text()(); // daily|weekly|monthly|yearly
+  IntColumn get nextRun => integer()(); // Unix ms
+  BoolColumn get active => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Stored FX rates (PRD §12C). All historical entries retained (no delete).
+@DataClassName('FxRateRow')
+class FxRates extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get baseCurrency => text()();
+  TextColumn get quoteCurrency => text()();
+  TextColumn get rate => text().map(const DecimalConverter())();
+  TextColumn get source => text()(); // 'ecb' | 'manual'
+  IntColumn get fetchedAt => integer()();
+}
+
+/// Transaction dedup fingerprints for bank statement import (PRD §13C).
+@DataClassName('TxnFingerprintRow')
+class TransactionFingerprints extends Table {
+  TextColumn get vaultId => text()();
+  TextColumn get fingerprint => text()();
+
+  @override
+  Set<Column> get primaryKey => {vaultId, fingerprint};
+}
+
 /// Learned merchant → category aliases (PRD §8 early Phase 2, §14 merchant
 /// alias learning).
 @DataClassName('MerchantAliasRow')

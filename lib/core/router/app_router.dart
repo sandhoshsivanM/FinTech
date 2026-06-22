@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/budget/screens/budget_screen.dart';
+import '../../features/goals/screens/goals_screen.dart';
+import '../../features/investments/screens/investments_screen.dart';
+import '../../features/liabilities/screens/liabilities_screen.dart';
 import '../../features/reports/screens/dashboard_screen.dart';
 import '../../features/transactions/screens/add_transaction_screen.dart';
 import '../../features/transactions/screens/search_screen.dart';
@@ -21,6 +24,9 @@ abstract final class Routes {
   static const addTransaction = '/app/transactions/add';
   static const search = '/app/search';
   static const budget = '/app/budget';
+  static const investments = '/app/investments';
+  static const liabilities = '/app/liabilities';
+  static const goals = '/app/goals';
   static const settings = '/app/settings';
 }
 
@@ -74,6 +80,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.budget,
             builder: (context, state) => const BudgetScreen(),
+          ),
+          GoRoute(
+            path: Routes.investments,
+            builder: (context, state) => const InvestmentsScreen(),
+          ),
+          GoRoute(
+            path: Routes.liabilities,
+            builder: (context, state) => const LiabilitiesScreen(),
+          ),
+          GoRoute(
+            path: Routes.goals,
+            builder: (context, state) => const GoalsScreen(),
           ),
           GoRoute(
             path: Routes.settings,
