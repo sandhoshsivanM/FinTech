@@ -1,0 +1,68 @@
+name: fintech_os
+description: "Fintech OS — offline-first, privacy-total personal finance engine."
+publish_to: 'none'
+
+# App version. The numeric part is also encoded into the backup file format (PRD §11A).
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.7
+
+# Versions per ADR-001 in the implementation plan: PRD §2 pins were stale on Dart 3.10.7.
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State management — Riverpod 2.x keeps the PRD §3C StateNotifier naming convention.
+  flutter_riverpod: ^2.6.1
+
+  # Navigation
+  go_router: ^17.3.0
+
+  # Database — Drift ORM over SQLCipher (AES-256 encrypted SQLite).
+  drift: ^2.34.0
+  sqlite3: ^3.3.3                # raw sqlite3 open API for SQLCipher PRAGMA key injection
+  sqlcipher_flutter_libs: ^0.7.0+eol # bundles the SQLCipher (AES-256) native library (EOL — accepted risk)
+  path_provider: ^2.1.4
+  path: ^1.9.0
+
+  # Security / crypto
+  pointycastle: ^3.9.1          # PBKDF2-HMAC-SHA256 (vault key derivation, 600k iters)
+  cryptography: ^2.9.0          # AES-256-GCM + SHA-256 (encrypted backup format)
+  flutter_secure_storage: ^10.0.0-beta.4
+  local_auth: ^2.3.0            # biometrics (Face ID / fingerprint / device PIN)
+
+  # Money — package:decimal; double is BANNED for monetary values (PRD §2).
+  decimal: ^3.2.4
+
+  # Charts (pure Flutter, offline-safe)
+  fl_chart: ^1.2.0
+
+  # Local notifications (overspend alerts) — no server push (PRD §2).
+  flutter_local_notifications: ^19.4.2
+
+  # File parsing (bank/broker import — later phases)
+  excel: ^4.0.6
+  csv: ^5.1.1
+
+  # Utilities
+  uuid: ^4.5.1
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Codegen for Drift tables/DAOs
+  drift_dev: ^2.34.0
+  build_runner: ^2.4.13
+
+  # Testing
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
