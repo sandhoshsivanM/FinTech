@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
@@ -29,13 +30,13 @@ class _SettingsBody extends ConsumerWidget {
   Future<void> _run(
     BuildContext context,
     Future<String> Function() action, {
-    required String successPrefix,
+    required String shareText,
   }) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final path = await action();
-      messenger.showSnackBar(
-          SnackBar(content: Text('$successPrefix\n$path')));
+      // Hand the file to the OS share sheet (PRD §5B: user shares explicitly).
+      await Share.shareXFiles([XFile(path)], text: shareText);
     } on Exception catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
     }
@@ -80,7 +81,7 @@ class _SettingsBody extends ConsumerWidget {
           title: const Text('Export encrypted backup'),
           subtitle: const Text('AES-256-GCM, verified on restore'),
           onTap: () => _run(context, actions.exportBackup,
-              successPrefix: 'Backup written to:'),
+              shareText: 'Fintech OS encrypted backup'),
         ),
         const Divider(),
         const _SectionHeader('Data & Privacy'),
@@ -198,7 +199,7 @@ class _SettingsBody extends ConsumerWidget {
     );
     if (ok != true || !context.mounted) return;
     await _run(context, actions.exportErrorLog,
-        successPrefix: 'Log written to:');
+        shareText: 'Fintech OS error log (no financial data)');
   }
 }
 

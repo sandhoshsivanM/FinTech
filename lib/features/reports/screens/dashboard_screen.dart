@@ -8,6 +8,8 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../domain/services/net_worth_calculator.dart';
 import '../../../presentation/data_gate.dart';
+import '../../../presentation/glass_card.dart';
+import '../../../presentation/onboarding_banner.dart';
 import '../../transactions/providers/recurring_providers.dart';
 import '../providers/dashboard_providers.dart';
 
@@ -38,6 +40,8 @@ class _DashboardBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
+        const OnboardingBanner(),
+        const SizedBox(height: AppSpacing.sm),
         _NetWorthCard(total: data.total),
         const SizedBox(height: AppSpacing.md),
         _WindowSelector(
@@ -108,9 +112,9 @@ class _NetWorthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+    return GlassCard(
+      child: SizedBox(
+        width: double.infinity,
         child: Semantics(
           label: 'Total net worth ${Money.toWords(total)}',
           child: ExcludeSemantics(

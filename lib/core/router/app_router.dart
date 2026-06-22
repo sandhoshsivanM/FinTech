@@ -12,6 +12,8 @@ import '../../features/transactions/screens/add_transaction_screen.dart';
 import '../../features/transactions/screens/recurring_screen.dart';
 import '../../features/transactions/screens/search_screen.dart';
 import '../../features/transactions/screens/transactions_screen.dart';
+import '../../features/settings/screens/currency_settings_screen.dart';
+import '../../features/settings/screens/market_data_settings_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../presentation/app_shell.dart';
 import '../../presentation/unlock_gate_screen.dart';
@@ -31,6 +33,8 @@ abstract final class Routes {
   static const goals = '/app/goals';
   static const bankImport = '/app/import/bank';
   static const recurring = '/app/recurring';
+  static const marketData = '/app/settings/market-data';
+  static const currency = '/app/settings/currency';
   static const settings = '/app/settings';
 }
 
@@ -108,6 +112,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.settings,
             builder: (context, state) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: Routes.marketData,
+            builder: (context, state) => const MarketDataSettingsScreen(),
+          ),
+          GoRoute(
+            path: Routes.currency,
+            builder: (context, state) => const CurrencySettingsScreen(),
           ),
         ],
       ),

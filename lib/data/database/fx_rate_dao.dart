@@ -13,6 +13,9 @@ class FxRateDao extends DatabaseAccessor<AppDatabase> with _$FxRateDaoMixin {
 
   Future<void> insertRate(FxRatesCompanion row) => into(fxRates).insert(row);
 
+  Future<List<FxRateRow>> allRates() =>
+      (select(fxRates)..orderBy([(r) => OrderingTerm.desc(r.fetchedAt)])).get();
+
   /// Latest rate for a (base, quote) pair.
   Future<FxRateRow?> latest(String base, String quote) {
     return (select(fxRates)

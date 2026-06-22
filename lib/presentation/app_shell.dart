@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/di/providers.dart';
 import '../core/router/app_router.dart';
+
+/// Intent for the "new transaction" keyboard shortcut (PRD Phase 4, Web).
+class _NewTransactionIntent extends Intent {
+  const _NewTransactionIntent();
+}
+
+/// Intent for the "lock vault" keyboard shortcut.
+class _LockIntent extends Intent {
+  const _LockIntent();
+}
 
 /// Authenticated shell: bottom navigation across the core feature screens.
 /// Re-locks the vault when the app is backgrounded (PRD security).
@@ -53,6 +64,37 @@ class _AppShellState extends ConsumerState<AppShell>
   @override
   Widget build(BuildContext context) {
     final index = _currentIndex(context);
+    // Keyboard shortcuts (PRD Phase 4): N = new transaction, Cmd/Ctrl+L = lock.
+    return Shortcuts(
+      shortcuts: <ShortcutActivator, Intent>{
+        const SingleActivator(LogicalKeyboardKey.keyN): const _NewTransactionIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyL, control: true): const _LockIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyL, meta: true): const _LockIntent(),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          _NewTransactionIntent: CallbackAction<_NewTransactionIntent>(
+            onInvoke: (_) {
+              context.go(Routes.addTransaction);
+              return null;
+            },
+          ),
+          _LockIntent: CallbackAction<_LockIntent>(
+            onInvoke: (_) {
+              ref.read(vaultUnlockProvider.notifier).lock();
+              return null;
+            },
+          ),
+        },
+        child: Focus(
+          autofocus: true,
+          child: _buildScaffold(context, index),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context, int index) {
     return Scaffold(
       body: widget.child,
       bottomNavigationBar: NavigationBar(

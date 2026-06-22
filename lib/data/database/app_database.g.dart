@@ -4394,6 +4394,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       FingerprintDao(this as AppDatabase);
   late final FxRateDao fxRateDao = FxRateDao(this as AppDatabase);
   late final GoalDao goalDao = GoalDao(this as AppDatabase);
+  late final RecurringDao recurringDao = RecurringDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
