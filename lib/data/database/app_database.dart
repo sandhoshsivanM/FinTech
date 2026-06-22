@@ -7,6 +7,8 @@ import 'category_dao.dart';
 import 'converters.dart';
 import 'encrypted_executor.dart';
 import 'fingerprint_dao.dart';
+import 'fx_rate_dao.dart';
+import 'goal_dao.dart';
 import 'holding_dao.dart';
 import 'liability_dao.dart';
 import 'merchant_alias_dao.dart';
@@ -41,6 +43,8 @@ part 'app_database.g.dart';
     HoldingDao,
     LiabilityDao,
     FingerprintDao,
+    FxRateDao,
+    GoalDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {

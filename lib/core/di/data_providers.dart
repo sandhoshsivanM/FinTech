@@ -6,12 +6,14 @@ import '../../data/database/app_database.dart';
 import '../../data/database/logs_database.dart';
 import '../../data/repositories/drift_budget_repository.dart';
 import '../../data/repositories/drift_category_repository.dart';
+import '../../data/repositories/drift_goal_repository.dart';
 import '../../data/repositories/drift_holding_repository.dart';
 import '../../data/repositories/drift_liability_repository.dart';
 import '../../data/repositories/drift_merchant_alias_repository.dart';
 import '../../data/repositories/drift_transaction_repository.dart';
 import '../../domain/repositories/budget_repository.dart';
 import '../../domain/repositories/category_repository.dart';
+import '../../domain/repositories/goal_repository.dart';
 import '../../domain/repositories/holding_repository.dart';
 import '../../domain/repositories/liability_repository.dart';
 import '../../domain/repositories/merchant_alias_repository.dart';
@@ -63,6 +65,10 @@ final holdingRepositoryProvider = Provider<IHoldingRepository>((ref) {
 
 final liabilityRepositoryProvider = Provider<ILiabilityRepository>((ref) {
   return DriftLiabilityRepository(ref.watch(databaseProvider).liabilityDao);
+});
+
+final goalRepositoryProvider = Provider<IGoalRepository>((ref) {
+  return DriftGoalRepository(ref.watch(databaseProvider).goalDao);
 });
 
 /// The id of the currently unlocked vault (PRD multi-vault; single 'default' in v1).
