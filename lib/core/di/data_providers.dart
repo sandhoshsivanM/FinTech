@@ -3,6 +3,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../data/database/app_database.dart';
+import '../../data/database/logs_database.dart';
 import '../../data/repositories/drift_budget_repository.dart';
 import '../../data/repositories/drift_category_repository.dart';
 import '../../data/repositories/drift_merchant_alias_repository.dart';
@@ -12,6 +13,7 @@ import '../../domain/repositories/category_repository.dart';
 import '../../domain/repositories/merchant_alias_repository.dart';
 import '../../domain/repositories/transaction_repository.dart';
 import '../security/vault_state.dart';
+import '../services/log_service.dart';
 import 'providers.dart';
 
 /// Opens the encrypted database for the currently unlocked vault (PRD §2).
@@ -55,4 +57,33 @@ final merchantAliasRepositoryProvider =
 final currentVaultIdProvider = Provider<String>((ref) {
   final vault = ref.watch(vaultUnlockProvider);
   return vault is VaultUnlocked ? vault.session.vaultId : 'default';
+});
+
+/// Documents-directory path of the encrypted vault .db file.
+final vaultDbPathProvider = FutureProvider<String>((ref) async {
+  final dir = await getApplicationDocumentsDirectory();
+  return p.join(dir.path, 'vault_${ref.watch(currentVaultIdProvider)}.db');
+});
+
+/// Encrypted local error log database (PRD §5: own logs.db, same vault key).
+final logsDatabaseProvider = FutureProvider<LogsDatabase>((ref) async {
+  final vault = ref.watch(vaultUnlockProvider);
+  if (vault is! VaultUnlocked) {
+    throw StateError('Vault is locked — logs unavailable.');
+  }
+  final dir = await getApplicationDocumentsDirectory();
+  final path = p.join(dir.path, 'logs_${vault.session.vaultId}.db');
+  final db = LogsDatabase.encrypted(key: vault.session.key, path: path);
+  ref.onDispose(db.close);
+  return db;
+});
+
+final logServiceProvider = Provider<LogService>((ref) {
+  final db = ref.watch(logsDatabaseProvider).requireValue;
+  return LogService(
+    db,
+    appVersion: '1.0.0',
+    deviceModel: LogService.platformModel,
+    osVersion: LogService.platformVersion,
+  );
 });
