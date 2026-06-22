@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
+import '../../../domain/entities/holding.dart';
 import '../../../domain/services/portfolio_diff.dart';
+import '../../../domain/services/tax_rule_engine.dart';
 import '../../../presentation/data_gate.dart';
 import '../../import/broker_parser.dart' show IBrokerParser, ZerodhaXlsxParser, UpstoxCsvParser;
 import '../providers/investment_providers.dart';
@@ -16,8 +18,45 @@ class InvestmentsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Investments')),
+      appBar: AppBar(
+        title: const Text('Investments'),
+        actions: const [_RefreshPricesButton()],
+      ),
       body: const DataGate(child: _InvestmentsBody()),
+    );
+  }
+}
+
+class _RefreshPricesButton extends ConsumerStatefulWidget {
+  const _RefreshPricesButton();
+  @override
+  ConsumerState<_RefreshPricesButton> createState() => _RefreshState();
+}
+
+class _RefreshState extends ConsumerState<_RefreshPricesButton> {
+  bool _busy = false;
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Refresh live prices',
+      icon: _busy
+          ? const SizedBox(
+              width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+          : const Icon(Icons.refresh),
+      onPressed: _busy
+          ? null
+          : () async {
+              final messenger = ScaffoldMessenger.of(context);
+              setState(() => _busy = true);
+              final source =
+                  await ref.read(portfolioImportProvider).refreshPrices();
+              if (mounted) setState(() => _busy = false);
+              messenger.showSnackBar(SnackBar(
+                content: Text(source == null
+                    ? 'Prices unavailable (offline or no provider).'
+                    : 'Prices updated via $source.'),
+              ));
+            },
     );
   }
 }
@@ -65,6 +104,7 @@ class _InvestmentsBody extends ConsumerWidget {
                         subtitle: Text(
                             '${h.quantity} @ ${Money.format(h.avgCost)}'),
                         trailing: Text(Money.format(h.marketValue)),
+                        onTap: () => _showTaxEstimate(context, ref, h),
                       ),
                   ],
                 ),
@@ -132,6 +172,44 @@ class _InvestmentsBody extends ConsumerWidget {
     } on Exception catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Import failed: $e')));
     }
+  }
+
+  Future<void> _showTaxEstimate(
+      BuildContext context, WidgetRef ref, Holding h) async {
+    final engine = await ref.read(taxRuleEngineProvider.future);
+    if (!context.mounted) return;
+    final gain = engine.computeGain(
+      assetType: h.assetType,
+      firstPurchaseDate: h.firstPurchaseDate,
+      saleDate: DateTime.now(),
+      buyValue: h.investedValue,
+      saleValue: h.marketValue,
+    );
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${h.symbol} — capital gains'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+                'Type: ${gain.gainType == GainType.longTerm ? "Long-term" : "Short-term"}'),
+            Text('Gain: ${Money.format(gain.gainAmount)}'),
+            Text('Applicable rate: ${gain.rateLabel}'),
+            Text('Estimated tax: ${gain.isSlab ? "—" : Money.format(gain.estimatedTax)}'),
+            const SizedBox(height: AppSpacing.md),
+            const Text('Estimates only. Consult a CA for tax filing.',
+                style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12)),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close')),
+        ],
+      ),
+    );
   }
 
   Future<bool?> _showDiff(BuildContext context, PortfolioDiff diff) {

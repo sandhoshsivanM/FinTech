@@ -4390,6 +4390,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       MerchantAliasDao(this as AppDatabase);
   late final HoldingDao holdingDao = HoldingDao(this as AppDatabase);
   late final LiabilityDao liabilityDao = LiabilityDao(this as AppDatabase);
+  late final FingerprintDao fingerprintDao =
+      FingerprintDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();

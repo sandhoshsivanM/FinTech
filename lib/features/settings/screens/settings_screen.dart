@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../core/di/providers.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/security/vault_registry.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../presentation/data_gate.dart';
@@ -62,6 +64,14 @@ class _SettingsBody extends ConsumerWidget {
           title: const Text('Switch / add vault'),
           subtitle: const Text('Re-authentication required'),
           onTap: () => _showVaultSwitcher(context, ref),
+        ),
+        const Divider(),
+        const _SectionHeader('Import'),
+        ListTile(
+          leading: const Icon(Icons.account_balance),
+          title: const Text('Import bank statement'),
+          subtitle: const Text('HDFC / ICICI / SBI / Axis'),
+          onTap: () => context.go(Routes.bankImport),
         ),
         const Divider(),
         const _SectionHeader('Backup'),

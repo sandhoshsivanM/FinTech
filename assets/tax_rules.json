@@ -1,0 +1,30 @@
+{
+  "schema_version": 3,
+  "effective_from": "2024-07-23",
+  "rules": {
+    "equity_etf": {
+      "stcg_rate": 20.0,
+      "ltcg_rate": 12.5,
+      "ltcg_threshold_months": 12,
+      "ltcg_exemption_inr": 125000
+    },
+    "debt_mf": {
+      "stcg_rate": "slab",
+      "ltcg_rate": "slab",
+      "ltcg_threshold_months": 24,
+      "ltcg_exemption_inr": 0
+    },
+    "gold_etf": {
+      "stcg_rate": "slab",
+      "ltcg_rate": 12.5,
+      "ltcg_threshold_months": 24,
+      "ltcg_exemption_inr": 0
+    },
+    "real_estate": {
+      "stcg_rate": "slab",
+      "ltcg_rate": 12.5,
+      "ltcg_threshold_months": 24,
+      "ltcg_exemption_inr": 0
+    }
+  }
+}
