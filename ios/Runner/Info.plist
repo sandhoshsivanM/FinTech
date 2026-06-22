@@ -5,7 +5,9 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Fintech Os</string>
+	<string>Fintech OS</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Fintech OS uses Face ID to unlock your encrypted vault.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

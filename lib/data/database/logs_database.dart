@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-import 'encrypted_executor.dart';
+import 'vault_executor.dart';
 
 part 'logs_database.g.dart';
 
@@ -30,7 +30,7 @@ class LogsDatabase extends _$LogsDatabase {
     required Uint8List key,
     required String path,
   }) {
-    return LogsDatabase(openEncrypted(key, path));
+    return LogsDatabase(openVaultExecutor(key, path));
   }
 
   @override

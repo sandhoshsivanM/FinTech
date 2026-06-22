@@ -5,7 +5,6 @@ import '../models/tables.dart';
 import 'budget_dao.dart';
 import 'category_dao.dart';
 import 'converters.dart';
-import 'encrypted_executor.dart';
 import 'fingerprint_dao.dart';
 import 'fx_rate_dao.dart';
 import 'goal_dao.dart';
@@ -14,6 +13,7 @@ import 'liability_dao.dart';
 import 'merchant_alias_dao.dart';
 import 'recurring_dao.dart';
 import 'transaction_dao.dart';
+import 'vault_executor.dart';
 
 part 'app_database.g.dart';
 
@@ -58,7 +58,7 @@ class AppDatabase extends _$AppDatabase {
     required Uint8List key,
     required String path,
   }) {
-    return AppDatabase(openEncrypted(key, path));
+    return AppDatabase(openVaultExecutor(key, path));
   }
 
   @override

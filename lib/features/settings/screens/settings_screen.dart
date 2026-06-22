@@ -74,6 +74,18 @@ class _SettingsBody extends ConsumerWidget {
           subtitle: const Text('HDFC / ICICI / SBI / Axis'),
           onTap: () => context.go(Routes.bankImport),
         ),
+        ListTile(
+          leading: const Icon(Icons.show_chart),
+          title: const Text('Market data'),
+          subtitle: const Text('API keys for live prices'),
+          onTap: () => context.go(Routes.marketData),
+        ),
+        ListTile(
+          leading: const Icon(Icons.currency_exchange),
+          title: const Text('Currency'),
+          subtitle: const Text('Exchange rates'),
+          onTap: () => context.go(Routes.currency),
+        ),
         const Divider(),
         const _SectionHeader('Backup'),
         ListTile(
