@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/budget/screens/budget_screen.dart';
 import '../../features/goals/screens/goals_screen.dart';
 import '../../features/import/screens/bank_import_screen.dart';
+import '../../features/insurance/screens/insurance_screen.dart';
 import '../../features/investments/screens/investments_screen.dart';
 import '../../features/liabilities/screens/liabilities_screen.dart';
 import '../../features/reports/screens/dashboard_screen.dart';
@@ -31,6 +32,7 @@ abstract final class Routes {
   static const budget = '/app/budget';
   static const investments = '/app/investments';
   static const liabilities = '/app/liabilities';
+  static const insurance = '/app/insurance';
   static const goals = '/app/goals';
   static const reports = '/app/reports';
   static const bankImport = '/app/import/bank';
@@ -81,6 +83,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           _tab(Routes.budget, const BudgetScreen()),
           _tab(Routes.investments, const InvestmentsScreen()),
           _tab(Routes.liabilities, const LiabilitiesScreen()),
+          _tab(Routes.insurance, const InsuranceScreen()),
           _tab(Routes.goals, const GoalsScreen()),
           _tab(Routes.reports, const ReportsScreen()),
           _tab(Routes.bankImport, const BankImportScreen()),

@@ -9,16 +9,20 @@ import '../../data/repositories/drift_budget_repository.dart';
 import '../../data/repositories/drift_category_repository.dart';
 import '../../data/repositories/drift_goal_repository.dart';
 import '../../data/repositories/drift_holding_repository.dart';
+import '../../data/repositories/drift_insurance_repository.dart';
 import '../../data/repositories/drift_liability_repository.dart';
 import '../../data/repositories/drift_merchant_alias_repository.dart';
+import '../../data/repositories/drift_net_worth_snapshot_repository.dart';
 import '../../data/repositories/drift_recurring_repository.dart';
 import '../../data/repositories/drift_transaction_repository.dart';
 import '../../domain/repositories/budget_repository.dart';
 import '../../domain/repositories/category_repository.dart';
 import '../../domain/repositories/goal_repository.dart';
 import '../../domain/repositories/holding_repository.dart';
+import '../../domain/repositories/insurance_repository.dart';
 import '../../domain/repositories/liability_repository.dart';
 import '../../domain/repositories/merchant_alias_repository.dart';
+import '../../domain/repositories/net_worth_snapshot_repository.dart';
 import '../../domain/repositories/recurring_repository.dart';
 import '../../domain/repositories/transaction_repository.dart';
 import '../security/vault_state.dart';
@@ -84,6 +88,15 @@ final goalRepositoryProvider = Provider<IGoalRepository>((ref) {
 
 final recurringRepositoryProvider = Provider<IRecurringRepository>((ref) {
   return DriftRecurringRepository(ref.watch(databaseProvider).recurringDao);
+});
+
+final insuranceRepositoryProvider = Provider<IInsuranceRepository>((ref) {
+  return DriftInsuranceRepository(ref.watch(databaseProvider).insuranceDao);
+});
+
+final netWorthSnapshotRepositoryProvider =
+    Provider<INetWorthSnapshotRepository>((ref) {
+  return DriftNetWorthSnapshotRepository(ref.watch(databaseProvider).snapshotDao);
 });
 
 /// The id of the currently unlocked vault (PRD multi-vault; single 'default' in v1).

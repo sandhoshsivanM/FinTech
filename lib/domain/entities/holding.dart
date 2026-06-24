@@ -5,7 +5,11 @@ enum AssetType {
   equityEtf('equity_etf'),
   debtMf('debt_mf'),
   goldEtf('gold_etf'),
-  realEstate('real_estate');
+  realEstate('real_estate'),
+  crypto('crypto'),
+  fd('fd'),
+  ppfEpf('ppf_epf'),
+  nps('nps');
 
   const AssetType(this.key);
   final String key;

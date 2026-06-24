@@ -9,9 +9,11 @@ import 'fingerprint_dao.dart';
 import 'fx_rate_dao.dart';
 import 'goal_dao.dart';
 import 'holding_dao.dart';
+import 'insurance_dao.dart';
 import 'liability_dao.dart';
 import 'merchant_alias_dao.dart';
 import 'recurring_dao.dart';
+import 'snapshot_dao.dart';
 import 'transaction_dao.dart';
 import 'vault_executor.dart';
 
@@ -35,6 +37,8 @@ part 'app_database.g.dart';
     RecurringRules,
     FxRates,
     TransactionFingerprints,
+    Insurances,
+    NetWorthSnapshots,
   ],
   daos: [
     TransactionDao,
@@ -47,6 +51,8 @@ part 'app_database.g.dart';
     FxRateDao,
     GoalDao,
     RecurringDao,
+    InsuranceDao,
+    SnapshotDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -62,13 +68,20 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await _createFtsObjects();
+        },
+        onUpgrade: (m, from, to) async {
+          // v2: insurance policies + daily net-worth snapshots.
+          if (from < 2) {
+            await m.createTable(insurances);
+            await m.createTable(netWorthSnapshots);
+          }
         },
       );
 

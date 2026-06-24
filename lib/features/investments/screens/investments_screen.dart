@@ -247,11 +247,19 @@ class _PortfolioHeroCard extends StatelessWidget {
 
 const _kViolet = Color(0xFF8B5CF6);
 
+const _kTeal = Color(0xFF0E7490);
+const _kOlive = Color(0xFF7C8A3A);
+const _kPlum = Color(0xFF9A5B9A);
+
 Color _assetColor(AssetType t) => switch (t) {
       AssetType.equityEtf => AppColors.accent,
       AssetType.goldEtf => AppColors.budgetWarn,
       AssetType.debtMf => _kViolet,
       AssetType.realEstate => AppColors.income,
+      AssetType.crypto => AppColors.expense,
+      AssetType.fd => _kTeal,
+      AssetType.ppfEpf => _kOlive,
+      AssetType.nps => _kPlum,
     };
 
 String _assetLabel(AssetType t) => switch (t) {
@@ -259,6 +267,10 @@ String _assetLabel(AssetType t) => switch (t) {
       AssetType.goldEtf => 'Gold',
       AssetType.debtMf => 'Debt',
       AssetType.realEstate => 'Real Estate',
+      AssetType.crypto => 'Crypto',
+      AssetType.fd => 'Fixed Deposit',
+      AssetType.ppfEpf => 'PPF / EPF',
+      AssetType.nps => 'NPS',
     };
 
 class _AllocationCard extends StatelessWidget {

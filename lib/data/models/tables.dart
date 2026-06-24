@@ -187,3 +187,35 @@ class MerchantAliases extends Table {
 
 /// Shared helper for an empty Decimal-typed expression default if needed.
 Expression<String> decimalLiteral(Decimal d) => Constant(d.toString());
+
+/// Insurance policies (parity with web app — coverage + gap analysis).
+@DataClassName('InsuranceRow')
+class Insurances extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get name => text()();
+  TextColumn get type => text()(); // life | health | term | vehicle | home | other
+  TextColumn get provider => text().nullable()();
+  TextColumn get coverAmount => text().map(const DecimalConverter())();
+  TextColumn get premium => text().map(const DecimalConverter())();
+  IntColumn get renewalDate => integer().nullable()(); // Unix ms
+  IntColumn get createdAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Daily net-worth snapshots (real history, not derived from cash flow alone).
+@DataClassName('NetWorthSnapshotRow')
+class NetWorthSnapshots extends Table {
+  TextColumn get id => text()(); // snap-<vault>-<yyyy-mm-dd>
+  TextColumn get vaultId => text()();
+  IntColumn get date => integer()(); // Unix ms
+  TextColumn get netWorth => text().map(const DecimalConverter())();
+  TextColumn get cash => text().map(const DecimalConverter())();
+  TextColumn get investments => text().map(const DecimalConverter())();
+  TextColumn get liabilities => text().map(const DecimalConverter())();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}

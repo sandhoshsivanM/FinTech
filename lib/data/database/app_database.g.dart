@@ -4365,6 +4365,887 @@ class TransactionFingerprintsCompanion
   }
 }
 
+class $InsurancesTable extends Insurances
+    with TableInfo<$InsurancesTable, InsuranceRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $InsurancesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<String> vaultId = GeneratedColumn<String>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+      'type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _providerMeta =
+      const VerificationMeta('provider');
+  @override
+  late final GeneratedColumn<String> provider = GeneratedColumn<String>(
+      'provider', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _coverAmountMeta =
+      const VerificationMeta('coverAmount');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> coverAmount =
+      GeneratedColumn<String>('cover_amount', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>($InsurancesTable.$convertercoverAmount);
+  static const VerificationMeta _premiumMeta =
+      const VerificationMeta('premium');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> premium =
+      GeneratedColumn<String>('premium', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>($InsurancesTable.$converterpremium);
+  static const VerificationMeta _renewalDateMeta =
+      const VerificationMeta('renewalDate');
+  @override
+  late final GeneratedColumn<int> renewalDate = GeneratedColumn<int>(
+      'renewal_date', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        vaultId,
+        name,
+        type,
+        provider,
+        coverAmount,
+        premium,
+        renewalDate,
+        createdAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'insurances';
+  @override
+  VerificationContext validateIntegrity(Insertable<InsuranceRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+          _typeMeta, type.isAcceptableOrUnknown(data['type']!, _typeMeta));
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('provider')) {
+      context.handle(_providerMeta,
+          provider.isAcceptableOrUnknown(data['provider']!, _providerMeta));
+    }
+    context.handle(_coverAmountMeta, const VerificationResult.success());
+    context.handle(_premiumMeta, const VerificationResult.success());
+    if (data.containsKey('renewal_date')) {
+      context.handle(
+          _renewalDateMeta,
+          renewalDate.isAcceptableOrUnknown(
+              data['renewal_date']!, _renewalDateMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  InsuranceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return InsuranceRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vault_id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      type: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
+      provider: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}provider']),
+      coverAmount: $InsurancesTable.$convertercoverAmount.fromSql(
+          attachedDatabase.typeMapping.read(
+              DriftSqlType.string, data['${effectivePrefix}cover_amount'])!),
+      premium: $InsurancesTable.$converterpremium.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}premium'])!),
+      renewalDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}renewal_date']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $InsurancesTable createAlias(String alias) {
+    return $InsurancesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Decimal, String> $convertercoverAmount =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterpremium =
+      const DecimalConverter();
+}
+
+class InsuranceRow extends DataClass implements Insertable<InsuranceRow> {
+  final String id;
+  final String vaultId;
+  final String name;
+  final String type;
+  final String? provider;
+  final Decimal coverAmount;
+  final Decimal premium;
+  final int? renewalDate;
+  final int createdAt;
+  const InsuranceRow(
+      {required this.id,
+      required this.vaultId,
+      required this.name,
+      required this.type,
+      this.provider,
+      required this.coverAmount,
+      required this.premium,
+      this.renewalDate,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vault_id'] = Variable<String>(vaultId);
+    map['name'] = Variable<String>(name);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || provider != null) {
+      map['provider'] = Variable<String>(provider);
+    }
+    {
+      map['cover_amount'] = Variable<String>(
+          $InsurancesTable.$convertercoverAmount.toSql(coverAmount));
+    }
+    {
+      map['premium'] =
+          Variable<String>($InsurancesTable.$converterpremium.toSql(premium));
+    }
+    if (!nullToAbsent || renewalDate != null) {
+      map['renewal_date'] = Variable<int>(renewalDate);
+    }
+    map['created_at'] = Variable<int>(createdAt);
+    return map;
+  }
+
+  InsurancesCompanion toCompanion(bool nullToAbsent) {
+    return InsurancesCompanion(
+      id: Value(id),
+      vaultId: Value(vaultId),
+      name: Value(name),
+      type: Value(type),
+      provider: provider == null && nullToAbsent
+          ? const Value.absent()
+          : Value(provider),
+      coverAmount: Value(coverAmount),
+      premium: Value(premium),
+      renewalDate: renewalDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(renewalDate),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory InsuranceRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return InsuranceRow(
+      id: serializer.fromJson<String>(json['id']),
+      vaultId: serializer.fromJson<String>(json['vaultId']),
+      name: serializer.fromJson<String>(json['name']),
+      type: serializer.fromJson<String>(json['type']),
+      provider: serializer.fromJson<String?>(json['provider']),
+      coverAmount: serializer.fromJson<Decimal>(json['coverAmount']),
+      premium: serializer.fromJson<Decimal>(json['premium']),
+      renewalDate: serializer.fromJson<int?>(json['renewalDate']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vaultId': serializer.toJson<String>(vaultId),
+      'name': serializer.toJson<String>(name),
+      'type': serializer.toJson<String>(type),
+      'provider': serializer.toJson<String?>(provider),
+      'coverAmount': serializer.toJson<Decimal>(coverAmount),
+      'premium': serializer.toJson<Decimal>(premium),
+      'renewalDate': serializer.toJson<int?>(renewalDate),
+      'createdAt': serializer.toJson<int>(createdAt),
+    };
+  }
+
+  InsuranceRow copyWith(
+          {String? id,
+          String? vaultId,
+          String? name,
+          String? type,
+          Value<String?> provider = const Value.absent(),
+          Decimal? coverAmount,
+          Decimal? premium,
+          Value<int?> renewalDate = const Value.absent(),
+          int? createdAt}) =>
+      InsuranceRow(
+        id: id ?? this.id,
+        vaultId: vaultId ?? this.vaultId,
+        name: name ?? this.name,
+        type: type ?? this.type,
+        provider: provider.present ? provider.value : this.provider,
+        coverAmount: coverAmount ?? this.coverAmount,
+        premium: premium ?? this.premium,
+        renewalDate: renewalDate.present ? renewalDate.value : this.renewalDate,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  InsuranceRow copyWithCompanion(InsurancesCompanion data) {
+    return InsuranceRow(
+      id: data.id.present ? data.id.value : this.id,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      name: data.name.present ? data.name.value : this.name,
+      type: data.type.present ? data.type.value : this.type,
+      provider: data.provider.present ? data.provider.value : this.provider,
+      coverAmount:
+          data.coverAmount.present ? data.coverAmount.value : this.coverAmount,
+      premium: data.premium.present ? data.premium.value : this.premium,
+      renewalDate:
+          data.renewalDate.present ? data.renewalDate.value : this.renewalDate,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InsuranceRow(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('provider: $provider, ')
+          ..write('coverAmount: $coverAmount, ')
+          ..write('premium: $premium, ')
+          ..write('renewalDate: $renewalDate, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, vaultId, name, type, provider,
+      coverAmount, premium, renewalDate, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is InsuranceRow &&
+          other.id == this.id &&
+          other.vaultId == this.vaultId &&
+          other.name == this.name &&
+          other.type == this.type &&
+          other.provider == this.provider &&
+          other.coverAmount == this.coverAmount &&
+          other.premium == this.premium &&
+          other.renewalDate == this.renewalDate &&
+          other.createdAt == this.createdAt);
+}
+
+class InsurancesCompanion extends UpdateCompanion<InsuranceRow> {
+  final Value<String> id;
+  final Value<String> vaultId;
+  final Value<String> name;
+  final Value<String> type;
+  final Value<String?> provider;
+  final Value<Decimal> coverAmount;
+  final Value<Decimal> premium;
+  final Value<int?> renewalDate;
+  final Value<int> createdAt;
+  final Value<int> rowid;
+  const InsurancesCompanion({
+    this.id = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.type = const Value.absent(),
+    this.provider = const Value.absent(),
+    this.coverAmount = const Value.absent(),
+    this.premium = const Value.absent(),
+    this.renewalDate = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  InsurancesCompanion.insert({
+    required String id,
+    required String vaultId,
+    required String name,
+    required String type,
+    this.provider = const Value.absent(),
+    required Decimal coverAmount,
+    required Decimal premium,
+    this.renewalDate = const Value.absent(),
+    required int createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        vaultId = Value(vaultId),
+        name = Value(name),
+        type = Value(type),
+        coverAmount = Value(coverAmount),
+        premium = Value(premium),
+        createdAt = Value(createdAt);
+  static Insertable<InsuranceRow> custom({
+    Expression<String>? id,
+    Expression<String>? vaultId,
+    Expression<String>? name,
+    Expression<String>? type,
+    Expression<String>? provider,
+    Expression<String>? coverAmount,
+    Expression<String>? premium,
+    Expression<int>? renewalDate,
+    Expression<int>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (name != null) 'name': name,
+      if (type != null) 'type': type,
+      if (provider != null) 'provider': provider,
+      if (coverAmount != null) 'cover_amount': coverAmount,
+      if (premium != null) 'premium': premium,
+      if (renewalDate != null) 'renewal_date': renewalDate,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  InsurancesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? vaultId,
+      Value<String>? name,
+      Value<String>? type,
+      Value<String?>? provider,
+      Value<Decimal>? coverAmount,
+      Value<Decimal>? premium,
+      Value<int?>? renewalDate,
+      Value<int>? createdAt,
+      Value<int>? rowid}) {
+    return InsurancesCompanion(
+      id: id ?? this.id,
+      vaultId: vaultId ?? this.vaultId,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      provider: provider ?? this.provider,
+      coverAmount: coverAmount ?? this.coverAmount,
+      premium: premium ?? this.premium,
+      renewalDate: renewalDate ?? this.renewalDate,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<String>(vaultId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (provider.present) {
+      map['provider'] = Variable<String>(provider.value);
+    }
+    if (coverAmount.present) {
+      map['cover_amount'] = Variable<String>(
+          $InsurancesTable.$convertercoverAmount.toSql(coverAmount.value));
+    }
+    if (premium.present) {
+      map['premium'] = Variable<String>(
+          $InsurancesTable.$converterpremium.toSql(premium.value));
+    }
+    if (renewalDate.present) {
+      map['renewal_date'] = Variable<int>(renewalDate.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InsurancesCompanion(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('provider: $provider, ')
+          ..write('coverAmount: $coverAmount, ')
+          ..write('premium: $premium, ')
+          ..write('renewalDate: $renewalDate, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $NetWorthSnapshotsTable extends NetWorthSnapshots
+    with TableInfo<$NetWorthSnapshotsTable, NetWorthSnapshotRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $NetWorthSnapshotsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<String> vaultId = GeneratedColumn<String>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<int> date = GeneratedColumn<int>(
+      'date', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _netWorthMeta =
+      const VerificationMeta('netWorth');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> netWorth =
+      GeneratedColumn<String>('net_worth', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>($NetWorthSnapshotsTable.$converternetWorth);
+  static const VerificationMeta _cashMeta = const VerificationMeta('cash');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> cash =
+      GeneratedColumn<String>('cash', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>($NetWorthSnapshotsTable.$convertercash);
+  static const VerificationMeta _investmentsMeta =
+      const VerificationMeta('investments');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> investments =
+      GeneratedColumn<String>('investments', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>(
+              $NetWorthSnapshotsTable.$converterinvestments);
+  static const VerificationMeta _liabilitiesMeta =
+      const VerificationMeta('liabilities');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> liabilities =
+      GeneratedColumn<String>('liabilities', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>(
+              $NetWorthSnapshotsTable.$converterliabilities);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, vaultId, date, netWorth, cash, investments, liabilities];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'net_worth_snapshots';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<NetWorthSnapshotRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+          _dateMeta, date.isAcceptableOrUnknown(data['date']!, _dateMeta));
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    context.handle(_netWorthMeta, const VerificationResult.success());
+    context.handle(_cashMeta, const VerificationResult.success());
+    context.handle(_investmentsMeta, const VerificationResult.success());
+    context.handle(_liabilitiesMeta, const VerificationResult.success());
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  NetWorthSnapshotRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return NetWorthSnapshotRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vault_id'])!,
+      date: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}date'])!,
+      netWorth: $NetWorthSnapshotsTable.$converternetWorth.fromSql(
+          attachedDatabase.typeMapping
+              .read(DriftSqlType.string, data['${effectivePrefix}net_worth'])!),
+      cash: $NetWorthSnapshotsTable.$convertercash.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}cash'])!),
+      investments: $NetWorthSnapshotsTable.$converterinvestments.fromSql(
+          attachedDatabase.typeMapping.read(
+              DriftSqlType.string, data['${effectivePrefix}investments'])!),
+      liabilities: $NetWorthSnapshotsTable.$converterliabilities.fromSql(
+          attachedDatabase.typeMapping.read(
+              DriftSqlType.string, data['${effectivePrefix}liabilities'])!),
+    );
+  }
+
+  @override
+  $NetWorthSnapshotsTable createAlias(String alias) {
+    return $NetWorthSnapshotsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Decimal, String> $converternetWorth =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertercash =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterinvestments =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterliabilities =
+      const DecimalConverter();
+}
+
+class NetWorthSnapshotRow extends DataClass
+    implements Insertable<NetWorthSnapshotRow> {
+  final String id;
+  final String vaultId;
+  final int date;
+  final Decimal netWorth;
+  final Decimal cash;
+  final Decimal investments;
+  final Decimal liabilities;
+  const NetWorthSnapshotRow(
+      {required this.id,
+      required this.vaultId,
+      required this.date,
+      required this.netWorth,
+      required this.cash,
+      required this.investments,
+      required this.liabilities});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vault_id'] = Variable<String>(vaultId);
+    map['date'] = Variable<int>(date);
+    {
+      map['net_worth'] = Variable<String>(
+          $NetWorthSnapshotsTable.$converternetWorth.toSql(netWorth));
+    }
+    {
+      map['cash'] =
+          Variable<String>($NetWorthSnapshotsTable.$convertercash.toSql(cash));
+    }
+    {
+      map['investments'] = Variable<String>(
+          $NetWorthSnapshotsTable.$converterinvestments.toSql(investments));
+    }
+    {
+      map['liabilities'] = Variable<String>(
+          $NetWorthSnapshotsTable.$converterliabilities.toSql(liabilities));
+    }
+    return map;
+  }
+
+  NetWorthSnapshotsCompanion toCompanion(bool nullToAbsent) {
+    return NetWorthSnapshotsCompanion(
+      id: Value(id),
+      vaultId: Value(vaultId),
+      date: Value(date),
+      netWorth: Value(netWorth),
+      cash: Value(cash),
+      investments: Value(investments),
+      liabilities: Value(liabilities),
+    );
+  }
+
+  factory NetWorthSnapshotRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return NetWorthSnapshotRow(
+      id: serializer.fromJson<String>(json['id']),
+      vaultId: serializer.fromJson<String>(json['vaultId']),
+      date: serializer.fromJson<int>(json['date']),
+      netWorth: serializer.fromJson<Decimal>(json['netWorth']),
+      cash: serializer.fromJson<Decimal>(json['cash']),
+      investments: serializer.fromJson<Decimal>(json['investments']),
+      liabilities: serializer.fromJson<Decimal>(json['liabilities']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vaultId': serializer.toJson<String>(vaultId),
+      'date': serializer.toJson<int>(date),
+      'netWorth': serializer.toJson<Decimal>(netWorth),
+      'cash': serializer.toJson<Decimal>(cash),
+      'investments': serializer.toJson<Decimal>(investments),
+      'liabilities': serializer.toJson<Decimal>(liabilities),
+    };
+  }
+
+  NetWorthSnapshotRow copyWith(
+          {String? id,
+          String? vaultId,
+          int? date,
+          Decimal? netWorth,
+          Decimal? cash,
+          Decimal? investments,
+          Decimal? liabilities}) =>
+      NetWorthSnapshotRow(
+        id: id ?? this.id,
+        vaultId: vaultId ?? this.vaultId,
+        date: date ?? this.date,
+        netWorth: netWorth ?? this.netWorth,
+        cash: cash ?? this.cash,
+        investments: investments ?? this.investments,
+        liabilities: liabilities ?? this.liabilities,
+      );
+  NetWorthSnapshotRow copyWithCompanion(NetWorthSnapshotsCompanion data) {
+    return NetWorthSnapshotRow(
+      id: data.id.present ? data.id.value : this.id,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      date: data.date.present ? data.date.value : this.date,
+      netWorth: data.netWorth.present ? data.netWorth.value : this.netWorth,
+      cash: data.cash.present ? data.cash.value : this.cash,
+      investments:
+          data.investments.present ? data.investments.value : this.investments,
+      liabilities:
+          data.liabilities.present ? data.liabilities.value : this.liabilities,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NetWorthSnapshotRow(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('date: $date, ')
+          ..write('netWorth: $netWorth, ')
+          ..write('cash: $cash, ')
+          ..write('investments: $investments, ')
+          ..write('liabilities: $liabilities')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, vaultId, date, netWorth, cash, investments, liabilities);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is NetWorthSnapshotRow &&
+          other.id == this.id &&
+          other.vaultId == this.vaultId &&
+          other.date == this.date &&
+          other.netWorth == this.netWorth &&
+          other.cash == this.cash &&
+          other.investments == this.investments &&
+          other.liabilities == this.liabilities);
+}
+
+class NetWorthSnapshotsCompanion extends UpdateCompanion<NetWorthSnapshotRow> {
+  final Value<String> id;
+  final Value<String> vaultId;
+  final Value<int> date;
+  final Value<Decimal> netWorth;
+  final Value<Decimal> cash;
+  final Value<Decimal> investments;
+  final Value<Decimal> liabilities;
+  final Value<int> rowid;
+  const NetWorthSnapshotsCompanion({
+    this.id = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.date = const Value.absent(),
+    this.netWorth = const Value.absent(),
+    this.cash = const Value.absent(),
+    this.investments = const Value.absent(),
+    this.liabilities = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  NetWorthSnapshotsCompanion.insert({
+    required String id,
+    required String vaultId,
+    required int date,
+    required Decimal netWorth,
+    required Decimal cash,
+    required Decimal investments,
+    required Decimal liabilities,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        vaultId = Value(vaultId),
+        date = Value(date),
+        netWorth = Value(netWorth),
+        cash = Value(cash),
+        investments = Value(investments),
+        liabilities = Value(liabilities);
+  static Insertable<NetWorthSnapshotRow> custom({
+    Expression<String>? id,
+    Expression<String>? vaultId,
+    Expression<int>? date,
+    Expression<String>? netWorth,
+    Expression<String>? cash,
+    Expression<String>? investments,
+    Expression<String>? liabilities,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (date != null) 'date': date,
+      if (netWorth != null) 'net_worth': netWorth,
+      if (cash != null) 'cash': cash,
+      if (investments != null) 'investments': investments,
+      if (liabilities != null) 'liabilities': liabilities,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  NetWorthSnapshotsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? vaultId,
+      Value<int>? date,
+      Value<Decimal>? netWorth,
+      Value<Decimal>? cash,
+      Value<Decimal>? investments,
+      Value<Decimal>? liabilities,
+      Value<int>? rowid}) {
+    return NetWorthSnapshotsCompanion(
+      id: id ?? this.id,
+      vaultId: vaultId ?? this.vaultId,
+      date: date ?? this.date,
+      netWorth: netWorth ?? this.netWorth,
+      cash: cash ?? this.cash,
+      investments: investments ?? this.investments,
+      liabilities: liabilities ?? this.liabilities,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<String>(vaultId.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<int>(date.value);
+    }
+    if (netWorth.present) {
+      map['net_worth'] = Variable<String>(
+          $NetWorthSnapshotsTable.$converternetWorth.toSql(netWorth.value));
+    }
+    if (cash.present) {
+      map['cash'] = Variable<String>(
+          $NetWorthSnapshotsTable.$convertercash.toSql(cash.value));
+    }
+    if (investments.present) {
+      map['investments'] = Variable<String>($NetWorthSnapshotsTable
+          .$converterinvestments
+          .toSql(investments.value));
+    }
+    if (liabilities.present) {
+      map['liabilities'] = Variable<String>($NetWorthSnapshotsTable
+          .$converterliabilities
+          .toSql(liabilities.value));
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NetWorthSnapshotsCompanion(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('date: $date, ')
+          ..write('netWorth: $netWorth, ')
+          ..write('cash: $cash, ')
+          ..write('investments: $investments, ')
+          ..write('liabilities: $liabilities, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4382,6 +5263,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $FxRatesTable fxRates = $FxRatesTable(this);
   late final $TransactionFingerprintsTable transactionFingerprints =
       $TransactionFingerprintsTable(this);
+  late final $InsurancesTable insurances = $InsurancesTable(this);
+  late final $NetWorthSnapshotsTable netWorthSnapshots =
+      $NetWorthSnapshotsTable(this);
   late final TransactionDao transactionDao =
       TransactionDao(this as AppDatabase);
   late final CategoryDao categoryDao = CategoryDao(this as AppDatabase);
@@ -4395,6 +5279,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final FxRateDao fxRateDao = FxRateDao(this as AppDatabase);
   late final GoalDao goalDao = GoalDao(this as AppDatabase);
   late final RecurringDao recurringDao = RecurringDao(this as AppDatabase);
+  late final InsuranceDao insuranceDao = InsuranceDao(this as AppDatabase);
+  late final SnapshotDao snapshotDao = SnapshotDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4410,7 +5296,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         goalContributions,
         recurringRules,
         fxRates,
-        transactionFingerprints
+        transactionFingerprints,
+        insurances,
+        netWorthSnapshots
       ];
 }
 
@@ -7567,6 +8455,459 @@ typedef $$TransactionFingerprintsTableProcessedTableManager
         ),
         TxnFingerprintRow,
         PrefetchHooks Function()>;
+typedef $$InsurancesTableCreateCompanionBuilder = InsurancesCompanion Function({
+  required String id,
+  required String vaultId,
+  required String name,
+  required String type,
+  Value<String?> provider,
+  required Decimal coverAmount,
+  required Decimal premium,
+  Value<int?> renewalDate,
+  required int createdAt,
+  Value<int> rowid,
+});
+typedef $$InsurancesTableUpdateCompanionBuilder = InsurancesCompanion Function({
+  Value<String> id,
+  Value<String> vaultId,
+  Value<String> name,
+  Value<String> type,
+  Value<String?> provider,
+  Value<Decimal> coverAmount,
+  Value<Decimal> premium,
+  Value<int?> renewalDate,
+  Value<int> createdAt,
+  Value<int> rowid,
+});
+
+class $$InsurancesTableFilterComposer
+    extends Composer<_$AppDatabase, $InsurancesTable> {
+  $$InsurancesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get provider => $composableBuilder(
+      column: $table.provider, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get coverAmount =>
+      $composableBuilder(
+          column: $table.coverAmount,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get premium =>
+      $composableBuilder(
+          column: $table.premium,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<int> get renewalDate => $composableBuilder(
+      column: $table.renewalDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$InsurancesTableOrderingComposer
+    extends Composer<_$AppDatabase, $InsurancesTable> {
+  $$InsurancesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get provider => $composableBuilder(
+      column: $table.provider, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get coverAmount => $composableBuilder(
+      column: $table.coverAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get premium => $composableBuilder(
+      column: $table.premium, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get renewalDate => $composableBuilder(
+      column: $table.renewalDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$InsurancesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $InsurancesTable> {
+  $$InsurancesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get provider =>
+      $composableBuilder(column: $table.provider, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get coverAmount =>
+      $composableBuilder(
+          column: $table.coverAmount, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get premium =>
+      $composableBuilder(column: $table.premium, builder: (column) => column);
+
+  GeneratedColumn<int> get renewalDate => $composableBuilder(
+      column: $table.renewalDate, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$InsurancesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $InsurancesTable,
+    InsuranceRow,
+    $$InsurancesTableFilterComposer,
+    $$InsurancesTableOrderingComposer,
+    $$InsurancesTableAnnotationComposer,
+    $$InsurancesTableCreateCompanionBuilder,
+    $$InsurancesTableUpdateCompanionBuilder,
+    (
+      InsuranceRow,
+      BaseReferences<_$AppDatabase, $InsurancesTable, InsuranceRow>
+    ),
+    InsuranceRow,
+    PrefetchHooks Function()> {
+  $$InsurancesTableTableManager(_$AppDatabase db, $InsurancesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$InsurancesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$InsurancesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$InsurancesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> vaultId = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> type = const Value.absent(),
+            Value<String?> provider = const Value.absent(),
+            Value<Decimal> coverAmount = const Value.absent(),
+            Value<Decimal> premium = const Value.absent(),
+            Value<int?> renewalDate = const Value.absent(),
+            Value<int> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              InsurancesCompanion(
+            id: id,
+            vaultId: vaultId,
+            name: name,
+            type: type,
+            provider: provider,
+            coverAmount: coverAmount,
+            premium: premium,
+            renewalDate: renewalDate,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String vaultId,
+            required String name,
+            required String type,
+            Value<String?> provider = const Value.absent(),
+            required Decimal coverAmount,
+            required Decimal premium,
+            Value<int?> renewalDate = const Value.absent(),
+            required int createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              InsurancesCompanion.insert(
+            id: id,
+            vaultId: vaultId,
+            name: name,
+            type: type,
+            provider: provider,
+            coverAmount: coverAmount,
+            premium: premium,
+            renewalDate: renewalDate,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$InsurancesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $InsurancesTable,
+    InsuranceRow,
+    $$InsurancesTableFilterComposer,
+    $$InsurancesTableOrderingComposer,
+    $$InsurancesTableAnnotationComposer,
+    $$InsurancesTableCreateCompanionBuilder,
+    $$InsurancesTableUpdateCompanionBuilder,
+    (
+      InsuranceRow,
+      BaseReferences<_$AppDatabase, $InsurancesTable, InsuranceRow>
+    ),
+    InsuranceRow,
+    PrefetchHooks Function()>;
+typedef $$NetWorthSnapshotsTableCreateCompanionBuilder
+    = NetWorthSnapshotsCompanion Function({
+  required String id,
+  required String vaultId,
+  required int date,
+  required Decimal netWorth,
+  required Decimal cash,
+  required Decimal investments,
+  required Decimal liabilities,
+  Value<int> rowid,
+});
+typedef $$NetWorthSnapshotsTableUpdateCompanionBuilder
+    = NetWorthSnapshotsCompanion Function({
+  Value<String> id,
+  Value<String> vaultId,
+  Value<int> date,
+  Value<Decimal> netWorth,
+  Value<Decimal> cash,
+  Value<Decimal> investments,
+  Value<Decimal> liabilities,
+  Value<int> rowid,
+});
+
+class $$NetWorthSnapshotsTableFilterComposer
+    extends Composer<_$AppDatabase, $NetWorthSnapshotsTable> {
+  $$NetWorthSnapshotsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get date => $composableBuilder(
+      column: $table.date, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get netWorth =>
+      $composableBuilder(
+          column: $table.netWorth,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get cash =>
+      $composableBuilder(
+          column: $table.cash,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get investments =>
+      $composableBuilder(
+          column: $table.investments,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get liabilities =>
+      $composableBuilder(
+          column: $table.liabilities,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+}
+
+class $$NetWorthSnapshotsTableOrderingComposer
+    extends Composer<_$AppDatabase, $NetWorthSnapshotsTable> {
+  $$NetWorthSnapshotsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get date => $composableBuilder(
+      column: $table.date, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get netWorth => $composableBuilder(
+      column: $table.netWorth, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get cash => $composableBuilder(
+      column: $table.cash, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get investments => $composableBuilder(
+      column: $table.investments, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get liabilities => $composableBuilder(
+      column: $table.liabilities, builder: (column) => ColumnOrderings(column));
+}
+
+class $$NetWorthSnapshotsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $NetWorthSnapshotsTable> {
+  $$NetWorthSnapshotsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<int> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get netWorth =>
+      $composableBuilder(column: $table.netWorth, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get cash =>
+      $composableBuilder(column: $table.cash, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get investments =>
+      $composableBuilder(
+          column: $table.investments, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get liabilities =>
+      $composableBuilder(
+          column: $table.liabilities, builder: (column) => column);
+}
+
+class $$NetWorthSnapshotsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $NetWorthSnapshotsTable,
+    NetWorthSnapshotRow,
+    $$NetWorthSnapshotsTableFilterComposer,
+    $$NetWorthSnapshotsTableOrderingComposer,
+    $$NetWorthSnapshotsTableAnnotationComposer,
+    $$NetWorthSnapshotsTableCreateCompanionBuilder,
+    $$NetWorthSnapshotsTableUpdateCompanionBuilder,
+    (
+      NetWorthSnapshotRow,
+      BaseReferences<_$AppDatabase, $NetWorthSnapshotsTable,
+          NetWorthSnapshotRow>
+    ),
+    NetWorthSnapshotRow,
+    PrefetchHooks Function()> {
+  $$NetWorthSnapshotsTableTableManager(
+      _$AppDatabase db, $NetWorthSnapshotsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$NetWorthSnapshotsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$NetWorthSnapshotsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$NetWorthSnapshotsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> vaultId = const Value.absent(),
+            Value<int> date = const Value.absent(),
+            Value<Decimal> netWorth = const Value.absent(),
+            Value<Decimal> cash = const Value.absent(),
+            Value<Decimal> investments = const Value.absent(),
+            Value<Decimal> liabilities = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              NetWorthSnapshotsCompanion(
+            id: id,
+            vaultId: vaultId,
+            date: date,
+            netWorth: netWorth,
+            cash: cash,
+            investments: investments,
+            liabilities: liabilities,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String vaultId,
+            required int date,
+            required Decimal netWorth,
+            required Decimal cash,
+            required Decimal investments,
+            required Decimal liabilities,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              NetWorthSnapshotsCompanion.insert(
+            id: id,
+            vaultId: vaultId,
+            date: date,
+            netWorth: netWorth,
+            cash: cash,
+            investments: investments,
+            liabilities: liabilities,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$NetWorthSnapshotsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $NetWorthSnapshotsTable,
+    NetWorthSnapshotRow,
+    $$NetWorthSnapshotsTableFilterComposer,
+    $$NetWorthSnapshotsTableOrderingComposer,
+    $$NetWorthSnapshotsTableAnnotationComposer,
+    $$NetWorthSnapshotsTableCreateCompanionBuilder,
+    $$NetWorthSnapshotsTableUpdateCompanionBuilder,
+    (
+      NetWorthSnapshotRow,
+      BaseReferences<_$AppDatabase, $NetWorthSnapshotsTable,
+          NetWorthSnapshotRow>
+    ),
+    NetWorthSnapshotRow,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7594,4 +8935,8 @@ class $AppDatabaseManager {
   $$TransactionFingerprintsTableTableManager get transactionFingerprints =>
       $$TransactionFingerprintsTableTableManager(
           _db, _db.transactionFingerprints);
+  $$InsurancesTableTableManager get insurances =>
+      $$InsurancesTableTableManager(_db, _db.insurances);
+  $$NetWorthSnapshotsTableTableManager get netWorthSnapshots =>
+      $$NetWorthSnapshotsTableTableManager(_db, _db.netWorthSnapshots);
 }

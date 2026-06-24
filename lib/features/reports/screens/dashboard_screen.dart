@@ -47,6 +47,8 @@ class _DashboardBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Materialize any due recurring transactions once the DB is ready (PRD §14).
     ref.watch(recurringProcessorProvider);
+    // Capture today's net-worth snapshot for real trend history.
+    ref.watch(snapshotCaptureProvider);
 
     final txnState = ref.watch(transactionListProvider);
     if (txnState is TransactionError) {
@@ -106,7 +108,15 @@ class _DashboardBody extends ConsumerWidget {
               ref.read(selectedWindowProvider.notifier).state = w,
         ),
         const SizedBox(height: AppSpacing.sm),
-        _TrendChart(series: data.series),
+        _TrendChart(series: ref.watch(dashboardTrendProvider)),
+        const SizedBox(height: AppSpacing.md),
+
+        // 4b. Financial health score.
+        const _FinancialHealthCard(),
+        const SizedBox(height: AppSpacing.md),
+
+        // 4c. Smart insights.
+        const _InsightsCard(),
         const SizedBox(height: AppSpacing.md),
 
         // 5. Recent transactions.
@@ -133,6 +143,7 @@ class _QuickLinks extends StatelessWidget {
       (Routes.budget, Icons.pie_chart_outline, 'Budget'),
       (Routes.goals, Icons.flag_outlined, 'Goals'),
       (Routes.liabilities, Icons.credit_card_outlined, 'Liabilities'),
+      (Routes.insurance, Icons.shield_outlined, 'Insurance'),
       (Routes.recurring, Icons.repeat, 'Recurring'),
       (Routes.search, Icons.search, 'Search'),
     ];
@@ -1172,6 +1183,201 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Financial health score
+// ---------------------------------------------------------------------------
+
+class _FinancialHealthCard extends ConsumerWidget {
+  const _FinancialHealthCard();
+
+  static Color _band(double frac) => frac >= 0.7
+      ? AppColors.income
+      : frac >= 0.4
+          ? AppColors.budgetWarn
+          : AppColors.expense;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final h = ref.watch(financialHealthProvider);
+    if (h == null) return const SizedBox.shrink();
+    final text = Theme.of(context).textTheme;
+    final muted = text.bodySmall?.color?.withValues(alpha: 0.65);
+    final color = _band(h.score / 100);
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Financial Health',
+              style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 84,
+                height: 84,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 84,
+                      height: 84,
+                      child: CircularProgressIndicator(
+                        value: h.score / 100,
+                        strokeWidth: 8,
+                        valueColor: AlwaysStoppedAnimation(color),
+                        backgroundColor: color.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('${h.score}',
+                            style: text.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w800, color: color)),
+                        Text(h.grade,
+                            style: text.labelSmall?.copyWith(color: muted)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(
+                child: Column(
+                  children: [
+                    for (final p in h.pillars)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                    child: Text(p.label,
+                                        style: text.labelMedium)),
+                                Text('${p.score.round()}/${p.max.toInt()}',
+                                    style:
+                                        text.labelSmall?.copyWith(color: muted)),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            ClipRRect(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadii.pill),
+                              child: LinearProgressIndicator(
+                                value: p.max > 0 ? p.score / p.max : 0,
+                                minHeight: 5,
+                                valueColor: AlwaysStoppedAnimation(
+                                    _band(p.max > 0 ? p.score / p.max : 0)),
+                                backgroundColor: (muted ?? Colors.grey)
+                                    .withValues(alpha: 0.15),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(p.detail,
+                                style: text.labelSmall?.copyWith(color: muted)),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(h.summary,
+              style: text.bodySmall
+                  ?.copyWith(color: muted, fontStyle: FontStyle.italic)),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Smart insights (local, rule-based)
+// ---------------------------------------------------------------------------
+
+class _InsightsCard extends ConsumerWidget {
+  const _InsightsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ins = ref.watch(dashboardInsightsProvider);
+    if (ins == null) return const SizedBox.shrink();
+    final ghost = ref.watch(ghostModeProvider);
+    final cats = ref.watch(categoryListProvider).valueOrNull ?? const [];
+    final text = Theme.of(context).textTheme;
+
+    String catName(String id) {
+      for (final c in cats) {
+        if (c.id == id) return c.name;
+      }
+      return 'Other';
+    }
+
+    String m(Decimal d) => ghost ? '••••••' : Money.format(d);
+
+    final tips = <String>[];
+    if (ins.safe.remaining > Decimal.zero) {
+      final days = ins.safe.daysLeft;
+      tips.add(
+          'Safe to spend: ${m(ins.safe.perDay)}/day for the next $days day${days == 1 ? '' : 's'} (${m(ins.safe.remaining)} left this month).');
+    }
+    for (final a in ins.anomalies.take(2)) {
+      tips.add(
+          '${catName(a.categoryId)} is ${a.ratio.toStringAsFixed(1)}× your usual — ${m(a.current)} vs ${m(a.avg)} avg.');
+    }
+    if (tips.isEmpty) {
+      tips.add('No alerts right now — your spending looks steady.');
+    }
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome,
+                  size: 18, color: AppColors.accent),
+              const SizedBox(width: AppSpacing.xs),
+              Text('Insights',
+                  style:
+                      text.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          for (final t in tips)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    margin: const EdgeInsets.only(top: 1),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.auto_awesome,
+                        size: 14, color: AppColors.accent),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: Text(t, style: text.bodySmall)),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
