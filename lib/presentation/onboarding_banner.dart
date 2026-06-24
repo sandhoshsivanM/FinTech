@@ -20,43 +20,54 @@ class OnboardingBanner extends ConsumerWidget {
     final seen = ref.watch(onboardingSeenProvider).valueOrNull ?? true;
     if (seen) return const SizedBox.shrink();
 
-    return Card(
-      color: AppColors.accent.withValues(alpha: 0.08),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.waving_hand, color: AppColors.accent),
-                const SizedBox(width: AppSpacing.sm),
-                Text('Welcome to Fintech OS',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            for (final t in _tips)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  children: [
-                    Icon(t.$1, size: 16),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(child: Text(t.$2)),
-                  ],
-                ),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.accent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.25)),
+      ),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.md, AppSpacing.sm, AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.waving_hand,
+                  color: AppColors.accent, size: 20),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text('Welcome to Fintech OS',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700)),
               ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.close, size: 18),
+                tooltip: 'Dismiss',
                 onPressed: () =>
                     ref.read(onboardingActionsProvider).markSeen(),
-                child: const Text('Got it'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          for (final t in _tips)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                children: [
+                  Icon(t.$1, size: 15, color: AppColors.accent),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                      child: Text(t.$2,
+                          style: const TextStyle(fontSize: 13))),
+                ],
               ),
             ),
-          ],
-        ),
+          const SizedBox(height: AppSpacing.xs),
+        ],
       ),
     );
   }

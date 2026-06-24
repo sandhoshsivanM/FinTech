@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:drift/drift.dart';
 import 'package:drift/wasm.dart';
 import 'package:sqlite3/wasm.dart';
@@ -11,6 +9,12 @@ import 'package:sqlite3/wasm.dart';
 QueryExecutor openVaultExecutor(Uint8List key, String path) {
   return LazyDatabase(() async {
     final sqlite3 = await WasmSqlite3.loadFromUrl(Uri.parse('sqlite3.wasm'));
+    // WasmDatabase.inMemory opens a file in the default VFS, so one must be
+    // registered first (per drift's documented setup).
+    sqlite3.registerVirtualFileSystem(
+      InMemoryFileSystem(),
+      makeDefault: true,
+    );
     return WasmDatabase.inMemory(sqlite3);
   });
 }

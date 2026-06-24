@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -24,6 +25,15 @@ import '../security/vault_state.dart';
 import '../services/log_service.dart';
 import 'providers.dart';
 
+/// Resolves the on-disk path for a vault file. On web there is no filesystem
+/// (the executor is in-memory), so the path is just a logical name and
+/// path_provider — which has no web implementation — is not called.
+Future<String> _vaultFilePath(String fileName) async {
+  if (kIsWeb) return fileName;
+  final dir = await getApplicationDocumentsDirectory();
+  return p.join(dir.path, fileName);
+}
+
 /// Opens the encrypted database for the currently unlocked vault (PRD §2).
 /// Rebuilds when the vault changes; disposed (closed) on lock/switch.
 final appDatabaseProvider = FutureProvider<AppDatabase>((ref) async {
@@ -31,8 +41,7 @@ final appDatabaseProvider = FutureProvider<AppDatabase>((ref) async {
   if (vault is! VaultUnlocked) {
     throw StateError('Vault is locked — database unavailable.');
   }
-  final dir = await getApplicationDocumentsDirectory();
-  final path = p.join(dir.path, 'vault_${vault.session.vaultId}.db');
+  final path = await _vaultFilePath('vault_${vault.session.vaultId}.db');
   final db = AppDatabase.encrypted(key: vault.session.key, path: path);
   ref.onDispose(db.close);
   return db;
@@ -85,8 +94,7 @@ final currentVaultIdProvider = Provider<String>((ref) {
 
 /// Documents-directory path of the encrypted vault .db file.
 final vaultDbPathProvider = FutureProvider<String>((ref) async {
-  final dir = await getApplicationDocumentsDirectory();
-  return p.join(dir.path, 'vault_${ref.watch(currentVaultIdProvider)}.db');
+  return _vaultFilePath('vault_${ref.watch(currentVaultIdProvider)}.db');
 });
 
 /// Encrypted local error log database (PRD §5: own logs.db, same vault key).
@@ -95,8 +103,7 @@ final logsDatabaseProvider = FutureProvider<LogsDatabase>((ref) async {
   if (vault is! VaultUnlocked) {
     throw StateError('Vault is locked — logs unavailable.');
   }
-  final dir = await getApplicationDocumentsDirectory();
-  final path = p.join(dir.path, 'logs_${vault.session.vaultId}.db');
+  final path = await _vaultFilePath('logs_${vault.session.vaultId}.db');
   final db = LogsDatabase.encrypted(key: vault.session.key, path: path);
   ref.onDispose(db.close);
   return db;

@@ -1,12 +1,14 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_tokens.dart';
 
-/// Glassmorphism surface (PRD Phase 4 visual upgrade) with a mandatory fallback
-/// (PRD §10A): if backdrop blur is unsupported or the user prefers reduced
-/// motion / transparency, render a solid surface so text stays readable.
+/// Frosted "glass" surface (PRD §3B glassmorphism components).
+///
+/// Uses a translucent solid fill over the gradient backdrop rather than a live
+/// `BackdropFilter` blur. Real-time backdrop blur is extremely expensive
+/// (re-samples the scene every frame) and caused tab-switch jank, so we render
+/// the frosted look with a translucent fill + border + soft shadow — which is
+/// also the PRD §10A solid-surface fallback. Cheap, smooth, still glassy.
 class GlassCard extends StatelessWidget {
   const GlassCard({
     required this.child,
@@ -19,39 +21,30 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = Theme.of(context).colorScheme.surface;
-
-    // Fallback: solid surface when transparency/animations are disabled
-    // (accessibility) — never render unreadable text over a blur.
-    final useSolid = media.disableAnimations || media.highContrast;
-
     final radius = BorderRadius.circular(AppRadii.card);
-    final content = Padding(padding: padding, child: child);
+    // Slightly more opaque than the live-blur fill so text stays crisp without
+    // sampling the backdrop.
+    final fill = isDark
+        ? const Color(0xCC182338) // ~80% slate
+        : Colors.white.withValues(alpha: 0.82);
+    final border =
+        isDark ? AppColors.glassBorderDark : AppColors.glassBorderLight;
 
-    if (useSolid) {
-      return Card(
-        shape: RoundedRectangleBorder(borderRadius: radius),
-        child: content,
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          decoration: BoxDecoration(
-            color: surface.withValues(alpha: isDark ? 0.55 : 0.7),
-            borderRadius: radius,
-            border: Border.all(
-              color: Colors.white.withValues(alpha: isDark ? 0.08 : 0.4),
-            ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: radius,
+        border: Border.all(color: border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
-          child: content,
-        ),
+        ],
       ),
+      child: Padding(padding: padding, child: child),
     );
   }
 }

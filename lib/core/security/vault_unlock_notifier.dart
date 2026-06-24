@@ -55,11 +55,16 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
   /// First-run vault creation. Derives and stores the key, then unlocks.
   Future<void> createVault(String pin) async {
     state = const VaultUnlocking();
-    final salt = await _keyStore.createSalt(vaultId);
-    final key = await _kdf.deriveKeyAsync(pin: pin, salt: salt);
-    await _keyStore.storeDerivedKey(vaultId, key);
-    await _registry?.register(VaultInfo(id: vaultId, name: vaultName));
-    state = VaultUnlocked(VaultSession(vaultId: vaultId, key: key));
+    try {
+      final salt = await _keyStore.createSalt(vaultId);
+      final key = await _kdf.deriveKeyAsync(pin: pin, salt: salt);
+      await _keyStore.storeDerivedKey(vaultId, key);
+      await _registry?.register(VaultInfo(id: vaultId, name: vaultName));
+      state = VaultUnlocked(VaultSession(vaultId: vaultId, key: key));
+    } on Object catch (e) {
+      // Never leave the user stuck on a spinner.
+      state = VaultUninitialized(error: 'Could not create vault: $e');
+    }
   }
 
   /// PIN unlock. Re-derives the key and compares to the stored key.
@@ -71,27 +76,31 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     final locked = current is VaultLocked ? current : const VaultLocked();
     state = const VaultUnlocking();
 
-    final salt = await _keyStore.readSalt(vaultId);
-    final stored = await _keyStore.readDerivedKey(vaultId);
-    if (salt == null || stored == null) {
-      state = const VaultUninitialized();
-      return;
-    }
+    try {
+      final salt = await _keyStore.readSalt(vaultId);
+      final stored = await _keyStore.readDerivedKey(vaultId);
+      if (salt == null || stored == null) {
+        state = const VaultUninitialized();
+        return;
+      }
 
-    final derived = await _kdf.deriveKeyAsync(pin: pin, salt: salt);
-    if (_constantTimeEquals(derived, stored)) {
-      state = VaultUnlocked(VaultSession(vaultId: vaultId, key: derived));
-      return;
-    }
+      final derived = await _kdf.deriveKeyAsync(pin: pin, salt: salt);
+      if (_constantTimeEquals(derived, stored)) {
+        state = VaultUnlocked(VaultSession(vaultId: vaultId, key: derived));
+        return;
+      }
 
-    final failures = locked.pinFailures + 1;
-    if (failures >= maxPinFailures) {
-      _startCooldown();
-    } else {
-      state = locked.copyWith(
-        pinFailures: failures,
-        lastError: 'Incorrect PIN. ${maxPinFailures - failures} attempts left.',
-      );
+      final failures = locked.pinFailures + 1;
+      if (failures >= maxPinFailures) {
+        _startCooldown();
+      } else {
+        state = locked.copyWith(
+          pinFailures: failures,
+          lastError: 'Incorrect PIN. ${maxPinFailures - failures} attempts left.',
+        );
+      }
+    } on Object catch (e) {
+      state = locked.copyWith(lastError: 'Unlock failed: $e');
     }
   }
 

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,6 +8,7 @@ import '../../features/import/screens/bank_import_screen.dart';
 import '../../features/investments/screens/investments_screen.dart';
 import '../../features/liabilities/screens/liabilities_screen.dart';
 import '../../features/reports/screens/dashboard_screen.dart';
+import '../../features/reports/screens/reports_screen.dart';
 import '../../features/transactions/screens/add_transaction_screen.dart';
 import '../../features/transactions/screens/recurring_screen.dart';
 import '../../features/transactions/screens/search_screen.dart';
@@ -31,6 +32,7 @@ abstract final class Routes {
   static const investments = '/app/investments';
   static const liabilities = '/app/liabilities';
   static const goals = '/app/goals';
+  static const reports = '/app/reports';
   static const bankImport = '/app/import/bank';
   static const recurring = '/app/recurring';
   static const marketData = '/app/settings/market-data';
@@ -63,66 +65,42 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.unlock,
         builder: (context, state) => const UnlockGateScreen(),
       ),
-      // Authenticated shell with bottom navigation.
+      // Authenticated shell with bottom navigation. Tab destinations use
+      // NoTransitionPage so switching tabs is instant (no animation jank).
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
-          GoRoute(
-            path: Routes.dashboard,
-            builder: (context, state) => const DashboardScreen(),
-          ),
-          GoRoute(
-            path: Routes.transactions,
-            builder: (context, state) => const TransactionsScreen(),
-            routes: [
-              GoRoute(
-                path: 'add',
-                builder: (context, state) => const AddTransactionScreen(),
-              ),
-            ],
-          ),
-          GoRoute(
-            path: Routes.search,
-            builder: (context, state) => const SearchScreen(),
-          ),
-          GoRoute(
-            path: Routes.budget,
-            builder: (context, state) => const BudgetScreen(),
-          ),
-          GoRoute(
-            path: Routes.investments,
-            builder: (context, state) => const InvestmentsScreen(),
-          ),
-          GoRoute(
-            path: Routes.liabilities,
-            builder: (context, state) => const LiabilitiesScreen(),
-          ),
-          GoRoute(
-            path: Routes.goals,
-            builder: (context, state) => const GoalsScreen(),
-          ),
-          GoRoute(
-            path: Routes.bankImport,
-            builder: (context, state) => const BankImportScreen(),
-          ),
-          GoRoute(
-            path: Routes.recurring,
-            builder: (context, state) => const RecurringScreen(),
-          ),
-          GoRoute(
-            path: Routes.settings,
-            builder: (context, state) => const SettingsScreen(),
-          ),
-          GoRoute(
-            path: Routes.marketData,
-            builder: (context, state) => const MarketDataSettingsScreen(),
-          ),
-          GoRoute(
-            path: Routes.currency,
-            builder: (context, state) => const CurrencySettingsScreen(),
-          ),
+          _tab(Routes.dashboard, const DashboardScreen()),
+          _tab(Routes.transactions, const TransactionsScreen(), children: [
+            GoRoute(
+              path: 'add',
+              builder: (context, state) => const AddTransactionScreen(),
+            ),
+          ]),
+          _tab(Routes.search, const SearchScreen()),
+          _tab(Routes.budget, const BudgetScreen()),
+          _tab(Routes.investments, const InvestmentsScreen()),
+          _tab(Routes.liabilities, const LiabilitiesScreen()),
+          _tab(Routes.goals, const GoalsScreen()),
+          _tab(Routes.reports, const ReportsScreen()),
+          _tab(Routes.bankImport, const BankImportScreen()),
+          _tab(Routes.recurring, const RecurringScreen()),
+          _tab(Routes.settings, const SettingsScreen()),
+          _tab(Routes.marketData, const MarketDataSettingsScreen()),
+          _tab(Routes.currency, const CurrencySettingsScreen()),
         ],
       ),
     ],
   );
 });
+
+/// A bottom-nav destination route that swaps in with no transition animation
+/// (instant tab switch — avoids per-switch jank).
+GoRoute _tab(String path, Widget screen, {List<RouteBase> children = const []}) {
+  return GoRoute(
+    path: path,
+    pageBuilder: (context, state) =>
+        NoTransitionPage(key: state.pageKey, child: screen),
+    routes: children,
+  );
+}

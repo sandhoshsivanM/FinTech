@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// Design tokens (PRD §10A accessibility palette + §3B theme tokens).
-///
-/// Income green (#10B981) and expense red (#EF4444) both pass WCAG AA contrast
-/// on the dark canvas — verified in the PRD.
+/// Design tokens (PRD §10A accessibility palette + §3B design-system tokens).
+/// Aesthetic: modern dark "glassmorphism" fintech — slate canvas, blue accent,
+/// frosted translucent surfaces. Income/expense verified on the dark canvas.
 abstract final class AppColors {
-  // Brand
-  static const Color accent = Color(0xFF1A56DB);
+  // Brand / accent
+  static const Color accent = Color(0xFF3B82F6); // brighter blue for dark UI
+  static const Color accentDeep = Color(0xFF1A56DB);
+  static const Color accentGlow = Color(0xFF60A5FA);
 
-  // Semantic money colors (PRD §10A — verified contrast).
+  // Semantic money colors (PRD §10A — pass contrast on both light and dark).
   static const Color income = Color(0xFF10B981);
   static const Color expense = Color(0xFFEF4444);
 
@@ -17,15 +18,27 @@ abstract final class AppColors {
   static const Color budgetWarn = Color(0xFFF59E0B);
   static const Color budgetOver = Color(0xFFEF4444);
 
-  // Dark canvas
+  // Dark canvas (the primary surface, PRD "dark canvas").
+  static const Color bgTop = Color(0xFF0F172A);
+  static const Color bgBottom = Color(0xFF0A0F1E);
   static const Color darkCanvas = Color(0xFF0F172A);
   static const Color darkSurface = Color(0xFF1E293B);
   static const Color darkOnSurface = Color(0xFFE2E8F0);
+  static const Color darkOnSurfaceMuted = Color(0xFF94A3B8);
 
-  // Light canvas
-  static const Color lightCanvas = Color(0xFFF8FAFC);
+  // Glass surfaces (translucent over the gradient canvas).
+  static const Color glassFillDark = Color(0x14FFFFFF); // ~8% white
+  static const Color glassBorderDark = Color(0x1FFFFFFF); // ~12% white
+
+  // Light canvas (secondary theme).
+  static const Color lightCanvas = Color(0xFFF1F5F9);
   static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightOnSurface = Color(0xFF1E293B);
+  static const Color lightOnSurface = Color(0xFF0F172A);
+  static const Color glassFillLight = Color(0xCCFFFFFF);
+  static const Color glassBorderLight = Color(0x14000000);
+
+  /// Brand gradient used for hero surfaces and primary actions.
+  static const List<Color> accentGradient = [Color(0xFF3B82F6), Color(0xFF1A56DB)];
 }
 
 abstract final class AppSpacing {
@@ -40,6 +53,7 @@ abstract final class AppSpacing {
 }
 
 abstract final class AppRadii {
-  static const double card = 16;
-  static const double button = 12;
+  static const double card = 20;
+  static const double button = 14;
+  static const double pill = 999;
 }

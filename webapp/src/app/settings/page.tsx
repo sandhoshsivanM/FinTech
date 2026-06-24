@@ -1,0 +1,476 @@
+'use client';
+import { useRef, useState } from 'react';
+import {
+  ShieldCheck, CloudOff, KeyRound, Download, Upload,
+  Globe, Lock, Trash2, Sparkles, CheckCircle2, AlertCircle,
+  Users, Plus, Pencil, Check, Briefcase, User, Heart,
+} from 'lucide-react';
+import { useApp, ACCENTS, type AccentName, type ThemeChoice } from '@/lib/store';
+import { loadSampleData } from '@/lib/sampleData';
+import { CURRENCIES } from '@/domain/currency';
+import { GlassCard, SectionHeader, Button, Field, Select, PageIntro, Input, Segmented } from '@/components/ui';
+import type { ProfileKind } from '@/lib/types';
+
+type NoteKind = 'success' | 'error';
+interface Note { kind: NoteKind; text: string }
+
+function StatusNote({ note }: { note: Note }) {
+  const isOk = note.kind === 'success';
+  return (
+    <div className={`flex items-start gap-2 rounded-[12px] px-3.5 py-2.5 text-sm mt-3 ${isOk ? 'bg-income/10 text-income' : 'bg-expense/10 text-expense'}`}>
+      {isOk ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> : <AlertCircle size={16} className="mt-0.5 shrink-0" />}
+      <span>{note.text}</span>
+    </div>
+  );
+}
+
+function AccentSwatch({ swatch, label, active, onClick }: { swatch: string; label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} title={label} aria-label={label}
+      className={`relative w-8 h-8 rounded-full transition-transform hover:scale-110 ${active ? 'ring-2 ring-offset-2 ring-offset-[var(--surface)] ring-[var(--ink-soft)]' : ''}`}
+      style={{ background: swatch }}>
+      {active && <Check size={15} className="absolute inset-0 m-auto text-white" />}
+    </button>
+  );
+}
+
+export default function SettingsPage() {
+  const lock = useApp((s) => s.lock);
+  const wipe = useApp((s) => s.wipe);
+  const exportBackup = useApp((s) => s.exportBackup);
+  const importBackup = useApp((s) => s.importBackup);
+  const currencyCode = useApp((s) => s.currencyCode);
+  const setCurrency = useApp((s) => s.setCurrency);
+  const theme = useApp((s) => s.theme);
+  const setTheme = useApp((s) => s.setTheme);
+  const accent = useApp((s) => s.accent);
+  const setAccent = useApp((s) => s.setAccent);
+
+  // Profiles
+  const profiles = useApp((s) => s.profiles);
+  const activeProfileId = useApp((s) => s.activeProfileId);
+  const setActiveProfile = useApp((s) => s.setActiveProfile);
+  const addProfile = useApp((s) => s.addProfile);
+  const renameProfile = useApp((s) => s.renameProfile);
+  const deleteProfile = useApp((s) => s.deleteProfile);
+
+  // Add-profile form state
+  const [newName, setNewName] = useState('');
+  const [newKind, setNewKind] = useState<ProfileKind>('self');
+  const [addBusy, setAddBusy] = useState(false);
+
+  // Per-profile rename state: profileId -> draft name (undefined = not editing)
+  const [renameMap, setRenameMap] = useState<Record<string, string>>({});
+
+  const handleAddProfile = async () => {
+    const name = newName.trim();
+    if (!name) return;
+    setAddBusy(true);
+    try {
+      await addProfile(name, newKind);
+      setNewName('');
+      setNewKind('self');
+    } finally {
+      setAddBusy(false);
+    }
+  };
+
+  const startRename = (id: string, current: string) =>
+    setRenameMap((m) => ({ ...m, [id]: current }));
+
+  const cancelRename = (id: string) =>
+    setRenameMap((m) => { const n = { ...m }; delete n[id]; return n; });
+
+  const commitRename = async (id: string) => {
+    const name = (renameMap[id] ?? '').trim();
+    if (name) await renameProfile(id, name);
+    cancelRename(id);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!window.confirm(`Delete profile "${name}"? This permanently removes all of its transactions, investments, and liabilities. This cannot be undone.`)) return;
+    await deleteProfile(id);
+  };
+
+  const [exportNote, setExportNote] = useState<Note | null>(null);
+  const [restoreNote, setRestoreNote] = useState<Note | null>(null);
+  const [sampleNote, setSampleNote] = useState<Note | null>(null);
+  const [sampleBusy, setSampleBusy] = useState(false);
+  const [exportBusy, setExportBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // ---- Export ----
+  const handleExport = async () => {
+    setExportBusy(true);
+    setExportNote(null);
+    try {
+      const b64 = await exportBackup();
+      const blob = new Blob([b64], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fintech-os-backup-${new Date().toISOString().slice(0, 10)}.ftos`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setExportNote({ kind: 'success', text: 'Backup exported successfully. Keep this file safe — it is encrypted with your vault PIN.' });
+    } catch (e) {
+      setExportNote({ kind: 'error', text: `Export failed: ${e instanceof Error ? e.message : String(e)}` });
+    } finally {
+      setExportBusy(false);
+    }
+  };
+
+  // ---- Restore ----
+  const handleRestore = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setRestoreNote(null);
+    try {
+      const text = await file.text();
+      const n = await importBackup(text);
+      setRestoreNote({ kind: 'success', text: `Restored ${n} record${n !== 1 ? 's' : ''} from backup.` });
+    } catch {
+      setRestoreNote({ kind: 'error', text: 'Incorrect vault or corrupted file. Make sure you are using a backup created with the same PIN.' });
+    } finally {
+      // Reset file input so the same file can be re-selected if needed
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  // ---- Sample data ----
+  const handleSample = async () => {
+    setSampleBusy(true);
+    setSampleNote(null);
+    try {
+      await loadSampleData();
+      setSampleNote({ kind: 'success', text: 'Sample data loaded. Explore the dashboard to see it in action.' });
+    } catch (e) {
+      setSampleNote({ kind: 'error', text: `Failed to load sample data: ${e instanceof Error ? e.message : String(e)}` });
+    } finally {
+      setSampleBusy(false);
+    }
+  };
+
+  // ---- Wipe ----
+  const handleWipe = async () => {
+    if (!window.confirm('This will permanently erase all data in this vault. This action cannot be undone. Continue?')) return;
+    await wipe();
+  };
+
+  return (
+    <div className="space-y-5">
+      <PageIntro title="Settings & Privacy" subtitle="Your data never leaves this device." />
+
+      {/* Appearance */}
+      <GlassCard>
+        <SectionHeader title="Appearance" />
+        <div className="grid sm:grid-cols-2 gap-6">
+          <div>
+            <div className="eyebrow mb-2">Theme</div>
+            <Segmented<ThemeChoice>
+              options={[
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+                { value: 'system', label: 'System' },
+              ]}
+              value={theme}
+              onChange={setTheme}
+            />
+            <p className="text-[11.5px] text-muted mt-2">System follows your OS setting.</p>
+          </div>
+          <div>
+            <div className="eyebrow mb-2">Accent color</div>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <AccentSwatch swatch="#34406b" label="Indigo" active={accent === 'default'} onClick={() => setAccent('default')} />
+              {(Object.keys(ACCENTS) as Exclude<AccentName, 'default'>[]).map((k) => (
+                <AccentSwatch key={k} swatch={ACCENTS[k].swatch} label={ACCENTS[k].label} active={accent === k} onClick={() => setAccent(k)} />
+              ))}
+            </div>
+            <p className="text-[11.5px] text-muted mt-2">Tuned for both light and dark.</p>
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* Profiles */}
+      <GlassCard>
+        <SectionHeader title="Profiles" />
+        <p className="text-xs text-muted mb-4">
+          Each profile keeps fully separate data — transactions, investments, liabilities, and more — inside the same encrypted vault. Use profiles to track yourself, a spouse, or a business independently.
+        </p>
+
+        {/* Profile rows */}
+        <div className="divide-y divide-[var(--glass-border)]">
+          {profiles.map((p) => {
+            const isActive = p.id === activeProfileId;
+            const isEditing = p.id in renameMap;
+            const kindLabel = p.kind === 'self' ? 'Personal' : p.kind === 'spouse' ? 'Spouse' : 'Business';
+            const KindIcon = p.kind === 'spouse' ? Heart : p.kind === 'business' ? Briefcase : User;
+            const initial = (p.name[0] ?? '?').toUpperCase();
+
+            return (
+              <div key={p.id} className="flex items-center gap-3 py-2.5 min-w-0">
+                {/* Avatar */}
+                <span className="w-8 h-8 rounded-full grid place-items-center bg-accent/12 text-accent shrink-0 font-semibold text-sm select-none">
+                  {initial}
+                </span>
+
+                {/* Name / rename input */}
+                <div className="flex-1 min-w-0">
+                  {isEditing ? (
+                    <Input
+                      autoFocus
+                      value={renameMap[p.id]}
+                      onChange={(e) => setRenameMap((m) => ({ ...m, [p.id]: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void commitRename(p.id);
+                        if (e.key === 'Escape') cancelRename(p.id);
+                      }}
+                      className="h-7 py-0 text-sm"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-medium text-sm truncate">{p.name}</span>
+                      {isActive && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-income/12 text-income shrink-0">
+                          <Check size={10} />Active
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1 mt-0.5 text-[11px] text-muted">
+                    <KindIcon size={11} />
+                    <span>{kindLabel}</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 shrink-0">
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={() => void commitRename(p.id)}
+                        className="p-1.5 rounded-[8px] text-income hover:bg-income/10 transition-colors"
+                        title="Save name"
+                      >
+                        <Check size={14} />
+                      </button>
+                      <button
+                        onClick={() => cancelRename(p.id)}
+                        className="p-1.5 rounded-[8px] text-muted hover:bg-[var(--glass-border)] transition-colors text-xs font-medium"
+                        title="Cancel"
+                      >
+                        ✕
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {!isActive && (
+                        <button
+                          onClick={() => void setActiveProfile(p.id)}
+                          className="px-2.5 py-1 rounded-[8px] text-[12px] font-semibold text-accent hover:bg-accent/10 border border-accent/25 transition-colors"
+                        >
+                          Switch
+                        </button>
+                      )}
+                      <button
+                        onClick={() => startRename(p.id, p.name)}
+                        className="p-1.5 rounded-[8px] text-muted hover:text-ink hover:bg-[var(--glass-border)] transition-colors"
+                        title="Rename"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      {profiles.length > 1 && (
+                        <button
+                          onClick={() => void handleDelete(p.id, p.name)}
+                          className="p-1.5 rounded-[8px] text-muted hover:text-expense hover:bg-expense/10 transition-colors"
+                          title="Delete profile"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Add profile form */}
+        <div className="pt-4 mt-2 border-t border-[var(--glass-border)]">
+          <div className="flex items-center gap-2 mb-2.5">
+            <Users size={14} className="text-muted shrink-0" />
+            <span className="text-xs font-semibold text-ink-soft">Add profile</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              placeholder="Profile name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void handleAddProfile(); }}
+              className="flex-1 min-w-[120px] h-8 text-sm py-0"
+            />
+            <Segmented<ProfileKind>
+              value={newKind}
+              onChange={setNewKind}
+              options={[
+                { value: 'self', label: 'Personal' },
+                { value: 'spouse', label: 'Spouse' },
+                { value: 'business', label: 'Business' },
+              ]}
+            />
+            <Button variant="soft" onClick={() => void handleAddProfile()} disabled={addBusy || !newName.trim()}>
+              <Plus size={14} />
+              {addBusy ? 'Adding…' : 'Add'}
+            </Button>
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* Privacy & Backup */}
+      <GlassCard>
+        <SectionHeader title="Privacy & Backup" />
+        <div className="space-y-1 mb-5">
+          <PrivacyRow
+            icon={<ShieldCheck size={18} />}
+            title="Encrypted on this device"
+            sub="Your vault is secured with AES-256-GCM encryption using your PIN as the key."
+          />
+          <PrivacyRow
+            icon={<CloudOff size={18} />}
+            title="No cloud, no tracking"
+            sub="Zero telemetry, zero servers. All data lives in your browser's IndexedDB, offline-first."
+          />
+          <PrivacyRow
+            icon={<KeyRound size={18} />}
+            title="You hold the only key — your PIN"
+            sub="Nobody, not even us, can read your vault without your PIN. There is no recovery option."
+          />
+        </div>
+
+        {/* Export */}
+        <div className="pt-4 border-t border-[var(--glass-border)]">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <div className="font-semibold text-sm">Export encrypted backup</div>
+              <div className="text-xs text-muted mt-0.5">Downloads a <code className="font-mono">.ftos</code> file encrypted with your vault PIN.</div>
+            </div>
+            <Button variant="soft" onClick={handleExport} disabled={exportBusy}>
+              <Download size={15} />
+              {exportBusy ? 'Exporting…' : 'Export backup'}
+            </Button>
+          </div>
+          {exportNote && <StatusNote note={exportNote} />}
+        </div>
+
+        {/* Restore */}
+        <div className="pt-4 mt-4 border-t border-[var(--glass-border)]">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <div className="font-semibold text-sm">Restore from backup</div>
+              <div className="text-xs text-muted mt-0.5">Select a <code className="font-mono">.ftos</code> backup file to merge records into this vault.</div>
+            </div>
+            <Button variant="soft" onClick={() => fileRef.current?.click()}>
+              <Upload size={15} />
+              Choose file
+            </Button>
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            className="hidden"
+            onChange={handleRestore}
+          />
+          {restoreNote && <StatusNote note={restoreNote} />}
+        </div>
+      </GlassCard>
+
+      {/* Display currency */}
+      <GlassCard>
+        <SectionHeader title="Display Currency" />
+        <p className="text-xs text-muted mb-3">
+          All amounts are stored in INR and converted for display using built-in exchange rates. Rates can be updated in the Market Data settings.
+        </p>
+        <Field label="Currency">
+          <Select
+            value={currencyCode}
+            onChange={(e) => setCurrency(e.target.value)}
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.code} — {c.name} ({c.symbol})
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <div className="flex items-center gap-2 mt-2.5">
+          <Globe size={14} className="text-muted" />
+          <span className="text-xs text-muted">Currently displaying in <strong>{currencyCode}</strong></span>
+        </div>
+      </GlassCard>
+
+      {/* Data */}
+      <GlassCard>
+        <SectionHeader title="Data" />
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <div className="font-semibold text-sm">Load sample data</div>
+            <div className="text-xs text-muted mt-0.5">Populate this vault with realistic demo transactions, holdings, and liabilities.</div>
+          </div>
+          <Button variant="soft" onClick={handleSample} disabled={sampleBusy}>
+            <Sparkles size={15} />
+            {sampleBusy ? 'Loading…' : 'Load sample data'}
+          </Button>
+        </div>
+        {sampleNote && <StatusNote note={sampleNote} />}
+      </GlassCard>
+
+      {/* Danger zone */}
+      <GlassCard>
+        <SectionHeader title="Danger Zone" />
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <div className="font-semibold text-sm">Lock vault</div>
+              <div className="text-xs text-muted mt-0.5">Clears decrypted data from memory. You will need your PIN to unlock again.</div>
+            </div>
+            <Button variant="ghost" onClick={lock}>
+              <Lock size={15} />
+              Lock now
+            </Button>
+          </div>
+
+          <div className="pt-3 border-t border-[var(--glass-border)] flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <div className="font-semibold text-sm text-expense">Erase this vault</div>
+              <div className="text-xs text-muted mt-0.5">Permanently deletes all records. This cannot be undone. Export a backup first.</div>
+            </div>
+            <Button variant="danger" onClick={handleWipe}>
+              <Trash2 size={15} />
+              Erase vault
+            </Button>
+          </div>
+        </div>
+      </GlassCard>
+
+      <p className="text-center text-xs text-muted italic px-6 pb-4">
+        Fintech OS is fully offline. Nothing leaves this device without your explicit action.
+      </p>
+    </div>
+  );
+}
+
+function PrivacyRow({ icon, title, sub }: { icon: React.ReactNode; title: string; sub: string }) {
+  return (
+    <div className="flex items-center gap-3 py-2.5">
+      <span className="w-9 h-9 rounded-full grid place-items-center bg-income/12 text-income shrink-0">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <div className="font-medium text-sm">{title}</div>
+        <div className="text-xs text-muted">{sub}</div>
+      </div>
+      <CheckCircle2 size={18} className="text-income shrink-0" />
+    </div>
+  );
+}

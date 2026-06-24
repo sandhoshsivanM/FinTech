@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/di/providers.dart';
 import '../core/security/vault_state.dart';
 import '../core/theme/app_tokens.dart';
+import 'glass_card.dart';
 
 /// App-level gate: routes between vault setup, PIN/biometric unlock, and the
 /// cooldown lockout (PRD §14, §4B).
@@ -18,21 +19,71 @@ class UnlockGateScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: switch (state) {
-                VaultUnlocking() => const _Busy(),
-                VaultUninitialized() => const _SetupForm(),
-                VaultLocked() => _UnlockForm(state: state),
-                VaultCooldown() => _CooldownView(until: state.until),
-                VaultUnlocked() => const _Busy(),
-              },
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const _BrandMark(),
+                    const SizedBox(height: AppSpacing.xl),
+                    GlassCard(
+                      child: switch (state) {
+                        VaultUnlocking() => const _Busy(),
+                        VaultUninitialized(:final error) =>
+                          _SetupForm(initialError: error),
+                        VaultLocked() => _UnlockForm(state: state),
+                        VaultCooldown() => _CooldownView(until: state.until),
+                        VaultUnlocked() => const _Busy(),
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Brand logo + name shown above the unlock card.
+class _BrandMark extends StatelessWidget {
+  const _BrandMark();
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: AppColors.accentGradient),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.accent.withValues(alpha: 0.4),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: const Icon(Icons.shield_rounded, color: Colors.white, size: 34),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text('Fintech OS',
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w800)),
+        const SizedBox(height: 2),
+        Text('Offline · private · encrypted',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+      ],
     );
   }
 }
@@ -49,7 +100,8 @@ class _Busy extends StatelessWidget {
 
 /// First-run: create a PIN. PRD requires a PIN before the vault exists.
 class _SetupForm extends ConsumerStatefulWidget {
-  const _SetupForm();
+  const _SetupForm({this.initialError});
+  final String? initialError;
   @override
   ConsumerState<_SetupForm> createState() => _SetupFormState();
 }
@@ -57,7 +109,7 @@ class _SetupForm extends ConsumerStatefulWidget {
 class _SetupFormState extends ConsumerState<_SetupForm> {
   final _pin = TextEditingController();
   final _confirm = TextEditingController();
-  String? _error;
+  late String? _error = widget.initialError;
 
   @override
   void dispose() {

@@ -11,6 +11,10 @@ final netWorthCalculatorProvider =
 final selectedWindowProvider =
     StateProvider<TimeWindow>((ref) => TimeWindow.oneMonth);
 
+/// Ghost mode — when true, all monetary values on the dashboard are masked
+/// as "••••••" (PRD §3B privacy feature).
+final ghostModeProvider = StateProvider<bool>((ref) => false);
+
 class DashboardData {
   const DashboardData({
     required this.total,

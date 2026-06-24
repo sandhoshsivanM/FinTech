@@ -30,9 +30,9 @@ class _AppShellState extends ConsumerState<AppShell>
     with WidgetsBindingObserver {
   static const _tabs = [
     (Routes.dashboard, Icons.dashboard_outlined, 'Dashboard'),
-    (Routes.transactions, Icons.receipt_long_outlined, 'Transactions'),
-    (Routes.search, Icons.search, 'Search'),
-    (Routes.budget, Icons.pie_chart_outline, 'Budget'),
+    (Routes.transactions, Icons.receipt_long_outlined, 'Cash Flow'),
+    (Routes.investments, Icons.trending_up_outlined, 'Investments'),
+    (Routes.reports, Icons.bar_chart_outlined, 'Reports'),
     (Routes.settings, Icons.settings_outlined, 'Settings'),
   ];
 

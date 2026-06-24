@@ -8,7 +8,8 @@ sealed class VaultState {
 
 /// No vault has been created yet — show the setup flow.
 class VaultUninitialized extends VaultState {
-  const VaultUninitialized();
+  const VaultUninitialized({this.error});
+  final String? error;
 }
 
 /// Vault exists but is locked. Tracks the failure cascade counters (PRD §4B):

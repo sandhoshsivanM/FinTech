@@ -1,0 +1,293 @@
+'use client';
+import { useMemo, useState } from 'react';
+import { BarChart2 } from 'lucide-react';
+import { useApp } from '@/lib/store';
+import { D, ZERO } from '@/lib/money';
+import { useFmt } from '@/lib/useFmt';
+import { netWorthSeries, monthRange, spentForCategory } from '@/domain/finance';
+import {
+  GlassCard,
+  PageIntro,
+  SectionHeader,
+  EmptyState,
+  Segmented,
+  Donut,
+  Bars,
+  Sparkline,
+} from '@/components/ui';
+
+// ── Time window ───────────────────────────────────────────────────────────────
+
+type ReportWindow = '3' | '6' | '12';
+
+const WINDOW_OPTIONS: { value: ReportWindow; label: string }[] = [
+  { value: '3', label: '3 months' },
+  { value: '6', label: '6 months' },
+  { value: '12', label: '12 months' },
+];
+
+// ── Color palette for category donut ─────────────────────────────────────────
+
+const CAT_COLORS = [
+  'var(--accent)',
+  'var(--violet)',
+  'var(--warn)',
+  'var(--income)',
+  'var(--expense)',
+  '#06b6d4',
+  '#ec4899',
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function monthLabel(year: number, month: number): string {
+  return new Date(year, month, 1).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+}
+
+/** Returns an array of {year, month} going back n months including the current month */
+function lastNMonths(n: number): { year: number; month: number }[] {
+  const now = new Date();
+  const result: { year: number; month: number }[] = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    result.push({ year: d.getFullYear(), month: d.getMonth() });
+  }
+  return result;
+}
+
+// ── Stat tile ─────────────────────────────────────────────────────────────────
+
+function StatTile({
+  label,
+  value,
+  color,
+  ghost,
+}: {
+  label: string;
+  value: string;
+  color: string;
+  ghost: boolean;
+}) {
+  return (
+    <GlassCard className="flex flex-col gap-1">
+      <span className="text-xs font-semibold text-muted tracking-wide">{label}</span>
+      <span className="text-xl font-extrabold tnum" style={{ color }}>
+        {ghost ? '••••••' : value}
+      </span>
+    </GlassCard>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+
+export default function ReportsPage() {
+  const txns = useApp((s) => s.txns);
+  const categories = useApp((s) => s.categories);
+  const ghost = useApp((s) => s.ghost);
+  const fmt = useFmt();
+
+  const [win, setWin] = useState<ReportWindow>('3');
+  const numMonths = parseInt(win, 10);
+
+  // ── Month range buckets ──────────────────────────────────────────────────
+  const months = useMemo(() => lastNMonths(numMonths), [numMonths]);
+
+  // ── Bar chart data: income + expense per month ───────────────────────────
+  const barGroups = useMemo(() => {
+    return months.map(({ year, month }) => {
+      const [first, last] = monthRange(new Date(year, month, 1));
+      let income = ZERO;
+      let expense = ZERO;
+      for (const t of txns) {
+        if (t.date < first || t.date > last) continue;
+        if (t.type === 'income') income = income.plus(D(t.amount));
+        else expense = expense.plus(D(t.amount));
+      }
+      return {
+        label: monthLabel(year, month),
+        values: [
+          { value: fmt.toNum(income), color: 'var(--income)' },
+          { value: fmt.toNum(expense), color: 'var(--expense)' },
+        ],
+      };
+    });
+  }, [txns, months, fmt]);
+
+  // ── Spending by category — current month ─────────────────────────────────
+  const catSpend = useMemo(() => {
+    const [first, last] = monthRange();
+    const byCategory: { id: string; name: string; amount: number }[] = [];
+    for (const cat of categories) {
+      const spent = spentForCategory(txns, cat.id, first, last);
+      if (spent.gt(0)) {
+        byCategory.push({ id: cat.id, name: cat.name, amount: spent.toNumber() });
+      }
+    }
+    byCategory.sort((a, b) => b.amount - a.amount);
+    // Top 6 + Other
+    if (byCategory.length <= 6) return byCategory;
+    const top = byCategory.slice(0, 6);
+    const rest = byCategory.slice(6).reduce((s, x) => s + x.amount, 0);
+    return [...top, { id: '__other', name: 'Other', amount: rest }];
+  }, [txns, categories]);
+
+  const catDonutSegments = catSpend.map((c, i) => ({
+    label: c.name,
+    value: c.amount,
+    color: CAT_COLORS[i % CAT_COLORS.length],
+  }));
+
+  // ── Net worth sparkline ───────────────────────────────────────────────────
+  const sparkValues = useMemo(() => {
+    return netWorthSeries(txns, '3M').map((p) => fmt.toNum(p.value));
+  }, [txns, fmt]);
+
+  // ── Summary stats over the selected window ────────────────────────────────
+  const windowStats = useMemo(() => {
+    // Compute the start epoch for this window
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - numMonths + 1, 1);
+    const startEpoch = startDate.getTime();
+    const endEpoch = Date.now();
+
+    let income = ZERO;
+    let expense = ZERO;
+    for (const t of txns) {
+      if (t.date < startEpoch || t.date > endEpoch) continue;
+      if (t.type === 'income') income = income.plus(D(t.amount));
+      else expense = expense.plus(D(t.amount));
+    }
+    const net = income.minus(expense);
+    const savingsRate = income.isZero() ? 0 : net.div(income).times(100).toNumber();
+    return { income, expense, net, savingsRate };
+  }, [txns, numMonths]);
+
+  const hasTxns = txns.length > 0;
+
+  return (
+    <div className="space-y-6">
+      <PageIntro
+        title="Reports"
+        subtitle="Spending analysis and financial trends"
+        action={
+          <Segmented
+            options={WINDOW_OPTIONS}
+            value={win}
+            onChange={setWin}
+          />
+        }
+      />
+
+      {!hasTxns ? (
+        <GlassCard>
+          <EmptyState
+            icon={<BarChart2 size={22} />}
+            title="No transactions yet"
+            hint="Add income and expense transactions to see your financial reports and trends."
+          />
+        </GlassCard>
+      ) : (
+        <>
+          {/* Summary stat tiles */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatTile
+              label={`Income (${win}mo)`}
+              value={fmt.money(windowStats.income)}
+              color="var(--income)"
+              ghost={ghost}
+            />
+            <StatTile
+              label={`Expenses (${win}mo)`}
+              value={fmt.money(windowStats.expense)}
+              color="var(--expense)"
+              ghost={ghost}
+            />
+            <StatTile
+              label="Net"
+              value={fmt.money(windowStats.net)}
+              color={windowStats.net.gte(0) ? 'var(--income)' : 'var(--expense)'}
+              ghost={ghost}
+            />
+            <StatTile
+              label="Savings Rate"
+              value={`${windowStats.savingsRate.toFixed(1)}%`}
+              color={windowStats.savingsRate >= 0 ? 'var(--accent)' : 'var(--expense)'}
+              ghost={ghost}
+            />
+          </div>
+
+          {/* Income vs Expense bar chart */}
+          <GlassCard>
+            <SectionHeader
+              title="Income vs Expenses"
+              action={
+                <div className="flex items-center gap-3 text-xs font-semibold">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-sm" style={{ background: 'var(--income)' }} />
+                    Income
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-sm" style={{ background: 'var(--expense)' }} />
+                    Expenses
+                  </span>
+                </div>
+              }
+            />
+            <div className="mt-4">
+              <Bars
+                groups={barGroups}
+                height={200}
+                formatY={(n) => `${fmt.symbol}${Math.round(n).toLocaleString()}`}
+              />
+            </div>
+          </GlassCard>
+
+          {/* Category donut + Net worth sparkline */}
+          <div className="grid lg:grid-cols-2 gap-4">
+            {/* Spending by category */}
+            <GlassCard>
+              <SectionHeader title="Spending by Category" action={<span className="text-xs text-muted">This month</span>} />
+              {catSpend.length === 0 ? (
+                <div className="py-8 text-center text-sm text-muted">No expense transactions this month.</div>
+              ) : (
+                <div className="mt-4">
+                  <Donut
+                    segments={catDonutSegments}
+                    size={160}
+                    stroke={24}
+                    centerText={String(catSpend.length)}
+                    centerSub="categories"
+                    legend
+                  />
+                </div>
+              )}
+            </GlassCard>
+
+            {/* Net worth trend */}
+            <GlassCard>
+              <SectionHeader title="Net Worth Trend" action={<span className="text-xs text-muted">3 months</span>} />
+              <div className="mt-2">
+                <Sparkline values={sparkValues} height={160} color="var(--accent)" />
+              </div>
+              {sparkValues.length >= 2 && (
+                <div className="mt-3 flex items-center justify-between text-sm">
+                  <span className="text-muted">3M ago</span>
+                  <span className="font-bold tnum" style={{
+                    color: sparkValues[sparkValues.length - 1] >= sparkValues[0]
+                      ? 'var(--income)'
+                      : 'var(--expense)',
+                  }}>
+                    {ghost
+                      ? '••••••'
+                      : `${fmt.symbol}${Math.round(sparkValues[sparkValues.length - 1]).toLocaleString()}`}
+                  </span>
+                  <span className="text-muted">Today</span>
+                </div>
+              )}
+            </GlassCard>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

@@ -10,6 +10,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/security/vault_registry.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../presentation/data_gate.dart';
+import '../providers/sample_data_provider.dart';
 import '../providers/settings_providers.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -42,6 +43,50 @@ class _SettingsBody extends ConsumerWidget {
     }
   }
 
+  Future<void> _loadSampleData(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Load sample data?'),
+        content: const Text(
+          'This adds demo transactions, holdings, liabilities, budgets, goals '
+          'and bills to the current vault so you can explore the app. You can '
+          'delete items individually afterwards.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Load')),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    // The spinner dialog is pushed on the ROOT navigator (showDialog default),
+    // so it must be popped from the root navigator — popping the nearest
+    // (shell) navigator would pop the Settings page and crash go_router.
+    final rootNav = Navigator.of(context, rootNavigator: true);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      await ref.read(sampleDataProvider).load();
+      if (rootNav.canPop()) rootNav.pop(); // close spinner
+      messenger.showSnackBar(
+          const SnackBar(content: Text('Sample data loaded.')));
+      if (context.mounted) context.go(Routes.dashboard);
+    } catch (e) {
+      if (rootNav.canPop()) rootNav.pop();
+      messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vaultId = ref.watch(currentVaultIdProvider);
@@ -65,6 +110,14 @@ class _SettingsBody extends ConsumerWidget {
           title: const Text('Switch / add vault'),
           subtitle: const Text('Re-authentication required'),
           onTap: () => _showVaultSwitcher(context, ref),
+        ),
+        const Divider(),
+        const _SectionHeader('Demo'),
+        ListTile(
+          leading: const Icon(Icons.auto_awesome),
+          title: const Text('Load sample data'),
+          subtitle: const Text('Fill this vault with realistic demo data'),
+          onTap: () => _loadSampleData(context, ref),
         ),
         const Divider(),
         const _SectionHeader('Import'),
