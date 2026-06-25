@@ -30,7 +30,7 @@ export function VaultGate() {
           <div className="hero-gradient w-16 h-16 rounded-2xl grid place-items-center">
             <ShieldCheck className="text-white" size={34} />
           </div>
-          <h1 className="mt-4 text-2xl font-extrabold">Fintech OS</h1>
+          <h1 className="mt-4 text-2xl font-extrabold">Khazana</h1>
           <p className="text-sm text-muted">Offline · private · encrypted</p>
         </div>
 

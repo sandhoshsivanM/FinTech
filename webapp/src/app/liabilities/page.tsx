@@ -10,6 +10,7 @@ import {
   PageIntro, GlassCard, SectionHeader, EmptyState,
   Button, Field, Input, Select, Segmented, ProgressBar,
 } from '@/components/ui';
+import { useConfirm } from '@/components/Confirm';
 
 // ---- Kind badge ----
 function KindBadge({ kind }: { kind: LiabilityKind }) {
@@ -61,13 +62,14 @@ export default function LiabilitiesPage() {
   const vaultId = useApp((s) => s.vaultId);
   const put = useApp((s) => s.put);
   const del = useApp((s) => s.del);
+  const confirm = useConfirm();
 
   const fmt = useFmt();
   const mask = (s: string) => (ghost ? '••••••' : s);
 
   // Delete
   async function deleteLiability(id: string) {
-    if (!window.confirm('Delete this liability?')) return;
+    if (!(await confirm({ title: 'Delete this liability?', confirmLabel: 'Delete', danger: true }))) return;
     await del(STORE.liability, id);
   }
 

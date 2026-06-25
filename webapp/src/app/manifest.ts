@@ -7,8 +7,8 @@ export const dynamic = 'force-static';
 // /manifest.webmanifest by Next's App Router.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Fintech OS — Private Wealth',
-    short_name: 'Fintech OS',
+    name: 'Khazana — Private Wealth',
+    short_name: 'Khazana',
     description: 'Offline-first, private personal finance & wealth management. Your data never leaves this device.',
     start_url: '/',
     scope: '/',

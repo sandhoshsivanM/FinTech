@@ -10,6 +10,7 @@ import {
   PageIntro, GlassCard, SectionHeader, EmptyState,
   Button, Field, Input, Select, ProgressBar, StatStrip,
 } from '@/components/ui';
+import { useConfirm } from '@/components/Confirm';
 
 // ---- Status pill ----
 function StatusPill({ status }: { status: 'ok' | 'warning' | 'over' }) {
@@ -39,6 +40,7 @@ export default function BudgetPage() {
   const vaultId = useApp((s) => s.vaultId);
   const put = useApp((s) => s.put);
   const del = useApp((s) => s.del);
+  const confirm = useConfirm();
 
   const fmt = useFmt();
 
@@ -91,7 +93,7 @@ export default function BudgetPage() {
   }
 
   async function deleteBudget(id: string) {
-    if (!window.confirm('Delete this budget?')) return;
+    if (!(await confirm({ title: 'Delete this budget?', confirmLabel: 'Delete', danger: true }))) return;
     await del(STORE.budget, id);
   }
 

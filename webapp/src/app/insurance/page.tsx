@@ -17,6 +17,7 @@ import {
   ProgressBar,
   StatStrip,
 } from '@/components/ui';
+import { useConfirm } from '@/components/Confirm';
 import {
   coverageGaps,
   annualPremiumTotal,
@@ -96,6 +97,7 @@ export default function InsurancePage() {
   const ghost      = useApp((s) => s.ghost);
 
   const fmt = useFmt();
+  const confirm = useConfirm();
   const mask = (s: string) => (ghost ? '••••••' : s);
 
   // ---- Form state ----
@@ -150,7 +152,7 @@ export default function InsurancePage() {
   }
 
   async function deletePolicy(id: string, name: string) {
-    if (!window.confirm(`Delete policy "${name}"? This cannot be undone.`)) return;
+    if (!(await confirm({ title: `Delete “${name}”?`, message: 'This policy will be removed. This cannot be undone.', confirmLabel: 'Delete', danger: true }))) return;
     await del(STORE.insurance, id);
   }
 

@@ -24,7 +24,7 @@ class BiometricGate {
   Future<bool> authenticate() async {
     try {
       return await _auth.authenticate(
-        localizedReason: 'Unlock your Fintech OS vault',
+        localizedReason: 'Unlock your Khazana vault',
         options: const AuthenticationOptions(
           biometricOnly: false,
           stickyAuth: true,

@@ -9,6 +9,7 @@ import { useApp, ACCENTS, type AccentName, type ThemeChoice } from '@/lib/store'
 import { loadSampleData } from '@/lib/sampleData';
 import { CURRENCIES } from '@/domain/currency';
 import { GlassCard, SectionHeader, Button, Field, Select, PageIntro, Input, Segmented } from '@/components/ui';
+import { useConfirm } from '@/components/Confirm';
 import type { ProfileKind } from '@/lib/types';
 
 type NoteKind = 'success' | 'error';
@@ -35,6 +36,7 @@ function AccentSwatch({ swatch, label, active, onClick }: { swatch: string; labe
 }
 
 export default function SettingsPage() {
+  const confirm = useConfirm();
   const lock = useApp((s) => s.lock);
   const wipe = useApp((s) => s.wipe);
   const exportBackup = useApp((s) => s.exportBackup);
@@ -88,7 +90,12 @@ export default function SettingsPage() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!window.confirm(`Delete profile "${name}"? This permanently removes all of its transactions, investments, and liabilities. This cannot be undone.`)) return;
+    if (!(await confirm({
+      title: `Delete profile “${name}”?`,
+      message: 'This permanently removes all of its transactions, investments, and liabilities. This cannot be undone.',
+      confirmLabel: 'Delete profile',
+      danger: true,
+    }))) return;
     await deleteProfile(id);
   };
 
@@ -155,13 +162,26 @@ export default function SettingsPage() {
 
   // ---- Wipe ----
   const handleWipe = async () => {
-    if (!window.confirm('This will permanently erase all data in this vault. This action cannot be undone. Continue?')) return;
+    if (!(await confirm({
+      title: 'Erase this vault?',
+      message: 'This permanently erases all data in this vault. This cannot be undone.',
+      confirmLabel: 'Erase everything',
+      danger: true,
+    }))) return;
     await wipe();
   };
 
   return (
     <div className="space-y-5">
-      <PageIntro title="Settings & Privacy" subtitle="Your data never leaves this device." />
+      <PageIntro
+        title="Settings & Privacy"
+        subtitle="Your data never leaves this device."
+        action={
+          <Button variant="soft" onClick={() => window.dispatchEvent(new Event('ftos:start-tour'))}>
+            <Sparkles size={15} /> Take a tour
+          </Button>
+        }
+      />
 
       {/* Appearance */}
       <GlassCard>
@@ -456,7 +476,7 @@ export default function SettingsPage() {
       </GlassCard>
 
       <p className="text-center text-xs text-muted italic px-6 pb-4">
-        Fintech OS is fully offline. Nothing leaves this device without your explicit action.
+        Khazana is fully offline. Nothing leaves this device without your explicit action.
       </p>
     </div>
   );

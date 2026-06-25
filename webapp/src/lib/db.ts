@@ -19,15 +19,29 @@ export interface VaultMeta {
   schemaVersion?: number; // data-shape version; drives forward migrations
 }
 
+/// Soft-delete marker for sync (records what was deleted, and when).
+export interface Tombstone {
+  key: string; // `${type}:${id}`
+  type: string;
+  recId: string; // the entity id
+  vaultId: string;
+  deletedAt: number; // epoch ms
+}
+
 class FintechDB extends Dexie {
   records!: Table<EncRecord, string>;
   vaults!: Table<VaultMeta, string>;
+  tombstones!: Table<Tombstone, string>;
 
   constructor() {
     super('fintech_os');
     this.version(1).stores({
       records: 'id, [type+vaultId], vaultId',
       vaults: 'vaultId',
+    });
+    // v2: tombstones for cross-device sync (soft-delete tracking).
+    this.version(2).stores({
+      tombstones: 'key, vaultId',
     });
   }
 }

@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/di/data_providers.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../domain/entities/holding.dart';
@@ -412,6 +413,7 @@ class _HoldingsCard extends StatelessWidget {
                 holding: slice[i],
                 onTap: () =>
                     _showTaxEstimate(context, ref, slice[i]),
+                onDelete: () => _confirmDelete(context, ref, slice[i]),
               ),
               if (i < slice.length - 1)
                 const Divider(height: 1, indent: 16, endIndent: 16),
@@ -420,6 +422,30 @@ class _HoldingsCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDelete(
+      BuildContext context, WidgetRef ref, Holding h) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete ${h.symbol}?'),
+        content: const Text(
+            'This holding will be removed. This cannot be undone.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.expense),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await ref.read(holdingRepositoryProvider).delete(h.id);
   }
 
   Future<void> _showTaxEstimate(
@@ -465,10 +491,11 @@ class _HoldingsCard extends StatelessWidget {
 }
 
 class _HoldingRow extends StatelessWidget {
-  const _HoldingRow({required this.holding, required this.onTap});
+  const _HoldingRow({required this.holding, required this.onTap, this.onDelete});
 
   final Holding holding;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -558,36 +585,51 @@ class _HoldingRow extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 // Value + P&L pill.
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      Money.format(holding.marketValue),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: pillBg,
-                        borderRadius:
-                            BorderRadius.circular(AppRadii.pill),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        Money.format(holding.marketValue),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
-                      child: Text(
-                        gainLabel,
-                        style: TextStyle(
-                          color: pillColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: pillBg,
+                          borderRadius:
+                              BorderRadius.circular(AppRadii.pill),
+                        ),
+                        child: Text(
+                          gainLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: pillColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                if (onDelete != null)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 20),
+                    color: AppColors.expense,
+                    tooltip: 'Delete holding',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: onDelete,
+                  ),
               ],
             ),
           ),

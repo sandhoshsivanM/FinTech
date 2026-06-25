@@ -37,7 +37,7 @@ class OnboardingBanner extends ConsumerWidget {
                   color: AppColors.accent, size: 20),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text('Welcome to Fintech OS',
+                child: Text('Welcome to Khazana',
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium

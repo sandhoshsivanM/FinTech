@@ -12,6 +12,7 @@ import { FREQ_LABEL } from '@/domain/recurrence';
 import {
   PageIntro, GlassCard, Button, Segmented, Field, Input, Select, EmptyState, StatStrip,
 } from '@/components/ui';
+import { useConfirm } from '@/components/Confirm';
 
 // ---- Icon map ----
 const ICON_MAP: Record<string, ElementType> = {
@@ -58,6 +59,7 @@ export default function RecurringPage() {
   const fmt = useFmt();
   const put = useApp((s) => s.put);
   const del = useApp((s) => s.del);
+  const confirm = useConfirm();
   const processRecurring = useApp((s) => s.processRecurring);
 
   // Run-due state
@@ -139,7 +141,7 @@ export default function RecurringPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Delete this recurring rule?')) return;
+    if (!(await confirm({ title: 'Delete this recurring rule?', confirmLabel: 'Delete', danger: true }))) return;
     await del(STORE.recurring, id);
   }
 

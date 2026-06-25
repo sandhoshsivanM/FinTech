@@ -4,6 +4,7 @@ import { useApp } from '@/lib/store';
 import { VaultGate } from './VaultGate';
 import { Shell } from './Shell';
 import { AutoLock } from './AutoLock';
+import { ConfirmProvider } from './Confirm';
 
 export function AppFrame({ children }: { children: ReactNode }) {
   const status = useApp((s) => s.status);
@@ -25,9 +26,9 @@ export function AppFrame({ children }: { children: ReactNode }) {
   }
   if (status !== 'unlocked') return <VaultGate />;
   return (
-    <>
+    <ConfirmProvider>
       <AutoLock />
       <Shell>{children}</Shell>
-    </>
+    </ConfirmProvider>
   );
 }

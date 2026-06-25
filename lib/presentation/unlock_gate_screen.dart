@@ -74,7 +74,7 @@ class _BrandMark extends StatelessWidget {
           child: const Icon(Icons.shield_rounded, color: Colors.white, size: 34),
         ),
         const SizedBox(height: AppSpacing.md),
-        Text('Fintech OS',
+        Text('Khazana',
             style: Theme.of(context)
                 .textTheme
                 .headlineSmall

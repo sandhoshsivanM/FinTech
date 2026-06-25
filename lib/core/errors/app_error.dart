@@ -1,4 +1,4 @@
-/// Base error hierarchy for Fintech OS (PRD §3B `lib/core/` base error types).
+/// Base error hierarchy for Khazana (PRD §3B `lib/core/` base error types).
 ///
 /// Pure Dart, no Flutter imports — usable from services and isolates.
 sealed class AppError implements Exception {
@@ -19,7 +19,7 @@ class AuthError extends AppError {
   const AuthError(super.message);
 }
 
-/// Backup file is not a valid Fintech OS backup, or failed validation (PRD §11).
+/// Backup file is not a valid Khazana backup, or failed validation (PRD §11).
 class BackupError extends AppError {
   const BackupError(super.message);
 }

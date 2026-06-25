@@ -1,5 +1,5 @@
 name: fintech_os
-description: "Fintech OS — offline-first, privacy-total personal finance engine."
+description: "Khazana — offline-first, privacy-total personal finance engine."
 publish_to: 'none'
 
 # App version. The numeric part is also encoded into the backup file format (PRD §11A).

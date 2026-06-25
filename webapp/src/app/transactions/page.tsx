@@ -10,6 +10,7 @@ import { D } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
 import { STORE, type TxnType } from '@/lib/types';
 import { PageIntro, Button, Segmented, Input, EmptyState, GlassCard } from '@/components/ui';
+import { useConfirm } from '@/components/Confirm';
 
 // ---- Icon map ----
 const ICON_MAP: Record<string, ElementType> = {
@@ -50,6 +51,7 @@ export default function TransactionsPage() {
   const ghost = useApp((s) => s.ghost);
   const del = useApp((s) => s.del);
   const fmt = useFmt();
+  const confirm = useConfirm();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
@@ -77,7 +79,7 @@ export default function TransactionsPage() {
   }, [txns, filter, search, catById]);
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Delete this transaction?')) return;
+    if (!(await confirm({ title: 'Delete this transaction?', confirmLabel: 'Delete', danger: true }))) return;
     await del(STORE.txn, id);
   }
 

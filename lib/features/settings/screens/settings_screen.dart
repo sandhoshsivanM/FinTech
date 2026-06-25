@@ -87,6 +87,42 @@ class _SettingsBody extends ConsumerWidget {
     }
   }
 
+  Future<void> _eraseAllData(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erase all data?'),
+        content: const Text(
+          'This permanently deletes all transactions, holdings, liabilities, '
+          'goals, budgets, recurring rules, insurance and snapshots in this '
+          'vault. Your categories and the vault itself are kept. This cannot '
+          'be undone.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.expense),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Erase everything'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(settingsActionsProvider).eraseAllData();
+      messenger.showSnackBar(
+          const SnackBar(content: Text('All data erased.')));
+      if (context.mounted) context.go(Routes.dashboard);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vaultId = ref.watch(currentVaultIdProvider);
@@ -146,7 +182,7 @@ class _SettingsBody extends ConsumerWidget {
           title: const Text('Export encrypted backup'),
           subtitle: const Text('AES-256-GCM, verified on restore'),
           onTap: () => _run(context, actions.exportBackup,
-              shareText: 'Fintech OS encrypted backup'),
+              shareText: 'Khazana encrypted backup'),
         ),
         const Divider(),
         const _SectionHeader('Data & Privacy'),
@@ -156,10 +192,20 @@ class _SettingsBody extends ConsumerWidget {
           subtitle: const Text('Plaintext logs.json — no financial data'),
           onTap: () => _showLogDisclaimer(context, ref),
         ),
+        const Divider(),
+        const _SectionHeader('Danger zone'),
+        ListTile(
+          leading: const Icon(Icons.delete_forever_outlined,
+              color: AppColors.expense),
+          title: const Text('Erase all data'),
+          subtitle: const Text(
+              'Permanently delete all financial data in this vault'),
+          onTap: () => _eraseAllData(context, ref),
+        ),
         const Padding(
           padding: EdgeInsets.all(AppSpacing.md),
           child: Text(
-            'Fintech OS is fully offline. Nothing leaves this device without '
+            'Khazana is fully offline. Nothing leaves this device without '
             'your explicit action.',
             style: TextStyle(fontStyle: FontStyle.italic),
           ),
@@ -264,7 +310,7 @@ class _SettingsBody extends ConsumerWidget {
     );
     if (ok != true || !context.mounted) return;
     await _run(context, actions.exportErrorLog,
-        shareText: 'Fintech OS error log (no financial data)');
+        shareText: 'Khazana error log (no financial data)');
   }
 }
 

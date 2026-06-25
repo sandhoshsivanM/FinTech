@@ -66,7 +66,7 @@ void main() {
           currentSchemaVersion: 1,
           currentAppVersion: BackupService.encodeSemver(1, 0, 0)),
       throwsA(isA<BackupError>()
-          .having((e) => e.message, 'm', contains('not a Fintech OS backup'))),
+          .having((e) => e.message, 'm', contains('not a Khazana backup'))),
     );
   });
 

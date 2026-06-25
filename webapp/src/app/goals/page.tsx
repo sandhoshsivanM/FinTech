@@ -9,6 +9,7 @@ import {
   PageIntro, GlassCard, SectionHeader, EmptyState,
   Button, Field, Input, Select, Ring, StatStrip,
 } from '@/components/ui';
+import { useConfirm } from '@/components/Confirm';
 
 // ---- Goal type config ----
 const GOAL_TYPES: { value: GoalType; label: string }[] = [
@@ -67,6 +68,7 @@ export default function GoalsPage() {
   const vaultId = useApp((s) => s.vaultId);
   const put = useApp((s) => s.put);
   const del = useApp((s) => s.del);
+  const confirm = useConfirm();
 
   const fmt = useFmt();
 
@@ -87,7 +89,7 @@ export default function GoalsPage() {
   }
 
   async function deleteGoal(id: string) {
-    if (!window.confirm('Delete this goal?')) return;
+    if (!(await confirm({ title: 'Delete this goal?', confirmLabel: 'Delete', danger: true }))) return;
     await del(STORE.goal, id);
   }
 

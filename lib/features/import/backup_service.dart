@@ -83,18 +83,18 @@ class BackupService {
   }) async {
     // (1) Magic header.
     if (backup.length < headerSize + _tagLen) {
-      throw const BackupError('This file is not a Fintech OS backup.');
+      throw const BackupError('This file is not a Khazana backup.');
     }
     final head = ByteData.sublistView(backup, 0, headerSize);
     if (head.getUint32(0, Endian.big) != magic) {
-      throw const BackupError('This file is not a Fintech OS backup.');
+      throw const BackupError('This file is not a Khazana backup.');
     }
 
     // (2) Schema version policy.
     final backupSchema = head.getUint32(_offSchema, Endian.big);
     if (backupSchema > currentSchemaVersion) {
       throw const BackupError(
-          'This backup was created by a newer version of Fintech OS. '
+          'This backup was created by a newer version of Khazana. '
           'Please update the app first.');
     }
     // backupSchema < current → proceed; forward migrations run after restore.

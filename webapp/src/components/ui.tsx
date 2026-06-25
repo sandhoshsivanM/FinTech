@@ -1,9 +1,9 @@
 'use client';
-import { type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes } from 'react';
+import { type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 
-export function GlassCard({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={clsx('card p-5', className)}>{children}</div>;
+export function GlassCard({ children, className, ...rest }: { children: ReactNode; className?: string } & HTMLAttributes<HTMLDivElement>) {
+  return <div className={clsx('card p-5', className)} {...rest}>{children}</div>;
 }
 
 export function SectionHeader({ title, action }: { title: string; action?: ReactNode }) {
@@ -142,12 +142,12 @@ export function Donut({
         )}
       </svg>
       {legend && (
-        <div className="flex-1 space-y-2.5">
+        <div className="flex-1 min-w-0 space-y-2.5">
           {segments.map((s, i) => (
             <div key={i} className="flex items-center gap-2.5 text-[13.5px]">
               <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
-              <span className="flex-1 text-ink-soft truncate">{s.label}</span>
-              <span className="font-semibold text-ink tnum">{total <= 0 ? '0%' : `${Math.round(s.value / total * 100)}%`}</span>
+              <span className="flex-1 min-w-0 text-ink-soft truncate">{s.label}</span>
+              <span className="shrink-0 font-semibold text-ink tnum tabular-nums">{total <= 0 ? '0%' : `${Math.round(s.value / total * 100)}%`}</span>
             </div>
           ))}
         </div>

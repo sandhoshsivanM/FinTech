@@ -79,6 +79,12 @@ class SettingsActions {
     }
   }
 
+  /// Permanently erases all financial data in the current vault (keeps
+  /// categories + the vault itself). PRD §11 reset.
+  Future<void> eraseAllData() async {
+    await _ref.read(databaseProvider).eraseAllData();
+  }
+
   /// Writes the error log to plaintext logs.json (PRD §5B).
   Future<String> exportErrorLog() async {
     final json = await _ref.read(logServiceProvider).exportJson();

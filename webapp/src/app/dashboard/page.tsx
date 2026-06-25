@@ -122,7 +122,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Net worth hero */}
-      <GlassCard className="p-6 md:p-7">
+      <GlassCard className="p-6 md:p-7" data-tour="networth">
         <div className="flex items-start justify-between">
           <div>
             <div className="eyebrow">Net worth</div>

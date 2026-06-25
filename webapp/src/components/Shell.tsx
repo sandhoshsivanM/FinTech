@@ -9,6 +9,7 @@ import {
   Sun, Moon, Monitor,
 } from 'lucide-react';
 import { useApp, type ThemeChoice } from '@/lib/store';
+import { Tour } from './Tour';
 
 const NAV = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
@@ -37,7 +38,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const ghost = useApp((s) => s.ghost);
   const toggleGhost = useApp((s) => s.toggleGhost);
   const lock = useApp((s) => s.lock);
-  const title = TITLES[Object.keys(TITLES).find((k) => path.startsWith(k)) ?? '/dashboard'] ?? 'Fintech OS';
+  const title = TITLES[Object.keys(TITLES).find((k) => path.startsWith(k)) ?? '/dashboard'] ?? 'Khazana';
 
   return (
     <div className="min-h-screen flex">
@@ -71,7 +72,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <span className="md:hidden font-semibold tracking-tight">{title}</span>
           <div className="flex-1" />
           <ThemeToggle />
-          <button onClick={toggleGhost} title="Privacy (Ghost mode)" className="focus-ring w-8 h-8 grid place-items-center rounded-full hover:bg-[var(--surface-2)] text-ink-soft transition-colors">
+          <button data-tour="ghost" onClick={toggleGhost} title="Privacy (Ghost mode)" className="focus-ring w-8 h-8 grid place-items-center rounded-full hover:bg-[var(--surface-2)] text-ink-soft transition-colors">
             {ghost ? <EyeOff size={17} /> : <Eye size={17} />}
           </button>
           <button onClick={lock} title="Lock vault" className="focus-ring w-8 h-8 grid place-items-center rounded-full hover:bg-[rgba(24,25,31,0.05)] text-ink-soft transition-colors">
@@ -83,6 +84,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <div className="mx-auto max-w-[1280px]">{children}</div>
         </main>
       </div>
+      <Tour />
     </div>
   );
 }
@@ -93,14 +95,14 @@ function Brand() {
       <span className="w-8 h-8 rounded-[9px] bg-[var(--primary)] grid place-items-center">
         <span className="w-3 h-3 rounded-[3px] border-[1.5px]" style={{ borderColor: 'var(--primary-fg)', opacity: 0.9 }} />
       </span>
-      <span className="font-bold text-[15.5px] tracking-tight">Fintech OS</span>
+      <span className="font-bold text-[15.5px] tracking-tight">Khazana</span>
     </Link>
   );
 }
 
 function Nav({ path, className, onNavigate }: { path: string; className?: string; onNavigate?: () => void }) {
   return (
-    <nav className={clsx('space-y-0.5', className)}>
+    <nav data-tour="nav" className={clsx('space-y-0.5', className)}>
       {NAV.map((n) => {
         const active = path === n.href || (n.href !== '/dashboard' && path.startsWith(n.href));
         const Icon = n.icon;
@@ -127,7 +129,7 @@ function ProfileMenu() {
 
   return (
     <div className="relative">
-      <button onClick={() => setOpen((o) => !o)} className="focus-ring flex items-center gap-1.5 rounded-full pl-1 pr-2 py-1 hover:bg-[rgba(24,25,31,0.05)] transition-colors">
+      <button data-tour="profile" onClick={() => setOpen((o) => !o)} className="focus-ring flex items-center gap-1.5 rounded-full pl-1 pr-2 py-1 hover:bg-[rgba(24,25,31,0.05)] transition-colors">
         <span className="w-7 h-7 grid place-items-center rounded-full bg-[var(--primary)] text-[var(--primary-fg)] text-[12px] font-semibold">{initial}</span>
         <span className="hidden sm:block text-[13px] font-medium max-w-[120px] truncate">{active?.name ?? 'Profile'}</span>
         <ChevronDown size={14} className="text-muted" />
@@ -162,7 +164,7 @@ function ProfileMenu() {
 
 function NewTxnButton() {
   return (
-    <Link href="/add"
+    <Link href="/add" data-tour="add"
       className="focus-ring mt-3 flex items-center justify-center gap-2 rounded-[11px] bg-[var(--primary)] text-[var(--primary-fg)] text-[13.5px] font-semibold py-2.5 hover:opacity-90 transition-opacity">
       <Plus size={17} /> Add Transaction
     </Link>
@@ -176,7 +178,7 @@ function ThemeToggle() {
   const next = () => setTheme(order[(order.indexOf(theme) + 1) % order.length]);
   const Icon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor;
   return (
-    <button onClick={next} title={`Theme: ${theme} (click to change)`}
+    <button data-tour="theme" onClick={next} title={`Theme: ${theme} (click to change)`}
       className="focus-ring w-8 h-8 grid place-items-center rounded-full hover:bg-[var(--surface-2)] text-ink-soft transition-colors">
       <Icon size={17} />
     </button>

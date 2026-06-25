@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Fintech OS",
+  "productName": "Khazana",
   "version": "0.1.0",
   "identifier": "com.technoduces.fintechos",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Fintech OS",
+        "title": "Khazana",
         "width": 1280,
         "height": 840,
         "minWidth": 960,

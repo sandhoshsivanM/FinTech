@@ -21,6 +21,7 @@ import {
   Select,
   Donut,
 } from '@/components/ui';
+import { useConfirm } from '@/components/Confirm';
 
 const ASSET_TYPES = Object.entries(ASSET_META) as [AssetType, { label: string; color: string }][];
 
@@ -426,9 +427,9 @@ function HoldingRow({ v, isEditing, onEdit, onClose, onDelete, ghost }: {
   return (
     <React.Fragment>
       <tr className={`border-t border-[var(--line)] transition-colors hover:bg-[rgba(24,25,31,0.018)]${isEditing ? ' bg-[rgba(52,64,107,0.05)]' : ''}`}>
-        <td className="py-3 pr-3">
-          <div className="font-semibold text-ink leading-tight">{h.symbol}</div>
-          <div className="text-[11px] text-muted">{h.exchange}</div>
+        <td className="py-3 pr-3 max-w-[150px]">
+          <div className="font-semibold text-ink leading-tight truncate">{h.symbol}</div>
+          <div className="text-[11px] text-muted truncate">{h.exchange}</div>
         </td>
         <td className="py-3 pr-3 hidden sm:table-cell">
           <span className="inline-block whitespace-nowrap text-[11px] font-medium px-2 py-0.5 rounded-full"
@@ -551,9 +552,9 @@ function TaxSummaryCard({ views, ghost }: { views: HV[]; ghost: boolean }) {
                   accent: stGain.lt(0) ? 'var(--expense)' : undefined,
                 },
                 {
-                  label: 'Est. tax if sold today',
+                  label: 'Est. tax if sold',
                   value: mask(fmt.money(estTax), ghost),
-                  sub: estTax.isZero() ? 'No tax (exempt / loss)' : undefined,
+                  sub: estTax.isZero() ? 'Exempt / loss' : undefined,
                   accent: 'var(--expense)',
                 },
               ]}
@@ -575,6 +576,7 @@ export default function InvestmentsPage() {
   const ghost = useApp((s) => s.ghost);
   const del = useApp((s) => s.del);
   const fmt = useFmt();
+  const confirm = useConfirm();
 
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -617,7 +619,7 @@ export default function InvestmentsPage() {
   const pnlIsPositive = summary.pnl.gte(0);
 
   async function deleteHolding(id: string, symbol: string) {
-    if (!window.confirm(`Delete holding "${symbol}"? This cannot be undone.`)) return;
+    if (!(await confirm({ title: `Delete ${symbol}?`, message: 'This holding will be removed. This cannot be undone.', confirmLabel: 'Delete', danger: true }))) return;
     await del(STORE.holding, id);
   }
 
@@ -734,7 +736,7 @@ export default function InvestmentsPage() {
           />
         </GlassCard>
       ) : (
-        <div className="grid lg:grid-cols-5 gap-4">
+        <div className="grid lg:grid-cols-5 gap-4 items-start">
           {/* Allocation donut — center shows total portfolio value */}
           <GlassCard className="lg:col-span-2">
             <SectionHeader title="Allocation" />

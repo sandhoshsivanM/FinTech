@@ -85,6 +85,25 @@ class AppDatabase extends _$AppDatabase {
         },
       );
 
+  /// Erase all user financial data (PRD §11 reset). Keeps categories, merchant
+  /// aliases, FX rates and the vault itself so the app stays usable — mirrors
+  /// the web app's wipe (a clean, empty vault).
+  Future<void> eraseAllData() async {
+    await transaction(() async {
+      await delete(transactions).go();
+      await delete(budgets).go();
+      await delete(holdings).go();
+      await delete(liabilities).go();
+      await delete(goalContributions).go();
+      await delete(goals).go();
+      await delete(recurringRules).go();
+      await delete(insurances).go();
+      await delete(netWorthSnapshots).go();
+      await delete(transactionFingerprints).go();
+      await customStatement('DELETE FROM transactions_fts');
+    });
+  }
+
   /// FTS5 full-text index over transactions (PRD §5/§16 search ≤100ms/10k).
   /// Kept in sync by triggers (never `LIKE '%x%'`). The indexed content is
   /// merchant + note + the joined category name.
