@@ -32,6 +32,11 @@
   --primary: #18191f;
   --primary-fg: #ffffff;
 
+  /* Subtle interactive fills / hovers / chart tracks (theme-aware, so they stay
+     visible in dark mode instead of being invisible near-black tints) */
+  --fill: rgba(24, 25, 31, 0.05);
+  --fill-strong: rgba(24, 25, 31, 0.08);
+
   /* Back-compat aliases (older markup referenced these tokens) */
   --glass-border: var(--line);
   --bg-top: var(--canvas);
@@ -58,6 +63,8 @@
   --violet: #9d8df0;
   --primary: #e9eaee;
   --primary-fg: #15171c;
+  --fill: rgba(255, 255, 255, 0.06);
+  --fill-strong: rgba(255, 255, 255, 0.11);
   --glass-border: var(--line);
   --bg-top: var(--canvas);
   --bg-bottom: var(--canvas);

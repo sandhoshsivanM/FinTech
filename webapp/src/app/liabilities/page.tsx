@@ -415,7 +415,7 @@ export default function LiabilitiesPage() {
             </div>
 
             {simResult && (
-              <div className="rounded-[14px] bg-black/[0.03] p-4 space-y-3">
+              <div className="rounded-[14px] bg-[var(--fill)] p-4 space-y-3">
                 {!simResult.feasible ? (
                   <div className="flex items-start gap-2 text-expense">
                     <AlertTriangle size={16} className="mt-0.5 shrink-0" />

@@ -181,17 +181,17 @@ export default function AddTransactionPage() {
                   onClick={() => setCategoryId(cat.id)}
                   className="flex flex-col items-center gap-1 p-2 rounded-[14px] border transition text-xs font-medium"
                   style={{
-                    background: selected ? 'var(--accent)' : 'rgba(255,255,255,0.6)',
-                    borderColor: selected ? 'var(--accent)' : 'var(--glass-border)',
-                    color: selected ? '#fff' : 'var(--ink-soft)',
-                    boxShadow: selected ? '0 4px 12px rgba(59,130,246,0.25)' : undefined,
+                    background: selected ? 'var(--accent)' : 'var(--surface-2)',
+                    borderColor: selected ? 'var(--accent)' : 'var(--line)',
+                    color: selected ? '#fff' : 'var(--ink)',
+                    boxShadow: selected ? '0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent)' : undefined,
                   }}
                   aria-pressed={selected}
                 >
                   <span
                     className="w-8 h-8 rounded-[10px] grid place-items-center"
                     style={{
-                      background: selected ? 'rgba(255,255,255,0.25)' : 'rgba(59,130,246,0.1)',
+                      background: selected ? 'rgba(255,255,255,0.25)' : 'color-mix(in srgb, var(--accent) 14%, transparent)',
                       color: selected ? '#fff' : 'var(--accent)',
                     }}
                   >

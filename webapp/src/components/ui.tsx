@@ -22,8 +22,8 @@ export function Button({
 }: { children: ReactNode; variant?: BtnVariant } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const styles: Record<BtnVariant, string> = {
     primary: 'bg-[var(--primary)] text-[var(--primary-fg)] hover:opacity-90 active:opacity-100',
-    soft: 'bg-[rgba(24,25,31,0.05)] text-ink hover:bg-[rgba(24,25,31,0.08)]',
-    ghost: 'text-ink-soft hover:bg-[rgba(24,25,31,0.05)] hover:text-ink',
+    soft: 'bg-[var(--fill)] text-ink hover:bg-[var(--fill-strong)]',
+    ghost: 'text-ink-soft hover:bg-[var(--fill)] hover:text-ink',
     danger: 'bg-[rgba(192,73,47,0.08)] text-expense hover:bg-[rgba(192,73,47,0.14)]',
   };
   return (
@@ -39,11 +39,11 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
   options: { value: T; label: ReactNode }[]; value: T; onChange: (v: T) => void; className?: string;
 }) {
   return (
-    <div className={clsx('inline-flex p-0.5 rounded-[11px] bg-[rgba(24,25,31,0.045)] border border-[var(--line)] gap-0.5', className)}>
+    <div className={clsx('inline-flex p-0.5 rounded-[11px] bg-[var(--fill)] border border-[var(--line)] gap-0.5', className)}>
       {options.map((o) => (
         <button key={o.value} onClick={() => onChange(o.value)}
           className={clsx('px-3 py-1.5 rounded-[8px] text-[13px] font-semibold tracking-tight transition-colors duration-150',
-            value === o.value ? 'bg-surface text-ink shadow-[0_1px_2px_rgba(24,25,31,0.08)]' : 'text-muted hover:text-ink-soft')}>
+            value === o.value ? 'bg-surface text-ink shadow-[0_1px_2px_var(--fill-strong)]' : 'text-muted hover:text-ink-soft')}>
           {o.label}
         </button>
       ))}
@@ -76,7 +76,7 @@ export function ProgressBar({ fraction, color, height = 7 }: { fraction: number;
   const pct = Math.min(100, Math.max(0, fraction * 100));
   const c = color ?? (pct > 90 ? 'var(--expense)' : pct >= 70 ? 'var(--warn)' : 'var(--income)');
   return (
-    <div className="w-full rounded-full overflow-hidden" style={{ height, background: 'rgba(24,25,31,0.07)' }}>
+    <div className="w-full rounded-full overflow-hidden" style={{ height, background: 'var(--fill-strong)' }}>
       <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: c }} />
     </div>
   );
@@ -92,7 +92,7 @@ export function Ring({ fraction, size = 120, stroke = 11, color = 'var(--accent)
   return (
     <div className="relative grid place-items-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(24,25,31,0.08)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--fill-strong)" strokeWidth={stroke} />
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - f)}
           style={{ transition: 'stroke-dashoffset .6s cubic-bezier(.4,0,.2,1)' }} />
@@ -119,7 +119,7 @@ export function Donut({
     <div className="flex items-center gap-6">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
         <g transform={`translate(${size / 2},${size / 2}) rotate(-90)`}>
-          <circle r={r} fill="none" stroke="rgba(24,25,31,0.07)" strokeWidth={stroke} />
+          <circle r={r} fill="none" stroke="var(--fill-strong)" strokeWidth={stroke} />
           {total > 0 && segments.map((s, i) => {
             const frac = Math.max(0, s.value) / total;
             const len = frac * c;
@@ -251,7 +251,7 @@ export function PageIntro({ title, subtitle, action }: { title: string; subtitle
 export function EmptyState({ icon, title, hint, action }: { icon?: ReactNode; title: string; hint?: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center text-center py-14 px-4">
-      {icon && <div className="w-11 h-11 rounded-[14px] bg-[rgba(24,25,31,0.04)] border border-[var(--line)] text-ink-soft grid place-items-center mb-3.5">{icon}</div>}
+      {icon && <div className="w-11 h-11 rounded-[14px] bg-[var(--fill)] border border-[var(--line)] text-ink-soft grid place-items-center mb-3.5">{icon}</div>}
       <p className="font-semibold text-ink text-[15px]">{title}</p>
       {hint && <p className="text-[13px] text-muted mt-1.5 max-w-sm leading-relaxed">{hint}</p>}
       {action && <div className="mt-5">{action}</div>}

@@ -75,7 +75,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <button data-tour="ghost" onClick={toggleGhost} title="Privacy (Ghost mode)" className="focus-ring w-8 h-8 grid place-items-center rounded-full hover:bg-[var(--surface-2)] text-ink-soft transition-colors">
             {ghost ? <EyeOff size={17} /> : <Eye size={17} />}
           </button>
-          <button onClick={lock} title="Lock vault" className="focus-ring w-8 h-8 grid place-items-center rounded-full hover:bg-[rgba(24,25,31,0.05)] text-ink-soft transition-colors">
+          <button onClick={lock} title="Lock vault" className="focus-ring w-8 h-8 grid place-items-center rounded-full hover:bg-[var(--fill)] text-ink-soft transition-colors">
             <Lock size={16} />
           </button>
           <ProfileMenu />
@@ -108,8 +108,9 @@ function Nav({ path, className, onNavigate }: { path: string; className?: string
         const Icon = n.icon;
         return (
           <Link key={n.href} href={n.href} onClick={onNavigate}
+            data-tour={`nav-${n.href.replace('/', '')}`}
             className={clsx('flex items-center gap-3 px-3 py-2 rounded-[10px] text-[13.5px] transition-colors duration-150',
-              active ? 'bg-[rgba(24,25,31,0.06)] text-ink font-semibold' : 'text-ink-soft font-medium hover:bg-[rgba(24,25,31,0.035)] hover:text-ink')}>
+              active ? 'bg-[var(--fill)] text-ink font-semibold' : 'text-ink-soft font-medium hover:bg-[var(--fill)] hover:text-ink')}>
             <Icon size={17.5} strokeWidth={active ? 2.2 : 1.9} className={active ? 'text-ink' : 'text-muted'} />
             {n.label}
           </Link>
@@ -129,7 +130,7 @@ function ProfileMenu() {
 
   return (
     <div className="relative">
-      <button data-tour="profile" onClick={() => setOpen((o) => !o)} className="focus-ring flex items-center gap-1.5 rounded-full pl-1 pr-2 py-1 hover:bg-[rgba(24,25,31,0.05)] transition-colors">
+      <button data-tour="profile" onClick={() => setOpen((o) => !o)} className="focus-ring flex items-center gap-1.5 rounded-full pl-1 pr-2 py-1 hover:bg-[var(--fill)] transition-colors">
         <span className="w-7 h-7 grid place-items-center rounded-full bg-[var(--primary)] text-[var(--primary-fg)] text-[12px] font-semibold">{initial}</span>
         <span className="hidden sm:block text-[13px] font-medium max-w-[120px] truncate">{active?.name ?? 'Profile'}</span>
         <ChevronDown size={14} className="text-muted" />
@@ -141,8 +142,8 @@ function ProfileMenu() {
             <p className="eyebrow px-2.5 pt-1.5 pb-1">Profiles</p>
             {profiles.map((p) => (
               <button key={p.id} onClick={() => { void setActive(p.id); setOpen(false); }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] hover:bg-[rgba(24,25,31,0.05)] text-left transition-colors">
-                <span className="w-7 h-7 grid place-items-center rounded-full bg-[rgba(24,25,31,0.06)] text-ink text-[12px] font-semibold shrink-0">{p.name.charAt(0).toUpperCase()}</span>
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] hover:bg-[var(--fill)] text-left transition-colors">
+                <span className="w-7 h-7 grid place-items-center rounded-full bg-[var(--fill)] text-ink text-[12px] font-semibold shrink-0">{p.name.charAt(0).toUpperCase()}</span>
                 <span className="flex-1 min-w-0">
                   <span className="block text-[13.5px] font-medium truncate">{p.name}</span>
                   <span className="block text-[11px] text-muted">{KIND_LABEL[p.kind] ?? p.kind}</span>
@@ -152,7 +153,7 @@ function ProfileMenu() {
             ))}
             <div className="my-1 border-t border-[var(--line)]" />
             <Link href="/settings" onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-2.5 py-2 rounded-[10px] text-[13px] font-medium text-ink-soft hover:bg-[rgba(24,25,31,0.05)] transition-colors">
+              className="flex items-center gap-2 px-2.5 py-2 rounded-[10px] text-[13px] font-medium text-ink-soft hover:bg-[var(--fill)] transition-colors">
               <Plus size={15} /> Manage profiles
             </Link>
           </div>

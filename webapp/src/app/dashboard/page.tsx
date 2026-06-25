@@ -135,7 +135,7 @@ export default function DashboardPage() {
               {mask(fmt.money(summary.net))}<span className="text-muted font-normal">this period</span>
             </div>
           </div>
-          <button onClick={toggleGhost} title="Privacy" className="focus-ring w-8 h-8 grid place-items-center rounded-full hover:bg-[rgba(24,25,31,0.05)] text-ink-soft transition-colors">
+          <button onClick={toggleGhost} title="Privacy" className="focus-ring w-8 h-8 grid place-items-center rounded-full hover:bg-[var(--fill)] text-ink-soft transition-colors">
             {ghost ? <EyeOff size={17} /> : <Eye size={17} />}
           </button>
         </div>

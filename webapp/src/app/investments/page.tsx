@@ -327,7 +327,7 @@ function ImportPanel({ onClose }: { onClose: () => void }) {
         <Field label="Or paste CSV text">
           <textarea
             rows={6}
-            className="w-full rounded-[12px] border border-[var(--glass-border)] bg-white/70 px-3.5 py-2.5 text-xs font-mono outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition resize-y"
+            className="w-full rounded-[12px] border border-[var(--line-strong)] bg-[var(--surface)] text-ink px-3.5 py-2.5 text-xs font-mono outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition resize-y"
             placeholder={'Symbol,Qty,Avg Cost,LTP\nNIFTYBEES,100,250.00,271.50\nGOLDBEES,50,48.50,52.00'}
             value={csvText}
             onChange={(e) => setCsvText(e.target.value)}
@@ -426,7 +426,7 @@ function HoldingRow({ v, isEditing, onEdit, onClose, onDelete, ghost }: {
   const cell = 'py-3 pr-3 text-right tnum whitespace-nowrap';
   return (
     <React.Fragment>
-      <tr className={`border-t border-[var(--line)] transition-colors hover:bg-[rgba(24,25,31,0.018)]${isEditing ? ' bg-[rgba(52,64,107,0.05)]' : ''}`}>
+      <tr className={`border-t border-[var(--line)] transition-colors hover:bg-[var(--fill)]${isEditing ? ' bg-[rgba(52,64,107,0.05)]' : ''}`}>
         <td className="py-3 pr-3 max-w-[150px]">
           <div className="font-semibold text-ink leading-tight truncate">{h.symbol}</div>
           <div className="text-[11px] text-muted truncate">{h.exchange}</div>
@@ -447,19 +447,19 @@ function HoldingRow({ v, isEditing, onEdit, onClose, onDelete, ghost }: {
           <div className="flex items-center justify-end gap-0.5">
             {hasDate && (
               <button onClick={() => setOpen((o) => !o)} title="XIRR & tax"
-                className="text-muted hover:text-ink p-1 rounded-md hover:bg-[rgba(24,25,31,0.05)] transition-colors">
+                className="text-muted hover:text-ink p-1 rounded-md hover:bg-[var(--fill)] transition-colors">
                 {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
             )}
             <button onClick={isEditing ? onClose : onEdit} title="Edit"
-              className="text-muted hover:text-ink p-1 rounded-md hover:bg-[rgba(24,25,31,0.05)] transition-colors"><Pencil size={13} /></button>
+              className="text-muted hover:text-ink p-1 rounded-md hover:bg-[var(--fill)] transition-colors"><Pencil size={13} /></button>
             <button onClick={onDelete} title="Delete"
               className="text-muted hover:text-expense p-1 rounded-md hover:bg-[rgba(192,73,47,0.08)] transition-colors"><Trash2 size={13} /></button>
           </div>
         </td>
       </tr>
       {open && hasDate && (
-        <tr className="bg-[rgba(24,25,31,0.018)]">
+        <tr className="bg-[var(--fill)]">
           <td colSpan={8} className="px-3 pb-3 pt-0">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px]">
               {xirrPct !== null && (

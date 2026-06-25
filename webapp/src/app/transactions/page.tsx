@@ -170,13 +170,13 @@ export default function TransactionsPage() {
               return (
                 <div key={t.id}>
                   {showHeader && (
-                    <div className="px-5 py-2 bg-black/[0.025] border-b border-[var(--glass-border)]">
+                    <div className="px-5 py-2 bg-[var(--fill)] border-b border-[var(--glass-border)]">
                       <span className="text-xs font-semibold text-ink-soft tracking-wide">
                         {formatDay(t.date)}
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-3 px-5 py-3 hover:bg-black/[0.02] transition group">
+                  <div className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--fill)] transition group">
                     {/* Category icon avatar */}
                     <span
                       className="w-9 h-9 rounded-full grid place-items-center shrink-0"
@@ -217,7 +217,7 @@ export default function TransactionsPage() {
                     <div className="flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition ml-1">
                       <Link
                         href={`/add?id=${t.id}`}
-                        className="p-1.5 rounded-[10px] text-ink-soft hover:text-ink hover:bg-[rgba(24,25,31,0.05)] transition"
+                        className="p-1.5 rounded-[10px] text-ink-soft hover:text-ink hover:bg-[var(--fill)] transition"
                         aria-label="Edit transaction"
                       >
                         <Pencil size={14} />

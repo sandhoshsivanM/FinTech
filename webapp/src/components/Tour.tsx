@@ -10,11 +10,20 @@ import { Button } from './ui';
 
 interface Step { sel: string; title: string; body: string }
 
+// Every area of the app, explained once, in nav order.
 const STEPS: Step[] = [
-  { sel: '[data-tour="networth"]', title: 'Your net worth', body: 'Everything you own minus what you owe — it updates as you add data. Tap the eye to hide amounts when someone’s nearby.' },
-  { sel: '[data-tour="add"]', title: 'Add a transaction', body: 'Log income or spending here. Tip: use quick-add — type “spent 450 on groceries” and it fills the form for you.' },
-  { sel: '[data-tour="nav"]', title: 'Everything in one place', body: 'Investments, liabilities, budgets, goals, insurance and reports all live in this menu.' },
-  { sel: '[data-tour="profile"]', title: 'Profiles', body: 'Keep separate books for yourself, your spouse, or a business — fully isolated. Switch anytime from here.' },
+  { sel: '[data-tour="networth"]', title: 'Overview', body: 'Your home screen: net worth (what you own minus what you owe), trends, a health score and smart insights. Tap the eye to hide amounts.' },
+  { sel: '[data-tour="add"]', title: 'Add a transaction', body: 'Log income or spending here. Tip: quick-add — type “spent 450 on groceries” and it fills the form for you.' },
+  { sel: '[data-tour="nav-transactions"]', title: 'Cash Flow', body: 'Every transaction in one list — search, filter by income/expense, edit, delete, and export to CSV.' },
+  { sel: '[data-tour="nav-investments"]', title: 'Investments', body: 'Your holdings with allocation, profit/loss, XIRR returns and an unrealised-tax estimate. Import from a broker CSV too.' },
+  { sel: '[data-tour="nav-liabilities"]', title: 'Liabilities', body: 'Track loans & credit cards — balances, APR, EMIs, card utilisation, and a debt-payoff planner (avalanche/snowball).' },
+  { sel: '[data-tour="nav-insurance"]', title: 'Insurance', body: 'Record your policies and see a coverage-gap analysis — whether your life and health cover are enough.' },
+  { sel: '[data-tour="nav-budget"]', title: 'Budget', body: 'Set monthly spending limits per category with green/amber/red progress and over-budget alerts.' },
+  { sel: '[data-tour="nav-goals"]', title: 'Goals', body: 'Savings targets (emergency fund, house, trip…) with progress rings and the monthly amount needed to get there.' },
+  { sel: '[data-tour="nav-reports"]', title: 'Reports', body: 'Charts over time — net-worth trend, income vs expense, and where your money goes by category.' },
+  { sel: '[data-tour="nav-recurring"]', title: 'Recurring', body: 'Set up bills and income that repeat — they post automatically and show up as upcoming on your dashboard.' },
+  { sel: '[data-tour="nav-settings"]', title: 'Settings', body: 'Appearance (themes & accents), profiles, encrypted backup/restore, display currency, and erase-data.' },
+  { sel: '[data-tour="profile"]', title: 'Profiles', body: 'Keep separate, fully-isolated books for yourself, your spouse, or a business. Switch anytime from here.' },
   { sel: '[data-tour="ghost"]', title: 'Privacy mode', body: 'One tap hides every amount on screen. Your data never leaves this device, ever.' },
   { sel: '[data-tour="theme"]', title: 'Make it yours', body: 'Switch light / dark / system here, and pick an accent colour in Settings → Appearance.' },
 ];

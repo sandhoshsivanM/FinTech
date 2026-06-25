@@ -10,6 +10,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/security/vault_registry.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../presentation/data_gate.dart';
+import '../../../presentation/tour_overlay.dart';
 import '../providers/sample_data_provider.dart';
 import '../providers/settings_providers.dart';
 
@@ -146,6 +147,14 @@ class _SettingsBody extends ConsumerWidget {
           title: const Text('Switch / add vault'),
           subtitle: const Text('Re-authentication required'),
           onTap: () => _showVaultSwitcher(context, ref),
+        ),
+        const Divider(),
+        const _SectionHeader('Help'),
+        ListTile(
+          leading: const Icon(Icons.school_outlined),
+          title: const Text('Take a tour'),
+          subtitle: const Text('A quick walkthrough of every area'),
+          onTap: () => showTour(context, ref),
         ),
         const Divider(),
         const _SectionHeader('Demo'),

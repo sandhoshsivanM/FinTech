@@ -185,7 +185,7 @@ export default function BudgetPage() {
               { label: 'Wants', pct: 30, color: 'var(--violet)' },
               { label: 'Savings', pct: 20, color: 'var(--income)' },
             ].map((item) => (
-              <div key={item.label} className="text-center p-3 rounded-[14px] bg-black/[0.03]">
+              <div key={item.label} className="text-center p-3 rounded-[14px] bg-[var(--fill)]">
                 <div className="text-lg font-extrabold" style={{ color: item.color }}>{item.pct}%</div>
                 <div className="text-xs text-ink-soft mt-0.5">{item.label}</div>
               </div>

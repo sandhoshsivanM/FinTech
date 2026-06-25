@@ -12,6 +12,7 @@ import '../../../domain/services/net_worth_calculator.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
 import '../../../presentation/onboarding_banner.dart';
+import '../../../presentation/tour_overlay.dart';
 import '../../investments/providers/investment_providers.dart';
 import '../../liabilities/providers/liability_providers.dart';
 import '../../transactions/providers/category_providers.dart';
@@ -81,7 +82,8 @@ class _DashboardBody extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       children: [
-        // 0. Onboarding banner (only shown once, collapses to nothing after).
+        // 0. First-run guided tour launcher (shows once) + welcome banner.
+        const TourLauncher(),
         const OnboardingBanner(),
         const SizedBox(height: AppSpacing.sm),
 

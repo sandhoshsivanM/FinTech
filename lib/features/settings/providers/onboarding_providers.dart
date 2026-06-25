@@ -7,10 +7,16 @@ const _storage = FlutterSecureStorage(
   ),
 );
 const _key = 'onboarding_seen_v1';
+const _tourKey = 'tour_seen_v1';
 
 /// Whether the first-run onboarding has been dismissed (PRD Phase 4 onboarding).
 final onboardingSeenProvider = FutureProvider<bool>((ref) async {
   return (await _storage.read(key: _key)) == '1';
+});
+
+/// Whether the first-run guided tour (area-by-area walkthrough) has been seen.
+final tourSeenProvider = FutureProvider<bool>((ref) async {
+  return (await _storage.read(key: _tourKey)) == '1';
 });
 
 final onboardingActionsProvider =
@@ -22,5 +28,16 @@ class OnboardingActions {
   Future<void> markSeen() async {
     await _storage.write(key: _key, value: '1');
     _ref.invalidate(onboardingSeenProvider);
+  }
+
+  Future<void> markTourSeen() async {
+    await _storage.write(key: _tourKey, value: '1');
+    _ref.invalidate(tourSeenProvider);
+  }
+
+  /// Replays the tour (clears the flag so it shows again).
+  Future<void> resetTour() async {
+    await _storage.delete(key: _tourKey);
+    _ref.invalidate(tourSeenProvider);
   }
 }
