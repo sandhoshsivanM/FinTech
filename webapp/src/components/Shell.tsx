@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import {
   LayoutDashboard, Receipt, TrendingUp, CreditCard, BarChart3, PieChart,
   Flag, Repeat, Settings, Eye, EyeOff, Lock, Menu, X, Plus, Shield, ChevronDown, Check,
-  Sun, Moon, Monitor,
+  Sun, Moon, Monitor, LifeBuoy,
 } from 'lucide-react';
 import { useApp, type ThemeChoice } from '@/lib/store';
 import { Tour } from './Tour';
@@ -17,6 +17,7 @@ const NAV = [
   { href: '/investments', icon: TrendingUp, label: 'Investments' },
   { href: '/liabilities', icon: CreditCard, label: 'Liabilities' },
   { href: '/insurance', icon: Shield, label: 'Insurance' },
+  { href: '/safety-net', icon: LifeBuoy, label: 'Safety Net' },
   { href: '/budget', icon: PieChart, label: 'Budget' },
   { href: '/goals', icon: Flag, label: 'Goals' },
   { href: '/reports', icon: BarChart3, label: 'Reports' },
@@ -26,7 +27,7 @@ const NAV = [
 
 const TITLES: Record<string, string> = {
   '/dashboard': 'Overview', '/transactions': 'Cash Flow', '/investments': 'Investments',
-  '/liabilities': 'Liabilities', '/insurance': 'Insurance', '/budget': 'Budget', '/goals': 'Goals',
+  '/liabilities': 'Liabilities', '/insurance': 'Insurance', '/safety-net': 'Safety Net', '/budget': 'Budget', '/goals': 'Goals',
   '/reports': 'Reports', '/recurring': 'Recurring', '/settings': 'Settings', '/add': 'Add Transaction',
 };
 

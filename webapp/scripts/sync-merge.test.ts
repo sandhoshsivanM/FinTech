@@ -1,5 +1,5 @@
-// Run with: node --test scripts/sync-merge.test.ts  (Node 24 strips types natively)
-import { test } from 'node:test';
+// Run with: npm test  (Vitest). Assertions use node:assert/strict, which Vitest supports.
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { mergeBundles, type SyncBundle } from '../src/domain/syncMerge.ts';
 

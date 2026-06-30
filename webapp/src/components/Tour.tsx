@@ -18,6 +18,7 @@ const STEPS: Step[] = [
   { sel: '[data-tour="nav-investments"]', title: 'Investments', body: 'Your holdings with allocation, profit/loss, XIRR returns and an unrealised-tax estimate. Import from a broker CSV too.' },
   { sel: '[data-tour="nav-liabilities"]', title: 'Liabilities', body: 'Track loans & credit cards — balances, APR, EMIs, card utilisation, and a debt-payoff planner (avalanche/snowball).' },
   { sel: '[data-tour="nav-insurance"]', title: 'Insurance', body: 'Record your policies and see a coverage-gap analysis — whether your life and health cover are enough.' },
+  { sel: '[data-tour="nav-safety-net"]', title: 'Safety Net', body: 'One readiness score that pulls together your emergency fund, insurance cover and safe/retirement assets — and shows what to shore up.' },
   { sel: '[data-tour="nav-budget"]', title: 'Budget', body: 'Set monthly spending limits per category with green/amber/red progress and over-budget alerts.' },
   { sel: '[data-tour="nav-goals"]', title: 'Goals', body: 'Savings targets (emergency fund, house, trip…) with progress rings and the monthly amount needed to get there.' },
   { sel: '[data-tour="nav-reports"]', title: 'Reports', body: 'Charts over time — net-worth trend, income vs expense, and where your money goes by category.' },
