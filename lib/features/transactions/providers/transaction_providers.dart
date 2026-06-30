@@ -7,6 +7,8 @@ import 'package:uuid/uuid.dart';
 import '../../../core/di/data_providers.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../domain/repositories/transaction_repository.dart';
+import '../../accounts/providers/account_providers.dart';
+import '../../accounts/services/ledger_writer.dart';
 
 const _uuid = Uuid();
 
@@ -29,10 +31,13 @@ class TransactionError extends TransactionState {
   final String message;
 }
 
-/// Streams the vault's transactions and exposes CRUD (PRD §3C naming).
+/// Streams the vault's transactions and exposes CRUD (PRD §3C naming). Every
+/// save/delete also maintains the double-entry postings via [LedgerWriter] so
+/// the chart of accounts stays in step with the transaction header (PRD §16).
 class TransactionNotifier extends StateNotifier<TransactionState> {
-  TransactionNotifier(this._repo, this._vaultId)
-      : super(const TransactionLoading()) {
+  TransactionNotifier(this._repo, this._vaultId, {LedgerWriter? ledger})
+      : _ledger = ledger,
+        super(const TransactionLoading()) {
     _sub = _repo.watch(_vaultId).listen(
           (txns) => state = TransactionData(txns),
           onError: (Object e) => state = TransactionError(e.toString()),
@@ -41,6 +46,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
 
   final ITransactionRepository _repo;
   final String _vaultId;
+  final LedgerWriter? _ledger;
   late final StreamSubscription<List<Txn>> _sub;
 
   Future<void> add({
@@ -50,9 +56,11 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     required DateTime date,
     String? merchant,
     String? note,
-  }) {
+    String? categoryName,
+    String? attachmentRef,
+  }) async {
     final now = DateTime.now();
-    return _repo.save(Txn(
+    final txn = Txn(
       id: _uuid.v4(),
       vaultId: _vaultId,
       amount: amount,
@@ -62,12 +70,22 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       merchant: merchant,
       note: note,
       createdAt: now,
-    ));
+      accountId: _ledger?.defaultCashId,
+      attachmentRef: attachmentRef,
+    );
+    await _repo.save(txn);
+    await _ledger?.writeEntry(txn, categoryName: categoryName);
   }
 
-  Future<void> update(Txn txn) => _repo.save(txn);
+  Future<void> update(Txn txn, {String? categoryName}) async {
+    await _repo.save(txn);
+    await _ledger?.writeEntry(txn, categoryName: categoryName);
+  }
 
-  Future<void> remove(String id) => _repo.delete(id);
+  Future<void> remove(String id) async {
+    await _ledger?.deleteEntry(id);
+    await _repo.delete(id);
+  }
 
   @override
   void dispose() {
@@ -80,5 +98,6 @@ final transactionListProvider =
     StateNotifierProvider<TransactionNotifier, TransactionState>((ref) {
   final repo = ref.watch(transactionRepositoryProvider);
   final vaultId = ref.watch(currentVaultIdProvider);
-  return TransactionNotifier(repo, vaultId);
+  return TransactionNotifier(repo, vaultId,
+      ledger: ref.watch(ledgerWriterProvider));
 });

@@ -32,6 +32,13 @@ class Transactions extends Table {
   TextColumn get merchant => text().nullable()();
   TextColumn get note => text().nullable()();
 
+  /// Double-entry header (PRD §16): the money account (cash/bank/credit) this
+  /// entry moves. Nullable for pre-v3 rows until the migration backfills them.
+  TextColumn get accountId => text().nullable()();
+
+  /// Receipt attachment — sandbox file path (PRD §11 local media).
+  TextColumn get attachmentRef => text().nullable()();
+
   /// Transaction date and creation time (Unix ms).
   IntColumn get date => integer()();
   IntColumn get createdAt => integer()();
@@ -215,6 +222,59 @@ class NetWorthSnapshots extends Table {
   TextColumn get cash => text().map(const DecimalConverter())();
   TextColumn get investments => text().map(const DecimalConverter())();
   TextColumn get liabilities => text().map(const DecimalConverter())();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Chart of accounts for double-entry bookkeeping (PRD §16). [openingBalance] is
+/// a natural magnitude; the sign is derived from [type] in the ledger math.
+@DataClassName('AccountRow')
+class Accounts extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get name => text()();
+  TextColumn get type => text()(); // asset | liability | income | expense | equity
+  TextColumn get subtype => text().withDefault(const Constant('cash'))();
+  TextColumn get currency => text().withDefault(const Constant('INR'))();
+  TextColumn get openingBalance =>
+      text().map(const DecimalConverter()).withDefault(const Constant('0'))();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
+  IntColumn get createdAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Journal postings — the authoritative double-entry ledger. [amount] is
+/// debit-signed; postings sharing [entryId] sum to zero (PRD §16).
+@DataClassName('PostingRow')
+class Postings extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get entryId => text().references(Transactions, #id)();
+  TextColumn get accountId => text().references(Accounts, #id)();
+  TextColumn get amount => text().map(const DecimalConverter())();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Auto-captured transaction drafts from the SMS / notification parser, awaiting
+/// review. Stores extracted values only — never the raw message text (PRD §11
+/// zero-telemetry privacy boundary).
+@DataClassName('PendingCaptureRow')
+class PendingCaptures extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get amount => text().map(const DecimalConverter())();
+  TextColumn get type => text()(); // expense | income
+  TextColumn get merchant => text().nullable()();
+  IntColumn get occurredAt => integer()(); // Unix ms
+  TextColumn get source => text()(); // sms | notification
+  BoolColumn get uncategorized => boolean().withDefault(const Constant(true))();
+  TextColumn get fingerprint => text()();
+  IntColumn get capturedAt => integer()();
 
   @override
   Set<Column> get primaryKey => {id};

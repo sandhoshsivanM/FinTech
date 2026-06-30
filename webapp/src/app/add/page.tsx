@@ -44,10 +44,13 @@ export default function AddTransactionPage() {
   const [merchant, setMerchant] = useState('');
   const [note, setNote] = useState('');
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [attachmentRef, setAttachmentRef] = useState<string | null>(null);
+  const putAttachment = useApp((s) => s.putAttachment);
 
   // Quick-add state
   const [quickText, setQuickText] = useState('');
   const [saving, setSaving] = useState(false);
+  const [attaching, setAttaching] = useState(false);
 
   // Edit mode: prefill from ?id= (read off the URL to avoid Suspense constraints)
   const [editId, setEditId] = useState<string | null>(null);
@@ -65,7 +68,18 @@ export default function AddTransactionPage() {
     setNote(t.note ?? '');
     setDate(new Date(t.date).toISOString().slice(0, 10));
     setCreatedAt(t.createdAt ?? Date.now());
+    setAttachmentRef(t.attachmentRef ?? null);
   }, []);
+
+  async function handleAttach(file: File | undefined) {
+    if (!file) return;
+    setAttaching(true);
+    try {
+      setAttachmentRef(await putAttachment(file));
+    } finally {
+      setAttaching(false);
+    }
+  }
 
   // Derived
   const amountNum = parseFloat(amountRaw.replace(/,/g, ''));
@@ -99,6 +113,7 @@ export default function AddTransactionPage() {
         note: note.trim() || null,
         date: new Date(date).getTime(),
         createdAt,
+        attachmentRef,
       });
       router.push(editId ? '/transactions' : '/dashboard');
     } finally {
@@ -228,6 +243,27 @@ export default function AddTransactionPage() {
             />
           </Field>
         </div>
+
+        {/* Receipt attachment (encrypted, stored on-device) */}
+        <Field label="Receipt (optional)">
+          {attachmentRef ? (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-income font-medium">Receipt attached</span>
+              <Button variant="ghost" onClick={() => setAttachmentRef(null)}>
+                <X size={14} /> Remove
+              </Button>
+            </div>
+          ) : (
+            <input
+              type="file"
+              accept="image/*"
+              disabled={attaching}
+              onChange={(e) => handleAttach(e.target.files?.[0])}
+              className="text-sm"
+              aria-label="Attach receipt image"
+            />
+          )}
+        </Field>
 
         {/* Actions */}
         <div className="flex gap-3 justify-end pt-1">

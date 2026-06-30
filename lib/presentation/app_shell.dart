@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/di/providers.dart';
 import '../core/router/app_router.dart';
+import '../features/capture/providers/capture_providers.dart';
 
 /// Intent for the "new transaction" keyboard shortcut (PRD Phase 4, Web).
 class _NewTransactionIntent extends Intent {
@@ -64,6 +65,9 @@ class _AppShellState extends ConsumerState<AppShell>
   @override
   Widget build(BuildContext context) {
     final index = _currentIndex(context);
+    // Start the on-device SMS / notification capture stream while unlocked
+    // (Android only; a no-op elsewhere).
+    ref.watch(captureListenerProvider);
     // Keyboard shortcuts (PRD Phase 4): N = new transaction, Cmd/Ctrl+L = lock.
     return Shortcuts(
       shortcuts: <ShortcutActivator, Intent>{

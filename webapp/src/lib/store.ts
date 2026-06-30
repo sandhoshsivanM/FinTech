@@ -2,14 +2,16 @@
 import { create } from 'zustand';
 import { db } from './db';
 import { deriveKey, encryptJson, decryptJson, randomBytes, bufToB64, b64ToBuf } from './crypto';
-import { clearVault, listRecords, putRecord, deleteRecord } from './repo';
+import { clearVault, listRecords, getRecord, putRecord, deleteRecord } from './repo';
 import { D, ZERO } from './money';
 import {
   STORE, PROFILE_SCOPED,
   type Budget, type Category, type Goal, type Holding, type Liability,
   type RecurringRule, type Txn, type Profile, type ProfileKind, type Insurance, type NetWorthSnapshot,
+  type Account, type Posting, type PendingCapture,
 } from './types';
 import { materialize } from '@/domain/recurrence';
+import { postingsForEntry } from '@/domain/accountLedger';
 
 const VAULT_ID = 'default';
 const VERIFIER = 'FTOS-OK';
@@ -21,6 +23,40 @@ async function runMigrations(from: number, _key: CryptoKey, _vaultId: string): P
   let v = from;
   // if (v < 2) { /* transform records */ v = 2; }
   void v;
+}
+
+/// Deterministic v3 account ids — keep the lazy backfill idempotent and isolated
+/// per profile (matches the Flutter Drift migration).
+const cashAcctId = (profileId: string) => `acct-cash-${profileId}`;
+const openingAcctId = (profileId: string) => `acct-opening-${profileId}`;
+const incomeAcctId = (profileId: string) => `acct-income-${profileId}`;
+const expenseAcctId = (profileId: string, categoryId: string) => `acct-exp-${profileId}-${categoryId}`;
+
+/// Lazily migrates a profile to double-entry: seeds its chart of accounts and
+/// converts each existing transaction into balanced postings, so net worth is
+/// preserved. Mirrors AppDatabase._migrateToDoubleEntry on Flutter.
+async function backfillDoubleEntry(
+  key: CryptoKey, vaultId: string, profileId: string,
+  categories: Category[], txns: Txn[],
+): Promise<void> {
+  const cashId = cashAcctId(profileId);
+  const seed = (a: Account) => putRecord(key, STORE.account, vaultId, a.id, a);
+  await seed({ id: cashId, vaultId, profileId, name: 'Cash', type: 'asset', subtype: 'cash', openingBalance: '0' });
+  await seed({ id: openingAcctId(profileId), vaultId, profileId, name: 'Opening Balances', type: 'equity', subtype: 'equity', openingBalance: '0' });
+  await seed({ id: incomeAcctId(profileId), vaultId, profileId, name: 'Income', type: 'income', subtype: 'income', openingBalance: '0' });
+  for (const c of categories) {
+    await seed({ id: expenseAcctId(profileId, c.id), vaultId, profileId, name: c.name, type: 'expense', subtype: 'expense', openingBalance: '0' });
+  }
+  for (const t of txns) {
+    const contra = t.type === 'income' ? incomeAcctId(profileId) : expenseAcctId(profileId, t.categoryId);
+    const legs = postingsForEntry({ entryId: t.id, vaultId, amount: t.amount, type: t.type, moneyAccountId: cashId, categoryAccountId: contra });
+    for (const leg of legs) {
+      await putRecord(key, STORE.posting, vaultId, leg.id, { ...leg, profileId });
+    }
+    if (!t.accountId) {
+      await putRecord(key, STORE.txn, vaultId, t.id, { ...t, accountId: cashId, profileId: t.profileId ?? profileId });
+    }
+  }
 }
 
 export const DEFAULT_CATEGORIES: { name: string; icon: string }[] = [
@@ -49,11 +85,15 @@ interface Data {
   recurring: RecurringRule[];
   insurances: Insurance[];
   snapshots: NetWorthSnapshot[];
+  accounts: Account[];
+  postings: Posting[];
+  pendingCaptures: PendingCapture[];
 }
 
 const emptyData: Data = {
   txns: [], categories: [], budgets: [], goals: [], holdings: [],
   liabilities: [], recurring: [], insurances: [], snapshots: [],
+  accounts: [], postings: [], pendingCaptures: [],
 };
 
 interface AppState extends Data {
@@ -83,6 +123,8 @@ interface AppState extends Data {
   reload: () => Promise<void>;
   put: (type: string, value: { id: string } & Record<string, unknown>) => Promise<void>;
   del: (type: string, id: string) => Promise<void>;
+  putAttachment: (file: File) => Promise<string>;
+  getAttachmentUrl: (id: string) => Promise<string | null>;
   processRecurring: () => Promise<number>;
   exportBackup: () => Promise<string>;
   importBackup: (b64: string) => Promise<number>;
@@ -301,7 +343,7 @@ export const useApp = create<AppState>((set, get) => ({
     // Profile-scoped reads: a record with no profileId belongs to the default profile.
     const inProfile = <T extends { profileId?: string }>(r: T) => (r.profileId ?? defaultId) === active;
 
-    const [txnsAll, budgetsAll, goalsAll, holdingsAll, liabilitiesAll, recurringAll, insurancesAll, snapshotsAll] =
+    const [txnsAll, budgetsAll, goalsAll, holdingsAll, liabilitiesAll, recurringAll, insurancesAll, snapshotsAll, pendingAll] =
       await Promise.all([
         listRecords<Txn>(key, STORE.txn, vaultId),
         listRecords<Budget>(key, STORE.budget, vaultId),
@@ -311,13 +353,26 @@ export const useApp = create<AppState>((set, get) => ({
         listRecords<RecurringRule>(key, STORE.recurring, vaultId),
         listRecords<Insurance>(key, STORE.insurance, vaultId),
         listRecords<NetWorthSnapshot>(key, STORE.snapshot, vaultId),
+        listRecords<PendingCapture>(key, STORE.pendingCapture, vaultId),
       ]);
+
+    // Double-entry (v3): lazily backfill the active profile's chart of accounts
+    // + postings the first time it has none, then read them back.
+    let accountsAll = await listRecords<Account>(key, STORE.account, vaultId);
+    if (!accountsAll.some(inProfile)) {
+      await backfillDoubleEntry(key, vaultId, active, categories, txnsAll.filter(inProfile));
+      accountsAll = await listRecords<Account>(key, STORE.account, vaultId);
+    }
+    const [txnsReloaded, postingsAll] = await Promise.all([
+      listRecords<Txn>(key, STORE.txn, vaultId),
+      listRecords<Posting>(key, STORE.posting, vaultId),
+    ]);
 
     set({
       categories,
       profiles,
       activeProfileId: active,
-      txns: txnsAll.filter(inProfile),
+      txns: txnsReloaded.filter(inProfile),
       budgets: budgetsAll.filter(inProfile),
       goals: goalsAll.filter(inProfile),
       holdings: holdingsAll.filter(inProfile),
@@ -325,6 +380,9 @@ export const useApp = create<AppState>((set, get) => ({
       recurring: recurringAll.filter(inProfile),
       insurances: insurancesAll.filter(inProfile),
       snapshots: snapshotsAll.filter(inProfile).sort((a, b) => a.date - b.date),
+      accounts: accountsAll.filter(inProfile),
+      postings: postingsAll.filter(inProfile),
+      pendingCaptures: pendingAll.filter(inProfile),
     });
   },
 
@@ -332,14 +390,60 @@ export const useApp = create<AppState>((set, get) => ({
     const { key, vaultId, activeProfileId } = get();
     if (!key) return;
     const needsProfile = PROFILE_SCOPED.includes(type) && !value.profileId;
-    const record = needsProfile ? { ...value, profileId: activeProfileId } : value;
-    await putRecord(key, type, vaultId, value.id, record);
+    const profileId = (value.profileId as string | undefined) ?? activeProfileId;
+    let record = needsProfile ? { ...value, profileId } : value;
+
+    // Double-entry (PRD §16): a transaction also moves a money account and
+    // writes balanced postings, mirroring the Flutter LedgerWriter.
+    if (type === STORE.txn) {
+      const cashId = cashAcctId(profileId);
+      record = { ...record, accountId: (value.accountId as string | undefined) ?? cashId };
+      const t = record as unknown as Txn;
+      const contra = t.type === 'income'
+        ? incomeAcctId(profileId)
+        : expenseAcctId(profileId, t.categoryId);
+      const legs = postingsForEntry({
+        entryId: t.id, vaultId, amount: t.amount, type: t.type,
+        moneyAccountId: cashId, categoryAccountId: contra,
+      });
+      await putRecord(key, type, vaultId, value.id, record);
+      for (const leg of legs) {
+        await putRecord(key, STORE.posting, vaultId, leg.id, { ...leg, profileId });
+      }
+    } else {
+      await putRecord(key, type, vaultId, value.id, record);
+    }
     await get().reload();
   },
 
   del: async (type, id) => {
+    const { key, vaultId } = get();
+    // Drop an entry's postings alongside the transaction.
+    if (type === STORE.txn && key) {
+      await deleteRecord(STORE.posting, `${id}:dr`);
+      await deleteRecord(STORE.posting, `${id}:cr`);
+    }
     await deleteRecord(type, id);
     await get().reload();
+  },
+
+  putAttachment: async (file) => {
+    const { key, vaultId } = get();
+    if (!key) throw new Error('Vault is locked');
+    const data = bufToB64(await file.arrayBuffer());
+    const id = uid();
+    await putRecord(key, STORE.attachment, vaultId, id, {
+      id, mime: file.type || 'image/jpeg', data,
+    });
+    return id;
+  },
+
+  getAttachmentUrl: async (id) => {
+    const { key } = get();
+    if (!key) return null;
+    const rec = await getRecord<{ mime: string; data: string }>(key, STORE.attachment, id);
+    if (!rec) return null;
+    return `data:${rec.mime};base64,${rec.data}`;
   },
 
   processRecurring: async () => {

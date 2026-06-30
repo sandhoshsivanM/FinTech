@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import {
   LayoutDashboard, Receipt, TrendingUp, CreditCard, BarChart3, PieChart,
   Flag, Repeat, Settings, Eye, EyeOff, Lock, Menu, X, Plus, Shield, ChevronDown, Check,
-  Sun, Moon, Monitor, LifeBuoy,
+  Sun, Moon, Monitor, LifeBuoy, CalendarDays,
 } from 'lucide-react';
 import { useApp, type ThemeChoice } from '@/lib/store';
 import { Tour } from './Tour';
@@ -14,6 +14,7 @@ import { Tour } from './Tour';
 const NAV = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
   { href: '/transactions', icon: Receipt, label: 'Cash Flow' },
+  { href: '/calendar', icon: CalendarDays, label: 'Calendar' },
   { href: '/investments', icon: TrendingUp, label: 'Investments' },
   { href: '/liabilities', icon: CreditCard, label: 'Liabilities' },
   { href: '/insurance', icon: Shield, label: 'Insurance' },

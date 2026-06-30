@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../data/database/app_database.dart';
 import '../../data/database/logs_database.dart';
+import '../../data/repositories/drift_account_repository.dart';
 import '../../data/repositories/drift_budget_repository.dart';
 import '../../data/repositories/drift_category_repository.dart';
 import '../../data/repositories/drift_goal_repository.dart';
@@ -13,8 +14,11 @@ import '../../data/repositories/drift_insurance_repository.dart';
 import '../../data/repositories/drift_liability_repository.dart';
 import '../../data/repositories/drift_merchant_alias_repository.dart';
 import '../../data/repositories/drift_net_worth_snapshot_repository.dart';
+import '../../data/repositories/drift_pending_capture_repository.dart';
+import '../../data/repositories/drift_posting_repository.dart';
 import '../../data/repositories/drift_recurring_repository.dart';
 import '../../data/repositories/drift_transaction_repository.dart';
+import '../../domain/repositories/account_repository.dart';
 import '../../domain/repositories/budget_repository.dart';
 import '../../domain/repositories/category_repository.dart';
 import '../../domain/repositories/goal_repository.dart';
@@ -23,6 +27,8 @@ import '../../domain/repositories/insurance_repository.dart';
 import '../../domain/repositories/liability_repository.dart';
 import '../../domain/repositories/merchant_alias_repository.dart';
 import '../../domain/repositories/net_worth_snapshot_repository.dart';
+import '../../domain/repositories/pending_capture_repository.dart';
+import '../../domain/repositories/posting_repository.dart';
 import '../../domain/repositories/recurring_repository.dart';
 import '../../domain/repositories/transaction_repository.dart';
 import '../security/vault_state.dart';
@@ -97,6 +103,20 @@ final insuranceRepositoryProvider = Provider<IInsuranceRepository>((ref) {
 final netWorthSnapshotRepositoryProvider =
     Provider<INetWorthSnapshotRepository>((ref) {
   return DriftNetWorthSnapshotRepository(ref.watch(databaseProvider).snapshotDao);
+});
+
+final accountRepositoryProvider = Provider<IAccountRepository>((ref) {
+  return DriftAccountRepository(ref.watch(databaseProvider).accountDao);
+});
+
+final postingRepositoryProvider = Provider<IPostingRepository>((ref) {
+  return DriftPostingRepository(ref.watch(databaseProvider).postingDao);
+});
+
+final pendingCaptureRepositoryProvider =
+    Provider<IPendingCaptureRepository>((ref) {
+  return DriftPendingCaptureRepository(
+      ref.watch(databaseProvider).pendingCaptureDao);
 });
 
 /// The id of the currently unlocked vault (PRD multi-vault; single 'default' in v1).

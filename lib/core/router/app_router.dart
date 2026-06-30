@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/budget/screens/budget_screen.dart';
+import '../../features/calendar/screens/calendar_ledger_screen.dart';
+import '../../features/capture/screens/capture_inbox_screen.dart';
 import '../../features/goals/screens/goals_screen.dart';
 import '../../features/import/screens/bank_import_screen.dart';
 import '../../features/insurance/screens/insurance_screen.dart';
@@ -39,6 +41,8 @@ abstract final class Routes {
   static const reports = '/app/reports';
   static const bankImport = '/app/import/bank';
   static const recurring = '/app/recurring';
+  static const captureInbox = '/app/capture';
+  static const calendar = '/app/calendar';
   static const marketData = '/app/settings/market-data';
   static const currency = '/app/settings/currency';
   static const settings = '/app/settings';
@@ -91,6 +95,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           _tab(Routes.reports, const ReportsScreen()),
           _tab(Routes.bankImport, const BankImportScreen()),
           _tab(Routes.recurring, const RecurringScreen()),
+          _tab(Routes.captureInbox, const CaptureInboxScreen()),
+          _tab(Routes.calendar, const CalendarLedgerScreen()),
           _tab(Routes.settings, const SettingsScreen()),
           _tab(Routes.marketData, const MarketDataSettingsScreen()),
           _tab(Routes.currency, const CurrencySettingsScreen()),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/router/app_router.dart';
+import 'core/router/layout_providers.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/app_background.dart';
 
@@ -34,19 +35,24 @@ class FintechOsApp extends ConsumerWidget {
 
 /// Centers and caps content width on large screens (web/desktop/tablet) so the
 /// mobile-first layout doesn't stretch edge-to-edge. Phones are unaffected.
-class _Responsive extends StatelessWidget {
+/// Screens that want a multi-panel desktop layout opt into a wider cap via
+/// [wideLayoutProvider] (e.g. the calendar ledger).
+class _Responsive extends ConsumerWidget {
   const _Responsive({required this.child});
   final Widget child;
 
-  static const double _maxWidth = 640;
+  static const double _mobileMaxWidth = 640;
+  static const double _wideMaxWidth = 1280;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final maxWidth =
+        ref.watch(wideLayoutProvider) ? _wideMaxWidth : _mobileMaxWidth;
     final width = MediaQuery.sizeOf(context).width;
-    if (width <= _maxWidth) return child;
+    if (width <= maxWidth) return child;
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: _maxWidth),
+        constraints: BoxConstraints(maxWidth: maxWidth),
         child: child,
       ),
     );

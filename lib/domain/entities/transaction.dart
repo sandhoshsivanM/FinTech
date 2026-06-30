@@ -16,6 +16,8 @@ class Txn {
     this.merchant,
     this.note,
     required this.createdAt,
+    this.accountId,
+    this.attachmentRef,
   });
 
   final String id;
@@ -28,6 +30,13 @@ class Txn {
   final String? note;
   final DateTime createdAt;
 
+  /// Double-entry header (PRD §16): the money account (cash/bank/credit) the
+  /// spend or income moves. Postings remain the authoritative ledger.
+  final String? accountId;
+
+  /// Receipt attachment — sandbox file path on mobile, record id on web.
+  final String? attachmentRef;
+
   /// Signed contribution to net worth: income adds, expense subtracts (PRD §16).
   Decimal get signedAmount =>
       type == TxnType.income ? amount : -amount;
@@ -39,6 +48,8 @@ class Txn {
     DateTime? date,
     String? merchant,
     String? note,
+    String? accountId,
+    String? attachmentRef,
   }) {
     return Txn(
       id: id,
@@ -50,6 +61,8 @@ class Txn {
       merchant: merchant ?? this.merchant,
       note: note ?? this.note,
       createdAt: createdAt,
+      accountId: accountId ?? this.accountId,
+      attachmentRef: attachmentRef ?? this.attachmentRef,
     );
   }
 }

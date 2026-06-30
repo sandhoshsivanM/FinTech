@@ -24,6 +24,20 @@ export async function listRecords<T>(
   return out;
 }
 
+export async function getRecord<T>(
+  key: CryptoKey,
+  type: string,
+  id: string,
+): Promise<T | null> {
+  const row = await db.records.get(recId(type, id));
+  if (!row) return null;
+  try {
+    return await decryptJson<T>(key, row.enc);
+  } catch {
+    return null;
+  }
+}
+
 export async function putRecord(
   key: CryptoKey,
   type: string,

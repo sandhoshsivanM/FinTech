@@ -24,6 +24,10 @@ export interface Txn {
   note?: string | null;
   date: number; // epoch ms
   createdAt: number;
+  // Double-entry header (PRD §16): the money account the spend/income moves, and
+  // an optional receipt attachment. Postings remain the authoritative ledger.
+  accountId?: string | null;
+  attachmentRef?: string | null; // record id on web, sandbox path on mobile
 }
 
 export interface Category {
@@ -117,6 +121,46 @@ export interface Insurance {
   renewalDate?: number | null;
 }
 
+// ---- Double-entry accounting (chart of accounts + balanced postings, PRD §16) ----
+export type AccountType = 'asset' | 'liability' | 'income' | 'expense' | 'equity';
+export interface Account {
+  id: string;
+  vaultId: string;
+  profileId?: string;
+  name: string;
+  type: AccountType;
+  // cash | bank | credit_card | loan | investment | manual_asset | income | expense | equity
+  subtype: string;
+  currency?: string;
+  openingBalance: string; // natural magnitude (≥ 0); sign derived from type
+  archived?: boolean;
+}
+
+export interface Posting {
+  id: string;
+  vaultId: string;
+  profileId?: string;
+  entryId: string; // the Txn this leg belongs to
+  accountId: string;
+  amount: string; // debit-signed (debit +, credit −); entry-wide sum == 0
+}
+
+// ---- Auto-capture drafts (SMS / notification parser, parsed values only) ----
+export type CaptureSource = 'sms' | 'notification';
+export interface PendingCapture {
+  id: string;
+  vaultId: string;
+  profileId?: string;
+  amount: string;
+  type: TxnType;
+  merchant?: string | null;
+  occurredAt: number; // epoch ms
+  source: CaptureSource;
+  uncategorized: boolean;
+  fingerprint: string; // SHA-256 dedup key
+  capturedAt: number;
+}
+
 // ---- Net-worth history snapshot (real, not derived) ----
 export interface NetWorthSnapshot {
   id: string;          // `snapshot:YYYY-MM-DD:profileId`
@@ -140,10 +184,15 @@ export const STORE = {
   profile: 'profile',
   insurance: 'insurance',
   snapshot: 'snapshot',
+  account: 'account',
+  posting: 'posting',
+  pendingCapture: 'pendingCapture',
+  attachment: 'attachment',
 } as const;
 
 // Entity types that are scoped to the active profile (category & profile are vault-wide).
 export const PROFILE_SCOPED: string[] = [
   STORE.txn, STORE.budget, STORE.goal, STORE.holding,
   STORE.liability, STORE.recurring, STORE.insurance, STORE.snapshot,
+  STORE.account, STORE.posting, STORE.pendingCapture, STORE.attachment,
 ];

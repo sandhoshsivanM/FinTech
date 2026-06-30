@@ -8,6 +8,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
+import '../../attachments/providers/attachment_providers.dart';
 import '../../budget/providers/budget_providers.dart';
 import '../providers/category_providers.dart';
 import '../providers/quick_entry_providers.dart';
@@ -57,6 +58,8 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
   String? _categoryId;
   DateTime _date = DateTime.now();
   bool _showCategoryError = false;
+  String? _attachmentRef;
+  bool _attaching = false;
 
   @override
   void dispose() {
@@ -110,6 +113,15 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
     if (!_formKey.currentState!.validate() || _categoryId == null) return;
 
     final amount = _parseAmount(_amount.text)!;
+    final categories =
+        ref.read(categoryListProvider).valueOrNull ?? const [];
+    String? categoryName;
+    for (final c in categories) {
+      if (c.id == _categoryId) {
+        categoryName = c.name;
+        break;
+      }
+    }
     await ref.read(transactionListProvider.notifier).add(
           amount: amount,
           type: _type,
@@ -118,6 +130,8 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
           merchant:
               _merchant.text.trim().isEmpty ? null : _merchant.text.trim(),
           note: _note.text.trim().isEmpty ? null : _note.text.trim(),
+          categoryName: categoryName,
+          attachmentRef: _attachmentRef,
         );
 
     // Learn merchant → category association for future quick entries.
@@ -139,6 +153,16 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
   // ------------------------------------------------------------------
   // Helpers
   // ------------------------------------------------------------------
+
+  Future<void> _pickAttachment() async {
+    setState(() => _attaching = true);
+    try {
+      final rel = await ref.read(attachmentServiceProvider).pickAndStore();
+      if (rel != null && mounted) setState(() => _attachmentRef = rel);
+    } finally {
+      if (mounted) setState(() => _attaching = false);
+    }
+  }
 
   bool get _isExpense => _type == TxnType.expense;
   String get _dateLabel {
@@ -314,6 +338,33 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
               prefixIcon: Icon(Icons.notes_outlined),
             ),
           ),
+          const SizedBox(height: AppSpacing.md),
+
+          // ── Receipt attachment (optional, stored locally) ─────────
+          if (_attachmentRef == null)
+            OutlinedButton.icon(
+              onPressed: _attaching ? null : _pickAttachment,
+              icon: _attaching
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.attach_file),
+              label: const Text('Attach receipt'),
+            )
+          else
+            Row(
+              children: [
+                const Icon(Icons.receipt_long, color: AppColors.accentGlow),
+                const SizedBox(width: AppSpacing.sm),
+                const Expanded(child: Text('Receipt attached')),
+                IconButton(
+                  tooltip: 'Remove receipt',
+                  icon: const Icon(Icons.close),
+                  onPressed: () => setState(() => _attachmentRef = null),
+                ),
+              ],
+            ),
           const SizedBox(height: AppSpacing.lg),
 
           // ── Save button ───────────────────────────────────────────

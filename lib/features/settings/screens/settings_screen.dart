@@ -167,6 +167,18 @@ class _SettingsBody extends ConsumerWidget {
         const Divider(),
         const _SectionHeader('Import'),
         ListTile(
+          leading: const Icon(Icons.calendar_month_outlined),
+          title: const Text('Calendar ledger'),
+          subtitle: const Text('Day-by-day income, spend & budgets'),
+          onTap: () => context.go(Routes.calendar),
+        ),
+        ListTile(
+          leading: const Icon(Icons.auto_awesome_motion_outlined),
+          title: const Text('Auto-capture'),
+          subtitle: const Text('Review SMS / notification transactions'),
+          onTap: () => context.go(Routes.captureInbox),
+        ),
+        ListTile(
           leading: const Icon(Icons.account_balance),
           title: const Text('Import bank statement'),
           subtitle: const Text('HDFC / ICICI / SBI / Axis'),
