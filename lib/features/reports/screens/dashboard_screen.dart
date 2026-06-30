@@ -146,6 +146,7 @@ class _QuickLinks extends StatelessWidget {
       (Routes.goals, Icons.flag_outlined, 'Goals'),
       (Routes.liabilities, Icons.credit_card_outlined, 'Liabilities'),
       (Routes.insurance, Icons.shield_outlined, 'Insurance'),
+      (Routes.safetyNet, Icons.health_and_safety_outlined, 'Safety Net'),
       (Routes.recurring, Icons.repeat, 'Recurring'),
       (Routes.search, Icons.search, 'Search'),
     ];

@@ -10,6 +10,7 @@ import '../../features/investments/screens/investments_screen.dart';
 import '../../features/liabilities/screens/liabilities_screen.dart';
 import '../../features/reports/screens/dashboard_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
+import '../../features/safety_net/screens/safety_net_screen.dart';
 import '../../features/transactions/screens/add_transaction_screen.dart';
 import '../../features/transactions/screens/recurring_screen.dart';
 import '../../features/transactions/screens/search_screen.dart';
@@ -33,6 +34,7 @@ abstract final class Routes {
   static const investments = '/app/investments';
   static const liabilities = '/app/liabilities';
   static const insurance = '/app/insurance';
+  static const safetyNet = '/app/safety-net';
   static const goals = '/app/goals';
   static const reports = '/app/reports';
   static const bankImport = '/app/import/bank';
@@ -84,6 +86,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           _tab(Routes.investments, const InvestmentsScreen()),
           _tab(Routes.liabilities, const LiabilitiesScreen()),
           _tab(Routes.insurance, const InsuranceScreen()),
+          _tab(Routes.safetyNet, const SafetyNetScreen()),
           _tab(Routes.goals, const GoalsScreen()),
           _tab(Routes.reports, const ReportsScreen()),
           _tab(Routes.bankImport, const BankImportScreen()),

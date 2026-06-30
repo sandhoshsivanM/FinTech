@@ -26,8 +26,8 @@ class GlassCard extends StatelessWidget {
     // Slightly more opaque than the live-blur fill so text stays crisp without
     // sampling the backdrop.
     final fill = isDark
-        ? const Color(0xCC182338) // ~80% slate
-        : Colors.white.withValues(alpha: 0.82);
+        ? AppColors.darkSurface // opaque charcoal surface
+        : AppColors.lightSurface;
     final border =
         isDark ? AppColors.glassBorderDark : AppColors.glassBorderLight;
 
@@ -36,11 +36,12 @@ class GlassCard extends StatelessWidget {
         color: fill,
         borderRadius: radius,
         border: Border.all(color: border),
+        // Whisper of elevation — hairline border carries the definition.
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
