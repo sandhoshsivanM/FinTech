@@ -1,0 +1,8 @@
+# Test tags.
+#  - golden:    pixel goldens; host/font-specific. Excluded in CI, run locally
+#               with `flutter test --update-goldens` when intentionally changed.
+#  - benchmark: prints measured numbers (crypto / FTS). Runs in CI but asserts
+#               only loose bounds; see docs/ARCHITECTURE.md.
+tags:
+  golden:
+  benchmark:

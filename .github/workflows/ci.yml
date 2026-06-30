@@ -49,5 +49,7 @@ jobs:
         run: dart run build_runner build --delete-conflicting-outputs
       - name: Analyze
         run: flutter analyze
+      # Goldens are pixel-compares tied to the host's font rendering; they pass
+      # only on the machine that generated them, so they're excluded from CI.
       - name: Unit + integration tests
-        run: flutter test
+        run: flutter test --exclude-tags golden
