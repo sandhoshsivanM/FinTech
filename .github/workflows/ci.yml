@@ -1,0 +1,53 @@
+name: CI
+
+# Lint + tests + build on both stacks (Next.js web app and the Flutter app)
+# for every push and pull request.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  webapp:
+    name: Web app (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webapp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+      - run: npm ci
+      # Hard gates: the suite must pass and the static export must build.
+      - name: Unit + component tests
+        run: npm run test
+      - name: Static export build
+        run: npm run build
+      # Advisory: the repo carries pre-existing react-hooks/purity lint debt
+      # under Next 16's ruleset (tracked separately). Surfaced, not gated, so
+      # new lint regressions are visible without blocking unrelated work.
+      - name: Lint (advisory)
+        run: npm run lint
+        continue-on-error: true
+
+  flutter:
+    name: Flutter app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      # Drift / json codegen must run before analyze & test.
+      - name: Codegen (build_runner)
+        run: dart run build_runner build --delete-conflicting-outputs
+      - name: Analyze
+        run: flutter analyze
+      - name: Unit + integration tests
+        run: flutter test

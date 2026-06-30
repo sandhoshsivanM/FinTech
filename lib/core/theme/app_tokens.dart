@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 /// Design tokens (PRD §10A accessibility palette + §3B design-system tokens).
-/// Aesthetic: modern dark "glassmorphism" fintech — slate canvas, blue accent,
-/// frosted translucent surfaces. Income/expense verified on the dark canvas.
+/// Aesthetic: premium "Khazana" look matching the web app — neutral charcoal
+/// canvas (warm paper in light), slate-indigo accent, opaque surfaces with
+/// hairline borders. Income/expense verified for contrast on both canvases.
 abstract final class AppColors {
   // Brand / accent — refined slate-indigo (matches the Khazana web app's dark
   // accent), replacing the old bright blue.

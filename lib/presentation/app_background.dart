@@ -14,7 +14,7 @@ class AppBackground extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark
         ? const [AppColors.bgTop, AppColors.bgBottom]
-        : const [Color(0xFFF7FAFF), Color(0xFFEAF0FA)];
+        : const [Color(0xFFFAF9F6), AppColors.lightCanvas]; // warm paper
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -32,7 +32,7 @@ class AppBackground extends StatelessWidget {
             right: -80,
             child: _Glow(
               color: AppColors.accent
-                  .withValues(alpha: isDark ? 0.20 : 0.14),
+                  .withValues(alpha: isDark ? 0.10 : 0.08),
               size: 320,
             ),
           ),
@@ -42,7 +42,7 @@ class AppBackground extends StatelessWidget {
             left: -100,
             child: _Glow(
               color: AppColors.accentGlow
-                  .withValues(alpha: isDark ? 0.12 : 0.10),
+                  .withValues(alpha: isDark ? 0.06 : 0.06),
               size: 360,
             ),
           ),

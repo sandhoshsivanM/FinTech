@@ -60,7 +60,7 @@ abstract final class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: glassFill,
+        color: scheme.surface, // opaque charcoal/white — hairline carries definition
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.card),
@@ -133,8 +133,8 @@ abstract final class AppTheme {
         height: 66,
         elevation: 0,
         backgroundColor: isDark
-            ? const Color(0xCC0B1120)
-            : Colors.white.withValues(alpha: 0.85),
+            ? AppColors.darkSurface.withValues(alpha: 0.92)
+            : Colors.white.withValues(alpha: 0.92),
         surfaceTintColor: Colors.transparent,
         indicatorColor: AppColors.accent.withValues(alpha: 0.22),
         iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(
@@ -170,14 +170,14 @@ abstract final class AppTheme {
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: isDark ? const Color(0xFF111A2E) : Colors.white,
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.card),
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: isDark ? const Color(0xFF111A2E) : Colors.white,
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
         surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -185,7 +185,7 @@ abstract final class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: isDark ? const Color(0xFF1E293B) : null,
+        backgroundColor: isDark ? AppColors.darkSurface : null,
         contentTextStyle:
             TextStyle(color: isDark ? AppColors.darkOnSurface : null),
         shape: RoundedRectangleBorder(
