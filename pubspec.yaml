@@ -53,6 +53,7 @@ dependencies:
   http: ^1.2.2
 
   # Utilities
+  meta: ^1.16.0 # @visibleForTesting and friends
   uuid: ^4.5.1
   intl: ^0.20.2
   share_plus: ^10.1.4 # OS share sheet for exporting backup / error log

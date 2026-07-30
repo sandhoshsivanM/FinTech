@@ -279,3 +279,175 @@ class PendingCaptures extends Table {
   @override
   Set<Column> get primaryKey => {id};
 }
+
+// ---------------------------------------------------------------------------
+// Lot-level portfolio model (v4)
+// ---------------------------------------------------------------------------
+//
+// Why these exist: [Holdings] stores one aggregated row per symbol with a single
+// avgCost, which makes true profit-and-loss impossible — there is no per-lot cost
+// basis, no realised/unrealised split, no dated price, and no sector to roll up
+// by. These six tables supply that. Money stays Decimal-in-TEXT (PRD §2: double
+// is banned for money).
+//
+// [Holdings] is retained for now and is backfilled into [Instruments]/[Trades] by
+// the v4 migration. It is superseded and should be treated as read-only legacy
+// until the UI finishes moving over.
+
+/// One row per security ever held. Identity, classification, and benchmark link.
+///
+/// Mutual funds have no ticker, so [symbol] and [exchange] are nullable and the
+/// natural key is [isin] or ([schemeCode], folio) — see [Trades.folioNumber].
+@DataClassName('InstrumentRow')
+class Instruments extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+
+  /// Matches `AssetType.key`.
+  TextColumn get kind => text()();
+  TextColumn get name => text()();
+
+  TextColumn get symbol => text().nullable()();
+  TextColumn get isin => text().nullable()();
+  TextColumn get exchange => text().nullable()();
+
+  /// Mutual-fund identity.
+  TextColumn get amcName => text().nullable()();
+  TextColumn get schemeCode => text().nullable()();
+
+  /// Classification from the bundled instrument master.
+  TextColumn get sectorCode => text().nullable()();
+  TextColumn get industryCode => text().nullable()();
+  TextColumn get marketCapBand => text().nullable()(); // large | mid | small
+
+  /// User corrections. These win over the bundled values and are never
+  /// overwritten when the bundled asset is upgraded.
+  TextColumn get sectorOverride => text().nullable()();
+  TextColumn get industryOverride => text().nullable()();
+
+  TextColumn get currency => text().withDefault(const Constant('INR'))();
+  TextColumn get benchmarkIndexCode => text().nullable()();
+  IntColumn get createdAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Every buy and sell. The source of truth for cost basis and realised P&L.
+///
+/// Open lots are derived from buys and matched against sells FIFO, so this table
+/// must never be collapsed into an average.
+@DataClassName('TradeRow')
+class Trades extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get instrumentId => text().references(Instruments, #id)();
+
+  /// Broker / demat account this trade belongs to. Nullable because legacy
+  /// backfilled rows and quick manual entries may not name one.
+  TextColumn get accountId => text().nullable().references(Accounts, #id)();
+
+  TextColumn get side => text()(); // buy | sell
+  TextColumn get quantity => text().map(const DecimalConverter())();
+  TextColumn get pricePerUnit => text().map(const DecimalConverter())();
+
+  /// Charges, broken out so cost basis matches the broker's own figure.
+  /// Cost basis = quantity × pricePerUnit + these.
+  TextColumn get brokerage =>
+      text().map(const DecimalConverter()).withDefault(const Constant('0'))();
+  TextColumn get stt =>
+      text().map(const DecimalConverter()).withDefault(const Constant('0'))();
+  TextColumn get stampDuty =>
+      text().map(const DecimalConverter()).withDefault(const Constant('0'))();
+  TextColumn get gst =>
+      text().map(const DecimalConverter()).withDefault(const Constant('0'))();
+  TextColumn get otherCharges =>
+      text().map(const DecimalConverter()).withDefault(const Constant('0'))();
+
+  IntColumn get tradeDate => integer()(); // Unix ms
+  TextColumn get folioNumber => text().nullable()();
+
+  /// manual | csv | cas | cams | api
+  TextColumn get source => text().withDefault(const Constant('manual'))();
+
+  /// Parser confidence 0-100; null for hand-entered rows.
+  IntColumn get confidence => integer().nullable()();
+
+  /// False until the user has confirmed an imported or backfilled row. Nothing
+  /// unreviewed should be presented as an authoritative number.
+  BoolColumn get isReviewed =>
+      boolean().withDefault(const Constant(false))();
+
+  IntColumn get createdAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Dated price series. A series rather than a single column so P&L can state how
+/// stale it is, and so trends and XIRR have history to work with.
+@DataClassName('InstrumentPriceRow')
+class InstrumentPrices extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get instrumentId => text().references(Instruments, #id)();
+  IntColumn get asOf => integer()(); // Unix ms
+  TextColumn get price => text().map(const DecimalConverter())();
+
+  /// manual | amfi | yahoo | alphavantage | twelvedata | cache
+  TextColumn get source => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Dividends and mutual-fund payouts. Counted as inflows for XIRR and reported
+/// separately from capital P&L.
+@DataClassName('DividendRow')
+class Dividends extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get instrumentId => text().references(Instruments, #id)();
+  IntColumn get paidOn => integer()(); // Unix ms
+  TextColumn get amount => text().map(const DecimalConverter())();
+  TextColumn get taxDeducted =>
+      text().map(const DecimalConverter()).withDefault(const Constant('0'))();
+  TextColumn get kind => text().withDefault(const Constant('dividend'))();
+
+  /// The income transaction this was posted as, so cash flow and the portfolio
+  /// view never disagree.
+  TextColumn get txnId => text().nullable().references(Transactions, #id)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Mutual-fund look-through: which underlying securities a scheme holds, and at
+/// what weight. Populated from the bundled AMC portfolio disclosures; used to
+/// detect the same stock held via several funds.
+@DataClassName('FundHoldingRow')
+class FundHoldings extends Table {
+  TextColumn get id => text()();
+  TextColumn get schemeCode => text()();
+  TextColumn get underlyingIsin => text()();
+
+  /// Weight in basis points (1% = 100), so no floating point is involved.
+  IntColumn get weightBps => integer()();
+  IntColumn get asOf => integer()(); // Unix ms
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Benchmark index closes, for returns comparison. Bundled and refreshed on the
+/// same explicit user-initiated path as prices.
+@DataClassName('BenchmarkPointRow')
+class BenchmarkSeries extends Table {
+  TextColumn get id => text()();
+  TextColumn get indexCode => text()(); // e.g. NIFTY50
+  IntColumn get onDate => integer()(); // Unix ms
+  TextColumn get closeValue => text().map(const DecimalConverter())();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}

@@ -6654,6 +6654,3110 @@ class PendingCapturesCompanion extends UpdateCompanion<PendingCaptureRow> {
   }
 }
 
+class $InstrumentsTable extends Instruments
+    with TableInfo<$InstrumentsTable, InstrumentRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $InstrumentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<String> vaultId = GeneratedColumn<String>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+      'kind', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+      'symbol', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _isinMeta = const VerificationMeta('isin');
+  @override
+  late final GeneratedColumn<String> isin = GeneratedColumn<String>(
+      'isin', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _exchangeMeta =
+      const VerificationMeta('exchange');
+  @override
+  late final GeneratedColumn<String> exchange = GeneratedColumn<String>(
+      'exchange', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _amcNameMeta =
+      const VerificationMeta('amcName');
+  @override
+  late final GeneratedColumn<String> amcName = GeneratedColumn<String>(
+      'amc_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _schemeCodeMeta =
+      const VerificationMeta('schemeCode');
+  @override
+  late final GeneratedColumn<String> schemeCode = GeneratedColumn<String>(
+      'scheme_code', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _sectorCodeMeta =
+      const VerificationMeta('sectorCode');
+  @override
+  late final GeneratedColumn<String> sectorCode = GeneratedColumn<String>(
+      'sector_code', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _industryCodeMeta =
+      const VerificationMeta('industryCode');
+  @override
+  late final GeneratedColumn<String> industryCode = GeneratedColumn<String>(
+      'industry_code', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _marketCapBandMeta =
+      const VerificationMeta('marketCapBand');
+  @override
+  late final GeneratedColumn<String> marketCapBand = GeneratedColumn<String>(
+      'market_cap_band', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _sectorOverrideMeta =
+      const VerificationMeta('sectorOverride');
+  @override
+  late final GeneratedColumn<String> sectorOverride = GeneratedColumn<String>(
+      'sector_override', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _industryOverrideMeta =
+      const VerificationMeta('industryOverride');
+  @override
+  late final GeneratedColumn<String> industryOverride = GeneratedColumn<String>(
+      'industry_override', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _currencyMeta =
+      const VerificationMeta('currency');
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+      'currency', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('INR'));
+  static const VerificationMeta _benchmarkIndexCodeMeta =
+      const VerificationMeta('benchmarkIndexCode');
+  @override
+  late final GeneratedColumn<String> benchmarkIndexCode =
+      GeneratedColumn<String>('benchmark_index_code', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        vaultId,
+        kind,
+        name,
+        symbol,
+        isin,
+        exchange,
+        amcName,
+        schemeCode,
+        sectorCode,
+        industryCode,
+        marketCapBand,
+        sectorOverride,
+        industryOverride,
+        currency,
+        benchmarkIndexCode,
+        createdAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'instruments';
+  @override
+  VerificationContext validateIntegrity(Insertable<InstrumentRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+          _kindMeta, kind.isAcceptableOrUnknown(data['kind']!, _kindMeta));
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(_symbolMeta,
+          symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta));
+    }
+    if (data.containsKey('isin')) {
+      context.handle(
+          _isinMeta, isin.isAcceptableOrUnknown(data['isin']!, _isinMeta));
+    }
+    if (data.containsKey('exchange')) {
+      context.handle(_exchangeMeta,
+          exchange.isAcceptableOrUnknown(data['exchange']!, _exchangeMeta));
+    }
+    if (data.containsKey('amc_name')) {
+      context.handle(_amcNameMeta,
+          amcName.isAcceptableOrUnknown(data['amc_name']!, _amcNameMeta));
+    }
+    if (data.containsKey('scheme_code')) {
+      context.handle(
+          _schemeCodeMeta,
+          schemeCode.isAcceptableOrUnknown(
+              data['scheme_code']!, _schemeCodeMeta));
+    }
+    if (data.containsKey('sector_code')) {
+      context.handle(
+          _sectorCodeMeta,
+          sectorCode.isAcceptableOrUnknown(
+              data['sector_code']!, _sectorCodeMeta));
+    }
+    if (data.containsKey('industry_code')) {
+      context.handle(
+          _industryCodeMeta,
+          industryCode.isAcceptableOrUnknown(
+              data['industry_code']!, _industryCodeMeta));
+    }
+    if (data.containsKey('market_cap_band')) {
+      context.handle(
+          _marketCapBandMeta,
+          marketCapBand.isAcceptableOrUnknown(
+              data['market_cap_band']!, _marketCapBandMeta));
+    }
+    if (data.containsKey('sector_override')) {
+      context.handle(
+          _sectorOverrideMeta,
+          sectorOverride.isAcceptableOrUnknown(
+              data['sector_override']!, _sectorOverrideMeta));
+    }
+    if (data.containsKey('industry_override')) {
+      context.handle(
+          _industryOverrideMeta,
+          industryOverride.isAcceptableOrUnknown(
+              data['industry_override']!, _industryOverrideMeta));
+    }
+    if (data.containsKey('currency')) {
+      context.handle(_currencyMeta,
+          currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta));
+    }
+    if (data.containsKey('benchmark_index_code')) {
+      context.handle(
+          _benchmarkIndexCodeMeta,
+          benchmarkIndexCode.isAcceptableOrUnknown(
+              data['benchmark_index_code']!, _benchmarkIndexCodeMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  InstrumentRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return InstrumentRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vault_id'])!,
+      kind: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}kind'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      symbol: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}symbol']),
+      isin: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}isin']),
+      exchange: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}exchange']),
+      amcName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}amc_name']),
+      schemeCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}scheme_code']),
+      sectorCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sector_code']),
+      industryCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}industry_code']),
+      marketCapBand: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}market_cap_band']),
+      sectorOverride: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sector_override']),
+      industryOverride: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}industry_override']),
+      currency: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}currency'])!,
+      benchmarkIndexCode: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}benchmark_index_code']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $InstrumentsTable createAlias(String alias) {
+    return $InstrumentsTable(attachedDatabase, alias);
+  }
+}
+
+class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
+  final String id;
+  final String vaultId;
+
+  /// Matches `AssetType.key`.
+  final String kind;
+  final String name;
+  final String? symbol;
+  final String? isin;
+  final String? exchange;
+
+  /// Mutual-fund identity.
+  final String? amcName;
+  final String? schemeCode;
+
+  /// Classification from the bundled instrument master.
+  final String? sectorCode;
+  final String? industryCode;
+  final String? marketCapBand;
+
+  /// User corrections. These win over the bundled values and are never
+  /// overwritten when the bundled asset is upgraded.
+  final String? sectorOverride;
+  final String? industryOverride;
+  final String currency;
+  final String? benchmarkIndexCode;
+  final int createdAt;
+  const InstrumentRow(
+      {required this.id,
+      required this.vaultId,
+      required this.kind,
+      required this.name,
+      this.symbol,
+      this.isin,
+      this.exchange,
+      this.amcName,
+      this.schemeCode,
+      this.sectorCode,
+      this.industryCode,
+      this.marketCapBand,
+      this.sectorOverride,
+      this.industryOverride,
+      required this.currency,
+      this.benchmarkIndexCode,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vault_id'] = Variable<String>(vaultId);
+    map['kind'] = Variable<String>(kind);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || symbol != null) {
+      map['symbol'] = Variable<String>(symbol);
+    }
+    if (!nullToAbsent || isin != null) {
+      map['isin'] = Variable<String>(isin);
+    }
+    if (!nullToAbsent || exchange != null) {
+      map['exchange'] = Variable<String>(exchange);
+    }
+    if (!nullToAbsent || amcName != null) {
+      map['amc_name'] = Variable<String>(amcName);
+    }
+    if (!nullToAbsent || schemeCode != null) {
+      map['scheme_code'] = Variable<String>(schemeCode);
+    }
+    if (!nullToAbsent || sectorCode != null) {
+      map['sector_code'] = Variable<String>(sectorCode);
+    }
+    if (!nullToAbsent || industryCode != null) {
+      map['industry_code'] = Variable<String>(industryCode);
+    }
+    if (!nullToAbsent || marketCapBand != null) {
+      map['market_cap_band'] = Variable<String>(marketCapBand);
+    }
+    if (!nullToAbsent || sectorOverride != null) {
+      map['sector_override'] = Variable<String>(sectorOverride);
+    }
+    if (!nullToAbsent || industryOverride != null) {
+      map['industry_override'] = Variable<String>(industryOverride);
+    }
+    map['currency'] = Variable<String>(currency);
+    if (!nullToAbsent || benchmarkIndexCode != null) {
+      map['benchmark_index_code'] = Variable<String>(benchmarkIndexCode);
+    }
+    map['created_at'] = Variable<int>(createdAt);
+    return map;
+  }
+
+  InstrumentsCompanion toCompanion(bool nullToAbsent) {
+    return InstrumentsCompanion(
+      id: Value(id),
+      vaultId: Value(vaultId),
+      kind: Value(kind),
+      name: Value(name),
+      symbol:
+          symbol == null && nullToAbsent ? const Value.absent() : Value(symbol),
+      isin: isin == null && nullToAbsent ? const Value.absent() : Value(isin),
+      exchange: exchange == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exchange),
+      amcName: amcName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amcName),
+      schemeCode: schemeCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(schemeCode),
+      sectorCode: sectorCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sectorCode),
+      industryCode: industryCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(industryCode),
+      marketCapBand: marketCapBand == null && nullToAbsent
+          ? const Value.absent()
+          : Value(marketCapBand),
+      sectorOverride: sectorOverride == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sectorOverride),
+      industryOverride: industryOverride == null && nullToAbsent
+          ? const Value.absent()
+          : Value(industryOverride),
+      currency: Value(currency),
+      benchmarkIndexCode: benchmarkIndexCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(benchmarkIndexCode),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory InstrumentRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return InstrumentRow(
+      id: serializer.fromJson<String>(json['id']),
+      vaultId: serializer.fromJson<String>(json['vaultId']),
+      kind: serializer.fromJson<String>(json['kind']),
+      name: serializer.fromJson<String>(json['name']),
+      symbol: serializer.fromJson<String?>(json['symbol']),
+      isin: serializer.fromJson<String?>(json['isin']),
+      exchange: serializer.fromJson<String?>(json['exchange']),
+      amcName: serializer.fromJson<String?>(json['amcName']),
+      schemeCode: serializer.fromJson<String?>(json['schemeCode']),
+      sectorCode: serializer.fromJson<String?>(json['sectorCode']),
+      industryCode: serializer.fromJson<String?>(json['industryCode']),
+      marketCapBand: serializer.fromJson<String?>(json['marketCapBand']),
+      sectorOverride: serializer.fromJson<String?>(json['sectorOverride']),
+      industryOverride: serializer.fromJson<String?>(json['industryOverride']),
+      currency: serializer.fromJson<String>(json['currency']),
+      benchmarkIndexCode:
+          serializer.fromJson<String?>(json['benchmarkIndexCode']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vaultId': serializer.toJson<String>(vaultId),
+      'kind': serializer.toJson<String>(kind),
+      'name': serializer.toJson<String>(name),
+      'symbol': serializer.toJson<String?>(symbol),
+      'isin': serializer.toJson<String?>(isin),
+      'exchange': serializer.toJson<String?>(exchange),
+      'amcName': serializer.toJson<String?>(amcName),
+      'schemeCode': serializer.toJson<String?>(schemeCode),
+      'sectorCode': serializer.toJson<String?>(sectorCode),
+      'industryCode': serializer.toJson<String?>(industryCode),
+      'marketCapBand': serializer.toJson<String?>(marketCapBand),
+      'sectorOverride': serializer.toJson<String?>(sectorOverride),
+      'industryOverride': serializer.toJson<String?>(industryOverride),
+      'currency': serializer.toJson<String>(currency),
+      'benchmarkIndexCode': serializer.toJson<String?>(benchmarkIndexCode),
+      'createdAt': serializer.toJson<int>(createdAt),
+    };
+  }
+
+  InstrumentRow copyWith(
+          {String? id,
+          String? vaultId,
+          String? kind,
+          String? name,
+          Value<String?> symbol = const Value.absent(),
+          Value<String?> isin = const Value.absent(),
+          Value<String?> exchange = const Value.absent(),
+          Value<String?> amcName = const Value.absent(),
+          Value<String?> schemeCode = const Value.absent(),
+          Value<String?> sectorCode = const Value.absent(),
+          Value<String?> industryCode = const Value.absent(),
+          Value<String?> marketCapBand = const Value.absent(),
+          Value<String?> sectorOverride = const Value.absent(),
+          Value<String?> industryOverride = const Value.absent(),
+          String? currency,
+          Value<String?> benchmarkIndexCode = const Value.absent(),
+          int? createdAt}) =>
+      InstrumentRow(
+        id: id ?? this.id,
+        vaultId: vaultId ?? this.vaultId,
+        kind: kind ?? this.kind,
+        name: name ?? this.name,
+        symbol: symbol.present ? symbol.value : this.symbol,
+        isin: isin.present ? isin.value : this.isin,
+        exchange: exchange.present ? exchange.value : this.exchange,
+        amcName: amcName.present ? amcName.value : this.amcName,
+        schemeCode: schemeCode.present ? schemeCode.value : this.schemeCode,
+        sectorCode: sectorCode.present ? sectorCode.value : this.sectorCode,
+        industryCode:
+            industryCode.present ? industryCode.value : this.industryCode,
+        marketCapBand:
+            marketCapBand.present ? marketCapBand.value : this.marketCapBand,
+        sectorOverride:
+            sectorOverride.present ? sectorOverride.value : this.sectorOverride,
+        industryOverride: industryOverride.present
+            ? industryOverride.value
+            : this.industryOverride,
+        currency: currency ?? this.currency,
+        benchmarkIndexCode: benchmarkIndexCode.present
+            ? benchmarkIndexCode.value
+            : this.benchmarkIndexCode,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  InstrumentRow copyWithCompanion(InstrumentsCompanion data) {
+    return InstrumentRow(
+      id: data.id.present ? data.id.value : this.id,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      name: data.name.present ? data.name.value : this.name,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      isin: data.isin.present ? data.isin.value : this.isin,
+      exchange: data.exchange.present ? data.exchange.value : this.exchange,
+      amcName: data.amcName.present ? data.amcName.value : this.amcName,
+      schemeCode:
+          data.schemeCode.present ? data.schemeCode.value : this.schemeCode,
+      sectorCode:
+          data.sectorCode.present ? data.sectorCode.value : this.sectorCode,
+      industryCode: data.industryCode.present
+          ? data.industryCode.value
+          : this.industryCode,
+      marketCapBand: data.marketCapBand.present
+          ? data.marketCapBand.value
+          : this.marketCapBand,
+      sectorOverride: data.sectorOverride.present
+          ? data.sectorOverride.value
+          : this.sectorOverride,
+      industryOverride: data.industryOverride.present
+          ? data.industryOverride.value
+          : this.industryOverride,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      benchmarkIndexCode: data.benchmarkIndexCode.present
+          ? data.benchmarkIndexCode.value
+          : this.benchmarkIndexCode,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InstrumentRow(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('kind: $kind, ')
+          ..write('name: $name, ')
+          ..write('symbol: $symbol, ')
+          ..write('isin: $isin, ')
+          ..write('exchange: $exchange, ')
+          ..write('amcName: $amcName, ')
+          ..write('schemeCode: $schemeCode, ')
+          ..write('sectorCode: $sectorCode, ')
+          ..write('industryCode: $industryCode, ')
+          ..write('marketCapBand: $marketCapBand, ')
+          ..write('sectorOverride: $sectorOverride, ')
+          ..write('industryOverride: $industryOverride, ')
+          ..write('currency: $currency, ')
+          ..write('benchmarkIndexCode: $benchmarkIndexCode, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      vaultId,
+      kind,
+      name,
+      symbol,
+      isin,
+      exchange,
+      amcName,
+      schemeCode,
+      sectorCode,
+      industryCode,
+      marketCapBand,
+      sectorOverride,
+      industryOverride,
+      currency,
+      benchmarkIndexCode,
+      createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is InstrumentRow &&
+          other.id == this.id &&
+          other.vaultId == this.vaultId &&
+          other.kind == this.kind &&
+          other.name == this.name &&
+          other.symbol == this.symbol &&
+          other.isin == this.isin &&
+          other.exchange == this.exchange &&
+          other.amcName == this.amcName &&
+          other.schemeCode == this.schemeCode &&
+          other.sectorCode == this.sectorCode &&
+          other.industryCode == this.industryCode &&
+          other.marketCapBand == this.marketCapBand &&
+          other.sectorOverride == this.sectorOverride &&
+          other.industryOverride == this.industryOverride &&
+          other.currency == this.currency &&
+          other.benchmarkIndexCode == this.benchmarkIndexCode &&
+          other.createdAt == this.createdAt);
+}
+
+class InstrumentsCompanion extends UpdateCompanion<InstrumentRow> {
+  final Value<String> id;
+  final Value<String> vaultId;
+  final Value<String> kind;
+  final Value<String> name;
+  final Value<String?> symbol;
+  final Value<String?> isin;
+  final Value<String?> exchange;
+  final Value<String?> amcName;
+  final Value<String?> schemeCode;
+  final Value<String?> sectorCode;
+  final Value<String?> industryCode;
+  final Value<String?> marketCapBand;
+  final Value<String?> sectorOverride;
+  final Value<String?> industryOverride;
+  final Value<String> currency;
+  final Value<String?> benchmarkIndexCode;
+  final Value<int> createdAt;
+  final Value<int> rowid;
+  const InstrumentsCompanion({
+    this.id = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.name = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.isin = const Value.absent(),
+    this.exchange = const Value.absent(),
+    this.amcName = const Value.absent(),
+    this.schemeCode = const Value.absent(),
+    this.sectorCode = const Value.absent(),
+    this.industryCode = const Value.absent(),
+    this.marketCapBand = const Value.absent(),
+    this.sectorOverride = const Value.absent(),
+    this.industryOverride = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.benchmarkIndexCode = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  InstrumentsCompanion.insert({
+    required String id,
+    required String vaultId,
+    required String kind,
+    required String name,
+    this.symbol = const Value.absent(),
+    this.isin = const Value.absent(),
+    this.exchange = const Value.absent(),
+    this.amcName = const Value.absent(),
+    this.schemeCode = const Value.absent(),
+    this.sectorCode = const Value.absent(),
+    this.industryCode = const Value.absent(),
+    this.marketCapBand = const Value.absent(),
+    this.sectorOverride = const Value.absent(),
+    this.industryOverride = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.benchmarkIndexCode = const Value.absent(),
+    required int createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        vaultId = Value(vaultId),
+        kind = Value(kind),
+        name = Value(name),
+        createdAt = Value(createdAt);
+  static Insertable<InstrumentRow> custom({
+    Expression<String>? id,
+    Expression<String>? vaultId,
+    Expression<String>? kind,
+    Expression<String>? name,
+    Expression<String>? symbol,
+    Expression<String>? isin,
+    Expression<String>? exchange,
+    Expression<String>? amcName,
+    Expression<String>? schemeCode,
+    Expression<String>? sectorCode,
+    Expression<String>? industryCode,
+    Expression<String>? marketCapBand,
+    Expression<String>? sectorOverride,
+    Expression<String>? industryOverride,
+    Expression<String>? currency,
+    Expression<String>? benchmarkIndexCode,
+    Expression<int>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (kind != null) 'kind': kind,
+      if (name != null) 'name': name,
+      if (symbol != null) 'symbol': symbol,
+      if (isin != null) 'isin': isin,
+      if (exchange != null) 'exchange': exchange,
+      if (amcName != null) 'amc_name': amcName,
+      if (schemeCode != null) 'scheme_code': schemeCode,
+      if (sectorCode != null) 'sector_code': sectorCode,
+      if (industryCode != null) 'industry_code': industryCode,
+      if (marketCapBand != null) 'market_cap_band': marketCapBand,
+      if (sectorOverride != null) 'sector_override': sectorOverride,
+      if (industryOverride != null) 'industry_override': industryOverride,
+      if (currency != null) 'currency': currency,
+      if (benchmarkIndexCode != null)
+        'benchmark_index_code': benchmarkIndexCode,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  InstrumentsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? vaultId,
+      Value<String>? kind,
+      Value<String>? name,
+      Value<String?>? symbol,
+      Value<String?>? isin,
+      Value<String?>? exchange,
+      Value<String?>? amcName,
+      Value<String?>? schemeCode,
+      Value<String?>? sectorCode,
+      Value<String?>? industryCode,
+      Value<String?>? marketCapBand,
+      Value<String?>? sectorOverride,
+      Value<String?>? industryOverride,
+      Value<String>? currency,
+      Value<String?>? benchmarkIndexCode,
+      Value<int>? createdAt,
+      Value<int>? rowid}) {
+    return InstrumentsCompanion(
+      id: id ?? this.id,
+      vaultId: vaultId ?? this.vaultId,
+      kind: kind ?? this.kind,
+      name: name ?? this.name,
+      symbol: symbol ?? this.symbol,
+      isin: isin ?? this.isin,
+      exchange: exchange ?? this.exchange,
+      amcName: amcName ?? this.amcName,
+      schemeCode: schemeCode ?? this.schemeCode,
+      sectorCode: sectorCode ?? this.sectorCode,
+      industryCode: industryCode ?? this.industryCode,
+      marketCapBand: marketCapBand ?? this.marketCapBand,
+      sectorOverride: sectorOverride ?? this.sectorOverride,
+      industryOverride: industryOverride ?? this.industryOverride,
+      currency: currency ?? this.currency,
+      benchmarkIndexCode: benchmarkIndexCode ?? this.benchmarkIndexCode,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<String>(vaultId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (isin.present) {
+      map['isin'] = Variable<String>(isin.value);
+    }
+    if (exchange.present) {
+      map['exchange'] = Variable<String>(exchange.value);
+    }
+    if (amcName.present) {
+      map['amc_name'] = Variable<String>(amcName.value);
+    }
+    if (schemeCode.present) {
+      map['scheme_code'] = Variable<String>(schemeCode.value);
+    }
+    if (sectorCode.present) {
+      map['sector_code'] = Variable<String>(sectorCode.value);
+    }
+    if (industryCode.present) {
+      map['industry_code'] = Variable<String>(industryCode.value);
+    }
+    if (marketCapBand.present) {
+      map['market_cap_band'] = Variable<String>(marketCapBand.value);
+    }
+    if (sectorOverride.present) {
+      map['sector_override'] = Variable<String>(sectorOverride.value);
+    }
+    if (industryOverride.present) {
+      map['industry_override'] = Variable<String>(industryOverride.value);
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (benchmarkIndexCode.present) {
+      map['benchmark_index_code'] = Variable<String>(benchmarkIndexCode.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InstrumentsCompanion(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('kind: $kind, ')
+          ..write('name: $name, ')
+          ..write('symbol: $symbol, ')
+          ..write('isin: $isin, ')
+          ..write('exchange: $exchange, ')
+          ..write('amcName: $amcName, ')
+          ..write('schemeCode: $schemeCode, ')
+          ..write('sectorCode: $sectorCode, ')
+          ..write('industryCode: $industryCode, ')
+          ..write('marketCapBand: $marketCapBand, ')
+          ..write('sectorOverride: $sectorOverride, ')
+          ..write('industryOverride: $industryOverride, ')
+          ..write('currency: $currency, ')
+          ..write('benchmarkIndexCode: $benchmarkIndexCode, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TradesTable extends Trades with TableInfo<$TradesTable, TradeRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TradesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<String> vaultId = GeneratedColumn<String>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _instrumentIdMeta =
+      const VerificationMeta('instrumentId');
+  @override
+  late final GeneratedColumn<String> instrumentId = GeneratedColumn<String>(
+      'instrument_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES instruments (id)'));
+  static const VerificationMeta _accountIdMeta =
+      const VerificationMeta('accountId');
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+      'account_id', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES accounts (id)'));
+  static const VerificationMeta _sideMeta = const VerificationMeta('side');
+  @override
+  late final GeneratedColumn<String> side = GeneratedColumn<String>(
+      'side', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _quantityMeta =
+      const VerificationMeta('quantity');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> quantity =
+      GeneratedColumn<String>('quantity', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>($TradesTable.$converterquantity);
+  static const VerificationMeta _pricePerUnitMeta =
+      const VerificationMeta('pricePerUnit');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> pricePerUnit =
+      GeneratedColumn<String>('price_per_unit', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>($TradesTable.$converterpricePerUnit);
+  static const VerificationMeta _brokerageMeta =
+      const VerificationMeta('brokerage');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> brokerage =
+      GeneratedColumn<String>('brokerage', aliasedName, false,
+              type: DriftSqlType.string,
+              requiredDuringInsert: false,
+              defaultValue: const Constant('0'))
+          .withConverter<Decimal>($TradesTable.$converterbrokerage);
+  static const VerificationMeta _sttMeta = const VerificationMeta('stt');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> stt =
+      GeneratedColumn<String>('stt', aliasedName, false,
+              type: DriftSqlType.string,
+              requiredDuringInsert: false,
+              defaultValue: const Constant('0'))
+          .withConverter<Decimal>($TradesTable.$converterstt);
+  static const VerificationMeta _stampDutyMeta =
+      const VerificationMeta('stampDuty');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> stampDuty =
+      GeneratedColumn<String>('stamp_duty', aliasedName, false,
+              type: DriftSqlType.string,
+              requiredDuringInsert: false,
+              defaultValue: const Constant('0'))
+          .withConverter<Decimal>($TradesTable.$converterstampDuty);
+  static const VerificationMeta _gstMeta = const VerificationMeta('gst');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> gst =
+      GeneratedColumn<String>('gst', aliasedName, false,
+              type: DriftSqlType.string,
+              requiredDuringInsert: false,
+              defaultValue: const Constant('0'))
+          .withConverter<Decimal>($TradesTable.$convertergst);
+  static const VerificationMeta _otherChargesMeta =
+      const VerificationMeta('otherCharges');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> otherCharges =
+      GeneratedColumn<String>('other_charges', aliasedName, false,
+              type: DriftSqlType.string,
+              requiredDuringInsert: false,
+              defaultValue: const Constant('0'))
+          .withConverter<Decimal>($TradesTable.$converterotherCharges);
+  static const VerificationMeta _tradeDateMeta =
+      const VerificationMeta('tradeDate');
+  @override
+  late final GeneratedColumn<int> tradeDate = GeneratedColumn<int>(
+      'trade_date', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _folioNumberMeta =
+      const VerificationMeta('folioNumber');
+  @override
+  late final GeneratedColumn<String> folioNumber = GeneratedColumn<String>(
+      'folio_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('manual'));
+  static const VerificationMeta _confidenceMeta =
+      const VerificationMeta('confidence');
+  @override
+  late final GeneratedColumn<int> confidence = GeneratedColumn<int>(
+      'confidence', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _isReviewedMeta =
+      const VerificationMeta('isReviewed');
+  @override
+  late final GeneratedColumn<bool> isReviewed = GeneratedColumn<bool>(
+      'is_reviewed', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_reviewed" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        vaultId,
+        instrumentId,
+        accountId,
+        side,
+        quantity,
+        pricePerUnit,
+        brokerage,
+        stt,
+        stampDuty,
+        gst,
+        otherCharges,
+        tradeDate,
+        folioNumber,
+        source,
+        confidence,
+        isReviewed,
+        createdAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'trades';
+  @override
+  VerificationContext validateIntegrity(Insertable<TradeRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('instrument_id')) {
+      context.handle(
+          _instrumentIdMeta,
+          instrumentId.isAcceptableOrUnknown(
+              data['instrument_id']!, _instrumentIdMeta));
+    } else if (isInserting) {
+      context.missing(_instrumentIdMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(_accountIdMeta,
+          accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta));
+    }
+    if (data.containsKey('side')) {
+      context.handle(
+          _sideMeta, side.isAcceptableOrUnknown(data['side']!, _sideMeta));
+    } else if (isInserting) {
+      context.missing(_sideMeta);
+    }
+    context.handle(_quantityMeta, const VerificationResult.success());
+    context.handle(_pricePerUnitMeta, const VerificationResult.success());
+    context.handle(_brokerageMeta, const VerificationResult.success());
+    context.handle(_sttMeta, const VerificationResult.success());
+    context.handle(_stampDutyMeta, const VerificationResult.success());
+    context.handle(_gstMeta, const VerificationResult.success());
+    context.handle(_otherChargesMeta, const VerificationResult.success());
+    if (data.containsKey('trade_date')) {
+      context.handle(_tradeDateMeta,
+          tradeDate.isAcceptableOrUnknown(data['trade_date']!, _tradeDateMeta));
+    } else if (isInserting) {
+      context.missing(_tradeDateMeta);
+    }
+    if (data.containsKey('folio_number')) {
+      context.handle(
+          _folioNumberMeta,
+          folioNumber.isAcceptableOrUnknown(
+              data['folio_number']!, _folioNumberMeta));
+    }
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    }
+    if (data.containsKey('confidence')) {
+      context.handle(
+          _confidenceMeta,
+          confidence.isAcceptableOrUnknown(
+              data['confidence']!, _confidenceMeta));
+    }
+    if (data.containsKey('is_reviewed')) {
+      context.handle(
+          _isReviewedMeta,
+          isReviewed.isAcceptableOrUnknown(
+              data['is_reviewed']!, _isReviewedMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TradeRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TradeRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vault_id'])!,
+      instrumentId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}instrument_id'])!,
+      accountId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}account_id']),
+      side: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}side'])!,
+      quantity: $TradesTable.$converterquantity.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}quantity'])!),
+      pricePerUnit: $TradesTable.$converterpricePerUnit.fromSql(
+          attachedDatabase.typeMapping.read(
+              DriftSqlType.string, data['${effectivePrefix}price_per_unit'])!),
+      brokerage: $TradesTable.$converterbrokerage.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}brokerage'])!),
+      stt: $TradesTable.$converterstt.fromSql(attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}stt'])!),
+      stampDuty: $TradesTable.$converterstampDuty.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}stamp_duty'])!),
+      gst: $TradesTable.$convertergst.fromSql(attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}gst'])!),
+      otherCharges: $TradesTable.$converterotherCharges.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}other_charges'])!),
+      tradeDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}trade_date'])!,
+      folioNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}folio_number']),
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+      confidence: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}confidence']),
+      isReviewed: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_reviewed'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $TradesTable createAlias(String alias) {
+    return $TradesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Decimal, String> $converterquantity =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterpricePerUnit =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterbrokerage =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterstt =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterstampDuty =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertergst =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterotherCharges =
+      const DecimalConverter();
+}
+
+class TradeRow extends DataClass implements Insertable<TradeRow> {
+  final String id;
+  final String vaultId;
+  final String instrumentId;
+
+  /// Broker / demat account this trade belongs to. Nullable because legacy
+  /// backfilled rows and quick manual entries may not name one.
+  final String? accountId;
+  final String side;
+  final Decimal quantity;
+  final Decimal pricePerUnit;
+
+  /// Charges, broken out so cost basis matches the broker's own figure.
+  /// Cost basis = quantity × pricePerUnit + these.
+  final Decimal brokerage;
+  final Decimal stt;
+  final Decimal stampDuty;
+  final Decimal gst;
+  final Decimal otherCharges;
+  final int tradeDate;
+  final String? folioNumber;
+
+  /// manual | csv | cas | cams | api
+  final String source;
+
+  /// Parser confidence 0-100; null for hand-entered rows.
+  final int? confidence;
+
+  /// False until the user has confirmed an imported or backfilled row. Nothing
+  /// unreviewed should be presented as an authoritative number.
+  final bool isReviewed;
+  final int createdAt;
+  const TradeRow(
+      {required this.id,
+      required this.vaultId,
+      required this.instrumentId,
+      this.accountId,
+      required this.side,
+      required this.quantity,
+      required this.pricePerUnit,
+      required this.brokerage,
+      required this.stt,
+      required this.stampDuty,
+      required this.gst,
+      required this.otherCharges,
+      required this.tradeDate,
+      this.folioNumber,
+      required this.source,
+      this.confidence,
+      required this.isReviewed,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vault_id'] = Variable<String>(vaultId);
+    map['instrument_id'] = Variable<String>(instrumentId);
+    if (!nullToAbsent || accountId != null) {
+      map['account_id'] = Variable<String>(accountId);
+    }
+    map['side'] = Variable<String>(side);
+    {
+      map['quantity'] =
+          Variable<String>($TradesTable.$converterquantity.toSql(quantity));
+    }
+    {
+      map['price_per_unit'] = Variable<String>(
+          $TradesTable.$converterpricePerUnit.toSql(pricePerUnit));
+    }
+    {
+      map['brokerage'] =
+          Variable<String>($TradesTable.$converterbrokerage.toSql(brokerage));
+    }
+    {
+      map['stt'] = Variable<String>($TradesTable.$converterstt.toSql(stt));
+    }
+    {
+      map['stamp_duty'] =
+          Variable<String>($TradesTable.$converterstampDuty.toSql(stampDuty));
+    }
+    {
+      map['gst'] = Variable<String>($TradesTable.$convertergst.toSql(gst));
+    }
+    {
+      map['other_charges'] = Variable<String>(
+          $TradesTable.$converterotherCharges.toSql(otherCharges));
+    }
+    map['trade_date'] = Variable<int>(tradeDate);
+    if (!nullToAbsent || folioNumber != null) {
+      map['folio_number'] = Variable<String>(folioNumber);
+    }
+    map['source'] = Variable<String>(source);
+    if (!nullToAbsent || confidence != null) {
+      map['confidence'] = Variable<int>(confidence);
+    }
+    map['is_reviewed'] = Variable<bool>(isReviewed);
+    map['created_at'] = Variable<int>(createdAt);
+    return map;
+  }
+
+  TradesCompanion toCompanion(bool nullToAbsent) {
+    return TradesCompanion(
+      id: Value(id),
+      vaultId: Value(vaultId),
+      instrumentId: Value(instrumentId),
+      accountId: accountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountId),
+      side: Value(side),
+      quantity: Value(quantity),
+      pricePerUnit: Value(pricePerUnit),
+      brokerage: Value(brokerage),
+      stt: Value(stt),
+      stampDuty: Value(stampDuty),
+      gst: Value(gst),
+      otherCharges: Value(otherCharges),
+      tradeDate: Value(tradeDate),
+      folioNumber: folioNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(folioNumber),
+      source: Value(source),
+      confidence: confidence == null && nullToAbsent
+          ? const Value.absent()
+          : Value(confidence),
+      isReviewed: Value(isReviewed),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory TradeRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TradeRow(
+      id: serializer.fromJson<String>(json['id']),
+      vaultId: serializer.fromJson<String>(json['vaultId']),
+      instrumentId: serializer.fromJson<String>(json['instrumentId']),
+      accountId: serializer.fromJson<String?>(json['accountId']),
+      side: serializer.fromJson<String>(json['side']),
+      quantity: serializer.fromJson<Decimal>(json['quantity']),
+      pricePerUnit: serializer.fromJson<Decimal>(json['pricePerUnit']),
+      brokerage: serializer.fromJson<Decimal>(json['brokerage']),
+      stt: serializer.fromJson<Decimal>(json['stt']),
+      stampDuty: serializer.fromJson<Decimal>(json['stampDuty']),
+      gst: serializer.fromJson<Decimal>(json['gst']),
+      otherCharges: serializer.fromJson<Decimal>(json['otherCharges']),
+      tradeDate: serializer.fromJson<int>(json['tradeDate']),
+      folioNumber: serializer.fromJson<String?>(json['folioNumber']),
+      source: serializer.fromJson<String>(json['source']),
+      confidence: serializer.fromJson<int?>(json['confidence']),
+      isReviewed: serializer.fromJson<bool>(json['isReviewed']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vaultId': serializer.toJson<String>(vaultId),
+      'instrumentId': serializer.toJson<String>(instrumentId),
+      'accountId': serializer.toJson<String?>(accountId),
+      'side': serializer.toJson<String>(side),
+      'quantity': serializer.toJson<Decimal>(quantity),
+      'pricePerUnit': serializer.toJson<Decimal>(pricePerUnit),
+      'brokerage': serializer.toJson<Decimal>(brokerage),
+      'stt': serializer.toJson<Decimal>(stt),
+      'stampDuty': serializer.toJson<Decimal>(stampDuty),
+      'gst': serializer.toJson<Decimal>(gst),
+      'otherCharges': serializer.toJson<Decimal>(otherCharges),
+      'tradeDate': serializer.toJson<int>(tradeDate),
+      'folioNumber': serializer.toJson<String?>(folioNumber),
+      'source': serializer.toJson<String>(source),
+      'confidence': serializer.toJson<int?>(confidence),
+      'isReviewed': serializer.toJson<bool>(isReviewed),
+      'createdAt': serializer.toJson<int>(createdAt),
+    };
+  }
+
+  TradeRow copyWith(
+          {String? id,
+          String? vaultId,
+          String? instrumentId,
+          Value<String?> accountId = const Value.absent(),
+          String? side,
+          Decimal? quantity,
+          Decimal? pricePerUnit,
+          Decimal? brokerage,
+          Decimal? stt,
+          Decimal? stampDuty,
+          Decimal? gst,
+          Decimal? otherCharges,
+          int? tradeDate,
+          Value<String?> folioNumber = const Value.absent(),
+          String? source,
+          Value<int?> confidence = const Value.absent(),
+          bool? isReviewed,
+          int? createdAt}) =>
+      TradeRow(
+        id: id ?? this.id,
+        vaultId: vaultId ?? this.vaultId,
+        instrumentId: instrumentId ?? this.instrumentId,
+        accountId: accountId.present ? accountId.value : this.accountId,
+        side: side ?? this.side,
+        quantity: quantity ?? this.quantity,
+        pricePerUnit: pricePerUnit ?? this.pricePerUnit,
+        brokerage: brokerage ?? this.brokerage,
+        stt: stt ?? this.stt,
+        stampDuty: stampDuty ?? this.stampDuty,
+        gst: gst ?? this.gst,
+        otherCharges: otherCharges ?? this.otherCharges,
+        tradeDate: tradeDate ?? this.tradeDate,
+        folioNumber: folioNumber.present ? folioNumber.value : this.folioNumber,
+        source: source ?? this.source,
+        confidence: confidence.present ? confidence.value : this.confidence,
+        isReviewed: isReviewed ?? this.isReviewed,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  TradeRow copyWithCompanion(TradesCompanion data) {
+    return TradeRow(
+      id: data.id.present ? data.id.value : this.id,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      instrumentId: data.instrumentId.present
+          ? data.instrumentId.value
+          : this.instrumentId,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      side: data.side.present ? data.side.value : this.side,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      pricePerUnit: data.pricePerUnit.present
+          ? data.pricePerUnit.value
+          : this.pricePerUnit,
+      brokerage: data.brokerage.present ? data.brokerage.value : this.brokerage,
+      stt: data.stt.present ? data.stt.value : this.stt,
+      stampDuty: data.stampDuty.present ? data.stampDuty.value : this.stampDuty,
+      gst: data.gst.present ? data.gst.value : this.gst,
+      otherCharges: data.otherCharges.present
+          ? data.otherCharges.value
+          : this.otherCharges,
+      tradeDate: data.tradeDate.present ? data.tradeDate.value : this.tradeDate,
+      folioNumber:
+          data.folioNumber.present ? data.folioNumber.value : this.folioNumber,
+      source: data.source.present ? data.source.value : this.source,
+      confidence:
+          data.confidence.present ? data.confidence.value : this.confidence,
+      isReviewed:
+          data.isReviewed.present ? data.isReviewed.value : this.isReviewed,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TradeRow(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('accountId: $accountId, ')
+          ..write('side: $side, ')
+          ..write('quantity: $quantity, ')
+          ..write('pricePerUnit: $pricePerUnit, ')
+          ..write('brokerage: $brokerage, ')
+          ..write('stt: $stt, ')
+          ..write('stampDuty: $stampDuty, ')
+          ..write('gst: $gst, ')
+          ..write('otherCharges: $otherCharges, ')
+          ..write('tradeDate: $tradeDate, ')
+          ..write('folioNumber: $folioNumber, ')
+          ..write('source: $source, ')
+          ..write('confidence: $confidence, ')
+          ..write('isReviewed: $isReviewed, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      vaultId,
+      instrumentId,
+      accountId,
+      side,
+      quantity,
+      pricePerUnit,
+      brokerage,
+      stt,
+      stampDuty,
+      gst,
+      otherCharges,
+      tradeDate,
+      folioNumber,
+      source,
+      confidence,
+      isReviewed,
+      createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TradeRow &&
+          other.id == this.id &&
+          other.vaultId == this.vaultId &&
+          other.instrumentId == this.instrumentId &&
+          other.accountId == this.accountId &&
+          other.side == this.side &&
+          other.quantity == this.quantity &&
+          other.pricePerUnit == this.pricePerUnit &&
+          other.brokerage == this.brokerage &&
+          other.stt == this.stt &&
+          other.stampDuty == this.stampDuty &&
+          other.gst == this.gst &&
+          other.otherCharges == this.otherCharges &&
+          other.tradeDate == this.tradeDate &&
+          other.folioNumber == this.folioNumber &&
+          other.source == this.source &&
+          other.confidence == this.confidence &&
+          other.isReviewed == this.isReviewed &&
+          other.createdAt == this.createdAt);
+}
+
+class TradesCompanion extends UpdateCompanion<TradeRow> {
+  final Value<String> id;
+  final Value<String> vaultId;
+  final Value<String> instrumentId;
+  final Value<String?> accountId;
+  final Value<String> side;
+  final Value<Decimal> quantity;
+  final Value<Decimal> pricePerUnit;
+  final Value<Decimal> brokerage;
+  final Value<Decimal> stt;
+  final Value<Decimal> stampDuty;
+  final Value<Decimal> gst;
+  final Value<Decimal> otherCharges;
+  final Value<int> tradeDate;
+  final Value<String?> folioNumber;
+  final Value<String> source;
+  final Value<int?> confidence;
+  final Value<bool> isReviewed;
+  final Value<int> createdAt;
+  final Value<int> rowid;
+  const TradesCompanion({
+    this.id = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.instrumentId = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.side = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.pricePerUnit = const Value.absent(),
+    this.brokerage = const Value.absent(),
+    this.stt = const Value.absent(),
+    this.stampDuty = const Value.absent(),
+    this.gst = const Value.absent(),
+    this.otherCharges = const Value.absent(),
+    this.tradeDate = const Value.absent(),
+    this.folioNumber = const Value.absent(),
+    this.source = const Value.absent(),
+    this.confidence = const Value.absent(),
+    this.isReviewed = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TradesCompanion.insert({
+    required String id,
+    required String vaultId,
+    required String instrumentId,
+    this.accountId = const Value.absent(),
+    required String side,
+    required Decimal quantity,
+    required Decimal pricePerUnit,
+    this.brokerage = const Value.absent(),
+    this.stt = const Value.absent(),
+    this.stampDuty = const Value.absent(),
+    this.gst = const Value.absent(),
+    this.otherCharges = const Value.absent(),
+    required int tradeDate,
+    this.folioNumber = const Value.absent(),
+    this.source = const Value.absent(),
+    this.confidence = const Value.absent(),
+    this.isReviewed = const Value.absent(),
+    required int createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        vaultId = Value(vaultId),
+        instrumentId = Value(instrumentId),
+        side = Value(side),
+        quantity = Value(quantity),
+        pricePerUnit = Value(pricePerUnit),
+        tradeDate = Value(tradeDate),
+        createdAt = Value(createdAt);
+  static Insertable<TradeRow> custom({
+    Expression<String>? id,
+    Expression<String>? vaultId,
+    Expression<String>? instrumentId,
+    Expression<String>? accountId,
+    Expression<String>? side,
+    Expression<String>? quantity,
+    Expression<String>? pricePerUnit,
+    Expression<String>? brokerage,
+    Expression<String>? stt,
+    Expression<String>? stampDuty,
+    Expression<String>? gst,
+    Expression<String>? otherCharges,
+    Expression<int>? tradeDate,
+    Expression<String>? folioNumber,
+    Expression<String>? source,
+    Expression<int>? confidence,
+    Expression<bool>? isReviewed,
+    Expression<int>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (instrumentId != null) 'instrument_id': instrumentId,
+      if (accountId != null) 'account_id': accountId,
+      if (side != null) 'side': side,
+      if (quantity != null) 'quantity': quantity,
+      if (pricePerUnit != null) 'price_per_unit': pricePerUnit,
+      if (brokerage != null) 'brokerage': brokerage,
+      if (stt != null) 'stt': stt,
+      if (stampDuty != null) 'stamp_duty': stampDuty,
+      if (gst != null) 'gst': gst,
+      if (otherCharges != null) 'other_charges': otherCharges,
+      if (tradeDate != null) 'trade_date': tradeDate,
+      if (folioNumber != null) 'folio_number': folioNumber,
+      if (source != null) 'source': source,
+      if (confidence != null) 'confidence': confidence,
+      if (isReviewed != null) 'is_reviewed': isReviewed,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TradesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? vaultId,
+      Value<String>? instrumentId,
+      Value<String?>? accountId,
+      Value<String>? side,
+      Value<Decimal>? quantity,
+      Value<Decimal>? pricePerUnit,
+      Value<Decimal>? brokerage,
+      Value<Decimal>? stt,
+      Value<Decimal>? stampDuty,
+      Value<Decimal>? gst,
+      Value<Decimal>? otherCharges,
+      Value<int>? tradeDate,
+      Value<String?>? folioNumber,
+      Value<String>? source,
+      Value<int?>? confidence,
+      Value<bool>? isReviewed,
+      Value<int>? createdAt,
+      Value<int>? rowid}) {
+    return TradesCompanion(
+      id: id ?? this.id,
+      vaultId: vaultId ?? this.vaultId,
+      instrumentId: instrumentId ?? this.instrumentId,
+      accountId: accountId ?? this.accountId,
+      side: side ?? this.side,
+      quantity: quantity ?? this.quantity,
+      pricePerUnit: pricePerUnit ?? this.pricePerUnit,
+      brokerage: brokerage ?? this.brokerage,
+      stt: stt ?? this.stt,
+      stampDuty: stampDuty ?? this.stampDuty,
+      gst: gst ?? this.gst,
+      otherCharges: otherCharges ?? this.otherCharges,
+      tradeDate: tradeDate ?? this.tradeDate,
+      folioNumber: folioNumber ?? this.folioNumber,
+      source: source ?? this.source,
+      confidence: confidence ?? this.confidence,
+      isReviewed: isReviewed ?? this.isReviewed,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<String>(vaultId.value);
+    }
+    if (instrumentId.present) {
+      map['instrument_id'] = Variable<String>(instrumentId.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (side.present) {
+      map['side'] = Variable<String>(side.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<String>(
+          $TradesTable.$converterquantity.toSql(quantity.value));
+    }
+    if (pricePerUnit.present) {
+      map['price_per_unit'] = Variable<String>(
+          $TradesTable.$converterpricePerUnit.toSql(pricePerUnit.value));
+    }
+    if (brokerage.present) {
+      map['brokerage'] = Variable<String>(
+          $TradesTable.$converterbrokerage.toSql(brokerage.value));
+    }
+    if (stt.present) {
+      map['stt'] =
+          Variable<String>($TradesTable.$converterstt.toSql(stt.value));
+    }
+    if (stampDuty.present) {
+      map['stamp_duty'] = Variable<String>(
+          $TradesTable.$converterstampDuty.toSql(stampDuty.value));
+    }
+    if (gst.present) {
+      map['gst'] =
+          Variable<String>($TradesTable.$convertergst.toSql(gst.value));
+    }
+    if (otherCharges.present) {
+      map['other_charges'] = Variable<String>(
+          $TradesTable.$converterotherCharges.toSql(otherCharges.value));
+    }
+    if (tradeDate.present) {
+      map['trade_date'] = Variable<int>(tradeDate.value);
+    }
+    if (folioNumber.present) {
+      map['folio_number'] = Variable<String>(folioNumber.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (confidence.present) {
+      map['confidence'] = Variable<int>(confidence.value);
+    }
+    if (isReviewed.present) {
+      map['is_reviewed'] = Variable<bool>(isReviewed.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TradesCompanion(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('accountId: $accountId, ')
+          ..write('side: $side, ')
+          ..write('quantity: $quantity, ')
+          ..write('pricePerUnit: $pricePerUnit, ')
+          ..write('brokerage: $brokerage, ')
+          ..write('stt: $stt, ')
+          ..write('stampDuty: $stampDuty, ')
+          ..write('gst: $gst, ')
+          ..write('otherCharges: $otherCharges, ')
+          ..write('tradeDate: $tradeDate, ')
+          ..write('folioNumber: $folioNumber, ')
+          ..write('source: $source, ')
+          ..write('confidence: $confidence, ')
+          ..write('isReviewed: $isReviewed, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $InstrumentPricesTable extends InstrumentPrices
+    with TableInfo<$InstrumentPricesTable, InstrumentPriceRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $InstrumentPricesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<String> vaultId = GeneratedColumn<String>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _instrumentIdMeta =
+      const VerificationMeta('instrumentId');
+  @override
+  late final GeneratedColumn<String> instrumentId = GeneratedColumn<String>(
+      'instrument_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES instruments (id)'));
+  static const VerificationMeta _asOfMeta = const VerificationMeta('asOf');
+  @override
+  late final GeneratedColumn<int> asOf = GeneratedColumn<int>(
+      'as_of', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _priceMeta = const VerificationMeta('price');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> price =
+      GeneratedColumn<String>('price', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>($InstrumentPricesTable.$converterprice);
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, vaultId, instrumentId, asOf, price, source];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'instrument_prices';
+  @override
+  VerificationContext validateIntegrity(Insertable<InstrumentPriceRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('instrument_id')) {
+      context.handle(
+          _instrumentIdMeta,
+          instrumentId.isAcceptableOrUnknown(
+              data['instrument_id']!, _instrumentIdMeta));
+    } else if (isInserting) {
+      context.missing(_instrumentIdMeta);
+    }
+    if (data.containsKey('as_of')) {
+      context.handle(
+          _asOfMeta, asOf.isAcceptableOrUnknown(data['as_of']!, _asOfMeta));
+    } else if (isInserting) {
+      context.missing(_asOfMeta);
+    }
+    context.handle(_priceMeta, const VerificationResult.success());
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  InstrumentPriceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return InstrumentPriceRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vault_id'])!,
+      instrumentId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}instrument_id'])!,
+      asOf: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}as_of'])!,
+      price: $InstrumentPricesTable.$converterprice.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}price'])!),
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+    );
+  }
+
+  @override
+  $InstrumentPricesTable createAlias(String alias) {
+    return $InstrumentPricesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Decimal, String> $converterprice =
+      const DecimalConverter();
+}
+
+class InstrumentPriceRow extends DataClass
+    implements Insertable<InstrumentPriceRow> {
+  final String id;
+  final String vaultId;
+  final String instrumentId;
+  final int asOf;
+  final Decimal price;
+
+  /// manual | amfi | yahoo | alphavantage | twelvedata | cache
+  final String source;
+  const InstrumentPriceRow(
+      {required this.id,
+      required this.vaultId,
+      required this.instrumentId,
+      required this.asOf,
+      required this.price,
+      required this.source});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vault_id'] = Variable<String>(vaultId);
+    map['instrument_id'] = Variable<String>(instrumentId);
+    map['as_of'] = Variable<int>(asOf);
+    {
+      map['price'] =
+          Variable<String>($InstrumentPricesTable.$converterprice.toSql(price));
+    }
+    map['source'] = Variable<String>(source);
+    return map;
+  }
+
+  InstrumentPricesCompanion toCompanion(bool nullToAbsent) {
+    return InstrumentPricesCompanion(
+      id: Value(id),
+      vaultId: Value(vaultId),
+      instrumentId: Value(instrumentId),
+      asOf: Value(asOf),
+      price: Value(price),
+      source: Value(source),
+    );
+  }
+
+  factory InstrumentPriceRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return InstrumentPriceRow(
+      id: serializer.fromJson<String>(json['id']),
+      vaultId: serializer.fromJson<String>(json['vaultId']),
+      instrumentId: serializer.fromJson<String>(json['instrumentId']),
+      asOf: serializer.fromJson<int>(json['asOf']),
+      price: serializer.fromJson<Decimal>(json['price']),
+      source: serializer.fromJson<String>(json['source']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vaultId': serializer.toJson<String>(vaultId),
+      'instrumentId': serializer.toJson<String>(instrumentId),
+      'asOf': serializer.toJson<int>(asOf),
+      'price': serializer.toJson<Decimal>(price),
+      'source': serializer.toJson<String>(source),
+    };
+  }
+
+  InstrumentPriceRow copyWith(
+          {String? id,
+          String? vaultId,
+          String? instrumentId,
+          int? asOf,
+          Decimal? price,
+          String? source}) =>
+      InstrumentPriceRow(
+        id: id ?? this.id,
+        vaultId: vaultId ?? this.vaultId,
+        instrumentId: instrumentId ?? this.instrumentId,
+        asOf: asOf ?? this.asOf,
+        price: price ?? this.price,
+        source: source ?? this.source,
+      );
+  InstrumentPriceRow copyWithCompanion(InstrumentPricesCompanion data) {
+    return InstrumentPriceRow(
+      id: data.id.present ? data.id.value : this.id,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      instrumentId: data.instrumentId.present
+          ? data.instrumentId.value
+          : this.instrumentId,
+      asOf: data.asOf.present ? data.asOf.value : this.asOf,
+      price: data.price.present ? data.price.value : this.price,
+      source: data.source.present ? data.source.value : this.source,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InstrumentPriceRow(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('asOf: $asOf, ')
+          ..write('price: $price, ')
+          ..write('source: $source')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, vaultId, instrumentId, asOf, price, source);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is InstrumentPriceRow &&
+          other.id == this.id &&
+          other.vaultId == this.vaultId &&
+          other.instrumentId == this.instrumentId &&
+          other.asOf == this.asOf &&
+          other.price == this.price &&
+          other.source == this.source);
+}
+
+class InstrumentPricesCompanion extends UpdateCompanion<InstrumentPriceRow> {
+  final Value<String> id;
+  final Value<String> vaultId;
+  final Value<String> instrumentId;
+  final Value<int> asOf;
+  final Value<Decimal> price;
+  final Value<String> source;
+  final Value<int> rowid;
+  const InstrumentPricesCompanion({
+    this.id = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.instrumentId = const Value.absent(),
+    this.asOf = const Value.absent(),
+    this.price = const Value.absent(),
+    this.source = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  InstrumentPricesCompanion.insert({
+    required String id,
+    required String vaultId,
+    required String instrumentId,
+    required int asOf,
+    required Decimal price,
+    required String source,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        vaultId = Value(vaultId),
+        instrumentId = Value(instrumentId),
+        asOf = Value(asOf),
+        price = Value(price),
+        source = Value(source);
+  static Insertable<InstrumentPriceRow> custom({
+    Expression<String>? id,
+    Expression<String>? vaultId,
+    Expression<String>? instrumentId,
+    Expression<int>? asOf,
+    Expression<String>? price,
+    Expression<String>? source,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (instrumentId != null) 'instrument_id': instrumentId,
+      if (asOf != null) 'as_of': asOf,
+      if (price != null) 'price': price,
+      if (source != null) 'source': source,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  InstrumentPricesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? vaultId,
+      Value<String>? instrumentId,
+      Value<int>? asOf,
+      Value<Decimal>? price,
+      Value<String>? source,
+      Value<int>? rowid}) {
+    return InstrumentPricesCompanion(
+      id: id ?? this.id,
+      vaultId: vaultId ?? this.vaultId,
+      instrumentId: instrumentId ?? this.instrumentId,
+      asOf: asOf ?? this.asOf,
+      price: price ?? this.price,
+      source: source ?? this.source,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<String>(vaultId.value);
+    }
+    if (instrumentId.present) {
+      map['instrument_id'] = Variable<String>(instrumentId.value);
+    }
+    if (asOf.present) {
+      map['as_of'] = Variable<int>(asOf.value);
+    }
+    if (price.present) {
+      map['price'] = Variable<String>(
+          $InstrumentPricesTable.$converterprice.toSql(price.value));
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InstrumentPricesCompanion(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('asOf: $asOf, ')
+          ..write('price: $price, ')
+          ..write('source: $source, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DividendsTable extends Dividends
+    with TableInfo<$DividendsTable, DividendRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DividendsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<String> vaultId = GeneratedColumn<String>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _instrumentIdMeta =
+      const VerificationMeta('instrumentId');
+  @override
+  late final GeneratedColumn<String> instrumentId = GeneratedColumn<String>(
+      'instrument_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES instruments (id)'));
+  static const VerificationMeta _paidOnMeta = const VerificationMeta('paidOn');
+  @override
+  late final GeneratedColumn<int> paidOn = GeneratedColumn<int>(
+      'paid_on', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> amount =
+      GeneratedColumn<String>('amount', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>($DividendsTable.$converteramount);
+  static const VerificationMeta _taxDeductedMeta =
+      const VerificationMeta('taxDeducted');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> taxDeducted =
+      GeneratedColumn<String>('tax_deducted', aliasedName, false,
+              type: DriftSqlType.string,
+              requiredDuringInsert: false,
+              defaultValue: const Constant('0'))
+          .withConverter<Decimal>($DividendsTable.$convertertaxDeducted);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+      'kind', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('dividend'));
+  static const VerificationMeta _txnIdMeta = const VerificationMeta('txnId');
+  @override
+  late final GeneratedColumn<String> txnId = GeneratedColumn<String>(
+      'txn_id', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES transactions (id)'));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, vaultId, instrumentId, paidOn, amount, taxDeducted, kind, txnId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'dividends';
+  @override
+  VerificationContext validateIntegrity(Insertable<DividendRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('instrument_id')) {
+      context.handle(
+          _instrumentIdMeta,
+          instrumentId.isAcceptableOrUnknown(
+              data['instrument_id']!, _instrumentIdMeta));
+    } else if (isInserting) {
+      context.missing(_instrumentIdMeta);
+    }
+    if (data.containsKey('paid_on')) {
+      context.handle(_paidOnMeta,
+          paidOn.isAcceptableOrUnknown(data['paid_on']!, _paidOnMeta));
+    } else if (isInserting) {
+      context.missing(_paidOnMeta);
+    }
+    context.handle(_amountMeta, const VerificationResult.success());
+    context.handle(_taxDeductedMeta, const VerificationResult.success());
+    if (data.containsKey('kind')) {
+      context.handle(
+          _kindMeta, kind.isAcceptableOrUnknown(data['kind']!, _kindMeta));
+    }
+    if (data.containsKey('txn_id')) {
+      context.handle(
+          _txnIdMeta, txnId.isAcceptableOrUnknown(data['txn_id']!, _txnIdMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DividendRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DividendRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vault_id'])!,
+      instrumentId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}instrument_id'])!,
+      paidOn: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}paid_on'])!,
+      amount: $DividendsTable.$converteramount.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}amount'])!),
+      taxDeducted: $DividendsTable.$convertertaxDeducted.fromSql(
+          attachedDatabase.typeMapping.read(
+              DriftSqlType.string, data['${effectivePrefix}tax_deducted'])!),
+      kind: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}kind'])!,
+      txnId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}txn_id']),
+    );
+  }
+
+  @override
+  $DividendsTable createAlias(String alias) {
+    return $DividendsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Decimal, String> $converteramount =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertertaxDeducted =
+      const DecimalConverter();
+}
+
+class DividendRow extends DataClass implements Insertable<DividendRow> {
+  final String id;
+  final String vaultId;
+  final String instrumentId;
+  final int paidOn;
+  final Decimal amount;
+  final Decimal taxDeducted;
+  final String kind;
+
+  /// The income transaction this was posted as, so cash flow and the portfolio
+  /// view never disagree.
+  final String? txnId;
+  const DividendRow(
+      {required this.id,
+      required this.vaultId,
+      required this.instrumentId,
+      required this.paidOn,
+      required this.amount,
+      required this.taxDeducted,
+      required this.kind,
+      this.txnId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vault_id'] = Variable<String>(vaultId);
+    map['instrument_id'] = Variable<String>(instrumentId);
+    map['paid_on'] = Variable<int>(paidOn);
+    {
+      map['amount'] =
+          Variable<String>($DividendsTable.$converteramount.toSql(amount));
+    }
+    {
+      map['tax_deducted'] = Variable<String>(
+          $DividendsTable.$convertertaxDeducted.toSql(taxDeducted));
+    }
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || txnId != null) {
+      map['txn_id'] = Variable<String>(txnId);
+    }
+    return map;
+  }
+
+  DividendsCompanion toCompanion(bool nullToAbsent) {
+    return DividendsCompanion(
+      id: Value(id),
+      vaultId: Value(vaultId),
+      instrumentId: Value(instrumentId),
+      paidOn: Value(paidOn),
+      amount: Value(amount),
+      taxDeducted: Value(taxDeducted),
+      kind: Value(kind),
+      txnId:
+          txnId == null && nullToAbsent ? const Value.absent() : Value(txnId),
+    );
+  }
+
+  factory DividendRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DividendRow(
+      id: serializer.fromJson<String>(json['id']),
+      vaultId: serializer.fromJson<String>(json['vaultId']),
+      instrumentId: serializer.fromJson<String>(json['instrumentId']),
+      paidOn: serializer.fromJson<int>(json['paidOn']),
+      amount: serializer.fromJson<Decimal>(json['amount']),
+      taxDeducted: serializer.fromJson<Decimal>(json['taxDeducted']),
+      kind: serializer.fromJson<String>(json['kind']),
+      txnId: serializer.fromJson<String?>(json['txnId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vaultId': serializer.toJson<String>(vaultId),
+      'instrumentId': serializer.toJson<String>(instrumentId),
+      'paidOn': serializer.toJson<int>(paidOn),
+      'amount': serializer.toJson<Decimal>(amount),
+      'taxDeducted': serializer.toJson<Decimal>(taxDeducted),
+      'kind': serializer.toJson<String>(kind),
+      'txnId': serializer.toJson<String?>(txnId),
+    };
+  }
+
+  DividendRow copyWith(
+          {String? id,
+          String? vaultId,
+          String? instrumentId,
+          int? paidOn,
+          Decimal? amount,
+          Decimal? taxDeducted,
+          String? kind,
+          Value<String?> txnId = const Value.absent()}) =>
+      DividendRow(
+        id: id ?? this.id,
+        vaultId: vaultId ?? this.vaultId,
+        instrumentId: instrumentId ?? this.instrumentId,
+        paidOn: paidOn ?? this.paidOn,
+        amount: amount ?? this.amount,
+        taxDeducted: taxDeducted ?? this.taxDeducted,
+        kind: kind ?? this.kind,
+        txnId: txnId.present ? txnId.value : this.txnId,
+      );
+  DividendRow copyWithCompanion(DividendsCompanion data) {
+    return DividendRow(
+      id: data.id.present ? data.id.value : this.id,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      instrumentId: data.instrumentId.present
+          ? data.instrumentId.value
+          : this.instrumentId,
+      paidOn: data.paidOn.present ? data.paidOn.value : this.paidOn,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      taxDeducted:
+          data.taxDeducted.present ? data.taxDeducted.value : this.taxDeducted,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      txnId: data.txnId.present ? data.txnId.value : this.txnId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DividendRow(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('paidOn: $paidOn, ')
+          ..write('amount: $amount, ')
+          ..write('taxDeducted: $taxDeducted, ')
+          ..write('kind: $kind, ')
+          ..write('txnId: $txnId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, vaultId, instrumentId, paidOn, amount, taxDeducted, kind, txnId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DividendRow &&
+          other.id == this.id &&
+          other.vaultId == this.vaultId &&
+          other.instrumentId == this.instrumentId &&
+          other.paidOn == this.paidOn &&
+          other.amount == this.amount &&
+          other.taxDeducted == this.taxDeducted &&
+          other.kind == this.kind &&
+          other.txnId == this.txnId);
+}
+
+class DividendsCompanion extends UpdateCompanion<DividendRow> {
+  final Value<String> id;
+  final Value<String> vaultId;
+  final Value<String> instrumentId;
+  final Value<int> paidOn;
+  final Value<Decimal> amount;
+  final Value<Decimal> taxDeducted;
+  final Value<String> kind;
+  final Value<String?> txnId;
+  final Value<int> rowid;
+  const DividendsCompanion({
+    this.id = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.instrumentId = const Value.absent(),
+    this.paidOn = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.taxDeducted = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.txnId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DividendsCompanion.insert({
+    required String id,
+    required String vaultId,
+    required String instrumentId,
+    required int paidOn,
+    required Decimal amount,
+    this.taxDeducted = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.txnId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        vaultId = Value(vaultId),
+        instrumentId = Value(instrumentId),
+        paidOn = Value(paidOn),
+        amount = Value(amount);
+  static Insertable<DividendRow> custom({
+    Expression<String>? id,
+    Expression<String>? vaultId,
+    Expression<String>? instrumentId,
+    Expression<int>? paidOn,
+    Expression<String>? amount,
+    Expression<String>? taxDeducted,
+    Expression<String>? kind,
+    Expression<String>? txnId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (instrumentId != null) 'instrument_id': instrumentId,
+      if (paidOn != null) 'paid_on': paidOn,
+      if (amount != null) 'amount': amount,
+      if (taxDeducted != null) 'tax_deducted': taxDeducted,
+      if (kind != null) 'kind': kind,
+      if (txnId != null) 'txn_id': txnId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DividendsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? vaultId,
+      Value<String>? instrumentId,
+      Value<int>? paidOn,
+      Value<Decimal>? amount,
+      Value<Decimal>? taxDeducted,
+      Value<String>? kind,
+      Value<String?>? txnId,
+      Value<int>? rowid}) {
+    return DividendsCompanion(
+      id: id ?? this.id,
+      vaultId: vaultId ?? this.vaultId,
+      instrumentId: instrumentId ?? this.instrumentId,
+      paidOn: paidOn ?? this.paidOn,
+      amount: amount ?? this.amount,
+      taxDeducted: taxDeducted ?? this.taxDeducted,
+      kind: kind ?? this.kind,
+      txnId: txnId ?? this.txnId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<String>(vaultId.value);
+    }
+    if (instrumentId.present) {
+      map['instrument_id'] = Variable<String>(instrumentId.value);
+    }
+    if (paidOn.present) {
+      map['paid_on'] = Variable<int>(paidOn.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<String>(
+          $DividendsTable.$converteramount.toSql(amount.value));
+    }
+    if (taxDeducted.present) {
+      map['tax_deducted'] = Variable<String>(
+          $DividendsTable.$convertertaxDeducted.toSql(taxDeducted.value));
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (txnId.present) {
+      map['txn_id'] = Variable<String>(txnId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DividendsCompanion(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('paidOn: $paidOn, ')
+          ..write('amount: $amount, ')
+          ..write('taxDeducted: $taxDeducted, ')
+          ..write('kind: $kind, ')
+          ..write('txnId: $txnId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FundHoldingsTable extends FundHoldings
+    with TableInfo<$FundHoldingsTable, FundHoldingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FundHoldingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _schemeCodeMeta =
+      const VerificationMeta('schemeCode');
+  @override
+  late final GeneratedColumn<String> schemeCode = GeneratedColumn<String>(
+      'scheme_code', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _underlyingIsinMeta =
+      const VerificationMeta('underlyingIsin');
+  @override
+  late final GeneratedColumn<String> underlyingIsin = GeneratedColumn<String>(
+      'underlying_isin', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _weightBpsMeta =
+      const VerificationMeta('weightBps');
+  @override
+  late final GeneratedColumn<int> weightBps = GeneratedColumn<int>(
+      'weight_bps', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _asOfMeta = const VerificationMeta('asOf');
+  @override
+  late final GeneratedColumn<int> asOf = GeneratedColumn<int>(
+      'as_of', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, schemeCode, underlyingIsin, weightBps, asOf];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'fund_holdings';
+  @override
+  VerificationContext validateIntegrity(Insertable<FundHoldingRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('scheme_code')) {
+      context.handle(
+          _schemeCodeMeta,
+          schemeCode.isAcceptableOrUnknown(
+              data['scheme_code']!, _schemeCodeMeta));
+    } else if (isInserting) {
+      context.missing(_schemeCodeMeta);
+    }
+    if (data.containsKey('underlying_isin')) {
+      context.handle(
+          _underlyingIsinMeta,
+          underlyingIsin.isAcceptableOrUnknown(
+              data['underlying_isin']!, _underlyingIsinMeta));
+    } else if (isInserting) {
+      context.missing(_underlyingIsinMeta);
+    }
+    if (data.containsKey('weight_bps')) {
+      context.handle(_weightBpsMeta,
+          weightBps.isAcceptableOrUnknown(data['weight_bps']!, _weightBpsMeta));
+    } else if (isInserting) {
+      context.missing(_weightBpsMeta);
+    }
+    if (data.containsKey('as_of')) {
+      context.handle(
+          _asOfMeta, asOf.isAcceptableOrUnknown(data['as_of']!, _asOfMeta));
+    } else if (isInserting) {
+      context.missing(_asOfMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FundHoldingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FundHoldingRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      schemeCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}scheme_code'])!,
+      underlyingIsin: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}underlying_isin'])!,
+      weightBps: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}weight_bps'])!,
+      asOf: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}as_of'])!,
+    );
+  }
+
+  @override
+  $FundHoldingsTable createAlias(String alias) {
+    return $FundHoldingsTable(attachedDatabase, alias);
+  }
+}
+
+class FundHoldingRow extends DataClass implements Insertable<FundHoldingRow> {
+  final String id;
+  final String schemeCode;
+  final String underlyingIsin;
+
+  /// Weight in basis points (1% = 100), so no floating point is involved.
+  final int weightBps;
+  final int asOf;
+  const FundHoldingRow(
+      {required this.id,
+      required this.schemeCode,
+      required this.underlyingIsin,
+      required this.weightBps,
+      required this.asOf});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['scheme_code'] = Variable<String>(schemeCode);
+    map['underlying_isin'] = Variable<String>(underlyingIsin);
+    map['weight_bps'] = Variable<int>(weightBps);
+    map['as_of'] = Variable<int>(asOf);
+    return map;
+  }
+
+  FundHoldingsCompanion toCompanion(bool nullToAbsent) {
+    return FundHoldingsCompanion(
+      id: Value(id),
+      schemeCode: Value(schemeCode),
+      underlyingIsin: Value(underlyingIsin),
+      weightBps: Value(weightBps),
+      asOf: Value(asOf),
+    );
+  }
+
+  factory FundHoldingRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FundHoldingRow(
+      id: serializer.fromJson<String>(json['id']),
+      schemeCode: serializer.fromJson<String>(json['schemeCode']),
+      underlyingIsin: serializer.fromJson<String>(json['underlyingIsin']),
+      weightBps: serializer.fromJson<int>(json['weightBps']),
+      asOf: serializer.fromJson<int>(json['asOf']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'schemeCode': serializer.toJson<String>(schemeCode),
+      'underlyingIsin': serializer.toJson<String>(underlyingIsin),
+      'weightBps': serializer.toJson<int>(weightBps),
+      'asOf': serializer.toJson<int>(asOf),
+    };
+  }
+
+  FundHoldingRow copyWith(
+          {String? id,
+          String? schemeCode,
+          String? underlyingIsin,
+          int? weightBps,
+          int? asOf}) =>
+      FundHoldingRow(
+        id: id ?? this.id,
+        schemeCode: schemeCode ?? this.schemeCode,
+        underlyingIsin: underlyingIsin ?? this.underlyingIsin,
+        weightBps: weightBps ?? this.weightBps,
+        asOf: asOf ?? this.asOf,
+      );
+  FundHoldingRow copyWithCompanion(FundHoldingsCompanion data) {
+    return FundHoldingRow(
+      id: data.id.present ? data.id.value : this.id,
+      schemeCode:
+          data.schemeCode.present ? data.schemeCode.value : this.schemeCode,
+      underlyingIsin: data.underlyingIsin.present
+          ? data.underlyingIsin.value
+          : this.underlyingIsin,
+      weightBps: data.weightBps.present ? data.weightBps.value : this.weightBps,
+      asOf: data.asOf.present ? data.asOf.value : this.asOf,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FundHoldingRow(')
+          ..write('id: $id, ')
+          ..write('schemeCode: $schemeCode, ')
+          ..write('underlyingIsin: $underlyingIsin, ')
+          ..write('weightBps: $weightBps, ')
+          ..write('asOf: $asOf')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, schemeCode, underlyingIsin, weightBps, asOf);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FundHoldingRow &&
+          other.id == this.id &&
+          other.schemeCode == this.schemeCode &&
+          other.underlyingIsin == this.underlyingIsin &&
+          other.weightBps == this.weightBps &&
+          other.asOf == this.asOf);
+}
+
+class FundHoldingsCompanion extends UpdateCompanion<FundHoldingRow> {
+  final Value<String> id;
+  final Value<String> schemeCode;
+  final Value<String> underlyingIsin;
+  final Value<int> weightBps;
+  final Value<int> asOf;
+  final Value<int> rowid;
+  const FundHoldingsCompanion({
+    this.id = const Value.absent(),
+    this.schemeCode = const Value.absent(),
+    this.underlyingIsin = const Value.absent(),
+    this.weightBps = const Value.absent(),
+    this.asOf = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FundHoldingsCompanion.insert({
+    required String id,
+    required String schemeCode,
+    required String underlyingIsin,
+    required int weightBps,
+    required int asOf,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        schemeCode = Value(schemeCode),
+        underlyingIsin = Value(underlyingIsin),
+        weightBps = Value(weightBps),
+        asOf = Value(asOf);
+  static Insertable<FundHoldingRow> custom({
+    Expression<String>? id,
+    Expression<String>? schemeCode,
+    Expression<String>? underlyingIsin,
+    Expression<int>? weightBps,
+    Expression<int>? asOf,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (schemeCode != null) 'scheme_code': schemeCode,
+      if (underlyingIsin != null) 'underlying_isin': underlyingIsin,
+      if (weightBps != null) 'weight_bps': weightBps,
+      if (asOf != null) 'as_of': asOf,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FundHoldingsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? schemeCode,
+      Value<String>? underlyingIsin,
+      Value<int>? weightBps,
+      Value<int>? asOf,
+      Value<int>? rowid}) {
+    return FundHoldingsCompanion(
+      id: id ?? this.id,
+      schemeCode: schemeCode ?? this.schemeCode,
+      underlyingIsin: underlyingIsin ?? this.underlyingIsin,
+      weightBps: weightBps ?? this.weightBps,
+      asOf: asOf ?? this.asOf,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (schemeCode.present) {
+      map['scheme_code'] = Variable<String>(schemeCode.value);
+    }
+    if (underlyingIsin.present) {
+      map['underlying_isin'] = Variable<String>(underlyingIsin.value);
+    }
+    if (weightBps.present) {
+      map['weight_bps'] = Variable<int>(weightBps.value);
+    }
+    if (asOf.present) {
+      map['as_of'] = Variable<int>(asOf.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FundHoldingsCompanion(')
+          ..write('id: $id, ')
+          ..write('schemeCode: $schemeCode, ')
+          ..write('underlyingIsin: $underlyingIsin, ')
+          ..write('weightBps: $weightBps, ')
+          ..write('asOf: $asOf, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BenchmarkSeriesTable extends BenchmarkSeries
+    with TableInfo<$BenchmarkSeriesTable, BenchmarkPointRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BenchmarkSeriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _indexCodeMeta =
+      const VerificationMeta('indexCode');
+  @override
+  late final GeneratedColumn<String> indexCode = GeneratedColumn<String>(
+      'index_code', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _onDateMeta = const VerificationMeta('onDate');
+  @override
+  late final GeneratedColumn<int> onDate = GeneratedColumn<int>(
+      'on_date', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _closeValueMeta =
+      const VerificationMeta('closeValue');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> closeValue =
+      GeneratedColumn<String>('close_value', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>($BenchmarkSeriesTable.$convertercloseValue);
+  @override
+  List<GeneratedColumn> get $columns => [id, indexCode, onDate, closeValue];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'benchmark_series';
+  @override
+  VerificationContext validateIntegrity(Insertable<BenchmarkPointRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('index_code')) {
+      context.handle(_indexCodeMeta,
+          indexCode.isAcceptableOrUnknown(data['index_code']!, _indexCodeMeta));
+    } else if (isInserting) {
+      context.missing(_indexCodeMeta);
+    }
+    if (data.containsKey('on_date')) {
+      context.handle(_onDateMeta,
+          onDate.isAcceptableOrUnknown(data['on_date']!, _onDateMeta));
+    } else if (isInserting) {
+      context.missing(_onDateMeta);
+    }
+    context.handle(_closeValueMeta, const VerificationResult.success());
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BenchmarkPointRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BenchmarkPointRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      indexCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}index_code'])!,
+      onDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}on_date'])!,
+      closeValue: $BenchmarkSeriesTable.$convertercloseValue.fromSql(
+          attachedDatabase.typeMapping.read(
+              DriftSqlType.string, data['${effectivePrefix}close_value'])!),
+    );
+  }
+
+  @override
+  $BenchmarkSeriesTable createAlias(String alias) {
+    return $BenchmarkSeriesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Decimal, String> $convertercloseValue =
+      const DecimalConverter();
+}
+
+class BenchmarkPointRow extends DataClass
+    implements Insertable<BenchmarkPointRow> {
+  final String id;
+  final String indexCode;
+  final int onDate;
+  final Decimal closeValue;
+  const BenchmarkPointRow(
+      {required this.id,
+      required this.indexCode,
+      required this.onDate,
+      required this.closeValue});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['index_code'] = Variable<String>(indexCode);
+    map['on_date'] = Variable<int>(onDate);
+    {
+      map['close_value'] = Variable<String>(
+          $BenchmarkSeriesTable.$convertercloseValue.toSql(closeValue));
+    }
+    return map;
+  }
+
+  BenchmarkSeriesCompanion toCompanion(bool nullToAbsent) {
+    return BenchmarkSeriesCompanion(
+      id: Value(id),
+      indexCode: Value(indexCode),
+      onDate: Value(onDate),
+      closeValue: Value(closeValue),
+    );
+  }
+
+  factory BenchmarkPointRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BenchmarkPointRow(
+      id: serializer.fromJson<String>(json['id']),
+      indexCode: serializer.fromJson<String>(json['indexCode']),
+      onDate: serializer.fromJson<int>(json['onDate']),
+      closeValue: serializer.fromJson<Decimal>(json['closeValue']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'indexCode': serializer.toJson<String>(indexCode),
+      'onDate': serializer.toJson<int>(onDate),
+      'closeValue': serializer.toJson<Decimal>(closeValue),
+    };
+  }
+
+  BenchmarkPointRow copyWith(
+          {String? id, String? indexCode, int? onDate, Decimal? closeValue}) =>
+      BenchmarkPointRow(
+        id: id ?? this.id,
+        indexCode: indexCode ?? this.indexCode,
+        onDate: onDate ?? this.onDate,
+        closeValue: closeValue ?? this.closeValue,
+      );
+  BenchmarkPointRow copyWithCompanion(BenchmarkSeriesCompanion data) {
+    return BenchmarkPointRow(
+      id: data.id.present ? data.id.value : this.id,
+      indexCode: data.indexCode.present ? data.indexCode.value : this.indexCode,
+      onDate: data.onDate.present ? data.onDate.value : this.onDate,
+      closeValue:
+          data.closeValue.present ? data.closeValue.value : this.closeValue,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BenchmarkPointRow(')
+          ..write('id: $id, ')
+          ..write('indexCode: $indexCode, ')
+          ..write('onDate: $onDate, ')
+          ..write('closeValue: $closeValue')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, indexCode, onDate, closeValue);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BenchmarkPointRow &&
+          other.id == this.id &&
+          other.indexCode == this.indexCode &&
+          other.onDate == this.onDate &&
+          other.closeValue == this.closeValue);
+}
+
+class BenchmarkSeriesCompanion extends UpdateCompanion<BenchmarkPointRow> {
+  final Value<String> id;
+  final Value<String> indexCode;
+  final Value<int> onDate;
+  final Value<Decimal> closeValue;
+  final Value<int> rowid;
+  const BenchmarkSeriesCompanion({
+    this.id = const Value.absent(),
+    this.indexCode = const Value.absent(),
+    this.onDate = const Value.absent(),
+    this.closeValue = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BenchmarkSeriesCompanion.insert({
+    required String id,
+    required String indexCode,
+    required int onDate,
+    required Decimal closeValue,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        indexCode = Value(indexCode),
+        onDate = Value(onDate),
+        closeValue = Value(closeValue);
+  static Insertable<BenchmarkPointRow> custom({
+    Expression<String>? id,
+    Expression<String>? indexCode,
+    Expression<int>? onDate,
+    Expression<String>? closeValue,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (indexCode != null) 'index_code': indexCode,
+      if (onDate != null) 'on_date': onDate,
+      if (closeValue != null) 'close_value': closeValue,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BenchmarkSeriesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? indexCode,
+      Value<int>? onDate,
+      Value<Decimal>? closeValue,
+      Value<int>? rowid}) {
+    return BenchmarkSeriesCompanion(
+      id: id ?? this.id,
+      indexCode: indexCode ?? this.indexCode,
+      onDate: onDate ?? this.onDate,
+      closeValue: closeValue ?? this.closeValue,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (indexCode.present) {
+      map['index_code'] = Variable<String>(indexCode.value);
+    }
+    if (onDate.present) {
+      map['on_date'] = Variable<int>(onDate.value);
+    }
+    if (closeValue.present) {
+      map['close_value'] = Variable<String>(
+          $BenchmarkSeriesTable.$convertercloseValue.toSql(closeValue.value));
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BenchmarkSeriesCompanion(')
+          ..write('id: $id, ')
+          ..write('indexCode: $indexCode, ')
+          ..write('onDate: $onDate, ')
+          ..write('closeValue: $closeValue, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6678,6 +9782,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PostingsTable postings = $PostingsTable(this);
   late final $PendingCapturesTable pendingCaptures =
       $PendingCapturesTable(this);
+  late final $InstrumentsTable instruments = $InstrumentsTable(this);
+  late final $TradesTable trades = $TradesTable(this);
+  late final $InstrumentPricesTable instrumentPrices =
+      $InstrumentPricesTable(this);
+  late final $DividendsTable dividends = $DividendsTable(this);
+  late final $FundHoldingsTable fundHoldings = $FundHoldingsTable(this);
+  late final $BenchmarkSeriesTable benchmarkSeries =
+      $BenchmarkSeriesTable(this);
   late final TransactionDao transactionDao =
       TransactionDao(this as AppDatabase);
   late final CategoryDao categoryDao = CategoryDao(this as AppDatabase);
@@ -6717,7 +9829,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         netWorthSnapshots,
         accounts,
         postings,
-        pendingCaptures
+        pendingCaptures,
+        instruments,
+        trades,
+        instrumentPrices,
+        dividends,
+        fundHoldings,
+        benchmarkSeries
       ];
 }
 
@@ -7248,6 +10366,21 @@ final class $$TransactionsTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$DividendsTable, List<DividendRow>>
+      _dividendsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.dividends,
+              aliasName:
+                  $_aliasNameGenerator(db.transactions.id, db.dividends.txnId));
+
+  $$DividendsTableProcessedTableManager get dividendsRefs {
+    final manager = $$DividendsTableTableManager($_db, $_db.dividends)
+        .filter((f) => f.txnId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_dividendsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$TransactionsTableFilterComposer
@@ -7324,6 +10457,27 @@ class $$TransactionsTableFilterComposer
             $$PostingsTableFilterComposer(
               $db: $db,
               $table: $db.postings,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> dividendsRefs(
+      Expression<bool> Function($$DividendsTableFilterComposer f) f) {
+    final $$DividendsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.dividends,
+        getReferencedColumn: (t) => t.txnId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DividendsTableFilterComposer(
+              $db: $db,
+              $table: $db.dividends,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -7473,6 +10627,27 @@ class $$TransactionsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> dividendsRefs<T extends Object>(
+      Expression<T> Function($$DividendsTableAnnotationComposer a) f) {
+    final $$DividendsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.dividends,
+        getReferencedColumn: (t) => t.txnId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DividendsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.dividends,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$TransactionsTableTableManager extends RootTableManager<
@@ -7486,7 +10661,8 @@ class $$TransactionsTableTableManager extends RootTableManager<
     $$TransactionsTableUpdateCompanionBuilder,
     (TransactionRow, $$TransactionsTableReferences),
     TransactionRow,
-    PrefetchHooks Function({bool categoryId, bool postingsRefs})> {
+    PrefetchHooks Function(
+        {bool categoryId, bool postingsRefs, bool dividendsRefs})> {
   $$TransactionsTableTableManager(_$AppDatabase db, $TransactionsTable table)
       : super(TableManagerState(
           db: db,
@@ -7559,10 +10735,16 @@ class $$TransactionsTableTableManager extends RootTableManager<
                     $$TransactionsTableReferences(db, table, e)
                   ))
               .toList(),
-          prefetchHooksCallback: ({categoryId = false, postingsRefs = false}) {
+          prefetchHooksCallback: (
+              {categoryId = false,
+              postingsRefs = false,
+              dividendsRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (postingsRefs) db.postings],
+              explicitlyWatchedTables: [
+                if (postingsRefs) db.postings,
+                if (dividendsRefs) db.dividends
+              ],
               addJoins: <
                   T extends TableManagerState<
                       dynamic,
@@ -7602,6 +10784,18 @@ class $$TransactionsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.entryId == item.id),
+                        typedResults: items),
+                  if (dividendsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$TransactionsTableReferences
+                            ._dividendsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$TransactionsTableReferences(db, table, p0)
+                                .dividendsRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.txnId == item.id),
                         typedResults: items)
                 ];
               },
@@ -7621,7 +10815,8 @@ typedef $$TransactionsTableProcessedTableManager = ProcessedTableManager<
     $$TransactionsTableUpdateCompanionBuilder,
     (TransactionRow, $$TransactionsTableReferences),
     TransactionRow,
-    PrefetchHooks Function({bool categoryId, bool postingsRefs})>;
+    PrefetchHooks Function(
+        {bool categoryId, bool postingsRefs, bool dividendsRefs})>;
 typedef $$BudgetsTableCreateCompanionBuilder = BudgetsCompanion Function({
   required String id,
   required String vaultId,
@@ -10471,6 +13666,20 @@ final class $$AccountsTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$TradesTable, List<TradeRow>> _tradesRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.trades,
+          aliasName: $_aliasNameGenerator(db.accounts.id, db.trades.accountId));
+
+  $$TradesTableProcessedTableManager get tradesRefs {
+    final manager = $$TradesTableTableManager($_db, $_db.trades)
+        .filter((f) => f.accountId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_tradesRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$AccountsTableFilterComposer
@@ -10524,6 +13733,27 @@ class $$AccountsTableFilterComposer
             $$PostingsTableFilterComposer(
               $db: $db,
               $table: $db.postings,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> tradesRefs(
+      Expression<bool> Function($$TradesTableFilterComposer f) f) {
+    final $$TradesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.trades,
+        getReferencedColumn: (t) => t.accountId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TradesTableFilterComposer(
+              $db: $db,
+              $table: $db.trades,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -10628,6 +13858,27 @@ class $$AccountsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> tradesRefs<T extends Object>(
+      Expression<T> Function($$TradesTableAnnotationComposer a) f) {
+    final $$TradesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.trades,
+        getReferencedColumn: (t) => t.accountId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TradesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.trades,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$AccountsTableTableManager extends RootTableManager<
@@ -10641,7 +13892,7 @@ class $$AccountsTableTableManager extends RootTableManager<
     $$AccountsTableUpdateCompanionBuilder,
     (AccountRow, $$AccountsTableReferences),
     AccountRow,
-    PrefetchHooks Function({bool postingsRefs})> {
+    PrefetchHooks Function({bool postingsRefs, bool tradesRefs})> {
   $$AccountsTableTableManager(_$AppDatabase db, $AccountsTable table)
       : super(TableManagerState(
           db: db,
@@ -10704,10 +13955,13 @@ class $$AccountsTableTableManager extends RootTableManager<
               .map((e) =>
                   (e.readTable(table), $$AccountsTableReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({postingsRefs = false}) {
+          prefetchHooksCallback: ({postingsRefs = false, tradesRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (postingsRefs) db.postings],
+              explicitlyWatchedTables: [
+                if (postingsRefs) db.postings,
+                if (tradesRefs) db.trades
+              ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
@@ -10719,6 +13973,17 @@ class $$AccountsTableTableManager extends RootTableManager<
                         managerFromTypedResult: (p0) =>
                             $$AccountsTableReferences(db, table, p0)
                                 .postingsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.accountId == item.id),
+                        typedResults: items),
+                  if (tradesRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $$AccountsTableReferences._tradesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$AccountsTableReferences(db, table, p0).tradesRefs,
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.accountId == item.id),
@@ -10741,7 +14006,7 @@ typedef $$AccountsTableProcessedTableManager = ProcessedTableManager<
     $$AccountsTableUpdateCompanionBuilder,
     (AccountRow, $$AccountsTableReferences),
     AccountRow,
-    PrefetchHooks Function({bool postingsRefs})>;
+    PrefetchHooks Function({bool postingsRefs, bool tradesRefs})>;
 typedef $$PostingsTableCreateCompanionBuilder = PostingsCompanion Function({
   required String id,
   required String vaultId,
@@ -11340,6 +14605,2181 @@ typedef $$PendingCapturesTableProcessedTableManager = ProcessedTableManager<
     ),
     PendingCaptureRow,
     PrefetchHooks Function()>;
+typedef $$InstrumentsTableCreateCompanionBuilder = InstrumentsCompanion
+    Function({
+  required String id,
+  required String vaultId,
+  required String kind,
+  required String name,
+  Value<String?> symbol,
+  Value<String?> isin,
+  Value<String?> exchange,
+  Value<String?> amcName,
+  Value<String?> schemeCode,
+  Value<String?> sectorCode,
+  Value<String?> industryCode,
+  Value<String?> marketCapBand,
+  Value<String?> sectorOverride,
+  Value<String?> industryOverride,
+  Value<String> currency,
+  Value<String?> benchmarkIndexCode,
+  required int createdAt,
+  Value<int> rowid,
+});
+typedef $$InstrumentsTableUpdateCompanionBuilder = InstrumentsCompanion
+    Function({
+  Value<String> id,
+  Value<String> vaultId,
+  Value<String> kind,
+  Value<String> name,
+  Value<String?> symbol,
+  Value<String?> isin,
+  Value<String?> exchange,
+  Value<String?> amcName,
+  Value<String?> schemeCode,
+  Value<String?> sectorCode,
+  Value<String?> industryCode,
+  Value<String?> marketCapBand,
+  Value<String?> sectorOverride,
+  Value<String?> industryOverride,
+  Value<String> currency,
+  Value<String?> benchmarkIndexCode,
+  Value<int> createdAt,
+  Value<int> rowid,
+});
+
+final class $$InstrumentsTableReferences
+    extends BaseReferences<_$AppDatabase, $InstrumentsTable, InstrumentRow> {
+  $$InstrumentsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$TradesTable, List<TradeRow>> _tradesRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.trades,
+          aliasName:
+              $_aliasNameGenerator(db.instruments.id, db.trades.instrumentId));
+
+  $$TradesTableProcessedTableManager get tradesRefs {
+    final manager = $$TradesTableTableManager($_db, $_db.trades)
+        .filter((f) => f.instrumentId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_tradesRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$InstrumentPricesTable, List<InstrumentPriceRow>>
+      _instrumentPricesRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.instrumentPrices,
+              aliasName: $_aliasNameGenerator(
+                  db.instruments.id, db.instrumentPrices.instrumentId));
+
+  $$InstrumentPricesTableProcessedTableManager get instrumentPricesRefs {
+    final manager =
+        $$InstrumentPricesTableTableManager($_db, $_db.instrumentPrices)
+            .filter((f) => f.instrumentId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_instrumentPricesRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$DividendsTable, List<DividendRow>>
+      _dividendsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.dividends,
+              aliasName: $_aliasNameGenerator(
+                  db.instruments.id, db.dividends.instrumentId));
+
+  $$DividendsTableProcessedTableManager get dividendsRefs {
+    final manager = $$DividendsTableTableManager($_db, $_db.dividends)
+        .filter((f) => f.instrumentId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_dividendsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$InstrumentsTableFilterComposer
+    extends Composer<_$AppDatabase, $InstrumentsTable> {
+  $$InstrumentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get symbol => $composableBuilder(
+      column: $table.symbol, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get isin => $composableBuilder(
+      column: $table.isin, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get exchange => $composableBuilder(
+      column: $table.exchange, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get amcName => $composableBuilder(
+      column: $table.amcName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get schemeCode => $composableBuilder(
+      column: $table.schemeCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get sectorCode => $composableBuilder(
+      column: $table.sectorCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get industryCode => $composableBuilder(
+      column: $table.industryCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get marketCapBand => $composableBuilder(
+      column: $table.marketCapBand, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get sectorOverride => $composableBuilder(
+      column: $table.sectorOverride,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get industryOverride => $composableBuilder(
+      column: $table.industryOverride,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get currency => $composableBuilder(
+      column: $table.currency, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get benchmarkIndexCode => $composableBuilder(
+      column: $table.benchmarkIndexCode,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> tradesRefs(
+      Expression<bool> Function($$TradesTableFilterComposer f) f) {
+    final $$TradesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.trades,
+        getReferencedColumn: (t) => t.instrumentId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TradesTableFilterComposer(
+              $db: $db,
+              $table: $db.trades,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> instrumentPricesRefs(
+      Expression<bool> Function($$InstrumentPricesTableFilterComposer f) f) {
+    final $$InstrumentPricesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.instrumentPrices,
+        getReferencedColumn: (t) => t.instrumentId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentPricesTableFilterComposer(
+              $db: $db,
+              $table: $db.instrumentPrices,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> dividendsRefs(
+      Expression<bool> Function($$DividendsTableFilterComposer f) f) {
+    final $$DividendsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.dividends,
+        getReferencedColumn: (t) => t.instrumentId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DividendsTableFilterComposer(
+              $db: $db,
+              $table: $db.dividends,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$InstrumentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $InstrumentsTable> {
+  $$InstrumentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get symbol => $composableBuilder(
+      column: $table.symbol, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get isin => $composableBuilder(
+      column: $table.isin, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get exchange => $composableBuilder(
+      column: $table.exchange, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get amcName => $composableBuilder(
+      column: $table.amcName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get schemeCode => $composableBuilder(
+      column: $table.schemeCode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get sectorCode => $composableBuilder(
+      column: $table.sectorCode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get industryCode => $composableBuilder(
+      column: $table.industryCode,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get marketCapBand => $composableBuilder(
+      column: $table.marketCapBand,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get sectorOverride => $composableBuilder(
+      column: $table.sectorOverride,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get industryOverride => $composableBuilder(
+      column: $table.industryOverride,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+      column: $table.currency, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get benchmarkIndexCode => $composableBuilder(
+      column: $table.benchmarkIndexCode,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$InstrumentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $InstrumentsTable> {
+  $$InstrumentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get isin =>
+      $composableBuilder(column: $table.isin, builder: (column) => column);
+
+  GeneratedColumn<String> get exchange =>
+      $composableBuilder(column: $table.exchange, builder: (column) => column);
+
+  GeneratedColumn<String> get amcName =>
+      $composableBuilder(column: $table.amcName, builder: (column) => column);
+
+  GeneratedColumn<String> get schemeCode => $composableBuilder(
+      column: $table.schemeCode, builder: (column) => column);
+
+  GeneratedColumn<String> get sectorCode => $composableBuilder(
+      column: $table.sectorCode, builder: (column) => column);
+
+  GeneratedColumn<String> get industryCode => $composableBuilder(
+      column: $table.industryCode, builder: (column) => column);
+
+  GeneratedColumn<String> get marketCapBand => $composableBuilder(
+      column: $table.marketCapBand, builder: (column) => column);
+
+  GeneratedColumn<String> get sectorOverride => $composableBuilder(
+      column: $table.sectorOverride, builder: (column) => column);
+
+  GeneratedColumn<String> get industryOverride => $composableBuilder(
+      column: $table.industryOverride, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<String> get benchmarkIndexCode => $composableBuilder(
+      column: $table.benchmarkIndexCode, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> tradesRefs<T extends Object>(
+      Expression<T> Function($$TradesTableAnnotationComposer a) f) {
+    final $$TradesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.trades,
+        getReferencedColumn: (t) => t.instrumentId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TradesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.trades,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<T> instrumentPricesRefs<T extends Object>(
+      Expression<T> Function($$InstrumentPricesTableAnnotationComposer a) f) {
+    final $$InstrumentPricesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.instrumentPrices,
+        getReferencedColumn: (t) => t.instrumentId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentPricesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.instrumentPrices,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<T> dividendsRefs<T extends Object>(
+      Expression<T> Function($$DividendsTableAnnotationComposer a) f) {
+    final $$DividendsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.dividends,
+        getReferencedColumn: (t) => t.instrumentId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DividendsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.dividends,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$InstrumentsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $InstrumentsTable,
+    InstrumentRow,
+    $$InstrumentsTableFilterComposer,
+    $$InstrumentsTableOrderingComposer,
+    $$InstrumentsTableAnnotationComposer,
+    $$InstrumentsTableCreateCompanionBuilder,
+    $$InstrumentsTableUpdateCompanionBuilder,
+    (InstrumentRow, $$InstrumentsTableReferences),
+    InstrumentRow,
+    PrefetchHooks Function(
+        {bool tradesRefs, bool instrumentPricesRefs, bool dividendsRefs})> {
+  $$InstrumentsTableTableManager(_$AppDatabase db, $InstrumentsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$InstrumentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$InstrumentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$InstrumentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> vaultId = const Value.absent(),
+            Value<String> kind = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String?> symbol = const Value.absent(),
+            Value<String?> isin = const Value.absent(),
+            Value<String?> exchange = const Value.absent(),
+            Value<String?> amcName = const Value.absent(),
+            Value<String?> schemeCode = const Value.absent(),
+            Value<String?> sectorCode = const Value.absent(),
+            Value<String?> industryCode = const Value.absent(),
+            Value<String?> marketCapBand = const Value.absent(),
+            Value<String?> sectorOverride = const Value.absent(),
+            Value<String?> industryOverride = const Value.absent(),
+            Value<String> currency = const Value.absent(),
+            Value<String?> benchmarkIndexCode = const Value.absent(),
+            Value<int> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              InstrumentsCompanion(
+            id: id,
+            vaultId: vaultId,
+            kind: kind,
+            name: name,
+            symbol: symbol,
+            isin: isin,
+            exchange: exchange,
+            amcName: amcName,
+            schemeCode: schemeCode,
+            sectorCode: sectorCode,
+            industryCode: industryCode,
+            marketCapBand: marketCapBand,
+            sectorOverride: sectorOverride,
+            industryOverride: industryOverride,
+            currency: currency,
+            benchmarkIndexCode: benchmarkIndexCode,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String vaultId,
+            required String kind,
+            required String name,
+            Value<String?> symbol = const Value.absent(),
+            Value<String?> isin = const Value.absent(),
+            Value<String?> exchange = const Value.absent(),
+            Value<String?> amcName = const Value.absent(),
+            Value<String?> schemeCode = const Value.absent(),
+            Value<String?> sectorCode = const Value.absent(),
+            Value<String?> industryCode = const Value.absent(),
+            Value<String?> marketCapBand = const Value.absent(),
+            Value<String?> sectorOverride = const Value.absent(),
+            Value<String?> industryOverride = const Value.absent(),
+            Value<String> currency = const Value.absent(),
+            Value<String?> benchmarkIndexCode = const Value.absent(),
+            required int createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              InstrumentsCompanion.insert(
+            id: id,
+            vaultId: vaultId,
+            kind: kind,
+            name: name,
+            symbol: symbol,
+            isin: isin,
+            exchange: exchange,
+            amcName: amcName,
+            schemeCode: schemeCode,
+            sectorCode: sectorCode,
+            industryCode: industryCode,
+            marketCapBand: marketCapBand,
+            sectorOverride: sectorOverride,
+            industryOverride: industryOverride,
+            currency: currency,
+            benchmarkIndexCode: benchmarkIndexCode,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$InstrumentsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: (
+              {tradesRefs = false,
+              instrumentPricesRefs = false,
+              dividendsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (tradesRefs) db.trades,
+                if (instrumentPricesRefs) db.instrumentPrices,
+                if (dividendsRefs) db.dividends
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (tradesRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $$InstrumentsTableReferences._tradesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$InstrumentsTableReferences(db, table, p0)
+                                .tradesRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.instrumentId == item.id),
+                        typedResults: items),
+                  if (instrumentPricesRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$InstrumentsTableReferences
+                            ._instrumentPricesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$InstrumentsTableReferences(db, table, p0)
+                                .instrumentPricesRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.instrumentId == item.id),
+                        typedResults: items),
+                  if (dividendsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$InstrumentsTableReferences
+                            ._dividendsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$InstrumentsTableReferences(db, table, p0)
+                                .dividendsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.instrumentId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$InstrumentsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $InstrumentsTable,
+    InstrumentRow,
+    $$InstrumentsTableFilterComposer,
+    $$InstrumentsTableOrderingComposer,
+    $$InstrumentsTableAnnotationComposer,
+    $$InstrumentsTableCreateCompanionBuilder,
+    $$InstrumentsTableUpdateCompanionBuilder,
+    (InstrumentRow, $$InstrumentsTableReferences),
+    InstrumentRow,
+    PrefetchHooks Function(
+        {bool tradesRefs, bool instrumentPricesRefs, bool dividendsRefs})>;
+typedef $$TradesTableCreateCompanionBuilder = TradesCompanion Function({
+  required String id,
+  required String vaultId,
+  required String instrumentId,
+  Value<String?> accountId,
+  required String side,
+  required Decimal quantity,
+  required Decimal pricePerUnit,
+  Value<Decimal> brokerage,
+  Value<Decimal> stt,
+  Value<Decimal> stampDuty,
+  Value<Decimal> gst,
+  Value<Decimal> otherCharges,
+  required int tradeDate,
+  Value<String?> folioNumber,
+  Value<String> source,
+  Value<int?> confidence,
+  Value<bool> isReviewed,
+  required int createdAt,
+  Value<int> rowid,
+});
+typedef $$TradesTableUpdateCompanionBuilder = TradesCompanion Function({
+  Value<String> id,
+  Value<String> vaultId,
+  Value<String> instrumentId,
+  Value<String?> accountId,
+  Value<String> side,
+  Value<Decimal> quantity,
+  Value<Decimal> pricePerUnit,
+  Value<Decimal> brokerage,
+  Value<Decimal> stt,
+  Value<Decimal> stampDuty,
+  Value<Decimal> gst,
+  Value<Decimal> otherCharges,
+  Value<int> tradeDate,
+  Value<String?> folioNumber,
+  Value<String> source,
+  Value<int?> confidence,
+  Value<bool> isReviewed,
+  Value<int> createdAt,
+  Value<int> rowid,
+});
+
+final class $$TradesTableReferences
+    extends BaseReferences<_$AppDatabase, $TradesTable, TradeRow> {
+  $$TradesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $InstrumentsTable _instrumentIdTable(_$AppDatabase db) =>
+      db.instruments.createAlias(
+          $_aliasNameGenerator(db.trades.instrumentId, db.instruments.id));
+
+  $$InstrumentsTableProcessedTableManager? get instrumentId {
+    if ($_item.instrumentId == null) return null;
+    final manager = $$InstrumentsTableTableManager($_db, $_db.instruments)
+        .filter((f) => f.id($_item.instrumentId!));
+    final item = $_typedResult.readTableOrNull(_instrumentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $AccountsTable _accountIdTable(_$AppDatabase db) => db.accounts
+      .createAlias($_aliasNameGenerator(db.trades.accountId, db.accounts.id));
+
+  $$AccountsTableProcessedTableManager? get accountId {
+    if ($_item.accountId == null) return null;
+    final manager = $$AccountsTableTableManager($_db, $_db.accounts)
+        .filter((f) => f.id($_item.accountId!));
+    final item = $_typedResult.readTableOrNull(_accountIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$TradesTableFilterComposer
+    extends Composer<_$AppDatabase, $TradesTable> {
+  $$TradesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get side => $composableBuilder(
+      column: $table.side, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get quantity =>
+      $composableBuilder(
+          column: $table.quantity,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get pricePerUnit =>
+      $composableBuilder(
+          column: $table.pricePerUnit,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get brokerage =>
+      $composableBuilder(
+          column: $table.brokerage,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get stt =>
+      $composableBuilder(
+          column: $table.stt,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get stampDuty =>
+      $composableBuilder(
+          column: $table.stampDuty,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get gst =>
+      $composableBuilder(
+          column: $table.gst,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get otherCharges =>
+      $composableBuilder(
+          column: $table.otherCharges,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<int> get tradeDate => $composableBuilder(
+      column: $table.tradeDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get folioNumber => $composableBuilder(
+      column: $table.folioNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get confidence => $composableBuilder(
+      column: $table.confidence, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isReviewed => $composableBuilder(
+      column: $table.isReviewed, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  $$InstrumentsTableFilterComposer get instrumentId {
+    final $$InstrumentsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableFilterComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$AccountsTableFilterComposer get accountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.accountId,
+        referencedTable: $db.accounts,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$AccountsTableFilterComposer(
+              $db: $db,
+              $table: $db.accounts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$TradesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TradesTable> {
+  $$TradesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get side => $composableBuilder(
+      column: $table.side, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get pricePerUnit => $composableBuilder(
+      column: $table.pricePerUnit,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get brokerage => $composableBuilder(
+      column: $table.brokerage, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get stt => $composableBuilder(
+      column: $table.stt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get stampDuty => $composableBuilder(
+      column: $table.stampDuty, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get gst => $composableBuilder(
+      column: $table.gst, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get otherCharges => $composableBuilder(
+      column: $table.otherCharges,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get tradeDate => $composableBuilder(
+      column: $table.tradeDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get folioNumber => $composableBuilder(
+      column: $table.folioNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get confidence => $composableBuilder(
+      column: $table.confidence, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isReviewed => $composableBuilder(
+      column: $table.isReviewed, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  $$InstrumentsTableOrderingComposer get instrumentId {
+    final $$InstrumentsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableOrderingComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$AccountsTableOrderingComposer get accountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.accountId,
+        referencedTable: $db.accounts,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$AccountsTableOrderingComposer(
+              $db: $db,
+              $table: $db.accounts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$TradesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TradesTable> {
+  $$TradesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<String> get side =>
+      $composableBuilder(column: $table.side, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get pricePerUnit =>
+      $composableBuilder(
+          column: $table.pricePerUnit, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get brokerage =>
+      $composableBuilder(column: $table.brokerage, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get stt =>
+      $composableBuilder(column: $table.stt, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get stampDuty =>
+      $composableBuilder(column: $table.stampDuty, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get gst =>
+      $composableBuilder(column: $table.gst, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get otherCharges =>
+      $composableBuilder(
+          column: $table.otherCharges, builder: (column) => column);
+
+  GeneratedColumn<int> get tradeDate =>
+      $composableBuilder(column: $table.tradeDate, builder: (column) => column);
+
+  GeneratedColumn<String> get folioNumber => $composableBuilder(
+      column: $table.folioNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<int> get confidence => $composableBuilder(
+      column: $table.confidence, builder: (column) => column);
+
+  GeneratedColumn<bool> get isReviewed => $composableBuilder(
+      column: $table.isReviewed, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$InstrumentsTableAnnotationComposer get instrumentId {
+    final $$InstrumentsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$AccountsTableAnnotationComposer get accountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.accountId,
+        referencedTable: $db.accounts,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$AccountsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.accounts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$TradesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TradesTable,
+    TradeRow,
+    $$TradesTableFilterComposer,
+    $$TradesTableOrderingComposer,
+    $$TradesTableAnnotationComposer,
+    $$TradesTableCreateCompanionBuilder,
+    $$TradesTableUpdateCompanionBuilder,
+    (TradeRow, $$TradesTableReferences),
+    TradeRow,
+    PrefetchHooks Function({bool instrumentId, bool accountId})> {
+  $$TradesTableTableManager(_$AppDatabase db, $TradesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TradesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TradesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TradesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> vaultId = const Value.absent(),
+            Value<String> instrumentId = const Value.absent(),
+            Value<String?> accountId = const Value.absent(),
+            Value<String> side = const Value.absent(),
+            Value<Decimal> quantity = const Value.absent(),
+            Value<Decimal> pricePerUnit = const Value.absent(),
+            Value<Decimal> brokerage = const Value.absent(),
+            Value<Decimal> stt = const Value.absent(),
+            Value<Decimal> stampDuty = const Value.absent(),
+            Value<Decimal> gst = const Value.absent(),
+            Value<Decimal> otherCharges = const Value.absent(),
+            Value<int> tradeDate = const Value.absent(),
+            Value<String?> folioNumber = const Value.absent(),
+            Value<String> source = const Value.absent(),
+            Value<int?> confidence = const Value.absent(),
+            Value<bool> isReviewed = const Value.absent(),
+            Value<int> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TradesCompanion(
+            id: id,
+            vaultId: vaultId,
+            instrumentId: instrumentId,
+            accountId: accountId,
+            side: side,
+            quantity: quantity,
+            pricePerUnit: pricePerUnit,
+            brokerage: brokerage,
+            stt: stt,
+            stampDuty: stampDuty,
+            gst: gst,
+            otherCharges: otherCharges,
+            tradeDate: tradeDate,
+            folioNumber: folioNumber,
+            source: source,
+            confidence: confidence,
+            isReviewed: isReviewed,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String vaultId,
+            required String instrumentId,
+            Value<String?> accountId = const Value.absent(),
+            required String side,
+            required Decimal quantity,
+            required Decimal pricePerUnit,
+            Value<Decimal> brokerage = const Value.absent(),
+            Value<Decimal> stt = const Value.absent(),
+            Value<Decimal> stampDuty = const Value.absent(),
+            Value<Decimal> gst = const Value.absent(),
+            Value<Decimal> otherCharges = const Value.absent(),
+            required int tradeDate,
+            Value<String?> folioNumber = const Value.absent(),
+            Value<String> source = const Value.absent(),
+            Value<int?> confidence = const Value.absent(),
+            Value<bool> isReviewed = const Value.absent(),
+            required int createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TradesCompanion.insert(
+            id: id,
+            vaultId: vaultId,
+            instrumentId: instrumentId,
+            accountId: accountId,
+            side: side,
+            quantity: quantity,
+            pricePerUnit: pricePerUnit,
+            brokerage: brokerage,
+            stt: stt,
+            stampDuty: stampDuty,
+            gst: gst,
+            otherCharges: otherCharges,
+            tradeDate: tradeDate,
+            folioNumber: folioNumber,
+            source: source,
+            confidence: confidence,
+            isReviewed: isReviewed,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) =>
+                  (e.readTable(table), $$TradesTableReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: ({instrumentId = false, accountId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (instrumentId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.instrumentId,
+                    referencedTable:
+                        $$TradesTableReferences._instrumentIdTable(db),
+                    referencedColumn:
+                        $$TradesTableReferences._instrumentIdTable(db).id,
+                  ) as T;
+                }
+                if (accountId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.accountId,
+                    referencedTable:
+                        $$TradesTableReferences._accountIdTable(db),
+                    referencedColumn:
+                        $$TradesTableReferences._accountIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$TradesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TradesTable,
+    TradeRow,
+    $$TradesTableFilterComposer,
+    $$TradesTableOrderingComposer,
+    $$TradesTableAnnotationComposer,
+    $$TradesTableCreateCompanionBuilder,
+    $$TradesTableUpdateCompanionBuilder,
+    (TradeRow, $$TradesTableReferences),
+    TradeRow,
+    PrefetchHooks Function({bool instrumentId, bool accountId})>;
+typedef $$InstrumentPricesTableCreateCompanionBuilder
+    = InstrumentPricesCompanion Function({
+  required String id,
+  required String vaultId,
+  required String instrumentId,
+  required int asOf,
+  required Decimal price,
+  required String source,
+  Value<int> rowid,
+});
+typedef $$InstrumentPricesTableUpdateCompanionBuilder
+    = InstrumentPricesCompanion Function({
+  Value<String> id,
+  Value<String> vaultId,
+  Value<String> instrumentId,
+  Value<int> asOf,
+  Value<Decimal> price,
+  Value<String> source,
+  Value<int> rowid,
+});
+
+final class $$InstrumentPricesTableReferences extends BaseReferences<
+    _$AppDatabase, $InstrumentPricesTable, InstrumentPriceRow> {
+  $$InstrumentPricesTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $InstrumentsTable _instrumentIdTable(_$AppDatabase db) =>
+      db.instruments.createAlias($_aliasNameGenerator(
+          db.instrumentPrices.instrumentId, db.instruments.id));
+
+  $$InstrumentsTableProcessedTableManager? get instrumentId {
+    if ($_item.instrumentId == null) return null;
+    final manager = $$InstrumentsTableTableManager($_db, $_db.instruments)
+        .filter((f) => f.id($_item.instrumentId!));
+    final item = $_typedResult.readTableOrNull(_instrumentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$InstrumentPricesTableFilterComposer
+    extends Composer<_$AppDatabase, $InstrumentPricesTable> {
+  $$InstrumentPricesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get asOf => $composableBuilder(
+      column: $table.asOf, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get price =>
+      $composableBuilder(
+          column: $table.price,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+
+  $$InstrumentsTableFilterComposer get instrumentId {
+    final $$InstrumentsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableFilterComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$InstrumentPricesTableOrderingComposer
+    extends Composer<_$AppDatabase, $InstrumentPricesTable> {
+  $$InstrumentPricesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get asOf => $composableBuilder(
+      column: $table.asOf, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get price => $composableBuilder(
+      column: $table.price, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  $$InstrumentsTableOrderingComposer get instrumentId {
+    final $$InstrumentsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableOrderingComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$InstrumentPricesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $InstrumentPricesTable> {
+  $$InstrumentPricesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<int> get asOf =>
+      $composableBuilder(column: $table.asOf, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get price =>
+      $composableBuilder(column: $table.price, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  $$InstrumentsTableAnnotationComposer get instrumentId {
+    final $$InstrumentsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$InstrumentPricesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $InstrumentPricesTable,
+    InstrumentPriceRow,
+    $$InstrumentPricesTableFilterComposer,
+    $$InstrumentPricesTableOrderingComposer,
+    $$InstrumentPricesTableAnnotationComposer,
+    $$InstrumentPricesTableCreateCompanionBuilder,
+    $$InstrumentPricesTableUpdateCompanionBuilder,
+    (InstrumentPriceRow, $$InstrumentPricesTableReferences),
+    InstrumentPriceRow,
+    PrefetchHooks Function({bool instrumentId})> {
+  $$InstrumentPricesTableTableManager(
+      _$AppDatabase db, $InstrumentPricesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$InstrumentPricesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$InstrumentPricesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$InstrumentPricesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> vaultId = const Value.absent(),
+            Value<String> instrumentId = const Value.absent(),
+            Value<int> asOf = const Value.absent(),
+            Value<Decimal> price = const Value.absent(),
+            Value<String> source = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              InstrumentPricesCompanion(
+            id: id,
+            vaultId: vaultId,
+            instrumentId: instrumentId,
+            asOf: asOf,
+            price: price,
+            source: source,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String vaultId,
+            required String instrumentId,
+            required int asOf,
+            required Decimal price,
+            required String source,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              InstrumentPricesCompanion.insert(
+            id: id,
+            vaultId: vaultId,
+            instrumentId: instrumentId,
+            asOf: asOf,
+            price: price,
+            source: source,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$InstrumentPricesTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({instrumentId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (instrumentId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.instrumentId,
+                    referencedTable: $$InstrumentPricesTableReferences
+                        ._instrumentIdTable(db),
+                    referencedColumn: $$InstrumentPricesTableReferences
+                        ._instrumentIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$InstrumentPricesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $InstrumentPricesTable,
+    InstrumentPriceRow,
+    $$InstrumentPricesTableFilterComposer,
+    $$InstrumentPricesTableOrderingComposer,
+    $$InstrumentPricesTableAnnotationComposer,
+    $$InstrumentPricesTableCreateCompanionBuilder,
+    $$InstrumentPricesTableUpdateCompanionBuilder,
+    (InstrumentPriceRow, $$InstrumentPricesTableReferences),
+    InstrumentPriceRow,
+    PrefetchHooks Function({bool instrumentId})>;
+typedef $$DividendsTableCreateCompanionBuilder = DividendsCompanion Function({
+  required String id,
+  required String vaultId,
+  required String instrumentId,
+  required int paidOn,
+  required Decimal amount,
+  Value<Decimal> taxDeducted,
+  Value<String> kind,
+  Value<String?> txnId,
+  Value<int> rowid,
+});
+typedef $$DividendsTableUpdateCompanionBuilder = DividendsCompanion Function({
+  Value<String> id,
+  Value<String> vaultId,
+  Value<String> instrumentId,
+  Value<int> paidOn,
+  Value<Decimal> amount,
+  Value<Decimal> taxDeducted,
+  Value<String> kind,
+  Value<String?> txnId,
+  Value<int> rowid,
+});
+
+final class $$DividendsTableReferences
+    extends BaseReferences<_$AppDatabase, $DividendsTable, DividendRow> {
+  $$DividendsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $InstrumentsTable _instrumentIdTable(_$AppDatabase db) =>
+      db.instruments.createAlias(
+          $_aliasNameGenerator(db.dividends.instrumentId, db.instruments.id));
+
+  $$InstrumentsTableProcessedTableManager? get instrumentId {
+    if ($_item.instrumentId == null) return null;
+    final manager = $$InstrumentsTableTableManager($_db, $_db.instruments)
+        .filter((f) => f.id($_item.instrumentId!));
+    final item = $_typedResult.readTableOrNull(_instrumentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $TransactionsTable _txnIdTable(_$AppDatabase db) =>
+      db.transactions.createAlias(
+          $_aliasNameGenerator(db.dividends.txnId, db.transactions.id));
+
+  $$TransactionsTableProcessedTableManager? get txnId {
+    if ($_item.txnId == null) return null;
+    final manager = $$TransactionsTableTableManager($_db, $_db.transactions)
+        .filter((f) => f.id($_item.txnId!));
+    final item = $_typedResult.readTableOrNull(_txnIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$DividendsTableFilterComposer
+    extends Composer<_$AppDatabase, $DividendsTable> {
+  $$DividendsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get paidOn => $composableBuilder(
+      column: $table.paidOn, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get amount =>
+      $composableBuilder(
+          column: $table.amount,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get taxDeducted =>
+      $composableBuilder(
+          column: $table.taxDeducted,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnFilters(column));
+
+  $$InstrumentsTableFilterComposer get instrumentId {
+    final $$InstrumentsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableFilterComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$TransactionsTableFilterComposer get txnId {
+    final $$TransactionsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.txnId,
+        referencedTable: $db.transactions,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TransactionsTableFilterComposer(
+              $db: $db,
+              $table: $db.transactions,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$DividendsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DividendsTable> {
+  $$DividendsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get paidOn => $composableBuilder(
+      column: $table.paidOn, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get amount => $composableBuilder(
+      column: $table.amount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get taxDeducted => $composableBuilder(
+      column: $table.taxDeducted, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnOrderings(column));
+
+  $$InstrumentsTableOrderingComposer get instrumentId {
+    final $$InstrumentsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableOrderingComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$TransactionsTableOrderingComposer get txnId {
+    final $$TransactionsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.txnId,
+        referencedTable: $db.transactions,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TransactionsTableOrderingComposer(
+              $db: $db,
+              $table: $db.transactions,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$DividendsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DividendsTable> {
+  $$DividendsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<int> get paidOn =>
+      $composableBuilder(column: $table.paidOn, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get taxDeducted =>
+      $composableBuilder(
+          column: $table.taxDeducted, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  $$InstrumentsTableAnnotationComposer get instrumentId {
+    final $$InstrumentsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$TransactionsTableAnnotationComposer get txnId {
+    final $$TransactionsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.txnId,
+        referencedTable: $db.transactions,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TransactionsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.transactions,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$DividendsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $DividendsTable,
+    DividendRow,
+    $$DividendsTableFilterComposer,
+    $$DividendsTableOrderingComposer,
+    $$DividendsTableAnnotationComposer,
+    $$DividendsTableCreateCompanionBuilder,
+    $$DividendsTableUpdateCompanionBuilder,
+    (DividendRow, $$DividendsTableReferences),
+    DividendRow,
+    PrefetchHooks Function({bool instrumentId, bool txnId})> {
+  $$DividendsTableTableManager(_$AppDatabase db, $DividendsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DividendsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DividendsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DividendsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> vaultId = const Value.absent(),
+            Value<String> instrumentId = const Value.absent(),
+            Value<int> paidOn = const Value.absent(),
+            Value<Decimal> amount = const Value.absent(),
+            Value<Decimal> taxDeducted = const Value.absent(),
+            Value<String> kind = const Value.absent(),
+            Value<String?> txnId = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              DividendsCompanion(
+            id: id,
+            vaultId: vaultId,
+            instrumentId: instrumentId,
+            paidOn: paidOn,
+            amount: amount,
+            taxDeducted: taxDeducted,
+            kind: kind,
+            txnId: txnId,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String vaultId,
+            required String instrumentId,
+            required int paidOn,
+            required Decimal amount,
+            Value<Decimal> taxDeducted = const Value.absent(),
+            Value<String> kind = const Value.absent(),
+            Value<String?> txnId = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              DividendsCompanion.insert(
+            id: id,
+            vaultId: vaultId,
+            instrumentId: instrumentId,
+            paidOn: paidOn,
+            amount: amount,
+            taxDeducted: taxDeducted,
+            kind: kind,
+            txnId: txnId,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$DividendsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({instrumentId = false, txnId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (instrumentId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.instrumentId,
+                    referencedTable:
+                        $$DividendsTableReferences._instrumentIdTable(db),
+                    referencedColumn:
+                        $$DividendsTableReferences._instrumentIdTable(db).id,
+                  ) as T;
+                }
+                if (txnId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.txnId,
+                    referencedTable: $$DividendsTableReferences._txnIdTable(db),
+                    referencedColumn:
+                        $$DividendsTableReferences._txnIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$DividendsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $DividendsTable,
+    DividendRow,
+    $$DividendsTableFilterComposer,
+    $$DividendsTableOrderingComposer,
+    $$DividendsTableAnnotationComposer,
+    $$DividendsTableCreateCompanionBuilder,
+    $$DividendsTableUpdateCompanionBuilder,
+    (DividendRow, $$DividendsTableReferences),
+    DividendRow,
+    PrefetchHooks Function({bool instrumentId, bool txnId})>;
+typedef $$FundHoldingsTableCreateCompanionBuilder = FundHoldingsCompanion
+    Function({
+  required String id,
+  required String schemeCode,
+  required String underlyingIsin,
+  required int weightBps,
+  required int asOf,
+  Value<int> rowid,
+});
+typedef $$FundHoldingsTableUpdateCompanionBuilder = FundHoldingsCompanion
+    Function({
+  Value<String> id,
+  Value<String> schemeCode,
+  Value<String> underlyingIsin,
+  Value<int> weightBps,
+  Value<int> asOf,
+  Value<int> rowid,
+});
+
+class $$FundHoldingsTableFilterComposer
+    extends Composer<_$AppDatabase, $FundHoldingsTable> {
+  $$FundHoldingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get schemeCode => $composableBuilder(
+      column: $table.schemeCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get underlyingIsin => $composableBuilder(
+      column: $table.underlyingIsin,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get weightBps => $composableBuilder(
+      column: $table.weightBps, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get asOf => $composableBuilder(
+      column: $table.asOf, builder: (column) => ColumnFilters(column));
+}
+
+class $$FundHoldingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FundHoldingsTable> {
+  $$FundHoldingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get schemeCode => $composableBuilder(
+      column: $table.schemeCode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get underlyingIsin => $composableBuilder(
+      column: $table.underlyingIsin,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get weightBps => $composableBuilder(
+      column: $table.weightBps, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get asOf => $composableBuilder(
+      column: $table.asOf, builder: (column) => ColumnOrderings(column));
+}
+
+class $$FundHoldingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FundHoldingsTable> {
+  $$FundHoldingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get schemeCode => $composableBuilder(
+      column: $table.schemeCode, builder: (column) => column);
+
+  GeneratedColumn<String> get underlyingIsin => $composableBuilder(
+      column: $table.underlyingIsin, builder: (column) => column);
+
+  GeneratedColumn<int> get weightBps =>
+      $composableBuilder(column: $table.weightBps, builder: (column) => column);
+
+  GeneratedColumn<int> get asOf =>
+      $composableBuilder(column: $table.asOf, builder: (column) => column);
+}
+
+class $$FundHoldingsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $FundHoldingsTable,
+    FundHoldingRow,
+    $$FundHoldingsTableFilterComposer,
+    $$FundHoldingsTableOrderingComposer,
+    $$FundHoldingsTableAnnotationComposer,
+    $$FundHoldingsTableCreateCompanionBuilder,
+    $$FundHoldingsTableUpdateCompanionBuilder,
+    (
+      FundHoldingRow,
+      BaseReferences<_$AppDatabase, $FundHoldingsTable, FundHoldingRow>
+    ),
+    FundHoldingRow,
+    PrefetchHooks Function()> {
+  $$FundHoldingsTableTableManager(_$AppDatabase db, $FundHoldingsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FundHoldingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FundHoldingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FundHoldingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> schemeCode = const Value.absent(),
+            Value<String> underlyingIsin = const Value.absent(),
+            Value<int> weightBps = const Value.absent(),
+            Value<int> asOf = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              FundHoldingsCompanion(
+            id: id,
+            schemeCode: schemeCode,
+            underlyingIsin: underlyingIsin,
+            weightBps: weightBps,
+            asOf: asOf,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String schemeCode,
+            required String underlyingIsin,
+            required int weightBps,
+            required int asOf,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              FundHoldingsCompanion.insert(
+            id: id,
+            schemeCode: schemeCode,
+            underlyingIsin: underlyingIsin,
+            weightBps: weightBps,
+            asOf: asOf,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$FundHoldingsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $FundHoldingsTable,
+    FundHoldingRow,
+    $$FundHoldingsTableFilterComposer,
+    $$FundHoldingsTableOrderingComposer,
+    $$FundHoldingsTableAnnotationComposer,
+    $$FundHoldingsTableCreateCompanionBuilder,
+    $$FundHoldingsTableUpdateCompanionBuilder,
+    (
+      FundHoldingRow,
+      BaseReferences<_$AppDatabase, $FundHoldingsTable, FundHoldingRow>
+    ),
+    FundHoldingRow,
+    PrefetchHooks Function()>;
+typedef $$BenchmarkSeriesTableCreateCompanionBuilder = BenchmarkSeriesCompanion
+    Function({
+  required String id,
+  required String indexCode,
+  required int onDate,
+  required Decimal closeValue,
+  Value<int> rowid,
+});
+typedef $$BenchmarkSeriesTableUpdateCompanionBuilder = BenchmarkSeriesCompanion
+    Function({
+  Value<String> id,
+  Value<String> indexCode,
+  Value<int> onDate,
+  Value<Decimal> closeValue,
+  Value<int> rowid,
+});
+
+class $$BenchmarkSeriesTableFilterComposer
+    extends Composer<_$AppDatabase, $BenchmarkSeriesTable> {
+  $$BenchmarkSeriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get indexCode => $composableBuilder(
+      column: $table.indexCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get onDate => $composableBuilder(
+      column: $table.onDate, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get closeValue =>
+      $composableBuilder(
+          column: $table.closeValue,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+}
+
+class $$BenchmarkSeriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $BenchmarkSeriesTable> {
+  $$BenchmarkSeriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get indexCode => $composableBuilder(
+      column: $table.indexCode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get onDate => $composableBuilder(
+      column: $table.onDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get closeValue => $composableBuilder(
+      column: $table.closeValue, builder: (column) => ColumnOrderings(column));
+}
+
+class $$BenchmarkSeriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BenchmarkSeriesTable> {
+  $$BenchmarkSeriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get indexCode =>
+      $composableBuilder(column: $table.indexCode, builder: (column) => column);
+
+  GeneratedColumn<int> get onDate =>
+      $composableBuilder(column: $table.onDate, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get closeValue =>
+      $composableBuilder(
+          column: $table.closeValue, builder: (column) => column);
+}
+
+class $$BenchmarkSeriesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $BenchmarkSeriesTable,
+    BenchmarkPointRow,
+    $$BenchmarkSeriesTableFilterComposer,
+    $$BenchmarkSeriesTableOrderingComposer,
+    $$BenchmarkSeriesTableAnnotationComposer,
+    $$BenchmarkSeriesTableCreateCompanionBuilder,
+    $$BenchmarkSeriesTableUpdateCompanionBuilder,
+    (
+      BenchmarkPointRow,
+      BaseReferences<_$AppDatabase, $BenchmarkSeriesTable, BenchmarkPointRow>
+    ),
+    BenchmarkPointRow,
+    PrefetchHooks Function()> {
+  $$BenchmarkSeriesTableTableManager(
+      _$AppDatabase db, $BenchmarkSeriesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BenchmarkSeriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BenchmarkSeriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BenchmarkSeriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> indexCode = const Value.absent(),
+            Value<int> onDate = const Value.absent(),
+            Value<Decimal> closeValue = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              BenchmarkSeriesCompanion(
+            id: id,
+            indexCode: indexCode,
+            onDate: onDate,
+            closeValue: closeValue,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String indexCode,
+            required int onDate,
+            required Decimal closeValue,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              BenchmarkSeriesCompanion.insert(
+            id: id,
+            indexCode: indexCode,
+            onDate: onDate,
+            closeValue: closeValue,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$BenchmarkSeriesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $BenchmarkSeriesTable,
+    BenchmarkPointRow,
+    $$BenchmarkSeriesTableFilterComposer,
+    $$BenchmarkSeriesTableOrderingComposer,
+    $$BenchmarkSeriesTableAnnotationComposer,
+    $$BenchmarkSeriesTableCreateCompanionBuilder,
+    $$BenchmarkSeriesTableUpdateCompanionBuilder,
+    (
+      BenchmarkPointRow,
+      BaseReferences<_$AppDatabase, $BenchmarkSeriesTable, BenchmarkPointRow>
+    ),
+    BenchmarkPointRow,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11377,4 +16817,16 @@ class $AppDatabaseManager {
       $$PostingsTableTableManager(_db, _db.postings);
   $$PendingCapturesTableTableManager get pendingCaptures =>
       $$PendingCapturesTableTableManager(_db, _db.pendingCaptures);
+  $$InstrumentsTableTableManager get instruments =>
+      $$InstrumentsTableTableManager(_db, _db.instruments);
+  $$TradesTableTableManager get trades =>
+      $$TradesTableTableManager(_db, _db.trades);
+  $$InstrumentPricesTableTableManager get instrumentPrices =>
+      $$InstrumentPricesTableTableManager(_db, _db.instrumentPrices);
+  $$DividendsTableTableManager get dividends =>
+      $$DividendsTableTableManager(_db, _db.dividends);
+  $$FundHoldingsTableTableManager get fundHoldings =>
+      $$FundHoldingsTableTableManager(_db, _db.fundHoldings);
+  $$BenchmarkSeriesTableTableManager get benchmarkSeries =>
+      $$BenchmarkSeriesTableTableManager(_db, _db.benchmarkSeries);
 }

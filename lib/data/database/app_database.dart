@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
+import 'package:meta/meta.dart';
 
 import '../models/tables.dart';
 import 'account_dao.dart';
@@ -45,6 +46,12 @@ part 'app_database.g.dart';
     Accounts,
     Postings,
     PendingCaptures,
+    Instruments,
+    Trades,
+    InstrumentPrices,
+    Dividends,
+    FundHoldings,
+    BenchmarkSeries,
   ],
   daos: [
     TransactionDao,
@@ -77,7 +84,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -94,6 +101,10 @@ class AppDatabase extends _$AppDatabase {
           // v3: double-entry accounting + receipt attachments + auto-capture.
           if (from < 3) {
             await _migrateToDoubleEntry(m);
+          }
+          // v4: lot-level portfolio model (cost basis, prices, sectors).
+          if (from < 4) {
+            await _migrateToLotLevelPortfolio(m);
           }
         },
       );
@@ -159,6 +170,93 @@ class AppDatabase extends _$AppDatabase {
         ));
         await (update(transactions)..where((x) => x.id.equals(t.id)))
             .write(TransactionsCompanion(accountId: Value(cash)));
+      }
+    });
+  }
+
+  /// v4 migration: introduces the lot-level portfolio model.
+  ///
+  /// [Holdings] stores one aggregated row per symbol with a single `avgCost`, so
+  /// profit-and-loss was not computable — no per-lot cost basis, no
+  /// realised/unrealised split, no dated price, no sector to roll up by.
+  ///
+  /// Every existing holding is backfilled as one [Instruments] row plus one
+  /// opening [Trades] buy at its recorded average cost, dated
+  /// `firstPurchaseDate`. Those rows carry `isReviewed = false`, because an
+  /// average is not a real lot: the quantity and total cost are right, but the
+  /// purchase history behind them is not. Flagging beats silently presenting
+  /// them as precise. Ids are derived from the holding id, so re-running the
+  /// migration cannot duplicate anything.
+  ///
+  /// [Holdings] is intentionally left in place and untouched — the UI still
+  /// reads it until the cutover completes.
+  Future<void> _migrateToLotLevelPortfolio(Migrator m) async {
+    await m.createTable(instruments);
+    await m.createTable(trades);
+    await m.createTable(instrumentPrices);
+    await m.createTable(dividends);
+    await m.createTable(fundHoldings);
+    await m.createTable(benchmarkSeries);
+    await backfillLotsFromHoldings();
+  }
+
+  /// Backfills [Instruments], [Trades] and [InstrumentPrices] from legacy
+  /// [Holdings] rows. Split out from the migration so it can be tested directly;
+  /// idempotent, so running it twice changes nothing.
+  @visibleForTesting
+  Future<void> backfillLotsFromHoldings() async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final existing = await select(holdings).get();
+    if (existing.isEmpty) return;
+
+    await transaction(() async {
+      for (final h in existing) {
+        final instrumentId = 'inst-${h.id}';
+        await into(instruments).insertOnConflictUpdate(
+          InstrumentsCompanion.insert(
+            id: instrumentId,
+            vaultId: h.vaultId,
+            kind: h.assetType,
+            name: h.symbol,
+            symbol: Value(h.symbol),
+            exchange: Value(h.exchange),
+            currency: Value(h.currency),
+            createdAt: now,
+          ),
+        );
+
+        await into(trades).insertOnConflictUpdate(
+          TradesCompanion.insert(
+            id: 'trade-${h.id}',
+            vaultId: h.vaultId,
+            instrumentId: instrumentId,
+            side: 'buy',
+            quantity: h.quantity,
+            pricePerUnit: h.avgCost,
+            tradeDate: h.firstPurchaseDate,
+            source: const Value('legacy'),
+            isReviewed: const Value(false),
+            createdAt: now,
+          ),
+        );
+
+        // Carry the last known price across as the first point of the series,
+        // so nothing that was already displayable stops being displayable.
+        // Timestamped `now` because the old schema never recorded when the
+        // price was fetched — which is precisely why staleness was unshowable.
+        final price = h.lastPrice;
+        if (price != null) {
+          await into(instrumentPrices).insertOnConflictUpdate(
+            InstrumentPricesCompanion.insert(
+              id: 'price-${h.id}-legacy',
+              vaultId: h.vaultId,
+              instrumentId: instrumentId,
+              asOf: now,
+              price: price,
+              source: 'legacy',
+            ),
+          );
+        }
       }
     });
   }
