@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../core/di/providers.dart';
 import '../core/router/app_router.dart';
 import '../features/capture/providers/capture_providers.dart';
+import 'desktop_shell.dart';
 
 /// Intent for the "new transaction" keyboard shortcut (PRD Phase 4, Web).
 class _NewTransactionIntent extends Intent {
@@ -17,8 +19,21 @@ class _LockIntent extends Intent {
   const _LockIntent();
 }
 
-/// Authenticated shell: bottom navigation across the core feature screens.
-/// Re-locks the vault when the app is backgrounded (PRD security).
+/// True on the desktop platforms, where the app should present a desktop layout
+/// rather than a phone layout stretched into a window.
+///
+/// Deliberately keyed on the PLATFORM, not on window width: a narrow window on a
+/// Mac is still a Mac app and should keep its sidebar, and a wide Android tablet
+/// still wants touch-sized targets. Web is excluded because it is served to
+/// phones as often as to desktops, so it keeps the width-driven mobile shell.
+bool get isDesktopPlatform =>
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux);
+
+/// Authenticated shell. Desktop gets a persistent sidebar ([DesktopShell]);
+/// phones get bottom navigation. Re-locks the vault when backgrounded.
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({required this.child, super.key});
   final Widget child;
@@ -99,6 +114,9 @@ class _AppShellState extends ConsumerState<AppShell>
   }
 
   Widget _buildScaffold(BuildContext context, int index) {
+    if (isDesktopPlatform) {
+      return DesktopShell(child: widget.child);
+    }
     return Scaffold(
       body: widget.child,
       bottomNavigationBar: NavigationBar(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'presentation/app_shell.dart' show isDesktopPlatform;
+
 import 'core/branding.dart';
 import 'core/router/app_router.dart';
 import 'core/router/layout_providers.dart';
@@ -47,6 +49,9 @@ class _Responsive extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Desktop draws its own full-width layout (sidebar + content), so capping
+    // the width here would put a phone-sized column in the middle of the window.
+    if (isDesktopPlatform) return child;
     final maxWidth =
         ref.watch(wideLayoutProvider) ? _wideMaxWidth : _mobileMaxWidth;
     final width = MediaQuery.sizeOf(context).width;
