@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/di/data_providers.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
+import '../../../domain/entities/asset_group.dart';
 import '../../../domain/entities/holding.dart';
 import '../../../domain/services/portfolio_diff.dart';
 import '../../../domain/services/tax_rule_engine.dart';
@@ -246,27 +247,28 @@ class _PortfolioHeroCard extends StatelessWidget {
 // 2. Allocation card
 // ---------------------------------------------------------------------------
 
-const _kViolet = Color(0xFF8B5CF6);
-
-const _kTeal = Color(0xFF0E7490);
-const _kOlive = Color(0xFF7C8A3A);
-const _kPlum = Color(0xFF9A5B9A);
-
-Color _assetColor(AssetType t) => switch (t) {
-      AssetType.equityEtf => AppColors.accent,
-      AssetType.goldEtf => AppColors.budgetWarn,
-      AssetType.debtMf => _kViolet,
-      AssetType.realEstate => AppColors.income,
-      AssetType.crypto => AppColors.expense,
-      AssetType.fd => _kTeal,
-      AssetType.ppfEpf => _kOlive,
-      AssetType.nps => _kPlum,
+/// Validated categorical palette for the seven chart groups.
+///
+/// Hues/steps come from the data-viz reference palette and were checked with its
+/// validator against this surface. Only valid in [kAssetGroupOrder] — see the
+/// note on that constant before reordering or sorting slices.
+Color _groupColor(AssetGroup g) => switch (g) {
+      AssetGroup.equity => const Color(0xFF2A78D6),
+      AssetGroup.debt => const Color(0xFFEB6834),
+      AssetGroup.gold => const Color(0xFF1BAF7A),
+      AssetGroup.realEstate => const Color(0xFFEDA100),
+      AssetGroup.retirement => const Color(0xFFE87BA4),
+      AssetGroup.crypto => const Color(0xFF008300),
+      AssetGroup.cash => const Color(0xFF4A3AA7),
     };
 
 String _assetLabel(AssetType t) => switch (t) {
-      AssetType.equityEtf => 'Equity',
+      AssetType.equityEtf => 'Equity / ETF',
+      AssetType.equityMf => 'Equity MF',
       AssetType.goldEtf => 'Gold',
-      AssetType.debtMf => 'Debt',
+      AssetType.debtMf => 'Debt MF',
+      AssetType.bond => 'Bonds',
+      AssetType.cash => 'Cash',
       AssetType.realEstate => 'Real Estate',
       AssetType.crypto => 'Crypto',
       AssetType.fd => 'Fixed Deposit',
@@ -281,33 +283,34 @@ class _AllocationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Group by asset type.
-    final grouped = <AssetType, Decimal>{};
+    // Group by chart group, not asset type — eleven asset types can't be kept
+    // colourblind-separable as eleven hues.
+    final grouped = <AssetGroup, Decimal>{};
     for (final h in holdings) {
-      grouped[h.assetType] =
-          (grouped[h.assetType] ?? Decimal.zero) + h.marketValue;
+      final g = AssetGroup.of(h.assetType);
+      grouped[g] = (grouped[g] ?? Decimal.zero) + h.marketValue;
     }
 
     final total =
         grouped.values.fold(Decimal.zero, (s, v) => s + v);
     if (total == Decimal.zero) return const SizedBox.shrink();
 
-    // Sort descending by value; build segments.
-    final sorted = grouped.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    // Emit in the fixed validated order — deliberately NOT sorted by value,
+    // because the palette only clears the colourblind gates on this adjacency.
+    final present = [
+      for (final g in kAssetGroupOrder)
+        if ((grouped[g] ?? Decimal.zero) > Decimal.zero) g,
+    ];
     final segments = [
-      for (final e in sorted)
-        DonutSegment(
-          _assetLabel(e.key),
-          e.value.toDouble(),
-          _assetColor(e.key),
-        ),
+      for (final g in present)
+        DonutSegment(g.label, grouped[g]!.toDouble(), _groupColor(g)),
     ];
 
-    // Largest slice for center label.
-    final largest = sorted.first;
+    // Largest group drives the centre label (a value read, not a colour order).
+    final largest = present
+        .reduce((a, b) => grouped[b]! > grouped[a]! ? b : a);
     final largestPct =
-        (largest.value.toDouble() / total.toDouble() * 100).round();
+        (grouped[largest]!.toDouble() / total.toDouble() * 100).round();
 
     return GlassCard(
       child: Column(
@@ -326,7 +329,7 @@ class _AllocationCard extends StatelessWidget {
             size: 140,
             strokeWidth: 22,
             centerText: '$largestPct%',
-            centerSub: _assetLabel(largest.key),
+            centerSub: largest.label,
             showLegend: true,
           ),
         ],
@@ -568,7 +571,8 @@ class _HoldingRow extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${holding.quantity} Qty · Avg ${Money.format(holding.avgCost)}',
+                        '${holding.quantity} Qty · Avg ${Money.format(holding.avgCost)}'
+                        ' · ${_assetLabel(holding.assetType)}',
                         style: Theme.of(context)
                             .textTheme
                             .bodySmall

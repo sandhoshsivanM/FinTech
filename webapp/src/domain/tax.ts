@@ -11,9 +11,20 @@ interface Rule {
   ltcgExemption: string;
 }
 
+// Must stay in sync with assets/tax_rules.json on the Flutter side — the Dart
+// test test/unit/asset_type_test.dart asserts every AssetType has a rule there,
+// and TypeScript's Record<AssetType, Rule> enforces the same completeness here.
 export const TAX_RULES: Record<AssetType, Rule> = {
   equity_etf: { stcgRate: 20, ltcgRate: 12.5, ltcgThresholdMonths: 12, ltcgExemption: '125000' },
+  // Equity-oriented mutual funds are taxed as equity, not as debt.
+  equity_mf: { stcgRate: 20, ltcgRate: 12.5, ltcgThresholdMonths: 12, ltcgExemption: '125000' },
   debt_mf: { stcgRate: null, ltcgRate: null, ltcgThresholdMonths: 24, ltcgExemption: '0' },
+  // Bonds: modelled as slab, which is the conservative case. Listed bonds and
+  // debentures can qualify for 12.5% LTCG after 12 months — revisit per-instrument.
+  bond: { stcgRate: null, ltcgRate: null, ltcgThresholdMonths: 24, ltcgExemption: '0' },
+  // Cash does not appreciate, so it produces no capital gain. Interest on it is
+  // slab-taxed income and belongs in transactions, not here.
+  cash: { stcgRate: 0, ltcgRate: 0, ltcgThresholdMonths: 0, ltcgExemption: '0' },
   gold_etf: { stcgRate: null, ltcgRate: 12.5, ltcgThresholdMonths: 24, ltcgExemption: '0' },
   real_estate: { stcgRate: null, ltcgRate: 12.5, ltcgThresholdMonths: 24, ltcgExemption: '0' },
   // VDAs (crypto): flat 30%, no LTCG concession, no loss set-off.

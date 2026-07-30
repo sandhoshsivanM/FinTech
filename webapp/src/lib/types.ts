@@ -62,9 +62,10 @@ export interface Goal {
   notes?: string | null;
 }
 
+// Keys must match Dart's AssetType.key and the entries in assets/tax_rules.json.
 export type AssetType =
-  | 'equity_etf' | 'debt_mf' | 'gold_etf' | 'real_estate'
-  | 'crypto' | 'fd' | 'ppf_epf' | 'nps';
+  | 'equity_etf' | 'equity_mf' | 'debt_mf' | 'gold_etf' | 'bond' | 'cash'
+  | 'real_estate' | 'crypto' | 'fd' | 'ppf_epf' | 'nps';
 
 export interface Holding {
   id: string;
