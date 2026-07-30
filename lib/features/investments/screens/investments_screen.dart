@@ -44,6 +44,11 @@ class InvestmentsScreen extends StatelessWidget {
             icon: const Icon(Icons.donut_small_outlined),
             onPressed: () => context.go(Routes.investmentsBreakdown),
           ),
+          IconButton(
+            tooltip: 'Import lots from a broker CSV',
+            icon: const Icon(Icons.upload_file_outlined),
+            onPressed: () => context.go(Routes.investmentsImportLots),
+          ),
           const _RefreshPricesButton(),
         ],
       ),

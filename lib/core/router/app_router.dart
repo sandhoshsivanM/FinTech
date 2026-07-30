@@ -9,6 +9,7 @@ import '../../features/goals/screens/goals_screen.dart';
 import '../../features/import/screens/bank_import_screen.dart';
 import '../../features/insurance/screens/insurance_screen.dart';
 import '../../features/investments/screens/add_lot_screen.dart';
+import '../../features/investments/screens/import_lots_screen.dart';
 import '../../features/investments/screens/investments_screen.dart';
 import '../../features/investments/screens/portfolio_breakdown_screen.dart';
 import '../../features/liabilities/screens/liabilities_screen.dart';
@@ -38,6 +39,7 @@ abstract final class Routes {
   static const investments = '/app/investments';
   static const investmentsBreakdown = '/app/investments/breakdown';
   static const investmentsAddLot = '/app/investments/add-lot';
+  static const investmentsImportLots = '/app/investments/import-lots';
   static const liabilities = '/app/liabilities';
   static const insurance = '/app/insurance';
   static const safetyNet = '/app/safety-net';
@@ -99,6 +101,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             GoRoute(
               path: 'add-lot',
               builder: (context, state) => const AddLotScreen(),
+            ),
+            GoRoute(
+              path: 'import-lots',
+              builder: (context, state) => const ImportLotsScreen(),
             ),
           ]),
           _tab(Routes.liabilities, const LiabilitiesScreen()),
