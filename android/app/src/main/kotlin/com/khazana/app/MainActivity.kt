@@ -1,4 +1,4 @@
-package com.fintechos.fintech_os
+package com.khazana.app
 
 import android.Manifest
 import android.content.ComponentName

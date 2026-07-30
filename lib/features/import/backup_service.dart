@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 
+import '../../core/branding.dart';
 import '../../core/errors/app_error.dart';
 
 /// Encrypted backup file codec + 6-check restore validator (PRD §11).
@@ -83,18 +84,18 @@ class BackupService {
   }) async {
     // (1) Magic header.
     if (backup.length < headerSize + _tagLen) {
-      throw const BackupError('This file is not a Khazana backup.');
+      throw const BackupError('This file is not a $kAppName backup.');
     }
     final head = ByteData.sublistView(backup, 0, headerSize);
     if (head.getUint32(0, Endian.big) != magic) {
-      throw const BackupError('This file is not a Khazana backup.');
+      throw const BackupError('This file is not a $kAppName backup.');
     }
 
     // (2) Schema version policy.
     final backupSchema = head.getUint32(_offSchema, Endian.big);
     if (backupSchema > currentSchemaVersion) {
       throw const BackupError(
-          'This backup was created by a newer version of Khazana. '
+          'This backup was created by a newer version of $kAppName. '
           'Please update the app first.');
     }
     // backupSchema < current → proceed; forward migrations run after restore.

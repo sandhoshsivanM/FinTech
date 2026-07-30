@@ -1,4 +1,4 @@
-package com.fintechos.fintech_os
+package com.khazana.app
 
 import android.content.BroadcastReceiver
 import android.content.Context

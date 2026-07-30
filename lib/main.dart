@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/branding.dart';
 import 'core/router/app_router.dart';
 import 'core/router/layout_providers.dart';
 import 'core/theme/app_theme.dart';
@@ -8,17 +9,17 @@ import 'presentation/app_background.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: FintechOsApp()));
+  runApp(const ProviderScope(child: KhazanaApp()));
 }
 
-class FintechOsApp extends ConsumerWidget {
-  const FintechOsApp({super.key});
+class KhazanaApp extends ConsumerWidget {
+  const KhazanaApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
-      title: 'Khazana',
+      title: kAppName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

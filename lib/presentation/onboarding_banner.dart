@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/branding.dart';
 import '../core/theme/app_tokens.dart';
 import '../features/settings/providers/onboarding_providers.dart';
 
@@ -37,7 +38,7 @@ class OnboardingBanner extends ConsumerWidget {
                   color: AppColors.accent, size: 20),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text('Welcome to Khazana',
+                child: Text('Welcome to $kAppName',
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium

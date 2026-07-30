@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:fintech_os/core/errors/app_error.dart';
-import 'package:fintech_os/features/import/backup_service.dart';
+import 'package:khazana/core/errors/app_error.dart';
+import 'package:khazana/features/import/backup_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

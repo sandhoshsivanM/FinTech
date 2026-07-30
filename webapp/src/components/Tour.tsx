@@ -3,7 +3,7 @@
 // time, each explained exactly once. Spotlights the control when it's on screen;
 // if a control is tucked away (e.g. the mobile menu), the step still shows its
 // explanation centered so nothing is skipped. Auto-runs once for new users;
-// replayable via the 'ftos:start-tour' window event. Pure DOM — no deps.
+// replayable via the TOUR_EVENT window event. Pure DOM — no deps.
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from './ui';
@@ -29,7 +29,11 @@ const STEPS: Step[] = [
   { sel: '[data-tour="theme"]', title: 'Make it yours', body: 'Switch light / dark / system here, and pick an accent colour in Settings → Appearance.' },
 ];
 
-const DONE_KEY = 'ftos-tour-done';
+const DONE_KEY = 'khazana-tour-done';
+const LEGACY_DONE_KEY = 'ftos-tour-done';
+
+/** Window event that replays the tour. Exported so callers can't drift from it. */
+export const TOUR_EVENT = 'khazana:start-tour';
 
 export function Tour() {
   const router = useRouter();
@@ -49,10 +53,17 @@ export function Tour() {
     if (typeof window === 'undefined') return;
     const onDash = window.location.pathname.includes('dashboard') || window.location.pathname === '/';
     let t: ReturnType<typeof setTimeout> | undefined;
-    if (!localStorage.getItem(DONE_KEY) && onDash) t = setTimeout(start, 800);
-    const replay = () => { localStorage.removeItem(DONE_KEY); start(); };
-    window.addEventListener('ftos:start-tour', replay);
-    return () => { if (t) clearTimeout(t); window.removeEventListener('ftos:start-tour', replay); };
+    // Honor the pre-rebrand key too, so an existing user isn't shown the
+    // first-run tour again just because the key was renamed.
+    const done = localStorage.getItem(DONE_KEY) ?? localStorage.getItem(LEGACY_DONE_KEY);
+    if (!done && onDash) t = setTimeout(start, 800);
+    const replay = () => {
+      localStorage.removeItem(DONE_KEY);
+      localStorage.removeItem(LEGACY_DONE_KEY);
+      start();
+    };
+    window.addEventListener(TOUR_EVENT, replay);
+    return () => { if (t) clearTimeout(t); window.removeEventListener(TOUR_EVENT, replay); };
   }, [start]);
 
   // Track the current target's position (retry a few times so it works right

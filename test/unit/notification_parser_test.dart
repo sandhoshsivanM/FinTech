@@ -1,5 +1,5 @@
-import 'package:fintech_os/domain/entities/transaction.dart';
-import 'package:fintech_os/domain/services/notification_parser.dart';
+import 'package:khazana/domain/entities/transaction.dart';
+import 'package:khazana/domain/services/notification_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Parity fixtures shared with webapp/src/domain/notificationParser.test.ts.

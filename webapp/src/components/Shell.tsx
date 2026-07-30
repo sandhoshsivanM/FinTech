@@ -8,6 +8,7 @@ import {
   Flag, Repeat, Settings, Eye, EyeOff, Lock, Menu, X, Plus, Shield, ChevronDown, Check,
   Sun, Moon, Monitor, LifeBuoy, CalendarDays,
 } from 'lucide-react';
+import { APP_NAME } from '@/lib/brand';
 import { useApp, type ThemeChoice } from '@/lib/store';
 import { Tour } from './Tour';
 
@@ -40,7 +41,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const ghost = useApp((s) => s.ghost);
   const toggleGhost = useApp((s) => s.toggleGhost);
   const lock = useApp((s) => s.lock);
-  const title = TITLES[Object.keys(TITLES).find((k) => path.startsWith(k)) ?? '/dashboard'] ?? 'Khazana';
+  const title = TITLES[Object.keys(TITLES).find((k) => path.startsWith(k)) ?? '/dashboard'] ?? APP_NAME;
 
   return (
     <div className="min-h-screen flex">
@@ -97,7 +98,7 @@ function Brand() {
       <span className="w-8 h-8 rounded-[9px] bg-[var(--primary)] grid place-items-center">
         <span className="w-3 h-3 rounded-[3px] border-[1.5px]" style={{ borderColor: 'var(--primary-fg)', opacity: 0.9 }} />
       </span>
-      <span className="font-bold text-[15.5px] tracking-tight">Khazana</span>
+      <span className="font-bold text-[15.5px] tracking-tight">{APP_NAME}</span>
     </Link>
   );
 }

@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
-import 'package:fintech_os/domain/entities/goal.dart';
-import 'package:fintech_os/domain/services/goal_projector.dart';
+import 'package:khazana/domain/entities/goal.dart';
+import 'package:khazana/domain/services/goal_projector.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
-import 'package:fintech_os/domain/entities/holding.dart';
-import 'package:fintech_os/domain/services/tax_rule_engine.dart';
-import 'package:fintech_os/domain/services/xirr_calculator.dart';
+import 'package:khazana/domain/entities/holding.dart';
+import 'package:khazana/domain/services/tax_rule_engine.dart';
+import 'package:khazana/domain/services/xirr_calculator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

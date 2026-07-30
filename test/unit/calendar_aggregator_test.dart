@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
-import 'package:fintech_os/domain/entities/transaction.dart';
-import 'package:fintech_os/domain/services/calendar_aggregator.dart';
+import 'package:khazana/domain/entities/transaction.dart';
+import 'package:khazana/domain/services/calendar_aggregator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Parity fixtures shared with webapp/src/domain/calendarLedger.test.ts. Times

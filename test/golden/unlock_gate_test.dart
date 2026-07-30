@@ -1,7 +1,7 @@
-import 'package:fintech_os/core/di/providers.dart';
-import 'package:fintech_os/core/security/biometric_gate.dart';
-import 'package:fintech_os/core/security/secure_key_store.dart';
-import 'package:fintech_os/presentation/unlock_gate_screen.dart';
+import 'package:khazana/core/di/providers.dart';
+import 'package:khazana/core/security/biometric_gate.dart';
+import 'package:khazana/core/security/secure_key_store.dart';
+import 'package:khazana/presentation/unlock_gate_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

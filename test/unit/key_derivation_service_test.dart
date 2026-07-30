@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:fintech_os/core/security/key_derivation_service.dart';
+import 'package:khazana/core/security/key_derivation_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

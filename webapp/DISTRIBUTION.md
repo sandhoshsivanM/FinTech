@@ -1,4 +1,4 @@
-# Distributing Fintech OS (web app)
+# Distributing Khazana (web app)
 
 The app is a **fully static, offline, local-only** build — no server, no cloud.
 `npm run build` emits portable files into `out/` (plain HTML/JS/CSS, plus the
@@ -41,7 +41,7 @@ npm install -D @tauri-apps/cli
 
 # 3. Initialise Tauri, pointing it at the static export
 npx tauri init \
-  --app-name "Fintech OS" \
+  --app-name "Khazana" \
   --frontend-dist ../out \
   --dev-url http://localhost:3100 \
   --before-dev-command "npm run dev" \

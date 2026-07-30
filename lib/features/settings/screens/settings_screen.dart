@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/branding.dart';
 import '../../../core/di/data_providers.dart';
 import '../../../core/di/providers.dart';
 import '../../../core/router/app_router.dart';
@@ -203,7 +204,7 @@ class _SettingsBody extends ConsumerWidget {
           title: const Text('Export encrypted backup'),
           subtitle: const Text('AES-256-GCM, verified on restore'),
           onTap: () => _run(context, actions.exportBackup,
-              shareText: 'Khazana encrypted backup'),
+              shareText: '$kAppName encrypted backup'),
         ),
         const Divider(),
         const _SectionHeader('Data & Privacy'),
@@ -226,7 +227,7 @@ class _SettingsBody extends ConsumerWidget {
         const Padding(
           padding: EdgeInsets.all(AppSpacing.md),
           child: Text(
-            'Khazana is fully offline. Nothing leaves this device without '
+            '$kAppName is fully offline. Nothing leaves this device without '
             'your explicit action.',
             style: TextStyle(fontStyle: FontStyle.italic),
           ),
@@ -331,7 +332,7 @@ class _SettingsBody extends ConsumerWidget {
     );
     if (ok != true || !context.mounted) return;
     await _run(context, actions.exportErrorLog,
-        shareText: 'Khazana error log (no financial data)');
+        shareText: '$kAppName error log (no financial data)');
   }
 }
 

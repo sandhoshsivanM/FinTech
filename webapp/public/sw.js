@@ -1,9 +1,9 @@
-// Fintech OS service worker — OFFLINE FALLBACK ONLY (network-first).
+// Khazana service worker — OFFLINE FALLBACK ONLY (network-first).
 // Privacy: caches only the app's own static assets so it works offline; makes
 // NO external requests and never touches your encrypted data (that's in
 // IndexedDB). Network-first everywhere so a new build's assets always load
 // fresh — the SW can never serve a stale/broken shell.
-const CACHE = 'ftos-shell-v2';
+const CACHE = 'khazana-shell-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

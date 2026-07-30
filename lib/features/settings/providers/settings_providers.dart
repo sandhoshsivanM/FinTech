@@ -57,7 +57,7 @@ class SettingsActions {
 
     final dir = await getApplicationDocumentsDirectory();
     final stamp = timestampMs ?? DateTime.now().millisecondsSinceEpoch;
-    final out = p.join(dir.path, 'fintech_backup_$stamp.ftos');
+    final out = p.join(dir.path, 'khazana_backup_$stamp.ftos');
     await File(out).writeAsBytes(backup, flush: true);
     return out;
   }

@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
-import 'package:fintech_os/domain/entities/liability.dart';
-import 'package:fintech_os/domain/services/debt_calculator.dart';
+import 'package:khazana/domain/entities/liability.dart';
+import 'package:khazana/domain/services/debt_calculator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

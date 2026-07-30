@@ -6,9 +6,9 @@ import 'dart:typed_data';
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
-import 'package:fintech_os/core/security/key_derivation_service.dart';
-import 'package:fintech_os/data/database/app_database.dart';
-import 'package:fintech_os/data/repositories/drift_transaction_repository.dart';
+import 'package:khazana/core/security/key_derivation_service.dart';
+import 'package:khazana/data/database/app_database.dart';
+import 'package:khazana/data/repositories/drift_transaction_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Benchmarks that print measured numbers for the architecture doc. Not strict

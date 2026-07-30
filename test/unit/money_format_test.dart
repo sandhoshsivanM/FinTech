@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:fintech_os/core/utils/money_format.dart';
+import 'package:khazana/core/utils/money_format.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

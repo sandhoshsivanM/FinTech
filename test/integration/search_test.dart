@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
-import 'package:fintech_os/data/database/app_database.dart';
-import 'package:fintech_os/data/repositories/drift_transaction_repository.dart';
-import 'package:fintech_os/domain/entities/transaction.dart';
+import 'package:khazana/data/database/app_database.dart';
+import 'package:khazana/data/repositories/drift_transaction_repository.dart';
+import 'package:khazana/domain/entities/transaction.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// FTS5 search tests (PRD §5/§16). Correctness on host; the ≤100ms/10k perf

@@ -1,5 +1,7 @@
 import 'package:local_auth/local_auth.dart';
 
+import '../branding.dart';
+
 /// Thin wrapper over local_auth so the unlock state machine is testable
 /// without the plugin (PRD §2 biometrics, §14 fallback).
 class BiometricGate {
@@ -24,7 +26,7 @@ class BiometricGate {
   Future<bool> authenticate() async {
     try {
       return await _auth.authenticate(
-        localizedReason: 'Unlock your Khazana vault',
+        localizedReason: 'Unlock your $kAppName vault',
         options: const AuthenticationOptions(
           biometricOnly: false,
           stickyAuth: true,

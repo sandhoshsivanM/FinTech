@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next';
 
+import { APP_NAME, APP_TITLE } from '@/lib/brand';
+
 // Required for `output: export` (static) builds.
 export const dynamic = 'force-static';
 
@@ -7,8 +9,8 @@ export const dynamic = 'force-static';
 // /manifest.webmanifest by Next's App Router.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Khazana — Private Wealth',
-    short_name: 'Khazana',
+    name: APP_TITLE,
+    short_name: APP_NAME,
     description: 'Offline-first, private personal finance & wealth management. Your data never leaves this device.',
     start_url: '/',
     scope: '/',

@@ -1,14 +1,14 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/native.dart';
-import 'package:fintech_os/data/database/app_database.dart';
-import 'package:fintech_os/data/repositories/drift_account_repository.dart';
-import 'package:fintech_os/data/repositories/drift_pending_capture_repository.dart';
-import 'package:fintech_os/data/repositories/drift_posting_repository.dart';
-import 'package:fintech_os/domain/entities/account.dart';
-import 'package:fintech_os/domain/entities/pending_capture.dart';
-import 'package:fintech_os/domain/entities/posting.dart';
-import 'package:fintech_os/domain/entities/transaction.dart';
-import 'package:fintech_os/domain/services/account_ledger.dart';
+import 'package:khazana/data/database/app_database.dart';
+import 'package:khazana/data/repositories/drift_account_repository.dart';
+import 'package:khazana/data/repositories/drift_pending_capture_repository.dart';
+import 'package:khazana/data/repositories/drift_posting_repository.dart';
+import 'package:khazana/domain/entities/account.dart';
+import 'package:khazana/domain/entities/pending_capture.dart';
+import 'package:khazana/domain/entities/posting.dart';
+import 'package:khazana/domain/entities/transaction.dart';
+import 'package:khazana/domain/services/account_ledger.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Integration tests for the v3 double-entry storage on an in-memory Drift DB:

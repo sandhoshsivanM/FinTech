@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
-import 'package:fintech_os/domain/entities/recurring_rule.dart';
-import 'package:fintech_os/domain/entities/transaction.dart';
-import 'package:fintech_os/domain/services/recurrence_calculator.dart';
+import 'package:khazana/domain/entities/recurring_rule.dart';
+import 'package:khazana/domain/entities/transaction.dart';
+import 'package:khazana/domain/services/recurrence_calculator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

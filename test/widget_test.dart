@@ -1,30 +1,28 @@
-// This is a basic Flutter widget test.
+// Branding regression guard.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// This file used to be the stock `flutter create` counter test, pumping a
+// `MyApp` widget that never existed in this codebase — so it could not compile
+// and `flutter test` failed on it. Replaced with assertions that protect the
+// rebrand invariants instead.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:fintech_os/main.dart';
+import 'package:khazana/core/branding.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('branding', () {
+    test('product name is Khazana', () {
+      expect(kAppName, 'Khazana');
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('backup extension stays .ftos', () {
+      // FROZEN: paired with the 0x46544F53 ("FTOS") magic in the backup header.
+      // Changing this makes every existing backup unrestorable.
+      expect(kBackupExtension, '.ftos');
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    test('tagline is present', () {
+      expect(kAppTagline, isNotEmpty);
+    });
   });
 }

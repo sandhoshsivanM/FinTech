@@ -1,10 +1,10 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:fintech_os/domain/entities/holding.dart';
-import 'package:fintech_os/domain/entities/liability.dart';
-import 'package:fintech_os/domain/entities/transaction.dart';
-import 'package:fintech_os/domain/services/financial_health.dart';
+import 'package:khazana/domain/entities/holding.dart';
+import 'package:khazana/domain/entities/liability.dart';
+import 'package:khazana/domain/entities/transaction.dart';
+import 'package:khazana/domain/services/financial_health.dart';
 
 Decimal d(int v) => Decimal.fromInt(v);
 

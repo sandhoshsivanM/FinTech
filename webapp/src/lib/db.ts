@@ -28,12 +28,16 @@ export interface Tombstone {
   deletedAt: number; // epoch ms
 }
 
-class FintechDB extends Dexie {
+class KhazanaDB extends Dexie {
   records!: Table<EncRecord, string>;
   vaults!: Table<VaultMeta, string>;
   tombstones!: Table<Tombstone, string>;
 
   constructor() {
+    // FROZEN: the IndexedDB database name stays `fintech_os` despite the rebrand.
+    // Renaming it would orphan every existing vault — the encrypted records,
+    // salt and verifier would still be on disk but invisible, dropping users
+    // onto the first-run "Set up your vault" screen. Class name only was renamed.
     super('fintech_os');
     this.version(1).stores({
       records: 'id, [type+vaultId], vaultId',
@@ -46,4 +50,4 @@ class FintechDB extends Dexie {
   }
 }
 
-export const db = new FintechDB();
+export const db = new KhazanaDB();

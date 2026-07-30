@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:drift/native.dart';
-import 'package:fintech_os/core/services/log_service.dart';
-import 'package:fintech_os/data/database/logs_database.dart';
+import 'package:khazana/core/services/log_service.dart';
+import 'package:khazana/data/database/logs_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// LogService prune/rolling-buffer and PII behavior on an in-memory logs DB

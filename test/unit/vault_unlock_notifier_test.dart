@@ -1,10 +1,10 @@
 import 'dart:typed_data';
 
-import 'package:fintech_os/core/security/biometric_gate.dart';
-import 'package:fintech_os/core/security/key_derivation_service.dart';
-import 'package:fintech_os/core/security/secure_key_store.dart';
-import 'package:fintech_os/core/security/vault_state.dart';
-import 'package:fintech_os/core/security/vault_unlock_notifier.dart';
+import 'package:khazana/core/security/biometric_gate.dart';
+import 'package:khazana/core/security/key_derivation_service.dart';
+import 'package:khazana/core/security/secure_key_store.dart';
+import 'package:khazana/core/security/vault_state.dart';
+import 'package:khazana/core/security/vault_unlock_notifier.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

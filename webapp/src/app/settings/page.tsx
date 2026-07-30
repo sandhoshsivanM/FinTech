@@ -5,6 +5,8 @@ import {
   Globe, Lock, Trash2, Sparkles, CheckCircle2, AlertCircle,
   Users, Plus, Pencil, Check, Briefcase, User, Heart,
 } from 'lucide-react';
+import { APP_NAME } from '@/lib/brand';
+import { TOUR_EVENT } from '@/components/Tour';
 import { useApp, ACCENTS, type AccentName, type ThemeChoice } from '@/lib/store';
 import { loadSampleData } from '@/lib/sampleData';
 import { CURRENCIES } from '@/domain/currency';
@@ -116,7 +118,7 @@ export default function SettingsPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `fintech-os-backup-${new Date().toISOString().slice(0, 10)}.ftos`;
+      a.download = `khazana-backup-${new Date().toISOString().slice(0, 10)}.ftos`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -177,7 +179,7 @@ export default function SettingsPage() {
         title="Settings & Privacy"
         subtitle="Your data never leaves this device."
         action={
-          <Button variant="soft" onClick={() => window.dispatchEvent(new Event('ftos:start-tour'))}>
+          <Button variant="soft" onClick={() => window.dispatchEvent(new Event(TOUR_EVENT))}>
             <Sparkles size={15} /> Take a tour
           </Button>
         }
@@ -476,7 +478,7 @@ export default function SettingsPage() {
       </GlassCard>
 
       <p className="text-center text-xs text-muted italic px-6 pb-4">
-        Khazana is fully offline. Nothing leaves this device without your explicit action.
+        {APP_NAME} is fully offline. Nothing leaves this device without your explicit action.
       </p>
     </div>
   );

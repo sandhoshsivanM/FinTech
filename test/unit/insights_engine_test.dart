@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:fintech_os/domain/entities/goal.dart';
-import 'package:fintech_os/domain/entities/transaction.dart';
-import 'package:fintech_os/domain/services/insights_engine.dart';
+import 'package:khazana/domain/entities/goal.dart';
+import 'package:khazana/domain/entities/transaction.dart';
+import 'package:khazana/domain/services/insights_engine.dart';
 
 Decimal d(int v) => Decimal.fromInt(v);
 

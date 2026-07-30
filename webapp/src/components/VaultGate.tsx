@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { ShieldCheck, Fingerprint } from 'lucide-react';
+import { APP_NAME, APP_TAGLINE } from '@/lib/brand';
 import { useApp } from '@/lib/store';
 
 export function VaultGate() {
@@ -30,8 +31,8 @@ export function VaultGate() {
           <div className="hero-gradient w-16 h-16 rounded-2xl grid place-items-center">
             <ShieldCheck className="text-white" size={34} />
           </div>
-          <h1 className="mt-4 text-2xl font-extrabold">Khazana</h1>
-          <p className="text-sm text-muted">Offline · private · encrypted</p>
+          <h1 className="mt-4 text-2xl font-extrabold">{APP_NAME}</h1>
+          <p className="text-sm text-muted">{APP_TAGLINE}</p>
         </div>
 
         <div className="glass p-6">

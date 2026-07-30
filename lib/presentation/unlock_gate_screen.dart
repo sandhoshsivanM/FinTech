@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/branding.dart';
 import '../core/di/providers.dart';
 import '../core/security/vault_state.dart';
 import '../core/theme/app_tokens.dart';
@@ -74,13 +75,13 @@ class _BrandMark extends StatelessWidget {
           child: const Icon(Icons.shield_rounded, color: Colors.white, size: 34),
         ),
         const SizedBox(height: AppSpacing.md),
-        Text('Khazana',
+        Text(kAppName,
             style: Theme.of(context)
                 .textTheme
                 .headlineSmall
                 ?.copyWith(fontWeight: FontWeight.w800)),
         const SizedBox(height: 2),
-        Text('Offline · private · encrypted',
+        Text(kAppTagline,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ],

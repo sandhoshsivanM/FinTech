@@ -1,11 +1,11 @@
 {
-    "name": "fintech_os",
-    "short_name": "fintech_os",
+    "name": "Khazana",
+    "short_name": "Khazana",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Khazana — offline-first, private personal finance & wealth management.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

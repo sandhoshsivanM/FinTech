@@ -132,10 +132,42 @@ interface AppState extends Data {
 }
 
 export const uid = () => crypto.randomUUID();
-const CURRENCY_KEY = 'ftos-currency';
-const ACTIVE_PROFILE_KEY = 'ftos-active-profile';
-const THEME_KEY = 'ftos-theme';
-const ACCENT_KEY = 'ftos-accent';
+// localStorage keys. Renamed from the old `ftos-*` prefix during the Khazana
+// rebrand. Writes always use the new key; reads fall back to the legacy key via
+// `lsGet` so an existing user keeps their currency, profile, theme and accent.
+//
+// NOTE: the legacy names are also hardcoded in the inline no-FOUC theme script
+// in `app/layout.tsx` (it can't import from here). Both must agree.
+const CURRENCY_KEY = 'khazana-currency';
+const ACTIVE_PROFILE_KEY = 'khazana-active-profile';
+const THEME_KEY = 'khazana-theme';
+const ACCENT_KEY = 'khazana-accent';
+
+const LEGACY_KEY: Record<string, string> = {
+  [CURRENCY_KEY]: 'ftos-currency',
+  [ACTIVE_PROFILE_KEY]: 'ftos-active-profile',
+  [THEME_KEY]: 'ftos-theme',
+  [ACCENT_KEY]: 'ftos-accent',
+};
+
+/**
+ * Reads a preference, migrating it off the pre-rebrand key on first hit.
+ * Returns null when neither key is present. Safe when localStorage is absent.
+ */
+function lsGet(key: string): string | null {
+  if (typeof localStorage === 'undefined') return null;
+  const current = localStorage.getItem(key);
+  if (current !== null) return current;
+  const legacy = LEGACY_KEY[key];
+  if (!legacy) return null;
+  const old = localStorage.getItem(legacy);
+  if (old !== null) {
+    // Copy forward once so later reads hit the new key directly. The legacy key
+    // is left in place so an older build still works against the same browser.
+    localStorage.setItem(key, old);
+  }
+  return old;
+}
 
 export type ThemeChoice = 'light' | 'dark' | 'system';
 export type AccentName = 'default' | 'emerald' | 'blue' | 'violet' | 'amber' | 'rose';
@@ -172,8 +204,8 @@ function applyAccent(name: string, dark: boolean) {
 // for 'system'. Safe on the server (guards on document).
 export function applyAppearance() {
   if (typeof document === 'undefined') return;
-  const theme = (localStorage.getItem(THEME_KEY) as ThemeChoice) || 'system';
-  const accent = localStorage.getItem(ACCENT_KEY) || 'default';
+  const theme = (lsGet(THEME_KEY) as ThemeChoice) || 'system';
+  const accent = lsGet(ACCENT_KEY) || 'default';
   const dark = theme === 'dark'
     || (theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
@@ -195,10 +227,9 @@ export const useApp = create<AppState>((set, get) => ({
 
   init: async () => {
     const meta = await db.vaults.get(VAULT_ID);
-    const ls = typeof localStorage !== 'undefined' ? localStorage : null;
-    const cur = ls?.getItem(CURRENCY_KEY) ?? 'INR';
-    const theme = (ls?.getItem(THEME_KEY) as ThemeChoice) ?? 'system';
-    const accent = (ls?.getItem(ACCENT_KEY) as AccentName) ?? 'default';
+    const cur = lsGet(CURRENCY_KEY) ?? 'INR';
+    const theme = (lsGet(THEME_KEY) as ThemeChoice) ?? 'system';
+    const accent = (lsGet(ACCENT_KEY) as AccentName) ?? 'default';
     set({ status: meta ? 'locked' : 'uninitialized', currencyCode: cur, theme, accent });
     applyAppearance();
   },
@@ -336,7 +367,7 @@ export const useApp = create<AppState>((set, get) => ({
     profiles.sort((a, b) => a.createdAt - b.createdAt);
     const defaultId = profiles[0].id;
     let active = get().activeProfileId
-      || (typeof localStorage !== 'undefined' ? localStorage.getItem(ACTIVE_PROFILE_KEY) : null)
+      || lsGet(ACTIVE_PROFILE_KEY)
       || defaultId;
     if (!profiles.some((p) => p.id === active)) active = defaultId;
 
