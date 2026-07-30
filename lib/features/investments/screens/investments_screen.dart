@@ -4,8 +4,10 @@ import 'package:decimal/decimal.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/di/data_providers.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../domain/entities/asset_group.dart';
@@ -13,6 +15,7 @@ import '../../../domain/entities/holding.dart';
 import '../../../domain/services/portfolio_diff.dart';
 import '../../../domain/services/tax_rule_engine.dart';
 import '../../../presentation/data_gate.dart';
+import '../../../presentation/asset_group_colors.dart';
 import '../../../presentation/donut_chart.dart';
 import '../../../presentation/glass_card.dart';
 import '../../import/broker_parser.dart'
@@ -35,7 +38,19 @@ class InvestmentsScreen extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         title: const Text('Investments'),
-        actions: const [_RefreshPricesButton()],
+        actions: [
+          IconButton(
+            tooltip: 'Sector-wise profit and loss',
+            icon: const Icon(Icons.donut_small_outlined),
+            onPressed: () => context.go(Routes.investmentsBreakdown),
+          ),
+          const _RefreshPricesButton(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.go(Routes.investmentsAddLot),
+        icon: const Icon(Icons.add),
+        label: const Text('Add lot'),
       ),
       body: const SafeArea(child: DataGate(child: _InvestmentsBody())),
     );
@@ -247,34 +262,7 @@ class _PortfolioHeroCard extends StatelessWidget {
 // 2. Allocation card
 // ---------------------------------------------------------------------------
 
-/// Validated categorical palette for the seven chart groups.
-///
-/// Hues/steps come from the data-viz reference palette and were checked with its
-/// validator against this surface. Only valid in [kAssetGroupOrder] — see the
-/// note on that constant before reordering or sorting slices.
-Color _groupColor(AssetGroup g) => switch (g) {
-      AssetGroup.equity => const Color(0xFF2A78D6),
-      AssetGroup.debt => const Color(0xFFEB6834),
-      AssetGroup.gold => const Color(0xFF1BAF7A),
-      AssetGroup.realEstate => const Color(0xFFEDA100),
-      AssetGroup.retirement => const Color(0xFFE87BA4),
-      AssetGroup.crypto => const Color(0xFF008300),
-      AssetGroup.cash => const Color(0xFF4A3AA7),
-    };
-
-String _assetLabel(AssetType t) => switch (t) {
-      AssetType.equityEtf => 'Equity / ETF',
-      AssetType.equityMf => 'Equity MF',
-      AssetType.goldEtf => 'Gold',
-      AssetType.debtMf => 'Debt MF',
-      AssetType.bond => 'Bonds',
-      AssetType.cash => 'Cash',
-      AssetType.realEstate => 'Real Estate',
-      AssetType.crypto => 'Crypto',
-      AssetType.fd => 'Fixed Deposit',
-      AssetType.ppfEpf => 'PPF / EPF',
-      AssetType.nps => 'NPS',
-    };
+// Labels come from AssetType.label — the single source of truth.
 
 class _AllocationCard extends StatelessWidget {
   const _AllocationCard({required this.holdings});
@@ -303,7 +291,7 @@ class _AllocationCard extends StatelessWidget {
     ];
     final segments = [
       for (final g in present)
-        DonutSegment(g.label, grouped[g]!.toDouble(), _groupColor(g)),
+        DonutSegment(g.label, grouped[g]!.toDouble(), groupColor(g)),
     ];
 
     // Largest group drives the centre label (a value read, not a colour order).
@@ -385,7 +373,8 @@ class _HoldingsCard extends StatelessWidget {
                             const Size(0, AppSpacing.minTouchTarget),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      onPressed: () {}, // parent wires nav if needed
+                      onPressed: () =>
+                          context.go(Routes.investmentsBreakdown),
                       child: const Text(
                         'See all',
                         style: TextStyle(
@@ -404,7 +393,8 @@ class _HoldingsCard extends StatelessWidget {
               padding: EdgeInsets.all(AppSpacing.lg),
               child: Center(
                 child: Text(
-                  'No holdings. Import from Zerodha or Upstox.',
+                  'No holdings yet. Tap "Add lot" to enter one, or import '
+                  'from Zerodha or Upstox.',
                   style: TextStyle(color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
@@ -572,7 +562,7 @@ class _HoldingRow extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         '${holding.quantity} Qty · Avg ${Money.format(holding.avgCost)}'
-                        ' · ${_assetLabel(holding.assetType)}',
+                        ' · ${holding.assetType.label}',
                         style: Theme.of(context)
                             .textTheme
                             .bodySmall

@@ -15,6 +15,7 @@ import 'insurance_dao.dart';
 import 'liability_dao.dart';
 import 'merchant_alias_dao.dart';
 import 'pending_capture_dao.dart';
+import 'portfolio_dao.dart';
 import 'posting_dao.dart';
 import 'recurring_dao.dart';
 import 'snapshot_dao.dart';
@@ -69,6 +70,7 @@ part 'app_database.g.dart';
     AccountDao,
     PostingDao,
     PendingCaptureDao,
+    PortfolioDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {

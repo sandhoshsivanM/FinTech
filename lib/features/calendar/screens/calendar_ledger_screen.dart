@@ -10,6 +10,7 @@ import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/budget_calculator.dart';
 import '../../../domain/services/calendar_aggregator.dart';
 import '../../../presentation/data_gate.dart';
+import '../../../presentation/glass_card.dart';
 import '../../budget/providers/budget_providers.dart';
 import '../../transactions/providers/category_providers.dart';
 import '../providers/calendar_providers.dart';
@@ -29,14 +30,12 @@ class _CalendarLedgerScreenState extends ConsumerState<CalendarLedgerScreen> {
   @override
   void initState() {
     super.initState();
-    // Allow the desktop multi-panel layout to use the full width.
     Future.microtask(
         () => ref.read(wideLayoutProvider.notifier).state = true);
   }
 
   @override
   void dispose() {
-    // Restore the mobile-first cap when leaving the calendar.
     ref.read(wideLayoutProvider.notifier).state = false;
     super.dispose();
   }
@@ -44,13 +43,21 @@ class _CalendarLedgerScreenState extends ConsumerState<CalendarLedgerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Calendar')),
-      body: DataGate(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final wide = constraints.maxWidth > 600;
-            return wide ? const _WideLayout() : const _CompactLayout();
-          },
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: const Text('Calendar'),
+      ),
+      body: SafeArea(
+        child: DataGate(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth > 600;
+              return wide ? const _WideLayout() : const _CompactLayout();
+            },
+          ),
         ),
       ),
     );
@@ -69,9 +76,9 @@ class _CompactLayout extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        const _MonthHeader(),
-        const SizedBox(height: AppSpacing.sm),
-        _CalendarGrid(
+        const _MonthTotalsCard(),
+        const SizedBox(height: AppSpacing.md),
+        _CalendarCard(
           onTapDay: (day) {
             ref.read(selectedDayProvider.notifier).state = day;
             _showDaySheet(context, day);
@@ -90,46 +97,41 @@ class _WideLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(selectedDayProvider);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
-        // Left: month navigation + month summary.
-        SizedBox(
-          width: 240,
-          child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            children: const [_MonthHeader(vertical: true), _MonthSummary()],
-          ),
-        ),
-        const VerticalDivider(width: 1),
-        // Center: the calendar workspace.
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.md),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CalendarGrid(
-                onTapDay: (day) =>
-                    ref.read(selectedDayProvider.notifier).state = day,
+              SizedBox(
+                width: 250,
+                child: Column(children: const [
+                  _MonthTotalsCard(),
+                ]),
               ),
-            ],
-          ),
-        ),
-        const VerticalDivider(width: 1),
-        // Right: day tracker + budget indicators.
-        SizedBox(
-          width: 320,
-          child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            children: [
-              if (selected != null)
-                _DayDetail(day: selected)
-              else
-                const Padding(
-                  padding: EdgeInsets.all(AppSpacing.md),
-                  child: Text('Select a day to see its ledger.'),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: _CalendarCard(
+                  onTapDay: (day) =>
+                      ref.read(selectedDayProvider.notifier).state = day,
                 ),
-              const SizedBox(height: AppSpacing.md),
-              const _BudgetTracker(),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              SizedBox(
+                width: 330,
+                child: Column(
+                  children: [
+                    GlassCard(
+                      child: selected == null
+                          ? const _EmptyHint('Select a day to see its ledger.')
+                          : _DayDetail(day: selected),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    const _BudgetTracker(),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -145,7 +147,8 @@ void _showDaySheet(BuildContext context, DateTime day) {
     isScrollControlled: true,
     builder: (context) => SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.sizeOf(context).height * 0.7,
@@ -158,42 +161,11 @@ void _showDaySheet(BuildContext context, DateTime day) {
 }
 
 // ---------------------------------------------------------------------------
-// Month header + summary
+// Month totals card (income / expense / net pills)
 // ---------------------------------------------------------------------------
 
-class _MonthHeader extends ConsumerWidget {
-  const _MonthHeader({this.vertical = false});
-  final bool vertical;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cursor = ref.watch(monthCursorProvider);
-    final label = DateFormat('MMMM yyyy').format(cursor);
-    void shift(int months) => ref.read(monthCursorProvider.notifier).state =
-        DateTime(cursor.year, cursor.month + months);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        IconButton(
-          onPressed: () => shift(-1),
-          icon: const Icon(Icons.chevron_left),
-          tooltip: 'Previous month',
-        ),
-        Text(label,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        IconButton(
-          onPressed: () => shift(1),
-          icon: const Icon(Icons.chevron_right),
-          tooltip: 'Next month',
-        ),
-      ],
-    );
-  }
-}
-
-class _MonthSummary extends ConsumerWidget {
-  const _MonthSummary();
+class _MonthTotalsCard extends ConsumerWidget {
+  const _MonthTotalsCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -208,45 +180,93 @@ class _MonthSummary extends ConsumerWidget {
       expense += entry.value.expense;
     }
     final net = income - expense;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('This month',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: AppSpacing.sm),
-            _kv('Income', income, AppColors.income),
-            _kv('Expense', expense, AppColors.expense),
-            const Divider(),
-            _kv('Net', net,
-                net >= Decimal.zero ? AppColors.income : AppColors.expense),
-          ],
-        ),
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(DateFormat('MMMM yyyy').format(cursor),
+              style: const TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: AppSpacing.md),
+          _StatRow(
+              icon: Icons.south_west,
+              label: 'Income',
+              value: income,
+              color: AppColors.income),
+          const SizedBox(height: AppSpacing.sm),
+          _StatRow(
+              icon: Icons.north_east,
+              label: 'Spending',
+              value: expense,
+              color: AppColors.expense),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            child: Divider(height: 1),
+          ),
+          _StatRow(
+            icon: net >= Decimal.zero
+                ? Icons.trending_up
+                : Icons.trending_down,
+            label: 'Net',
+            value: net,
+            color: net >= Decimal.zero ? AppColors.income : AppColors.expense,
+            emphasize: true,
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _kv(String k, Decimal v, Color color) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(k),
-            Text(Money.format(v),
-                style: TextStyle(color: color, fontWeight: FontWeight.w600)),
-          ],
+class _StatRow extends StatelessWidget {
+  const _StatRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    this.emphasize = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final Decimal value;
+  final Color color;
+  final bool emphasize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(icon, size: 16, color: color),
         ),
-      );
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(child: Text(label)),
+        Text(
+          Money.format(value),
+          style: TextStyle(
+            color: color,
+            fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
+            fontSize: emphasize ? 16 : 14,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
-// Calendar grid
+// Calendar card (month nav + grid)
 // ---------------------------------------------------------------------------
 
-class _CalendarGrid extends ConsumerWidget {
-  const _CalendarGrid({required this.onTapDay});
+class _CalendarCard extends ConsumerWidget {
+  const _CalendarCard({required this.onTapDay});
   final void Function(DateTime day) onTapDay;
 
   static const _weekdayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -257,19 +277,23 @@ class _CalendarGrid extends ConsumerWidget {
     final ledgers = ref.watch(dayLedgersProvider);
     final selected = ref.watch(selectedDayProvider);
     final today = DateTime.now();
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
 
     final firstOfMonth = DateTime(cursor.year, cursor.month, 1);
     final daysInMonth = DateTime(cursor.year, cursor.month + 1, 0).day;
     final leadingBlanks = firstOfMonth.weekday - 1; // Monday-first
+
+    void shift(int months) => ref.read(monthCursorProvider.notifier).state =
+        DateTime(cursor.year, cursor.month + months);
 
     final cells = <Widget>[
       for (final w in _weekdayLabels)
         Center(
           child: Text(w,
               style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.darkOnSurfaceMuted,
-                  fontWeight: FontWeight.w600)),
+                  fontSize: 11.5,
+                  color: muted,
+                  fontWeight: FontWeight.w700)),
         ),
       for (var i = 0; i < leadingBlanks; i++) const SizedBox.shrink(),
       for (var d = 1; d <= daysInMonth; d++)
@@ -288,13 +312,96 @@ class _CalendarGrid extends ConsumerWidget {
         ),
     ];
 
-    return GridView.count(
-      crossAxisCount: 7,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 4,
-      crossAxisSpacing: 4,
-      children: cells,
+    return GlassCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _NavButton(
+                  icon: Icons.chevron_left,
+                  tooltip: 'Previous month',
+                  onTap: () => shift(-1)),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    DateFormat('MMMM yyyy').format(cursor),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+              _NavButton(
+                  icon: Icons.chevron_right,
+                  tooltip: 'Next month',
+                  onTap: () => shift(1)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          GridView.count(
+            crossAxisCount: 7,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 5,
+            crossAxisSpacing: 5,
+            children: cells,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _LegendDot(color: AppColors.income, label: 'Income'),
+              const SizedBox(width: AppSpacing.md),
+              _LegendDot(color: AppColors.expense, label: 'Spending'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavButton extends StatelessWidget {
+  const _NavButton(
+      {required this.icon, required this.tooltip, required this.onTap});
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onTap,
+      tooltip: tooltip,
+      visualDensity: VisualDensity.compact,
+      style: IconButton.styleFrom(
+        backgroundColor: AppColors.accent.withValues(alpha: 0.10),
+      ),
+      icon: Icon(icon, color: AppColors.accent),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  const _LegendDot({required this.color, required this.label});
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 5),
+        Text(label,
+            style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+      ],
     );
   }
 }
@@ -318,33 +425,53 @@ class _DayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasIncome = ledger != null && ledger!.income > Decimal.zero;
     final hasExpense = ledger != null && ledger!.expense > Decimal.zero;
+    final hasActivity = hasIncome || hasExpense;
+
+    final Color bg;
+    final Color border;
+    if (isSelected) {
+      bg = AppColors.accent.withValues(alpha: 0.16);
+      border = AppColors.accent;
+    } else if (isToday) {
+      bg = AppColors.accent.withValues(alpha: 0.06);
+      border = AppColors.accent.withValues(alpha: 0.45);
+    } else if (hasActivity) {
+      bg = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.035);
+      border = AppColors.glassBorderLight;
+    } else {
+      bg = Colors.transparent;
+      border = AppColors.glassBorderLight;
+    }
+
     return InkWell(
       onTap: () => onTap(date),
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.accent
-                : (isToday
-                    ? AppColors.accent.withValues(alpha: 0.4)
-                    : AppColors.glassBorderLight),
-            width: isSelected ? 2 : 1,
-          ),
-          color: isToday ? AppColors.accent.withValues(alpha: 0.06) : null,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: border, width: isSelected ? 1.6 : 1),
+          color: bg,
         ),
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Text('${date.day}', style: const TextStyle(fontSize: 12)),
+                Text('${date.day}',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight:
+                          isToday ? FontWeight.w800 : FontWeight.w500,
+                      color: isToday || isSelected
+                          ? AppColors.accent
+                          : null,
+                    )),
                 const Spacer(),
                 if (ledger?.hasAttachment ?? false)
                   Icon(Icons.attach_file,
-                      size: 11, color: AppColors.darkOnSurfaceMuted),
+                      size: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
               ],
             ),
             const Spacer(),
@@ -369,7 +496,7 @@ class _DayCell extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Day detail (bottom sheet on mobile / right panel on desktop)
+// Day detail
 // ---------------------------------------------------------------------------
 
 class _DayDetail extends ConsumerWidget {
@@ -382,46 +509,92 @@ class _DayDetail extends ConsumerWidget {
     final categories =
         ref.watch(categoryListProvider).valueOrNull ?? const [];
     final byId = {for (final c in categories) c.id: c.name};
-    final df = DateFormat('EEEE, d MMM yyyy');
+
+    var income = Decimal.zero;
+    var expense = Decimal.zero;
+    for (final t in txns) {
+      if (t.type == TxnType.income) {
+        income += t.amount;
+      } else {
+        expense += t.amount;
+      }
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(df.format(day),
+        Text(DateFormat('EEEE, d MMM').format(day),
             style:
-                const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+        if (txns.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(
+            '${Money.formatSigned(income, isIncome: true)}  ·  '
+            '${Money.formatSigned(expense, isIncome: false)}',
+            style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
+          ),
+        ],
         const SizedBox(height: AppSpacing.sm),
         if (txns.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-            child: Text('No transactions on this day.'),
-          )
+          const _EmptyHint('No transactions on this day.')
         else
           for (final t in txns)
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                t.attachmentRef != null
-                    ? Icons.receipt_long
-                    : (t.type == TxnType.income
-                        ? Icons.south_west
-                        : Icons.north_east),
-                color: t.type == TxnType.income
-                    ? AppColors.income
-                    : AppColors.expense,
-              ),
-              title: Text(t.merchant ?? byId[t.categoryId] ?? 'Transaction'),
-              subtitle: Text(byId[t.categoryId] ?? ''),
-              trailing: Text(
-                Money.formatSigned(t.amount,
-                    isIncome: t.type == TxnType.income),
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: t.type == TxnType.income
-                      ? AppColors.income
-                      : AppColors.expense,
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: (t.type == TxnType.income
+                              ? AppColors.income
+                              : AppColors.expense)
+                          .withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      t.attachmentRef != null
+                          ? Icons.receipt_long
+                          : (t.type == TxnType.income
+                              ? Icons.south_west
+                              : Icons.north_east),
+                      size: 17,
+                      color: t.type == TxnType.income
+                          ? AppColors.income
+                          : AppColors.expense,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t.merchant ?? byId[t.categoryId] ?? 'Transaction',
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text(byId[t.categoryId] ?? '',
+                            style: TextStyle(
+                                fontSize: 11.5,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    Money.formatSigned(t.amount,
+                        isIncome: t.type == TxnType.income),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: t.type == TxnType.income
+                          ? AppColors.income
+                          : AppColors.expense,
+                    ),
+                  ),
+                ],
               ),
             ),
       ],
@@ -443,42 +616,45 @@ class _BudgetTracker extends ConsumerWidget {
         ref.watch(categoryListProvider).valueOrNull ?? const [];
     final byId = {for (final c in categories) c.id: c.name};
     if (progress.isEmpty) return const SizedBox.shrink();
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Budgets',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: AppSpacing.sm),
-            for (final p in progress) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(byId[p.budget.categoryId] ?? 'Category'),
-                  Text(
-                    '${Money.format(p.spent)} / ${Money.format(p.budget.amountLimit)}',
-                    style: TextStyle(
-                        fontSize: 12, color: AppColors.darkOnSurfaceMuted),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: p.fraction,
-                  minHeight: 7,
-                  backgroundColor: AppColors.glassFillLight,
-                  color: _budgetColor(p.status),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.pie_chart_outline,
+                  size: 18, color: AppColors.accent),
+              const SizedBox(width: AppSpacing.sm),
+              const Text('Budgets', style: TextStyle(fontWeight: FontWeight.w700)),
             ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          for (final p in progress) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(byId[p.budget.categoryId] ?? 'Category'),
+                Text(
+                  '${Money.format(p.spent)} / ${Money.format(p.budget.amountLimit)}',
+                  style: TextStyle(fontSize: 11.5, color: muted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: p.fraction,
+                minHeight: 7,
+                backgroundColor: AppColors.glassFillLight,
+                color: _budgetColor(p.status),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -489,3 +665,18 @@ Color _budgetColor(BudgetStatus status) => switch (status) {
       BudgetStatus.warning => AppColors.budgetWarn,
       BudgetStatus.over => AppColors.budgetOver,
     };
+
+class _EmptyHint extends StatelessWidget {
+  const _EmptyHint(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: Text(text,
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant)),
+    );
+  }
+}

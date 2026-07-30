@@ -142,6 +142,8 @@ class _QuickLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const links = [
+      (Routes.calendar, Icons.calendar_month_outlined, 'Calendar'),
+      (Routes.captureInbox, Icons.auto_awesome_motion_outlined, 'Auto-capture'),
       (Routes.budget, Icons.pie_chart_outline, 'Budget'),
       (Routes.goals, Icons.flag_outlined, 'Goals'),
       (Routes.liabilities, Icons.credit_card_outlined, 'Liabilities'),

@@ -8,7 +8,9 @@ import '../../features/capture/screens/capture_inbox_screen.dart';
 import '../../features/goals/screens/goals_screen.dart';
 import '../../features/import/screens/bank_import_screen.dart';
 import '../../features/insurance/screens/insurance_screen.dart';
+import '../../features/investments/screens/add_lot_screen.dart';
 import '../../features/investments/screens/investments_screen.dart';
+import '../../features/investments/screens/portfolio_breakdown_screen.dart';
 import '../../features/liabilities/screens/liabilities_screen.dart';
 import '../../features/reports/screens/dashboard_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
@@ -34,6 +36,8 @@ abstract final class Routes {
   static const search = '/app/search';
   static const budget = '/app/budget';
   static const investments = '/app/investments';
+  static const investmentsBreakdown = '/app/investments/breakdown';
+  static const investmentsAddLot = '/app/investments/add-lot';
   static const liabilities = '/app/liabilities';
   static const insurance = '/app/insurance';
   static const safetyNet = '/app/safety-net';
@@ -87,7 +91,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           ]),
           _tab(Routes.search, const SearchScreen()),
           _tab(Routes.budget, const BudgetScreen()),
-          _tab(Routes.investments, const InvestmentsScreen()),
+          _tab(Routes.investments, const InvestmentsScreen(), children: [
+            GoRoute(
+              path: 'breakdown',
+              builder: (context, state) => const PortfolioBreakdownScreen(),
+            ),
+            GoRoute(
+              path: 'add-lot',
+              builder: (context, state) => const AddLotScreen(),
+            ),
+          ]),
           _tab(Routes.liabilities, const LiabilitiesScreen()),
           _tab(Routes.insurance, const InsuranceScreen()),
           _tab(Routes.safetyNet, const SafetyNetScreen()),

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "note": "Index metadata ships here; the CLOSE SERIES is empty by design. Benchmark comparison needs real historical index closes, which are not bundled because approximating them would make every 'you vs the index' number quietly wrong. With no series loaded, the app compares against your own portfolio history and the fixed-return baseline (both of which need no external data) and states plainly that index comparison is unavailable. Populate `series` to switch it on.",
+  "fields": {
+    "code": "index code, referenced by Instruments.benchmarkIndexCode",
+    "series": "array of { date: ISO date, close: decimal string }"
+  },
+  "fixed_baseline": {
+    "note": "Needs no data — answers 'am I beating a fixed deposit?'. Rate is annual, in percent, and is a stated assumption rather than a market observation.",
+    "default_rate_pct": "7.0"
+  },
+  "indices": [
+    { "code": "NIFTY50", "name": "NIFTY 50", "applies_to": "large", "series": [] },
+    { "code": "NIFTYMIDCAP150", "name": "NIFTY Midcap 150", "applies_to": "mid", "series": [] },
+    { "code": "NIFTYSMALLCAP250", "name": "NIFTY Smallcap 250", "applies_to": "small", "series": [] },
+    { "code": "NIFTY500", "name": "NIFTY 500", "applies_to": "diversified", "series": [] }
+  ]
+}

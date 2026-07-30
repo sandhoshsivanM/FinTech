@@ -6,20 +6,26 @@ import 'package:decimal/decimal.dart';
 /// [key]) or gain computation throws, and a matching entry in the web app's
 /// `ASSET_META` so the two clients agree on labels and colours.
 enum AssetType {
-  equityEtf('equity_etf'),
-  equityMf('equity_mf'),
-  debtMf('debt_mf'),
-  goldEtf('gold_etf'),
-  bond('bond'),
-  cash('cash'),
-  realEstate('real_estate'),
-  crypto('crypto'),
-  fd('fd'),
-  ppfEpf('ppf_epf'),
-  nps('nps');
+  equityEtf('equity_etf', 'Equity / ETF'),
+  equityMf('equity_mf', 'Equity MF'),
+  debtMf('debt_mf', 'Debt MF'),
+  goldEtf('gold_etf', 'Gold'),
+  bond('bond', 'Bonds'),
+  cash('cash', 'Cash'),
+  realEstate('real_estate', 'Real Estate'),
+  crypto('crypto', 'Crypto'),
+  fd('fd', 'Fixed Deposit'),
+  ppfEpf('ppf_epf', 'PPF / EPF'),
+  nps('nps', 'NPS');
 
-  const AssetType(this.key);
+  const AssetType(this.key, this.label);
+
+  /// Stable storage key. Also the key in `assets/tax_rules.json`.
   final String key;
+
+  /// Human-readable name. Single source of truth — do not re-list these in UI
+  /// code, which is how the web and Flutter labels drifted apart before.
+  final String label;
 
   /// Parses a stored key. Throws [ArgumentError] on an unrecognised value.
   ///

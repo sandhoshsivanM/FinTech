@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "source": "AMC monthly portfolio disclosures",
+  "note": "EMPTY BY DESIGN. Mutual-fund look-through and overlap detection need each scheme's actual underlying holdings and weights, published monthly by every AMC. Those figures are not bundled here because inventing them would produce confident, wrong overlap numbers — the exact failure this app's design avoids elsewhere. Until real disclosures are loaded, the overlap view reports that it has no data rather than showing a fabricated 0% overlap. Populate `schemes` from the AMC disclosure files (or AMFI's consolidated feed) to switch the feature on.",
+  "fields": {
+    "scheme_code": "AMFI scheme code; the match key against Instruments.schemeCode",
+    "as_of": "ISO date of the disclosure the weights came from",
+    "holdings": "array of { isin, weight_bps } — weight in basis points, 1% = 100, integers only so no floating point enters the calculation",
+    "weight_note": "weights within a scheme need not sum to 10000; cash and derivatives are typically omitted"
+  },
+  "schemes": []
+}

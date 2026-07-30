@@ -9809,6 +9809,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final PostingDao postingDao = PostingDao(this as AppDatabase);
   late final PendingCaptureDao pendingCaptureDao =
       PendingCaptureDao(this as AppDatabase);
+  late final PortfolioDao portfolioDao = PortfolioDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
