@@ -1,12 +1,22 @@
 'use client';
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import clsx from 'clsx';
+import type Decimal from 'decimal.js';
 import {
   TrendingUp, Plus, Trash2, Upload, ChevronDown, ChevronUp, CheckCircle2, Pencil,
 } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
 import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
-import { portfolioSummary, holdingView, ASSET_META, xirr } from '@/domain/portfolio';
+import {
+  portfolioSummary, holdingView, ASSET_META, xirr,
+  rollup, allocationByGroup, ASSET_GROUP_META, UNCLASSIFIED_KEY,
+  type RollupDimension, type RollupRow,
+} from '@/domain/portfolio';
+import {
+  loadInstrumentMaster, lookupClassification,
+  EMPTY_MASTER, type InstrumentMaster,
+} from '@/domain/instrumentMaster';
 import { computeGain } from '@/domain/tax';
 import { STORE, type AssetType, type Holding } from '@/lib/types';
 import {
@@ -571,7 +581,148 @@ function TaxSummaryCard({ views, ghost }: { views: HV[]; ghost: boolean }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
+
+// ---- Sector-wise P&L breakdown ----------------------------------------------
+// Mirrors the Flutter Breakdown screen. Sector, industry and market cap come
+// from the bundled instrument master (offline: classifying by API would reveal
+// which stocks you own). Anything unmatched shows as "Unclassified" rather than
+// being guessed at.
+
+const DIMENSIONS: { value: RollupDimension; label: string }[] = [
+  { value: 'sector', label: 'Sector' },
+  { value: 'industry', label: 'Industry' },
+  { value: 'marketCap', label: 'Market cap' },
+  { value: 'assetGroup', label: 'Asset class' },
+];
+
+function BreakdownCard({
+  holdings, master, ghost, fmt,
+}: {
+  holdings: Holding[];
+  master: InstrumentMaster;
+  ghost: boolean;
+  fmt: ReturnType<typeof useFmt>;
+}) {
+  const [dim, setDim] = useState<RollupDimension>('sector');
+
+  const classify = useCallback(
+    (h: Holding) => lookupClassification(master, { symbol: h.symbol }),
+    [master],
+  );
+
+  const rows = useMemo(() => rollup(holdings, dim, classify), [holdings, dim, classify]);
+  const summary = useMemo(() => portfolioSummary(holdings), [holdings]);
+  const totalValue = summary.current;
+  const unclassified = rows.find((r) => r.key === UNCLASSIFIED_KEY);
+
+  if (holdings.length === 0) return null;
+
+  const money = (v: Decimal) => (ghost ? '••••' : fmt.money(v.toString()));
+  const signed = (v: Decimal) =>
+    ghost ? '••••' : `${v.isNegative() ? '-' : '+'}${fmt.money(v.abs().toString())}`;
+  const pnlClass = (v: Decimal) =>
+    v.isZero() ? 'text-muted' : v.isNegative() ? 'text-[var(--expense)]' : 'text-[var(--income)]';
+
+  return (
+    <GlassCard className="lg:col-span-5">
+      <SectionHeader title="Profit &amp; loss breakdown" />
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {DIMENSIONS.map((d) => (
+          <button
+            key={d.value}
+            type="button"
+            onClick={() => setDim(d.value)}
+            className={clsx(
+              'px-3 py-1.5 rounded-full text-[12.5px] font-semibold border transition',
+              dim === d.value
+                ? 'bg-[var(--primary)] text-[var(--primary-fg)] border-transparent'
+                : 'border-[var(--line)] text-ink-soft hover:bg-[var(--fill)]',
+            )}
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
+
+      {unclassified && unclassified.holdingCount > 0 && (
+        <p className="mt-3 text-xs text-muted">
+          {unclassified.holdingCount} holding{unclassified.holdingCount === 1 ? '' : 's'} could
+          not be classified and appear under &ldquo;Unclassified&rdquo;. The bundled sector list
+          covers common Indian large caps; an honest gap beats a wrong sector.
+        </p>
+      )}
+
+      <div className="overflow-x-auto -mx-1 px-1 mt-3">
+        <table className="w-full text-[13.5px]">
+          <thead>
+            <tr className="text-left text-muted border-b border-[var(--line)]">
+              <th className="py-2 px-3 font-medium">{DIMENSIONS.find((d) => d.value === dim)?.label}</th>
+              <th className="py-2 px-3 font-medium text-right">Invested</th>
+              <th className="py-2 px-3 font-medium text-right">Value</th>
+              <th className="py-2 px-3 font-medium text-right">P&amp;L</th>
+              <th className="py-2 px-3 font-medium text-right">Return</th>
+              <th className="py-2 px-3 font-medium text-right">Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r: RollupRow) => {
+              const share = totalValue.isZero()
+                ? 0
+                : r.current.div(totalValue).times(100).toNumber();
+              return (
+                <tr key={r.key} className="border-b border-[var(--line)] last:border-0">
+                  <td className="py-2 px-3">
+                    <div className="font-semibold">{r.label}</div>
+                    <div className="text-xs text-muted">
+                      {r.holdingCount} holding{r.holdingCount === 1 ? '' : 's'}
+                      {r.unpricedCount > 0 ? ` · ${r.unpricedCount} unpriced` : ''}
+                    </div>
+                  </td>
+                  <td className="py-2 px-3 text-right tabular-nums">{money(r.invested)}</td>
+                  <td className="py-2 px-3 text-right tabular-nums font-semibold">{money(r.current)}</td>
+                  <td className={clsx('py-2 px-3 text-right tabular-nums font-semibold', pnlClass(r.pnl))}>
+                    {signed(r.pnl)}
+                  </td>
+                  <td className={clsx('py-2 px-3 text-right tabular-nums', pnlClass(r.pnl))}>
+                    {/* An undefined percentage renders as a dash, never as 0%. */}
+                    {r.pnlPct === null ? '—' : `${r.pnlPct >= 0 ? '+' : ''}${r.pnlPct.toFixed(2)}%`}
+                  </td>
+                  <td className="py-2 px-3 text-right tabular-nums text-muted">{share.toFixed(1)}%</td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            {/* Reconciliation row: if this ever disagrees with the rows above,
+                the roll-up is wrong. The paired unit tests assert it cannot. */}
+            <tr className="border-t-2 border-[var(--line)] font-bold">
+              <td className="py-2 px-3">Total</td>
+              <td className="py-2 px-3 text-right tabular-nums">{money(summary.invested)}</td>
+              <td className="py-2 px-3 text-right tabular-nums">{money(summary.current)}</td>
+              <td className={clsx('py-2 px-3 text-right tabular-nums', pnlClass(summary.pnl))}>
+                {signed(summary.pnl)}
+              </td>
+              <td className="py-2 px-3" />
+              <td className="py-2 px-3" />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </GlassCard>
+  );
+}
+
 export default function InvestmentsPage() {
+  // Bundled sector/industry/cap table. A fetch failure degrades to "no
+  // classification" rather than breaking the page.
+  const [master, setMaster] = useState<InstrumentMaster>(EMPTY_MASTER);
+  useEffect(() => {
+    let alive = true;
+    loadInstrumentMaster().then((m) => { if (alive) setMaster(m); });
+    return () => { alive = false; };
+  }, []);
+
   const holdings = useApp((s) => s.holdings);
   const ghost = useApp((s) => s.ghost);
   const del = useApp((s) => s.del);
@@ -591,10 +742,16 @@ export default function InvestmentsPage() {
     [summary.views],
   );
 
-  const donutSegments = summary.allocation.map((a) => ({
-    label: a.label,
-    value: a.value,
-    color: a.color,
+  // Colour by asset GROUP in the fixed validated order — not by asset type and
+  // not value-sorted. Eleven categorical hues cannot be kept colourblind-
+  // separable, and sorting slices by value makes the adjacency data-dependent,
+  // which is exactly the case the palette fails (worst pair dE 3.2 protan).
+  // NOTE: uses the light-mode steps. ASSET_GROUP_META also carries validated
+  // `dark` steps, to be wired when this page gets theme-reactive chart colours.
+  const donutSegments = allocationByGroup(holdings).map((r) => ({
+    label: r.label,
+    value: r.current.toNumber(),
+    color: ASSET_GROUP_META[r.key as keyof typeof ASSET_GROUP_META].light,
   }));
 
   // Portfolio-level XIRR — collect one outflow per dated holding + one total inflow now
@@ -751,6 +908,13 @@ export default function InvestmentsPage() {
               />
             </div>
           </GlassCard>
+
+          <BreakdownCard
+            holdings={holdings}
+            master={master}
+            ghost={ghost}
+            fmt={fmt}
+          />
 
           {/* Holdings list — sorted by current value DESC */}
           <GlassCard className="lg:col-span-3">

@@ -2,6 +2,10 @@
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
 import type { AssetType, Holding } from '@/lib/types';
+import {
+  MARKET_CAP_LABEL,
+  type InstrumentClassification,
+} from './instrumentMaster';
 
 // Labels + chip colours per asset type. These colours are used for the small
 // labelled chips in tables, where the text always accompanies the colour, so
@@ -135,4 +139,127 @@ export function xirr(flows: CashFlow[]): number | null {
     rate = next;
   }
   return rate * 100;
+}
+
+// ---------------------------------------------------------------------------
+// Roll-ups (sector-wise P&L)
+// ---------------------------------------------------------------------------
+//
+// Mirrors `PortfolioAnalytics.rollup` in
+// lib/domain/services/portfolio_analytics.dart. The load-bearing invariant, and
+// what the paired tests assert on both sides: a roll-up along any dimension must
+// sum exactly to the portfolio total.
+//
+// Note the model difference from Flutter, which is deliberate and not an
+// oversight: the web app stores aggregated positions (one row per symbol with an
+// average cost), so it computes UNREALISED P&L only. Lot-level cost basis,
+// per-trade charges and realised P&L need the Drift v4 trade ledger, which is
+// currently Flutter-only.
+
+export type RollupDimension =
+  | 'sector' | 'industry' | 'marketCap' | 'assetGroup' | 'assetType' | 'currency';
+
+export const UNCLASSIFIED_KEY = '__unclassified__';
+export const UNCLASSIFIED_LABEL = 'Unclassified';
+
+export interface RollupRow {
+  key: string;
+  label: string;
+  current: Decimal;
+  invested: Decimal;
+  pnl: Decimal;
+  /** Null when cost is zero — an undefined percentage must not render as 0%. */
+  pnlPct: number | null;
+  holdingCount: number;
+  /** Holdings with no price. Their P&L reads as zero, so the UI must disclose. */
+  unpricedCount: number;
+}
+
+function bucketOf(
+  h: Holding,
+  dimension: RollupDimension,
+  classify: (h: Holding) => InstrumentClassification | undefined,
+): [string, string] {
+  const cls = classify(h);
+  switch (dimension) {
+    case 'sector':
+      return cls?.sector ? [cls.sector, cls.sector] : [UNCLASSIFIED_KEY, UNCLASSIFIED_LABEL];
+    case 'industry':
+      return cls?.industry ? [cls.industry, cls.industry] : [UNCLASSIFIED_KEY, UNCLASSIFIED_LABEL];
+    case 'marketCap':
+      return cls?.cap ? [cls.cap, MARKET_CAP_LABEL[cls.cap]] : [UNCLASSIFIED_KEY, UNCLASSIFIED_LABEL];
+    case 'assetGroup': {
+      const g = ASSET_GROUP_OF[h.assetType];
+      return [g, ASSET_GROUP_META[g].label];
+    }
+    case 'assetType':
+      return [h.assetType, ASSET_META[h.assetType].label];
+    case 'currency':
+      // The web Holding has no currency column; everything is vault currency.
+      return ['INR', 'INR'];
+  }
+}
+
+/**
+ * Groups holdings along `dimension` and totals value, cost and P&L.
+ *
+ * Rows come back sorted by value descending — safe because a table is read as a
+ * ranking, unlike a chart, whose colour adjacency must stay fixed (see
+ * ASSET_GROUP_ORDER).
+ */
+export function rollup(
+  holdings: Holding[],
+  dimension: RollupDimension,
+  classify: (h: Holding) => InstrumentClassification | undefined = () => undefined,
+): RollupRow[] {
+  const acc = new Map<string, {
+    label: string; current: Decimal; invested: Decimal;
+    count: number; unpriced: number;
+  }>();
+
+  for (const h of holdings) {
+    const view = holdingView(h);
+    const [key, label] = bucketOf(h, dimension, classify);
+    const row = acc.get(key) ?? {
+      label, current: ZERO, invested: ZERO, count: 0, unpriced: 0,
+    };
+    row.current = row.current.plus(view.current);
+    row.invested = row.invested.plus(view.invested);
+    row.count += 1;
+    // No price recorded: holdingView falls back to avgCost, so this holding
+    // contributes no P&L and the row's figure is understated.
+    if (h.lastPrice == null || h.lastPrice === '') row.unpriced += 1;
+    acc.set(key, row);
+  }
+
+  return [...acc.entries()]
+    .map(([key, r]) => {
+      const pnl = r.current.minus(r.invested);
+      return {
+        key,
+        label: r.label,
+        current: r.current,
+        invested: r.invested,
+        pnl,
+        pnlPct: r.invested.isZero() ? null : pnl.div(r.invested).times(100).toNumber(),
+        holdingCount: r.count,
+        unpricedCount: r.unpriced,
+      };
+    })
+    .sort((a, b) => b.current.comparedTo(a.current));
+}
+
+/**
+ * Allocation by asset group in the FIXED chart order.
+ *
+ * Use this for the allocation chart. `rollup` sorts by value, which would make
+ * colour adjacency data-dependent and break the palette's colourblind
+ * guarantees — see ASSET_GROUP_ORDER.
+ */
+export function allocationByGroup(holdings: Holding[]): RollupRow[] {
+  const rows = rollup(holdings, 'assetGroup');
+  const byKey = new Map(rows.map((r) => [r.key, r]));
+  return ASSET_GROUP_ORDER
+    .filter((g) => byKey.has(g))
+    .map((g) => byKey.get(g)!);
 }

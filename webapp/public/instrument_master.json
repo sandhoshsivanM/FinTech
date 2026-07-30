@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "source": "NSE macro-sector / sector classification, manually curated",
+  "note": "STARTER SET — covers frequently held Indian large caps only. Sector and industry are NSE-style macro-sector and sector names. Extend this file to widen coverage; anything absent shows as 'Unclassified' in roll-ups, which is deliberate: an honest gap beats a wrong sector. User overrides set in the app always win over values here and are never clobbered when this file is upgraded.",
+  "fields": {
+    "symbol": "NSE trading symbol; the match key for equities",
+    "isin": "optional; preferred match key when present",
+    "sector": "NSE macro-sector",
+    "industry": "NSE sector / industry within the macro-sector",
+    "cap": "large | mid | small",
+    "benchmark": "index code for returns comparison"
+  },
+  "instruments": [
+    { "symbol": "INFY", "sector": "Information Technology", "industry": "IT - Software", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "TCS", "sector": "Information Technology", "industry": "IT - Software", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "WIPRO", "sector": "Information Technology", "industry": "IT - Software", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "HCLTECH", "sector": "Information Technology", "industry": "IT - Software", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "TECHM", "sector": "Information Technology", "industry": "IT - Software", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "LTIM", "sector": "Information Technology", "industry": "IT - Software", "cap": "large", "benchmark": "NIFTY50" },
+
+    { "symbol": "HDFCBANK", "sector": "Financial Services", "industry": "Banks", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "ICICIBANK", "sector": "Financial Services", "industry": "Banks", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "SBIN", "sector": "Financial Services", "industry": "Banks", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "KOTAKBANK", "sector": "Financial Services", "industry": "Banks", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "AXISBANK", "sector": "Financial Services", "industry": "Banks", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "INDUSINDBK", "sector": "Financial Services", "industry": "Banks", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "BAJFINANCE", "sector": "Financial Services", "industry": "Finance", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "BAJAJFINSV", "sector": "Financial Services", "industry": "Finance", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "HDFCLIFE", "sector": "Financial Services", "industry": "Insurance", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "SBILIFE", "sector": "Financial Services", "industry": "Insurance", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "ICICIGI", "sector": "Financial Services", "industry": "Insurance", "cap": "large", "benchmark": "NIFTY50" },
+
+    { "symbol": "RELIANCE", "sector": "Oil Gas & Consumable Fuels", "industry": "Refineries & Marketing", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "ONGC", "sector": "Oil Gas & Consumable Fuels", "industry": "Exploration & Production", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "IOC", "sector": "Oil Gas & Consumable Fuels", "industry": "Refineries & Marketing", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "BPCL", "sector": "Oil Gas & Consumable Fuels", "industry": "Refineries & Marketing", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "COALINDIA", "sector": "Oil Gas & Consumable Fuels", "industry": "Coal", "cap": "large", "benchmark": "NIFTY50" },
+
+    { "symbol": "ITC", "sector": "Fast Moving Consumer Goods", "industry": "Diversified FMCG", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "HINDUNILVR", "sector": "Fast Moving Consumer Goods", "industry": "Diversified FMCG", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "NESTLEIND", "sector": "Fast Moving Consumer Goods", "industry": "Packaged Foods", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "BRITANNIA", "sector": "Fast Moving Consumer Goods", "industry": "Packaged Foods", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "TATACONSUM", "sector": "Fast Moving Consumer Goods", "industry": "Packaged Foods", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "DABUR", "sector": "Fast Moving Consumer Goods", "industry": "Personal Products", "cap": "mid", "benchmark": "NIFTY50" },
+
+    { "symbol": "MARUTI", "sector": "Automobile and Auto Components", "industry": "Passenger Cars & Utility Vehicles", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "TATAMOTORS", "sector": "Automobile and Auto Components", "industry": "Passenger Cars & Utility Vehicles", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "M&M", "sector": "Automobile and Auto Components", "industry": "Passenger Cars & Utility Vehicles", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "BAJAJ-AUTO", "sector": "Automobile and Auto Components", "industry": "2/3 Wheelers", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "HEROMOTOCO", "sector": "Automobile and Auto Components", "industry": "2/3 Wheelers", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "EICHERMOT", "sector": "Automobile and Auto Components", "industry": "2/3 Wheelers", "cap": "large", "benchmark": "NIFTY50" },
+
+    { "symbol": "SUNPHARMA", "sector": "Healthcare", "industry": "Pharmaceuticals", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "DRREDDY", "sector": "Healthcare", "industry": "Pharmaceuticals", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "CIPLA", "sector": "Healthcare", "industry": "Pharmaceuticals", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "DIVISLAB", "sector": "Healthcare", "industry": "Pharmaceuticals", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "APOLLOHOSP", "sector": "Healthcare", "industry": "Healthcare Services", "cap": "large", "benchmark": "NIFTY50" },
+
+    { "symbol": "TATASTEEL", "sector": "Metals & Mining", "industry": "Iron & Steel", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "JSWSTEEL", "sector": "Metals & Mining", "industry": "Iron & Steel", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "HINDALCO", "sector": "Metals & Mining", "industry": "Aluminium", "cap": "large", "benchmark": "NIFTY50" },
+
+    { "symbol": "NTPC", "sector": "Power", "industry": "Power Generation", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "POWERGRID", "sector": "Power", "industry": "Power Transmission", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "TATAPOWER", "sector": "Power", "industry": "Power Generation", "cap": "mid", "benchmark": "NIFTY50" },
+
+    { "symbol": "LT", "sector": "Construction", "industry": "Civil Construction", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "ULTRACEMCO", "sector": "Construction Materials", "industry": "Cement", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "GRASIM", "sector": "Construction Materials", "industry": "Cement", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "SHREECEM", "sector": "Construction Materials", "industry": "Cement", "cap": "mid", "benchmark": "NIFTY50" },
+
+    { "symbol": "BHARTIARTL", "sector": "Telecommunication", "industry": "Telecom Services", "cap": "large", "benchmark": "NIFTY50" },
+
+    { "symbol": "ASIANPAINT", "sector": "Consumer Durables", "industry": "Paints", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "TITAN", "sector": "Consumer Durables", "industry": "Gems Jewellery & Watches", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "PIDILITIND", "sector": "Chemicals", "industry": "Specialty Chemicals", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "UPL", "sector": "Chemicals", "industry": "Agrochemicals", "cap": "mid", "benchmark": "NIFTY50" },
+
+    { "symbol": "ADANIENT", "sector": "Services", "industry": "Diversified Commercial Services", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "ADANIPORTS", "sector": "Services", "industry": "Port & Port Services", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "DMART", "sector": "Consumer Services", "industry": "Retailing", "cap": "large", "benchmark": "NIFTY50" },
+    { "symbol": "ZOMATO", "sector": "Consumer Services", "industry": "Online Services", "cap": "large", "benchmark": "NIFTY50" }
+  ]
+}
