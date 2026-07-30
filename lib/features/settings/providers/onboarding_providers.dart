@@ -1,11 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const _storage = FlutterSecureStorage(
-  iOptions: IOSOptions(
-    accessibility: KeychainAccessibility.first_unlock_this_device,
-  ),
-);
+import '../../../core/security/secure_storage.dart';
+
+const _storage = appSecureStorage;
 const _key = 'onboarding_seen_v1';
 const _tourKey = 'tour_seen_v1';
 
@@ -37,7 +34,7 @@ class OnboardingActions {
 
   /// Replays the tour (clears the flag so it shows again).
   Future<void> resetTour() async {
-    await _storage.delete(key: _tourKey);
+    await _storage.erase(key: _tourKey);
     _ref.invalidate(tourSeenProvider);
   }
 }

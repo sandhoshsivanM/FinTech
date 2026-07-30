@@ -4,5 +4,36 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+
+	<!-- Keychain note. The vault key and market-data API keys live in the
+	     keychain. The app deliberately uses the FILE-BASED keychain
+	     (usesDataProtectionKeychain: false in lib/core/security/secure_storage.dart)
+	     rather than the data-protection keychain, because the latter demands a
+	     `keychain-access-groups` entitlement, and Xcode rejects that entitlement
+	     unless the build is signed with a real Apple development certificate:
+	         "Runner has entitlements that require signing with a development
+	          certificate."
+	     That would make a locally-signed build impossible. The file-based keychain
+	     needs no entitlement, is still encrypted by macOS, and is scoped to this
+	     login keychain. Without this combination, creating a vault failed with
+	     errSecMissingEntitlement (-34018).
+
+	     If this app is ever signed with a real team for distribution, add:
+	         <key>keychain-access-groups</key>
+	         <array><string>$(AppIdentifierPrefix)com.khazana.app</string></array>
+	     and flip usesDataProtectionKeychain back to true. -->
+
+	<!-- Outbound network, needed ONLY for the user-initiated price refresh
+	     (equity quotes and the AMFI NAV file). There is no server, no telemetry
+	     and no automatic sync; nothing is contacted unless the user taps refresh.
+	     `network.server` is deliberately absent — the app never listens. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+
+	<!-- Files the user explicitly picks: importing a bank or broker CSV, or an
+	     encrypted .ftos backup, and writing an export back out. Scoped to
+	     user-selected files only, so the app never gets blanket disk access. -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
 </dict>
 </plist>

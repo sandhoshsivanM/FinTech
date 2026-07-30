@@ -6,7 +6,16 @@
 	<true/>
 	<key>com.apple.security.cs.allow-jit</key>
 	<true/>
+	<!-- Debug only: the Flutter tooling connects over a local socket.
+	     Deliberately NOT present in Release.entitlements. -->
 	<key>com.apple.security.network.server</key>
+	<true/>
+
+	<!-- Mirrors Release.entitlements so a debug run exercises the same
+	     permissions as a release build. See that file for the keychain reasoning. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
 </dict>
 </plist>

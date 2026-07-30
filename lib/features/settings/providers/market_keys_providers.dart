@@ -1,11 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const _storage = FlutterSecureStorage(
-  iOptions: IOSOptions(
-    accessibility: KeychainAccessibility.first_unlock_this_device,
-  ),
-);
+import '../../../core/security/secure_storage.dart';
+
+const _storage = appSecureStorage;
 
 const _avKey = 'mkt_alphavantage_key';
 const _tdKey = 'mkt_twelvedata_key';

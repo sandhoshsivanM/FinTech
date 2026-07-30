@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
@@ -13,14 +12,11 @@ import '../../../domain/services/portfolio_diff.dart';
 import '../../../domain/services/tax_rule_engine.dart';
 import '../../import/broker_parser.dart';
 import '../data/price_providers.dart';
+import '../../../core/security/secure_storage.dart';
 
 const _uuid = Uuid();
 
-const _secureStorage = FlutterSecureStorage(
-  iOptions: IOSOptions(
-    accessibility: KeychainAccessibility.first_unlock_this_device,
-  ),
-);
+const _secureStorage = appSecureStorage;
 
 /// Builds the provider fallback chain using stored API keys (PRD §9B) and a
 /// cache seeded from current holdings' last known prices.

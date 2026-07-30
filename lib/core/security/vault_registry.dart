@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'secure_storage.dart';
 
 /// A known vault (id + display name).
 class VaultInfo {
@@ -18,11 +19,7 @@ class VaultInfo {
 class VaultRegistry {
   VaultRegistry([FlutterSecureStorage? storage])
       : _storage = storage ??
-            const FlutterSecureStorage(
-              iOptions: IOSOptions(
-                accessibility: KeychainAccessibility.first_unlock_this_device,
-              ),
-            );
+            appSecureStorage;
 
   final FlutterSecureStorage _storage;
   static const _key = 'vault_registry';

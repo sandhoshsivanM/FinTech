@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'key_derivation_service.dart';
+import 'secure_storage.dart';
 
 /// Stores per-vault secrets in the OS keychain / Keystore (PRD §14):
 /// a 32-byte random salt per vault. The PIN and derived key are NEVER persisted.
@@ -12,11 +13,7 @@ import 'key_derivation_service.dart';
 class SecureKeyStore {
   SecureKeyStore([FlutterSecureStorage? storage])
       : _storage = storage ??
-            const FlutterSecureStorage(
-              iOptions: IOSOptions(
-                accessibility: KeychainAccessibility.first_unlock_this_device,
-              ),
-            );
+            appSecureStorage;
 
   final FlutterSecureStorage _storage;
 
@@ -30,7 +27,7 @@ class SecureKeyStore {
 
   /// True once a vault has completed setup (so the app shows unlock vs. setup).
   Future<bool> vaultExists(String vaultId) async {
-    return (await _storage.read(key: _existsKey(vaultId))) == '1';
+    return nullIfBlank(await _storage.read(key: _existsKey(vaultId))) == '1';
   }
 
   /// Creates and stores a fresh random salt for a new vault.
@@ -46,7 +43,9 @@ class SecureKeyStore {
 
   /// Reads the stored salt for an existing vault, or null if none.
   Future<Uint8List?> readSalt(String vaultId) async {
-    final hex = await _storage.read(key: _saltKey(vaultId));
+    // nullIfBlank: an erased secret is an empty string, which must read as
+    // absent rather than being parsed into an empty salt.
+    final hex = nullIfBlank(await _storage.read(key: _saltKey(vaultId)));
     if (hex == null) return null;
     return _fromHex(hex);
   }
@@ -63,15 +62,20 @@ class SecureKeyStore {
 
   /// Reads the stored derived key (used for biometric unlock). Null if absent.
   Future<Uint8List?> readDerivedKey(String vaultId) async {
-    final hex = await _storage.read(key: _keyKey(vaultId));
+    final hex = nullIfBlank(await _storage.read(key: _keyKey(vaultId)));
     if (hex == null) return null;
     return _fromHex(hex);
   }
 
+  /// Destroys every secret for a vault.
+  ///
+  /// Uses [SecureErase.erase] rather than a plain delete so the secret material
+  /// is overwritten even where the platform's delete cannot complete — see that
+  /// method for the macOS keychain defect this works around.
   Future<void> deleteVault(String vaultId) async {
-    await _storage.delete(key: _saltKey(vaultId));
-    await _storage.delete(key: _existsKey(vaultId));
-    await _storage.delete(key: _keyKey(vaultId));
+    await _storage.erase(key: _saltKey(vaultId));
+    await _storage.erase(key: _existsKey(vaultId));
+    await _storage.erase(key: _keyKey(vaultId));
   }
 
   static Uint8List _randomBytes(int n) {
