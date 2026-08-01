@@ -10,7 +10,7 @@ import '../../../core/utils/money_format.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/net_worth_calculator.dart';
 import '../../../presentation/data_gate.dart';
-import '../../../presentation/donut_chart.dart';
+import '../../../presentation/charts/donut_chart.dart';
 import '../../../presentation/glass_card.dart';
 import '../../transactions/providers/category_providers.dart';
 import '../../transactions/providers/transaction_providers.dart';

@@ -6,17 +6,23 @@ import clsx from 'clsx';
 import {
   LayoutDashboard, Receipt, TrendingUp, CreditCard, BarChart3, PieChart,
   Flag, Repeat, Settings, Eye, EyeOff, Lock, Menu, X, Plus, Shield, ChevronDown, Check,
-  Sun, Moon, Monitor, LifeBuoy, CalendarDays,
+  Sun, Moon, Monitor, LifeBuoy, CalendarDays, Gauge,
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
 import { useApp, type ThemeChoice } from '@/lib/store';
 import { Tour } from './Tour';
 
+/**
+ * The full sidebar. Every route in the app is here — the sidebar is the
+ * complete index, and the bottom bar below is a shortcut to five of them, not a
+ * replacement for this list.
+ */
 const NAV = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
   { href: '/transactions', icon: Receipt, label: 'Cash Flow' },
   { href: '/calendar', icon: CalendarDays, label: 'Calendar' },
   { href: '/investments', icon: TrendingUp, label: 'Investments' },
+  { href: '/score', icon: Gauge, label: 'Score' },
   { href: '/liabilities', icon: CreditCard, label: 'Liabilities' },
   { href: '/insurance', icon: Shield, label: 'Insurance' },
   { href: '/safety-net', icon: LifeBuoy, label: 'Safety Net' },
@@ -27,8 +33,25 @@ const NAV = [
   { href: '/settings', icon: Settings, label: 'Settings' },
 ];
 
+/**
+ * The five phone destinations, matching the Flutter app's bottom bar exactly.
+ * A user moving between the two clients should not have to relearn where things
+ * are; `Shell.test.tsx` asserts the two lists stay in step.
+ *
+ * Everything not here stays reachable through the hamburger drawer, which is
+ * why this can be five items rather than thirteen.
+ */
+const BOTTOM_NAV = [
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
+  { href: '/transactions', icon: Receipt, label: 'Cash Flow' },
+  { href: '/investments', icon: TrendingUp, label: 'Investments' },
+  { href: '/score', icon: Gauge, label: 'Score' },
+  { href: '/settings', icon: Settings, label: 'Settings' },
+];
+
 const TITLES: Record<string, string> = {
   '/dashboard': 'Overview', '/transactions': 'Cash Flow', '/investments': 'Investments',
+  '/score': 'Score',
   '/liabilities': 'Liabilities', '/insurance': 'Insurance', '/safety-net': 'Safety Net', '/budget': 'Budget', '/goals': 'Goals',
   '/reports': 'Reports', '/recurring': 'Recurring', '/settings': 'Settings', '/add': 'Add Transaction',
 };
@@ -45,8 +68,12 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex">
-      {/* Sidebar (desktop) */}
-      <aside className="hidden md:flex w-[248px] shrink-0 flex-col border-r border-[var(--line)] px-4 py-6">
+      {/* Sidebar. Collapses at 900px rather than Tailwind's 768px `md`: the
+          sidebar plus a readable content column needs the extra room, and web
+          is served to phones and desktops alike so the breakpoint has to be
+          width-driven. Page-level `md:` grids are independent — don't sweep
+          them into this. */}
+      <aside className="hidden min-[900px]:flex w-[248px] shrink-0 flex-col border-r border-[var(--line)] px-4 py-6">
         <Brand />
         <Nav path={path} className="mt-8 flex-1" />
         <NewTxnButton />
@@ -56,11 +83,11 @@ export function Shell({ children }: { children: ReactNode }) {
         </p>
       </aside>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer — the full route index below 900px. */}
       {open && (
-        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-40 min-[900px]:hidden" onClick={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-          <aside className="absolute left-0 top-0 h-full w-[280px] bg-canvas border-r border-[var(--line)] px-4 py-6 flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <aside className="absolute left-0 top-0 h-full w-[280px] bg-canvas border-r border-[var(--line)] px-4 py-6 flex flex-col overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between"><Brand /><button onClick={() => setOpen(false)} className="text-ink-soft"><X size={20} /></button></div>
             <Nav path={path} className="mt-8 flex-1" onNavigate={() => setOpen(false)} />
             <NewTxnButton />
@@ -70,9 +97,9 @@ export function Shell({ children }: { children: ReactNode }) {
 
       {/* Main column */}
       <div className="flex-1 min-w-0 flex flex-col">
-        <header className="sticky top-0 z-30 flex items-center gap-3 px-5 md:px-10 h-14 border-b border-[var(--line)] bg-[var(--canvas)]/85 backdrop-blur-xl">
-          <button className="md:hidden text-ink-soft" onClick={() => setOpen(true)}><Menu size={21} /></button>
-          <span className="md:hidden font-semibold tracking-tight">{title}</span>
+        <header className="sticky top-0 z-30 flex items-center gap-3 px-5 min-[900px]:px-10 h-14 border-b border-[var(--line)] bg-[var(--canvas)]/85 backdrop-blur-xl">
+          <button className="min-[900px]:hidden text-ink-soft" onClick={() => setOpen(true)} aria-label="Open navigation"><Menu size={21} /></button>
+          <span className="min-[900px]:hidden font-semibold tracking-tight">{title}</span>
           <div className="flex-1" />
           <ThemeToggle />
           <button data-tour="ghost" onClick={toggleGhost} title="Privacy (Ghost mode)" className="focus-ring w-8 h-8 grid place-items-center rounded-full hover:bg-[var(--surface-2)] text-ink-soft transition-colors">
@@ -83,12 +110,58 @@ export function Shell({ children }: { children: ReactNode }) {
           </button>
           <ProfileMenu />
         </header>
-        <main className="flex-1 px-5 md:px-9 py-6">
+        {/* Bottom padding clears the fixed bar below 900px. */}
+        <main className="flex-1 px-5 min-[900px]:px-9 py-6 pb-24 min-[900px]:pb-6">
           <div className="mx-auto max-w-[1280px]">{children}</div>
         </main>
       </div>
+      <BottomNav path={path} />
       <Tour />
     </div>
+  );
+}
+
+/**
+ * Phone bottom bar. Five destinations, matching the Flutter app.
+ *
+ * Carries no `data-tour` attributes on purpose: `Tour.tsx` finds its targets
+ * with `querySelector`, which returns the first match in DOM order — the
+ * sidebar copy, which is `hidden` at this width. Duplicating the attributes here
+ * would leave the tour spotlighting an invisible element.
+ */
+function BottomNav({ path }: { path: string }) {
+  return (
+    <nav
+      aria-label="Primary"
+      className="min-[900px]:hidden fixed bottom-0 inset-x-0 z-30 flex border-t border-[var(--line)] bg-[var(--canvas)]/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]"
+    >
+      {BOTTOM_NAV.map((n) => {
+        const active = path === n.href || (n.href !== '/dashboard' && path.startsWith(n.href));
+        const Icon = n.icon;
+        return (
+          <Link
+            key={n.href}
+            href={n.href}
+            aria-current={active ? 'page' : undefined}
+            className="focus-ring flex-1 min-w-0 flex flex-col items-center gap-1 pt-2 pb-2.5 text-[10.5px] font-medium"
+          >
+            {/* Material's pill indicator: the shape carries the active state, so
+                it survives being read at a glance in bright light. */}
+            <span
+              className={clsx(
+                'px-4 py-0.5 rounded-full transition-colors duration-150',
+                active ? 'bg-[var(--fill-strong)] text-ink' : 'text-muted',
+              )}
+            >
+              <Icon size={19} strokeWidth={active ? 2.2 : 1.9} />
+            </span>
+            <span className={clsx('truncate max-w-full', active ? 'text-ink font-semibold' : 'text-muted')}>
+              {n.label}
+            </span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 

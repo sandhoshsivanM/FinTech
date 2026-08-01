@@ -12,7 +12,8 @@ import '../../../domain/services/portfolio_analytics.dart';
 import '../../../domain/services/tax_rule_engine.dart';
 import '../../../presentation/asset_group_colors.dart';
 import '../../../presentation/data_gate.dart';
-import '../../../presentation/donut_chart.dart';
+import '../../../presentation/charts/donut_chart.dart';
+import '../../../presentation/stat_tile.dart';
 import '../../../presentation/glass_card.dart';
 import '../providers/investment_providers.dart' show taxRuleEngineProvider;
 import '../providers/portfolio_providers.dart';
@@ -141,20 +142,20 @@ class _StatGrid extends ConsumerWidget {
     final pct = snap.unrealisedPnlPct;
 
     final tiles = <Widget>[
-      _StatTile(
+      StatTile(
         label: 'Current value',
         value: Money.format(snap.marketValue),
         emphasise: true,
         footer: _asOfText(snap.lastPricedAt) ?? 'No prices recorded',
       ),
-      _StatTile(label: 'Invested', value: Money.format(snap.costBasis)),
-      _StatTile(
+      StatTile(label: 'Invested', value: Money.format(snap.costBasis)),
+      StatTile(
         label: 'Unrealised P&L',
         value: _signed(snap.unrealisedPnl),
         valueColor: _pnlColor(snap.unrealisedPnl),
         footer: pct == null ? null : '${_pctText(pct)}%',
       ),
-      _StatTile(
+      StatTile(
         label: 'Realised P&L',
         value: _signed(snap.realisedPnl),
         valueColor: _pnlColor(snap.realisedPnl),
@@ -163,7 +164,7 @@ class _StatGrid extends ConsumerWidget {
             : '${snap.disposals.length} disposal'
                 '${snap.disposals.length == 1 ? '' : 's'}',
       ),
-      _StatTile(
+      StatTile(
         label: 'XIRR',
         // Null means the solver had nothing to work with. Never invent a return.
         value: xirr == null ? '—' : '${(xirr * 100).toStringAsFixed(1)}%',
@@ -172,7 +173,7 @@ class _StatGrid extends ConsumerWidget {
             : (xirr >= 0 ? AppColors.income : AppColors.expense),
         footer: xirr == null ? 'Needs dated lots' : 'Annualised',
       ),
-      _StatTile(
+      StatTile(
         label: 'Dividends',
         value: Money.format(snap.dividendIncome),
         footer: 'Counted in XIRR',
@@ -196,69 +197,6 @@ class _StatGrid extends ConsumerWidget {
           children: tiles,
         );
       },
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  const _StatTile({
-    required this.label,
-    required this.value,
-    this.valueColor,
-    this.footer,
-    this.emphasise = false,
-  });
-
-  final String label;
-  final String value;
-  final Color? valueColor;
-  final String? footer;
-  final bool emphasise;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(color: scheme.onSurfaceVariant),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: emphasise ? 21 : 18,
-                fontWeight: FontWeight.w800,
-                color: valueColor,
-              ),
-            ),
-          ),
-          if (footer != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              footer!,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelSmall
-                  ?.copyWith(color: scheme.onSurfaceVariant),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ],
-      ),
     );
   }
 }

@@ -9,7 +9,7 @@ import '../../../domain/entities/asset_group.dart';
 import '../../../domain/services/portfolio_analytics.dart';
 import '../../../presentation/asset_group_colors.dart';
 import '../../../presentation/data_gate.dart';
-import '../../../presentation/donut_chart.dart';
+import '../../../presentation/charts/donut_chart.dart';
 import '../../../presentation/glass_card.dart';
 import '../providers/portfolio_providers.dart';
 

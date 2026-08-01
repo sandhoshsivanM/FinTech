@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_tokens.dart';
+import '../../core/theme/app_tokens.dart';
 
 /// A single slice of a [DonutChart].
 class DonutSegment {

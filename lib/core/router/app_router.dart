@@ -16,6 +16,7 @@ import '../../features/liabilities/screens/liabilities_screen.dart';
 import '../../features/reports/screens/dashboard_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
 import '../../features/safety_net/screens/safety_net_screen.dart';
+import '../../features/score/screens/score_screen.dart';
 import '../../features/transactions/screens/add_transaction_screen.dart';
 import '../../features/transactions/screens/recurring_screen.dart';
 import '../../features/transactions/screens/search_screen.dart';
@@ -45,6 +46,7 @@ abstract final class Routes {
   static const safetyNet = '/app/safety-net';
   static const goals = '/app/goals';
   static const reports = '/app/reports';
+  static const score = '/app/score';
   static const bankImport = '/app/import/bank';
   static const recurring = '/app/recurring';
   static const captureInbox = '/app/capture';
@@ -52,6 +54,56 @@ abstract final class Routes {
   static const marketData = '/app/settings/market-data';
   static const currency = '/app/settings/currency';
   static const settings = '/app/settings';
+
+  /// Which bottom-nav tab "owns" [location] — i.e. which tab should read as
+  /// selected while this screen is open.
+  ///
+  /// The app has five tabs and twenty-two screens, so most locations are not a
+  /// tab. The shell used to resolve this with a `startsWith` scan that fell back
+  /// to index 0, which meant every one of those non-tab screens highlighted
+  /// Dashboard — Budget, Goals, Liabilities and eight others all claimed to be
+  /// the home screen. An explicit map is the only honest answer, because the
+  /// relationship it encodes ("Reports lives under Score") is a product
+  /// decision, not something a prefix can derive.
+  static String ownerTab(String location) {
+    for (final entry in _tabOwners.entries) {
+      if (location == entry.key || location.startsWith('${entry.key}/')) {
+        return entry.value;
+      }
+    }
+    return dashboard;
+  }
+
+  /// Longest paths first, so `/app/settings/currency` is not swallowed by
+  /// `/app/settings`.
+  static final _tabOwners = <String, String>{
+    // Score owns the analysis screens.
+    reports: score,
+    safetyNet: score,
+    score: score,
+    // Transactions owns everything that puts money in or out of the ledger.
+    addTransaction: transactions,
+    budget: transactions,
+    calendar: transactions,
+    recurring: transactions,
+    search: transactions,
+    captureInbox: transactions,
+    bankImport: transactions,
+    transactions: transactions,
+    // Investments owns the whole balance sheet, assets and liabilities alike.
+    investmentsBreakdown: investments,
+    investmentsAddLot: investments,
+    investmentsImportLots: investments,
+    liabilities: investments,
+    insurance: investments,
+    goals: investments,
+    investments: investments,
+    // Settings owns its own sub-pages.
+    marketData: settings,
+    currency: settings,
+    settings: settings,
+    dashboard: dashboard,
+  };
 }
 
 /// go_router driven by [vaultUnlockProvider]. Redirects every `/app/*` route to
@@ -112,6 +164,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           _tab(Routes.safetyNet, const SafetyNetScreen()),
           _tab(Routes.goals, const GoalsScreen()),
           _tab(Routes.reports, const ReportsScreen()),
+          // No child routes: score category detail is disclosure in place.
+          _tab(Routes.score, const ScoreScreen()),
           _tab(Routes.bankImport, const BankImportScreen()),
           _tab(Routes.recurring, const RecurringScreen()),
           _tab(Routes.captureInbox, const CaptureInboxScreen()),

@@ -38,8 +38,10 @@ dependencies:
   # Money — package:decimal; double is BANNED for monetary values (PRD §2).
   decimal: ^3.2.4
 
-  # Charts (pure Flutter, offline-safe)
-  fl_chart: ^1.2.0
+  # No chart package. Every chart is a CustomPainter in lib/presentation/charts/,
+  # because each one needs a pixel-comparable React SVG twin in the web client —
+  # a package's styling API has no analogue there, so adopting one guarantees the
+  # two clients drift. (fl_chart was declared here for a year and imported never.)
 
   # Local notifications (overspend alerts) — no server push (PRD §2).
   flutter_local_notifications: ^19.4.2

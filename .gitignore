@@ -46,3 +46,7 @@ app.*.map.json
 
 # Packaged release artifacts (rebuild with flutter build + hdiutil)
 /dist/
+
+# Golden-test failure output. Regenerated on every failing run; committing it
+# means the repo carries a snapshot of one machine's font rendering.
+/test/golden/failures/

@@ -44,11 +44,20 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell>
     with WidgetsBindingObserver {
+  /// The five bottom-nav destinations.
+  ///
+  /// Labels are kept short on purpose: `NavigationBar` clips rather than wraps,
+  /// and at five destinations on a 360dp phone "Transactions" does not fit at
+  /// the theme's 11px label size. The screen itself is titled "Transactions";
+  /// only the tab is abbreviated.
+  ///
+  /// Reports is deliberately not here — it sits under Score, which is what
+  /// [Routes.ownerTab] encodes.
   static const _tabs = [
     (Routes.dashboard, Icons.dashboard_outlined, 'Dashboard'),
     (Routes.transactions, Icons.receipt_long_outlined, 'Cash Flow'),
     (Routes.investments, Icons.trending_up_outlined, 'Investments'),
-    (Routes.reports, Icons.bar_chart_outlined, 'Reports'),
+    (Routes.score, Icons.speed_outlined, 'Score'),
     (Routes.settings, Icons.settings_outlined, 'Settings'),
   ];
 
@@ -72,8 +81,8 @@ class _AppShellState extends ConsumerState<AppShell>
   }
 
   int _currentIndex(BuildContext context) {
-    final location = GoRouterState.of(context).matchedLocation;
-    final idx = _tabs.indexWhere((t) => location.startsWith(t.$1));
+    final owner = Routes.ownerTab(GoRouterState.of(context).matchedLocation);
+    final idx = _tabs.indexWhere((t) => t.$1 == owner);
     return idx < 0 ? 0 : idx;
   }
 

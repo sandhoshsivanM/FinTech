@@ -12,6 +12,7 @@ import '../../../domain/services/net_worth_calculator.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
 import '../../../presentation/onboarding_banner.dart';
+import '../../../presentation/stat_tile.dart';
 import '../../../presentation/tour_overlay.dart';
 import '../../investments/providers/investment_providers.dart';
 import '../../liabilities/providers/liability_providers.dart';
@@ -142,6 +143,9 @@ class _QuickLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const links = [
+      // Reports is not a tab any more (Score took its slot), so this chip and
+      // the link on the Score screen are how it stays reachable on a phone.
+      (Routes.reports, Icons.bar_chart_outlined, 'Reports'),
       (Routes.calendar, Icons.calendar_month_outlined, 'Calendar'),
       (Routes.captureInbox, Icons.auto_awesome_motion_outlined, 'Auto-capture'),
       (Routes.budget, Icons.pie_chart_outline, 'Budget'),
@@ -422,15 +426,18 @@ class _StatTilesGrid extends ConsumerWidget {
             summary.income.toDouble() *
             100.0;
 
+    final rate = savingsRate.clamp(-999.0, 999.0);
+    final rateColor = rate >= 0 ? AppColors.income : AppColors.expense;
+
     return Column(
       children: [
         Row(
           children: [
             Expanded(
-              child: _StatTile(
+              child: StatTile(
                 label: 'Net Cash',
-                value: ghost ? null : netCash,
-                rawValue: netCash,
+                value: Money.format(netCash),
+                semanticValue: Money.toWords(netCash),
                 icon: Icons.account_balance_wallet_outlined,
                 iconColor: AppColors.accent,
                 ghost: ghost,
@@ -438,9 +445,9 @@ class _StatTilesGrid extends ConsumerWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: _StatTileAsync(
+              child: _AsyncMoneyTile(
                 label: 'Investments',
-                asyncDecimal: investments,
+                amount: investments,
                 icon: Icons.trending_up_rounded,
                 iconColor: AppColors.income,
                 ghost: ghost,
@@ -453,9 +460,9 @@ class _StatTilesGrid extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: _StatTileAsync(
+              child: _AsyncMoneyTile(
                 label: 'Liabilities',
-                asyncDecimal: liabilities,
+                amount: liabilities,
                 icon: Icons.credit_card_outlined,
                 iconColor: AppColors.expense,
                 ghost: ghost,
@@ -464,8 +471,13 @@ class _StatTilesGrid extends ConsumerWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: _SavingsRateTile(
-                rateDouble: savingsRate,
+              child: StatTile(
+                label: 'Savings Rate',
+                value: '${rate.toStringAsFixed(1)}%',
+                semanticValue: '${rate.toStringAsFixed(1)} percent',
+                icon: Icons.savings_outlined,
+                iconColor: rateColor,
+                valueColor: rateColor,
                 ghost: ghost,
               ),
             ),
@@ -476,11 +488,10 @@ class _StatTilesGrid extends ConsumerWidget {
   }
 }
 
-class _StatTile extends StatelessWidget {
-  const _StatTile({
+class _AsyncMoneyTile extends StatelessWidget {
+  const _AsyncMoneyTile({
     required this.label,
-    required this.value,
-    required this.rawValue,
+    required this.amount,
     required this.icon,
     required this.iconColor,
     required this.ghost,
@@ -488,8 +499,7 @@ class _StatTile extends StatelessWidget {
   });
 
   final String label;
-  final Decimal? value;
-  final Decimal rawValue;
+  final AsyncValue<Decimal> amount;
   final IconData icon;
   final Color iconColor;
   final bool ghost;
@@ -497,175 +507,18 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: ghost
-          ? '$label hidden'
-          : '$label ${Money.toWords(rawValue)}',
-      button: onTap != null,
-      child: GlassCard(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: ExcludeSemantics(
-          child: InkWell(
-            borderRadius: BorderRadius.circular(AppRadii.card),
-            onTap: onTap,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: iconColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(icon, color: iconColor, size: 18),
-                    ),
-                    if (onTap != null) ...[
-                      const Spacer(),
-                      Icon(Icons.chevron_right_rounded,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.outline),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-                const SizedBox(height: 2),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    ghost
-                        ? '••••••'
-                        : Money.format(value ?? Decimal.zero),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.lightOnSurface,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatTileAsync extends ConsumerWidget {
-  const _StatTileAsync({
-    required this.label,
-    required this.asyncDecimal,
-    required this.icon,
-    required this.iconColor,
-    required this.ghost,
-    this.onTap,
-  });
-
-  final String label;
-  final AsyncValue<Decimal> asyncDecimal;
-  final IconData icon;
-  final Color iconColor;
-  final bool ghost;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return asyncDecimal.when(
-      loading: () => _StatTile(
-        label: label,
-        value: Decimal.zero,
-        rawValue: Decimal.zero,
-        icon: icon,
-        iconColor: iconColor,
-        ghost: ghost,
-        onTap: onTap,
-      ),
-      error: (e, st) => _StatTile(
-        label: label,
-        value: Decimal.zero,
-        rawValue: Decimal.zero,
-        icon: icon,
-        iconColor: iconColor,
-        ghost: ghost,
-        onTap: onTap,
-      ),
-      data: (v) => _StatTile(
-        label: label,
-        value: v,
-        rawValue: v,
-        icon: icon,
-        iconColor: iconColor,
-        ghost: ghost,
-        onTap: onTap,
-      ),
-    );
-  }
-}
-
-class _SavingsRateTile extends StatelessWidget {
-  const _SavingsRateTile({required this.rateDouble, required this.ghost});
-  final double rateDouble;
-  final bool ghost;
-
-  @override
-  Widget build(BuildContext context) {
-    // Clamp for display (can be negative if expenses > income).
-    final pct = rateDouble.clamp(-999.0, 999.0);
-    final isPositive = pct >= 0;
-    final color = isPositive ? AppColors.income : AppColors.expense;
-
-    return Semantics(
-      label: ghost
-          ? 'Monthly savings rate hidden'
-          : 'Monthly savings rate ${pct.toStringAsFixed(1)} percent',
-      child: GlassCard(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: ExcludeSemantics(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.savings_outlined, color: color, size: 18),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Savings Rate',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color:
-                          Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-              const SizedBox(height: 2),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  ghost ? '••••' : '${pct.toStringAsFixed(1)}%',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: color,
-                      ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    // Loading and error both render zero rather than a spinner: these tiles sit
+    // in a fixed 2x2 grid, and swapping a spinner in and out reflows the whole
+    // grid on every stream tick.
+    final value = amount.valueOrNull ?? Decimal.zero;
+    return StatTile(
+      label: label,
+      value: Money.format(value),
+      semanticValue: Money.toWords(value),
+      icon: icon,
+      iconColor: iconColor,
+      ghost: ghost,
+      onTap: onTap,
     );
   }
 }

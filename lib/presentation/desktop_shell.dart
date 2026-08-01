@@ -15,16 +15,23 @@ typedef _Section = ({String title, List<_Dest> items});
 
 /// Desktop navigation: a persistent sidebar, not a phone's bottom bar.
 ///
-/// The mobile shell exposes five bottom-nav tabs, which left seven substantial
-/// modules (budget, liabilities, insurance, safety net, goals, recurring,
-/// search) reachable only via a dashboard tile — effectively invisible on a
-/// large screen. A desktop window has room to show everything at once, so it
-/// does, grouped rather than as one flat list.
+/// The mobile shell exposes five bottom-nav tabs, which leaves eight
+/// substantial modules (budget, liabilities, insurance, safety net, goals,
+/// recurring, search, reports) reachable only via a dashboard chip or a link
+/// from their owning tab — effectively invisible on a large screen. A desktop
+/// window has room to show everything at once, so it does, grouped rather than
+/// as one flat list.
+///
+/// Every screen in the app appears here. That is not an aspiration: it is
+/// asserted by `test/widget/desktop_shell_test.dart`, which walks [Routes] and
+/// fails if a route has no sidebar entry. Adding a screen without adding it here
+/// breaks the build.
 const _sections = <_Section>[
   (
     title: 'Overview',
     items: [
       (route: Routes.dashboard, icon: Icons.dashboard_outlined, label: 'Dashboard'),
+      (route: Routes.score, icon: Icons.speed_outlined, label: 'Score'),
       (route: Routes.reports, icon: Icons.bar_chart_outlined, label: 'Reports'),
       (route: Routes.safetyNet, icon: Icons.health_and_safety_outlined, label: 'Safety Net'),
     ],
@@ -58,6 +65,14 @@ const _sections = <_Section>[
     ],
   ),
 ];
+
+/// Every route the sidebar links to, in display order.
+///
+/// Exposed so `test/widget/navigation_test.dart` can assert that no screen is
+/// missing from it. Reading `_sections` from a test would mean making the whole
+/// private structure public; this is the one fact the test needs.
+List<String> get desktopSidebarRoutes =>
+    [for (final s in _sections) ...s.items.map((d) => d.route)];
 
 class DesktopShell extends ConsumerWidget {
   const DesktopShell({required this.child, super.key});

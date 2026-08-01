@@ -102,97 +102,15 @@ export function Ring({ fraction, size = 120, stroke = 11, color = 'var(--accent)
   );
 }
 
-// ---- Donut (SVG, no chart lib) ----
-export interface DonutSeg { label: string; value: number; color: string }
+// ---- Charts ----
+// These live in ./charts/. Re-exported here so every existing import site keeps
+// working; new code should import from ./charts directly.
+export { Donut, type DonutSeg } from './charts/Donut';
+export { AreaChart, EmptyChart } from './charts/AreaChart';
+export { StatTile } from './charts/StatTile';
 
-export function Donut({
-  segments, size = 150, stroke = 20, centerText, centerSub, legend = true,
-}: {
-  segments: DonutSeg[]; size?: number; stroke?: number;
-  centerText?: string; centerSub?: string; legend?: boolean;
-}) {
-  const total = segments.reduce((s, x) => s + Math.max(0, x.value), 0);
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  let offset = 0;
-  return (
-    <div className="flex items-center gap-6">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
-        <g transform={`translate(${size / 2},${size / 2}) rotate(-90)`}>
-          <circle r={r} fill="none" stroke="var(--fill-strong)" strokeWidth={stroke} />
-          {total > 0 && segments.map((s, i) => {
-            const frac = Math.max(0, s.value) / total;
-            const len = frac * c;
-            const el = (
-              <circle key={i} r={r} fill="none" stroke={s.color} strokeWidth={stroke}
-                strokeDasharray={`${Math.max(0, len - 3)} ${c}`}
-                strokeDashoffset={-offset} />
-            );
-            offset += len;
-            return el;
-          })}
-        </g>
-        {centerText && (
-          <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle"
-            className="fill-ink" style={{ fontSize: size > 150 ? 19 : 16, fontWeight: 700, letterSpacing: '-0.02em' }}>{centerText}</text>
-        )}
-        {centerSub && (
-          <text x="50%" y="60%" textAnchor="middle" dominantBaseline="middle"
-            fill="var(--muted)" style={{ fontSize: 10.5, letterSpacing: '0.04em' }}>{centerSub}</text>
-        )}
-      </svg>
-      {legend && (
-        <div className="flex-1 min-w-0 space-y-2.5">
-          {segments.map((s, i) => (
-            <div key={i} className="flex items-center gap-2.5 text-[13.5px]">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
-              <span className="flex-1 min-w-0 text-ink-soft truncate">{s.label}</span>
-              <span className="shrink-0 font-semibold text-ink tnum tabular-nums">{total <= 0 ? '0%' : `${Math.round(s.value / total * 100)}%`}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---- Sparkline (SVG area) ----
-export function Sparkline({ values, height = 140, color = 'var(--accent)' }: {
-  values: number[]; height?: number; color?: string;
-}) {
-  if (values.length < 2) return <EmptyChart />;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  if (max - min < 1e-9) return <EmptyChart />;
-  const W = 600;
-  const H = height;
-  const dx = W / (values.length - 1);
-  const y = (v: number) => H - 10 - ((v - min) / (max - min)) * (H - 20);
-  const pts = values.map((v, i) => `${i * dx},${y(v)}`);
-  const line = `M ${pts.join(' L ')}`;
-  const area = `${line} L ${W},${H} L 0,${H} Z`;
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={height} preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="spark" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.16" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill="url(#spark)" />
-      <path d={line} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-    </svg>
-  );
-}
-
-function EmptyChart() {
-  return (
-    <div className="h-36 flex flex-col items-center justify-center text-muted text-[13px] gap-1">
-      <span className="w-8 h-px bg-[var(--line-strong)]" />
-      Not enough data yet
-    </div>
-  );
-}
+/** @deprecated Renamed to `AreaChart` — it draws a filled area, not a bare line. */
+export { AreaChart as Sparkline } from './charts/AreaChart';
 
 // ---- Grouped bar chart (reports) ----
 export interface BarGroup { label: string; values: { value: number; color: string }[] }
