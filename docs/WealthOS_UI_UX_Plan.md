@@ -3,6 +3,49 @@ Based on WealthOS Development Plan v2 — Section 3 (MVP scope), Section 6 (func
 
 ---
 
+## 0. Dashboard v1 — implementation checklist
+
+Everything below is decided and documented elsewhere in this plan. This is the build list, in one place.
+
+**Layout & components (Section 2.1):**
+- [ ] Greeting header + settings icon
+- [ ] Story ring entry point (Section 12) — compact, above the greeting, opens the Weekly Story Recap full-screen; not embedded in the scroll itself
+- [ ] Net worth hero card — large number, ghost-mode eye toggle, change line
+- [ ] 4 stat tiles (2×2): Cash · Investments · Debt · Savings rate — tappable, route to owning module
+- [ ] Health score band — gauge/grade + 4 category mini-bars (Wealth/Protection/Efficiency/Future)
+- [ ] "Not yet tracked" state for Protection & Future until their modules exist (Section 7 honesty rule) — **not** a placeholder number
+- [ ] Insight card — one Section 8 narrative sentence, dismissible, never more than one at a time
+- [ ] Net worth sparkline — 7D/1M/3M toggle
+- [ ] Recent transactions (last 4–5) + "View all"
+
+**Data rules (non-negotiable, Section 2.3 / Section 6):**
+- [ ] Every figure reads from the single portfolio/ledger model — no per-screen data source
+- [ ] Loads from cache, never recomputes live on open
+- [ ] Investments stat tile stays a plain number here — sunburst drill-down lives on the Investments screen only, not the Dashboard (Section 7)
+
+**Brand (Section 10):**
+- [ ] Ink (`#1B2340`) / Paper (`#FAF8F4`) base palette
+- [ ] Signal amber (`#E8A33D`) reserved for exactly one element per screen — on the Dashboard, that's the Health Score card
+- [ ] Manrope, tabular numerals on every currency figure
+- [ ] Growth/Caution semantic colors (`#4C7A63` / `#B5493D`) for +/- amounts only — never decorative
+
+**Platform behavior (Section 9):**
+- [ ] macOS: Dashboard sits in the sidebar shell's "Overview" group; `Cmd+N` opens Add Transaction from anywhere, including from the Dashboard
+- [ ] Android: bottom nav Home tab, Material 3 pill active-state, FAB not shown on Dashboard itself (FAB appears on Transactions/Investments, per Section 9.3)
+- [ ] Web: same layout, collapses sidebar→hamburger below ~900px; no SMS-derived recent-transaction entries possible here (Section 9.2)
+
+**Explicitly NOT on the Dashboard (stays elsewhere or deferred):**
+- Sunburst allocation chart, sector P&L, monthly heatmap — Investments screen only (Section 7–8)
+- Tax lot / STCG-LTCG detail — Investments → Tax sub-view only (Tax Lot Engine Spec, Section 8)
+- Weekly Story Recap — separate entry point, not embedded in the Dashboard scroll (Section on signature feature)
+- Insurance, Goals, Tax, Liabilities — no Dashboard tiles until their modules exist (Section 4 backlog discipline)
+
+**Still open before this is truly build-ready:**
+- Validation kit (Section 11) hasn't been run on real users
+- Logo mark (Section 10.4) is a direction, not a final asset
+
+---
+
 ## 1. Navigation structure
 
 The plan's own test decides what earns a tab: *"does this module change whether a user opens the app again next week?"* That gives exactly 4 destinations plus Settings — matching Section 3's MVP scope precisely, nothing added.
@@ -74,8 +117,12 @@ The plan's own test decides what earns a tab: *"does this module change whether 
 **Layout:**
 1. **Import bar** — "Import CAS/CAMS statement" (primary, Section 6.3's core data source) · "Add lot manually" (secondary)
 2. **Stat tiles** — Current value · Invested · Unrealised P&L · XIRR
-3. **Allocation sunburst** — two-ring hierarchical chart: inner ring = asset class (Equity / Mutual funds / ETF / Bonds / Cash), outer ring = sector or sub-type within that class. Tap a segment to zoom in; tap centre to zoom back out. Replaces a flat donut + separate sector list with one chart that answers both "what do I own" and "what's it made of" — see Section 7
-4. **Holdings list** — every position, expandable to lot-level detail
+3. **Primary chart — allocation sunburst** — always visible. Two-ring hierarchical chart: inner ring = asset class, outer ring = sector/sub-type. Tap a segment to zoom in; tap centre to zoom back out — see Section 7
+4. **Primary chart — value trend** — always visible, directly below the sunburst. Area chart, 6-month default range
+5. **"More detail" toggle** — collapsed by default. Expands to reveal the **secondary charts**: sector-wise P&L (diverging bar) and the monthly returns heatmap (Section 8). These are real, useful views — but showing all four charts at once on first load turns a calm "how am I doing" screen into a dense analytics dashboard, which fights the base plan's own positioning. Two charts earn a permanent place; two earn a tap.
+6. **Holdings list** — every position, expandable to lot-level detail
+
+**Why this split, not just "fewer charts":** the sunburst answers "what do I own," the trend answers "is it working" — those are the two questions someone actually opens this screen with. Sector P&L and monthly heatmap answer "why," which is a follow-up question, not the first one.
 
 **Non-negotiable UX rule, given what already went wrong once:** every number on this screen and the Dashboard's investment tile must read from the **same single data table**. There is no "legacy vs new" split in this plan — one model, one source of truth, from day one. This is the one lesson to carry forward from Khazana's §7.1 defect.
 
@@ -235,6 +282,20 @@ The Android build should read as a native Android app, not a ported iOS layout:
 - **Edge-to-edge layout** with the system status bar and gesture nav bar treated as insets, not blocked off
 - **Adaptive icon** for the home screen, and Android's own biometric prompt UI (not a custom-drawn one) for vault unlock
 
+### 9.3a Interaction depth, not just chrome
+A sidebar vs. a bottom nav is chrome. The gap that actually matters is how the *same* interaction — say, drilling into the sunburst — behaves once you're not tapping a touchscreen anymore.
+
+| Interaction | macOS | Android |
+|---|---|---|
+| Zoom into a sunburst segment | Click segment, or hover + scroll to zoom continuously | Tap segment; pinch-to-zoom not supported (sunburst zoom is discrete, not continuous, so pinch has no natural mapping) |
+| Zoom back out | Click centre, or `Esc` | Tap centre, or system back gesture |
+| Edit a transaction | Right-click → context menu (Edit/Delete/Duplicate), or select + `Enter` | Long-press → bottom sheet with the same three actions |
+| Navigate the transaction list | Arrow keys move selection, `Enter` opens, `Cmd+Backspace` deletes | Swipe left/right on a row for quick delete/edit, standard Material list behaviour |
+| Search | `Cmd+F` focuses search from anywhere | Tap the search icon; no global shortcut, since there's no keyboard |
+| Weekly Story Recap | Click-through with arrow keys or on-screen chevrons (no swipe gesture available) | Swipe left/right between cards, matching the Stories format it's borrowing from |
+
+This table is what actually gets a platform to "feels native" rather than "looks native" — the visual chrome was the easy 80%.
+
 ### 9.4 What stays identical across all three
 
 - Every screen's information architecture (Sections 2.1–2.5)
@@ -243,3 +304,124 @@ The Android build should read as a native Android app, not a ported iOS layout:
 - The health score's "not yet tracked" honesty rule (Section 7 of the base plan)
 
 **The only thing that should ever look "off" between platforms is chrome** — how you navigate and where buttons sit. If a chart shows a different number on Android than it does on macOS, that's not a platform design choice, that's the two-model bug from Khazana happening again.
+
+---
+
+## 10. Brand & visual identity system
+
+Every mockup so far used the generic chat-widget design system — functional, but interchangeable with any other app's dashboard. This section defines what actually makes WealthOS look like *itself*.
+
+### 10.1 Color system
+Most Indian fintech defaults to bright blue-and-green (trust + money, literally). WealthOS's positioning — "the operating system for your financial life" — calls for something calmer and more editorial, closer to how a well-designed OS or a Stripe-adjacent product feels than a typical finance app.
+
+| Role | Color | Hex | Why |
+|---|---|---|---|
+| **Ink** (primary, text/nav) | Deep indigo-navy | `#1B2340` | Stable, intelligent, not another finance-app blue |
+| **Paper** (background) | Warm off-white | `#FAF8F4` | Editorial, calm — not stark clinical white |
+| **Signal** (accent — insights, score, the one thing to look at) | Warm amber-gold | `#E8A33D` | Used *sparingly*, so it always means "look here" — the Health Score, the Weekly Story, a key insight. If it's on every button, it stops meaning anything |
+| **Growth** (positive) | Muted sage | `#4C7A63` | Deliberately not neon green — confident, not shouty |
+| **Caution** (negative) | Muted brick | `#B5493D` | Serious without being alarming |
+| **Ink-40** (secondary text/borders) | `#6B6F80` | Derived from Ink at reduced opacity, not a separate gray |
+
+**The rule that makes this a system, not a palette:** Signal (amber) is the *only* saturated color allowed to be decorative. Everything else is either Ink (structure), Paper (space), or a semantic Growth/Caution pair (meaning). A screen with three amber elements has failed — amber marks the single most important thing on that screen, never more than one at a time.
+
+### 10.2 Typography
+- **Headings & numbers** — Manrope (geometric, slightly rounded terminals — warmer than a strict grotesk, still feels precise for currency figures)
+- **Body & UI text** — same family, regular weight, for consistency rather than pairing two typefaces
+- **Numerals** — tabular figures everywhere a number might update (net worth, P&L) so digits don't jitter horizontally when they change
+
+### 10.3 Iconography & motion
+- Outline icons throughout, 1.5px stroke weight, rounded joins — consistent with what's already in the mockups, kept rather than replaced
+- **Icon color follows the same discipline as Signal**: icons are Ink by default; only the active/selected state gets amber
+- Motion: transitions are quick and functional (150–200ms), never decorative — this is a finance app, not a game; the one exception is the Weekly Story Recap, which can use a slightly slower swipe transition (250ms) since that screen is meant to feel like a moment, not a task
+
+### 10.3a Dashboard motion — what actually animates
+
+The rule above was too generic to build from. Here's what's specified now, element by element:
+
+| Element | Animation | Duration | Trigger | Why it's functional, not decorative |
+|---|---|---|---|---|
+| Net worth figure | Count-up from 0 to value | ~900ms, ease-out | On screen mount (once, cached data still loads instantly — this animates the *display*, not a live recompute) | Draws the eye to the number that matters most, first |
+| Health score gauge | Arc sweeps from empty to the score's fill | ~900ms, ease-out | On screen mount | Reinforces "explainable, not just a number" (Section 7 of base plan) — watching it settle mirrors the idea that it's built from parts |
+| Net worth sparkline | Line draws left to right | ~800ms, ease-out, starts 150ms after the count-up | On screen mount | Signals "this is a trend," not a static image |
+| Story ring | Gentle opacity pulse (1 → 0.55 → 1) | 2.2s loop | Continuous, only while an unviewed recap exists; stops once viewed | The one intentionally continuous animation — it's a notification, and notifications are supposed to draw attention |
+| Stat tiles, insight card | Fade + 4px slide-in, staggered ~40ms apart | 200ms each | On screen mount | Standard entrance, nothing that delays reading the numbers |
+| Everything else (taps, navigation) | Standard platform transition | Platform default | Interaction | Android uses Material 3's standard/emphasized easing curves, not a custom one — a hand-rolled curve is what makes an app feel like a web view instead of a native one |
+
+**Reduced motion:** every animation above degrades to an instant final-state jump under `prefers-reduced-motion: reduce` — no exceptions, including the story ring pulse.
+
+**What deliberately doesn't animate:** stat tile numbers don't count up (only the hero net worth figure does — count-up on every number would slow down reading, not help it), and nothing on the Dashboard animates on every re-render, only on first mount.
+
+### 10.4 Logo direction (concept, not final)
+An abstract mark suggesting a gauge or pulse settling into balance — two overlapping arcs in Ink and Signal, echoing the Health Score gauge that's already the product's core visual metaphor. Worth designing properly as a follow-up, not guessed at here.
+
+Below is the Dashboard reskinned with this system in place, next to what it looked like before — same layout, same data, different identity.
+
+---
+
+## 11. Validation plan (not yet run — this is a script, not evidence)
+
+Section 5 of the base plan sets the Stage 2 exit criteria as *unprompted repeat usage in week 2* from 5–10 real users. Nothing in this document, including this section, satisfies that — a plan for validation isn't validation. This is the concrete kit to actually run it.
+
+**Recruit:** 5–10 people who currently track finances in a spreadsheet or another app — not friends doing a favor, people with a real existing habit to compare against.
+
+**Task-based session (15–20 min each), in order:**
+1. Import or manually add their real CAS/CAMS statement or a week of real transactions — watch where they hesitate, don't help unless stuck for 30+ seconds
+2. Find their net worth, then find "why did my score change this week" — un-narrated, see if the Health Score's structure is self-explanatory
+3. Try to delete/undo something — tests whether the data-integrity fixes actually hold up under real fumbling, not just clean demo data
+
+**Metrics that matter more than opinions:**
+- Task completion without help (target: 4/5 tasks unassisted)
+- Time-to-first-insight (how long until they say something like "oh, interesting" unprompted)
+- **Week-2 return without a reminder** — the actual Stage 2 exit criteria, tracked via a simple "did you open it again" check-in, not a survey
+
+**What to explicitly ask, not just observe:** *"What would make you delete this and go back to your spreadsheet?"* — a sharper question than "what did you like," because it surfaces the actual dealbreaker rather than polite feedback.
+
+**Honest scope:** this closes the validation gap only once it's actually run. Everything else in this document can reasonably be called a 9/10 effort. This one stays capped until real people have used it.
+
+---
+
+## 12. Signature feature — Weekly Story Recap
+
+This was decided during planning but never actually written into the spec until now — worth naming, since a decision that only exists in conversation isn't a decision anyone can build from.
+
+### 12.1 Why this, specifically
+The Health Score is good execution of a known idea — every competitor scores something. The gap the base plan doesn't close on its own is a single unmistakable experience: the thing someone describes to a friend as "the app that does *that*." A swipeable, Instagram-Stories-format weekly recap is that thing, for two reasons: nobody in Indian personal finance uses this format, and it costs almost nothing extra to build, because it's Section 8's narrative engine wrapped in a different presentation layer rather than new logic.
+
+### 12.2 Entry point (not embedded in the Dashboard scroll)
+A single compact "story ring" sits at the very top of the Dashboard, above the greeting — the same visual language as an Instagram/WhatsApp status ring: a circular avatar-style element that fills with the Signal amber outline when a new recap is ready, and dims to Ink-40 once viewed. Tapping it opens the recap full-screen. This keeps the Dashboard itself calm (Section 0's checklist) while making the recap impossible to miss.
+
+### 12.3 Card structure (5–6 cards, swipeable)
+Generated fresh every week, following a fixed slot order:
+
+1. **Opening card** — headline number: net worth movement for the week
+2. **Score card** — Health Score movement, one line on which category moved it most
+3. **Win card** — the single largest positive change (spending down in a category, a gain, idle cash reduced)
+4. **Attention card** — the single largest thing worth a look (spending up, idle cash sitting, a score category slipping)
+5. **Flashback card** *(conditional — see 12.4)* — the Time Machine counterfactual, only when a real trigger condition is met, not every week
+6. **Closing card** — one CTA (review this week's budget / see full Investments breakdown) plus a streak indicator if the score held or improved
+
+### 12.4 Time Machine — the flashback card
+*"If you'd moved that idle ₹1.2L into a fund a year ago, you'd have ₹9,400 more today."*
+
+Uses only the person's own real historical data — an idle-cash balance that actually sat there, compared against an actual benchmark return over the actual period. Deterministic, no LLM. **Trigger conditions** (appears only when true, so it stays meaningful rather than routine):
+- Idle cash has sat above the Efficiency-category threshold for 30+ days, or
+- A holding just crossed the 12-month LTCG threshold (ties naturally into the Tax Lot Engine's "days to LTCG" tracking), or
+- It's the first recap of a new month (a monthly-cadence fallback so the feature doesn't go quiet for people without an active trigger)
+
+### 12.5 Generation logic (deterministic, matching Section 8's philosophy)
+Same template-engine approach as the base plan's narrative insights — no LLM, no hallucination risk, every number traceable to a real aggregate:
+1. Compute week-over-week deltas across all tracked metrics (spending by category, investment value, idle cash, score per category)
+2. Rank by magnitude of change, normalized against that metric's own recent volatility — a ₹500 move in a usually-stable category matters more than ₹500 in a naturally noisy one
+3. Slot the top positive delta into the Win card, the top negative/attention-worthy delta into the Attention card
+4. Check Flashback trigger conditions; include or skip accordingly
+5. Fill each card's template with real numbers — same SEBI-safe, informational-only language rules as Section 8 and the Tax Lot Engine's Section 9
+
+### 12.6 Platform interaction
+Already specified in Section 9.3a: swipe left/right between cards on Android (matching the format's own convention), click-through with on-screen chevrons or arrow keys on macOS, since there's no swipe gesture to borrow there.
+
+### 12.7 Data dependencies
+No new data sources — this card set reads entirely from Transactions, Investments, and the Health Score's four categories, all of which are already MVP-scope. The only new piece of logic is the ranking/selection step in 12.5.
+
+### 12.8 Sequencing
+This is **not** new scope — it's a presentation-layer extension of Track A's existing Phase 9–12 deliverable ("Health Score & Narrative Reports," per the base plan's timeline), not a separate build phase. The ranking logic in 12.5 is the only genuinely new work; everything else already had to be built for Section 8's insight cards regardless.

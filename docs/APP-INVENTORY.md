@@ -784,7 +784,7 @@ development certificate. Without this, vault creation failed with
 
 ## 7. Defects
 
-Ordered by how much they affect you. **7.1, 7.2, 7.3 and 7.10 are fixed** — see
+Ordered by how much they affect you. **7.1, 7.2, 7.3, 7.5 and 7.10 are fixed** — see
 the notes under each. The rest still stand.
 
 ### 7.1 Two portfolio models disagree — FIXED
@@ -867,11 +867,21 @@ Two problems:
 *Evidence:* `settings_providers.dart:27` vs `app_database.dart:89` ·
 `settings_providers.dart:67-80`
 
-### 7.5 Currency conversion is promised but not wired
+### 7.5 Currency conversion is promised but not wired — FIXED
 
 The Currency screen states rates convert foreign holdings. They do not —
 `CurrencyConverter` is tested but imported by nothing, and holdings are summed
 across currencies without conversion.
+
+**Fixed.** `investmentTotalsProvider` converts every foreign holding into the
+base currency before anything downstream sees it, so the converter is now
+load-bearing rather than decorative. A holding with no stored rate is
+**excluded** from the total and named in `InvestmentTotals.unconvertedCurrencies`,
+with a notice on the Investments screen — counting 100 USD as 100 INR would
+understate net worth by 99% and look entirely plausible. Rates can be fetched
+live from ECB reference rates (free, no key, one request for all currencies) and
+are stamped with the source's publication date, not the fetch time. Base
+currency is a `shared_preferences` setting.
 
 ### 7.6 Receipt attachments never persist
 
