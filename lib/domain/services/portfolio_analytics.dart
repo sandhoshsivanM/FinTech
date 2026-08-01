@@ -169,6 +169,32 @@ enum RollupDimension {
 const unclassifiedKey = '__unclassified__';
 const unclassifiedLabel = 'Unclassified';
 
+/// One node of a two-level roll-up: a parent row and the rows inside it.
+class RollupNode {
+  const RollupNode({required this.row, required this.children});
+
+  final RollupRow row;
+
+  /// Never empty for a parent that is present — see [PortfolioAnalytics.sunburst].
+  final List<RollupRow> children;
+}
+
+/// What the sunburst's outer ring splits each group by.
+///
+/// Only equities carry a sector in the bundled classification table, so the
+/// honest split is "sector where we have one, sub-type otherwise". Groups whose
+/// members would each be their own sub-type split by instrument instead, since
+/// a ring of one segment says nothing.
+const kDefaultSunburstChildren = <AssetGroup, RollupDimension>{
+  AssetGroup.equity: RollupDimension.sector,
+  AssetGroup.debt: RollupDimension.assetType,
+  AssetGroup.retirement: RollupDimension.assetType,
+  AssetGroup.gold: RollupDimension.instrument,
+  AssetGroup.realEstate: RollupDimension.instrument,
+  AssetGroup.crypto: RollupDimension.instrument,
+  AssetGroup.cash: RollupDimension.instrument,
+};
+
 /// A whole-portfolio view at a point in time.
 class PortfolioSnapshot {
   const PortfolioSnapshot({
@@ -395,6 +421,59 @@ class PortfolioAnalytics {
       for (final g in kAssetGroupOrder)
         if (byKey.containsKey(g.name)) byKey[g.name]!,
     ];
+  }
+
+  /// Two-level roll-up for the sunburst: asset group, then a child dimension.
+  ///
+  /// The inner ring is **always** emitted in [kAssetGroupOrder] and is **never**
+  /// sorted by value — the palette's colourblind guarantee is a property of that
+  /// exact adjacency, and re-sorting drops the worst adjacent protanopia ΔE from
+  /// 9.1 to 3.2. Children carry no independent hue (they inherit the parent's at
+  /// a lower lightness), so they *are* sorted, largest first.
+  ///
+  /// A group whose children are all unclassified yields exactly one child keyed
+  /// [unclassifiedKey], never zero — an empty child list would leave a hollow
+  /// gap in the outer ring where the parent's arc should be.
+  List<RollupNode> sunburst(
+    List<Position> positions, {
+    Map<AssetGroup, RollupDimension> childByGroup = kDefaultSunburstChildren,
+    RollupDimension defaultChild = RollupDimension.sector,
+  }) {
+    final byGroup = <AssetGroup, List<Position>>{};
+    for (final p in positions) {
+      (byGroup[p.instrument.group] ??= []).add(p);
+    }
+
+    return [
+      for (final g in kAssetGroupOrder)
+        if (byGroup.containsKey(g))
+          RollupNode(
+            row: _groupRow(g, byGroup[g]!),
+            // Reuses [rollup] rather than re-bucketing: one implementation of
+            // "group these positions", so a parent and its children cannot
+            // disagree about which position went where.
+            children: rollup(byGroup[g]!, childByGroup[g] ?? defaultChild),
+          ),
+    ];
+  }
+
+  RollupRow _groupRow(AssetGroup g, List<Position> members) {
+    var value = Decimal.zero;
+    var cost = Decimal.zero;
+    var unpriced = 0;
+    for (final p in members) {
+      value += p.marketValue;
+      cost += p.costBasis;
+      if (p.isUnpriced) unpriced++;
+    }
+    return RollupRow(
+      key: g.name,
+      label: g.label,
+      marketValue: value,
+      costBasis: cost,
+      instrumentCount: members.length,
+      unpricedCount: unpriced,
+    );
   }
 
   (String, String) _bucket(Position p, RollupDimension d) {

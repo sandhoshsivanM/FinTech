@@ -1,0 +1,186 @@
+// Chart-kit guards. The web twins of test/widget/charts_test.dart.
+import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { render, screen, cleanup, fireEvent, within } from '@testing-library/react';
+import { Gauge } from './Gauge';
+import { AreaChart } from './AreaChart';
+import { Sunburst, type SunburstNode } from './Sunburst';
+import { groupShades, MAX_GROUP_SHADES, ASSET_GROUP_META, ASSET_GROUP_ORDER } from '@/domain/portfolio';
+
+beforeEach(cleanup);
+
+describe('Gauge', () => {
+  test('a null value reads "Not yet tracked" and shows no number', () => {
+    // This single behaviour is the entire honesty rule's UI surface. If it
+    // regresses, an untracked score renders as a failing grade.
+    render(<Gauge value={null} />);
+    expect(screen.getByText('Not yet tracked')).toBeTruthy();
+    expect(screen.queryByText('0')).toBeNull();
+    expect(screen.getByText('—')).toBeTruthy();
+  });
+
+  test('a tracked value shows the number and its grade', () => {
+    render(<Gauge value={72} sublabel="Strong" />);
+    expect(screen.getByText('72')).toBeTruthy();
+    expect(screen.getByText('Strong')).toBeTruthy();
+    expect(screen.queryByText('Not yet tracked')).toBeNull();
+  });
+
+  test('a zero score is not the same as no score', () => {
+    render(<Gauge value={0} sublabel="At risk" />);
+    expect(screen.getByText('0')).toBeTruthy();
+    expect(screen.queryByText('Not yet tracked')).toBeNull();
+  });
+
+  test('clamps out-of-range values to the scale', () => {
+    render(<Gauge value={340} />);
+    expect(screen.getByText('100')).toBeTruthy();
+  });
+
+  test('announces itself to assistive tech', () => {
+    render(<Gauge value={72} sublabel="Strong" />);
+    expect(screen.getByRole('img', { name: '72, Strong' })).toBeTruthy();
+  });
+
+  test('the untracked state announces itself too', () => {
+    render(<Gauge value={null} />);
+    expect(screen.getByRole('img', { name: 'Not yet tracked' })).toBeTruthy();
+  });
+});
+
+describe('AreaChart', () => {
+  test('fewer than two points renders the empty state', () => {
+    render(<AreaChart values={[42]} />);
+    expect(screen.getByText('Not enough data yet')).toBeTruthy();
+  });
+
+  test('a perfectly flat series does not divide by zero', () => {
+    render(<AreaChart values={[100, 100, 100]} />);
+    expect(screen.getByText('Not enough data yet')).toBeTruthy();
+  });
+
+  test('two charts on one page get distinct gradient ids', () => {
+    // The bug this guards: the id used to be hardcoded, so the second chart on
+    // a page silently inherited the first one's gradient — which the Overview
+    // and Score pages together would have hit.
+    const { container } = render(
+      <>
+        <AreaChart values={[1, 2, 3]} />
+        <AreaChart values={[3, 2, 1]} />
+      </>,
+    );
+    const ids = [...container.querySelectorAll('linearGradient')].map((g) => g.id);
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(2);
+  });
+});
+
+describe('Sunburst', () => {
+  const leaf = (label: string, value: number, color: string): SunburstNode =>
+    ({ key: label, label, value, color });
+
+  const root = (): SunburstNode => ({
+    key: 'root',
+    label: 'Portfolio',
+    value: 1000,
+    color: 'transparent',
+    children: [
+      {
+        key: 'equity',
+        label: 'Equity',
+        value: 700,
+        color: ASSET_GROUP_META.equity.light,
+        children: [
+          leaf('IT', 400, groupShades('equity', 2, false)[0]),
+          leaf('Energy', 300, groupShades('equity', 2, false)[1]),
+        ],
+      },
+      {
+        key: 'gold',
+        label: 'Gold',
+        value: 300,
+        color: ASSET_GROUP_META.gold.light,
+        children: [leaf('GOLDBEES', 300, ASSET_GROUP_META.gold.light)],
+      },
+    ],
+  });
+
+  test('every arc is labelled for assistive tech', () => {
+    render(<Sunburst root={root()} />);
+    expect(screen.getByRole('button', { name: 'Equity, 70%' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Gold, 30%' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'IT, 40%' })).toBeTruthy();
+  });
+
+  test('clicking a parent arc drills in and reports the path', () => {
+    const onFocusChange = vi.fn();
+    render(<Sunburst root={root()} onFocusChange={onFocusChange} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Equity, 70%' }));
+    expect(onFocusChange).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'Portfolio' }),
+        expect.objectContaining({ label: 'Equity' }),
+      ]),
+    );
+  });
+
+  test('Enter drills in, so the chart is usable without a pointer', () => {
+    const onFocusChange = vi.fn();
+    render(<Sunburst root={root()} onFocusChange={onFocusChange} />);
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Equity, 70%' }), { key: 'Enter' });
+    expect(onFocusChange).toHaveBeenCalled();
+  });
+
+  test('drilling in reveals a breadcrumb back to the top', () => {
+    render(<Sunburst root={root()} />);
+    expect(screen.queryByRole('navigation', { name: 'Chart drill-down' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Equity, 70%' }));
+    const crumbs = screen.getByRole('navigation', { name: 'Chart drill-down' });
+    expect(within(crumbs).getByRole('button', { name: 'Portfolio' })).toBeTruthy();
+  });
+
+  test('the legend renders segments in the order given, never re-sorted', () => {
+    // The palette's colourblind guarantee is a property of ASSET_GROUP_ORDER's
+    // exact adjacency, so a value sort would break it silently.
+    const { container } = render(<Sunburst root={root()} />);
+    const legend = container.querySelectorAll('.flex-wrap > span');
+    expect([...legend].map((s) => s.textContent?.trim())).toEqual(['Equity 70%', 'Gold 30%']);
+  });
+
+  test('an empty root renders a message rather than blank rings', () => {
+    render(<Sunburst root={{ key: 'r', label: 'Portfolio', value: 0, color: '#ccc' }} />);
+    expect(screen.getByText('Nothing to show yet')).toBeTruthy();
+  });
+});
+
+describe('groupShades', () => {
+  test('the first step is the group colour itself', () => {
+    for (const g of ASSET_GROUP_ORDER) {
+      expect(groupShades(g, 3, false)[0]).toBe(ASSET_GROUP_META[g].light);
+      expect(groupShades(g, 3, true)[0]).toBe(ASSET_GROUP_META[g].dark);
+    }
+  });
+
+  test('caps at five steps', () => {
+    // Past five, adjacent steps stop separating and the chart would claim to
+    // distinguish things a reader cannot.
+    expect(groupShades('equity', 12, false)).toHaveLength(MAX_GROUP_SHADES);
+  });
+
+  test('the same (group, index) is always the same colour', () => {
+    // Shade index follows a stable entity key, never value rank — otherwise a
+    // price movement repaints the chart and the colours stop meaning anything.
+    expect(groupShades('debt', 4, true)).toEqual(groupShades('debt', 4, true));
+  });
+
+  test('emits valid hex at every step', () => {
+    for (const g of ASSET_GROUP_ORDER) {
+      for (const shade of groupShades(g, MAX_GROUP_SHADES, false)) {
+        expect(shade).toMatch(/^#[0-9a-f]{6}$/);
+      }
+    }
+  });
+
+  test('light and dark ramps differ', () => {
+    expect(groupShades('equity', 3, false)[2]).not.toBe(groupShades('equity', 3, true)[2]);
+  });
+});

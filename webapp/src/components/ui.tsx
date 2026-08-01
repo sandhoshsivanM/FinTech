@@ -108,6 +108,8 @@ export function Ring({ fraction, size = 120, stroke = 11, color = 'var(--accent)
 export { Donut, type DonutSeg } from './charts/Donut';
 export { AreaChart, EmptyChart } from './charts/AreaChart';
 export { StatTile } from './charts/StatTile';
+export { Gauge, HEALTH_BANDS, type GaugeBand } from './charts/Gauge';
+export { Sunburst, type SunburstNode } from './charts/Sunburst';
 
 /** @deprecated Renamed to `AreaChart` — it draws a filled area, not a bare line. */
 export { AreaChart as Sparkline } from './charts/AreaChart';

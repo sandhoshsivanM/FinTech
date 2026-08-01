@@ -263,3 +263,49 @@ export function allocationByGroup(holdings: Holding[]): RollupRow[] {
     .filter((g) => byKey.has(g))
     .map((g) => byKey.get(g)!);
 }
+
+/** Most steps a single hue family can carry before they stop separating. */
+export const MAX_GROUP_SHADES = 5;
+
+/** Surface colours the ramps lerp toward, matching the app's two canvases. */
+const SURFACE = { light: '#ffffff', dark: '#17191f' } as const;
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '');
+  return [
+    parseInt(h.slice(0, 2), 16),
+    parseInt(h.slice(2, 4), 16),
+    parseInt(h.slice(4, 6), 16),
+  ];
+}
+
+function mix(a: string, b: string, t: number): string {
+  const [r1, g1, b1] = hexToRgb(a);
+  const [r2, g2, b2] = hexToRgb(b);
+  const c = (x: number, y: number) => Math.round(x + (y - x) * t).toString(16).padStart(2, '0');
+  return `#${c(r1, r2)}${c(g1, g2)}${c(b1, b2)}`;
+}
+
+/**
+ * An ordinal ramp within one group's hue, for the sunburst's outer ring.
+ * The twin of `groupShades` in lib/presentation/asset_group_colors.dart.
+ *
+ * Children share their parent's hue and differ only in lightness — a composite
+ * encoding (family hue picks the asset class, lightness step picks the child),
+ * which is the legitimate way past the seven-hue ceiling ASSET_GROUP_META hits.
+ *
+ * NOT implemented as opacity, despite that being the obvious reading of "the
+ * parent hue at lower opacity": these charts sit over a gradient backdrop, so an
+ * alpha-blended arc's effective colour depends on where it lands on screen and
+ * its contrast cannot be verified. Mixing toward the surface gives the same look
+ * with a colour that is actually knowable.
+ *
+ * The step index must come from a STABLE key — never value order. Colour keyed
+ * on rank means a price movement repaints the chart.
+ */
+export function groupShades(g: AssetGroup, count: number, dark: boolean): string[] {
+  const base = dark ? ASSET_GROUP_META[g].dark : ASSET_GROUP_META[g].light;
+  const toward = dark ? SURFACE.dark : SURFACE.light;
+  const n = Math.max(1, Math.min(count, MAX_GROUP_SHADES));
+  return Array.from({ length: n }, (_, i) => (i === 0 ? base : mix(base, toward, 0.14 * i)));
+}
