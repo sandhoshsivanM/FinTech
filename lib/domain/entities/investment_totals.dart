@@ -51,9 +51,10 @@ class InvestmentTotals {
   /// Positions with no recorded price at all.
   final int unpricedCount;
 
-  /// How much of [marketValue] rests on something other than a live quote:
-  /// unpriced positions valued at cost. A total that is a third guesswork
-  /// should not be presented with the same confidence as one that isn't.
+  /// How much of [marketValue] rests on something other than a market quote:
+  /// positions carried at cost, priced by hand, or carrying a price whose date
+  /// is not real. A total that is a third guesswork should not be presented
+  /// with the same confidence as one that isn't.
   final Decimal indicativeValue;
 
   /// The most recent price observation anywhere in the portfolio.
@@ -104,7 +105,9 @@ class InvestmentTotals {
     for (final p in snap.positions) {
       final g = p.instrument.group;
       byGroup[g] = (byGroup[g] ?? Decimal.zero) + p.marketValue;
-      if (p.isUnpriced) indicative += p.marketValue;
+      // Not just unpriced: a bond you typed a price for last month is no more
+      // a market quote than one you never priced at all.
+      if (p.isIndicative) indicative += p.marketValue;
     }
     return InvestmentTotals(
       marketValue: snap.marketValue,

@@ -5,6 +5,8 @@ import '../../../core/di/data_providers.dart';
 import '../../../domain/entities/net_worth_snapshot.dart';
 import '../../../domain/services/financial_health.dart';
 import '../../../domain/services/insights_engine.dart';
+import '../../../core/utils/money_format.dart';
+import '../../../domain/services/narrative_engine.dart';
 import '../../../domain/services/net_worth_calculator.dart';
 import '../../../domain/entities/investment_totals.dart';
 import '../../budget/providers/budget_providers.dart';
@@ -12,6 +14,7 @@ import '../../goals/providers/goal_providers.dart';
 import '../../insurance/providers/insurance_providers.dart';
 import '../../investments/providers/portfolio_providers.dart';
 import '../../liabilities/providers/liability_providers.dart';
+import '../../transactions/providers/category_providers.dart';
 import '../../transactions/providers/recurring_providers.dart';
 import '../../transactions/providers/transaction_providers.dart';
 
@@ -94,6 +97,23 @@ final netWorthHistoryProvider = Provider<AsyncValue<List<NetWorthPoint>>>((ref) 
       (list) => list.map((s) => NetWorthPoint(s.date, s.netWorth)).toList());
 });
 
+/// The most recent stored snapshot, for the cold-open path.
+///
+/// The Dashboard's live figures need the whole transaction ledger and the whole
+/// portfolio to resolve before they exist. That is a spinner on every cold
+/// open, on the one screen the plan says must answer "how am I doing" in under
+/// three seconds.
+///
+/// This is yesterday's number, rendered immediately and replaced the moment the
+/// real one arrives. It is explicitly *not* treated as current: the hero card
+/// marks it as an "as of" figure, because showing a stale number as though it
+/// were live is the failure mode this whole change has been removing.
+final cachedNetWorthProvider = Provider<NetWorthSnapshot?>((ref) {
+  final snaps = ref.watch(netWorthSnapshotListProvider).valueOrNull;
+  if (snaps == null || snaps.isEmpty) return null;
+  return snaps.reduce((a, b) => b.date.isAfter(a.date) ? b : a);
+});
+
 /// Trend series: prefer real snapshots once we have ≥2, else the derived series.
 final dashboardTrendProvider = Provider<List<NetWorthPoint>>((ref) {
   final snaps = ref.watch(netWorthHistoryProvider).valueOrNull ?? const [];
@@ -152,6 +172,29 @@ final scoreHistoryProvider = Provider<List<double>>((ref) {
     for (final s in sorted)
       if (s.healthScore != null) s.healthScore!.toDouble(),
   ];
+});
+
+/// The narrative sentences for the Dashboard card and the Score screen.
+///
+/// Reuses the already-computed health score, insights and portfolio totals
+/// rather than recomputing them — otherwise the Dashboard pays for the health
+/// score twice on every rebuild.
+final narrativeProvider = Provider<List<Narrative>>((ref) {
+  final health = ref.watch(financialHealthProvider);
+  final investments = ref.watch(investmentTotalsProvider).valueOrNull;
+  if (health == null || investments == null) return const [];
+  final insights = ref.watch(dashboardInsightsProvider);
+  final categories = ref.watch(categoryListProvider).valueOrNull ?? const [];
+
+  return const NarrativeEngine().generate(NarrativeContext(
+    health: health,
+    investments: investments,
+    safeToSpend: insights?.safe,
+    anomalies: insights?.anomalies ?? const [],
+    snapshots: ref.watch(netWorthSnapshotListProvider).valueOrNull ?? const [],
+    categoryNames: {for (final c in categories) c.id: c.name},
+    currencyFormat: Money.format,
+  ));
 });
 
 /// Combined local insights (safe-to-spend + spending anomalies).

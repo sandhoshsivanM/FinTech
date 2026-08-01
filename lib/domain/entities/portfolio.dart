@@ -210,6 +210,76 @@ class Trade {
 }
 
 /// A dated price observation.
+/// How much a price can be trusted, independent of where it came from.
+///
+/// The UI needs this, not the provider name: "AlphaVantage" means nothing to a
+/// user, but "priced today" versus "you typed this in" versus "date unknown"
+/// changes what they should conclude from a P&L figure.
+enum PriceQuality {
+  /// A live market quote.
+  live,
+
+  /// An official published value — an AMFI NAV. Genuinely a day behind, and
+  /// that is correct rather than stale.
+  official,
+
+  /// The last known value, re-served because nothing fresher was reachable.
+  stale,
+
+  /// Entered by hand, or carried at cost. Bonds and FDs live here permanently:
+  /// no free live source exists for them.
+  indicative,
+
+  /// The value is real but its date is not. See [PriceSource.legacy].
+  unknownDate,
+}
+
+/// Where a price came from.
+///
+/// Replaces a bare `String` with a comment listing the legal values — which is
+/// a comment, not a constraint, and had already accumulated one value
+/// (`sample`) that the comment did not mention.
+enum PriceSource {
+  yahoo('yahoo', 'Yahoo Finance', PriceQuality.live),
+  alphaVantage('alphavantage', 'AlphaVantage', PriceQuality.live),
+  twelveData('twelvedata', 'TwelveData', PriceQuality.live),
+  amfi('amfi', 'AMFI NAV', PriceQuality.official),
+  cache('cache', 'Cached', PriceQuality.stale),
+  manual('manual', 'Manual entry', PriceQuality.indicative),
+  sample('sample', 'Sample data', PriceQuality.indicative),
+
+  /// Backfilled from the pre-v4 `Holdings.lastPrice`, a column with no
+  /// timestamp. The migration stamps its own run time as `asOf`, so the value
+  /// is real but the date is fiction — which is why this maps to
+  /// [PriceQuality.unknownDate] and must never be rendered as "priced 2
+  /// minutes ago".
+  legacy('legacy', 'Imported (date unknown)', PriceQuality.unknownDate);
+
+  const PriceSource(this.key, this.label, this.quality);
+
+  /// Stable storage key.
+  final String key;
+
+  /// Human-readable name.
+  final String label;
+
+  final PriceQuality quality;
+
+  /// Parses a stored key, degrading to [legacy] rather than throwing.
+  ///
+  /// Deliberately unlike [AssetType.fromKey], which fails loudly: misfiling an
+  /// asset type corrupts tax treatment and roll-ups, while an unrecognised
+  /// price source only costs a label — and "we do not know where this came
+  /// from" is the honest reading of an unknown key. One bad row must not take
+  /// the Investments screen down.
+  static PriceSource fromKey(String k) {
+    for (final s in PriceSource.values) {
+      if (s.key == k) return s;
+    }
+    return PriceSource.legacy;
+  }
+}
+
 class InstrumentPrice {
   const InstrumentPrice({
     required this.instrumentId,
@@ -219,11 +289,24 @@ class InstrumentPrice {
   });
 
   final String instrumentId;
+
+  /// When this price was observed. For [PriceSource.legacy] this is the
+  /// migration's own timestamp and means nothing — check [quality] first.
   final DateTime asOf;
+
   final Decimal price;
 
-  /// manual | amfi | yahoo | alphavantage | twelvedata | cache | legacy
+  /// Stored as TEXT; parsed through [PriceSource.fromKey].
   final String source;
+
+  PriceSource get priceSource => PriceSource.fromKey(source);
+
+  PriceQuality get quality => priceSource.quality;
+
+  /// True when this figure should not be presented with the same confidence as
+  /// a market quote.
+  bool get isIndicative =>
+      quality == PriceQuality.indicative || quality == PriceQuality.unknownDate;
 }
 
 /// A dividend or mutual-fund payout.

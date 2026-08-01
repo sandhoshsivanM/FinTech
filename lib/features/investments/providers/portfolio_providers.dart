@@ -12,6 +12,9 @@ import '../../../domain/entities/investment_totals.dart';
 import '../../../domain/entities/portfolio.dart';
 import '../../../domain/services/instrument_master.dart';
 import '../../../domain/services/portfolio_analytics.dart';
+import '../data/amfi_nav_provider.dart';
+import '../services/price_refresh_service.dart';
+import 'investment_providers.dart' show marketDataServiceProvider;
 
 const _uuid = Uuid();
 
@@ -149,6 +152,21 @@ final unreviewedLotCountProvider = FutureProvider<int>((ref) async {
   return ref
       .watch(portfolioRepositoryProvider)
       .unreviewedCount(ref.watch(currentVaultIdProvider));
+});
+
+/// Refreshes prices from AMFI (funds) and the ticker chain (equities/ETFs).
+///
+/// A `FutureProvider` because the market-data chain reads stored API keys.
+/// Nothing calls it on build — see [PriceRefreshService]'s note on this being
+/// the app's only outbound call and firing only when the user asks.
+final priceRefreshServiceProvider =
+    FutureProvider<PriceRefreshService>((ref) async {
+  return PriceRefreshService(
+    repo: ref.watch(portfolioRepositoryProvider),
+    vaultId: ref.watch(currentVaultIdProvider),
+    marketData: await ref.watch(marketDataServiceProvider.future),
+    amfi: AmfiNavProvider(),
+  );
 });
 
 /// Mutations for the lot-level portfolio.

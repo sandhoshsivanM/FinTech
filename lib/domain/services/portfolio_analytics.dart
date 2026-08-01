@@ -80,6 +80,7 @@ class Position {
     required this.lots,
     this.price,
     this.pricedAt,
+    this.priceSource,
   });
 
   final Instrument instrument;
@@ -99,8 +100,21 @@ class Position {
   /// without a date is a lie.
   final DateTime? pricedAt;
 
+  /// Where [price] came from. Null when never priced.
+  final PriceSource? priceSource;
+
+  PriceQuality? get priceQuality => priceSource?.quality;
+
   /// True when we have no price and are therefore showing cost, not value.
   bool get isUnpriced => price == null;
+
+  /// True when this position's value should not be presented with the same
+  /// confidence as a market quote: never priced, priced by hand, or carrying a
+  /// price whose date is not real.
+  bool get isIndicative =>
+      isUnpriced ||
+      priceQuality == PriceQuality.indicative ||
+      priceQuality == PriceQuality.unknownDate;
 
   /// Market value, falling back to cost basis when unpriced so totals never
   /// silently drop a holding.
@@ -359,6 +373,7 @@ class PortfolioAnalytics {
         lots: result.open,
         price: price?.price,
         pricedAt: price?.asOf,
+        priceSource: price?.priceSource,
       ));
     }
 

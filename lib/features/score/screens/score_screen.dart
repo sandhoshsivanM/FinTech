@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../domain/services/financial_health.dart';
+import '../../../domain/services/narrative_engine.dart';
 import '../../../presentation/charts/area_chart.dart';
 import '../../../presentation/charts/gauge_chart.dart';
 import '../../../presentation/data_gate.dart';
@@ -55,6 +56,8 @@ class _Body extends ConsumerWidget {
       children: [
         _ScoreHero(health: health),
         const SizedBox(height: AppSpacing.md),
+        const _WeeklyReportCard(),
+        const SizedBox(height: AppSpacing.md),
         for (final c in health.categories) ...[
           _CategoryCard(category: c),
           const SizedBox(height: AppSpacing.sm),
@@ -101,6 +104,47 @@ class _ScoreHero extends StatelessWidget {
             textAlign: TextAlign.center,
             style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The narrative paragraph: up to three sentences about the period.
+///
+/// Every sentence comes from a template in [NarrativeEngine] and is checked
+/// against the banned-phrase list by test. Naming a figure is description;
+/// telling someone what to do about it is advice, which this app does not give.
+class _WeeklyReportCard extends ConsumerWidget {
+  const _WeeklyReportCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final narratives = ref.watch(narrativeProvider);
+    if (narratives.isEmpty) return const SizedBox.shrink();
+
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final report = narratives.take(3).map((n) => n.text).join(' ');
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome, size: 18, color: AppColors.accent),
+              const SizedBox(width: AppSpacing.xs),
+              Text('This period',
+                  style:
+                      text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(report, style: text.bodyMedium),
+          const SizedBox(height: AppSpacing.sm),
+          Text(kNarrativeDisclaimer,
+              style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant)),
         ],
       ),
     );

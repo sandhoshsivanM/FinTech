@@ -17,6 +17,7 @@ import '../../../presentation/charts/sunburst_chart.dart';
 import '../../../presentation/stat_tile.dart';
 import '../../../presentation/glass_card.dart';
 import '../providers/investment_providers.dart' show taxRuleEngineProvider;
+import '../services/price_refresh_service.dart';
 import '../providers/portfolio_providers.dart';
 
 /// The portfolio home: totals, allocation, sector P&L, movers and every holding.
@@ -42,6 +43,7 @@ class InvestmentsScreen extends ConsumerWidget {
             icon: const Icon(Icons.donut_small_outlined),
             onPressed: () => context.go(Routes.investmentsBreakdown),
           ),
+          const _RefreshPricesButton(),
           IconButton(
             tooltip: 'Import lots from a broker CSV',
             icon: const Icon(Icons.upload_file_outlined),
@@ -68,6 +70,79 @@ class InvestmentsScreen extends ConsumerWidget {
               icon: const Icon(Icons.add),
               label: const Text('Add lot'),
             ),
+    );
+  }
+}
+
+/// Fetches prices, on demand and only on demand.
+///
+/// This is the app's only outbound network call. It is a button rather than
+/// something that happens on open, because a background fetch would make the
+/// app phone out on a schedule the user never agreed to — and the whole design
+/// rests on it not doing that.
+class _RefreshPricesButton extends ConsumerStatefulWidget {
+  const _RefreshPricesButton();
+
+  @override
+  ConsumerState<_RefreshPricesButton> createState() =>
+      _RefreshPricesButtonState();
+}
+
+class _RefreshPricesButtonState extends ConsumerState<_RefreshPricesButton> {
+  bool _busy = false;
+
+  Future<void> _refresh() async {
+    setState(() => _busy = true);
+    try {
+      final service = await ref.read(priceRefreshServiceProvider.future);
+      final result = await service.refresh();
+      // Force a re-read: prices are fetched per snapshot build rather than
+      // streamed, so nothing else would notice they changed.
+      ref.invalidate(portfolioSnapshotProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_describe(result))),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Could not refresh prices: $e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Reports what happened, including the parts that did not work.
+  static String _describe(PriceRefreshResult r) {
+    if (r.didNothing && r.failures.isEmpty) {
+      return r.skipped > 0
+          ? 'Nothing to refresh — ${r.skipped} holding'
+              '${r.skipped == 1 ? '' : 's'} priced manually.'
+          : 'Nothing to refresh.';
+    }
+    final parts = <String>[
+      if (r.updated > 0) 'Updated ${r.updated}',
+      // Named rather than silently folded into a success count: a partial
+      // refresh that reports "Updated 8" while quietly failing on two is how a
+      // stale price gets mistaken for a fresh one.
+      if (r.failures.isNotEmpty) '${r.failures.length} unavailable',
+      if (r.skipped > 0) '${r.skipped} priced manually',
+    ];
+    return parts.join(' · ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Refresh prices',
+      onPressed: _busy ? null : _refresh,
+      icon: _busy
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.refresh),
     );
   }
 }

@@ -7,9 +7,11 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../domain/entities/investment_totals.dart';
+import '../../../domain/entities/net_worth_snapshot.dart';
 import '../../../domain/entities/recurring_rule.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/financial_health.dart';
+import '../../../domain/services/narrative_engine.dart';
 import '../../../domain/services/net_worth_calculator.dart';
 import '../../../presentation/charts/area_chart.dart';
 import '../../../presentation/charts/gauge_chart.dart';
@@ -80,7 +82,14 @@ class _DashboardBody extends ConsumerWidget {
     final window = ref.watch(selectedWindowProvider);
 
     if (data == null) {
-      return const Center(child: CircularProgressIndicator());
+      // Cold open: show the last stored snapshot rather than a spinner, and
+      // label it. A number marked "as of yesterday" is useful; the same number
+      // presented as live is the dishonesty this whole change removes.
+      final cached = ref.watch(cachedNetWorthProvider);
+      if (cached == null) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      return _ColdOpenPlaceholder(snapshot: cached);
     }
 
     return ListView(
@@ -134,6 +143,64 @@ class _DashboardBody extends ConsumerWidget {
         // 6. Upcoming bills.
         const _UpcomingBillsSection(),
         const SizedBox(height: AppSpacing.lg),
+      ],
+    );
+  }
+}
+
+/// What the Dashboard shows for the moment before the live figures resolve.
+class _ColdOpenPlaceholder extends ConsumerWidget {
+  const _ColdOpenPlaceholder({required this.snapshot});
+  final NetWorthSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ghost = ref.watch(ghostModeProvider);
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final days = DateTime.now().difference(snapshot.date).inDays;
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      children: [
+        const _GreetingHeader(),
+        const SizedBox(height: AppSpacing.md),
+        GlassCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Net worth',
+                  style: text.labelMedium
+                      ?.copyWith(color: scheme.onSurfaceVariant)),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                ghost ? '••••••' : Money.format(snapshot.netWorth),
+                style: text.headlineMedium
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: scheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    days <= 0
+                        ? 'As of earlier today · updating'
+                        : 'As of ${days == 1 ? 'yesterday' : '$days days ago'} · updating',
+                    style: text.labelSmall
+                        ?.copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -1121,78 +1188,67 @@ class _CategoryBar extends StatelessWidget {
 // Smart insights (local, rule-based)
 // ---------------------------------------------------------------------------
 
+/// The Dashboard's single narrative sentence.
+///
+/// One card, one sentence. The plan is explicit about this, and the reason is
+/// that a list of five observations is read as none: the value of an honest
+/// insight comes from it being the only thing in the box.
 class _InsightsCard extends ConsumerWidget {
   const _InsightsCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ins = ref.watch(dashboardInsightsProvider);
-    if (ins == null) return const SizedBox.shrink();
+    final narratives = ref.watch(narrativeProvider);
+    // Nothing to say means no card. An "everything looks steady" placeholder is
+    // filler, and filler teaches people this box never says anything.
+    if (narratives.isEmpty) return const SizedBox.shrink();
+
     final ghost = ref.watch(ghostModeProvider);
-    final cats = ref.watch(categoryListProvider).valueOrNull ?? const [];
+    final narrative = narratives.first;
     final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
 
-    String catName(String id) {
-      for (final c in cats) {
-        if (c.id == id) return c.name;
-      }
-      return 'Other';
-    }
-
-    String m(Decimal d) => ghost ? '••••••' : Money.format(d);
-
-    final tips = <String>[];
-    if (ins.safe.remaining > Decimal.zero) {
-      final days = ins.safe.daysLeft;
-      tips.add(
-          'Safe to spend: ${m(ins.safe.perDay)}/day for the next $days day${days == 1 ? '' : 's'} (${m(ins.safe.remaining)} left this month).');
-    }
-    for (final a in ins.anomalies.take(2)) {
-      tips.add(
-          '${catName(a.categoryId)} is ${a.ratio.toStringAsFixed(1)}× your usual — ${m(a.current)} vs ${m(a.avg)} avg.');
-    }
-    if (tips.isEmpty) {
-      tips.add('No alerts right now — your spending looks steady.');
-    }
+    final tint = switch (narrative.tone) {
+      NarrativeTone.positive => AppColors.income,
+      NarrativeTone.caution => AppColors.budgetWarn,
+      NarrativeTone.neutral => AppColors.accent,
+    };
 
     return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.auto_awesome,
-                  size: 18, color: AppColors.accent),
-              const SizedBox(width: AppSpacing.xs),
-              Text('Insights',
-                  style:
-                      text.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          for (final t in tips)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 26,
-                    height: 26,
-                    margin: const EdgeInsets.only(top: 1),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.auto_awesome,
-                        size: 14, color: AppColors.accent),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(child: Text(t, style: text.bodySmall)),
-                ],
-              ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        onTap: () => context.go(Routes.score),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_awesome, size: 18, color: tint),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text('Insight',
+                      style: text.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    size: 18, color: scheme.outline),
+              ],
             ),
-        ],
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              // Ghost mode masks the whole sentence rather than the figures
+              // inside it: "You saved ••••• of ••••" still leaks the shape of
+              // someone's month to a shoulder-surfer.
+              ghost ? 'Hidden in ghost mode' : narrative.text,
+              style: text.bodyMedium,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              kNarrativeDisclaimer,
+              style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ),
       ),
     );
   }

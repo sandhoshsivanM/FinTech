@@ -11,9 +11,13 @@ import { netWorthTotal, windowSummary, netWorthSeries, type TimeWindow } from '@
 import { healthScore } from '@/domain/health';
 import { investmentTotals } from '@/domain/investmentTotals';
 import { spendingAnomalies, safeToSpend } from '@/domain/insights';
+import { generateNarratives, NARRATIVE_DISCLAIMER, type NarrativeTone } from '@/domain/narrative';
 import { GlassCard, SectionHeader, Sparkline, Ring, ProgressBar } from '@/components/ui';
 
 const WINDOWS: TimeWindow[] = ['7D', '1M', '3M'];
+
+const toneColor = (t: NarrativeTone) =>
+  t === 'positive' ? 'var(--income)' : t === 'caution' ? 'var(--warn)' : 'var(--accent)';
 
 export default function DashboardPage() {
   const { txns, holdings, liabilities, recurring, categories, ghost } = useApp();
@@ -70,78 +74,24 @@ export default function DashboardPage() {
       : health.score >= 70 ? 'var(--income)'
         : health.score >= 40 ? 'var(--warn)' : 'var(--expense)';
 
-  // Insights — domain helpers + rule-based tips, capped at 5
-  const insights = useMemo(() => {
-    const tips: string[] = [];
-
-    // 0a. Safe-to-spend (most actionable — leads the list)
-    const sts = safeToSpend(txns, recurring);
-    if (sts.remaining.gt(0)) {
-      tips.push(
-        `Safe to spend: ${ghost ? '••••' : fmt.money(sts.perDay)}/day for the next ${sts.daysLeft} day${sts.daysLeft !== 1 ? 's' : ''} (${ghost ? '••••' : fmt.money(sts.remaining)} left this month).`
-      );
-    }
-
-    // 0b. Spending anomalies — top 2 categories spiking ≥1.5× their avg
-    const anomalies = spendingAnomalies(txns).slice(0, 2);
-    for (const a of anomalies) {
-      const name = catName(a.categoryId);
-      tips.push(
-        `${name} is ${a.ratio.toFixed(1)}× your usual — ${ghost ? '••••' : fmt.money(a.current)} vs ${ghost ? '••••' : fmt.money(a.avg)} avg.`
-      );
-    }
-
-    // 1. Top spending category this month
-    const now = Date.now();
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
-    const monthExpenses = txns.filter((t) => t.type === 'expense' && t.date >= monthStart && t.date <= now);
-    if (monthExpenses.length > 0) {
-      const catTotals = new Map<string, number>();
-      for (const t of monthExpenses) {
-        catTotals.set(t.categoryId, (catTotals.get(t.categoryId) ?? 0) + parseFloat(t.amount));
-      }
-      const [topCatId, topAmt] = [...catTotals.entries()].sort((a, b) => b[1] - a[1])[0];
-      const topCatName = catName(topCatId);
-      tips.push(`Your biggest spend this month is ${topCatName} (${ghost ? '••••' : fmt.money(D(topAmt.toFixed(2)))}).`);
-    }
-
-    // 2. Savings rate
-    if (!summary.income.isZero()) {
-      if (savingsRate >= 20) {
-        tips.push(`Great savings discipline — you're saving ${savingsRate.toFixed(0)}% of income this period.`);
-      } else if (savingsRate > 0) {
-        tips.push(`Your savings rate is ${savingsRate.toFixed(0)}% this period.`);
-      } else {
-        tips.push(`You're spending more than you earn this period.`);
-      }
-    } else if (txns.length === 0) {
-      tips.push(`No transactions yet. Load sample data from Settings to explore your dashboard.`);
-    }
-
-    // 3. Biggest liability
-    if (liabilities.length > 0) {
-      const biggest = [...liabilities].sort((a, b) => parseFloat(b.principal) - parseFloat(a.principal))[0];
-      // Informational framing only — no recommendation. See the SEBI note in
-      // domain/narrative.ts: naming a balance is description; telling someone
-      // which debt to pay first is advice.
-      tips.push(`Biggest liability: "${biggest.name}" at ${ghost ? '••••' : fmt.money(D(biggest.principal))}, at ${biggest.aprPct}% APR.`);
-    } else if (txns.length > 0) {
-      tips.push(`No liabilities tracked — loans and credit cards feed the Efficiency part of your score.`);
-    }
-
-    // 4. Investment nudge
-    if (holdings.length === 0 && txns.length > 0) {
-      tips.push(`No investments tracked yet — your score's Wealth and Future areas stay unscored until you add one.`);
-    } else if (holdings.length > 0) {
-      const investedVal = holdings.reduce((s, h) => s + parseFloat(h.quantity) * parseFloat(h.lastPrice ?? h.avgCost), 0);
-      const totalVal = netWorth.toNumber();
-      if (totalVal > 0 && investedVal / totalVal < 0.1) {
-        tips.push(`${((investedVal / totalVal) * 100).toFixed(0)}% of your net worth is in tracked investments.`);
-      }
-    }
-
-    return tips.slice(0, 5);
-  }, [txns, holdings, liabilities, recurring, summary, savingsRate, netWorth, categories, ghost, fmt]);
+  // Insights come from the narrative engine, which assembles every sentence
+  // from a fixed template table and is tested against a banned-phrase list.
+  // The block this replaced was hand-written and had drifted into advice:
+  // "Prioritising high-APR debt first saves the most interest", "Consider
+  // diversifying into long-term assets". Both were written in good faith; both
+  // are regulated advice this app is not licensed to give.
+  const narratives = useMemo(
+    () => generateNarratives({
+      health,
+      investments: investmentTotals(holdings),
+      safeToSpend: safeToSpend(txns, recurring),
+      anomalies: spendingAnomalies(txns),
+      snapshots,
+      categoryNames: Object.fromEntries(categories.map((c) => [c.id, c.name])),
+      formatMoney: (v) => (ghost ? '••••' : fmt.money(v)),
+    }),
+    [health, holdings, txns, recurring, snapshots, categories, ghost, fmt],
+  );
 
   return (
     <div className="space-y-6">
@@ -253,19 +203,30 @@ export default function DashboardPage() {
         {/* Insights — 3/5 */}
         <GlassCard className="lg:col-span-3">
           <SectionHeader title="Insights" action={<Sparkles size={16} className="text-accent" />} />
-          {insights.length === 0 ? (
-            <div className="text-sm text-muted py-6 text-center">No insights yet — add transactions to get personalised tips.</div>
+          {narratives.length === 0 ? (
+            <div className="text-sm text-muted py-6 text-center">Add a transaction, a holding or a policy and insights will appear here.</div>
           ) : (
+            <>
             <ul className="space-y-3 mt-1">
-              {insights.map((tip, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className="mt-0.5 w-7 h-7 shrink-0 rounded-[10px] grid place-items-center bg-accent/10 text-accent">
+              {narratives.slice(0, 3).map((n) => (
+                <li key={n.id} className="flex items-start gap-3">
+                  <span
+                    className="mt-0.5 w-7 h-7 shrink-0 rounded-[10px] grid place-items-center"
+                    style={{
+                      background: `color-mix(in srgb, ${toneColor(n.tone)} 12%, transparent)`,
+                      color: toneColor(n.tone),
+                    }}
+                  >
                     <Sparkles size={14} />
                   </span>
-                  <p className="text-sm text-ink-soft leading-relaxed">{tip}</p>
+                  <p className="text-sm text-ink-soft leading-relaxed">{n.text}</p>
                 </li>
               ))}
             </ul>
+            <p className="text-[11px] text-muted mt-4 pt-3 border-t border-[var(--line)]">
+              {NARRATIVE_DISCLAIMER}
+            </p>
+            </>
           )}
         </GlassCard>
       </div>

@@ -144,9 +144,40 @@ void main() {
     expect(totals.marketValue, d('180000'),
         reason: 'the bond must count at cost, not vanish from the total');
     expect(totals.unpricedCount, 1);
-    expect(totals.indicativeValue, d('10000'),
-        reason: 'the UI needs to know how much of the total is not a real '
-            'market price');
+  });
+
+  test('indicative value covers hand-entered prices, not just unpriced ones',
+      () async {
+    // A price you typed last month is no more a market quote than a position
+    // you never priced. Both belong in the figure the UI discloses.
+    final infy = await instrument('i1', 'INFY', AssetType.equityEtf);
+    final bond = await instrument('i2', 'GSEC2030', AssetType.bond);
+    await buy('t1', infy, '100', '1500', now);
+    await buy('t2', bond, '10', '1000', now);
+    await priceAt(infy, '1700', now); // recorded with source 'manual'
+
+    final totals = InvestmentTotals.fromSnapshot(await snapshot());
+    expect(totals.indicativeValue, d('180000'),
+        reason: 'a manual price and an absent price are both indicative');
+  });
+
+  test('a live-sourced price is not counted as indicative', () async {
+    final infy = await instrument('i1', 'INFY', AssetType.equityEtf);
+    await buy('t1', infy, '100', '1500', now);
+    await repo.recordPrice(
+      vaultId: vault,
+      instrumentId: infy.id,
+      price: InstrumentPrice(
+        instrumentId: infy.id,
+        asOf: now,
+        price: d('1700'),
+        source: PriceSource.yahoo.key,
+      ),
+    );
+
+    final totals = InvestmentTotals.fromSnapshot(await snapshot());
+    expect(totals.marketValue, d('170000'));
+    expect(totals.indicativeValue, Decimal.zero);
   });
 
   test('an empty vault is empty, and says so distinctly', () async {
