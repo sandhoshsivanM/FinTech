@@ -11,6 +11,7 @@ import { useFmt } from '@/lib/useFmt';
 import { STORE, type TxnType } from '@/lib/types';
 import { PageIntro, Button, Segmented, Input, EmptyState, GlassCard } from '@/components/ui';
 import { useConfirm } from '@/components/Confirm';
+import { BudgetStrip } from '@/components/BudgetStrip';
 
 // ---- Icon map ----
 const ICON_MAP: Record<string, ElementType> = {
@@ -124,6 +125,12 @@ export default function TransactionsPage() {
           </div>
         }
       />
+
+      {/* Budget awareness, right where a spend is about to be logged.
+          Deliberately no review-queue banner here: browsers cannot read SMS, so
+          the web app has no capture queue at all. Rendering a greyed-out one
+          would advertise a feature this platform does not have. */}
+      <BudgetStrip />
 
       {/* Search + filter */}
       <div className="flex flex-col sm:flex-row gap-3">

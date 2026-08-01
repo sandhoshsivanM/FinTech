@@ -10,9 +10,10 @@ import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
 import {
   portfolioSummary, holdingView, ASSET_META, xirr,
-  rollup, allocationByGroup, ASSET_GROUP_META, UNCLASSIFIED_KEY,
-  type RollupDimension, type RollupRow,
+  rollup, sunburst, groupShades, ASSET_GROUP_META, UNCLASSIFIED_KEY,
+  type RollupDimension, type RollupRow, type AssetGroup,
 } from '@/domain/portfolio';
+import { useDarkMode } from '@/lib/useDarkMode';
 import {
   loadInstrumentMaster, lookupClassification,
   EMPTY_MASTER, type InstrumentMaster,
@@ -29,7 +30,8 @@ import {
   Field,
   Input,
   Select,
-  Donut,
+  Sunburst,
+  type SunburstNode,
 } from '@/components/ui';
 import { useConfirm } from '@/components/Confirm';
 
@@ -722,6 +724,13 @@ export default function InvestmentsPage() {
     loadInstrumentMaster().then((m) => { if (alive) setMaster(m); });
     return () => { alive = false; };
   }, []);
+  const classify = useCallback(
+    (h: Holding) => lookupClassification(master, { symbol: h.symbol }),
+    [master],
+  );
+  // Chart colours follow the *resolved* theme, not the stored preference —
+  // 'system' is not a colour.
+  const dark = useDarkMode();
 
   const holdings = useApp((s) => s.holdings);
   const ghost = useApp((s) => s.ghost);
@@ -746,13 +755,48 @@ export default function InvestmentsPage() {
   // not value-sorted. Eleven categorical hues cannot be kept colourblind-
   // separable, and sorting slices by value makes the adjacency data-dependent,
   // which is exactly the case the palette fails (worst pair dE 3.2 protan).
-  // NOTE: uses the light-mode steps. ASSET_GROUP_META also carries validated
-  // `dark` steps, to be wired when this page gets theme-reactive chart colours.
-  const donutSegments = allocationByGroup(holdings).map((r) => ({
-    label: r.label,
-    value: r.current.toNumber(),
-    color: ASSET_GROUP_META[r.key as keyof typeof ASSET_GROUP_META].light,
-  }));
+  //
+  // Children inherit their parent's hue at successive lightness steps, keyed on
+  // position in the roll-up rather than on value, so a price move does not
+  // repaint the chart. Both the light and dark validated steps are wired.
+  const allocationRoot = useMemo((): SunburstNode => {
+    const nodes = sunburst(holdings, classify);
+    return {
+      key: 'portfolio',
+      label: 'Portfolio',
+      value: summary.current.toNumber(),
+      color: 'transparent',
+      children: nodes.map((n) => {
+        const group = n.row.key as AssetGroup;
+        const shades = groupShades(group, n.children.length, dark);
+        return {
+          key: n.row.key,
+          label: n.row.label,
+          value: n.row.current.toNumber(),
+          color: dark ? ASSET_GROUP_META[group].dark : ASSET_GROUP_META[group].light,
+          children: n.children.map((c, i) => ({
+            key: c.key,
+            label: c.label,
+            value: c.current.toNumber(),
+            // Past the ramp's cap, children share its last step; the caption
+            // and legend labels are what keep them apart.
+            color: shades[Math.min(i, shades.length - 1)],
+          })),
+        };
+      }),
+    };
+  }, [holdings, classify, summary.current, dark]);
+
+  // The bundled classification table is a starter set, so a real portfolio can
+  // land largely in "Unclassified". Said out loud rather than rendered as a big
+  // grey wedge with no explanation — that gap is the app's, not the user's.
+  const unclassifiedShare = useMemo(() => {
+    if (summary.current.lte(0)) return null;
+    const rows = rollup(holdings, 'sector', classify);
+    const un = rows.find((r) => r.key === UNCLASSIFIED_KEY);
+    if (!un || un.current.lte(0)) return null;
+    return un.current.div(summary.current).toNumber();
+  }, [holdings, classify, summary.current]);
 
   // Portfolio-level XIRR — collect one outflow per dated holding + one total inflow now
   const portfolioXirr = useMemo(() => {
@@ -894,19 +938,24 @@ export default function InvestmentsPage() {
         </GlassCard>
       ) : (
         <div className="grid lg:grid-cols-5 gap-4 items-start">
-          {/* Allocation donut — center shows total portfolio value */}
+          {/* Allocation sunburst — asset class, then sector inside it. */}
           <GlassCard className="lg:col-span-2">
             <SectionHeader title="Allocation" />
-            <div className="mt-3">
-              <Donut
-                segments={donutSegments}
-                size={172}
-                stroke={24}
-                centerText={ghost ? '••••' : compact(fmt.toNum(summary.current), fmt.symbol)}
-                centerSub="Total value"
-                legend
-              />
-            </div>
+            <p className="text-[11.5px] text-muted -mt-2 mb-3">
+              Asset class, then sector inside it. Click a slice to zoom in.
+            </p>
+            <Sunburst
+              root={allocationRoot}
+              size={220}
+              centerSub="Total value"
+              formatValue={(v) => (ghost ? '••••' : compact(v, fmt.symbol))}
+            />
+            {unclassifiedShare != null && unclassifiedShare > 0.15 && (
+              <p className="text-[11.5px] text-muted mt-3">
+                {Math.round(unclassifiedShare * 100)}% of your holdings have no
+                sector yet — the bundled classification covers a starter set.
+              </p>
+            )}
           </GlassCard>
 
           <BreakdownCard

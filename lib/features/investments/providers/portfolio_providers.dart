@@ -109,6 +109,23 @@ final allocationProvider = Provider<List<RollupRow>>((ref) {
   return portfolioAnalytics.allocationByGroup(snap.positions);
 });
 
+/// Unclassified market value, and its share of the portfolio.
+///
+/// The bundled classification table covers a starter set of Indian large caps,
+/// so a real portfolio can land largely in "Unclassified". The sunburst says so
+/// in its caption rather than quietly rendering one grey wedge and calling it a
+/// breakdown.
+final unclassifiedShareProvider = Provider<double?>((ref) {
+  final snap = ref.watch(portfolioSnapshotProvider).valueOrNull;
+  if (snap == null || snap.marketValue <= Decimal.zero) return null;
+  final rows = portfolioAnalytics.rollup(snap.positions, RollupDimension.sector);
+  final unclassified = rows
+      .where((r) => r.key == unclassifiedKey)
+      .fold(Decimal.zero, (s, r) => s + r.marketValue);
+  if (unclassified <= Decimal.zero) return null;
+  return (unclassified / snap.marketValue).toDouble();
+});
+
 /// Portfolio XIRR, or null when it cannot be solved.
 final portfolioXirrProvider = FutureProvider<double?>((ref) async {
   final repo = ref.watch(portfolioRepositoryProvider);

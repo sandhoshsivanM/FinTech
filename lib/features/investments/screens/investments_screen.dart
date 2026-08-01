@@ -11,8 +11,9 @@ import '../../../domain/entities/asset_group.dart';
 import '../../../domain/services/portfolio_analytics.dart';
 import '../../../domain/services/tax_rule_engine.dart';
 import '../../../presentation/asset_group_colors.dart';
+import '../../../presentation/app_shell.dart' show isDesktopPlatform;
 import '../../../presentation/data_gate.dart';
-import '../../../presentation/charts/donut_chart.dart';
+import '../../../presentation/charts/sunburst_chart.dart';
 import '../../../presentation/stat_tile.dart';
 import '../../../presentation/glass_card.dart';
 import '../providers/investment_providers.dart' show taxRuleEngineProvider;
@@ -58,6 +59,68 @@ class InvestmentsScreen extends ConsumerWidget {
         ],
       ),
       body: const SafeArea(child: DataGate(child: _Body())),
+      // Material's primary-action affordance. Desktop keeps the AppBar button,
+      // where a floating control over a wide window reads as a stray element.
+      floatingActionButton: isDesktopPlatform
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => context.go(Routes.investmentsAddLot),
+              icon: const Icon(Icons.add),
+              label: const Text('Add lot'),
+            ),
+    );
+  }
+}
+
+/// Import entry points, given the weight the plan asks for.
+///
+/// Statement import is the primary way a real portfolio gets in — typing years
+/// of trades by hand is not something anyone does — so it belongs in the body
+/// rather than behind an AppBar icon.
+class _ImportBar extends StatelessWidget {
+  const _ImportBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return GlassCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: const Icon(Icons.description_outlined,
+                color: AppColors.accent, size: 19),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Import your holdings',
+                    style:
+                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  'Broker CSV. Nothing is written until you review it.',
+                  style: text.labelSmall
+                      ?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          FilledButton(
+            onPressed: () => context.go(Routes.investmentsImportLots),
+            child: const Text('Import'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -81,6 +144,8 @@ class _Body extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
             _StatGrid(snap: snap),
+            const SizedBox(height: AppSpacing.md),
+            const _ImportBar(),
             const SizedBox(height: AppSpacing.md),
             const _Notices(),
             if (wide)
@@ -119,7 +184,8 @@ class _Body extends ConsumerWidget {
             ],
             const SizedBox(height: AppSpacing.md),
             _HoldingsCard(snap: snap),
-            const SizedBox(height: AppSpacing.xl),
+            // Clearance for the FAB.
+            const SizedBox(height: 88),
           ],
         );
       },
@@ -265,52 +331,88 @@ class _Notice extends StatelessWidget {
 // Allocation
 // ---------------------------------------------------------------------------
 
-class _AllocationCard extends StatelessWidget {
+class _AllocationCard extends ConsumerWidget {
   const _AllocationCard({required this.snap});
 
   final PortfolioSnapshot snap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     const analytics = PortfolioAnalytics();
-    // Fixed validated order, never value-sorted — see kAssetGroupOrder.
-    final rows = analytics.allocationByGroup(snap.positions);
-    if (rows.isEmpty) return const SizedBox.shrink();
+    if (snap.positions.isEmpty || snap.marketValue <= Decimal.zero) {
+      return const SizedBox.shrink();
+    }
 
-    final total = rows.fold(Decimal.zero, (s, r) => s + r.marketValue);
-    if (total == Decimal.zero) return const SizedBox.shrink();
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    // Groups come back in the fixed validated order and are never sorted —
+    // see kAssetGroupOrder. Children inherit the parent's hue at successive
+    // lightness steps, keyed on their position in the roll-up rather than on
+    // value, so a price move does not repaint the chart.
+    final nodes = analytics.sunburst(snap.positions);
+    final root = SunburstNode(
+      key: 'portfolio',
+      label: 'Portfolio',
+      value: snap.marketValue.toDouble(),
+      color: Colors.transparent,
+      children: [
+        for (final n in nodes)
+          () {
+            final group =
+                AssetGroup.values.firstWhere((g) => g.name == n.row.key);
+            final shades = groupShades(group, n.children.length, dark: dark);
+            // Anything past the ramp's cap shares its last step; the labels in
+            // the caption and legend are what keep them apart.
+            return SunburstNode(
+              key: n.row.key,
+              label: n.row.label,
+              value: n.row.marketValue.toDouble(),
+              color: groupColor(group),
+              children: [
+                for (var i = 0; i < n.children.length; i++)
+                  SunburstNode(
+                    key: n.children[i].key,
+                    label: n.children[i].label,
+                    value: n.children[i].marketValue.toDouble(),
+                    color: shades[i.clamp(0, shades.length - 1)],
+                  ),
+              ],
+            );
+          }(),
+      ],
+    );
 
-    final largest =
-        rows.reduce((a, b) => b.marketValue > a.marketValue ? b : a);
-    final pct =
-        (largest.marketValue.toDouble() / total.toDouble() * 100).round();
+    final unclassified = ref.watch(unclassifiedShareProvider);
 
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _CardTitle('Allocation'),
-          const SizedBox(height: AppSpacing.md),
-          Center(
-            child: DonutChart(
-              segments: [
-                for (final r in rows)
-                  DonutSegment(
-                    r.label,
-                    r.marketValue.toDouble(),
-                    groupColor(
-                        AssetGroup.values.firstWhere((g) => g.name == r.key)),
-                  ),
-              ],
-              size: 150,
-              strokeWidth: 24,
-              centerText: '$pct%',
-              centerSub: largest.label,
-              // The legend is load-bearing: three palette steps sit below 3:1
-              // contrast, so labels keep identity off colour alone.
-              showLegend: true,
-            ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Asset class, then sector inside it. Tap a slice to zoom in.',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
+          const SizedBox(height: AppSpacing.md),
+          SunburstChart(
+            root: root,
+            size: 220,
+            formatValue: (v) =>
+                Money.format(Decimal.parse(v.toStringAsFixed(2))),
+          ),
+          if (unclassified != null && unclassified > 0.15) ...[
+            const SizedBox(height: AppSpacing.sm),
+            // Said out loud rather than shown as a large grey wedge with no
+            // explanation. The classification table is a starter set, and a
+            // portfolio outside it is the app's gap, not the user's.
+            Text(
+              '${(unclassified * 100).round()}% of your holdings have no sector '
+              'yet — set one from a holding to sharpen this.',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+          ],
         ],
       ),
     );

@@ -309,3 +309,66 @@ export function groupShades(g: AssetGroup, count: number, dark: boolean): string
   const n = Math.max(1, Math.min(count, MAX_GROUP_SHADES));
   return Array.from({ length: n }, (_, i) => (i === 0 ? base : mix(base, toward, 0.14 * i)));
 }
+
+/** One node of a two-level roll-up. */
+export interface RollupNode {
+  row: RollupRow;
+  /** Never empty for a parent that is present — see `sunburst`. */
+  children: RollupRow[];
+}
+
+/**
+ * What the sunburst's outer ring splits each group by.
+ *
+ * Only equities carry a sector in the bundled classification table, so the
+ * honest split is "sector where we have one, sub-type otherwise". Groups whose
+ * members would each be their own sub-type are left at asset type, since a ring
+ * of one segment says nothing.
+ */
+export const DEFAULT_SUNBURST_CHILDREN: Record<AssetGroup, RollupDimension> = {
+  equity: 'sector',
+  debt: 'assetType',
+  retirement: 'assetType',
+  gold: 'assetType',
+  real_estate: 'assetType',
+  crypto: 'assetType',
+  cash: 'assetType',
+};
+
+/**
+ * Two-level roll-up for the sunburst: asset group, then a child dimension.
+ * The twin of `PortfolioAnalytics.sunburst` in portfolio_analytics.dart.
+ *
+ * The inner ring is ALWAYS emitted in ASSET_GROUP_ORDER and is NEVER sorted by
+ * value — the palette's colourblind guarantee is a property of that exact
+ * adjacency. Children carry no independent hue (they inherit the parent's at a
+ * lower lightness), so they are sorted, largest first.
+ *
+ * A group whose children are all unclassified yields exactly one child keyed
+ * UNCLASSIFIED_KEY, never zero: an empty child list leaves a hollow gap in the
+ * outer ring where the parent's arc should be.
+ */
+export function sunburst(
+  holdings: Holding[],
+  classify: (h: Holding) => InstrumentClassification | undefined = () => undefined,
+  childByGroup: Record<AssetGroup, RollupDimension> = DEFAULT_SUNBURST_CHILDREN,
+): RollupNode[] {
+  const byGroup = new Map<AssetGroup, Holding[]>();
+  for (const h of holdings) {
+    const g = ASSET_GROUP_OF[h.assetType];
+    const list = byGroup.get(g);
+    if (list) list.push(h);
+    else byGroup.set(g, [h]);
+  }
+
+  const nodes: RollupNode[] = [];
+  for (const g of ASSET_GROUP_ORDER) {
+    const members = byGroup.get(g);
+    if (!members) continue;
+    // Reuses `rollup` rather than re-bucketing, so a parent and its children
+    // cannot disagree about which holding went where.
+    const parent = rollup(members, 'assetGroup', classify)[0];
+    nodes.push({ row: parent, children: rollup(members, childByGroup[g], classify) });
+  }
+  return nodes;
+}
