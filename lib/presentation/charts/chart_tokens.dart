@@ -49,4 +49,24 @@ abstract final class ChartTokens {
   /// Charts below this many points render their empty state instead. A
   /// one-point "trend" is a dot pretending to be a line.
   static const int minSeriesPoints = 2;
+
+  /// How long a chart takes to draw itself in.
+  ///
+  /// Long enough to read as motion, short enough that nobody waits for it. The
+  /// entrance is the only animation these charts have: data changing under a
+  /// user is not a moment to be decorative about.
+  static const Duration entrance = Duration(milliseconds: 650);
+
+  /// Easing for the entrance. Decelerating, so the chart arrives rather than
+  /// snapping into place.
+  static const Curve entranceCurve = Curves.easeOutCubic;
+
+  /// Animation duration honouring the platform's reduce-motion setting.
+  ///
+  /// Widget tests set `disableAnimations` too, which is what keeps goldens
+  /// deterministic without every test having to pump for the full duration.
+  static Duration entranceFor(BuildContext context) =>
+      MediaQuery.maybeOf(context)?.disableAnimations ?? false
+          ? Duration.zero
+          : entrance;
 }

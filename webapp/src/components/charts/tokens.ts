@@ -42,4 +42,28 @@ export const CHART = {
 
   /** Below this, render the empty state. A one-point "trend" is a dot pretending to be a line. */
   minSeriesPoints: 2,
+
+  /**
+   * How long a chart takes to draw itself in. Long enough to read as motion,
+   * short enough that nobody waits for it. The entrance is the only animation
+   * these charts have — data changing under a user is not a moment to be
+   * decorative about.
+   *
+   * Matches ChartTokens.entrance in chart_tokens.dart.
+   */
+  entranceMs: 650,
+
+  /** Decelerating, so a chart arrives rather than snapping into place. */
+  entranceEasing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
 } as const;
+
+/**
+ * True when the viewer has asked for less motion.
+ *
+ * Honouring this is not optional: vestibular disorders make large sweeping
+ * motion genuinely unpleasant, and a chart entrance is decoration.
+ */
+export function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined' || !window.matchMedia) return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}

@@ -61,15 +61,22 @@ class AreaChart extends StatelessWidget {
         child: SizedBox(
           height: height,
           width: double.infinity,
-          child: CustomPaint(
-            painter: _AreaPainter(
-              values: values,
-              min: min,
-              max: max,
-              color: c,
-              fillOpacity: fillOpacity,
-              showEndDot: showEndDot,
-              surface: scheme.surface,
+          child: TweenAnimationBuilder<double>(
+            // Draws left to right, the direction the data is read in.
+            tween: Tween(begin: 0, end: 1),
+            duration: ChartTokens.entranceFor(context),
+            curve: ChartTokens.entranceCurve,
+            builder: (context, t, _) => CustomPaint(
+              painter: _AreaPainter(
+                values: values,
+                min: min,
+                max: max,
+                color: c,
+                fillOpacity: fillOpacity,
+                showEndDot: showEndDot,
+                surface: scheme.surface,
+                progress: t,
+              ),
             ),
           ),
         ),
@@ -119,6 +126,7 @@ class _AreaPainter extends CustomPainter {
     required this.fillOpacity,
     required this.showEndDot,
     required this.surface,
+    this.progress = 1,
   });
 
   final List<double> values;
@@ -129,8 +137,23 @@ class _AreaPainter extends CustomPainter {
   final bool showEndDot;
   final Color surface;
 
+  /// 0..1 entrance progress. Clips the drawing horizontally rather than
+  /// interpolating the values, so no frame ever shows a number the data does
+  /// not contain.
+  final double progress;
+
   @override
   void paint(Canvas canvas, Size size) {
+    if (progress <= 0) return;
+    if (progress < 1) {
+      canvas.save();
+      canvas.clipRect(Rect.fromLTWH(0, 0, size.width * progress, size.height));
+    }
+    _paintSeries(canvas, size);
+    if (progress < 1) canvas.restore();
+  }
+
+  void _paintSeries(Canvas canvas, Size size) {
     const pad = 10.0;
     final dx = size.width / (values.length - 1);
     double y(double v) =>
@@ -169,7 +192,9 @@ class _AreaPainter extends CustomPainter {
         ..strokeJoin = ChartTokens.lineJoin,
     );
 
-    if (showEndDot) {
+    // Only once the line has actually reached it — a marker sitting ahead of
+    // the line would claim a value that has not been drawn yet.
+    if (showEndDot && progress >= 1) {
       final end = Offset(size.width, y(values.last));
       // Ring first, in the surface colour, so the dot stays visible where the
       // line crosses its own fill.
@@ -185,5 +210,9 @@ class _AreaPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_AreaPainter old) =>
-      old.values != values || old.color != color || old.min != min || old.max != max;
+      old.values != values ||
+      old.color != color ||
+      old.min != min ||
+      old.max != max ||
+      old.progress != progress;
 }

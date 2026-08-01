@@ -111,17 +111,25 @@ class GaugeChart extends StatelessWidget {
           // gauge from pushing everything under it down by a quarter of its
           // own height.
           height: size * 0.82,
-          child: CustomPaint(
-            painter: _GaugePainter(
-              fraction: tracked ? fraction : 0,
-              sweepRadians: sweepDegrees * math.pi / 180,
-              stroke: strokeWidth,
-              active: active,
-              track: track,
-              tickColor: scheme.surface,
-              bands: tracked ? bands : const [],
-              min: min,
-              max: max,
+          child: TweenAnimationBuilder<double>(
+            // Sweeps up from empty. Keyed on the value so a score that changes
+            // animates to its new position rather than restarting from zero.
+            tween: Tween(begin: 0, end: tracked ? fraction : 0),
+            duration: ChartTokens.entranceFor(context),
+            curve: ChartTokens.entranceCurve,
+            builder: (context, t, child) => CustomPaint(
+              painter: _GaugePainter(
+                fraction: t,
+                sweepRadians: sweepDegrees * math.pi / 180,
+                stroke: strokeWidth,
+                active: active,
+                track: track,
+                tickColor: scheme.surface,
+                bands: tracked ? bands : const [],
+                min: min,
+                max: max,
+              ),
+              child: child,
             ),
             child: Center(
               child: Padding(

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { CHART } from './tokens';
+import { useEntrance } from './useEntrance';
 
 export interface SunburstNode {
   key: string;
@@ -53,6 +54,9 @@ export function Sunburst({
 }) {
   const [path, setPath] = useState<number[]>([]);
   const [selected, setSelected] = useState<SunburstNode | null>(null);
+  // Re-keyed on the drill path, so zooming in sweeps the new ring rather than
+  // swapping it in instantly.
+  const { progress, transition } = useEntrance(path.join('/'));
 
   const pathNodes: SunburstNode[] = [root];
   let focus = root;
@@ -166,13 +170,25 @@ export function Sunburst({
 
       <div className="relative mx-auto" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          {segments.map((s, i) => (
+          {segments.map((s, i) => {
+            const radius = s.depth === 0 ? innerR : outerR;
+            // Arc length, used as the dash pattern so each segment grows from
+            // its own start angle — the ring sweeps clockwise the way it reads.
+            const len = radius * s.sweep;
+            // The outer ring trails the inner one, so the hierarchy lands in
+            // order: asset class first, then what is inside it.
+            const lead = s.depth === 0 ? 0 : 0.15;
+            const local = Math.max(0, Math.min(1, (progress - lead) / (1 - lead)));
+            return (
             <path
               key={`${s.depth}-${s.node.key}-${i}`}
-              d={arcPath(s, s.depth === 0 ? innerR : outerR)}
+              d={arcPath(s, radius)}
               fill="none"
               stroke={s.node.color}
               strokeWidth={ringWidth}
+              strokeDasharray={len}
+              strokeDashoffset={len * (1 - local)}
+              style={{ transition: `stroke-dashoffset ${transition}` }}
               role="button"
               tabIndex={0}
               aria-label={`${s.node.label}, ${Math.round((s.node.value / (focus.value || total)) * 100)}%`}
@@ -191,7 +207,8 @@ export function Sunburst({
               {/* Native tooltip — free, and it works before JS hydrates. */}
               <title>{`${s.node.label} · ${formatValue(s.node.value)}`}</title>
             </path>
-          ))}
+            );
+          })}
         </svg>
 
         {/* Centre: the total, and the way back out. */}

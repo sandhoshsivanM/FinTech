@@ -1,6 +1,7 @@
 'use client';
 import type { ReactNode } from 'react';
 import { CHART } from './tokens';
+import { useEntrance } from './useEntrance';
 
 export interface GaugeBand {
   /** Upper bound of this band, on the gauge's own scale. */
@@ -56,6 +57,7 @@ export function Gauge({
   untrackedLabel?: string;
   children?: ReactNode;
 }) {
+  const { progress, transition } = useEntrance(value);
   const tracked = value !== null;
   const clamped = tracked ? Math.min(max, Math.max(min, value)) : min;
   const fraction = max <= min ? 0 : (clamped - min) / (max - min);
@@ -103,16 +105,24 @@ export function Gauge({
           stroke={tracked ? active : 'var(--fill-strong)'}
           opacity={tracked ? 0.18 : 1}
         />
-        {tracked && fraction > 0 && (
-          <path
-            d={arc(start, start + sweep * fraction)}
-            fill="none"
-            stroke={active}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            style={{ transition: 'd .6s cubic-bezier(.4,0,.2,1)' }}
-          />
-        )}
+        {tracked && fraction > 0 && (() => {
+          // Drawn at full length and revealed with dash-offset. Transitioning
+          // the path's own `d` is not reliably animatable across browsers,
+          // whereas stroke-dashoffset is, and it sweeps in the same direction.
+          const len = r * sweep * fraction;
+          return (
+            <path
+              d={arc(start, start + sweep * fraction)}
+              fill="none"
+              stroke={active}
+              strokeWidth={stroke}
+              strokeLinecap="round"
+              strokeDasharray={len}
+              strokeDashoffset={len * (1 - progress)}
+              style={{ transition: `stroke-dashoffset ${transition}` }}
+            />
+          );
+        })()}
         {/* Band boundaries as gaps in the track. Five coloured segments would
             put a rainbow on what is an ordered scale. */}
         {tracked && max > min && bands.map((b) => {

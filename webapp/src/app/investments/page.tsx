@@ -411,8 +411,11 @@ function ImportPanel({ onClose }: { onClose: () => void }) {
 type Dec = import('decimal.js').default;
 interface HoldingView { holding: Holding; invested: Dec; current: Dec; pnl: Dec; pnlPct: number }
 
-function HoldingRow({ v, isEditing, onEdit, onClose, onDelete, ghost }: {
-  v: HoldingView; isEditing: boolean; onEdit: () => void; onClose: () => void; onDelete: () => void; ghost: boolean;
+function HoldingRow({ v, weight, isEditing, onEdit, onClose, onDelete, ghost }: {
+  v: HoldingView;
+  /** Share of total portfolio value, 0..1. Null when the portfolio is empty. */
+  weight: number | null;
+  isEditing: boolean; onEdit: () => void; onClose: () => void; onDelete: () => void; ghost: boolean;
 }) {
   const fmt = useFmt();
   const [open, setOpen] = useState(false);
@@ -450,7 +453,16 @@ function HoldingRow({ v, isEditing, onEdit, onClose, onDelete, ghost }: {
         <td className={`${cell} text-ink-soft`}>{D(h.quantity).toFixed(2)}</td>
         <td className={`${cell} text-ink-soft hidden md:table-cell`}>{mask(fmt.money(D(h.avgCost)), ghost)}</td>
         <td className={`${cell} text-ink-soft hidden md:table-cell`}>{mask(fmt.money(price), ghost)}</td>
-        <td className={`${cell} font-semibold`}>{mask(fmt.money(current), ghost)}</td>
+        <td className={`${cell} font-semibold`}>
+          {mask(fmt.money(current), ghost)}
+          {/* Concentration is the question a value column alone cannot answer:
+              a large number means nothing until you know it is 40% of
+              everything you own. Never masked by ghost mode — a percentage
+              reveals no amount. */}
+          {weight !== null && (
+            <div className="text-[11px] text-muted tnum">{(weight * 100).toFixed(1)}%</div>
+          )}
+        </td>
         <td className="py-3 pr-3 text-right whitespace-nowrap">
           <div className="font-semibold tnum" style={{ color: pnlColor(pnlPct) }}>{ghost ? '••••' : fmt.signed(pnl, isPos)}</div>
           <div className="text-[11px] tnum" style={{ color: pnlColor(pnlPct) }}>{ghost ? '' : `${isPos ? '+' : ''}${pnlPct.toFixed(2)}%`}</div>
@@ -977,7 +989,7 @@ export default function InvestmentsPage() {
                     <th className="pb-2.5 pr-3 text-right font-medium">Qty</th>
                     <th className="pb-2.5 pr-3 text-right font-medium hidden md:table-cell">Avg Cost</th>
                     <th className="pb-2.5 pr-3 text-right font-medium hidden md:table-cell">Last Price</th>
-                    <th className="pb-2.5 pr-3 text-right font-medium">Value</th>
+                    <th className="pb-2.5 pr-3 text-right font-medium">Value / Weight</th>
                     <th className="pb-2.5 pr-3 text-right font-medium">P&amp;L</th>
                     <th className="pb-2.5 w-[84px]" />
                   </tr>
@@ -987,6 +999,7 @@ export default function InvestmentsPage() {
                     <HoldingRow
                       key={v.holding.id}
                       v={v}
+                      weight={summary.current.lte(0) ? null : v.current.div(summary.current).toNumber()}
                       isEditing={editHolding?.id === v.holding.id}
                       onEdit={() => openEdit(v.holding)}
                       onClose={closeEdit}

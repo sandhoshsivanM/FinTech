@@ -1,6 +1,7 @@
 'use client';
 import { useId } from 'react';
 import { CHART } from './tokens';
+import { useEntrance } from './useEntrance';
 
 /**
  * Trend line with a gradient area fill. The web twin of Flutter's `AreaChart`.
@@ -23,6 +24,7 @@ export function AreaChart({
   emptyLabel?: string;
 }) {
   const gradientId = useId();
+  const { progress, transition } = useEntrance(values.length);
 
   if (values.length < CHART.minSeriesPoints) return <EmptyChart label={emptyLabel} />;
   const min = Math.min(...values);
@@ -47,7 +49,12 @@ export function AreaChart({
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={area} fill={`url(#${gradientId})`} />
+      <path
+        d={area}
+        fill={`url(#${gradientId})`}
+        opacity={progress}
+        style={{ transition: `opacity ${transition}` }}
+      />
       <path
         d={line}
         fill="none"
@@ -56,6 +63,13 @@ export function AreaChart({
         strokeLinejoin={CHART.lineJoin}
         strokeLinecap={CHART.lineCap}
         vectorEffect="non-scaling-stroke"
+        // Drawn left to right, the direction the data is read in. The length is
+        // an over-estimate of the path — exactness does not matter, only that
+        // it is never shorter than the real path, or the tail would be clipped.
+        pathLength={1}
+        strokeDasharray={1}
+        strokeDashoffset={1 - progress}
+        style={{ transition: `stroke-dashoffset ${transition}` }}
       />
     </svg>
   );

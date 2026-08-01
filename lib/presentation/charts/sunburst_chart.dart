@@ -240,9 +240,17 @@ class _HitTestArea extends StatelessWidget {
                 onSegmentSelect(hit.node);
               }
             },
-            child: CustomPaint(
-              size: Size.square(size),
-              painter: _SunburstPainter(geometry),
+            child: TweenAnimationBuilder<double>(
+              // Re-keyed on the focused node, so drilling in sweeps the new
+              // ring rather than swapping it in instantly.
+              key: ValueKey(node.key),
+              tween: Tween(begin: 0, end: 1),
+              duration: ChartTokens.entranceFor(context),
+              curve: ChartTokens.entranceCurve,
+              builder: (context, t, _) => CustomPaint(
+                size: Size.square(size),
+                painter: _SunburstPainter(geometry, progress: t),
+              ),
             ),
           ),
           // One invisible semantics node per visible arc, so the allocation is
@@ -389,18 +397,29 @@ class SunburstGeometry {
 }
 
 class _SunburstPainter extends CustomPainter {
-  _SunburstPainter(this.geometry);
+  _SunburstPainter(this.geometry, {this.progress = 1});
+
   final SunburstGeometry geometry;
+
+  /// 0..1 entrance progress. Each arc grows from its own start angle, so the
+  /// ring sweeps round clockwise the way it is read.
+  final double progress;
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (progress <= 0) return;
     for (final s in geometry.segments) {
       if (s.sweepAngle <= 0) continue;
       final radius = s.depth == 0 ? geometry.innerRadius : geometry.outerRadius;
+      // The outer ring trails the inner one slightly, so the hierarchy reads:
+      // asset class first, then what is inside it.
+      final lead = s.depth == 0 ? 0.0 : 0.15;
+      final local = ((progress - lead) / (1 - lead)).clamp(0.0, 1.0);
+      if (local <= 0) continue;
       canvas.drawArc(
         Rect.fromCircle(center: geometry.centre, radius: radius),
         s.startAngle,
-        s.sweepAngle,
+        s.sweepAngle * local,
         false,
         Paint()
           ..color = s.node.color
@@ -411,7 +430,8 @@ class _SunburstPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_SunburstPainter old) => old.geometry != geometry;
+  bool shouldRepaint(_SunburstPainter old) =>
+      old.geometry != geometry || old.progress != progress;
 }
 
 class _Breadcrumb extends StatelessWidget {
