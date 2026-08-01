@@ -30,6 +30,7 @@ class InvestmentTotals {
     required this.unpricedCount,
     required this.indicativeValue,
     this.lastPricedAt,
+    this.unconvertedCurrencies = const {},
   });
 
   /// What the portfolio is worth. Unpriced positions contribute their cost
@@ -60,6 +61,14 @@ class InvestmentTotals {
   /// The most recent price observation anywhere in the portfolio.
   final DateTime? lastPricedAt;
 
+  /// Currencies held that could not be converted, because no rate is stored.
+  ///
+  /// Those holdings are **excluded** from [marketValue] rather than counted at
+  /// parity. Counting 100 USD as 100 INR would understate net worth by 99% and
+  /// look entirely plausible on screen; an obviously missing number sends the
+  /// user to Settings, a quietly wrong one does not.
+  final Set<String> unconvertedCurrencies;
+
   static final empty = InvestmentTotals(
     marketValue: Decimal.zero,
     costBasis: Decimal.zero,
@@ -68,6 +77,9 @@ class InvestmentTotals {
     unpricedCount: 0,
     indicativeValue: Decimal.zero,
   );
+
+  /// True when some holding could not be expressed in the base currency.
+  bool get hasUnconverted => unconvertedCurrencies.isNotEmpty;
 
   /// True when the vault holds nothing.
   ///
@@ -99,24 +111,57 @@ class InvestmentTotals {
     return (largest / marketValue).toDouble();
   }
 
-  factory InvestmentTotals.fromSnapshot(PortfolioSnapshot snap) {
+  /// Builds the totals, converting any foreign holding into [baseCurrency].
+  ///
+  /// [rateFor] returns base units per 1 unit of the given currency, or null
+  /// when no rate is known. Passing null for [rateFor] keeps every amount at
+  /// face value — correct only for a single-currency vault, which is why the
+  /// providers always supply one.
+  factory InvestmentTotals.fromSnapshot(
+    PortfolioSnapshot snap, {
+    String baseCurrency = 'INR',
+    Decimal? Function(String currency)? rateFor,
+  }) {
     final byGroup = <AssetGroup, Decimal>{};
+    final unconverted = <String>{};
+    var market = Decimal.zero;
+    var cost = Decimal.zero;
     var indicative = Decimal.zero;
+    var counted = 0;
+
     for (final p in snap.positions) {
+      final currency = p.instrument.currency;
+      Decimal rate = Decimal.one;
+      if (currency != baseCurrency) {
+        final found = rateFor?.call(currency);
+        if (found == null) {
+          // Excluded, and named, rather than counted at parity.
+          unconverted.add(currency);
+          continue;
+        }
+        rate = found;
+      }
+
+      final value = p.marketValue * rate;
       final g = p.instrument.group;
-      byGroup[g] = (byGroup[g] ?? Decimal.zero) + p.marketValue;
+      byGroup[g] = (byGroup[g] ?? Decimal.zero) + value;
+      market += value;
+      cost += p.costBasis * rate;
+      counted++;
       // Not just unpriced: a bond you typed a price for last month is no more
       // a market quote than one you never priced at all.
-      if (p.isIndicative) indicative += p.marketValue;
+      if (p.isIndicative) indicative += value;
     }
+
     return InvestmentTotals(
-      marketValue: snap.marketValue,
-      costBasis: snap.costBasis,
+      marketValue: market,
+      costBasis: cost,
       valueByGroup: byGroup,
-      positionCount: snap.positions.length,
+      positionCount: counted,
       unpricedCount: snap.unpriced.length,
       indicativeValue: indicative,
       lastPricedAt: snap.lastPricedAt,
+      unconvertedCurrencies: unconverted,
     );
   }
 }

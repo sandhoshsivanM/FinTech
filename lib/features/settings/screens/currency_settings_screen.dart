@@ -19,19 +19,63 @@ class CurrencySettingsScreen extends StatelessWidget {
   }
 }
 
-class _Body extends ConsumerWidget {
+class _Body extends ConsumerStatefulWidget {
   const _Body();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_Body> createState() => _BodyState();
+}
+
+class _BodyState extends ConsumerState<_Body> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final rates = ref.watch(fxRatesProvider).valueOrNull ?? const [];
+    final base = ref.watch(baseCurrencyProvider);
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          const Text(
-            'Exchange rates are used to convert foreign holdings into your '
-            'vault currency. Enter rates manually if no internet is available.',
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.public),
+            title: const Text('Base currency'),
+            subtitle: Text('Totals are reported in $base'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: _pickBase,
+          ),
+          const Divider(),
+          Text(
+            'Rates convert foreign holdings into $base. Fetching gets every '
+            'currency in one request, so the source never learns which ones '
+            'you hold.',
+            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              FilledButton.icon(
+                onPressed: _busy ? null : _refresh,
+                icon: _busy
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.cloud_download_outlined, size: 18),
+                label: const Text('Fetch rates'),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              TextButton.icon(
+                onPressed: () => _add(context, ref),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add manually'),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
           if (rates.isEmpty)
@@ -45,16 +89,68 @@ class _Body extends ConsumerWidget {
                 leading: const Icon(Icons.currency_exchange),
                 title: Text('1 ${r.baseCurrency} = ${r.rate} ${r.quoteCurrency}'),
                 subtitle: Text(
-                    '${r.source} · ${DateFormat('d MMM yyyy').format(r.fetchedAt)}'),
+                    '${_sourceLabel(r.source)} · '
+                    '${DateFormat('d MMM yyyy').format(r.fetchedAt)}'),
               ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _add(context, ref),
-        icon: const Icon(Icons.add),
-        label: const Text('Add rate'),
+    );
+  }
+
+  /// Reference rates are published per working day, so the stored date is the
+  /// honest label — not "just now", which a Sunday fetch would make untrue.
+  static String _sourceLabel(String source) =>
+      source == 'ecb' ? 'ECB reference rate' : 'Manual entry';
+
+  Future<void> _pickBase() async {
+    final controller =
+        TextEditingController(text: ref.read(baseCurrencyProvider));
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Base currency'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.characters,
+          decoration: const InputDecoration(
+            labelText: 'ISO code',
+            hintText: 'INR, USD, EUR, GBP, AED…',
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
+    final code = picked?.trim();
+    if (code == null || code.isEmpty) return;
+    await ref.read(baseCurrencyProvider.notifier).set(code);
+  }
+
+  Future<void> _refresh() async {
+    setState(() => _busy = true);
+    try {
+      final result = await ref.read(fxActionsProvider).refreshLive();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('${result.updated} rates · '
+            '${result.source} as of '
+            '${DateFormat('d MMM yyyy').format(result.asOf)}'),
+      ));
+    } on Object catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _add(BuildContext context, WidgetRef ref) async {

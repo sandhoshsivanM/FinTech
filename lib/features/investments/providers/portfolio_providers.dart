@@ -14,6 +14,7 @@ import '../../../domain/services/instrument_master.dart';
 import '../../../domain/services/portfolio_analytics.dart';
 import '../data/amfi_nav_provider.dart';
 import '../services/price_refresh_service.dart';
+import '../../settings/providers/fx_providers.dart';
 import 'investment_providers.dart' show marketDataServiceProvider;
 
 const _uuid = Uuid();
@@ -87,9 +88,18 @@ final portfolioSnapshotProvider =
 /// investments, dropping the score on every cold open until the streams
 /// resolve — a fabricated number, which is exactly what this work is removing.
 final investmentTotalsProvider = Provider<AsyncValue<InvestmentTotals>>((ref) {
-  return ref
-      .watch(portfolioSnapshotProvider)
-      .whenData(InvestmentTotals.fromSnapshot);
+  // Foreign holdings are converted into the base currency here, once, so no
+  // consumer has to think about FX. Anything with no stored rate is excluded
+  // and named in `unconvertedCurrencies` rather than counted at parity.
+  final base = ref.watch(baseCurrencyProvider);
+  final rateFor = ref.watch(fxLookupProvider);
+  return ref.watch(portfolioSnapshotProvider).whenData(
+        (snap) => InvestmentTotals.fromSnapshot(
+          snap,
+          baseCurrency: base,
+          rateFor: rateFor,
+        ),
+      );
 });
 
 /// Which dimension the breakdown screen is grouping by.

@@ -26,6 +26,9 @@ export const ASSET_META: Record<AssetType, { label: string; color: string }> = {
   fd: { label: 'Fixed Deposit', color: '#0e7490' },
   ppf_epf: { label: 'PPF / EPF', color: '#7c8a3a' },
   nps: { label: 'NPS', color: '#9a5b9a' },
+  ssy: { label: 'Sukanya Samriddhi', color: '#5b7c8a' },
+  sgb: { label: 'Sovereign Gold Bond', color: '#8a6d1f' },
+  ulip: { label: 'ULIP', color: '#7a5b9a' },
 };
 
 /** Chart-facing buckets. Eleven asset types collapse to seven groups. */
@@ -44,6 +47,13 @@ export const ASSET_GROUP_OF: Record<AssetType, AssetGroup> = {
   nps: 'retirement',
   crypto: 'crypto',
   cash: 'cash',
+  // Kept in step with AssetGroup.of in lib/domain/entities/asset_group.dart.
+  // A sovereign gold bond is gold exposure whatever its wrapper; SSY is an EEE
+  // long-lock scheme like PPF; a ULIP's investment leg is market-linked (its
+  // insurance leg is cover, tracked separately).
+  ssy: 'retirement',
+  sgb: 'gold',
+  ulip: 'equity',
 };
 
 /**

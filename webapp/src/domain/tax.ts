@@ -35,6 +35,19 @@ export const TAX_RULES: Record<AssetType, Rule> = {
   ppf_epf: { stcgRate: 0, ltcgRate: 0, ltcgThresholdMonths: 0, ltcgExemption: '0' },
   // NPS withdrawal: taxable portion at slab (simplified).
   nps: { stcgRate: null, ltcgRate: null, ltcgThresholdMonths: 0, ltcgExemption: '0' },
+  // Sukanya Samriddhi is EEE, like PPF.
+  ssy: { stcgRate: 0, ltcgRate: 0, ltcgThresholdMonths: 0, ltcgExemption: '0' },
+  // Sovereign Gold Bonds held to maturity are capital-gains exempt, but this
+  // engine models a SALE: a pre-maturity sale on the exchange is a listed
+  // security at 12.5% after 12 months. The redemption exemption is a maturity
+  // event, not a disposal, so it is deliberately not encoded as a rate.
+  sgb: { stcgRate: null, ltcgRate: 12.5, ltcgThresholdMonths: 12, ltcgExemption: '0' },
+  // ULIPs issued after 1 Feb 2021 with aggregate annual premium above Rs 2.5L
+  // are taxed as equity-oriented funds. Below it, proceeds are exempt under
+  // 10(10D) — but that threshold depends on the user's whole policy portfolio,
+  // which this engine cannot see, so it models the taxable case. Understating
+  // tax is the worse of the two errors.
+  ulip: { stcgRate: 20, ltcgRate: 12.5, ltcgThresholdMonths: 12, ltcgExemption: '125000' },
 };
 
 export type GainType = 'short_term' | 'long_term';

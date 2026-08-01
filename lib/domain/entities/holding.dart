@@ -16,7 +16,10 @@ enum AssetType {
   crypto('crypto', 'Crypto'),
   fd('fd', 'Fixed Deposit'),
   ppfEpf('ppf_epf', 'PPF / EPF'),
-  nps('nps', 'NPS');
+  nps('nps', 'NPS'),
+  ssy('ssy', 'Sukanya Samriddhi'),
+  sgb('sgb', 'Sovereign Gold Bond'),
+  ulip('ulip', 'ULIP');
 
   const AssetType(this.key, this.label);
 

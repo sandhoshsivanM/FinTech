@@ -353,9 +353,22 @@ class _Notices extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final snap = ref.watch(portfolioSnapshotProvider).valueOrNull;
     final unreviewed = ref.watch(unreviewedLotCountProvider).valueOrNull ?? 0;
+    final totals = ref.watch(investmentTotalsProvider).valueOrNull;
     if (snap == null) return const SizedBox.shrink();
 
+    final unconverted = totals?.unconvertedCurrencies ?? const <String>{};
+
     final notices = <Widget>[
+      // Loudest, because it is the only notice about a number being WRONG
+      // rather than imprecise: those holdings are missing from the total
+      // entirely, and a silently smaller net worth is worse than an obvious
+      // gap.
+      if (unconverted.isNotEmpty)
+        _Notice(
+          icon: Icons.currency_exchange,
+          text: 'Holdings in ${unconverted.join(', ')} are not in your totals '
+              '— no exchange rate stored. Fetch rates in Settings > Currency.',
+        ),
       if (snap.unpriced.isNotEmpty)
         _Notice(
           icon: Icons.help_outline,

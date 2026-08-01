@@ -43,6 +43,12 @@ dependencies:
   # a package's styling API has no analogue there, so adopting one guarantees the
   # two clients drift. (fl_chart was declared here for a year and imported never.)
 
+  # Non-secret display preferences (base currency, and anything else that is a
+  # setting rather than a secret). Deliberately NOT the keychain: every keychain
+  # item is a separate macOS access prompt, and a currency code is not worth
+  # one.
+  shared_preferences: ^2.3.2
+
   # Local notifications (overspend alerts) — no server push (PRD §2).
   flutter_local_notifications: ^19.4.2
 

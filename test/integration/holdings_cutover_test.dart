@@ -180,6 +180,74 @@ void main() {
     expect(totals.indicativeValue, Decimal.zero);
   });
 
+  group('currency', () {
+    Future<Instrument> foreign(String id, String currency) async {
+      final i = Instrument(
+        id: id,
+        vaultId: vault,
+        kind: AssetType.equityEtf,
+        name: id,
+        symbol: id,
+        exchange: 'NASDAQ',
+        currency: currency,
+      );
+      await repo.saveInstrument(i);
+      return i;
+    }
+
+    test('a foreign holding is converted at the supplied rate', () async {
+      final aapl = await foreign('AAPL', 'USD');
+      await buy('t1', aapl, '10', '150', now);
+      await priceAt(aapl, '200', now); // 2,000 USD
+
+      final totals = InvestmentTotals.fromSnapshot(
+        await snapshot(),
+        baseCurrency: 'INR',
+        rateFor: (c) => c == 'USD' ? d('83') : null,
+      );
+      expect(totals.marketValue, d('166000')); // 2000 x 83
+      expect(totals.unconvertedCurrencies, isEmpty);
+    });
+
+    test('a holding with no rate is excluded and named, not counted at parity',
+        () async {
+      // The dangerous alternative: 2,000 USD counted as 2,000 INR understates
+      // net worth by 99% and looks entirely plausible on screen.
+      final aapl = await foreign('AAPL', 'USD');
+      final infy = await instrument('i1', 'INFY', AssetType.equityEtf);
+      await buy('t1', aapl, '10', '150', now);
+      await buy('t2', infy, '100', '1500', now);
+      await priceAt(aapl, '200', now);
+      await priceAt(infy, '1700', now);
+
+      final totals = InvestmentTotals.fromSnapshot(
+        await snapshot(),
+        baseCurrency: 'INR',
+        rateFor: (_) => null,
+      );
+      expect(totals.marketValue, d('170000'), reason: 'INR holding only');
+      expect(totals.unconvertedCurrencies, {'USD'});
+      expect(totals.hasUnconverted, isTrue);
+      expect(totals.positionCount, 1, reason: 'the excluded one is not counted');
+    });
+
+    test('cost basis is converted too, so P&L stays in one currency', () async {
+      final aapl = await foreign('AAPL', 'USD');
+      await buy('t1', aapl, '10', '150', now); // 1,500 USD cost
+      await priceAt(aapl, '200', now);
+
+      final totals = InvestmentTotals.fromSnapshot(
+        await snapshot(),
+        baseCurrency: 'INR',
+        rateFor: (c) => c == 'USD' ? d('83') : null,
+      );
+      // Charges are added to cost basis, so assert the conversion held rather
+      // than a bare product.
+      expect(totals.costBasis > d('124000'), isTrue);
+      expect(totals.unrealisedPnl, totals.marketValue - totals.costBasis);
+    });
+  });
+
   test('an empty vault is empty, and says so distinctly', () async {
     final totals = InvestmentTotals.fromSnapshot(await snapshot());
     expect(totals.isEmpty, isTrue);

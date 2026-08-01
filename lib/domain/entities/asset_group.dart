@@ -24,11 +24,20 @@ enum AssetGroup {
 
   /// The group an asset type belongs to.
   static AssetGroup of(AssetType t) => switch (t) {
-        AssetType.equityEtf || AssetType.equityMf => AssetGroup.equity,
+        // A ULIP's investment leg is market-linked, so it is charted as
+        // equity. Its insurance leg is cover, not an asset, and is tracked
+        // separately under Insurance.
+        AssetType.equityEtf || AssetType.equityMf || AssetType.ulip =>
+          AssetGroup.equity,
         AssetType.debtMf || AssetType.bond => AssetGroup.debt,
-        AssetType.goldEtf => AssetGroup.gold,
+        // A sovereign gold bond IS gold exposure, whatever its wrapper — it
+        // tracks the metal price and belongs beside the ETF in an allocation
+        // chart, not in a "bonds" sleeve its name suggests.
+        AssetType.goldEtf || AssetType.sgb => AssetGroup.gold,
         AssetType.realEstate => AssetGroup.realEstate,
-        AssetType.fd || AssetType.ppfEpf || AssetType.nps =>
+        // SSY is a long-lock government savings scheme with the same EEE
+        // treatment as PPF, so it sits with the retirement bucket.
+        AssetType.fd || AssetType.ppfEpf || AssetType.nps || AssetType.ssy =>
           AssetGroup.retirement,
         AssetType.crypto => AssetGroup.crypto,
         AssetType.cash => AssetGroup.cash,
