@@ -5,6 +5,7 @@ import { PiggyBank, Landmark, ArrowRight } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { safetyNet, type SafetyComponent } from '@/domain/safetyNet';
+import { investmentTotals } from '@/domain/investmentTotals';
 import { ASSET_META } from '@/domain/portfolio';
 import { D } from '@/lib/money';
 import {
@@ -24,7 +25,7 @@ export default function SafetyNetPage() {
   const fmt = useFmt();
 
   const sn = useMemo(
-    () => safetyNet(txns, goals, insurances, holdings),
+    () => safetyNet(txns, goals, insurances, investmentTotals(holdings)),
     [txns, goals, insurances, holdings],
   );
   const m = (v: Parameters<typeof fmt.money>[0]) => (ghost ? '••••••' : fmt.money(v));

@@ -3,12 +3,12 @@
 // Pure Decimal math; reuses the existing coverage-gap engine.
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
-import type { Goal, Holding, Insurance, Txn } from '@/lib/types';
+import type { Goal, Insurance, Txn } from '@/lib/types';
+import { retirementValue, type InvestmentTotals } from './investmentTotals';
 import { windowSummary } from './finance';
 import { coverageGaps, annualPremiumTotal } from './insurance';
 
 const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
-const RETIREMENT_ASSETS = new Set(['fd', 'ppf_epf', 'nps']);
 const EMERGENCY_MONTHS_TARGET = 6;
 
 export interface SafetyComponent {
@@ -48,7 +48,7 @@ export function safetyNet(
   txns: Txn[],
   goals: Goal[],
   insurances: Insurance[],
-  holdings: Holding[],
+  investments: InvestmentTotals,
   now = Date.now(),
 ): SafetyNet {
   // Bases shared with the Insurance page / health score.
@@ -96,9 +96,9 @@ export function safetyNet(
   };
 
   // ---- Safe / retirement assets (FD, PPF·EPF, NPS) ----
-  const retireValue = holdings
-    .filter((h) => RETIREMENT_ASSETS.has(h.assetType))
-    .reduce((s, h) => s.plus(D(h.quantity).times(D(h.lastPrice ?? h.avgCost))), ZERO);
+  // Supplied by InvestmentTotals rather than filtered here: the same grouping
+  // was previously repeated on both platforms, which is how they drift.
+  const retireValue = retirementValue(investments);
   // Heuristic: ~1 year of income parked safely = fully covered.
   const retirePct = annualIncome.gt(0)
     ? clamp01(retireValue.div(annualIncome).toNumber()) * 100

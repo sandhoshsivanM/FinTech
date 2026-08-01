@@ -9,6 +9,7 @@ import { D, ZERO, moneyToWords } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
 import { netWorthTotal, windowSummary, netWorthSeries, type TimeWindow } from '@/domain/finance';
 import { healthScore } from '@/domain/health';
+import { investmentTotals } from '@/domain/investmentTotals';
 import { spendingAnomalies, safeToSpend } from '@/domain/insights';
 import { GlassCard, SectionHeader, Sparkline, Ring, ProgressBar } from '@/components/ui';
 
@@ -16,6 +17,11 @@ const WINDOWS: TimeWindow[] = ['7D', '1M', '3M'];
 
 export default function DashboardPage() {
   const { txns, holdings, liabilities, recurring, categories, ghost } = useApp();
+  // Goals, insurances and budgets decide whether Protection, Efficiency and
+  // Future are tracked at all, so the score needs them, not just the money.
+  const goals = useApp((s) => s.goals);
+  const insurances = useApp((s) => s.insurances);
+  const budgets = useApp((s) => s.budgets);
   const snapshots = useApp((s) => s.snapshots);
   const toggleGhost = useApp((s) => s.toggleGhost);
   const [win, setWin] = useState<TimeWindow>('1M');
@@ -46,8 +52,23 @@ export default function DashboardPage() {
   const mask = (s: string) => (ghost ? '••••••' : s);
 
   // Financial Health
-  const health = useMemo(() => healthScore(txns, holdings, liabilities), [txns, holdings, liabilities]);
-  const ringColor = health.score >= 70 ? 'var(--income)' : health.score >= 40 ? 'var(--warn)' : 'var(--expense)';
+  const health = useMemo(
+    () => healthScore({
+      txns,
+      investments: investmentTotals(holdings),
+      liabilities,
+      goals,
+      insurances,
+      budgets,
+      snapshots,
+    }),
+    [txns, holdings, liabilities, goals, insurances, budgets, snapshots],
+  );
+  // A null score means nothing is tracked yet — grey, not a failing colour.
+  const ringColor =
+    health.score === null ? 'var(--muted)'
+      : health.score >= 70 ? 'var(--income)'
+        : health.score >= 40 ? 'var(--warn)' : 'var(--expense)';
 
   // Insights — domain helpers + rule-based tips, capped at 5
   const insights = useMemo(() => {
@@ -89,9 +110,9 @@ export default function DashboardPage() {
       if (savingsRate >= 20) {
         tips.push(`Great savings discipline — you're saving ${savingsRate.toFixed(0)}% of income this period.`);
       } else if (savingsRate > 0) {
-        tips.push(`Your savings rate is ${savingsRate.toFixed(0)}% this period. Aim for 20%+ for long-term stability.`);
+        tips.push(`Your savings rate is ${savingsRate.toFixed(0)}% this period.`);
       } else {
-        tips.push(`You're spending more than you earn this period. Review discretionary expenses to get back on track.`);
+        tips.push(`You're spending more than you earn this period.`);
       }
     } else if (txns.length === 0) {
       tips.push(`No transactions yet. Load sample data from Settings to explore your dashboard.`);
@@ -100,19 +121,22 @@ export default function DashboardPage() {
     // 3. Biggest liability
     if (liabilities.length > 0) {
       const biggest = [...liabilities].sort((a, b) => parseFloat(b.principal) - parseFloat(a.principal))[0];
-      tips.push(`Biggest liability: "${biggest.name}" at ${ghost ? '••••' : fmt.money(D(biggest.principal))}. Prioritising high-APR debt first saves the most interest.`);
+      // Informational framing only — no recommendation. See the SEBI note in
+      // domain/narrative.ts: naming a balance is description; telling someone
+      // which debt to pay first is advice.
+      tips.push(`Biggest liability: "${biggest.name}" at ${ghost ? '••••' : fmt.money(D(biggest.principal))}, at ${biggest.aprPct}% APR.`);
     } else if (txns.length > 0) {
-      tips.push(`No liabilities tracked. If you have loans or credit cards, add them to get a complete health picture.`);
+      tips.push(`No liabilities tracked — loans and credit cards feed the Efficiency part of your score.`);
     }
 
     // 4. Investment nudge
     if (holdings.length === 0 && txns.length > 0) {
-      tips.push(`No investments tracked yet. Even a small SIP can significantly grow your wealth over time.`);
+      tips.push(`No investments tracked yet — your score's Wealth and Future areas stay unscored until you add one.`);
     } else if (holdings.length > 0) {
       const investedVal = holdings.reduce((s, h) => s + parseFloat(h.quantity) * parseFloat(h.lastPrice ?? h.avgCost), 0);
       const totalVal = netWorth.toNumber();
       if (totalVal > 0 && investedVal / totalVal < 0.1) {
-        tips.push(`Only ${((investedVal / totalVal) * 100).toFixed(0)}% of your net worth is in tracked investments. Consider diversifying into long-term assets.`);
+        tips.push(`${((investedVal / totalVal) * 100).toFixed(0)}% of your net worth is in tracked investments.`);
       }
     }
 
@@ -186,27 +210,39 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row items-center gap-5 mt-1">
             {/* Ring */}
             <div className="shrink-0">
-              <Ring fraction={health.score / 100} size={110} stroke={10} color={ringColor}>
+              <Ring fraction={(health.score ?? 0) / 100} size={110} stroke={10} color={ringColor}>
                 <div className="text-center">
-                  <div className="text-2xl font-extrabold leading-none" style={{ color: ringColor }}>{health.score}</div>
-                  <div className="text-[10px] font-semibold text-muted mt-0.5">{health.grade}</div>
+                  <div className="text-2xl font-extrabold leading-none" style={{ color: ringColor }}>
+                    {health.score ?? '—'}
+                  </div>
+                  <div className="text-[10px] font-semibold text-muted mt-0.5">
+                    {health.grade ?? 'Not yet scored'}
+                  </div>
                 </div>
               </Ring>
             </div>
-            {/* Pillars */}
+            {/* Categories. An untracked one shows a grey bar and the words
+                "Not yet tracked" — never "0/25", which would tell the user they
+                scored nothing when the app simply has nothing to score. */}
             <div className="flex-1 w-full space-y-3">
-              {health.pillars.map((p) => (
-                <div key={p.key}>
+              {health.categories.map((c) => (
+                <div key={c.key}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold text-ink">{p.label}</span>
-                    <span className="text-xs text-muted">{Math.round(p.score)}/{p.max}</span>
+                    <span className="text-xs font-semibold text-ink">{c.label}</span>
+                    <span className="text-xs text-muted">
+                      {c.tracked ? `${Math.round(c.score as number)}/${c.weight}` : 'Not yet tracked'}
+                    </span>
                   </div>
                   <ProgressBar
-                    fraction={p.max > 0 ? p.score / p.max : 0}
-                    color={p.score / p.max >= 0.7 ? 'var(--income)' : p.score / p.max >= 0.4 ? 'var(--warn)' : 'var(--expense)'}
+                    fraction={c.fraction ?? 0}
+                    color={
+                      !c.tracked ? 'transparent'
+                        : (c.fraction as number) >= 0.7 ? 'var(--income)'
+                          : (c.fraction as number) >= 0.4 ? 'var(--warn)' : 'var(--expense)'
+                    }
                     height={5}
                   />
-                  <div className="text-[11px] text-muted mt-0.5">{p.detail}</div>
+                  <div className="text-[11px] text-muted mt-0.5">{c.detail}</div>
                 </div>
               ))}
             </div>

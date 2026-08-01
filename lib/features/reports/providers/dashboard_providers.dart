@@ -7,6 +7,9 @@ import '../../../domain/services/financial_health.dart';
 import '../../../domain/services/insights_engine.dart';
 import '../../../domain/services/net_worth_calculator.dart';
 import '../../../domain/entities/investment_totals.dart';
+import '../../budget/providers/budget_providers.dart';
+import '../../goals/providers/goal_providers.dart';
+import '../../insurance/providers/insurance_providers.dart';
 import '../../investments/providers/portfolio_providers.dart';
 import '../../liabilities/providers/liability_providers.dart';
 import '../../transactions/providers/recurring_providers.dart';
@@ -62,17 +65,33 @@ final financialHealthProvider = Provider<HealthScore?>((ref) {
   final investments = ref.watch(investmentTotalsProvider).valueOrNull;
   if (investments == null) return null;
   final liabs = ref.watch(liabilityListProvider).valueOrNull ?? const [];
-  return const FinancialHealth()
-      .compute(txnState.transactions, investments, liabs);
+  return const FinancialHealth().compute(HealthInputs(
+    txns: txnState.transactions,
+    investments: investments,
+    liabilities: liabs,
+    // These four decide whether Protection, Efficiency and Future are tracked
+    // at all, so an empty default is not neutral: it renders those categories
+    // as "Not yet tracked" until they load. They come from streams that resolve
+    // in the same frame as the two gated above.
+    goals: ref.watch(goalListProvider).valueOrNull ?? const [],
+    insurances: ref.watch(insuranceListProvider).valueOrNull ?? const [],
+    budgets: ref.watch(budgetListProvider).valueOrNull ?? const [],
+    snapshots: ref.watch(netWorthSnapshotListProvider).valueOrNull ?? const [],
+  ));
+});
+
+/// The raw daily snapshot rows.
+final netWorthSnapshotListProvider =
+    StreamProvider<List<NetWorthSnapshot>>((ref) {
+  return ref
+      .watch(netWorthSnapshotRepositoryProvider)
+      .watch(ref.watch(currentVaultIdProvider));
 });
 
 /// Real net-worth history from daily snapshots (mapped to trend points).
-final netWorthHistoryProvider = StreamProvider<List<NetWorthPoint>>((ref) {
-  return ref
-      .watch(netWorthSnapshotRepositoryProvider)
-      .watch(ref.watch(currentVaultIdProvider))
-      .map((list) =>
-          list.map((s) => NetWorthPoint(s.date, s.netWorth)).toList());
+final netWorthHistoryProvider = Provider<AsyncValue<List<NetWorthPoint>>>((ref) {
+  return ref.watch(netWorthSnapshotListProvider).whenData(
+      (list) => list.map((s) => NetWorthPoint(s.date, s.netWorth)).toList());
 });
 
 /// Trend series: prefer real snapshots once we have ≥2, else the derived series.

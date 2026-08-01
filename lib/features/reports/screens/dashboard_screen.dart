@@ -9,6 +9,7 @@ import '../../../core/utils/money_format.dart';
 import '../../../domain/entities/investment_totals.dart';
 import '../../../domain/entities/recurring_rule.dart';
 import '../../../domain/entities/transaction.dart';
+import '../../../domain/services/financial_health.dart';
 import '../../../domain/services/net_worth_calculator.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
@@ -1085,96 +1086,157 @@ class _FinancialHealthCard extends ConsumerWidget {
     if (h == null) return const SizedBox.shrink();
     final text = Theme.of(context).textTheme;
     final muted = text.bodySmall?.color?.withValues(alpha: 0.65);
-    final color = _band(h.score / 100);
+    final score = h.score;
+    final color = score == null
+        ? (muted ?? Colors.grey)
+        : _band(score / 100);
 
     return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Financial Health',
-              style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 84,
-                height: 84,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 84,
-                      height: 84,
-                      child: CircularProgressIndicator(
-                        value: h.score / 100,
-                        strokeWidth: 8,
-                        valueColor: AlwaysStoppedAnimation(color),
-                        backgroundColor: color.withValues(alpha: 0.15),
-                      ),
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('${h.score}',
-                            style: text.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w800, color: color)),
-                        Text(h.grade,
-                            style: text.labelSmall?.copyWith(color: muted)),
-                      ],
-                    ),
-                  ],
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        onTap: () => context.go(Routes.score),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Financial Health',
+                      style: text.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                child: Column(
-                  children: [
-                    for (final p in h.pillars)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: Text(p.label,
-                                        style: text.labelMedium)),
-                                Text('${p.score.round()}/${p.max.toInt()}',
-                                    style:
-                                        text.labelSmall?.copyWith(color: muted)),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadii.pill),
-                              child: LinearProgressIndicator(
-                                value: p.max > 0 ? p.score / p.max : 0,
-                                minHeight: 5,
-                                valueColor: AlwaysStoppedAnimation(
-                                    _band(p.max > 0 ? p.score / p.max : 0)),
-                                backgroundColor: (muted ?? Colors.grey)
-                                    .withValues(alpha: 0.15),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(p.detail,
-                                style: text.labelSmall?.copyWith(color: muted)),
-                          ],
+                Icon(Icons.chevron_right_rounded,
+                    size: 18, color: Theme.of(context).colorScheme.outline),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 84,
+                  height: 84,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 84,
+                        height: 84,
+                        child: CircularProgressIndicator(
+                          // A null score means nothing is tracked yet: an empty
+                          // ring, not a ring at zero, which would read as a
+                          // failing grade the data cannot support.
+                          value: score == null ? 0 : score / 100,
+                          strokeWidth: 8,
+                          valueColor: AlwaysStoppedAnimation(color),
+                          backgroundColor: color.withValues(alpha: 0.15),
                         ),
                       ),
-                  ],
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(score == null ? '—' : '$score',
+                              style: text.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w800, color: color)),
+                          Text(h.grade ?? 'Not yet scored',
+                              textAlign: TextAlign.center,
+                              style: text.labelSmall?.copyWith(color: muted)),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: Column(
+                    children: [
+                      for (final c in h.categories)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: _CategoryBar(category: c, muted: muted),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (h.isPartial) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Based on ${h.trackedCategoryCount} of '
+                '${h.categories.length} areas.',
+                style: text.labelSmall?.copyWith(color: muted),
               ),
             ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(h.summary,
-              style: text.bodySmall
-                  ?.copyWith(color: muted, fontStyle: FontStyle.italic)),
-        ],
+            const SizedBox(height: AppSpacing.sm),
+            Text(h.summary,
+                style: text.bodySmall
+                    ?.copyWith(color: muted, fontStyle: FontStyle.italic)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One category row: a filled bar with points, or a grey bar labelled
+/// "Not yet tracked" and carrying no number at all.
+///
+/// The absence of a number is the point. An untracked category rendered as
+/// "0/25" tells the user they scored nothing, when what actually happened is
+/// that the app has nothing to score.
+class _CategoryBar extends StatelessWidget {
+  const _CategoryBar({required this.category, required this.muted});
+
+  final HealthCategory category;
+  final Color? muted;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final track = (muted ?? Colors.grey).withValues(alpha: 0.15);
+    final fraction = category.fraction;
+    final tracked = fraction != null;
+
+    return Semantics(
+      label: tracked
+          ? '${category.label} '
+              '${category.score!.round()} of ${category.weight.toInt()}'
+          : '${category.label} not yet tracked',
+      child: ExcludeSemantics(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text(category.label, style: text.labelMedium)),
+                Text(
+                  tracked
+                      ? '${category.score!.round()}/${category.weight.toInt()}'
+                      : 'Not yet tracked',
+                  style: text.labelSmall?.copyWith(color: muted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+              child: LinearProgressIndicator(
+                value: fraction ?? 0,
+                minHeight: 5,
+                valueColor: AlwaysStoppedAnimation(
+                  tracked
+                      ? _FinancialHealthCard._band(fraction)
+                      : Colors.transparent,
+                ),
+                backgroundColor: track,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(category.detail,
+                style: text.labelSmall?.copyWith(color: muted)),
+          ],
+        ),
       ),
     );
   }

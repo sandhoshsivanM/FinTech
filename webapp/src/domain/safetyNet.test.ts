@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { safetyNet } from './safetyNet';
+import { EMPTY_INVESTMENTS, totalsOf } from './investmentTotals';
 import type { Txn, Goal, Holding, Insurance } from '@/lib/types';
 
 // Fixed clock so all date windows are deterministic.
@@ -33,7 +34,7 @@ describe('safetyNet', () => {
       [income],
       [goal('600000', '600000')], // EF fully funded
       [ins('life', '10000000'), ins('health', '500000')], // 10× income + ₹5L floor
-      [holding('fd', '1', '1000000')], // ≥ 1× income parked safely
+      totalsOf({ fd: 1000000 }), // ≥ 1× income parked safely
       NOW,
     );
     expect(sn.score).toBe(100);
@@ -43,7 +44,7 @@ describe('safetyNet', () => {
   });
 
   test('empty inputs → low score; zero income means life cover is vacuously 100%', () => {
-    const sn = safetyNet([], [], [], [], NOW);
+    const sn = safetyNet([], [], [], EMPTY_INVESTMENTS, NOW);
     // life recommended = 10×0 = 0 ⇒ coverageGaps treats it as 100% covered (nothing to cover).
     // Only that pillar's 25 weight lands; everything else is 0 ⇒ score 25.
     expect(sn.score).toBe(25);
@@ -57,7 +58,7 @@ describe('safetyNet', () => {
     const sn = safetyNet(
       [txn('30000', 'expense', 10)],
       [goal('30000', '0')], // currentAmount 30k, no explicit target
-      [], [], NOW,
+      [], EMPTY_INVESTMENTS, NOW,
     );
     const ef = sn.components.find((c) => c.key === 'emergency')!;
     expect(ef.recommended.toString()).toBe('60000');
@@ -71,23 +72,22 @@ describe('safetyNet', () => {
     const sn = safetyNet(
       [txn('30000', 'expense', 10)], // would imply ₹60k fallback
       [goal('50000', '200000')], // explicit ₹2L target
-      [], [], NOW,
+      [], EMPTY_INVESTMENTS, NOW,
     );
     const ef = sn.components.find((c) => c.key === 'emergency')!;
     expect(ef.recommended.toString()).toBe('200000');
     expect(Math.round(ef.coveredPct)).toBe(25);
   });
 
-  test('retirement counts only FD/PPF·EPF/NPS and uses lastPrice ?? avgCost', () => {
+  test('retirement counts only the retirement asset group', () => {
     const income = txn('1000000', 'income', 30);
     const sn = safetyNet(
       [income], [],
       [],
-      [
-        holding('fd', '1', '999', '300000'),      // lastPrice wins → 300000
-        holding('ppf_epf', '1', '200000'),         // avgCost fallback → 200000
-        holding('equity_etf', '100', '100000'),    // ignored (not a safe/retirement asset)
-      ],
+      // Equity is in the portfolio but not in the retirement group, so it must
+      // not count toward safe assets. That grouping is InvestmentTotals' job
+      // now rather than a filter repeated inside this service.
+      totalsOf({ fd: 300000, ppf_epf: 200000, equity_etf: 10000000 }),
       NOW,
     );
     const r = sn.components.find((c) => c.key === 'retirement')!;
@@ -102,7 +102,7 @@ describe('safetyNet', () => {
       [income],
       [goal('100000', '100000')],       // emergency 100%
       [],                                // no insurance ⇒ health 0% (life vacuous at income>0 ⇒ 0%)
-      [holding('fd', '1', '1000000')],   // retirement 100%
+      totalsOf({ fd: 1000000 }),         // retirement 100%
       NOW,
     );
     // 35 (emergency) + 0 (life: 10×income recommended, 0 current) + 0 (health) + 15 (retire) = 50.
@@ -115,7 +115,7 @@ describe('safetyNet', () => {
     const sn = safetyNet(
       [income], [],
       [ins('life', '10000000'), ins('health', '500000')], // both fully covered
-      [], NOW,
+      EMPTY_INVESTMENTS, NOW,
     );
     // 0 (emergency) + 25 (life) + 25 (health) + 0 (retire) = 50.
     expect(sn.score).toBe(50);
@@ -128,7 +128,7 @@ describe('safetyNet', () => {
       [income],
       [goal('600000', '600000')],
       [ins('life', '10000000'), ins('health', '500000')],
-      [], // retirement 0 ⇒ 85, Excellent boundary
+      EMPTY_INVESTMENTS, // retirement 0 ⇒ 85, Excellent boundary
       NOW,
     );
     expect(strong.score).toBe(85);

@@ -1,0 +1,112 @@
+{
+  "_comment": [
+    "Shared fixture for the financial health score, loaded byte-identically by",
+    "test/unit/financial_health_test.dart and",
+    "webapp/src/domain/__fixtures__/health_cases.json (a copy of this file).",
+    "",
+    "Before this existed, the TypeScript health score had no test at all and the",
+    "two implementations were kept in step by convention. The two portfolio",
+    "models had already drifted under exactly that arrangement. This file turns",
+    "'keep them in sync' into a failing build.",
+    "",
+    "Amounts are integers in rupees. Dates are days before `now`, which both",
+    "suites pin to 2026-06-15T00:00:00Z so the 90-day windows land identically."
+  ],
+  "now": "2026-06-15T00:00:00.000Z",
+  "cases": [
+    {
+      "name": "empty vault — nothing tracked at all",
+      "input": {},
+      "expect": {
+        "score": null,
+        "grade": null,
+        "trackedWeight": 0,
+        "trackedCategoryCount": 0,
+        "categories": {
+          "wealth": null,
+          "protection": null,
+          "efficiency": null,
+          "future": null
+        }
+      }
+    },
+    {
+      "name": "cash flow only — efficiency tracked, the rest are not",
+      "input": {
+        "txns": [
+          { "amount": 300000, "type": "income", "daysAgo": 45 },
+          { "amount": 210000, "type": "expense", "daysAgo": 40 }
+        ]
+      },
+      "expect": {
+        "trackedCategoryCount": 2,
+        "trackedWeight": 55,
+        "untracked": ["protection", "future"]
+      }
+    },
+    {
+      "name": "no insurance — protection is untracked, not zero",
+      "input": {
+        "txns": [
+          { "amount": 300000, "type": "income", "daysAgo": 45 },
+          { "amount": 150000, "type": "expense", "daysAgo": 40 }
+        ],
+        "investments": { "equity_etf": 500000, "fd": 300000 },
+        "goals": [
+          { "type": "vacation", "target": 200000, "current": 150000 }
+        ]
+      },
+      "expect": {
+        "untracked": ["protection"],
+        "trackedWeight": 75
+      }
+    },
+    {
+      "name": "everything tracked",
+      "input": {
+        "txns": [
+          { "amount": 1200000, "type": "income", "daysAgo": 200 },
+          { "amount": 300000, "type": "income", "daysAgo": 45 },
+          { "amount": 150000, "type": "expense", "daysAgo": 40 }
+        ],
+        "investments": { "equity_etf": 800000, "fd": 400000 },
+        "liabilities": [{ "principal": 100000, "apr": 9 }],
+        "insurances": [
+          { "type": "life", "cover": 15000000, "premium": 20000 },
+          { "type": "health", "cover": 1000000, "premium": 15000 }
+        ],
+        "goals": [
+          { "type": "emergency_fund", "target": 300000, "current": 300000 },
+          { "type": "vacation", "target": 200000, "current": 100000 }
+        ]
+      },
+      "expect": {
+        "trackedWeight": 100,
+        "trackedCategoryCount": 4,
+        "untracked": []
+      }
+    },
+    {
+      "name": "high-APR debt costs more than its size alone",
+      "input": {
+        "txns": [
+          { "amount": 300000, "type": "income", "daysAgo": 45 },
+          { "amount": 150000, "type": "expense", "daysAgo": 40 }
+        ],
+        "investments": { "equity_etf": 500000 },
+        "liabilities": [{ "principal": 100000, "apr": 42 }]
+      },
+      "comparison": {
+        "against": {
+          "txns": [
+            { "amount": 300000, "type": "income", "daysAgo": 45 },
+            { "amount": 150000, "type": "expense", "daysAgo": 40 }
+          ],
+          "investments": { "equity_etf": 500000 },
+          "liabilities": [{ "principal": 100000, "apr": 9 }]
+        },
+        "expect": "lower"
+      }
+    }
+  ]
+}
