@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'biometric_gate.dart';
 import 'key_derivation_service.dart';
 import 'secure_key_store.dart';
+import 'vault_credential_store.dart';
 import 'vault_registry.dart';
 import 'vault_session.dart';
 import 'vault_state.dart';
@@ -18,18 +19,25 @@ import 'vault_state.dart';
 class VaultUnlockNotifier extends StateNotifier<VaultState> {
   VaultUnlockNotifier({
     required SecureKeyStore keyStore,
+    required VaultCredentialStore credentials,
     required KeyDerivationService kdf,
     required BiometricGate biometric,
     VaultRegistry? registry,
     this.vaultId = 'default',
     this.vaultName = 'My Vault',
   })  : _keyStore = keyStore,
+        _credentials = credentials,
         _kdf = kdf,
         _biometric = biometric,
         _registry = registry,
         super(const VaultUnlocking());
 
+  /// Only touched when the user has opted into biometric unlock. The PIN path
+  /// never reads it, which is what keeps the keychain — and its access prompt —
+  /// off the launch path entirely.
   final SecureKeyStore _keyStore;
+
+  final VaultCredentialStore _credentials;
   final KeyDerivationService _kdf;
   final BiometricGate _biometric;
   final VaultRegistry? _registry;
@@ -50,16 +58,18 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
   Future<void> initialize() async {
     final bool exists;
     try {
-      exists = await _keyStore.vaultExists(vaultId);
+      // Preferences, not the keychain. This is the whole point: launching the
+      // app must never trigger an OS keychain prompt.
+      exists = await _credentials.vaultExists(vaultId);
     } on Object catch (e) {
-      // The keychain could not be read, so whether a vault exists is UNKNOWN.
-      //
-      // Falling back to [VaultUninitialized] would offer to create one, and
-      // creating over an existing vault rewrites its salt and key — the old
-      // database would become permanently undecryptable. Locked-with-an-error
-      // is the conservative choice: it explains itself, it lets the user retry,
-      // and it cannot destroy anything.
-      state = VaultLocked(lastError: _keychainMessage(e));
+      // Existence is unknown. Falling back to [VaultUninitialized] would offer
+      // to create a vault, and creating over an existing one rewrites its salt,
+      // leaving the old database permanently undecryptable. Locked-with-an-
+      // error explains itself, allows a retry, and cannot destroy anything.
+      state = VaultLocked(
+        lastError: 'Could not read local settings, so Khazana cannot tell '
+            'whether a vault exists. Your data has not been touched. ($e)',
+      );
       return;
     }
 
@@ -68,29 +78,33 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
       return;
     }
 
-    // A biometric probe must never gate entry either: PIN entry has to remain
-    // reachable when the hardware or its permission is unavailable.
-    var bioAvailable = false;
-    try {
-      bioAvailable = await _biometric.isAvailable();
-    } on Object {
-      bioAvailable = false;
-    }
-    state = VaultLocked(biometricAvailable: bioAvailable);
+    state = VaultLocked(biometricAvailable: await _biometricOffered());
   }
 
-  /// Turns a storage failure into something a user can act on.
-  static String _keychainMessage(Object error) =>
-      'Could not read the keychain, so Khazana cannot tell whether a vault '
-      'exists on this device. Your data has not been touched. ($error)';
+  /// Whether to show the biometric button: the user has opted in AND the
+  /// hardware is actually usable.
+  ///
+  /// Both checks are guarded — a broken sensor, a withdrawn permission or an
+  /// unreadable preference must never make PIN entry unreachable.
+  Future<bool> _biometricOffered() async {
+    try {
+      if (!await _credentials.biometricEnabled(vaultId)) return false;
+      return await _biometric.isAvailable();
+    } on Object {
+      return false;
+    }
+  }
 
   /// First-run vault creation. Derives and stores the key, then unlocks.
   Future<void> createVault(String pin) async {
     state = const VaultUnlocking();
     try {
-      final salt = await _keyStore.createSalt(vaultId);
+      final salt = await _credentials.createSalt(vaultId);
       final key = await _kdf.deriveKeyAsync(pin: pin, salt: salt);
-      await _keyStore.storeDerivedKey(vaultId, key);
+      // Only a hash of the key is written. The key itself stays in memory, so
+      // there is no key at rest for anyone — including a thief with the disk —
+      // to find.
+      await _credentials.storeVerifier(vaultId, key);
       await _registry?.register(VaultInfo(id: vaultId, name: vaultName));
       state = VaultUnlocked(VaultSession(vaultId: vaultId, key: key));
     } on Object catch (e) {
@@ -109,15 +123,14 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     state = const VaultUnlocking();
 
     try {
-      final salt = await _keyStore.readSalt(vaultId);
-      final stored = await _keyStore.readDerivedKey(vaultId);
-      if (salt == null || stored == null) {
+      final salt = await _credentials.readSalt(vaultId);
+      if (salt == null) {
         state = const VaultUninitialized();
         return;
       }
 
       final derived = await _kdf.deriveKeyAsync(pin: pin, salt: salt);
-      if (_constantTimeEquals(derived, stored)) {
+      if (await _credentials.verify(vaultId, derived)) {
         state = VaultUnlocked(VaultSession(vaultId: vaultId, key: derived));
         return;
       }
@@ -143,6 +156,12 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     final locked = current is VaultLocked ? current : const VaultLocked();
     if (locked.biometricExhausted) return;
 
+    if (!await _credentials.biometricEnabled(vaultId)) {
+      state = locked.copyWith(
+          lastError: 'Biometric unlock is off. Turn it on in Settings.');
+      return;
+    }
+
     final ok = await _biometric.authenticate();
     if (!ok) {
       state = locked.copyWith(
@@ -152,7 +171,16 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
       return;
     }
 
-    final key = await _keyStore.readDerivedKey(vaultId);
+    final Uint8List? key;
+    try {
+      key = await _keyStore.readDerivedKey(vaultId);
+    } on Object {
+      // The keychain refused. PIN entry still works, so say so instead of
+      // stranding the user.
+      state = locked.copyWith(
+          lastError: 'Could not read the saved key. Use your PIN.');
+      return;
+    }
     if (key == null) {
       state = locked.copyWith(lastError: 'No stored key. Use your PIN.');
       return;
@@ -160,11 +188,45 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     state = VaultUnlocked(VaultSession(vaultId: vaultId, key: key));
   }
 
+  /// Turns biometric unlock on, storing the key in the OS keychain.
+  ///
+  /// This is the ONLY path that writes the key to the keychain, and it runs
+  /// only when the user asks for it — so the one-off OS permission prompt lands
+  /// on a deliberate action they can connect it to, rather than ambushing them
+  /// at launch.
+  ///
+  /// Requires an unlocked vault: the key comes from the live session, so
+  /// enabling this can never be done by someone who has not already
+  /// authenticated.
+  Future<bool> enableBiometricUnlock() async {
+    final current = state;
+    if (current is! VaultUnlocked) return false;
+    try {
+      await _keyStore.storeDerivedKey(vaultId, current.session.key);
+      await _credentials.setBiometricEnabled(vaultId, true);
+      return true;
+    } on Object {
+      // Leave the flag off, so a failed write cannot advertise an unlock method
+      // that will not work.
+      await _credentials.setBiometricEnabled(vaultId, false);
+      return false;
+    }
+  }
+
+  /// Turns biometric unlock off and removes the stored key.
+  Future<void> disableBiometricUnlock() async {
+    await _credentials.setBiometricEnabled(vaultId, false);
+    try {
+      await _keyStore.deleteVault(vaultId);
+    } on Object {
+      // The flag is already off, so the key is unreachable either way.
+    }
+  }
+
   /// Re-lock the vault (PRD: re-lock on app backgrounding).
   Future<void> lock() async {
     _cooldownTimer?.cancel();
-    final bioAvailable = await _biometric.isAvailable();
-    state = VaultLocked(biometricAvailable: bioAvailable);
+    state = VaultLocked(biometricAvailable: await _biometricOffered());
   }
 
   void _startCooldown() {
@@ -178,14 +240,6 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     });
   }
 
-  static bool _constantTimeEquals(Uint8List a, Uint8List b) {
-    if (a.length != b.length) return false;
-    var diff = 0;
-    for (var i = 0; i < a.length; i++) {
-      diff |= a[i] ^ b[i];
-    }
-    return diff == 0;
-  }
 
   @override
   void dispose() {

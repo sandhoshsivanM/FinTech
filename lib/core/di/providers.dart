@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../security/biometric_gate.dart';
 import '../security/key_derivation_service.dart';
 import '../security/secure_key_store.dart';
+import '../security/vault_credential_store.dart';
 import '../security/vault_registry.dart';
 import '../security/vault_state.dart';
 import '../security/vault_unlock_notifier.dart';
@@ -33,6 +34,11 @@ final vaultListProvider = FutureProvider<List<VaultInfo>>((ref) {
   return ref.watch(vaultRegistryProvider).list();
 });
 
+/// Salt and PIN verifier, in preferences rather than the keychain — so opening
+/// the app never triggers an OS keychain prompt.
+final vaultCredentialStoreProvider =
+    Provider<VaultCredentialStore>((ref) => VaultCredentialStore());
+
 /// Which vault the unlock gate currently targets. Changing it locks and
 /// re-points the unlock flow (re-auth on switch).
 final selectedVaultProvider =
@@ -45,6 +51,7 @@ final vaultUnlockProvider =
   final selected = ref.watch(selectedVaultProvider);
   final notifier = VaultUnlockNotifier(
     keyStore: ref.watch(secureKeyStoreProvider),
+    credentials: ref.watch(vaultCredentialStoreProvider),
     kdf: ref.watch(keyDerivationServiceProvider),
     biometric: ref.watch(biometricGateProvider),
     registry: ref.watch(vaultRegistryProvider),

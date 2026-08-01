@@ -138,6 +138,7 @@ class _SettingsBody extends ConsumerWidget {
           title: const Text('Active vault'),
           subtitle: Text(vaultId),
         ),
+        const _BiometricUnlockTile(),
         ListTile(
           leading: const Icon(Icons.lock_outline),
           title: const Text('Lock now'),
@@ -333,6 +334,100 @@ class _SettingsBody extends ConsumerWidget {
     if (ok != true || !context.mounted) return;
     await _run(context, actions.exportErrorLog,
         shareText: '$kAppName error log (no financial data)');
+  }
+}
+
+/// Opt-in biometric unlock.
+///
+/// Off by default, and that default is the point: Khazana unlocks from your PIN
+/// alone, deriving the key each time and keeping it only in memory. Turning
+/// this on stores the key in the OS keychain so a fingerprint can retrieve it —
+/// which is a real convenience, and a real trade: a key at rest is a key that
+/// can be attacked while you are not there.
+///
+/// The one-off OS permission prompt therefore lands here, on a deliberate
+/// action, rather than ambushing you at launch.
+class _BiometricUnlockTile extends ConsumerStatefulWidget {
+  const _BiometricUnlockTile();
+
+  @override
+  ConsumerState<_BiometricUnlockTile> createState() =>
+      _BiometricUnlockTileState();
+}
+
+class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
+  bool? _enabled;
+  bool _available = false;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final vaultId = ref.read(currentVaultIdProvider);
+    final enabled =
+        await ref.read(vaultCredentialStoreProvider).biometricEnabled(vaultId);
+    var available = false;
+    try {
+      available = await ref.read(biometricGateProvider).isAvailable();
+    } on Object {
+      available = false;
+    }
+    if (!mounted) return;
+    setState(() {
+      _enabled = enabled;
+      _available = available;
+    });
+  }
+
+  Future<void> _toggle(bool next) async {
+    setState(() => _busy = true);
+    final notifier = ref.read(vaultUnlockProvider.notifier);
+    String message;
+    if (next) {
+      final ok = await notifier.enableBiometricUnlock();
+      message = ok
+          ? 'Biometric unlock is on.'
+          : 'Could not save the key, so biometric unlock stays off.';
+    } else {
+      await notifier.disableBiometricUnlock();
+      message = 'Biometric unlock is off. The saved key was removed.';
+    }
+    await _load();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = _enabled;
+    if (enabled == null) {
+      return const ListTile(
+        leading: Icon(Icons.fingerprint),
+        title: Text('Biometric unlock'),
+        subtitle: Text('Checking…'),
+      );
+    }
+    return SwitchListTile(
+      secondary: const Icon(Icons.fingerprint),
+      title: const Text('Biometric unlock'),
+      subtitle: Text(
+        !_available
+            ? 'No fingerprint or Face ID is set up on this device'
+            : enabled
+                ? 'Your key is stored in the keychain so a fingerprint can '
+                    'unlock it'
+                : 'Off — your PIN derives the key each time, and nothing is '
+                    'stored',
+      ),
+      value: enabled,
+      onChanged: (!_available || _busy) ? null : _toggle,
+    );
   }
 }
 

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:khazana/core/security/biometric_gate.dart';
 import 'package:khazana/core/security/key_derivation_service.dart';
 import 'package:khazana/core/security/secure_key_store.dart';
+import 'package:khazana/core/security/vault_credential_store.dart';
 import 'package:khazana/core/security/vault_state.dart';
 import 'package:khazana/core/security/vault_unlock_notifier.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,12 +11,23 @@ import 'package:mocktail/mocktail.dart';
 
 class _MockKeyStore extends Mock implements SecureKeyStore {}
 
+class _MockCredentials extends Mock implements VaultCredentialStore {}
+
 class _MockKdf extends Mock implements KeyDerivationService {}
 
 class _MockBiometric extends Mock implements BiometricGate {}
 
+bool _sameBytes(Uint8List a, Uint8List b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
 void main() {
   late _MockKeyStore keyStore;
+  late _MockCredentials credentials;
   late _MockKdf kdf;
   late _MockBiometric biometric;
 
@@ -29,48 +41,58 @@ void main() {
 
   setUp(() {
     keyStore = _MockKeyStore();
+    credentials = _MockCredentials();
     kdf = _MockKdf();
     biometric = _MockBiometric();
     when(() => biometric.isAvailable()).thenAnswer((_) async => true);
+    // Opted in by default here, so the existing biometric tests keep exercising
+    // that path; the PIN-only default is covered in its own file.
+    when(() => credentials.biometricEnabled(any()))
+        .thenAnswer((_) async => true);
+    when(() => credentials.setBiometricEnabled(any(), any()))
+        .thenAnswer((_) async {});
   });
 
   VaultUnlockNotifier build() => VaultUnlockNotifier(
         keyStore: keyStore,
+        credentials: credentials,
         kdf: kdf,
         biometric: biometric,
       );
 
   test('initialize → uninitialized when no vault exists', () async {
-    when(() => keyStore.vaultExists(any())).thenAnswer((_) async => false);
+    when(() => credentials.vaultExists(any())).thenAnswer((_) async => false);
     final n = build();
     await n.initialize();
     expect(n.state, isA<VaultUninitialized>());
   });
 
   test('initialize → locked when vault exists', () async {
-    when(() => keyStore.vaultExists(any())).thenAnswer((_) async => true);
+    when(() => credentials.vaultExists(any())).thenAnswer((_) async => true);
     final n = build();
     await n.initialize();
     expect(n.state, isA<VaultLocked>());
   });
 
   test('createVault stores key and unlocks', () async {
-    when(() => keyStore.createSalt(any())).thenAnswer((_) async => salt);
+    when(() => credentials.createSalt(any())).thenAnswer((_) async => salt);
     when(() => kdf.deriveKeyAsync(pin: any(named: 'pin'), salt: any(named: 'salt')))
         .thenAnswer((_) async => correctKey);
-    when(() => keyStore.storeDerivedKey(any(), any())).thenAnswer((_) async {});
+    when(() => credentials.storeVerifier(any(), any())).thenAnswer((_) async {});
 
     final n = build();
     await n.createVault('1234');
     expect(n.state, isA<VaultUnlocked>());
-    verify(() => keyStore.storeDerivedKey(any(), correctKey)).called(1);
+    // A verifier, never the key: there is no key at rest in the default flow.
+    verify(() => credentials.storeVerifier(any(), correctKey)).called(1);
+    verifyNever(() => keyStore.storeDerivedKey(any(), any()));
   });
 
   group('PIN cascade', () {
     setUp(() {
-      when(() => keyStore.readSalt(any())).thenAnswer((_) async => salt);
-      when(() => keyStore.readDerivedKey(any()))
-          .thenAnswer((_) async => correctKey);
+      when(() => credentials.readSalt(any())).thenAnswer((_) async => salt);
+      when(() => credentials.verify(any(), any())).thenAnswer(
+          (i) async => _sameBytes(i.positionalArguments[1] as Uint8List, correctKey));
     });
 
     test('correct PIN unlocks', () async {
@@ -106,7 +128,7 @@ void main() {
 
   group('biometric cascade', () {
     setUp(() async {
-      when(() => keyStore.vaultExists(any())).thenAnswer((_) async => true);
+      when(() => credentials.vaultExists(any())).thenAnswer((_) async => true);
       when(() => keyStore.readDerivedKey(any()))
           .thenAnswer((_) async => correctKey);
     });
