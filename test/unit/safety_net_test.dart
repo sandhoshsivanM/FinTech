@@ -7,6 +7,8 @@ import 'package:khazana/domain/entities/insurance.dart';
 import 'package:khazana/domain/entities/transaction.dart';
 import 'package:khazana/domain/services/safety_net.dart';
 
+import '../support/investment_totals_builder.dart';
+
 Decimal d(int v) => Decimal.fromInt(v);
 
 final _now = DateTime(2023, 11, 15);
@@ -34,18 +36,6 @@ Goal _goal(int current, int target,
       currentAmount: d(current),
     );
 
-Holding _holding(AssetType type, int qty, int price, [int? last]) => Holding(
-      id: _uid(),
-      vaultId: 'v',
-      symbol: type.key.toUpperCase(),
-      exchange: 'NSE',
-      quantity: d(qty),
-      avgCost: d(price),
-      firstPurchaseDate: _now,
-      assetType: type,
-      lastPrice: last == null ? null : d(last),
-    );
-
 Insurance _ins(InsuranceType type, int cover, [int premium = 1000]) => Insurance(
       id: _uid(),
       vaultId: 'v',
@@ -63,7 +53,7 @@ void main() {
       [_txn(1000000, TxnType.income, 30)],
       [_goal(600000, 600000)],
       [_ins(InsuranceType.life, 10000000), _ins(InsuranceType.health, 500000)],
-      [_holding(AssetType.fd, 1, 1000000)],
+      totalsOf({AssetType.fd: 1000000}),
       now: _now,
     );
     expect(sn.score, 100);
@@ -74,7 +64,7 @@ void main() {
 
   test('empty inputs → score 25 (zero income makes life cover vacuously 100%)',
       () {
-    final sn = svc.compute(const [], const [], const [], const [], now: _now);
+    final sn = svc.compute(const [], const [], const [], noInvestments, now: _now);
     expect(sn.score, 25);
     expect(sn.grade, 'At risk');
     expect(
@@ -90,7 +80,7 @@ void main() {
       [_txn(30000, TxnType.expense, 10)], // 90d expense 30k → monthly 10k
       [_goal(30000, 0)],
       const [],
-      const [],
+      noInvestments,
       now: _now,
     );
     final ef = sn.components.firstWhere((c) => c.key == 'emergency');
@@ -105,7 +95,7 @@ void main() {
       [_txn(30000, TxnType.expense, 10)],
       [_goal(50000, 200000)],
       const [],
-      const [],
+      noInvestments,
       now: _now,
     );
     final ef = sn.components.firstWhere((c) => c.key == 'emergency');
@@ -113,17 +103,19 @@ void main() {
     expect(ef.coveredPct.round(), 25);
   });
 
-  test('retirement counts only FD/PPF·EPF/NPS and uses lastPrice ?? avgCost',
-      () {
+  test('retirement counts only the retirement asset group', () {
     final sn = svc.compute(
       [_txn(1000000, TxnType.income, 30)],
       const [],
       const [],
-      [
-        _holding(AssetType.fd, 1, 999, 300000), // lastPrice wins
-        _holding(AssetType.ppfEpf, 1, 200000), // avgCost fallback
-        _holding(AssetType.equityEtf, 100, 100000), // ignored
-      ],
+      // Equity is in the portfolio but not in the retirement group, so it must
+      // not count toward "safe assets" — that grouping is now InvestmentTotals'
+      // job rather than a filter repeated inside this service.
+      totalsOf({
+        AssetType.fd: 300000,
+        AssetType.ppfEpf: 200000,
+        AssetType.equityEtf: 10000000,
+      }),
       now: _now,
     );
     final r = sn.components.firstWhere((c) => c.key == 'retirement');
@@ -136,7 +128,7 @@ void main() {
       [_txn(1000000, TxnType.income, 30)],
       [_goal(100000, 100000)],
       const [],
-      [_holding(AssetType.fd, 1, 1000000)],
+      totalsOf({AssetType.fd: 1000000}),
       now: _now,
     );
     expect(sn.score, 50);
@@ -148,7 +140,7 @@ void main() {
       [_txn(1000000, TxnType.income, 30)],
       const [],
       [_ins(InsuranceType.life, 10000000), _ins(InsuranceType.health, 500000)],
-      const [],
+      noInvestments,
       now: _now,
     );
     expect(sn.score, 50);
@@ -159,7 +151,7 @@ void main() {
       [_txn(1000000, TxnType.income, 30)],
       [_goal(600000, 600000)],
       [_ins(InsuranceType.life, 10000000), _ins(InsuranceType.health, 500000)],
-      const [], // retirement 0 → 85
+      noInvestments, // retirement 0 → 85
       now: _now,
     );
     expect(sn.score, 85);

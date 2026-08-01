@@ -1,6 +1,5 @@
 import 'package:decimal/decimal.dart';
 import 'package:khazana/domain/entities/account.dart';
-import 'package:khazana/domain/entities/holding.dart';
 import 'package:khazana/domain/entities/posting.dart';
 import 'package:khazana/domain/entities/transaction.dart';
 import 'package:khazana/domain/services/account_ledger.dart';
@@ -71,14 +70,11 @@ void main() {
     expect(ledger.netWorthFromAccounts([cashOpen, ccOpen], const []), d('3000'));
   });
 
-  test('net worth adds market-priced holdings without double-counting', () {
-    final h = Holding(
-      id: 'h', vaultId: 'v', symbol: 'X', exchange: 'NSE',
-      quantity: d('2'), avgCost: d('100'),
-      firstPurchaseDate: DateTime(2020), lastPrice: d('250'),
-    );
+  test('net worth adds market-priced securities without double-counting', () {
+    // Securities are not mirrored as accounts, so the portfolio's value is
+    // added on top rather than being summed twice.
     final cashOpen = acct('cash', AccountType.asset, sub: 'cash', opening: '1000');
-    expect(ledger.netWorth([cashOpen], const [], [h]), d('1500'));
+    expect(ledger.netWorth([cashOpen], const [], d('500')), d('1500'));
   });
 
   test('net worth from accounts equals the legacy signed-sum for a cash vault', () {

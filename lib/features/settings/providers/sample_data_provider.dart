@@ -8,9 +8,11 @@ import '../../../domain/entities/budget.dart';
 import '../../../domain/entities/category.dart';
 import '../../../domain/entities/goal.dart';
 import '../../../domain/entities/holding.dart';
+import '../../../domain/entities/portfolio.dart';
 import '../../../domain/entities/liability.dart';
 import '../../../domain/entities/recurring_rule.dart';
 import '../../../domain/entities/transaction.dart';
+import '../../investments/providers/portfolio_providers.dart';
 
 const _uuid = Uuid();
 
@@ -30,7 +32,12 @@ class SampleDataLoader {
     final db = _ref.read(databaseProvider);
     final catRepo = _ref.read(categoryRepositoryProvider);
     final txnRepo = _ref.read(transactionRepositoryProvider);
-    final holdRepo = _ref.read(holdingRepositoryProvider);
+    // Wait for the bundled classification table before creating instruments:
+    // `PortfolioActions` falls back to an empty master, and an instrument
+    // created without it keeps a null sector for good, so the demo portfolio
+    // would roll up entirely as "Unclassified".
+    await _ref.read(instrumentMasterProvider.future);
+    final portfolio = _ref.read(portfolioActionsProvider);
     final liabRepo = _ref.read(liabilityRepositoryProvider);
     final budgetRepo = _ref.read(budgetRepositoryProvider);
     final goalRepo = _ref.read(goalRepositoryProvider);
@@ -112,27 +119,93 @@ class SampleDataLoader {
             merchant: s[3] as String);
       }
 
-      // 5. Holdings (investments).
-      Future<void> hold(String sym, String qty, String avg, String last,
-          AssetType type, int dAgo) {
-        return holdRepo.save(Holding(
+      // 5. Investments — written to the lot model (instruments + trades +
+      //    prices), which is what every screen reads.
+      //
+      //    This block used to write the legacy `Holdings` table instead. Since
+      //    nothing read that table any more, "Load sample data" produced a
+      //    vault with a healthy net worth on the Dashboard and a completely
+      //    empty Investments screen.
+      Future<Instrument> security(
+        String name,
+        String symbol,
+        AssetType kind, {
+        String? schemeCode,
+        String? amcName,
+      }) =>
+          portfolio.ensureInstrument(
+            name: name,
+            kind: kind,
+            symbol: schemeCode == null ? symbol : null,
+            exchange: schemeCode == null ? 'NSE' : null,
+            schemeCode: schemeCode,
+            amcName: amcName,
+          );
+
+      Future<void> trade(Instrument i, TradeSide side, String qty, String price,
+          int dAgo) {
+        return portfolio.addTrade(Trade(
           id: _uuid.v4(),
           vaultId: vaultId,
-          symbol: sym,
-          exchange: 'NSE',
+          instrumentId: i.id,
+          side: side,
           quantity: _d(qty),
-          avgCost: _d(avg),
-          firstPurchaseDate: daysAgo(dAgo),
-          assetType: type,
-          lastPrice: _d(last),
+          pricePerUnit: _d(price),
+          tradeDate: daysAgo(dAgo),
+          brokerage: _d('20'),
+          // Sample data is not an import awaiting confirmation. Leaving these
+          // unreviewed would light up the review badge on a demo vault, which
+          // teaches people to ignore it.
+          isReviewed: true,
         ));
       }
 
-      await hold('NIFTYBEES', '800', '235.10', '286.40', AssetType.equityEtf, 400);
-      await hold('GOLDBEES', '500', '53.20', '62.80', AssetType.goldEtf, 300);
-      await hold('RELIANCE', '60', '2250.00', '2645.00', AssetType.equityEtf, 250);
-      await hold('INFY', '120', '1480.00', '1695.00', AssetType.equityEtf, 500);
-      await hold('SBIN', '200', '560.00', '612.00', AssetType.equityEtf, 180);
+      Future<void> price(Instrument i, String p) => portfolio.recordManualPrice(
+            instrumentId: i.id,
+            price: _d(p),
+            asOf: now,
+          );
+
+      final niftybees = await security('Nippon India ETF Nifty 50 BeES',
+          'NIFTYBEES', AssetType.equityEtf);
+      final goldbees =
+          await security('Nippon India ETF Gold BeES', 'GOLDBEES', AssetType.goldEtf);
+      final reliance =
+          await security('Reliance Industries', 'RELIANCE', AssetType.equityEtf);
+      final infy = await security('Infosys', 'INFY', AssetType.equityEtf);
+      final sbin = await security('State Bank of India', 'SBIN', AssetType.equityEtf);
+
+      // Two mutual funds, with real AMFI scheme codes, so the fund path and the
+      // sunburst's non-equity ring have something real to render.
+      final parag = await security('Parag Parikh Flexi Cap Fund - Direct Growth',
+          '', AssetType.equityMf,
+          schemeCode: '122639', amcName: 'PPFAS Mutual Fund');
+      final iciciDebt = await security(
+          'ICICI Prudential Corporate Bond Fund - Direct Growth', '',
+          AssetType.debtMf,
+          schemeCode: '120753', amcName: 'ICICI Prudential Mutual Fund');
+
+      await trade(niftybees, TradeSide.buy, '800', '235.10', 400);
+      await trade(goldbees, TradeSide.buy, '500', '53.20', 300);
+      await trade(reliance, TradeSide.buy, '60', '2250.00', 250);
+      await trade(sbin, TradeSide.buy, '200', '560.00', 180);
+      await trade(parag, TradeSide.buy, '1500.482', '58.42', 220);
+      await trade(iciciDebt, TradeSide.buy, '4200.115', '26.83', 150);
+
+      // Infosys gets two buy lots and a partial sell, so the demo actually
+      // exercises FIFO matching, realised P&L, the disposal count and the
+      // lot-level detail view — none of which a single-lot holding can show.
+      await trade(infy, TradeSide.buy, '120', '1480.00', 500);
+      await trade(infy, TradeSide.buy, '80', '1610.00', 210);
+      await trade(infy, TradeSide.sell, '50', '1720.00', 45);
+
+      await price(niftybees, '286.40');
+      await price(goldbees, '62.80');
+      await price(reliance, '2645.00');
+      await price(infy, '1695.00');
+      await price(sbin, '612.00');
+      await price(parag, '71.19');
+      await price(iciciDebt, '28.94');
 
       // 6. Liabilities.
       await liabRepo.save(Liability(

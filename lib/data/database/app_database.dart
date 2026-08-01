@@ -10,7 +10,6 @@ import 'converters.dart';
 import 'fingerprint_dao.dart';
 import 'fx_rate_dao.dart';
 import 'goal_dao.dart';
-import 'holding_dao.dart';
 import 'insurance_dao.dart';
 import 'liability_dao.dart';
 import 'merchant_alias_dao.dart';
@@ -59,7 +58,6 @@ part 'app_database.g.dart';
     CategoryDao,
     BudgetDao,
     MerchantAliasDao,
-    HoldingDao,
     LiabilityDao,
     FingerprintDao,
     FxRateDao,
@@ -190,8 +188,12 @@ class AppDatabase extends _$AppDatabase {
   /// them as precise. Ids are derived from the holding id, so re-running the
   /// migration cannot duplicate anything.
   ///
-  /// [Holdings] is intentionally left in place and untouched — the UI still
-  /// reads it until the cutover completes.
+  /// [Holdings] is intentionally left in place and untouched. Nothing reads it
+  /// any more — its repository, DAO and providers are gone — but the table has
+  /// to survive one more release: this backfill still selects from it for
+  /// anyone upgrading from v3 or restoring a v3 backup, and keeping the rows on
+  /// disk means the backfill can be re-run if the cutover turns out to have a
+  /// defect. It is dropped in schema v5, after that has had a release to show.
   Future<void> _migrateToLotLevelPortfolio(Migrator m) async {
     await m.createTable(instruments);
     await m.createTable(trades);
@@ -270,7 +272,6 @@ class AppDatabase extends _$AppDatabase {
     await transaction(() async {
       await delete(transactions).go();
       await delete(budgets).go();
-      await delete(holdings).go();
       await delete(liabilities).go();
       await delete(goalContributions).go();
       await delete(goals).go();
@@ -282,6 +283,20 @@ class AppDatabase extends _$AppDatabase {
       // The chart of accounts is structural (like categories) and is kept.
       await delete(postings).go();
       await delete(pendingCaptures).go();
+
+      // The whole portfolio, children before parents. [holdings] is the legacy
+      // aggregate table; the five v4 tables are where the portfolio actually
+      // lives. Only [holdings] used to be erased here, which was invisible for
+      // as long as the UI still read it — and would have become "Erase all data
+      // leaves every holding on screen" the moment the UI moved to the lot
+      // model. A privacy promise this app makes in writing, so it is tested:
+      // see test/integration/erase_all_data_test.dart.
+      await delete(dividends).go();
+      await delete(instrumentPrices).go();
+      await delete(trades).go();
+      await delete(instruments).go();
+      await delete(holdings).go();
+
       await customStatement('DELETE FROM transactions_fts');
     });
   }

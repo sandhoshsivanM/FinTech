@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
+import '../../../domain/entities/investment_totals.dart';
 import '../../../domain/entities/recurring_rule.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/net_worth_calculator.dart';
@@ -14,7 +15,7 @@ import '../../../presentation/glass_card.dart';
 import '../../../presentation/onboarding_banner.dart';
 import '../../../presentation/stat_tile.dart';
 import '../../../presentation/tour_overlay.dart';
-import '../../investments/providers/investment_providers.dart';
+import '../../investments/providers/portfolio_providers.dart';
 import '../../liabilities/providers/liability_providers.dart';
 import '../../transactions/providers/category_providers.dart';
 import '../../transactions/providers/recurring_providers.dart';
@@ -399,12 +400,10 @@ class _StatTilesGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ghost = ref.watch(ghostModeProvider);
 
-    // Investments — sum of holdings' marketValue.
-    final holdingsAsync = ref.watch(holdingListProvider);
-    final investments = holdingsAsync.whenData(
-      (list) => list.fold<Decimal>(
-          Decimal.zero, (s, h) => s + h.marketValue),
-    );
+    // Investments — from the one place the portfolio is valued, so this tile
+    // and the Investments screen cannot disagree.
+    final totals = ref.watch(investmentTotalsProvider);
+    final investments = totals.whenData((t) => t.marketValue);
 
     // Liabilities — sum of principals.
     final liabilitiesAsync = ref.watch(liabilityListProvider);
@@ -451,6 +450,10 @@ class _StatTilesGrid extends ConsumerWidget {
                 icon: Icons.trending_up_rounded,
                 iconColor: AppColors.income,
                 ghost: ghost,
+                // How current this number is. Mutual-fund NAVs lag a day and
+                // manually entered prices can be weeks old; a portfolio value
+                // with no date implies a precision it does not have.
+                footer: _pricingFooter(totals.valueOrNull),
                 onTap: () => context.go(Routes.investments),
               ),
             ),
@@ -488,6 +491,21 @@ class _StatTilesGrid extends ConsumerWidget {
   }
 }
 
+/// How current the portfolio value is, or null when there is nothing to date.
+String? _pricingFooter(InvestmentTotals? t) {
+  if (t == null || t.isEmpty) return null;
+  if (t.unpricedCount > 0) {
+    final n = t.unpricedCount;
+    return '$n holding${n == 1 ? '' : 's'} at cost';
+  }
+  final at = t.lastPricedAt;
+  if (at == null) return 'No prices recorded';
+  final days = DateTime.now().difference(at).inDays;
+  if (days <= 0) return 'Priced today';
+  if (days == 1) return 'Priced yesterday';
+  return 'Priced $days days ago';
+}
+
 class _AsyncMoneyTile extends StatelessWidget {
   const _AsyncMoneyTile({
     required this.label,
@@ -495,6 +513,7 @@ class _AsyncMoneyTile extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.ghost,
+    this.footer,
     this.onTap,
   });
 
@@ -503,6 +522,7 @@ class _AsyncMoneyTile extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final bool ghost;
+  final String? footer;
   final VoidCallback? onTap;
 
   @override
@@ -518,6 +538,7 @@ class _AsyncMoneyTile extends StatelessWidget {
       icon: icon,
       iconColor: iconColor,
       ghost: ghost,
+      footer: footer,
       onTap: onTap,
     );
   }

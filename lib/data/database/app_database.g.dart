@@ -9796,7 +9796,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final BudgetDao budgetDao = BudgetDao(this as AppDatabase);
   late final MerchantAliasDao merchantAliasDao =
       MerchantAliasDao(this as AppDatabase);
-  late final HoldingDao holdingDao = HoldingDao(this as AppDatabase);
   late final LiabilityDao liabilityDao = LiabilityDao(this as AppDatabase);
   late final FingerprintDao fingerprintDao =
       FingerprintDao(this as AppDatabase);

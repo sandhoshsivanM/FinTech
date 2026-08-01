@@ -6,6 +6,8 @@ import 'package:khazana/domain/entities/liability.dart';
 import 'package:khazana/domain/entities/transaction.dart';
 import 'package:khazana/domain/services/financial_health.dart';
 
+import '../support/investment_totals_builder.dart';
+
 Decimal d(int v) => Decimal.fromInt(v);
 
 Txn _txn(int amount, TxnType type, DateTime date) => Txn(
@@ -23,7 +25,7 @@ void main() {
   final now = DateTime(2026, 6, 15);
 
   test('score is bounded 0..100 with 4 pillars', () {
-    final res = fh.compute(const [], const [], const [], now: now);
+    final res = fh.compute(const [], noInvestments, const [], now: now);
     expect(res.score, inInclusiveRange(0, 100));
     expect(res.pillars.length, 4);
     expect(res.grade, isNotEmpty);
@@ -35,14 +37,9 @@ void main() {
       _txn(300000, TxnType.income, DateTime(2026, 5, 1)),
       _txn(60000, TxnType.expense, DateTime(2026, 5, 5)),
     ];
-    final holdings = [
-      Holding(
-        id: 'h1', vaultId: 'v', symbol: 'NIFTYBEES', exchange: 'NSE',
-        quantity: d(100), avgCost: d(2000),
-        firstPurchaseDate: DateTime(2024, 1, 1), lastPrice: d(2500),
-      ),
-    ];
-    final res = fh.compute(txns, holdings, const [], now: now);
+    final investments =
+        totalsOf({AssetType.equityEtf: 250000}, costBasis: 200000);
+    final res = fh.compute(txns, investments, const [], now: now);
     expect(res.score, greaterThan(60));
   });
 
@@ -54,7 +51,7 @@ void main() {
         kind: LiabilityKind.loan, principal: d(5000000), aprPct: d(12),
       ),
     ];
-    final res = fh.compute(txns, const [], liabs, now: now);
+    final res = fh.compute(txns, noInvestments, liabs, now: now);
     final debtPillar = res.pillars.firstWhere((p) => p.key == 'debt');
     expect(debtPillar.score, lessThan(debtPillar.max));
   });

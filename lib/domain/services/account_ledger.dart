@@ -1,7 +1,6 @@
 import 'package:decimal/decimal.dart';
 
 import '../entities/account.dart';
-import '../entities/holding.dart';
 import '../entities/posting.dart';
 import '../entities/transaction.dart';
 
@@ -95,16 +94,18 @@ class AccountLedger {
   }
 
   /// Full net worth: account-tracked cash/bank/credit/loan/manual assets plus
-  /// market-priced securities. Holdings are *not* mirrored as asset accounts,
+  /// market-priced securities. Securities are *not* mirrored as asset accounts,
   /// so nothing is double-counted (PRD §16 invariant).
+  ///
+  /// Takes the portfolio's market value rather than a holdings list: this
+  /// service has no business knowing how a position is priced, and callers get
+  /// the number from `investmentTotalsProvider`, which is the one place the
+  /// portfolio is valued.
   Decimal netWorth(
     List<Account> accounts,
     List<Posting> postings,
-    List<Holding> holdings,
+    Decimal investmentsValue,
   ) {
-    final fromAccounts = netWorthFromAccounts(accounts, postings);
-    final fromHoldings =
-        holdings.fold(Decimal.zero, (s, h) => s + h.marketValue);
-    return fromAccounts + fromHoldings;
+    return netWorthFromAccounts(accounts, postings) + investmentsValue;
   }
 }

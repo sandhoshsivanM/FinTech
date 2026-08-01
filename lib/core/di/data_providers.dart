@@ -9,7 +9,6 @@ import '../../data/repositories/drift_account_repository.dart';
 import '../../data/repositories/drift_budget_repository.dart';
 import '../../data/repositories/drift_category_repository.dart';
 import '../../data/repositories/drift_goal_repository.dart';
-import '../../data/repositories/drift_holding_repository.dart';
 import '../../data/repositories/drift_insurance_repository.dart';
 import '../../data/repositories/drift_liability_repository.dart';
 import '../../data/repositories/drift_merchant_alias_repository.dart';
@@ -22,7 +21,6 @@ import '../../domain/repositories/account_repository.dart';
 import '../../domain/repositories/budget_repository.dart';
 import '../../domain/repositories/category_repository.dart';
 import '../../domain/repositories/goal_repository.dart';
-import '../../domain/repositories/holding_repository.dart';
 import '../../domain/repositories/insurance_repository.dart';
 import '../../domain/repositories/liability_repository.dart';
 import '../../domain/repositories/merchant_alias_repository.dart';
@@ -78,10 +76,6 @@ final merchantAliasRepositoryProvider =
     Provider<IMerchantAliasRepository>((ref) {
   return DriftMerchantAliasRepository(
       ref.watch(databaseProvider).merchantAliasDao);
-});
-
-final holdingRepositoryProvider = Provider<IHoldingRepository>((ref) {
-  return DriftHoldingRepository(ref.watch(databaseProvider).holdingDao);
 });
 
 final liabilityRepositoryProvider = Provider<ILiabilityRepository>((ref) {

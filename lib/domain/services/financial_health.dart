@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-import '../entities/holding.dart';
+import '../entities/investment_totals.dart';
 import '../entities/liability.dart';
 import '../entities/transaction.dart';
 import 'net_worth_calculator.dart';
@@ -46,7 +46,7 @@ class FinancialHealth {
 
   HealthScore compute(
     List<Txn> txns,
-    List<Holding> holdings,
+    InvestmentTotals investments,
     List<Liability> liabilities, {
     DateTime? now,
   }) {
@@ -54,9 +54,7 @@ class FinancialHealth {
     final s90 = calc.summary(txns, TimeWindow.threeMonths, now: now);
     final monthlyExpense = s90.expense.toDouble() / 3;
     final netWorth = calc.total(txns).toDouble();
-    final invest = holdings
-        .fold(Decimal.zero, (s, h) => s + h.marketValue)
-        .toDouble();
+    final invest = investments.marketValue.toDouble();
     final debt = liabilities
         .fold(Decimal.zero, (s, l) => s + l.principal)
         .toDouble();

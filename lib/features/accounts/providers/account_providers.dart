@@ -1,10 +1,11 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../domain/entities/account.dart';
 import '../../../domain/entities/posting.dart';
 import '../../../domain/services/account_ledger.dart';
-import '../../investments/providers/investment_providers.dart';
+import '../../investments/providers/portfolio_providers.dart';
 import '../services/ledger_writer.dart';
 
 final accountLedgerProvider =
@@ -37,6 +38,7 @@ final ledgerWriterProvider = Provider<LedgerWriter>((ref) {
 final accountNetWorthProvider = Provider((ref) {
   final accounts = ref.watch(accountListProvider).valueOrNull ?? const [];
   final postings = ref.watch(postingListProvider).valueOrNull ?? const [];
-  final holdings = ref.watch(holdingListProvider).valueOrNull ?? const [];
-  return ref.watch(accountLedgerProvider).netWorth(accounts, postings, holdings);
+  final investments = ref.watch(investmentTotalsProvider).valueOrNull;
+  return ref.watch(accountLedgerProvider).netWorth(
+      accounts, postings, investments?.marketValue ?? Decimal.zero);
 });

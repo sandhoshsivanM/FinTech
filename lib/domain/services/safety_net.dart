@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 
 import '../entities/goal.dart';
-import '../entities/holding.dart';
+import '../entities/investment_totals.dart';
 import '../entities/insurance.dart';
 import '../entities/transaction.dart';
 import 'insurance_advisor.dart';
@@ -62,12 +62,6 @@ class SafetyNetService {
   static const int wRetirement = 15;
   static const int emergencyMonthsTarget = 6;
 
-  static const Set<AssetType> _retirementAssets = {
-    AssetType.fd,
-    AssetType.ppfEpf,
-    AssetType.nps,
-  };
-
   static String _grade(int score) {
     if (score >= 85) return 'Excellent';
     if (score >= 70) return 'Strong';
@@ -80,11 +74,15 @@ class SafetyNetService {
 
   static Decimal _maxZero(Decimal v) => v > Decimal.zero ? v : Decimal.zero;
 
+  /// [investments] supplies the safe/retirement asset value. It replaced a
+  /// `List<Holding>` that this service only ever filtered down to FD/PPF/NPS
+  /// and summed — a computation that now lives once, in [InvestmentTotals],
+  /// where it is derived from the lot model rather than the legacy table.
   SafetyNet compute(
     List<Txn> txns,
     List<Goal> goals,
     List<Insurance> insurances,
-    List<Holding> holdings, {
+    InvestmentTotals investments, {
     DateTime? now,
   }) {
     final end = now ?? DateTime.now();
@@ -157,10 +155,7 @@ class SafetyNetService {
     );
 
     // ---- Safe / retirement assets (FD, PPF·EPF, NPS) ----
-    final retireValue = holdings
-        .where((h) => _retirementAssets.contains(h.assetType))
-        .fold(Decimal.zero,
-            (s, h) => s + h.quantity * (h.lastPrice ?? h.avgCost));
+    final retireValue = investments.retirementValue;
     // Heuristic: ~1 year of income parked safely = fully covered.
     final retirePct = annualIncome > Decimal.zero
         ? _clamp01(retireValue.toDouble() / annualIncome.toDouble()) * 100

@@ -6,7 +6,8 @@ import '../../../domain/entities/net_worth_snapshot.dart';
 import '../../../domain/services/financial_health.dart';
 import '../../../domain/services/insights_engine.dart';
 import '../../../domain/services/net_worth_calculator.dart';
-import '../../investments/providers/investment_providers.dart';
+import '../../../domain/entities/investment_totals.dart';
+import '../../investments/providers/portfolio_providers.dart';
 import '../../liabilities/providers/liability_providers.dart';
 import '../../transactions/providers/recurring_providers.dart';
 import '../../transactions/providers/transaction_providers.dart';
@@ -49,12 +50,20 @@ final netWorthProvider = Provider<DashboardData?>((ref) {
 });
 
 /// Financial-health score (0–100) across cash, investments and liabilities.
+///
+/// Null while any input is still loading. Defaulting the portfolio to
+/// [InvestmentTotals.empty] instead would tell the score there are no
+/// investments, so the grade would visibly dip on every cold open and settle a
+/// moment later — a fabricated number, which is the thing this score is meant
+/// not to produce.
 final financialHealthProvider = Provider<HealthScore?>((ref) {
   final txnState = ref.watch(transactionListProvider);
   if (txnState is! TransactionData) return null;
-  final holdings = ref.watch(holdingListProvider).valueOrNull ?? const [];
+  final investments = ref.watch(investmentTotalsProvider).valueOrNull;
+  if (investments == null) return null;
   final liabs = ref.watch(liabilityListProvider).valueOrNull ?? const [];
-  return const FinancialHealth().compute(txnState.transactions, holdings, liabs);
+  return const FinancialHealth()
+      .compute(txnState.transactions, investments, liabs);
 });
 
 /// Real net-worth history from daily snapshots (mapped to trend points).
@@ -74,14 +83,23 @@ final dashboardTrendProvider = Provider<List<NetWorthPoint>>((ref) {
 });
 
 /// Captures (or updates) today's net-worth snapshot once data is loaded.
+///
+/// Gated on every input having *resolved*, not merely having a default. A
+/// snapshot row is persistent and one row per day, so a write that lands while
+/// the portfolio stream is still loading records a permanently wrong point in
+/// the trend line — and the trend is exactly what the user would consult to
+/// find out whether that dip was real.
 final snapshotCaptureProvider = FutureProvider<void>((ref) async {
   final txnState = ref.watch(transactionListProvider);
   if (txnState is! TransactionData) return;
-  final holdings = ref.watch(holdingListProvider).valueOrNull ?? const [];
-  final liabs = ref.watch(liabilityListProvider).valueOrNull ?? const [];
+  final investments = ref.watch(investmentTotalsProvider).valueOrNull;
+  if (investments == null) return;
+  final liabsAsync = ref.watch(liabilityListProvider);
+  if (!liabsAsync.hasValue) return;
+  final liabs = liabsAsync.requireValue;
   const calc = NetWorthCalculator();
   final cash = calc.total(txnState.transactions);
-  final invest = holdings.fold(Decimal.zero, (s, h) => s + h.marketValue);
+  final invest = investments.marketValue;
   final liab = liabs.fold(Decimal.zero, (s, l) => s + l.principal);
   final vault = ref.watch(currentVaultIdProvider);
   final now = DateTime.now();

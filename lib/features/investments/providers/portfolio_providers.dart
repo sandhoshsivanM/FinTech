@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/di/data_providers.dart';
 import '../../../data/repositories/drift_portfolio_repository.dart';
 import '../../../domain/entities/holding.dart';
+import '../../../domain/entities/investment_totals.dart';
 import '../../../domain/entities/portfolio.dart';
 import '../../../domain/services/instrument_master.dart';
 import '../../../domain/services/portfolio_analytics.dart';
@@ -67,6 +68,25 @@ final portfolioSnapshotProvider =
     latestPrices: prices,
     dividends: divs,
   );
+});
+
+/// What the portfolio is worth, for every consumer outside this feature.
+///
+/// Dashboard tiles, the health score, the safety net, account net worth and the
+/// daily snapshot all read this and nothing else. That is the whole point: those
+/// five used to sum the legacy `Holdings` table independently while the
+/// Investments screen read the lot model, so the app showed two different
+/// answers to "what are my investments worth" depending on which screen you
+/// were looking at.
+///
+/// Stays an [AsyncValue] deliberately. Collapsing loading to
+/// [InvestmentTotals.empty] would tell the health score there are no
+/// investments, dropping the score on every cold open until the streams
+/// resolve — a fabricated number, which is exactly what this work is removing.
+final investmentTotalsProvider = Provider<AsyncValue<InvestmentTotals>>((ref) {
+  return ref
+      .watch(portfolioSnapshotProvider)
+      .whenData(InvestmentTotals.fromSnapshot);
 });
 
 /// Which dimension the breakdown screen is grouping by.
