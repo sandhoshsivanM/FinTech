@@ -10,6 +10,8 @@ class NetWorthSnapshot {
     required this.cash,
     required this.investments,
     required this.liabilities,
+    this.healthScore,
+    this.healthTrackedWeight,
   });
 
   final String id;
@@ -19,4 +21,11 @@ class NetWorthSnapshot {
   final Decimal cash;
   final Decimal investments;
   final Decimal liabilities;
+
+  /// Health score on this day, 0-100. Null when nothing was tracked — see the
+  /// column doc in `tables.dart`; storing 0 would fabricate a failing grade.
+  final int? healthScore;
+
+  /// Share of the score's weight that was tracked, 0-100.
+  final int? healthTrackedWeight;
 }

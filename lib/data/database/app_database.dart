@@ -84,7 +84,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -105,6 +105,14 @@ class AppDatabase extends _$AppDatabase {
           // v4: lot-level portfolio model (cost basis, prices, sectors).
           if (from < 4) {
             await _migrateToLotLevelPortfolio(m);
+          }
+          // v5: the health score's daily history. Both columns are nullable and
+          // start null — back-dating a score for days the app was not
+          // computing one would invent history.
+          if (from < 5) {
+            await m.addColumn(netWorthSnapshots, netWorthSnapshots.healthScore);
+            await m.addColumn(
+                netWorthSnapshots, netWorthSnapshots.healthTrackedWeight);
           }
         },
       );
@@ -193,7 +201,9 @@ class AppDatabase extends _$AppDatabase {
   /// to survive one more release: this backfill still selects from it for
   /// anyone upgrading from v3 or restoring a v3 backup, and keeping the rows on
   /// disk means the backfill can be re-run if the cutover turns out to have a
-  /// defect. It is dropped in schema v5, after that has had a release to show.
+  /// defect. It gets dropped a release after the cutover has shipped clean —
+  /// deliberately not bundled into v5, which only adds two nullable columns and
+  /// so is a migration that cannot fail.
   Future<void> _migrateToLotLevelPortfolio(Migrator m) async {
     await m.createTable(instruments);
     await m.createTable(trades);

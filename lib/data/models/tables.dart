@@ -223,6 +223,17 @@ class NetWorthSnapshots extends Table {
   TextColumn get investments => text().map(const DecimalConverter())();
   TextColumn get liabilities => text().map(const DecimalConverter())();
 
+  /// The health score on this day, 0-100. **Nullable on purpose**: a day where
+  /// nothing was tracked has no score, and storing 0 would turn "we could not
+  /// judge this" into "you scored nothing" the moment it is read back into the
+  /// Score screen's history chart.
+  IntColumn get healthScore => integer().nullable()();
+
+  /// How much of the score's weight was tracked that day, 0-100. Without it a
+  /// history point cannot be read honestly — 70 out of four categories and 70
+  /// out of two are not the same number.
+  IntColumn get healthTrackedWeight => integer().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }

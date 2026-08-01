@@ -12,6 +12,8 @@ import {
 } from './types';
 import { materialize } from '@/domain/recurrence';
 import { postingsForEntry } from '@/domain/accountLedger';
+import { healthScore } from '@/domain/health';
+import { investmentTotals } from '@/domain/investmentTotals';
 
 const VAULT_ID = 'default';
 const VERIFIER = 'FTOS-OK';
@@ -328,17 +330,30 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   captureSnapshot: async () => {
-    const { key, vaultId, activeProfileId, txns, holdings, liabilities } = get();
+    const {
+      key, vaultId, activeProfileId, txns, holdings, liabilities,
+      goals, insurances, budgets, snapshots,
+    } = get();
     if (!key || !activeProfileId) return;
     const day = new Date().toISOString().slice(0, 10);
     const id = `snap-${activeProfileId}-${day}`;
+    const investments = investmentTotals(holdings);
     const cash = txns.reduce((s, t) => (t.type === 'income' ? s.plus(D(t.amount)) : s.minus(D(t.amount))), ZERO);
-    const invest = holdings.reduce((s, h) => s.plus(D(h.quantity).times(D(h.lastPrice ?? h.avgCost))), ZERO);
+    const invest = investments.marketValue;
     const liab = liabilities.reduce((s, l) => s.plus(D(l.principal)), ZERO);
+    // Both health fields stay null when the score cannot be computed. A day
+    // with nothing tracked has no score, and writing 0 would put a failing
+    // grade into the Score page's history chart for a day the app had no
+    // opinion about.
+    const health = healthScore({
+      txns, investments, liabilities, goals, insurances, budgets, snapshots,
+    });
     const snap: NetWorthSnapshot = {
       id, vaultId, profileId: activeProfileId, date: Date.now(),
       netWorth: cash.plus(invest).minus(liab).toString(),
       cash: cash.toString(), investments: invest.toString(), liabilities: liab.toString(),
+      healthScore: health.score,
+      healthTrackedWeight: health.score === null ? null : Math.round(health.trackedWeight),
     };
     await putRecord(key, STORE.snapshot, vaultId, id, snap);
   },

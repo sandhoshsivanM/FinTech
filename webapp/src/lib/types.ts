@@ -172,6 +172,16 @@ export interface NetWorthSnapshot {
   cash: string;
   investments: string;
   liabilities: string;
+  /**
+   * Health score on this day, 0-100. Optional and nullable on purpose: a day
+   * where nothing was tracked has no score, and storing 0 would turn "we could
+   * not judge this" into "you scored nothing" the moment the Score page reads
+   * it back into the history chart. Mirrors the nullable column added in
+   * Drift schema v5.
+   */
+  healthScore?: number | null;
+  /** Share of the score's weight that was tracked that day, 0-100. */
+  healthTrackedWeight?: number | null;
 }
 
 export const STORE = {

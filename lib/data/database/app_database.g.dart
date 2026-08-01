@@ -4991,9 +4991,30 @@ class $NetWorthSnapshotsTable extends NetWorthSnapshots
               type: DriftSqlType.string, requiredDuringInsert: true)
           .withConverter<Decimal>(
               $NetWorthSnapshotsTable.$converterliabilities);
+  static const VerificationMeta _healthScoreMeta =
+      const VerificationMeta('healthScore');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, vaultId, date, netWorth, cash, investments, liabilities];
+  late final GeneratedColumn<int> healthScore = GeneratedColumn<int>(
+      'health_score', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _healthTrackedWeightMeta =
+      const VerificationMeta('healthTrackedWeight');
+  @override
+  late final GeneratedColumn<int> healthTrackedWeight = GeneratedColumn<int>(
+      'health_tracked_weight', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        vaultId,
+        date,
+        netWorth,
+        cash,
+        investments,
+        liabilities,
+        healthScore,
+        healthTrackedWeight
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5026,6 +5047,18 @@ class $NetWorthSnapshotsTable extends NetWorthSnapshots
     context.handle(_cashMeta, const VerificationResult.success());
     context.handle(_investmentsMeta, const VerificationResult.success());
     context.handle(_liabilitiesMeta, const VerificationResult.success());
+    if (data.containsKey('health_score')) {
+      context.handle(
+          _healthScoreMeta,
+          healthScore.isAcceptableOrUnknown(
+              data['health_score']!, _healthScoreMeta));
+    }
+    if (data.containsKey('health_tracked_weight')) {
+      context.handle(
+          _healthTrackedWeightMeta,
+          healthTrackedWeight.isAcceptableOrUnknown(
+              data['health_tracked_weight']!, _healthTrackedWeightMeta));
+    }
     return context;
   }
 
@@ -5053,6 +5086,10 @@ class $NetWorthSnapshotsTable extends NetWorthSnapshots
       liabilities: $NetWorthSnapshotsTable.$converterliabilities.fromSql(
           attachedDatabase.typeMapping.read(
               DriftSqlType.string, data['${effectivePrefix}liabilities'])!),
+      healthScore: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}health_score']),
+      healthTrackedWeight: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}health_tracked_weight']),
     );
   }
 
@@ -5080,6 +5117,17 @@ class NetWorthSnapshotRow extends DataClass
   final Decimal cash;
   final Decimal investments;
   final Decimal liabilities;
+
+  /// The health score on this day, 0-100. **Nullable on purpose**: a day where
+  /// nothing was tracked has no score, and storing 0 would turn "we could not
+  /// judge this" into "you scored nothing" the moment it is read back into the
+  /// Score screen's history chart.
+  final int? healthScore;
+
+  /// How much of the score's weight was tracked that day, 0-100. Without it a
+  /// history point cannot be read honestly — 70 out of four categories and 70
+  /// out of two are not the same number.
+  final int? healthTrackedWeight;
   const NetWorthSnapshotRow(
       {required this.id,
       required this.vaultId,
@@ -5087,7 +5135,9 @@ class NetWorthSnapshotRow extends DataClass
       required this.netWorth,
       required this.cash,
       required this.investments,
-      required this.liabilities});
+      required this.liabilities,
+      this.healthScore,
+      this.healthTrackedWeight});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -5110,6 +5160,12 @@ class NetWorthSnapshotRow extends DataClass
       map['liabilities'] = Variable<String>(
           $NetWorthSnapshotsTable.$converterliabilities.toSql(liabilities));
     }
+    if (!nullToAbsent || healthScore != null) {
+      map['health_score'] = Variable<int>(healthScore);
+    }
+    if (!nullToAbsent || healthTrackedWeight != null) {
+      map['health_tracked_weight'] = Variable<int>(healthTrackedWeight);
+    }
     return map;
   }
 
@@ -5122,6 +5178,12 @@ class NetWorthSnapshotRow extends DataClass
       cash: Value(cash),
       investments: Value(investments),
       liabilities: Value(liabilities),
+      healthScore: healthScore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(healthScore),
+      healthTrackedWeight: healthTrackedWeight == null && nullToAbsent
+          ? const Value.absent()
+          : Value(healthTrackedWeight),
     );
   }
 
@@ -5136,6 +5198,9 @@ class NetWorthSnapshotRow extends DataClass
       cash: serializer.fromJson<Decimal>(json['cash']),
       investments: serializer.fromJson<Decimal>(json['investments']),
       liabilities: serializer.fromJson<Decimal>(json['liabilities']),
+      healthScore: serializer.fromJson<int?>(json['healthScore']),
+      healthTrackedWeight:
+          serializer.fromJson<int?>(json['healthTrackedWeight']),
     );
   }
   @override
@@ -5149,6 +5214,8 @@ class NetWorthSnapshotRow extends DataClass
       'cash': serializer.toJson<Decimal>(cash),
       'investments': serializer.toJson<Decimal>(investments),
       'liabilities': serializer.toJson<Decimal>(liabilities),
+      'healthScore': serializer.toJson<int?>(healthScore),
+      'healthTrackedWeight': serializer.toJson<int?>(healthTrackedWeight),
     };
   }
 
@@ -5159,7 +5226,9 @@ class NetWorthSnapshotRow extends DataClass
           Decimal? netWorth,
           Decimal? cash,
           Decimal? investments,
-          Decimal? liabilities}) =>
+          Decimal? liabilities,
+          Value<int?> healthScore = const Value.absent(),
+          Value<int?> healthTrackedWeight = const Value.absent()}) =>
       NetWorthSnapshotRow(
         id: id ?? this.id,
         vaultId: vaultId ?? this.vaultId,
@@ -5168,6 +5237,10 @@ class NetWorthSnapshotRow extends DataClass
         cash: cash ?? this.cash,
         investments: investments ?? this.investments,
         liabilities: liabilities ?? this.liabilities,
+        healthScore: healthScore.present ? healthScore.value : this.healthScore,
+        healthTrackedWeight: healthTrackedWeight.present
+            ? healthTrackedWeight.value
+            : this.healthTrackedWeight,
       );
   NetWorthSnapshotRow copyWithCompanion(NetWorthSnapshotsCompanion data) {
     return NetWorthSnapshotRow(
@@ -5180,6 +5253,11 @@ class NetWorthSnapshotRow extends DataClass
           data.investments.present ? data.investments.value : this.investments,
       liabilities:
           data.liabilities.present ? data.liabilities.value : this.liabilities,
+      healthScore:
+          data.healthScore.present ? data.healthScore.value : this.healthScore,
+      healthTrackedWeight: data.healthTrackedWeight.present
+          ? data.healthTrackedWeight.value
+          : this.healthTrackedWeight,
     );
   }
 
@@ -5192,14 +5270,16 @@ class NetWorthSnapshotRow extends DataClass
           ..write('netWorth: $netWorth, ')
           ..write('cash: $cash, ')
           ..write('investments: $investments, ')
-          ..write('liabilities: $liabilities')
+          ..write('liabilities: $liabilities, ')
+          ..write('healthScore: $healthScore, ')
+          ..write('healthTrackedWeight: $healthTrackedWeight')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, vaultId, date, netWorth, cash, investments, liabilities);
+  int get hashCode => Object.hash(id, vaultId, date, netWorth, cash,
+      investments, liabilities, healthScore, healthTrackedWeight);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5210,7 +5290,9 @@ class NetWorthSnapshotRow extends DataClass
           other.netWorth == this.netWorth &&
           other.cash == this.cash &&
           other.investments == this.investments &&
-          other.liabilities == this.liabilities);
+          other.liabilities == this.liabilities &&
+          other.healthScore == this.healthScore &&
+          other.healthTrackedWeight == this.healthTrackedWeight);
 }
 
 class NetWorthSnapshotsCompanion extends UpdateCompanion<NetWorthSnapshotRow> {
@@ -5221,6 +5303,8 @@ class NetWorthSnapshotsCompanion extends UpdateCompanion<NetWorthSnapshotRow> {
   final Value<Decimal> cash;
   final Value<Decimal> investments;
   final Value<Decimal> liabilities;
+  final Value<int?> healthScore;
+  final Value<int?> healthTrackedWeight;
   final Value<int> rowid;
   const NetWorthSnapshotsCompanion({
     this.id = const Value.absent(),
@@ -5230,6 +5314,8 @@ class NetWorthSnapshotsCompanion extends UpdateCompanion<NetWorthSnapshotRow> {
     this.cash = const Value.absent(),
     this.investments = const Value.absent(),
     this.liabilities = const Value.absent(),
+    this.healthScore = const Value.absent(),
+    this.healthTrackedWeight = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   NetWorthSnapshotsCompanion.insert({
@@ -5240,6 +5326,8 @@ class NetWorthSnapshotsCompanion extends UpdateCompanion<NetWorthSnapshotRow> {
     required Decimal cash,
     required Decimal investments,
     required Decimal liabilities,
+    this.healthScore = const Value.absent(),
+    this.healthTrackedWeight = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         vaultId = Value(vaultId),
@@ -5256,6 +5344,8 @@ class NetWorthSnapshotsCompanion extends UpdateCompanion<NetWorthSnapshotRow> {
     Expression<String>? cash,
     Expression<String>? investments,
     Expression<String>? liabilities,
+    Expression<int>? healthScore,
+    Expression<int>? healthTrackedWeight,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5266,6 +5356,9 @@ class NetWorthSnapshotsCompanion extends UpdateCompanion<NetWorthSnapshotRow> {
       if (cash != null) 'cash': cash,
       if (investments != null) 'investments': investments,
       if (liabilities != null) 'liabilities': liabilities,
+      if (healthScore != null) 'health_score': healthScore,
+      if (healthTrackedWeight != null)
+        'health_tracked_weight': healthTrackedWeight,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5278,6 +5371,8 @@ class NetWorthSnapshotsCompanion extends UpdateCompanion<NetWorthSnapshotRow> {
       Value<Decimal>? cash,
       Value<Decimal>? investments,
       Value<Decimal>? liabilities,
+      Value<int?>? healthScore,
+      Value<int?>? healthTrackedWeight,
       Value<int>? rowid}) {
     return NetWorthSnapshotsCompanion(
       id: id ?? this.id,
@@ -5287,6 +5382,8 @@ class NetWorthSnapshotsCompanion extends UpdateCompanion<NetWorthSnapshotRow> {
       cash: cash ?? this.cash,
       investments: investments ?? this.investments,
       liabilities: liabilities ?? this.liabilities,
+      healthScore: healthScore ?? this.healthScore,
+      healthTrackedWeight: healthTrackedWeight ?? this.healthTrackedWeight,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5321,6 +5418,12 @@ class NetWorthSnapshotsCompanion extends UpdateCompanion<NetWorthSnapshotRow> {
           .$converterliabilities
           .toSql(liabilities.value));
     }
+    if (healthScore.present) {
+      map['health_score'] = Variable<int>(healthScore.value);
+    }
+    if (healthTrackedWeight.present) {
+      map['health_tracked_weight'] = Variable<int>(healthTrackedWeight.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5337,6 +5440,8 @@ class NetWorthSnapshotsCompanion extends UpdateCompanion<NetWorthSnapshotRow> {
           ..write('cash: $cash, ')
           ..write('investments: $investments, ')
           ..write('liabilities: $liabilities, ')
+          ..write('healthScore: $healthScore, ')
+          ..write('healthTrackedWeight: $healthTrackedWeight, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -13415,6 +13520,8 @@ typedef $$NetWorthSnapshotsTableCreateCompanionBuilder
   required Decimal cash,
   required Decimal investments,
   required Decimal liabilities,
+  Value<int?> healthScore,
+  Value<int?> healthTrackedWeight,
   Value<int> rowid,
 });
 typedef $$NetWorthSnapshotsTableUpdateCompanionBuilder
@@ -13426,6 +13533,8 @@ typedef $$NetWorthSnapshotsTableUpdateCompanionBuilder
   Value<Decimal> cash,
   Value<Decimal> investments,
   Value<Decimal> liabilities,
+  Value<int?> healthScore,
+  Value<int?> healthTrackedWeight,
   Value<int> rowid,
 });
 
@@ -13466,6 +13575,13 @@ class $$NetWorthSnapshotsTableFilterComposer
       $composableBuilder(
           column: $table.liabilities,
           builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<int> get healthScore => $composableBuilder(
+      column: $table.healthScore, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get healthTrackedWeight => $composableBuilder(
+      column: $table.healthTrackedWeight,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$NetWorthSnapshotsTableOrderingComposer
@@ -13497,6 +13613,13 @@ class $$NetWorthSnapshotsTableOrderingComposer
 
   ColumnOrderings<String> get liabilities => $composableBuilder(
       column: $table.liabilities, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get healthScore => $composableBuilder(
+      column: $table.healthScore, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get healthTrackedWeight => $composableBuilder(
+      column: $table.healthTrackedWeight,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$NetWorthSnapshotsTableAnnotationComposer
@@ -13530,6 +13653,12 @@ class $$NetWorthSnapshotsTableAnnotationComposer
   GeneratedColumnWithTypeConverter<Decimal, String> get liabilities =>
       $composableBuilder(
           column: $table.liabilities, builder: (column) => column);
+
+  GeneratedColumn<int> get healthScore => $composableBuilder(
+      column: $table.healthScore, builder: (column) => column);
+
+  GeneratedColumn<int> get healthTrackedWeight => $composableBuilder(
+      column: $table.healthTrackedWeight, builder: (column) => column);
 }
 
 class $$NetWorthSnapshotsTableTableManager extends RootTableManager<
@@ -13568,6 +13697,8 @@ class $$NetWorthSnapshotsTableTableManager extends RootTableManager<
             Value<Decimal> cash = const Value.absent(),
             Value<Decimal> investments = const Value.absent(),
             Value<Decimal> liabilities = const Value.absent(),
+            Value<int?> healthScore = const Value.absent(),
+            Value<int?> healthTrackedWeight = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               NetWorthSnapshotsCompanion(
@@ -13578,6 +13709,8 @@ class $$NetWorthSnapshotsTableTableManager extends RootTableManager<
             cash: cash,
             investments: investments,
             liabilities: liabilities,
+            healthScore: healthScore,
+            healthTrackedWeight: healthTrackedWeight,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -13588,6 +13721,8 @@ class $$NetWorthSnapshotsTableTableManager extends RootTableManager<
             required Decimal cash,
             required Decimal investments,
             required Decimal liabilities,
+            Value<int?> healthScore = const Value.absent(),
+            Value<int?> healthTrackedWeight = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               NetWorthSnapshotsCompanion.insert(
@@ -13598,6 +13733,8 @@ class $$NetWorthSnapshotsTableTableManager extends RootTableManager<
             cash: cash,
             investments: investments,
             liabilities: liabilities,
+            healthScore: healthScore,
+            healthTrackedWeight: healthTrackedWeight,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +9,7 @@ import '../../../core/utils/money_format.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/net_worth_calculator.dart';
 import '../../../presentation/data_gate.dart';
+import '../../../presentation/charts/area_chart.dart';
 import '../../../presentation/charts/donut_chart.dart';
 import '../../../presentation/glass_card.dart';
 import '../../transactions/providers/category_providers.dart';
@@ -468,18 +468,11 @@ class _NetWorthTrendCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          Semantics(
-            label:
-                'Net worth trend over the selected period, ending at ${Money.toWords(lastValue)}',
-            child: ExcludeSemantics(
-              child: SizedBox(
-                height: 140,
-                width: double.infinity,
-                child: CustomPaint(
-                  painter: _ReportsSparklinePainter(pts, AppColors.accent),
-                ),
-              ),
-            ),
+          AreaChart(
+            values: pts,
+            height: 140,
+            semanticLabel: 'Net worth trend over the selected period, '
+                'ending at ${Money.toWords(lastValue)}',
           ),
         ],
       ),
@@ -487,73 +480,3 @@ class _NetWorthTrendCard extends StatelessWidget {
   }
 }
 
-/// Lightweight sparkline — gradient fill under a stroked line.
-class _ReportsSparklinePainter extends CustomPainter {
-  _ReportsSparklinePainter(this.values, this.color);
-
-  final List<double> values;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (values.length < 2) return;
-    final minV = values.reduce(math.min);
-    final maxV = values.reduce(math.max);
-    final range = (maxV - minV).abs() < 1e-9 ? 1.0 : (maxV - minV);
-    final dx = size.width / (values.length - 1);
-
-    Offset at(int i) => Offset(
-          i * dx,
-          size.height -
-              ((values[i] - minV) / range) * (size.height - 8) -
-              4,
-        );
-
-    final line = Path()..moveTo(at(0).dx, at(0).dy);
-    for (var i = 1; i < values.length; i++) {
-      line.lineTo(at(i).dx, at(i).dy);
-    }
-
-    // Gradient fill below the line.
-    final fill = Path.from(line)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-
-    canvas.drawPath(
-      fill,
-      Paint()
-        ..shader = ui.Gradient.linear(
-          Offset(0, 0),
-          Offset(0, size.height),
-          [color.withValues(alpha: 0.22), color.withValues(alpha: 0.0)],
-        ),
-    );
-
-    canvas.drawPath(
-      line,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
-        ..strokeJoin = StrokeJoin.round
-        ..strokeCap = StrokeCap.round,
-    );
-
-    // End dot.
-    final last = at(values.length - 1);
-    canvas.drawCircle(last, 3.5, Paint()..color = color);
-    canvas.drawCircle(
-      last,
-      3.5,
-      Paint()
-        ..color = color.withValues(alpha: 0.25)
-        ..strokeWidth = 4
-        ..style = PaintingStyle.stroke,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_ReportsSparklinePainter old) =>
-      old.values != values || old.color != color;
-}

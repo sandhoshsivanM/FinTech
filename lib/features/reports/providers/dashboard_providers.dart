@@ -124,6 +124,10 @@ final snapshotCaptureProvider = FutureProvider<void>((ref) async {
   final now = DateTime.now();
   final day = '${now.year}-${now.month.toString().padLeft(2, '0')}-'
       '${now.day.toString().padLeft(2, '0')}';
+  // Both stay null when the score cannot be computed. A day with nothing
+  // tracked has no score, and writing 0 would put a failing grade into the
+  // history chart for a day the app simply had no opinion about.
+  final health = ref.watch(financialHealthProvider);
   await ref.read(netWorthSnapshotRepositoryProvider).save(NetWorthSnapshot(
         id: 'snap-$vault-$day',
         vaultId: vault,
@@ -132,7 +136,22 @@ final snapshotCaptureProvider = FutureProvider<void>((ref) async {
         cash: cash,
         investments: invest,
         liabilities: liab,
+        healthScore: health?.score,
+        healthTrackedWeight: health?.trackedWeight.round(),
       ));
+});
+
+/// The Score screen's trend line: past health scores, oldest first.
+///
+/// Days with no score are skipped rather than plotted at zero — the chart shows
+/// the scores that existed, not a dip on every day the app could not judge.
+final scoreHistoryProvider = Provider<List<double>>((ref) {
+  final snaps = ref.watch(netWorthSnapshotListProvider).valueOrNull ?? const [];
+  final sorted = [...snaps]..sort((a, b) => a.date.compareTo(b.date));
+  return [
+    for (final s in sorted)
+      if (s.healthScore != null) s.healthScore!.toDouble(),
+  ];
 });
 
 /// Combined local insights (safe-to-spend + spending anomalies).

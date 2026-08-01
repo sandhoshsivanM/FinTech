@@ -47,6 +47,21 @@ void main() {
           last_price TEXT NULL
         );
       ''');
+      // A real v3 database has this table — it arrived in the v2 migration, and
+      // the v5 step adds columns to it. Omitting it here made the fixture a
+      // shape no user's database has ever had, so a migration that works in
+      // production failed in the test.
+      await db.customStatement('''
+        CREATE TABLE net_worth_snapshots (
+          id TEXT NOT NULL PRIMARY KEY,
+          vault_id TEXT NOT NULL,
+          date INTEGER NOT NULL,
+          net_worth TEXT NOT NULL,
+          cash TEXT NOT NULL,
+          investments TEXT NOT NULL,
+          liabilities TEXT NOT NULL
+        );
+      ''');
       for (final stmt in holdingInserts) {
         await db.customStatement(stmt);
       }

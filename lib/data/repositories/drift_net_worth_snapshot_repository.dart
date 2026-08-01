@@ -27,6 +27,8 @@ class DriftNetWorthSnapshotRepository implements INetWorthSnapshotRepository {
         cash: Value(s.cash),
         investments: Value(s.investments),
         liabilities: Value(s.liabilities),
+        healthScore: Value(s.healthScore),
+        healthTrackedWeight: Value(s.healthTrackedWeight),
       ));
 
   static NetWorthSnapshot _toEntity(NetWorthSnapshotRow r) => NetWorthSnapshot(
@@ -37,5 +39,7 @@ class DriftNetWorthSnapshotRepository implements INetWorthSnapshotRepository {
         cash: r.cash,
         investments: r.investments,
         liabilities: r.liabilities,
+        healthScore: r.healthScore,
+        healthTrackedWeight: r.healthTrackedWeight,
       );
 }

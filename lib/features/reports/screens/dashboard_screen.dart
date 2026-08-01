@@ -11,6 +11,8 @@ import '../../../domain/entities/recurring_rule.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/financial_health.dart';
 import '../../../domain/services/net_worth_calculator.dart';
+import '../../../presentation/charts/area_chart.dart';
+import '../../../presentation/charts/gauge_chart.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
 import '../../../presentation/onboarding_banner.dart';
@@ -102,11 +104,16 @@ class _DashboardBody extends ConsumerWidget {
         _StatTilesGrid(summary: data.summary),
         const SizedBox(height: AppSpacing.md),
 
-        // 3b. Quick links to the rest of the app.
-        const _QuickLinks(),
+        // 4. Health score, then the single insight. Both sit above the trend
+        //    chart: they answer "how am I doing" in one glance, which is what
+        //    the first screenful is for. The trend is the second look.
+        const _FinancialHealthCard(),
         const SizedBox(height: AppSpacing.md),
 
-        // 4. Window selector + trend chart.
+        const _InsightsCard(),
+        const SizedBox(height: AppSpacing.md),
+
+        // 5. Window selector + trend chart.
         _WindowSelector(
           selected: window,
           onChanged: (w) =>
@@ -116,12 +123,8 @@ class _DashboardBody extends ConsumerWidget {
         _TrendChart(series: ref.watch(dashboardTrendProvider)),
         const SizedBox(height: AppSpacing.md),
 
-        // 4b. Financial health score.
-        const _FinancialHealthCard(),
-        const SizedBox(height: AppSpacing.md),
-
-        // 4c. Smart insights.
-        const _InsightsCard(),
+        // 6. Quick links to everything that is not a tab.
+        const _QuickLinks(),
         const SizedBox(height: AppSpacing.md),
 
         // 5. Recent transactions.
@@ -577,128 +580,28 @@ class _TrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final values = series.map((p) => p.value.toDouble()).toList();
-    final allFlat = values.isEmpty ||
-        (values.reduce((a, b) => a < b ? a : b) ==
-            values.reduce((a, b) => a > b ? a : b));
-
-    if (series.length < 2 || allFlat) {
-      return GlassCard(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: SizedBox(
-          height: 160,
-          width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.show_chart,
-                  size: 36, color: Theme.of(context).colorScheme.outline),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Your net worth trend will appear here',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              const Text(
-                'Add a few transactions to get started',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Downsample to at most ~60 points for a smooth, cheap sparkline.
-    final raw = values;
-    final step = (raw.length / 60).ceil().clamp(1, raw.length);
+    // Downsample to ~60 points. Beyond that the extra vertices are sub-pixel
+    // and cost paint time for nothing.
+    final raw = series.map((p) => p.value.toDouble()).toList();
+    final step = raw.isEmpty ? 1 : (raw.length / 60).ceil().clamp(1, raw.length);
     final pts = <double>[
       for (var i = 0; i < raw.length; i += step) raw[i],
     ];
-    if (pts.last != raw.last) pts.add(raw.last);
+    if (pts.isNotEmpty && pts.last != raw.last) pts.add(raw.last);
 
-    return Semantics(
-      label: 'Net worth trend over the selected period, '
-          'ending at ${Money.toWords(series.last.value)}',
-      child: ExcludeSemantics(
-        child: GlassCard(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: SizedBox(
-            height: 150,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: _SparklinePainter(pts, AppColors.accent),
-            ),
-          ),
-        ),
+    return GlassCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: AreaChart(
+        values: pts,
+        height: 150,
+        emptyLabel: 'Your net worth trend will appear here',
+        semanticLabel: series.isEmpty
+            ? null
+            : 'Net worth trend over the selected period, '
+                'ending at ${Money.toWords(series.last.value)}',
       ),
     );
   }
-}
-
-/// Lightweight net-worth sparkline (CustomPainter — no chart lib, no animation
-/// ticker, smooth on web). Draws a gradient-filled trend line.
-class _SparklinePainter extends CustomPainter {
-  _SparklinePainter(this.values, this.color);
-  final List<double> values;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (values.length < 2) return;
-    final minV = values.reduce((a, b) => a < b ? a : b);
-    final maxV = values.reduce((a, b) => a > b ? a : b);
-    final range = (maxV - minV).abs() < 1e-9 ? 1.0 : (maxV - minV);
-    final dx = size.width / (values.length - 1);
-
-    Offset at(int i) => Offset(
-          i * dx,
-          size.height - ((values[i] - minV) / range) * (size.height - 8) - 4,
-        );
-
-    final line = Path()..moveTo(at(0).dx, at(0).dy);
-    for (var i = 1; i < values.length; i++) {
-      line.lineTo(at(i).dx, at(i).dy);
-    }
-
-    // Gradient fill below the line.
-    final fill = Path.from(line)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(
-      fill,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [color.withValues(alpha: 0.22), color.withValues(alpha: 0.0)],
-        ).createShader(Offset.zero & size),
-    );
-
-    canvas.drawPath(
-      line,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
-        ..strokeJoin = StrokeJoin.round
-        ..strokeCap = StrokeCap.round,
-    );
-
-    // End dot.
-    final last = at(values.length - 1);
-    canvas.drawCircle(last, 3.5, Paint()..color = color);
-    canvas.drawCircle(
-        last, 3.5, Paint()..color = color.withValues(alpha: 0.25)..strokeWidth = 4..style = PaintingStyle.stroke);
-  }
-
-  @override
-  bool shouldRepaint(_SparklinePainter old) =>
-      old.values != values || old.color != color;
 }
 
 // ---------------------------------------------------------------------------
@@ -1087,9 +990,6 @@ class _FinancialHealthCard extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final muted = text.bodySmall?.color?.withValues(alpha: 0.65);
     final score = h.score;
-    final color = score == null
-        ? (muted ?? Colors.grey)
-        : _band(score / 100);
 
     return GlassCard(
       child: InkWell(
@@ -1113,38 +1013,13 @@ class _FinancialHealthCard extends ConsumerWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 84,
-                  height: 84,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 84,
-                        height: 84,
-                        child: CircularProgressIndicator(
-                          // A null score means nothing is tracked yet: an empty
-                          // ring, not a ring at zero, which would read as a
-                          // failing grade the data cannot support.
-                          value: score == null ? 0 : score / 100,
-                          strokeWidth: 8,
-                          valueColor: AlwaysStoppedAnimation(color),
-                          backgroundColor: color.withValues(alpha: 0.15),
-                        ),
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(score == null ? '—' : '$score',
-                              style: text.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w800, color: color)),
-                          Text(h.grade ?? 'Not yet scored',
-                              textAlign: TextAlign.center,
-                              style: text.labelSmall?.copyWith(color: muted)),
-                        ],
-                      ),
-                    ],
-                  ),
+                // Smaller than the Score screen's: net worth is this screen's
+                // hero, and two competing hero figures read as neither.
+                GaugeChart(
+                  value: score?.toDouble(),
+                  size: 120,
+                  sublabel: h.grade,
+                  untrackedLabel: 'Not yet scored',
                 ),
                 const SizedBox(width: AppSpacing.lg),
                 Expanded(
