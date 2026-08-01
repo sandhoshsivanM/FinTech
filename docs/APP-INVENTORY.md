@@ -784,12 +784,20 @@ development certificate. Without this, vault creation failed with
 
 ## 7. Defects
 
-Ordered by how much they affect you.
+Ordered by how much they affect you. **7.1, 7.2, 7.3 and 7.10 are fixed** — see
+the notes under each. The rest still stand.
 
-### 7.1 Two portfolio models disagree
+### 7.1 Two portfolio models disagree — FIXED
 
 **Impact:** the Investments screen shows "No holdings yet" while the Dashboard
 shows a large investments figure, in the same vault.
+
+**Fixed.** `InvestmentTotals` (`lib/domain/entities/investment_totals.dart`) is
+now the single derivation every consumer outside the Investments feature reads,
+exposed as `investmentTotalsProvider`. The legacy repository, DAO and providers
+are deleted, so there is no second path left to drift. Sample data writes the
+lot model. Pinned by `test/integration/holdings_cutover_test.dart`. The
+`Holdings` *table* survives one more release for the v3 backfill, then goes.
 
 **Root cause:** the app has two portfolio models and they never got unified.
 
@@ -814,10 +822,17 @@ It cannot self-correct: a new vault is created at schema 4 via `onCreate`, so
 **Fix:** point sample data at the lot model, and migrate the remaining legacy
 readers.
 
-### 7.2 Prices cannot reach the new model
+### 7.2 Prices cannot reach the new model — FIXED
 
 **Impact:** imported lots show "at cost — no price" with ₹0 P&L, permanently.
 No amount of tapping refresh changes it.
+
+**Fixed.** `PriceRefreshService` writes `InstrumentPrices` with the date the
+*source* reported, routed by asset type: mutual funds to AMFI (finally wiring
+the provider that had been built and tested with zero callers), equities and
+ETFs to the ticker chain, and bonds/FDs to nothing at all — reported as skipped
+rather than failed, since no free live source exists for them. A refresh button
+sits in the Investments AppBar; there is still no scheduler, by design.
 
 Two halves:
 - `refreshPrices` writes to `Holdings.lastPrice` and never to `InstrumentPrices`
@@ -827,14 +842,18 @@ Two halves:
 
 *Evidence:* `investment_providers.dart:111-128` · `add_lot_screen.dart:116`
 
-### 7.3 "Erase all data" does not erase the portfolio
+### 7.3 "Erase all data" does not erase the portfolio — FIXED
 
 **Impact:** after wiping, your lots, cost basis, prices, dividends and
 benchmarks are all still there.
 
 `eraseAllData` predates v4 and was never extended to the six new tables.
 
-*Evidence:* `app_database.dart:269-287`
+**Fixed.** `eraseAllData` now deletes `instruments`, `trades`,
+`instrumentPrices` and `dividends`, children before parents. (`fundHoldings`
+and `benchmarkSeries` are vault-independent reference data and are correctly
+kept.) The app promises in writing that this button removes your financial data;
+`test/integration/erase_all_data_test.dart` is that promise.
 
 ### 7.4 Backup is write-only and mis-stamped
 
@@ -881,10 +900,15 @@ encrypted.
 `update()` is implemented and correct; no UI reaches it. You can only add and
 delete.
 
-### 7.10 `'legacy'` is an undocumented enum value
+### 7.10 `'legacy'` is an undocumented enum value — FIXED
 
 The v4 migration writes `source: 'legacy'` into `Trades` and `InstrumentPrices`,
 but neither column documents it as valid.
+
+**Fixed.** `PriceSource` is a real enum with a documented `legacy` member, and
+it carries the consequence: because the migration stamps its own run time as
+`asOf`, `legacy` maps to `PriceQuality.unknownDate` so those rows can never
+render as "priced 2 minutes ago".
 
 ### 7.11 Release builds need `--no-tree-shake-icons`
 
