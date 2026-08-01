@@ -42,15 +42,47 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
   Timer? _cooldownTimer;
 
   /// Determines whether to show setup or unlock on launch.
+  ///
+  /// Every failure path here must land on a state the user can act from. This
+  /// method runs on every cold start and begins from [VaultUnlocking], so an
+  /// uncaught throw leaves the app on a spinner with no way forward and no
+  /// explanation — which is exactly what an unreadable keychain used to do.
   Future<void> initialize() async {
-    final exists = await _keyStore.vaultExists(vaultId);
+    final bool exists;
+    try {
+      exists = await _keyStore.vaultExists(vaultId);
+    } on Object catch (e) {
+      // The keychain could not be read, so whether a vault exists is UNKNOWN.
+      //
+      // Falling back to [VaultUninitialized] would offer to create one, and
+      // creating over an existing vault rewrites its salt and key — the old
+      // database would become permanently undecryptable. Locked-with-an-error
+      // is the conservative choice: it explains itself, it lets the user retry,
+      // and it cannot destroy anything.
+      state = VaultLocked(lastError: _keychainMessage(e));
+      return;
+    }
+
     if (!exists) {
       state = const VaultUninitialized();
       return;
     }
-    final bioAvailable = await _biometric.isAvailable();
+
+    // A biometric probe must never gate entry either: PIN entry has to remain
+    // reachable when the hardware or its permission is unavailable.
+    var bioAvailable = false;
+    try {
+      bioAvailable = await _biometric.isAvailable();
+    } on Object {
+      bioAvailable = false;
+    }
     state = VaultLocked(biometricAvailable: bioAvailable);
   }
+
+  /// Turns a storage failure into something a user can act on.
+  static String _keychainMessage(Object error) =>
+      'Could not read the keychain, so Khazana cannot tell whether a vault '
+      'exists on this device. Your data has not been touched. ($error)';
 
   /// First-run vault creation. Derives and stores the key, then unlocks.
   Future<void> createVault(String pin) async {
