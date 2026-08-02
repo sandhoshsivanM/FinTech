@@ -471,6 +471,7 @@ class _NetWorthTrendCard extends StatelessWidget {
           AreaChart(
             values: pts,
             height: 140,
+            formatValue: (v) => Money.format(Decimal.parse(v.toStringAsFixed(2))),
             semanticLabel: 'Net worth trend over the selected period, '
                 'ending at ${Money.toWords(lastValue)}',
           ),

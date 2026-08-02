@@ -661,6 +661,7 @@ class _TrendChart extends StatelessWidget {
       child: AreaChart(
         values: pts,
         height: 150,
+        formatValue: (v) => Money.format(Decimal.parse(v.toStringAsFixed(2))),
         emptyLabel: 'Your net worth trend will appear here',
         semanticLabel: series.isEmpty
             ? null

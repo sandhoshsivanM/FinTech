@@ -119,6 +119,14 @@ class _SunburstChartState extends State<SunburstChart> {
     _setPath([..._path, index]);
   }
 
+  /// The segment under the pointer, on devices that have one.
+  ///
+  /// Hover only ever previews: it never changes [_selected], so moving the
+  /// mouse away restores exactly what a tap had chosen. A pointer passing over
+  /// a chart on its way somewhere else must not silently rewrite what the
+  /// screen says.
+  SunburstNode? _hovered;
+
   void _zoomOut() {
     if (_path.isEmpty) return;
     _setPath(_path.sublist(0, _path.length - 1));
@@ -133,7 +141,7 @@ class _SunburstChartState extends State<SunburstChart> {
     final text = Theme.of(context).textTheme;
     final focus = _focus;
     final path = _pathNodes;
-    final described = _selected ?? focus;
+    final described = _hovered ?? _selected ?? focus;
     final total = focus.value <= 0 ? 1.0 : focus.value;
 
     if (focus.children.isEmpty) {
@@ -167,9 +175,14 @@ class _SunburstChartState extends State<SunburstChart> {
                   size: widget.size,
                   ringWidth: widget.ringWidth,
                   node: focus,
+                  hovered: _hovered,
                   onSegmentTap: _drillInto,
                   onCenterTap: _path.isEmpty ? null : _zoomOut,
                   onSegmentSelect: (n) => setState(() => _selected = n),
+                  onHover: (n) {
+                    if (identical(n, _hovered)) return;
+                    setState(() => _hovered = n);
+                  },
                 ),
                 IgnorePointer(
                   child: widget.centerBuilder?.call(context, focus) ??
@@ -205,6 +218,8 @@ class _HitTestArea extends StatelessWidget {
     required this.onSegmentTap,
     required this.onCenterTap,
     required this.onSegmentSelect,
+    required this.onHover,
+    this.hovered,
   });
 
   final double size;
@@ -213,6 +228,8 @@ class _HitTestArea extends StatelessWidget {
   final void Function(int index) onSegmentTap;
   final VoidCallback? onCenterTap;
   final void Function(SunburstNode) onSegmentSelect;
+  final void Function(SunburstNode?) onHover;
+  final SunburstNode? hovered;
 
   @override
   Widget build(BuildContext context) {
@@ -226,7 +243,14 @@ class _HitTestArea extends StatelessWidget {
       container: true,
       child: Stack(
         children: [
-          GestureDetector(
+          MouseRegion(
+            // Resolved against the same geometry the painter drew with, so the
+            // arc that lights up is the arc under the cursor rather than one
+            // computed by a second, drifting copy of the maths.
+            onHover: (event) =>
+                onHover(geometry.hitTest(event.localPosition)?.node),
+            onExit: (_) => onHover(null),
+            child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTapUp: (details) {
               final hit = geometry.hitTest(details.localPosition);
@@ -249,8 +273,10 @@ class _HitTestArea extends StatelessWidget {
               curve: ChartTokens.entranceCurve,
               builder: (context, t, _) => CustomPaint(
                 size: Size.square(size),
-                painter: _SunburstPainter(geometry, progress: t),
+                painter: _SunburstPainter(geometry,
+                    progress: t, hovered: hovered),
               ),
+            ),
             ),
           ),
           // One invisible semantics node per visible arc, so the allocation is
@@ -397,9 +423,18 @@ class SunburstGeometry {
 }
 
 class _SunburstPainter extends CustomPainter {
-  _SunburstPainter(this.geometry, {this.progress = 1});
+  _SunburstPainter(this.geometry, {this.progress = 1, this.hovered});
 
   final SunburstGeometry geometry;
+
+  /// The segment under the pointer, drawn thicker rather than recoloured.
+  ///
+  /// Lightening or saturating the hovered arc would break the one thing the
+  /// colours are load-bearing for: `kAssetGroupOrder` is chosen so adjacent
+  /// arcs stay distinguishable under protanopia, and shifting a hue at hover
+  /// time puts a colour on screen that was never checked. Thickness carries no
+  /// meaning here, so it is free to borrow.
+  final SunburstNode? hovered;
 
   /// 0..1 entrance progress. Each arc grows from its own start angle, so the
   /// ring sweeps round clockwise the way it is read.
@@ -416,6 +451,7 @@ class _SunburstPainter extends CustomPainter {
       final lead = s.depth == 0 ? 0.0 : 0.15;
       final local = ((progress - lead) / (1 - lead)).clamp(0.0, 1.0);
       if (local <= 0) continue;
+      final isHovered = hovered != null && identical(s.node, hovered);
       canvas.drawArc(
         Rect.fromCircle(center: geometry.centre, radius: radius),
         s.startAngle,
@@ -424,14 +460,17 @@ class _SunburstPainter extends CustomPainter {
         Paint()
           ..color = s.node.color
           ..style = PaintingStyle.stroke
-          ..strokeWidth = geometry.ringWidth,
+          ..strokeWidth =
+              isHovered ? geometry.ringWidth + 6 : geometry.ringWidth,
       );
     }
   }
 
   @override
   bool shouldRepaint(_SunburstPainter old) =>
-      old.geometry != geometry || old.progress != progress;
+      old.geometry != geometry ||
+      old.progress != progress ||
+      !identical(old.hovered, hovered);
 }
 
 class _Breadcrumb extends StatelessWidget {

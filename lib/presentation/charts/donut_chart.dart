@@ -14,7 +14,7 @@ class DonutSegment {
 
 /// Lightweight custom-painted donut (no chart library → smooth on web).
 /// Shows an optional centered label/sublabel and an optional side legend.
-class DonutChart extends StatelessWidget {
+class DonutChart extends StatefulWidget {
   const DonutChart({
     required this.segments,
     this.size = 150,
@@ -22,6 +22,7 @@ class DonutChart extends StatelessWidget {
     this.centerText,
     this.centerSub,
     this.showLegend = true,
+    this.formatValue,
     super.key,
   });
 
@@ -32,36 +33,110 @@ class DonutChart extends StatelessWidget {
   final String? centerSub;
   final bool showLegend;
 
+  /// How to render a slice's value on hover. Without it the centre shows the
+  /// share only, which is still true — a percentage never needs a formatter.
+  final String Function(double value)? formatValue;
+
+  @override
+  State<DonutChart> createState() => _DonutChartState();
+}
+
+class _DonutChartState extends State<DonutChart> {
+  int? _hover;
+
+  /// Which slice a point falls in, or null for the hole and the outside.
+  ///
+  /// Computed from the same start angle and sweep the painter uses, so the
+  /// slice that responds is the slice under the cursor.
+  int? _sliceAt(Offset local, double total) {
+    final r = widget.size / 2;
+    final centre = Offset(r, r);
+    final d = (local - centre).distance;
+    final outer = r;
+    final inner = r - widget.strokeWidth;
+    if (d > outer || d < inner) return null;
+    if (total <= 0) return null;
+
+    // atan2 measures from the positive x-axis; the ring starts at 12 o'clock,
+    // so shift by a quarter turn and wrap into [0, 2pi).
+    var a = math.atan2(local.dy - centre.dy, local.dx - centre.dx) + math.pi / 2;
+    if (a < 0) a += 2 * math.pi;
+
+    var sweptTo = 0.0;
+    for (var i = 0; i < widget.segments.length; i++) {
+      final v = widget.segments[i].value;
+      if (v <= 0) continue;
+      sweptTo += (v / total) * 2 * math.pi;
+      if (a <= sweptTo) return i;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final segments = widget.segments;
+    final size = widget.size;
     final total = segments.fold<double>(0, (s, e) => s + (e.value < 0 ? 0 : e.value));
+
+    final hover = _hover;
+    final hovered = hover != null && hover < segments.length ? segments[hover] : null;
+    final share = hovered == null || total <= 0
+        ? null
+        : (hovered.value / total * 100).toStringAsFixed(hovered.value / total < 0.1 ? 1 : 0);
+
     final ring = SizedBox(
       width: size,
       height: size,
-      child: CustomPaint(
-        painter: _DonutPainter(segments, strokeWidth,
-            Theme.of(context).colorScheme.surfaceContainerHighest),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (centerText != null)
-                Text(centerText!,
+      child: MouseRegion(
+        onHover: (e) {
+          final i = _sliceAt(e.localPosition, total);
+          if (i != _hover) setState(() => _hover = i);
+        },
+        onExit: (_) => setState(() => _hover = null),
+        child: CustomPaint(
+          painter: _DonutPainter(segments, widget.strokeWidth,
+              Theme.of(context).colorScheme.surfaceContainerHighest,
+              hover: hover),
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: widget.strokeWidth),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // The hovered slice replaces the centre text rather than
+                  // appearing beside it: a floating tooltip over a 22px ring is
+                  // a poor target, and the centre is already where the eye is.
+                  Text(
+                    hovered != null
+                        ? (widget.formatValue?.call(hovered.value) ?? '$share%')
+                        : (widget.centerText ?? ''),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w800)),
-              if (centerSub != null)
-                Text(centerSub!,
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  Text(
+                    hovered != null
+                        ? '${hovered.label}${share == null ? '' : ' · $share%'}'
+                        : (widget.centerSub ?? ''),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
-            ],
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
 
-    if (!showLegend) return ring;
+    if (!widget.showLegend) return ring;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -112,10 +187,15 @@ class DonutChart extends StatelessWidget {
 }
 
 class _DonutPainter extends CustomPainter {
-  _DonutPainter(this.segments, this.stroke, this.trackColor);
+  _DonutPainter(this.segments, this.stroke, this.trackColor, {this.hover});
   final List<DonutSegment> segments;
   final double stroke;
   final Color trackColor;
+
+  /// Index of the hovered slice, drawn thicker. Not recoloured — the palette is
+  /// checked for colourblind separation as a set, and a hue invented at hover
+  /// time was never part of that check.
+  final int? hover;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -137,7 +217,8 @@ class _DonutPainter extends CustomPainter {
 
     var start = -math.pi / 2; // start at top
     const gap = 0.04; // small gap between slices (radians)
-    for (final s in segments) {
+    for (var i = 0; i < segments.length; i++) {
+      final s = segments[i];
       if (s.value <= 0) continue;
       final sweep = (s.value / total) * (2 * math.pi) - gap;
       canvas.drawArc(
@@ -148,7 +229,7 @@ class _DonutPainter extends CustomPainter {
         Paint()
           ..color = s.color
           ..style = PaintingStyle.stroke
-          ..strokeWidth = stroke
+          ..strokeWidth = i == hover ? stroke + 5 : stroke
           ..strokeCap = StrokeCap.round,
       );
       start += (s.value / total) * (2 * math.pi);
@@ -157,5 +238,6 @@ class _DonutPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DonutPainter old) =>
+      old.hover != hover ||
       old.segments != segments || old.stroke != stroke;
 }
