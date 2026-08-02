@@ -18,6 +18,7 @@ import '../../features/reports/screens/reports_screen.dart';
 import '../../features/safety_net/screens/safety_net_screen.dart';
 import '../../features/score/screens/score_screen.dart';
 import '../../features/transactions/screens/add_transaction_screen.dart';
+import '../../features/accounts/screens/accounts_screen.dart';
 import '../../features/transactions/screens/recurring_screen.dart';
 import '../../features/transactions/screens/search_screen.dart';
 import '../../features/transactions/screens/transactions_screen.dart';
@@ -48,6 +49,7 @@ abstract final class Routes {
   static const reports = '/app/reports';
   static const score = '/app/score';
   static const bankImport = '/app/import/bank';
+  static const accounts = '/app/accounts';
   static const recurring = '/app/recurring';
   static const captureInbox = '/app/capture';
   static const calendar = '/app/calendar';
@@ -85,6 +87,7 @@ abstract final class Routes {
     addTransaction: transactions,
     budget: transactions,
     calendar: transactions,
+    accounts: transactions,
     recurring: transactions,
     search: transactions,
     captureInbox: transactions,
@@ -167,6 +170,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // No child routes: score category detail is disclosure in place.
           _tab(Routes.score, const ScoreScreen()),
           _tab(Routes.bankImport, const BankImportScreen()),
+          _tab(Routes.accounts, const AccountsScreen()),
           _tab(Routes.recurring, const RecurringScreen()),
           _tab(Routes.captureInbox, const CaptureInboxScreen()),
           _tab(Routes.calendar, const CalendarLedgerScreen()),

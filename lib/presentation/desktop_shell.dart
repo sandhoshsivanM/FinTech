@@ -40,6 +40,7 @@ const _sections = <_Section>[
     title: 'Money',
     items: [
       (route: Routes.transactions, icon: Icons.receipt_long_outlined, label: 'Cash Flow'),
+      (route: Routes.accounts, icon: Icons.account_balance_outlined, label: 'Accounts'),
       (route: Routes.calendar, icon: Icons.calendar_month_outlined, label: 'Calendar'),
       (route: Routes.budget, icon: Icons.pie_chart_outline, label: 'Budget'),
       (route: Routes.recurring, icon: Icons.repeat, label: 'Recurring'),

@@ -12,6 +12,7 @@ import '../../../domain/entities/portfolio.dart';
 import '../../../domain/entities/liability.dart';
 import '../../../domain/entities/recurring_rule.dart';
 import '../../../domain/entities/transaction.dart';
+import '../../accounts/providers/account_providers.dart';
 import '../../investments/providers/portfolio_providers.dart';
 
 const _uuid = Uuid();
@@ -32,6 +33,13 @@ class SampleDataLoader {
     final db = _ref.read(databaseProvider);
     final catRepo = _ref.read(categoryRepositoryProvider);
     final txnRepo = _ref.read(transactionRepositoryProvider);
+    // Sample transactions must go through the ledger for the same reason real
+    // ones do. Writing straight to the transaction repo skips LedgerWriter,
+    // which is what creates the chart of accounts and the balanced postings —
+    // so a demo vault ended up with a full transaction history, no accounts at
+    // all, and an account-derived net worth of zero sitting beside a
+    // transaction-derived one of twenty-five lakh.
+    final ledger = _ref.read(ledgerWriterProvider);
     // Wait for the bundled classification table before creating instruments:
     // `PortfolioActions` falls back to an empty master, and an instrument
     // created without it keeps a null sector for good, so the demo portfolio
@@ -67,8 +75,8 @@ class SampleDataLoader {
           .id;
 
       Future<void> txn(String amount, TxnType type, String category, int dAgo,
-          {String? merchant, String? note}) {
-        return txnRepo.save(Txn(
+          {String? merchant, String? note}) async {
+        final t = Txn(
           id: _uuid.v4(),
           vaultId: vaultId,
           amount: _d(amount),
@@ -78,7 +86,9 @@ class SampleDataLoader {
           note: note ?? 'Sample',
           date: daysAgo(dAgo),
           createdAt: now,
-        ));
+        );
+        await txnRepo.save(t);
+        await ledger.writeEntry(t, categoryName: category);
       }
 
       // 2. Opening savings + 3 months of salary → healthy net worth.

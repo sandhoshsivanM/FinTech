@@ -34,6 +34,7 @@ const _allRoutes = <String>[
   Routes.reports,
   Routes.score,
   Routes.bankImport,
+  Routes.accounts,
   Routes.recurring,
   Routes.captureInbox,
   Routes.calendar,
