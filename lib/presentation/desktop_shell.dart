@@ -333,7 +333,7 @@ class _LockButton extends ConsumerWidget {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () =>
-                  ref.read(vaultUnlockProvider.notifier).lock(),
+                  ref.read(vaultUnlockProvider.notifier).lock(force: true),
               icon: const Icon(Icons.lock_outline, size: 16),
               label: const Text('Lock vault'),
             ),

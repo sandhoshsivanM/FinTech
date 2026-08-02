@@ -78,6 +78,23 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
       return;
     }
 
+    // Opening without a PIN, when the user has asked for that. The stored key
+    // is still verified rather than trusted: a key that no longer decrypts this
+    // vault must fall through to the PIN, or a restored backup would open onto
+    // SQLITE_NOTADB with no way back.
+    try {
+      if (await _credentials.lockDisabled(vaultId)) {
+        final key = await _credentials.readDeviceKey(vaultId);
+        if (key != null && await _credentials.verify(vaultId, key)) {
+          state = VaultUnlocked(VaultSession(vaultId: vaultId, key: key));
+          return;
+        }
+      }
+    } on Object {
+      // Fall through to the lock screen. An unreadable preference must never
+      // be the reason someone cannot reach their own data.
+    }
+
     state = VaultLocked(biometricAvailable: await _biometricOffered());
   }
 
@@ -131,6 +148,16 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
 
       final derived = await _kdf.deriveKeyAsync(pin: pin, salt: salt);
       if (await _credentials.verify(vaultId, derived)) {
+        // If the lock is already off, this is the one PIN entry that turns it
+        // off for good: the key could not be stored before, because until now
+        // nothing had derived it.
+        try {
+          if (await _credentials.lockDisabled(vaultId)) {
+            await _credentials.storeDeviceKey(vaultId, derived);
+          }
+        } on Object {
+          // Unlocking succeeded; failing to remember it is not worth refusing.
+        }
         state = VaultUnlocked(VaultSession(vaultId: vaultId, key: derived));
         return;
       }
@@ -223,9 +250,51 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     }
   }
 
+  /// Stops asking for a PIN on this device.
+  ///
+  /// Writes the live session key to local preferences. Requires an unlocked
+  /// vault, so it can only ever be done by someone who has already
+  /// authenticated — the same rule biometric enrolment follows.
+  Future<bool> disableLock() async {
+    final current = state;
+    if (current is! VaultUnlocked) return false;
+    try {
+      await _credentials.storeDeviceKey(vaultId, current.session.key);
+      await _credentials.setLockDisabled(vaultId, true);
+      return true;
+    } on Object {
+      // Leave the lock ON. A half-applied change that stores the key without
+      // recording the setting is the worst of both: the protection is gone and
+      // the user is still asked for a PIN, so they never learn it happened.
+      await _credentials.clearDeviceKey(vaultId);
+      await _credentials.setLockDisabled(vaultId, false);
+      return false;
+    }
+  }
+
+  /// Puts the PIN back, and removes the stored key.
+  Future<void> enableLock() async {
+    await _credentials.setLockDisabled(vaultId, false);
+    await _credentials.clearDeviceKey(vaultId);
+  }
+
+  Future<bool> lockIsDisabled() => _credentials.lockDisabled(vaultId);
+
   /// Re-lock the vault (PRD: re-lock on app backgrounding).
-  Future<void> lock() async {
+  ///
+  /// [force] distinguishes the user pressing "Lock vault" from the app being
+  /// backgrounded. With the lock turned off, backgrounding must not throw up a
+  /// PIN screen — that is the friction being removed — but an explicit press
+  /// still locks, because a control that does nothing is worse than no control.
+  Future<void> lock({bool force = false}) async {
     _cooldownTimer?.cancel();
+    if (!force) {
+      try {
+        if (await _credentials.lockDisabled(vaultId)) return;
+      } on Object {
+        // Unreadable setting: lock. Erring toward locked is the safe direction.
+      }
+    }
     state = VaultLocked(biometricAvailable: await _biometricOffered());
   }
 

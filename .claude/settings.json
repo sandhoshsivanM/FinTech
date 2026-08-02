@@ -1,0 +1,53 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(open -a /Users/sandhoshsivan/Desktop/Khazana.app)",
+      "Bash(screencapture -x -o -R224,60,1280,872 /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/khz-final.png)",
+      "Bash(pkill -f \"Desktop/Khazana.app/Contents/MacOS\")",
+      "Bash(cp -R build/macos/Build/Products/Release/Khazana.app ~/Desktop/Khazana.app)",
+      "Bash(open -n ~/Desktop/Khazana.app)",
+      "Bash(screencapture -x -o -R224,60,1280,872 /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/after-fix.png)",
+      "Bash(screencapture -x -o -R224,60,1280,872 /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/pin-only.png)",
+      "Bash(screencapture -x -o -R224,60,1280,872 /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/pin-only-2.png)",
+      "Bash(ps -eo pid,lstart,args)",
+      "Bash(~/Desktop/Khazana.app/Contents/MacOS/Khazana)",
+      "Bash(screencapture -x -o -R224,60,1280,872 /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/working.png)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:8765/dashboard.html)",
+      "Bash(open \"http://127.0.0.1:8765/dashboard.html\")",
+      "Bash(osascript -e 'tell application \"System Events\" to get name of every process whose background only is false')",
+      "Bash(osascript -e 'tell application \"System Events\" to tell process \"Khazana\" to get value of attribute \"AXWindows\"')",
+      "Bash(osascript)",
+      "Bash(screencapture -x -R0,38,1400,971 shots/_calib.png)",
+      "Bash(sips -g pixelWidth -g pixelHeight shots/_calib.png)",
+      "Bash(osascript -e 'tell application \"System Events\" to tell process \"Khazana\" *)",
+      "Bash(perl -e 'select\\(undef,undef,undef,1.2\\)')",
+      "Bash(chmod +x shoot.sh)",
+      "Bash(./shoot.sh)",
+      "Bash(swiftc --version)",
+      "Bash(swiftc -O uitool.swift -o uitool)",
+      "Bash(./uitool windowid *)",
+      "Bash(mkdir -p ~/Desktop/Khazana-Screens && cp shots/*.png ~/Desktop/Khazana-Screens/ && ls ~/Desktop/Khazana-Screens | wc -l && du -sh ~/Desktop/Khazana-Screens)",
+      "Bash(perl -e 'select\\(undef,undef,undef,1.5\\)')",
+      "Bash(open ~/Desktop/Khazana.app)",
+      "Bash(ps -eo pid,lstart,comm)",
+      "Bash(shasum build/macos/Build/Products/Release/Khazana.app/Contents/Frameworks/App.framework/Versions/A/App ~/Desktop/Khazana.app/Contents/Frameworks/App.framework/Versions/A/App)",
+      "Bash(perl -e 'select\\(undef,undef,undef,2\\)')",
+      "Bash(perl -e 'select\\(undef,undef,undef,6\\)')",
+      "Bash(rm -rf shots-before)",
+      "Bash(mv shots *)",
+      "Bash(rm -rf ~/Desktop/Khazana-Screens)",
+      "Bash(mkdir -p ~/Desktop/Khazana-Screens/after ~/Desktop/Khazana-Screens/before)",
+      "Bash(cp shots/*.png ~/Desktop/Khazana-Screens/after/)",
+      "Bash(cp shots-old/*.png ~/Desktop/Khazana-Screens/before/)",
+      "Bash(curl -s -m 12 -A \"Mozilla/5.0\" \"https://query1.finance.yahoo.com/v8/finance/chart/INFY.NS?interval=1d&range=1d\")",
+      "Bash(curl -s -m 20 \"https://www.amfiindia.com/spages/NAVAll.txt\")",
+      "Bash(curl -s -m 25 \"https://portal.amfiindia.com/spages/NAVAll.txt\")",
+      "Bash(curl -s -o /dev/null -m 20 -w \"%{http_code} -> %{redirect_url}\\\\n\" \"https://www.amfiindia.com/spages/NAVAll.txt\")",
+      "Bash(perl -e 'select\\(undef,undef,undef,8\\)')",
+      "Bash(curl -s -m 30 \"https://portal.amfiindia.com/spages/NAVAll.txt\")"
+    ],
+    "additionalDirectories": [
+      "/private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/shots"
+    ]
+  }
+}

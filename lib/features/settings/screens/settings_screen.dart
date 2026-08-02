@@ -139,10 +139,11 @@ class _SettingsBody extends ConsumerWidget {
           subtitle: Text(vaultId),
         ),
         const _BiometricUnlockTile(),
+        const _RequirePinTile(),
         ListTile(
           leading: const Icon(Icons.lock_outline),
           title: const Text('Lock now'),
-          onTap: () => ref.read(vaultUnlockProvider.notifier).lock(),
+          onTap: () => ref.read(vaultUnlockProvider.notifier).lock(force: true),
         ),
         ListTile(
           leading: const Icon(Icons.swap_horiz),
@@ -261,7 +262,7 @@ class _SettingsBody extends ConsumerWidget {
                 onTap: () {
                   // Switching re-points the unlock gate → forces re-auth.
                   ref.read(selectedVaultProvider.notifier).state = v;
-                  ref.read(vaultUnlockProvider.notifier).lock();
+                  ref.read(vaultUnlockProvider.notifier).lock(force: true);
                   Navigator.pop(context);
                 },
               ),
@@ -446,6 +447,79 @@ class _SectionHeader extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
       ),
+    );
+  }
+}
+
+
+/// Turns the launch PIN back on, or off.
+///
+/// Phrased as "Require a PIN" rather than "Skip the PIN" so the switch being ON
+/// is the protected state. A toggle whose ON position removes a protection
+/// reads backwards on every glance.
+class _RequirePinTile extends ConsumerStatefulWidget {
+  const _RequirePinTile();
+
+  @override
+  ConsumerState<_RequirePinTile> createState() => _RequirePinTileState();
+}
+
+class _RequirePinTileState extends ConsumerState<_RequirePinTile> {
+  bool? _required;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final disabled =
+        await ref.read(vaultUnlockProvider.notifier).lockIsDisabled();
+    if (mounted) setState(() => _required = !disabled);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final required = _required;
+    return SwitchListTile(
+      secondary: const Icon(Icons.password_outlined),
+      title: const Text('Require a PIN to open Khazana'),
+      subtitle: Text(
+        required == false
+            ? 'Off — the key that decrypts your vault is stored on this device, '
+                'so anyone who can use it can open Khazana.'
+            : 'On — your vault key is recomputed from your PIN each time and '
+                'never written to disk.',
+      ),
+      value: required ?? true,
+      onChanged: _busy || required == null
+          ? null
+          : (want) async {
+              setState(() => _busy = true);
+              final notifier = ref.read(vaultUnlockProvider.notifier);
+              final messenger = ScaffoldMessenger.of(context);
+              var ok = true;
+              if (want) {
+                await notifier.enableLock();
+              } else {
+                // Requires an unlocked vault, which is guaranteed here: this
+                // screen is behind the gate.
+                ok = await notifier.disableLock();
+              }
+              if (!mounted) return;
+              setState(() {
+                _required = ok ? want : true;
+                _busy = false;
+              });
+              if (!ok) {
+                messenger.showSnackBar(const SnackBar(
+                  content: Text(
+                      'Could not store the key, so the PIN is still required.'),
+                ));
+              }
+            },
     );
   }
 }

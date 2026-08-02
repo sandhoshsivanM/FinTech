@@ -76,6 +76,8 @@ class _AppShellState extends ConsumerState<AppShell>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
+      // Not forced: with the lock turned off, backgrounding the app must not
+      // put a PIN screen in front of someone who asked never to see one.
       ref.read(vaultUnlockProvider.notifier).lock();
     }
   }
@@ -109,7 +111,9 @@ class _AppShellState extends ConsumerState<AppShell>
           ),
           _LockIntent: CallbackAction<_LockIntent>(
             onInvoke: (_) {
-              ref.read(vaultUnlockProvider.notifier).lock();
+              // Cmd+L is a deliberate press, so it locks even when the lock is
+              // otherwise off.
+              ref.read(vaultUnlockProvider.notifier).lock(force: true);
               return null;
             },
           ),

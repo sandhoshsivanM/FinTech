@@ -37,6 +37,8 @@ class VaultCredentialStore {
   static const _saltPrefix = 'vault_salt_';
   static const _verifierPrefix = 'vault_verifier_';
   static const _biometricPrefix = 'vault_biometric_';
+  static const _deviceKeyPrefix = 'vault_device_key_';
+  static const _lockDisabledPrefix = 'vault_lock_disabled_';
 
   /// Domain separation, so the stored hash cannot be confused with, or replayed
   /// against, any other SHA-256 the app computes over the same key.
@@ -48,6 +50,8 @@ class VaultCredentialStore {
   String _saltKey(String vaultId) => '$_saltPrefix$vaultId';
   String _verifierKey(String vaultId) => '$_verifierPrefix$vaultId';
   String _biometricKey(String vaultId) => '$_biometricPrefix$vaultId';
+  String _deviceKeyKey(String vaultId) => '$_deviceKeyPrefix$vaultId';
+  String _lockDisabledKey(String vaultId) => '$_lockDisabledPrefix$vaultId';
 
   /// True once a vault has completed setup.
   ///
@@ -109,11 +113,59 @@ class VaultCredentialStore {
     await p.setBool(_biometricKey(vaultId), enabled);
   }
 
+  // -- Opening without a PIN ------------------------------------------------
+  //
+  // Everything above is built so there is NO key at rest: the key is recomputed
+  // from the PIN at each unlock and held only in memory, and even a thief with
+  // the disk finds nothing that decrypts the database.
+  //
+  // The methods below deliberately give that up. When the user turns the lock
+  // off, the derived key is written here in plain preferences, beside the
+  // database it opens. That is not a weakened protection, it is no protection:
+  // anyone who can read the file can read the vault. It exists because a person
+  // may reasonably decide that a machine only they use does not need a PIN
+  // every launch, and the honest way to offer that is to say plainly what it
+  // costs rather than to pretend the encryption still means something.
+  //
+  // Kept out of the keychain on purpose. The keychain would prompt on every
+  // launch, which is the exact friction being removed.
+
+  /// Whether this device opens the vault without asking for a PIN.
+  Future<bool> lockDisabled(String vaultId) async {
+    final p = await _prefs;
+    return p.getBool(_lockDisabledKey(vaultId)) ?? false;
+  }
+
+  Future<void> setLockDisabled(String vaultId, bool disabled) async {
+    final p = await _prefs;
+    await p.setBool(_lockDisabledKey(vaultId), disabled);
+  }
+
+  /// The stored key, or null when the lock is on.
+  Future<Uint8List?> readDeviceKey(String vaultId) async {
+    final p = await _prefs;
+    final hex = p.getString(_deviceKeyKey(vaultId));
+    if (hex == null || hex.isEmpty) return null;
+    return _fromHex(hex);
+  }
+
+  Future<void> storeDeviceKey(String vaultId, Uint8List key) async {
+    final p = await _prefs;
+    await p.setString(_deviceKeyKey(vaultId), KeyDerivationService.toHex(key));
+  }
+
+  Future<void> clearDeviceKey(String vaultId) async {
+    final p = await _prefs;
+    await p.remove(_deviceKeyKey(vaultId));
+  }
+
   Future<void> deleteVault(String vaultId) async {
     final p = await _prefs;
     await p.remove(_saltKey(vaultId));
     await p.remove(_verifierKey(vaultId));
     await p.remove(_biometricKey(vaultId));
+    await p.remove(_deviceKeyKey(vaultId));
+    await p.remove(_lockDisabledKey(vaultId));
   }
 
   static String _verifierFor(Uint8List key) {

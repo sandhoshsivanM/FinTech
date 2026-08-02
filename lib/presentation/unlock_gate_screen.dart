@@ -176,6 +176,13 @@ class _UnlockForm extends ConsumerStatefulWidget {
 class _UnlockFormState extends ConsumerState<_UnlockForm> {
   final _pin = TextEditingController();
 
+  /// Whether this unlock should be the last one.
+  ///
+  /// Offered here rather than only in Settings because this screen is where the
+  /// friction actually is — asking someone to unlock, then navigate somewhere
+  /// else to say they did not want to unlock, is the long way round.
+  bool _remember = false;
+
   @override
   void dispose() {
     _pin.dispose();
@@ -206,6 +213,26 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
           _ErrorText(s.lastError!),
         ],
         const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.sm),
+        // Deliberately worded as what it costs, not as a convenience. "Stay
+        // unlocked" would describe the benefit and hide the trade; the key has
+        // to be written to this device for it to work, and anyone with the
+        // device then has the vault.
+        CheckboxListTile(
+          value: _remember,
+          onChanged: (v) => setState(() => _remember = v ?? false),
+          controlAffinity: ListTileControlAffinity.leading,
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          title: const Text("Don't ask on this device again"),
+          subtitle: Text(
+            'Stores the key that decrypts your vault on this device. Anyone '
+            'who can use it can then open Khazana.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
         FilledButton(
           onPressed: _submitPin,
           child: const Text('Unlock'),
@@ -223,9 +250,13 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
     );
   }
 
-  void _submitPin() {
-    ref.read(vaultUnlockProvider.notifier).unlockWithPin(_pin.text);
+  Future<void> _submitPin() async {
+    final notifier = ref.read(vaultUnlockProvider.notifier);
+    await notifier.unlockWithPin(_pin.text);
     _pin.clear();
+    // Only after the PIN is verified: disableLock reads the live session key,
+    // so a wrong PIN cannot turn the lock off.
+    if (_remember) await notifier.disableLock();
   }
 }
 
