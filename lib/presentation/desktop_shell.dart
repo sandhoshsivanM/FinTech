@@ -106,10 +106,66 @@ class DesktopShell extends ConsumerWidget {
         children: [
           _Sidebar(active: active),
           const VerticalDivider(width: 1, thickness: 1),
-          // No width cap here: a desktop window should use its width. The
-          // mobile shell keeps its 640px cap.
-          Expanded(child: child),
+          Expanded(child: _ContentColumn(route: active, child: child)),
         ],
+      ),
+    );
+  }
+}
+
+/// Routes whose content is genuinely multi-column and earns the extra width.
+///
+/// Everything else is a list or a form, and a list row is unreadable when it
+/// spans 1600px: the label sits at the far left and its value at the far right
+/// with half a metre of blank canvas between them, so the eye cannot pair them.
+const _wideRoutes = <String>{
+  Routes.dashboard,
+  Routes.investments,
+  Routes.investmentsBreakdown,
+  Routes.calendar,
+  Routes.reports,
+};
+
+/// Caps and centres the content column.
+///
+/// The desktop shell used to hand [child] the whole window on the reasoning
+/// that "a desktop window should use its width". But the screens were written
+/// as a 640px mobile column, so using the width meant stretching every row to
+/// fill it — which is what made Recurring, Liabilities, Import and Insurance
+/// read as loose text on a blank page rather than as a financial UI.
+///
+/// Width is decided by ROUTE alone. The mobile shell's `wideLayoutProvider`
+/// opt-in is deliberately NOT consulted here: it is set on mount and cleared on
+/// dispose, and those two do not reliably interleave — navigating away from the
+/// calendar can leave the flag stuck true, which silently un-caps every screen
+/// visited afterwards. That is precisely the bug this widget was added to fix,
+/// and it hid the fix for a full build cycle. A route is a fact; a flag set by
+/// whichever screen mounted last is not.
+class _ContentColumn extends ConsumerWidget {
+  const _ContentColumn({required this.route, required this.child});
+
+  final String? route;
+  final Widget child;
+
+  /// Lists and forms.
+  ///
+  /// Deliberately narrow. A row's label sits at the left edge and its amount at
+  /// the right, so the column width IS the distance the eye has to travel to
+  /// pair them; past roughly 900px that pairing stops being free and the row
+  /// reads as two unrelated pieces of text. This is the same reason a bank
+  /// statement is a column and not a billboard.
+  static const double _standard = 880;
+
+  /// Dashboards that lay out two or three real columns.
+  static const double _wide = 1440;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final wide = _wideRoutes.contains(route);
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: wide ? _wide : _standard),
+        child: child,
       ),
     );
   }

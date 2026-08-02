@@ -7,6 +7,7 @@ import '../../../core/utils/money_format.dart';
 import '../../../domain/entities/insurance.dart';
 import '../../../domain/services/insurance_advisor.dart';
 import '../../../presentation/data_gate.dart';
+import '../../../presentation/empty_state.dart';
 import '../providers/insurance_providers.dart';
 
 IconData _typeIcon(InsuranceType t) => switch (t) {
@@ -98,9 +99,12 @@ class _Body extends ConsumerWidget {
               const SizedBox(height: AppSpacing.sm),
 
               if (policies.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(AppSpacing.lg),
-                  child: Center(child: Text('No policies yet. Tap Add.')),
+                const EmptyState(
+                  icon: Icons.umbrella_outlined,
+                  title: 'No policies tracked yet',
+                  message: 'Add your life and health cover and the gap analysis '
+                      'above becomes a real reading of where you stand, rather '
+                      'than 0% against a guideline.',
                 )
               else
                 for (final p in policies)
