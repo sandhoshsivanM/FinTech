@@ -1,6 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../../core/di/data_providers.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
@@ -28,8 +31,133 @@ class AccountsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Accounts')),
       body: const DataGate(child: _Body()),
+      floatingActionButton: const _AddAccountButton(),
     );
   }
+}
+
+const _uuid = Uuid();
+
+/// Adds a bank or cash account with the balance it holds today.
+///
+/// Until this existed the only accounts in the app were the ones LedgerWriter
+/// created implicitly — a single "Cash" account named after nothing — so a
+/// screen that showed balances had nothing a person could put on it. An opening
+/// balance is enough on its own: [AccountLedger.accountBalances] seeds each
+/// account from it and every later transaction moves it from there, so a new
+/// account is correct from the moment it is saved without needing its history
+/// re-entered.
+class _AddAccountButton extends ConsumerWidget {
+  const _AddAccountButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FloatingActionButton.extended(
+      onPressed: () => _showAddAccount(context, ref),
+      icon: const Icon(Icons.add),
+      label: const Text('Add account'),
+    );
+  }
+}
+
+Future<void> _showAddAccount(BuildContext context, WidgetRef ref) async {
+  final name = TextEditingController();
+  final balance = TextEditingController();
+  var group = _Group.bank;
+  var error = false;
+
+  await showDialog<void>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: const Text('Add account'),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 380),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: name,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  hintText: 'HDFC Savings',
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              // Chips rather than a dropdown: two options, and the dropdown
+              // menu on this platform paints over its own field.
+              Wrap(
+                spacing: AppSpacing.sm,
+                children: [
+                  for (final g in _Group.values)
+                    ChoiceChip(
+                      label: Text(g.label),
+                      selected: g == group,
+                      onSelected: (_) => setState(() => group = g),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: balance,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'Balance today',
+                  prefixText: '₹ ',
+                  errorText: error ? 'Enter a number, or leave it blank' : null,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'Khazana never connects to your bank. Enter what the account '
+                'holds now and every transaction you record moves it from '
+                'there.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final label = name.text.trim();
+              if (label.isEmpty) return;
+              final raw = balance.text.trim().replaceAll(',', '');
+              // An unparseable balance is rejected rather than silently treated
+              // as zero: an account that quietly opens at nothing is worse than
+              // one that refuses to be created.
+              final opening =
+                  raw.isEmpty ? Decimal.zero : Decimal.tryParse(raw);
+              if (opening == null) {
+                setState(() => error = true);
+                return;
+              }
+              final vaultId = ref.read(currentVaultIdProvider);
+              await ref.read(accountRepositoryProvider).save(Account(
+                    id: 'acct-${_uuid.v4()}',
+                    vaultId: vaultId,
+                    name: label,
+                    type: AccountType.asset,
+                    subtype: group.subtype,
+                    openingBalance: opening.abs(),
+                  ));
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 /// Only the account subtypes that hold money.
@@ -83,12 +211,17 @@ class _Body extends ConsumerWidget {
     }
 
     if (grouped.isEmpty && liabilities.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.account_balance_outlined,
         title: 'No accounts yet',
-        message: 'Import a bank statement and Khazana creates the account it '
-            'belongs to, then keeps its balance in step with every '
-            'transaction you record.',
+        message: 'Add the accounts your money sits in and Khazana keeps their '
+            'balances in step with every transaction you record. Importing a '
+            'bank statement fills one in too.',
+        action: FilledButton.icon(
+          onPressed: () => _showAddAccount(context, ref),
+          icon: const Icon(Icons.add),
+          label: const Text('Add your first account'),
+        ),
       );
     }
 
@@ -149,6 +282,8 @@ class _Body extends ConsumerWidget {
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
+        // Clearance for the FAB.
+        const SizedBox(height: 88),
       ],
     );
   }
