@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../domain/entities/portfolio.dart' show PriceQuality, PriceSource;
 import '../models/tables.dart';
 import 'app_database.dart';
 
@@ -146,9 +147,53 @@ class PortfolioDao extends DatabaseAccessor<AppDatabase>
     final latest = <String, InstrumentPriceRow>{};
     for (final r in rows) {
       final held = latest[r.instrumentId];
-      if (held == null || r.asOf > held.asOf) latest[r.instrumentId] = r;
+      if (held == null || _outranks(r, held)) latest[r.instrumentId] = r;
     }
     return latest;
+  }
+
+  /// Whether [candidate] should replace [held] as the instrument's current
+  /// price.
+  ///
+  /// Newest-`asOf`-wins is the obvious rule and it is wrong, because `asOf` is
+  /// the date the price DESCRIBES, not the date we learned it. AMFI publishes a
+  /// day behind and the app records that real date rather than the fetch time —
+  /// deliberately, so a NAV is never dressed up as fresher than it is. The
+  /// consequence was that a freshly fetched official NAV dated yesterday lost to
+  /// a sample price stamped today, and two mutual funds sat on demo values
+  /// through a successful refresh that reported "Updated 7".
+  ///
+  /// So authority comes first: an observation of a real market outranks a
+  /// hand-typed number regardless of date. Only within the same tier does the
+  /// newer `asOf` win.
+  ///
+  /// The tradeoff, stated plainly: a manual price entered to override a live
+  /// quote will not take effect while that quote stands. That is the right way
+  /// round — manual entry exists for instruments with no market (bonds, FDs,
+  /// property), and for those nothing else competes.
+  static bool _outranks(InstrumentPriceRow candidate, InstrumentPriceRow held) {
+    final a = _authority(candidate.source);
+    final b = _authority(held.source);
+    if (a != b) return a > b;
+    return candidate.asOf > held.asOf;
+  }
+
+  /// How much a price source is to be believed. Unknown keys degrade to the
+  /// bottom rather than throwing: a row written by a future version must not
+  /// crash an older build, and treating it as least authoritative is the safe
+  /// direction.
+  static int _authority(String sourceKey) {
+    final source = PriceSource.values
+        .where((s) => s.key == sourceKey)
+        .firstOrNull;
+    return switch (source?.quality) {
+      PriceQuality.live => 3,
+      PriceQuality.official => 3,
+      PriceQuality.stale => 2,
+      PriceQuality.indicative => 1,
+      PriceQuality.unknownDate => 0,
+      null => 0,
+    };
   }
 
   /// Drops price history older than [keep] points per instrument.

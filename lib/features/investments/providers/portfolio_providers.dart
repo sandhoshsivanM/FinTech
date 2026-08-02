@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
@@ -318,4 +319,33 @@ extension _FirstWhereOrNull<E> on Iterable<E> {
     }
     return null;
   }
+}
+
+/// When the user last ran a price refresh on this device.
+///
+/// Distinct from any price's own `asOf`: a run that reaches every provider and
+/// finds nothing newer still counts as "checked". Without this, a portfolio
+/// whose prices are all a week old is indistinguishable from one that was
+/// checked a minute ago and genuinely has not moved.
+///
+/// Stored in preferences, not the keychain — a timestamp is not a secret, and
+/// reading it must not cost an OS password prompt.
+final lastPriceRefreshProvider =
+    FutureProvider<DateTime?>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  final ms = prefs.getInt(_lastRefreshKey(ref.watch(currentVaultIdProvider)));
+  return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+});
+
+String _lastRefreshKey(String vaultId) => 'prices_last_refresh_$vaultId';
+
+/// Records that a refresh ran. Call after the service returns, success or not:
+/// "we checked and nothing came back" is exactly what the user needs to know.
+///
+/// Takes the vault id rather than a `Ref` so widgets (which hold a `WidgetRef`)
+/// and providers can both call it.
+Future<void> recordPriceRefresh(String vaultId) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setInt(
+      _lastRefreshKey(vaultId), DateTime.now().millisecondsSinceEpoch);
 }

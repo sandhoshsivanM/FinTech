@@ -17,7 +17,9 @@ import '../../../presentation/charts/sunburst_chart.dart';
 import '../../../presentation/stat_tile.dart';
 import '../../../presentation/glass_card.dart';
 import '../providers/investment_providers.dart' show taxRuleEngineProvider;
+import '../../../core/di/data_providers.dart' show currentVaultIdProvider;
 import '../services/price_refresh_service.dart';
+import '../widgets/market_data_card.dart';
 import '../providers/portfolio_providers.dart';
 
 /// The portfolio home: totals, allocation, sector P&L, movers and every holding.
@@ -96,6 +98,10 @@ class _RefreshPricesButtonState extends ConsumerState<_RefreshPricesButton> {
     try {
       final service = await ref.read(priceRefreshServiceProvider.future);
       final result = await service.refresh();
+      // Recorded even when nothing changed: "checked a minute ago and nothing
+      // moved" and "not checked in a week" look identical on screen otherwise.
+      await recordPriceRefresh(ref.read(currentVaultIdProvider));
+      ref.invalidate(lastPriceRefreshProvider);
       // Force a re-read: prices are fetched per snapshot build rather than
       // streamed, so nothing else would notice they changed.
       ref.invalidate(portfolioSnapshotProvider);
@@ -104,6 +110,8 @@ class _RefreshPricesButtonState extends ConsumerState<_RefreshPricesButton> {
         SnackBar(content: Text(_describe(result))),
       );
     } on Object catch (e) {
+      await recordPriceRefresh(ref.read(currentVaultIdProvider));
+      ref.invalidate(lastPriceRefreshProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Could not refresh prices: $e')));
@@ -223,6 +231,8 @@ class _Body extends ConsumerWidget {
             const _ImportBar(),
             const SizedBox(height: AppSpacing.md),
             const _Notices(),
+            _MarketData(snap: snap),
+            const SizedBox(height: AppSpacing.md),
             if (wide)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1095,4 +1105,23 @@ String? _asOfText(DateTime? at) {
   if (days <= 0) return 'Priced today';
   if (days == 1) return 'Priced yesterday';
   return 'Priced $when ($days days ago)';
+}
+
+
+/// Binds the market-data card to the last-refresh timestamp and hands it the
+/// existing refresh control, so there is still exactly one code path that
+/// touches the network.
+class _MarketData extends ConsumerWidget {
+  const _MarketData({required this.snap});
+
+  final PortfolioSnapshot snap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MarketDataCard(
+      snap: snap,
+      lastRefreshedAt: ref.watch(lastPriceRefreshProvider).valueOrNull,
+      refreshButton: const _RefreshPricesButton(),
+    );
+  }
 }

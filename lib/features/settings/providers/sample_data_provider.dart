@@ -193,7 +193,13 @@ class SampleDataLoader {
       final iciciDebt = await security(
           'ICICI Prudential Corporate Bond Fund - Direct Growth', '',
           AssetType.debtMf,
-          schemeCode: '120753', amcName: 'ICICI Prudential Mutual Fund');
+          // 120692 is the Direct Plan GROWTH option. The code here was 120753,
+          // which is a discontinued IDCW-reinvestment option of a different
+          // scheme entirely — AMFI still lists it, so the lookup succeeded and
+          // the demo portfolio quietly carried a NAV last published in
+          // September 2022. A code that resolves is not the same as a code
+          // that is right.
+          schemeCode: '120692', amcName: 'ICICI Prudential Mutual Fund');
 
       await trade(niftybees, TradeSide.buy, '800', '235.10', 400);
       await trade(goldbees, TradeSide.buy, '500', '53.20', 300);
