@@ -14,7 +14,10 @@ class AppBackground extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark
         ? const [AppColors.bgTop, AppColors.bgBottom]
-        : const [Color(0xFFFAF9F6), AppColors.lightCanvas]; // warm paper
+        // Lighter at the top, settling into the canvas — the same direction as
+        // the dark gradient, so switching themes does not also flip which end
+        // of the screen is brighter.
+        : const [Color(0xFFFBFCFE), AppColors.lightCanvas];
 
     return DecoratedBox(
       decoration: BoxDecoration(

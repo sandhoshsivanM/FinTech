@@ -7,6 +7,7 @@ import 'core/branding.dart';
 import 'core/router/app_router.dart';
 import 'core/router/layout_providers.dart';
 import 'core/theme/app_theme.dart';
+import 'features/settings/providers/theme_providers.dart';
 import 'presentation/app_background.dart';
 
 void main() {
@@ -25,13 +26,11 @@ class KhazanaApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      // Default to light (user preference); the gradient backdrop + glass
-      // surfaces give the premium look in both themes.
-      // Dark by default. Every screen in this app is a dense grid of figures,
-      // and the light canvas was warm paper — good for reading prose, wrong for
-      // a wall of numbers where the ink should be the brightest thing present.
-      // Light remains available in Settings.
-      themeMode: ThemeMode.dark,
+      // Follows the OS unless the user has chosen, in Settings → Appearance.
+      // This was hardcoded — first to light, then to dark — and a hardcoded
+      // theme is a claim about someone's room made from the other side of the
+      // world.
+      themeMode: ref.watch(themeModeProvider),
       routerConfig: router,
       builder: (context, child) => AppBackground(
         child: _Responsive(child: child ?? const SizedBox()),

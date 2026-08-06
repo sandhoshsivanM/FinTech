@@ -10,6 +10,7 @@ import '../../../core/di/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/security/vault_registry.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../providers/theme_providers.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/tour_overlay.dart';
 import '../providers/sample_data_provider.dart';
@@ -132,6 +133,9 @@ class _SettingsBody extends ConsumerWidget {
 
     return ListView(
       children: [
+        const _SectionHeader('Appearance'),
+        const _ThemeTile(),
+        const Divider(),
         const _SectionHeader('Vault'),
         ListTile(
           leading: const Icon(Icons.account_balance_wallet_outlined),
@@ -520,6 +524,39 @@ class _RequirePinTileState extends ConsumerState<_RequirePinTile> {
                 ));
               }
             },
+    );
+  }
+}
+
+
+/// Light, dark, or whatever the OS says.
+class _ThemeTile extends ConsumerWidget {
+  const _ThemeTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(themeModeProvider);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm),
+      child: Row(
+        children: [
+          Icon(Icons.contrast,
+              color: Theme.of(context).colorScheme.onSurfaceVariant),
+          const SizedBox(width: AppSpacing.lg),
+          const Expanded(child: Text('Theme')),
+          SegmentedButton<ThemeMode>(
+            segments: [
+              for (final m in ThemeMode.values)
+                ButtonSegment(value: m, label: Text(m.label)),
+            ],
+            selected: {mode},
+            showSelectedIcon: false,
+            onSelectionChanged: (s) =>
+                ref.read(themeModeProvider.notifier).set(s.first),
+          ),
+        ],
+      ),
     );
   }
 }

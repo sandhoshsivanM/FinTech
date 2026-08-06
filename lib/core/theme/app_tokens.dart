@@ -43,7 +43,11 @@ abstract final class AppColors {
   static const Color bgTop = Color(0xFF0D1220);
   static const Color bgBottom = Color(0xFF080B14);
   static const Color darkCanvas = Color(0xFF080B14);
-  static const Color darkSurface = Color(0xFF141B2D);
+  // #17203A, not #141B2D. The test asserting a card is distinguishable from the
+  // page caught this at 0.0078 against a 0.008 floor — close enough to pass by
+  // eye on a good monitor and not on a dim one, which is exactly the kind of
+  // margin that should be decided by a number rather than by whoever is looking.
+  static const Color darkSurface = Color(0xFF17203A);
   static const Color darkOnSurface = Color(0xFFE8ECF5);
   static const Color darkOnSurfaceMuted = Color(0xFF8B94AB);
 
@@ -51,12 +55,23 @@ abstract final class AppColors {
   static const Color glassFillDark = Color(0x14FFFFFF); // ~8% white fill
   static const Color glassBorderDark = Color(0x24FFFFFF); // ~14% white hairline
 
-  // Light canvas (warm "paper", matches the web light theme).
-  static const Color lightCanvas = Color(0xFFF7F6F3);
+  // Light canvas — cool near-white, not warm paper.
+  //
+  // The old canvas was a warm cream (#F7F6F3) chosen when the accent was a pale
+  // slate-indigo. Against the saturated blue the accent is now, warm grey reads
+  // as a yellow cast and makes the blue look cold and out of place. A canvas
+  // with a trace of the same blue keeps the two on one scale, which is the same
+  // reasoning behind the navy dark canvas — a theme is a pair of choices, not
+  // one choice inverted.
+  //
+  // Cards are pure white ON the tinted canvas rather than the other way round,
+  // so a card is the brightest surface in light exactly as it is in dark. Both
+  // themes then read as "the data sits above the page".
+  static const Color lightCanvas = Color(0xFFF1F4F9);
   static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightOnSurface = Color(0xFF18191F);
-  static const Color glassFillLight = Color(0x0D18191F); // ~5% ink fill
-  static const Color glassBorderLight = Color(0x1718191F); // ~9% ink hairline
+  static const Color lightOnSurface = Color(0xFF141A24);
+  static const Color glassFillLight = Color(0x0D141A24); // ~5% ink fill
+  static const Color glassBorderLight = Color(0x1F141A24); // ~12% ink hairline
 
   /// Accent gradient for hero surfaces and primary actions.
   static const List<Color> accentGradient = [Color(0xFF4B7BEC), Color(0xFF3B5BDB)];
