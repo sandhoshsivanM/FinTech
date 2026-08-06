@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
+import '../../budget/providers/budget_providers.dart';
 import '../../../domain/entities/investment_totals.dart';
 import '../../../domain/entities/net_worth_snapshot.dart';
 import '../../../domain/entities/recurring_rule.dart';
@@ -127,6 +128,13 @@ class _DashboardBody extends ConsumerWidget {
         // 4b. Cash flow, month by month. Above the net-worth trend because it
         //     is the shorter horizon and the one a person can act on this week.
         const _CashFlowCard(),
+        const SizedBox(height: AppSpacing.md),
+
+        // 4c. This month at a glance: where the money went, and how the
+        //     budgets are holding. Two columns on a desktop window — one
+        //     full-width card per fact turns the dashboard into a column of
+        //     banners.
+        const _MonthAtAGlance(),
         const SizedBox(height: AppSpacing.md),
 
         // 5. Window selector + trend chart.
@@ -1339,6 +1347,7 @@ class _CashFlowCard extends ConsumerWidget {
             height: 150,
             formatValue: (v) =>
                 Money.format(Decimal.parse(v.toStringAsFixed(2))),
+            formatAxis: Money.compact,
             semanticLabel: 'Monthly income and spending for the last '
                 '$_months months',
           ),
@@ -1368,6 +1377,243 @@ class _LegendDot extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ],
+    );
+  }
+}
+
+/// Where this month's money went, and how the budgets are holding.
+///
+/// Two cards side by side rather than one each, because on a desktop window a
+/// single full-width card per fact makes the dashboard a column of banners you
+/// scroll through — which is what "I only see one widget" meant.
+class _MonthAtAGlance extends StatelessWidget {
+  const _MonthAtAGlance();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        const gap = SizedBox(width: AppSpacing.md);
+        if (c.maxWidth < 720) {
+          return const Column(
+            children: [
+              _TopSpendCard(),
+              SizedBox(height: AppSpacing.md),
+              _BudgetPulseCard(),
+            ],
+          );
+        }
+        return const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _TopSpendCard()),
+            gap,
+            Expanded(child: _BudgetPulseCard()),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// This month's spending, biggest category first.
+class _TopSpendCard extends ConsumerWidget {
+  const _TopSpendCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(transactionListProvider);
+    final categories = ref.watch(categoryListProvider).valueOrNull ?? const [];
+    final text = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
+    if (state is! TransactionData) return const SizedBox.shrink();
+
+    final now = DateTime.now();
+    final names = {for (final c in categories) c.id: c.name};
+    final byCategory = <String, Decimal>{};
+    for (final t in state.transactions) {
+      if (t.type != TxnType.expense) continue;
+      if (t.date.year != now.year || t.date.month != now.month) continue;
+      byCategory[t.categoryId] =
+          (byCategory[t.categoryId] ?? Decimal.zero) + t.amount;
+    }
+
+    final rows = byCategory.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final total = rows.fold(Decimal.zero, (s, e) => s + e.value);
+    final top = rows.take(5).toList();
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('Where it went',
+                    style:
+                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+              ),
+              Text(Money.format(total),
+                  style: text.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800, color: AppColors.expense)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text('This month, biggest first.',
+              style: text.bodySmall?.copyWith(color: muted)),
+          const SizedBox(height: AppSpacing.sm),
+          if (top.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Text('Nothing spent yet this month.',
+                  style: text.bodyMedium?.copyWith(color: muted)),
+            )
+          else
+            for (final e in top)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(names[e.key] ?? 'Uncategorised',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: text.bodyMedium),
+                        ),
+                        Text(Money.format(e.value),
+                            style: text.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        // Share of THIS month's spending, not of a budget — the
+                        // bar answers "how much of my spending was this", which
+                        // is the question the ordering already raises.
+                        value: total <= Decimal.zero
+                            ? 0
+                            : (e.value / total).toDouble().clamp(0.0, 1.0),
+                        minHeight: 4,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                        valueColor: const AlwaysStoppedAnimation(
+                            AppColors.expense),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Budget headroom, closest to the limit first.
+class _BudgetPulseCard extends ConsumerWidget {
+  const _BudgetPulseCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progress = [...ref.watch(budgetProgressProvider)]
+      ..sort((a, b) => b.fraction.compareTo(a.fraction));
+    // Budget.categoryId is a uuid; the Budget screen resolves it the same way.
+    // Printing the raw id would put a hex string where a category name belongs.
+    final names = {
+      for (final c in ref.watch(categoryListProvider).valueOrNull ?? const [])
+        c.id: c.name,
+    };
+    final text = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final over = progress.where((p) => p.remaining < Decimal.zero).length;
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('Budgets',
+                    style:
+                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+              ),
+              if (over > 0)
+                Text('$over over',
+                    style: text.bodySmall?.copyWith(
+                        color: AppColors.expense,
+                        fontWeight: FontWeight.w700)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            progress.isEmpty
+                ? 'Set a budget and its headroom shows here.'
+                : 'Closest to the limit first.',
+            style: text.bodySmall?.copyWith(color: muted),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          for (final p in progress.take(5))
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                            names[p.budget.categoryId] ?? 'Uncategorised',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: text.bodyMedium),
+                      ),
+                      Text(
+                        p.remaining < Decimal.zero
+                            ? '${Money.format(-p.remaining)} over'
+                            : '${Money.format(p.remaining)} left',
+                        style: text.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: p.remaining < Decimal.zero
+                              ? AppColors.expense
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: p.fraction.clamp(0.0, 1.0),
+                      minHeight: 4,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation(
+                        // Same three thresholds the Budget screen uses. Two
+                        // screens disagreeing about when a budget is "warning"
+                        // is worse than either threshold being wrong.
+                        p.fraction >= 0.9
+                            ? AppColors.budgetOver
+                            : p.fraction >= 0.7
+                                ? AppColors.budgetWarn
+                                : AppColors.budgetOk,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

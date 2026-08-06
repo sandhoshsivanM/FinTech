@@ -555,6 +555,7 @@ class _MonthlyFlowCard extends ConsumerWidget {
             height: 170,
             formatValue: (v) =>
                 Money.format(Decimal.parse(v.toStringAsFixed(2))),
+            formatAxis: Money.compact,
             semanticLabel:
                 'Monthly income and spending for the last $_months months',
           ),

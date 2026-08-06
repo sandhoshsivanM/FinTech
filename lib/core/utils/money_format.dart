@@ -10,6 +10,30 @@ abstract final class Money {
   /// Display string, e.g. ₹10,000.00 (Indian grouping).
   static String format(Decimal amount) => _inr.format(amount.toDouble());
 
+  /// Short form for chart axes: ₹1.2L, ₹90k, ₹450.
+  ///
+  /// Uses the Indian scale — lakh and crore — because the rest of the app
+  /// groups digits that way (₹9,25,935.49, not ₹925,935.49) and an axis reading
+  /// "₹925k" beside a total reading "₹9,25,935" makes the reader do a
+  /// conversion to check they match.
+  ///
+  /// One decimal at most. An axis label is read at a glance and is there to
+  /// give the bars a scale, not to be the number of record — that is what the
+  /// hover readout and the totals above are for.
+  static String compact(num amount) {
+    final v = amount.abs();
+    final sign = amount < 0 ? '-' : '';
+    String trim(double x) {
+      final s = x.toStringAsFixed(1);
+      return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+    }
+
+    if (v >= 10000000) return '$sign₹${trim(v / 10000000)}Cr';
+    if (v >= 100000) return '$sign₹${trim(v / 100000)}L';
+    if (v >= 1000) return '$sign₹${trim(v / 1000)}k';
+    return '$sign₹${v.toStringAsFixed(0)}';
+  }
+
   /// Signed display for a transaction type.
   static String formatSigned(Decimal amount, {required bool isIncome}) {
     final s = format(amount);
