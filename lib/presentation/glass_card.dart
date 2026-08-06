@@ -12,7 +12,11 @@ import '../core/theme/app_tokens.dart';
 class GlassCard extends StatelessWidget {
   const GlassCard({
     required this.child,
-    this.padding = const EdgeInsets.all(AppSpacing.lg),
+    // 16, not 24. A trading screen earns its authority from density: every
+    // point of padding is a point not spent on a figure, and at 24 a card
+    // holding four numbers looked like a card holding one. The reference
+    // dashboards this is measured against sit at 16 or below.
+    this.padding = const EdgeInsets.all(AppSpacing.md),
     super.key,
   });
 

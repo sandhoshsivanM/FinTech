@@ -243,8 +243,6 @@ class _Body extends ConsumerWidget {
                     child: Column(
                       children: [
                         _AllocationCard(snap: snap),
-                        const SizedBox(height: AppSpacing.md),
-                        _MarketCapCard(snap: snap),
                       ],
                     ),
                   ),
@@ -264,8 +262,6 @@ class _Body extends ConsumerWidget {
               _AllocationCard(snap: snap),
               const SizedBox(height: AppSpacing.md),
               _SectorPnlCard(snap: snap),
-              const SizedBox(height: AppSpacing.md),
-              _MarketCapCard(snap: snap),
               const SizedBox(height: AppSpacing.md),
               _MoversCard(snap: snap),
             ],
@@ -293,6 +289,14 @@ class _Body extends ConsumerWidget {
                       by: (p) => p.instrument.sectorCode,
                     ),
                   ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: GroupAllocationCard(
+                      snap: snap,
+                      title: 'Market cap',
+                      by: (p) => p.instrument.marketCapBand?.label,
+                    ),
+                  ),
                 ],
               )
             else ...[
@@ -307,6 +311,11 @@ class _Body extends ConsumerWidget {
                   snap: snap,
                   title: 'Sector',
                   by: (p) => p.instrument.sectorCode),
+              const SizedBox(height: AppSpacing.md),
+              GroupAllocationCard(
+                  snap: snap,
+                  title: 'Market cap',
+                  by: (p) => p.instrument.marketCapBand?.label),
             ],
             const SizedBox(height: AppSpacing.md),
 
@@ -345,17 +354,13 @@ class _Body extends ConsumerWidget {
                   const SizedBox(width: AppSpacing.md),
                   Expanded(child: DiversificationCard(snap: snap)),
                   const SizedBox(width: AppSpacing.md),
-                  Expanded(child: RiskCard(snap: snap)),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(child: PortfolioInsightsCard(snap: snap)),
+                  Expanded(flex: 2, child: PortfolioInsightsCard(snap: snap)),
                 ],
               )
             else ...[
               WinnersLosersCard(snap: snap),
               const SizedBox(height: AppSpacing.md),
               DiversificationCard(snap: snap),
-              const SizedBox(height: AppSpacing.md),
-              RiskCard(snap: snap),
               const SizedBox(height: AppSpacing.md),
               PortfolioInsightsCard(snap: snap),
             ],
@@ -723,34 +728,6 @@ class _RollupRowTile extends StatelessWidget {
 
 // ---------------------------------------------------------------------------
 // Market cap
-// ---------------------------------------------------------------------------
-
-class _MarketCapCard extends StatelessWidget {
-  const _MarketCapCard({required this.snap});
-
-  final PortfolioSnapshot snap;
-
-  @override
-  Widget build(BuildContext context) {
-    const analytics = PortfolioAnalytics();
-    final rows = analytics.rollup(snap.positions, RollupDimension.marketCap);
-    if (rows.isEmpty) return const SizedBox.shrink();
-
-    return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _CardTitle('Market cap'),
-          const SizedBox(height: AppSpacing.xs),
-          for (final r in rows) _RollupRowTile(row: r, total: snap.marketValue),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Movers
 // ---------------------------------------------------------------------------
 
 class _MoversCard extends StatelessWidget {

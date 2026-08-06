@@ -170,8 +170,8 @@ class WinnersLosersCard extends StatelessWidget {
           if (flat > 0)
             DonutSegment('Flat', flat.toDouble(), scheme.outlineVariant),
         ],
-        size: 130,
-        strokeWidth: 18,
+        size: 116,
+        strokeWidth: 16,
         centerText: '$up / ${snap.positions.length}',
         centerSub: 'in profit',
         formatValue: (v) => '${v.round()} holdings',
@@ -306,7 +306,14 @@ class ReturnDistributionCard extends StatelessWidget {
   }
 }
 
-/// The handful of facts a person would otherwise scan the table for.
+/// The facts a person would otherwise scan the table for.
+///
+/// Was two cards. "Concentration" and "At a glance" both opened with the
+/// largest position, its share and its value — the same three facts, rounded
+/// differently, so the screen said 23.6% in one card and 24% in the other and
+/// invited the reader to work out which was right. Two cards that disagree
+/// about the same number are worse than one card, and a dashboard that repeats
+/// itself is the clearest signal that nobody read it end to end.
 class PortfolioInsightsCard extends StatelessWidget {
   const PortfolioInsightsCard({required this.snap, super.key});
 
@@ -318,28 +325,48 @@ class PortfolioInsightsCard extends StatelessWidget {
     if (positions.isEmpty) return const SizedBox.shrink();
 
     final priced = positions.where((p) => _returnOf(p) != null).toList();
-    final biggest =
-        positions.reduce((a, b) => b.marketValue > a.marketValue ? b : a);
+    final sorted = [...positions]
+      ..sort((a, b) => b.marketValue.compareTo(a.marketValue));
+    final largest = sorted.first;
+    final smallest = sorted.last;
+    final topThree =
+        sorted.take(3).fold(Decimal.zero, (s, p) => s + p.marketValue);
     final best = priced.isEmpty
         ? null
         : priced.reduce((a, b) => _returnOf(b)! > _returnOf(a)! ? b : a);
     final worst = priced.isEmpty
         ? null
         : priced.reduce((a, b) => _returnOf(b)! < _returnOf(a)! ? b : a);
-    final total =
-        positions.fold(Decimal.zero, (s, p) => s + p.marketValue);
+
+    final total = positions.fold(Decimal.zero, (s, p) => s + p.marketValue);
+    final invested = positions.fold(Decimal.zero, (s, p) => s + p.costBasis);
+
+    // One rounding, used everywhere on this card. The duplicate cards differed
+    // only because each did its own.
+    String share(Decimal v) => total <= Decimal.zero
+        ? '—'
+        : '${((v / total).toDouble() * 100).toStringAsFixed(1)}%';
 
     return _Card(
-      title: 'At a glance',
+      title: 'Concentration and extremes',
       child: Column(
         children: [
           _InsightRow(
-            label: 'Largest position',
-            value: biggest.instrument.name,
-            detail: total <= Decimal.zero
-                ? null
-                : '${((biggest.marketValue / total).toDouble() * 100).round()}%'
-                    ' · ${Money.format(biggest.marketValue)}',
+            label: 'Largest',
+            value: largest.instrument.name,
+            detail: '${share(largest.marketValue)} · '
+                '${Money.format(largest.marketValue)}',
+          ),
+          _InsightRow(
+            label: 'Top three',
+            value: share(topThree),
+            detail: Money.format(topThree),
+          ),
+          _InsightRow(
+            label: 'Smallest',
+            value: smallest.instrument.name,
+            detail: '${share(smallest.marketValue)} · '
+                '${Money.format(smallest.marketValue)}',
           ),
           if (best != null)
             _InsightRow(
@@ -356,12 +383,10 @@ class PortfolioInsightsCard extends StatelessWidget {
               detailColor: AppColors.expense,
             ),
           _InsightRow(
-            label: 'Average position',
-            value: Money.format(
-              (total / Decimal.fromInt(positions.length))
-                  .toDecimal(scaleOnInfinitePrecision: 2),
-            ),
-            detail: '${positions.length} holdings',
+            label: 'Invested',
+            value: Money.format(invested),
+            detail: '${positions.length} positions · avg '
+                '${Money.format((total / Decimal.fromInt(positions.length)).toDecimal(scaleOnInfinitePrecision: 2))}',
           ),
         ],
       ),
@@ -392,16 +417,21 @@ class _InsightRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 120,
+            width: 84,
             child: Text(label, style: text.bodySmall?.copyWith(color: muted)),
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // One line, ellipsised. A holding name wrapping to three lines
+                // made every row a different height and the column ragged —
+                // which is most of what "unfinished" looks like on a dense
+                // screen.
                 Text(value,
                     textAlign: TextAlign.right,
-                    maxLines: 2,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: text.bodyMedium
                         ?.copyWith(fontWeight: FontWeight.w700)),
                 ?detail == null
@@ -621,66 +651,6 @@ class ValueDistributionCard extends StatelessWidget {
   }
 }
 
-/// The numbers a risk conversation starts from.
-class RiskCard extends StatelessWidget {
-  const RiskCard({required this.snap, super.key});
-
-  final PortfolioSnapshot snap;
-
-  @override
-  Widget build(BuildContext context) {
-    final positions = snap.positions;
-    if (positions.isEmpty) return const SizedBox.shrink();
-
-    final total = positions.fold(Decimal.zero, (s, p) => s + p.marketValue);
-    final sorted = [...positions]
-      ..sort((a, b) => b.marketValue.compareTo(a.marketValue));
-    final largest = sorted.first;
-    final smallest = sorted.last;
-
-    // Share of the top three, not just the top one. A portfolio can look fine
-    // on "largest holding 22%" while three names carry two thirds of it.
-    final topThree = sorted
-        .take(3)
-        .fold(Decimal.zero, (s, p) => s + p.marketValue);
-
-    String share(Decimal v) => total <= Decimal.zero
-        ? '—'
-        : '${((v / total).toDouble() * 100).toStringAsFixed(1)}%';
-
-    return _Card(
-      title: 'Concentration',
-      child: Column(
-        children: [
-          _InsightRow(
-            label: 'Largest',
-            value: largest.instrument.name,
-            detail: '${share(largest.marketValue)} · '
-                '${Money.format(largest.marketValue)}',
-          ),
-          _InsightRow(
-            label: 'Top three',
-            value: share(topThree),
-            detail: Money.format(topThree),
-          ),
-          _InsightRow(
-            label: 'Smallest',
-            value: smallest.instrument.name,
-            detail: '${share(smallest.marketValue)} · '
-                '${Money.format(smallest.marketValue)}',
-          ),
-          _InsightRow(
-            label: 'Invested',
-            value: Money.format(
-                positions.fold(Decimal.zero, (s, p) => s + p.costBasis)),
-            detail: '${positions.length} positions',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Top gainers and top losers, ranked by return percentage.
 ///
 /// Percentage, not rupees: the rupee ranking is already the diverging chart
@@ -826,8 +796,8 @@ class GroupAllocationCard extends StatelessWidget {
             DonutSegment(u.key, u.value.toDouble(),
                 Theme.of(context).colorScheme.outlineVariant),
         ],
-        size: 130,
-        strokeWidth: 18,
+        size: 116,
+        strokeWidth: 16,
         centerText: Money.compact(grand.toDouble()),
         formatValue: (v) => Money.format(Decimal.parse(v.toStringAsFixed(2))),
       ),
