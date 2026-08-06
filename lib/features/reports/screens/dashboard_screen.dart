@@ -13,7 +13,9 @@ import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/financial_health.dart';
 import '../../../domain/services/narrative_engine.dart';
 import '../../../domain/services/net_worth_calculator.dart';
+import '../../../domain/services/monthly_cash_flow.dart';
 import '../../../presentation/charts/area_chart.dart';
+import '../../../presentation/charts/bar_chart.dart';
 import '../../../presentation/charts/gauge_chart.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
@@ -120,6 +122,11 @@ class _DashboardBody extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
 
         const _InsightsCard(),
+        const SizedBox(height: AppSpacing.md),
+
+        // 4b. Cash flow, month by month. Above the net-worth trend because it
+        //     is the shorter horizon and the one a person can act on this week.
+        const _CashFlowCard(),
         const SizedBox(height: AppSpacing.md),
 
         // 5. Window selector + trend chart.
@@ -1251,6 +1258,116 @@ class _InsightsCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Income against spending, month by month.
+///
+/// The dashboard already carried a savings-rate tile, which is the same
+/// information reduced to one number for one window — and one number cannot
+/// answer the question people actually bring to a dashboard, which is not "what
+/// did I spend" but "is that more than usual". Six bars answer it without being
+/// read.
+class _CashFlowCard extends ConsumerWidget {
+  const _CashFlowCard();
+
+  static const _months = 6;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(transactionListProvider);
+    final text = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
+    // Nothing at all while loading, rather than an empty chart: six flat bars
+    // are a claim about six months, and during load there is no such claim to
+    // make.
+    if (state is! TransactionData) return const SizedBox.shrink();
+    final txns = state.transactions;
+
+    final flows = MonthlyCashFlow.lastMonths(txns, months: _months);
+    final withYear = MonthlyCashFlow.spansYears(flows);
+    final hasAny = flows.any((f) => f.income > Decimal.zero || f.expense > Decimal.zero);
+
+    final saved = flows.fold(Decimal.zero, (s, f) => s + f.net);
+    final months = flows.where((f) => f.income > Decimal.zero).length;
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('Cash flow',
+                    style:
+                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+              ),
+              _LegendDot(color: AppColors.income, label: 'In'),
+              const SizedBox(width: AppSpacing.sm),
+              _LegendDot(color: AppColors.expense, label: 'Out'),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            hasAny
+                ? months == 0
+                    ? 'The last $_months months.'
+                    : 'Kept ${Money.format(saved)} over the last $_months months.'
+                : 'Record a few transactions and your months will appear here.',
+            style: text.bodySmall?.copyWith(color: muted),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          BarChart(
+            groups: [
+              for (final f in flows)
+                BarGroup(
+                  label: f.label(withYear: withYear),
+                  bars: [
+                    Bar(
+                        label: 'In',
+                        value: f.income.toDouble(),
+                        color: AppColors.income),
+                    Bar(
+                        label: 'Out',
+                        value: f.expense.toDouble(),
+                        color: AppColors.expense),
+                  ],
+                ),
+            ],
+            height: 150,
+            formatValue: (v) =>
+                Money.format(Decimal.parse(v.toStringAsFixed(2))),
+            semanticLabel: 'Monthly income and spending for the last '
+                '$_months months',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  const _LegendDot({required this.color, required this.label});
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+      ],
     );
   }
 }

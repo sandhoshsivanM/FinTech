@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
+import '../../../presentation/charts/bar_chart.dart';
+import '../../../domain/services/monthly_cash_flow.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/net_worth_calculator.dart';
 import '../../../presentation/data_gate.dart';
@@ -87,8 +89,13 @@ class _ReportsBody extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.md),
 
-        // 1. Income vs Expense bars.
+        // 1. Income vs Expense — the window's two totals, then the same
+        //    quantities month by month. The totals answer "how much"; only the
+        //    months answer "is that more than usual", which is the question
+        //    that brings people to this screen.
         _IncomeExpenseCard(summary: data.summary),
+        const SizedBox(height: AppSpacing.md),
+        const _MonthlyFlowCard(),
         const SizedBox(height: AppSpacing.md),
 
         // 2. Spending by category donut.
@@ -481,3 +488,78 @@ class _NetWorthTrendCard extends StatelessWidget {
   }
 }
 
+
+// ---------------------------------------------------------------------------
+// 1b. Month-by-month cash flow
+// ---------------------------------------------------------------------------
+
+/// Twelve months of income against spending.
+///
+/// Longer than the dashboard's six because Reports is the screen people open to
+/// look back rather than to check in, and a year is the span that makes an
+/// annual bonus or a seasonal bill legible as a pattern instead of an anomaly.
+class _MonthlyFlowCard extends ConsumerWidget {
+  const _MonthlyFlowCard();
+
+  static const _months = 12;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(transactionListProvider);
+    if (state is! TransactionData) return const SizedBox.shrink();
+
+    final text = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final flows =
+        MonthlyCashFlow.lastMonths(state.transactions, months: _months);
+    final withYear = MonthlyCashFlow.spansYears(flows);
+
+    final active = flows.where((f) => f.expense > Decimal.zero).toList();
+    final busiest = active.isEmpty
+        ? null
+        : active.reduce((a, b) => b.expense > a.expense ? b : a);
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Month by month',
+              style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            busiest == null
+                ? 'Your months will appear here as you record transactions.'
+                : 'Heaviest spending was '
+                    '${busiest.label(withYear: withYear)}, at '
+                    '${Money.format(busiest.expense)}.',
+            style: text.bodySmall?.copyWith(color: muted),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          BarChart(
+            groups: [
+              for (final f in flows)
+                BarGroup(
+                  label: f.label(withYear: withYear),
+                  bars: [
+                    Bar(
+                        label: 'In',
+                        value: f.income.toDouble(),
+                        color: AppColors.income),
+                    Bar(
+                        label: 'Out',
+                        value: f.expense.toDouble(),
+                        color: AppColors.expense),
+                  ],
+                ),
+            ],
+            height: 170,
+            formatValue: (v) =>
+                Money.format(Decimal.parse(v.toStringAsFixed(2))),
+            semanticLabel:
+                'Monthly income and spending for the last $_months months',
+          ),
+        ],
+      ),
+    );
+  }
+}

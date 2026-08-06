@@ -46,6 +46,16 @@ abstract final class ChartTokens {
   /// Gridlines: hairline, solid, never dashed. Dashes compete with the data.
   static const double gridLineWidth = 1;
 
+  /// Bars are capped rather than stretched. A bar wider than it is tall stops
+  /// reading as a magnitude and starts reading as a block of colour, and the
+  /// eye compares the areas instead of the heights.
+  static const double barMaxWidth = 14;
+
+  /// Rounded at the data end only. A radius at the baseline would lift the bar
+  /// off its own axis and shorten it by the radius, which is a small lie told
+  /// consistently.
+  static const double barCornerRadius = 4;
+
   /// Charts below this many points render their empty state instead. A
   /// one-point "trend" is a dot pretending to be a line.
   static const int minSeriesPoints = 2;
