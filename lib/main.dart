@@ -27,7 +27,11 @@ class KhazanaApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       // Default to light (user preference); the gradient backdrop + glass
       // surfaces give the premium look in both themes.
-      themeMode: ThemeMode.light,
+      // Dark by default. Every screen in this app is a dense grid of figures,
+      // and the light canvas was warm paper — good for reading prose, wrong for
+      // a wall of numbers where the ink should be the brightest thing present.
+      // Light remains available in Settings.
+      themeMode: ThemeMode.dark,
       routerConfig: router,
       builder: (context, child) => AppBackground(
         child: _Responsive(child: child ?? const SizedBox()),

@@ -6,6 +6,46 @@ import 'app_tokens.dart';
 /// Premium dark-first "glassmorphism" theme (PRD §10A dark canvas + §3B design
 /// system). Scaffolds are transparent — the gradient background is painted
 /// globally by [AppBackground] via MaterialApp.builder.
+/// Applies tabular figures app-wide, and tightens tracking on the large sizes.
+///
+/// Tabular figures are the single largest difference between a screen that
+/// looks like a finance product and one that does not. By default digits are
+/// proportionally spaced — a 1 is narrower than a 0 — so ₹1,11,111 and
+/// ₹9,99,999 are different widths, decimal points in a column do not line up,
+/// and a figure that updates appears to twitch because its digits reflow. Every
+/// terminal, ledger and broker app uses tabular figures for exactly this
+/// reason, and no amount of alignment work compensates for their absence.
+///
+/// Applied to the whole theme rather than to money widgets alone, because the
+/// moment one label opts out the column it sits in stops aligning, and tracking
+/// down which one is a worse job than never allowing it.
+///
+/// Large sizes also get negative letter spacing. Type set at 32px carries the
+/// tracking it was designed for at 16px, which at that size reads as loose.
+TextTheme _numericTextTheme(TextTheme t) {
+  const figures = [FontFeature.tabularFigures()];
+  TextStyle? tight(TextStyle? s, double spacing) =>
+      s?.copyWith(fontFeatures: figures, letterSpacing: spacing);
+
+  return t.copyWith(
+    displayLarge: tight(t.displayLarge, -1.5),
+    displayMedium: tight(t.displayMedium, -1.0),
+    displaySmall: tight(t.displaySmall, -0.8),
+    headlineLarge: tight(t.headlineLarge, -0.8),
+    headlineMedium: tight(t.headlineMedium, -0.6),
+    headlineSmall: tight(t.headlineSmall, -0.4),
+    titleLarge: tight(t.titleLarge, -0.2),
+    titleMedium: tight(t.titleMedium, -0.1),
+    titleSmall: tight(t.titleSmall, 0),
+    bodyLarge: tight(t.bodyLarge, 0),
+    bodyMedium: tight(t.bodyMedium, 0),
+    bodySmall: tight(t.bodySmall, 0),
+    labelLarge: tight(t.labelLarge, 0),
+    labelMedium: tight(t.labelMedium, 0),
+    labelSmall: tight(t.labelSmall, 0.2),
+  );
+}
+
 abstract final class AppTheme {
   static ThemeData get dark => _build(Brightness.dark);
   static ThemeData get light => _build(Brightness.light);
@@ -39,10 +79,10 @@ abstract final class AppTheme {
     );
 
     return base.copyWith(
-      textTheme: base.textTheme.apply(
+      textTheme: _numericTextTheme(base.textTheme.apply(
         bodyColor: scheme.onSurface,
         displayColor: scheme.onSurface,
-      ),
+      )),
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,

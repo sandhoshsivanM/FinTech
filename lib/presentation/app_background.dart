@@ -31,8 +31,12 @@ class AppBackground extends StatelessWidget {
             top: -120,
             right: -80,
             child: _Glow(
+              // Restrained on dark. The glow exists to keep a large flat canvas
+              // from looking dead; past this it starts tinting the cards that
+              // sit on top of it, and a card whose colour depends on where it
+              // is on the page cannot have its contrast checked.
               color: AppColors.accent
-                  .withValues(alpha: isDark ? 0.10 : 0.08),
+                  .withValues(alpha: isDark ? 0.07 : 0.08),
               size: 320,
             ),
           ),
