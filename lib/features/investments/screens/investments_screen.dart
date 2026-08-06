@@ -20,6 +20,7 @@ import '../providers/investment_providers.dart' show taxRuleEngineProvider;
 import '../../../core/di/data_providers.dart' show currentVaultIdProvider;
 import '../services/price_refresh_service.dart';
 import '../widgets/market_data_card.dart';
+import '../widgets/portfolio_analytics.dart';
 import '../providers/portfolio_providers.dart';
 
 /// The portfolio home: totals, allocation, sector P&L, movers and every holding.
@@ -267,6 +268,33 @@ class _Body extends ConsumerWidget {
               const SizedBox(height: AppSpacing.md),
               _MoversCard(snap: snap),
             ],
+            const SizedBox(height: AppSpacing.md),
+
+            // Analytics. Gain-and-loss spans the full width because its bars
+            // are horizontal and their length IS the reading; halving the width
+            // halves the resolution of every comparison on it.
+            PnlByHoldingCard(snap: snap),
+            const SizedBox(height: AppSpacing.md),
+            if (wide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: WinnersLosersCard(snap: snap)),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(child: DiversificationCard(snap: snap)),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(child: PortfolioInsightsCard(snap: snap)),
+                ],
+              )
+            else ...[
+              WinnersLosersCard(snap: snap),
+              const SizedBox(height: AppSpacing.md),
+              DiversificationCard(snap: snap),
+              const SizedBox(height: AppSpacing.md),
+              PortfolioInsightsCard(snap: snap),
+            ],
+            const SizedBox(height: AppSpacing.md),
+            ReturnDistributionCard(snap: snap),
             const SizedBox(height: AppSpacing.md),
             _HoldingsCard(snap: snap),
             // Clearance for the FAB.
