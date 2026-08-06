@@ -6,6 +6,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
+import '../../../presentation/charts/donut_chart.dart';
+import '../../../domain/entities/goal.dart';
+import '../../goals/providers/goal_providers.dart';
+import '../../../presentation/asset_group_colors.dart';
+import '../../../domain/entities/asset_group.dart';
 import '../../budget/providers/budget_providers.dart';
 import '../../../domain/entities/investment_totals.dart';
 import '../../../domain/entities/net_worth_snapshot.dart';
@@ -125,19 +130,8 @@ class _DashboardBody extends ConsumerWidget {
         const _InsightsCard(),
         const SizedBox(height: AppSpacing.md),
 
-        // 4b. Cash flow, month by month. Above the net-worth trend because it
-        //     is the shorter horizon and the one a person can act on this week.
-        const _CashFlowCard(),
-        const SizedBox(height: AppSpacing.md),
-
-        // 4c. This month at a glance: where the money went, and how the
-        //     budgets are holding. Two columns on a desktop window — one
-        //     full-width card per fact turns the dashboard into a column of
-        //     banners.
-        const _MonthAtAGlance(),
-        const SizedBox(height: AppSpacing.md),
-
-        // 5. Window selector + trend chart.
+        // 4b. Window selector + net-worth trend, full width. The trend is the
+        //     one series whose shape needs the whole width to be readable.
         _WindowSelector(
           selected: window,
           onChanged: (w) =>
@@ -147,16 +141,28 @@ class _DashboardBody extends ConsumerWidget {
         _TrendChart(series: ref.watch(dashboardTrendProvider)),
         const SizedBox(height: AppSpacing.md),
 
-        // 6. Quick links to everything that is not a tab.
+        // 4c. The grid. Every widget here is a CHART — a donut, a dial, a ring,
+        //     a bar series — because a dashboard's job is to be read at a
+        //     glance, and a ranked list of amounts has to be read line by line.
+        //     Two columns on a wide window so several are visible at once,
+        //     which is the difference between a dashboard and a long scroll.
+        const _Masonry(children: [
+          _CashFlowCard(),
+          _TopSpendCard(),
+          _BudgetPulseCard(),
+          _AllocationMiniCard(),
+          _GoalsCard(),
+          _UpcomingBillsSection(),
+        ]),
+
+        // 5. Quick links to everything that is not a tab.
         const _QuickLinks(),
         const SizedBox(height: AppSpacing.md),
 
-        // 5. Recent transactions.
+        // 6. Recent transactions — a list on purpose. These are individual
+        //    events, not a distribution, and there is no chart of "the last
+        //    five things that happened".
         const _RecentTransactionsSection(),
-        const SizedBox(height: AppSpacing.md),
-
-        // 6. Upcoming bills.
-        const _UpcomingBillsSection(),
         const SizedBox(height: AppSpacing.lg),
       ],
     );
@@ -1381,51 +1387,23 @@ class _LegendDot extends StatelessWidget {
   }
 }
 
-/// Where this month's money went, and how the budgets are holding.
+/// This month's spending as a donut.
 ///
-/// Two cards side by side rather than one each, because on a desktop window a
-/// single full-width card per fact makes the dashboard a column of banners you
-/// scroll through — which is what "I only see one widget" meant.
-class _MonthAtAGlance extends StatelessWidget {
-  const _MonthAtAGlance();
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, c) {
-        const gap = SizedBox(width: AppSpacing.md);
-        if (c.maxWidth < 720) {
-          return const Column(
-            children: [
-              _TopSpendCard(),
-              SizedBox(height: AppSpacing.md),
-              _BudgetPulseCard(),
-            ],
-          );
-        }
-        return const Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: _TopSpendCard()),
-            gap,
-            Expanded(child: _BudgetPulseCard()),
-          ],
-        );
-      },
-    );
-  }
-}
-
-/// This month's spending, biggest category first.
+/// Was a list of categories with a bar each — which is a table wearing a chart
+/// costume. A donut answers "what is the shape of my spending" in one look,
+/// which a ranked list cannot: a list tells you the order, and the order was
+/// never the question.
 class _TopSpendCard extends ConsumerWidget {
   const _TopSpendCard();
+
+  /// Beyond six slices a donut becomes a colour wheel nobody can map back to a
+  /// legend, so the tail is folded into one honest "Other".
+  static const _maxSlices = 6;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(transactionListProvider);
     final categories = ref.watch(categoryListProvider).valueOrNull ?? const [];
-    final text = Theme.of(context).textTheme;
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
 
     if (state is! TransactionData) return const SizedBox.shrink();
 
@@ -1442,82 +1420,71 @@ class _TopSpendCard extends ConsumerWidget {
     final rows = byCategory.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final total = rows.fold(Decimal.zero, (s, e) => s + e.value);
-    final top = rows.take(5).toList();
 
-    return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text('Where it went',
-                    style:
-                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-              ),
-              Text(Money.format(total),
-                  style: text.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800, color: AppColors.expense)),
-            ],
+    if (rows.isEmpty) {
+      return _DashCard(
+        title: 'Where it went',
+        subtitle: 'This month.',
+        onTap: () => context.go(Routes.reports),
+        child: SizedBox(
+          height: 120,
+          child: Center(
+            child: Text('Nothing spent yet this month.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Text('This month, biggest first.',
-              style: text.bodySmall?.copyWith(color: muted)),
-          const SizedBox(height: AppSpacing.sm),
-          if (top.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-              child: Text('Nothing spent yet this month.',
-                  style: text.bodyMedium?.copyWith(color: muted)),
-            )
-          else
-            for (final e in top)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 5),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(names[e.key] ?? 'Uncategorised',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: text.bodyMedium),
-                        ),
-                        Text(Money.format(e.value),
-                            style: text.bodyMedium
-                                ?.copyWith(fontWeight: FontWeight.w700)),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: LinearProgressIndicator(
-                        // Share of THIS month's spending, not of a budget — the
-                        // bar answers "how much of my spending was this", which
-                        // is the question the ordering already raises.
-                        value: total <= Decimal.zero
-                            ? 0
-                            : (e.value / total).toDouble().clamp(0.0, 1.0),
-                        minHeight: 4,
-                        backgroundColor: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest,
-                        valueColor: const AlwaysStoppedAnimation(
-                            AppColors.expense),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-        ],
+        ),
+      );
+    }
+
+    final head = rows.take(_maxSlices).toList();
+    final tail = rows.skip(_maxSlices);
+    final other = tail.fold(Decimal.zero, (s, e) => s + e.value);
+
+    final segments = <DonutSegment>[
+      for (var i = 0; i < head.length; i++)
+        DonutSegment(names[head[i].key] ?? 'Uncategorised',
+            head[i].value.toDouble(), _sliceColors[i % _sliceColors.length]),
+      if (other > Decimal.zero)
+        DonutSegment('Other', other.toDouble(),
+            Theme.of(context).colorScheme.outlineVariant),
+    ];
+
+    return _DashCard(
+      title: 'Where it went',
+      subtitle: 'This month · ${Money.format(total)}',
+      onTap: () => context.go(Routes.reports),
+      child: DonutChart(
+        segments: segments,
+        size: 140,
+        strokeWidth: 20,
+        centerText: Money.compact(total.toDouble()),
+        centerSub: 'spent',
+        formatValue: (v) => Money.format(Decimal.parse(v.toStringAsFixed(2))),
       ),
     );
   }
 }
 
-/// Budget headroom, closest to the limit first.
+/// Categorical slice colours.
+///
+/// Not the asset-group palette: that one is checked for separation in ITS
+/// adjacency order, and borrowing it here would put those guarantees on a
+/// different set of neighbours where they have not been verified.
+const _sliceColors = <Color>[
+  Color(0xFF6C7BF0),
+  Color(0xFFEB6834),
+  Color(0xFF1BAF7A),
+  Color(0xFFEDA100),
+  Color(0xFFE87BA4),
+  Color(0xFF4A3AA7),
+];
+
+/// Budgets as a row of dials.
+///
+/// A dial reads as "how full is this" without being measured, which is the only
+/// question a budget raises. The list of remaining amounts it replaces made the
+/// reader compare numbers against limits in their head, one row at a time.
 class _BudgetPulseCard extends ConsumerWidget {
   const _BudgetPulseCard();
 
@@ -1532,87 +1499,289 @@ class _BudgetPulseCard extends ConsumerWidget {
         c.id: c.name,
     };
     final text = Theme.of(context).textTheme;
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     final over = progress.where((p) => p.remaining < Decimal.zero).length;
 
-    return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text('Budgets',
-                    style:
-                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-              ),
-              if (over > 0)
-                Text('$over over',
-                    style: text.bodySmall?.copyWith(
-                        color: AppColors.expense,
-                        fontWeight: FontWeight.w700)),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            progress.isEmpty
-                ? 'Set a budget and its headroom shows here.'
-                : 'Closest to the limit first.',
-            style: text.bodySmall?.copyWith(color: muted),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          for (final p in progress.take(5))
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                            names[p.budget.categoryId] ?? 'Uncategorised',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: text.bodyMedium),
-                      ),
-                      Text(
-                        p.remaining < Decimal.zero
-                            ? '${Money.format(-p.remaining)} over'
-                            : '${Money.format(p.remaining)} left',
-                        style: text.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: p.remaining < Decimal.zero
-                              ? AppColors.expense
-                              : null,
+    return _DashCard(
+      title: 'Budgets',
+      subtitle: progress.isEmpty
+          ? 'Set a budget and its dial shows here.'
+          : over > 0
+              ? '$over over the limit.'
+              : 'All within limit.',
+      onTap: () => context.go(Routes.budget),
+      child: progress.isEmpty
+          ? const SizedBox(height: 40)
+          : Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.sm,
+              children: [
+                for (final p in progress.take(4))
+                  SizedBox(
+                    width: 92,
+                    child: Column(
+                      children: [
+                        GaugeChart(
+                          // Percentage used, so every dial is on the same
+                          // scale regardless of the limit behind it — four
+                          // dials with four different maxima cannot be
+                          // compared at a glance, which is the whole point.
+                          value: (p.fraction * 100).clamp(0, 100),
+                          bands: kBudgetBands,
+                          size: 84,
+                          strokeWidth: 9,
+                          label: '${(p.fraction * 100).round()}%',
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
-                      value: p.fraction.clamp(0.0, 1.0),
-                      minHeight: 4,
-                      backgroundColor:
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
-                      valueColor: AlwaysStoppedAnimation(
-                        // Same three thresholds the Budget screen uses. Two
-                        // screens disagreeing about when a budget is "warning"
-                        // is worse than either threshold being wrong.
-                        p.fraction >= 0.9
-                            ? AppColors.budgetOver
-                            : p.fraction >= 0.7
-                                ? AppColors.budgetWarn
-                                : AppColors.budgetOk,
-                      ),
+                        Text(
+                          names[p.budget.categoryId] ?? 'Uncategorised',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: text.bodySmall,
+                        ),
+                        Text(
+                          p.remaining < Decimal.zero
+                              ? '${Money.compact((-p.remaining).toDouble())} over'
+                              : '${Money.compact(p.remaining.toDouble())} left',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.labelSmall?.copyWith(
+                            color: p.remaining < Decimal.zero
+                                ? AppColors.expense
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
-        ],
+    );
+  }
+}
+
+/// Two balanced columns on a wide window, one on a narrow one.
+///
+/// The dashboard was a single-column `ListView`, so on a 1400px window every
+/// card spanned the full width and you scrolled past them one at a time. That
+/// is a scroll of banners, not a dashboard — a dashboard's whole claim is that
+/// several things are true at once and you can see them at once.
+///
+/// Cards alternate left/right rather than being packed by measured height.
+/// Height-balanced masonry needs a layout pass before it can place anything,
+/// which means the order changes as data loads — cards moving between columns
+/// while you read them is worse than a slightly uneven bottom edge.
+class _Masonry extends StatelessWidget {
+  const _Masonry({required this.children});
+
+  final List<Widget> children;
+
+  /// Below this the two columns would each be too narrow for a donut plus its
+  /// legend, so the grid collapses to one.
+  static const double _breakpoint = 860;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        if (c.maxWidth < _breakpoint) {
+          return Column(
+            children: [
+              for (final w in children)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: w,
+                ),
+            ],
+          );
+        }
+        final left = <Widget>[];
+        final right = <Widget>[];
+        for (var i = 0; i < children.length; i++) {
+          (i.isEven ? left : right).add(Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: children[i],
+          ));
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: Column(children: left)),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: Column(children: right)),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Goals as rings.
+///
+/// A full ring, unlike the 240° health gauge, because a goal genuinely is a
+/// proportion of a whole — the amount saved out of the amount needed — and that
+/// is exactly what a closed circle encodes.
+class _GoalsCard extends ConsumerWidget {
+  const _GoalsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final goals = ref.watch(goalListProvider).valueOrNull ?? const [];
+    final text = Theme.of(context).textTheme;
+
+    double pct(Goal g) => g.targetAmount <= Decimal.zero
+        ? 0
+        : (g.currentAmount / g.targetAmount).toDouble().clamp(0.0, 1.0);
+
+    final open = goals.where((g) => !g.isAchieved).toList()
+      ..sort((a, b) => pct(b).compareTo(pct(a)));
+
+    return _DashCard(
+      title: 'Goals',
+      subtitle: open.isEmpty
+          ? 'Set a goal and its ring shows here.'
+          : '${open.length} in progress.',
+      onTap: () => context.go(Routes.goals),
+      child: open.isEmpty
+          ? const SizedBox(height: 40)
+          : Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.sm,
+              children: [
+                for (final g in open.take(4))
+                  SizedBox(
+                    width: 92,
+                    child: Column(
+                      children: [
+                        DonutChart(
+                          segments: [
+                            DonutSegment('Saved', pct(g), AppColors.income),
+                            DonutSegment(
+                                'To go',
+                                1 - pct(g),
+                                Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest),
+                          ],
+                          size: 84,
+                          strokeWidth: 9,
+                          showLegend: false,
+                          centerText: '${(pct(g) * 100).round()}%',
+                        ),
+                        Text(
+                          g.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: text.bodySmall,
+                        ),
+                        Text(
+                          Money.compact(g.currentAmount.toDouble()),
+                          style: text.labelSmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+    );
+  }
+}
+
+/// What the portfolio is made of, without leaving the dashboard.
+class _AllocationMiniCard extends ConsumerWidget {
+  const _AllocationMiniCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final totals = ref.watch(investmentTotalsProvider).valueOrNull;
+    if (totals == null || totals.marketValue <= Decimal.zero) {
+      return const SizedBox.shrink();
+    }
+
+    // Declaration order, never value-sorted. The palette is checked for
+    // colourblind separation with the groups adjacent in THIS order;
+    // re-sorting by size can put two near-identical hues side by side.
+    final segments = <DonutSegment>[
+      for (final g in AssetGroup.values)
+        if ((totals.valueByGroup[g] ?? Decimal.zero) > Decimal.zero)
+          DonutSegment(
+              g.label, totals.valueByGroup[g]!.toDouble(), groupColor(g)),
+    ];
+
+    return _DashCard(
+      title: 'Allocation',
+      subtitle: '${totals.positionCount} holding'
+          '${totals.positionCount == 1 ? '' : 's'}',
+      onTap: () => context.go(Routes.investments),
+      child: DonutChart(
+        segments: segments,
+        size: 140,
+        strokeWidth: 20,
+        centerText: Money.compact(totals.marketValue.toDouble()),
+        centerSub: 'portfolio',
+        formatValue: (v) => Money.format(Decimal.parse(v.toStringAsFixed(2))),
+      ),
+    );
+  }
+}
+
+/// A card with a heading, a one-line explanation and a tap target.
+///
+/// Every dashboard widget is a summary of a screen that holds the full version,
+/// so each one is a link. Repeating the chrome by hand was how the existing
+/// cards drifted into three different heading weights.
+class _DashCard extends StatelessWidget {
+  const _DashCard({
+    required this.title,
+    required this.child,
+    this.subtitle,
+    this.onTap,
+  });
+
+  final String title;
+  final Widget child;
+  final String? subtitle;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
+    return GlassCard(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(title,
+                      style: text.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                ),
+                if (onTap != null)
+                  Icon(Icons.chevron_right, size: 18, color: muted),
+              ],
+            ),
+            ?subtitle == null
+                ? null
+                : Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    child: Text(subtitle!,
+                        style: text.bodySmall?.copyWith(color: muted)),
+                  ),
+            const SizedBox(height: AppSpacing.sm),
+            child,
+          ],
+        ),
       ),
     );
   }

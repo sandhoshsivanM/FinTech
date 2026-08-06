@@ -24,6 +24,18 @@ const kHealthBands = <GaugeBand>[
   GaugeBand(100, AppColors.income, 'Excellent'),
 ];
 
+/// Budget consumption bands, matching the thresholds the Budget screen paints
+/// its progress bars with.
+///
+/// Inverted relative to [kHealthBands] because the scales run opposite ways: a
+/// high health score is good and a high budget fraction is not. Reusing the
+/// health bands here would have painted a nearly-spent budget green.
+const kBudgetBands = <GaugeBand>[
+  GaugeBand(70, AppColors.budgetOk, 'On track'),
+  GaugeBand(90, AppColors.budgetWarn, 'Close to limit'),
+  GaugeBand(100, AppColors.budgetOver, 'At or over'),
+];
+
 /// A banded arc gauge for a single graded number.
 ///
 /// Two things distinguish it from the progress rings used for goals and budgets,
