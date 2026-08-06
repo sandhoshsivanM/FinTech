@@ -29,15 +29,23 @@ double? _returnOf(Position p) {
 /// Not the asset-group palette: that set's colourblind separation was verified
 /// for ITS adjacency order, and lending it to a different set of neighbours
 /// lends none of the guarantee.
+/// A ramp, not a rainbow.
+///
+/// Eight fully saturated hues is what makes a dashboard look generated: the eye
+/// reads "many colours" before it reads any value, and none of them mean
+/// anything relative to each other. This walks blue to violet with one warm
+/// break, so ordering is visible in the colour itself — slice four is further
+/// along the ramp than slice two, which is true, where "orange vs teal" says
+/// nothing.
 const _sliceColors = <Color>[
   Color(0xFF4B7BEC),
-  Color(0xFFEB6834),
-  Color(0xFF1BAF7A),
-  Color(0xFFEDA100),
-  Color(0xFFA55EEA),
-  Color(0xFF2BCBBA),
-  Color(0xFFE87BA4),
-  Color(0xFF4A3AA7),
+  Color(0xFF5E8FF0),
+  Color(0xFF7B7BF0),
+  Color(0xFF9B77E8),
+  Color(0xFF6FA8DC),
+  Color(0xFF4FB3C4),
+  Color(0xFF52A88B),
+  Color(0xFFD9A05B),
 ];
 
 String _pct(double fraction) =>
@@ -501,78 +509,70 @@ class DayChangeCard extends ConsumerWidget {
   static String _date(DateTime d) => '${d.day} ${_months[d.month - 1]}';
 }
 
-/// Cost against value, side by side.
+/// Allocation, switchable between what was paid and what it is worth.
 ///
-/// Two donuts rather than one: "where my money went in" and "where it sits now"
-/// are different questions with different answers, and the gap between the two
-/// shapes IS the performance. A single chart can only show one of them.
-class CostVsValueCard extends StatelessWidget {
+/// Was two donuts side by side. With eight slices each and no legend between
+/// them, neither was readable: the colours were traceable in principle and in
+/// practice nobody can hold sixteen arcs in mind to compare them. One donut at
+/// a time, with its legend, answers the same question by being switched.
+class CostVsValueCard extends StatefulWidget {
   const CostVsValueCard({required this.snap, super.key});
 
   final PortfolioSnapshot snap;
 
   @override
+  State<CostVsValueCard> createState() => _CostVsValueCardState();
+}
+
+class _CostVsValueCardState extends State<CostVsValueCard> {
+  bool _showInvested = false;
+
+  @override
   Widget build(BuildContext context) {
-    final positions = [...snap.positions]
+    final positions = [...widget.snap.positions]
       ..sort((a, b) => b.marketValue.compareTo(a.marketValue));
     if (positions.isEmpty) return const SizedBox.shrink();
 
-    final invested =
-        positions.fold(Decimal.zero, (s, p) => s + p.costBasis);
-    final current =
-        positions.fold(Decimal.zero, (s, p) => s + p.marketValue);
+    final invested = positions.fold(Decimal.zero, (s, p) => s + p.costBasis);
+    final current = positions.fold(Decimal.zero, (s, p) => s + p.marketValue);
+    final pnl = current - invested;
 
-    // Both donuts use the SAME colour per holding, so a slice that grows or
-    // shrinks between them is traceable. Independent palettes would make the
-    // comparison impossible, which is the only reason to show two.
-    Color colorFor(int i) => _sliceColors[i % _sliceColors.length];
-
-    List<DonutSegment> segments(Decimal Function(Position) pick) => [
-          for (var i = 0; i < positions.length && i < 8; i++)
-            DonutSegment(positions[i].instrument.name,
-                pick(positions[i]).toDouble(), colorFor(i)),
-        ];
+    Decimal pick(Position p) => _showInvested ? p.costBasis : p.marketValue;
+    final grand = _showInvested ? invested : current;
 
     return _Card(
-      title: 'Invested against value',
-      subtitle: 'The gap between the two shapes is the performance.',
-      child: LayoutBuilder(
-        builder: (context, c) {
-          final side = Column(
-            children: [
-              Text('Invested',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              const SizedBox(height: AppSpacing.xs),
-              DonutChart(
-                segments: segments((p) => p.costBasis),
-                size: 120,
-                strokeWidth: 16,
-                showLegend: false,
-                centerText: Money.compact(invested.toDouble()),
-              ),
+      title: _showInvested ? 'Allocation by amount invested' : 'Allocation by value',
+      subtitle: '${Money.format(invested)} invested is now '
+          '${Money.format(current)} — '
+          '${pnl >= Decimal.zero ? 'up' : 'down'} ${Money.format(pnl.abs())}.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: false, label: Text('Now')),
+              ButtonSegment(value: true, label: Text('Invested')),
             ],
-          );
-          final now = Column(
-            children: [
-              Text('Now',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              const SizedBox(height: AppSpacing.xs),
-              DonutChart(
-                segments: segments((p) => p.marketValue),
-                size: 120,
-                strokeWidth: 16,
-                showLegend: false,
-                centerText: Money.compact(current.toDouble()),
-              ),
+            selected: {_showInvested},
+            showSelectedIcon: false,
+            onSelectionChanged: (v) =>
+                setState(() => _showInvested = v.first),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          DonutChart(
+            segments: [
+              for (var i = 0; i < positions.length && i < 8; i++)
+                DonutSegment(positions[i].instrument.name,
+                    pick(positions[i]).toDouble(),
+                    _sliceColors[i % _sliceColors.length]),
             ],
-          );
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [side, now],
-          );
-        },
+            size: 130,
+            strokeWidth: 18,
+            centerText: Money.compact(grand.toDouble()),
+            formatValue: (v) =>
+                Money.format(Decimal.parse(v.toStringAsFixed(2))),
+          ),
+        ],
       ),
     );
   }
@@ -735,7 +735,7 @@ class GainersLosersCard extends StatelessWidget {
                         style: text.bodySmall?.copyWith(color: muted)),
                   ),
                   SizedBox(
-                    width: 96,
+                    width: 150,
                     child: Text(shown[i].p.instrument.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

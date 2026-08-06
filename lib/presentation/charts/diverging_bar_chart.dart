@@ -68,6 +68,11 @@ class _DivergingBarChartState extends State<DivergingBarChart> {
     }
 
     final extent = bars.fold(0.0, (m, b) => b.value.abs() > m ? b.value.abs() : m);
+    // With nothing negative there is nothing to diverge from, so the spine
+    // moves to the left edge and the bars use the full width. Keeping it
+    // centred threw away half the resolution of every comparison to reserve
+    // room for values that cannot occur.
+    final centred = bars.any((b) => b.value < 0);
     String fmt(double v) =>
         widget.formatValue?.call(v) ?? v.toStringAsFixed(0);
 
@@ -88,7 +93,7 @@ class _DivergingBarChartState extends State<DivergingBarChart> {
                   child: Row(
                     children: [
                       SizedBox(
-                        width: 104,
+                        width: 168,
                         child: Text(
                           bars[i].label,
                           maxLines: 1,
@@ -111,6 +116,7 @@ class _DivergingBarChartState extends State<DivergingBarChart> {
                             painter: _DivergingBarPainter(
                               value: bars[i].value,
                               extent: extent,
+                              centred: centred,
                               progress: t,
                               positive: widget.positiveColor,
                               negative: widget.negativeColor,
@@ -120,15 +126,17 @@ class _DivergingBarChartState extends State<DivergingBarChart> {
                         ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
+                      // Amount and percentage get their own fixed columns.
+                      // Concatenating them into one box meant the longest row
+                      // set the truncation point for every row, so a portfolio
+                      // with one six-figure position clipped the percentages
+                      // off all the others.
                       SizedBox(
-                        width: 108,
+                        width: 118,
                         child: Text(
-                          bars[i].detail == null
-                              ? fmt(bars[i].value)
-                              : '${fmt(bars[i].value)}  ${bars[i].detail}',
+                          fmt(bars[i].value),
                           textAlign: TextAlign.right,
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                           style: text.bodySmall?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: bars[i].value < 0
@@ -137,6 +145,21 @@ class _DivergingBarChartState extends State<DivergingBarChart> {
                           ),
                         ),
                       ),
+                      ?bars[i].detail == null
+                          ? null
+                          : SizedBox(
+                              width: 68,
+                              child: Text(
+                                bars[i].detail!,
+                                textAlign: TextAlign.right,
+                                maxLines: 1,
+                                style: text.bodySmall?.copyWith(
+                                  color: bars[i].value < 0
+                                      ? widget.negativeColor
+                                      : widget.positiveColor,
+                                ),
+                              ),
+                            ),
                     ],
                   ),
                 ),
@@ -156,10 +179,12 @@ class _DivergingBarPainter extends CustomPainter {
     required this.positive,
     required this.negative,
     required this.axis,
+    required this.centred,
   });
 
   final double value;
   final double extent;
+  final bool centred;
   final double progress;
   final Color positive;
   final Color negative;
@@ -167,7 +192,7 @@ class _DivergingBarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final mid = size.width / 2;
+    final mid = centred ? size.width / 2 : 0.0;
 
     // The spine is drawn first and always, even for a row whose bar is too
     // small to see: without it a near-zero value has no anchor and the row
@@ -181,7 +206,7 @@ class _DivergingBarPainter extends CustomPainter {
     );
 
     if (extent <= 0) return;
-    final half = mid - 2;
+    final half = (centred ? mid : size.width) - 2;
     final len = (value.abs() / extent) * half * progress;
     if (len <= 0) return;
 
@@ -208,5 +233,6 @@ class _DivergingBarPainter extends CustomPainter {
   bool shouldRepaint(_DivergingBarPainter old) =>
       old.value != value ||
       old.extent != extent ||
+      old.centred != centred ||
       old.progress != progress;
 }

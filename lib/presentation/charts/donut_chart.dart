@@ -142,7 +142,10 @@ class _DonutChartState extends State<DonutChart> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         ring,
-        const SizedBox(width: AppSpacing.lg),
+        // md, not lg. The legend is where long category names live — "Oil Gas &
+        // Consumable Fuels" — and every point given to the gap is taken from
+        // the only column that has to hold prose.
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -162,9 +165,14 @@ class _DonutChartState extends State<DonutChart> {
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                           child: Text(s.label,
-                              maxLines: 1,
+                              // Two lines before ellipsis. A truncated category
+                              // name is unidentifiable — "Financial Ser…" and
+                              // "Financial Services" are the same prefix as
+                              // half a dozen other labels — and a chart whose
+                              // legend cannot be read is decoration.
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium)),
+                              style: Theme.of(context).textTheme.bodySmall)),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
                         total <= 0
