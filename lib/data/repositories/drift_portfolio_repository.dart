@@ -116,6 +116,20 @@ class DriftPortfolioRepository {
         benchmarkIndexCode: benchmarkIndexCode,
       );
 
+  /// The price each instrument carried before its current one, for day-change.
+  Future<Map<String, InstrumentPrice>> previousPrices(String vaultId) async {
+    final rows = await _dao.previousPrices(vaultId);
+    return {
+      for (final e in rows.entries)
+        e.key: InstrumentPrice(
+          instrumentId: e.value.instrumentId,
+          asOf: DateTime.fromMillisecondsSinceEpoch(e.value.asOf),
+          price: e.value.price,
+          source: e.value.source,
+        ),
+    };
+  }
+
   Future<void> recordPrice({
     required String vaultId,
     required String instrumentId,

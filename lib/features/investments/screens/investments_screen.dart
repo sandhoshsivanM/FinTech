@@ -20,6 +20,7 @@ import '../providers/investment_providers.dart' show taxRuleEngineProvider;
 import '../../../core/di/data_providers.dart' show currentVaultIdProvider;
 import '../services/price_refresh_service.dart';
 import '../widgets/market_data_card.dart';
+import '../widgets/holdings_table.dart';
 import '../widgets/portfolio_analytics.dart';
 import '../providers/portfolio_providers.dart';
 
@@ -270,10 +271,71 @@ class _Body extends ConsumerWidget {
             ],
             const SizedBox(height: AppSpacing.md),
 
-            // Analytics. Gain-and-loss spans the full width because its bars
-            // are horizontal and their length IS the reading; halving the width
-            // halves the resolution of every comparison on it.
+            // Allocation family: current value, cost, asset type, sector.
+            if (wide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: CostVsValueCard(snap: snap)),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: GroupAllocationCard(
+                      snap: snap,
+                      title: 'Asset type',
+                      by: (p) => p.instrument.kind.label,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: GroupAllocationCard(
+                      snap: snap,
+                      title: 'Sector',
+                      by: (p) => p.instrument.sectorCode,
+                    ),
+                  ),
+                ],
+              )
+            else ...[
+              CostVsValueCard(snap: snap),
+              const SizedBox(height: AppSpacing.md),
+              GroupAllocationCard(
+                  snap: snap,
+                  title: 'Asset type',
+                  by: (p) => p.instrument.kind.label),
+              const SizedBox(height: AppSpacing.md),
+              GroupAllocationCard(
+                  snap: snap,
+                  title: 'Sector',
+                  by: (p) => p.instrument.sectorCode),
+            ],
+            const SizedBox(height: AppSpacing.md),
+
+            // Winners and losers, ranked by return.
+            if (wide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: GainersLosersCard(snap: snap)),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                      child: GainersLosersCard(snap: snap, gainers: false)),
+                ],
+              )
+            else ...[
+              GainersLosersCard(snap: snap),
+              const SizedBox(height: AppSpacing.md),
+              GainersLosersCard(snap: snap, gainers: false),
+            ],
+            const SizedBox(height: AppSpacing.md),
+
+            // Gain-and-loss and the value ranking span the full width: their
+            // bars are horizontal, so length IS the reading and halving the
+            // width halves the resolution of every comparison on them.
             PnlByHoldingCard(snap: snap),
+            const SizedBox(height: AppSpacing.md),
+            DayChangeCard(snap: snap),
+            const SizedBox(height: AppSpacing.md),
+            ValueDistributionCard(snap: snap),
             const SizedBox(height: AppSpacing.md),
             if (wide)
               Row(
@@ -283,6 +345,8 @@ class _Body extends ConsumerWidget {
                   const SizedBox(width: AppSpacing.md),
                   Expanded(child: DiversificationCard(snap: snap)),
                   const SizedBox(width: AppSpacing.md),
+                  Expanded(child: RiskCard(snap: snap)),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(child: PortfolioInsightsCard(snap: snap)),
                 ],
               )
@@ -291,10 +355,14 @@ class _Body extends ConsumerWidget {
               const SizedBox(height: AppSpacing.md),
               DiversificationCard(snap: snap),
               const SizedBox(height: AppSpacing.md),
+              RiskCard(snap: snap),
+              const SizedBox(height: AppSpacing.md),
               PortfolioInsightsCard(snap: snap),
             ],
             const SizedBox(height: AppSpacing.md),
             ReturnDistributionCard(snap: snap),
+            const SizedBox(height: AppSpacing.md),
+            HoldingsTable(snap: snap),
             const SizedBox(height: AppSpacing.md),
             _HoldingsCard(snap: snap),
             // Clearance for the FAB.

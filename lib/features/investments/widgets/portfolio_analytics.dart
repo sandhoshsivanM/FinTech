@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
@@ -9,6 +10,7 @@ import '../../../presentation/charts/diverging_bar_chart.dart';
 import '../../../presentation/charts/donut_chart.dart';
 import '../../../presentation/charts/gauge_chart.dart';
 import '../../../presentation/glass_card.dart';
+import '../providers/portfolio_providers.dart';
 
 /// Return on a position as a fraction, or null when there is no cost to
 /// measure against.
@@ -21,6 +23,22 @@ double? _returnOf(Position p) {
   if (p.costBasis <= Decimal.zero) return null;
   return (p.unrealisedPnl / p.costBasis).toDouble();
 }
+
+/// Categorical slice colours for per-holding charts.
+///
+/// Not the asset-group palette: that set's colourblind separation was verified
+/// for ITS adjacency order, and lending it to a different set of neighbours
+/// lends none of the guarantee.
+const _sliceColors = <Color>[
+  Color(0xFF4B7BEC),
+  Color(0xFFEB6834),
+  Color(0xFF1BAF7A),
+  Color(0xFFEDA100),
+  Color(0xFFA55EEA),
+  Color(0xFF2BCBBA),
+  Color(0xFFE87BA4),
+  Color(0xFF4A3AA7),
+];
 
 String _pct(double fraction) =>
     '${fraction >= 0 ? '+' : ''}${(fraction * 100).toStringAsFixed(1)}%';
@@ -387,6 +405,431 @@ class _InsightRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Movement since the previous recorded price, per holding.
+///
+/// Not called "Today's P&L". Refresh here is user-initiated, so the previous
+/// price can be a week old — labelling that as today's move would be a lie told
+/// every time the screen opens. The card names the date it is measuring from.
+class DayChangeCard extends ConsumerWidget {
+  const DayChangeCard({required this.snap, super.key});
+
+  final PortfolioSnapshot snap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final moves = ref.watch(priceMovesProvider).valueOrNull;
+    final text = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
+    if (moves == null || moves.isEmpty) {
+      return _Card(
+        title: 'Change since last price',
+        subtitle: 'Needs prices from two different days. Refresh again '
+            'tomorrow and the move appears here.',
+        child: const SizedBox(height: 24),
+      );
+    }
+
+    final rows = <({Position p, PriceMove m, Decimal value})>[];
+    var total = Decimal.zero;
+    DateTime? oldest;
+    for (final p in snap.positions) {
+      final m = moves[p.instrument.id];
+      if (m == null) continue;
+      final value = m.delta * p.quantity;
+      total += value;
+      rows.add((p: p, m: m, value: value));
+      if (oldest == null || m.since.isBefore(oldest)) oldest = m.since;
+    }
+    if (rows.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    rows.sort((a, b) => b.value.compareTo(a.value));
+
+    return _Card(
+      title: 'Change since last price',
+      subtitle: 'Measured from ${_date(oldest!)}. '
+          '${total >= Decimal.zero ? 'Up' : 'Down'} '
+          '${Money.format(total.abs())} across ${rows.length} holding'
+          '${rows.length == 1 ? '' : 's'}.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            Money.formatSigned(total, isIncome: total >= Decimal.zero),
+            style: text.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: total >= Decimal.zero
+                  ? AppColors.income
+                  : AppColors.expense,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          DivergingBarChart(
+            bars: [
+              for (final r in rows)
+                DivergingBar(
+                  label: r.p.instrument.name,
+                  value: r.value.toDouble(),
+                  detail: _pct(r.m.fraction.toDouble()),
+                ),
+            ],
+            formatValue: (v) =>
+                Money.format(Decimal.parse(v.toStringAsFixed(2))),
+            semanticLabel: 'Change per holding since the previous price',
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Prices move when you refresh, not continuously — this is the gap '
+            'between the last two prices Khazana holds.',
+            style: text.bodySmall?.copyWith(color: muted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  static String _date(DateTime d) => '${d.day} ${_months[d.month - 1]}';
+}
+
+/// Cost against value, side by side.
+///
+/// Two donuts rather than one: "where my money went in" and "where it sits now"
+/// are different questions with different answers, and the gap between the two
+/// shapes IS the performance. A single chart can only show one of them.
+class CostVsValueCard extends StatelessWidget {
+  const CostVsValueCard({required this.snap, super.key});
+
+  final PortfolioSnapshot snap;
+
+  @override
+  Widget build(BuildContext context) {
+    final positions = [...snap.positions]
+      ..sort((a, b) => b.marketValue.compareTo(a.marketValue));
+    if (positions.isEmpty) return const SizedBox.shrink();
+
+    final invested =
+        positions.fold(Decimal.zero, (s, p) => s + p.costBasis);
+    final current =
+        positions.fold(Decimal.zero, (s, p) => s + p.marketValue);
+
+    // Both donuts use the SAME colour per holding, so a slice that grows or
+    // shrinks between them is traceable. Independent palettes would make the
+    // comparison impossible, which is the only reason to show two.
+    Color colorFor(int i) => _sliceColors[i % _sliceColors.length];
+
+    List<DonutSegment> segments(Decimal Function(Position) pick) => [
+          for (var i = 0; i < positions.length && i < 8; i++)
+            DonutSegment(positions[i].instrument.name,
+                pick(positions[i]).toDouble(), colorFor(i)),
+        ];
+
+    return _Card(
+      title: 'Invested against value',
+      subtitle: 'The gap between the two shapes is the performance.',
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final side = Column(
+            children: [
+              Text('Invested',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              const SizedBox(height: AppSpacing.xs),
+              DonutChart(
+                segments: segments((p) => p.costBasis),
+                size: 120,
+                strokeWidth: 16,
+                showLegend: false,
+                centerText: Money.compact(invested.toDouble()),
+              ),
+            ],
+          );
+          final now = Column(
+            children: [
+              Text('Now',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              const SizedBox(height: AppSpacing.xs),
+              DonutChart(
+                segments: segments((p) => p.marketValue),
+                size: 120,
+                strokeWidth: 16,
+                showLegend: false,
+                centerText: Money.compact(current.toDouble()),
+              ),
+            ],
+          );
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [side, now],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Holdings ranked by what they are worth.
+class ValueDistributionCard extends StatelessWidget {
+  const ValueDistributionCard({required this.snap, this.limit = 10, super.key});
+
+  final PortfolioSnapshot snap;
+  final int limit;
+
+  @override
+  Widget build(BuildContext context) {
+    final positions = [...snap.positions]
+      ..sort((a, b) => b.marketValue.compareTo(a.marketValue));
+    if (positions.isEmpty) return const SizedBox.shrink();
+
+    final total = positions.fold(Decimal.zero, (s, p) => s + p.marketValue);
+    final shown = positions.take(limit).toList();
+
+    return _Card(
+      title: 'Biggest holdings',
+      subtitle: positions.length > shown.length
+          ? 'Top ${shown.length} of ${positions.length} by value.'
+          : 'By value.',
+      child: DivergingBarChart(
+        // Values are all positive here, so the spine sits at the left edge of
+        // the ink rather than the middle — the same widget reads as a plain
+        // ranked bar chart when nothing is negative.
+        bars: [
+          for (final p in shown)
+            DivergingBar(
+              label: p.instrument.name,
+              value: p.marketValue.toDouble(),
+              detail: total <= Decimal.zero
+                  ? null
+                  : '${((p.marketValue / total).toDouble() * 100).toStringAsFixed(1)}%',
+            ),
+        ],
+        positiveColor: AppColors.accent,
+        formatValue: (v) => Money.compact(v),
+        semanticLabel: 'Holdings ranked by current value',
+      ),
+    );
+  }
+}
+
+/// The numbers a risk conversation starts from.
+class RiskCard extends StatelessWidget {
+  const RiskCard({required this.snap, super.key});
+
+  final PortfolioSnapshot snap;
+
+  @override
+  Widget build(BuildContext context) {
+    final positions = snap.positions;
+    if (positions.isEmpty) return const SizedBox.shrink();
+
+    final total = positions.fold(Decimal.zero, (s, p) => s + p.marketValue);
+    final sorted = [...positions]
+      ..sort((a, b) => b.marketValue.compareTo(a.marketValue));
+    final largest = sorted.first;
+    final smallest = sorted.last;
+
+    // Share of the top three, not just the top one. A portfolio can look fine
+    // on "largest holding 22%" while three names carry two thirds of it.
+    final topThree = sorted
+        .take(3)
+        .fold(Decimal.zero, (s, p) => s + p.marketValue);
+
+    String share(Decimal v) => total <= Decimal.zero
+        ? '—'
+        : '${((v / total).toDouble() * 100).toStringAsFixed(1)}%';
+
+    return _Card(
+      title: 'Concentration',
+      child: Column(
+        children: [
+          _InsightRow(
+            label: 'Largest',
+            value: largest.instrument.name,
+            detail: '${share(largest.marketValue)} · '
+                '${Money.format(largest.marketValue)}',
+          ),
+          _InsightRow(
+            label: 'Top three',
+            value: share(topThree),
+            detail: Money.format(topThree),
+          ),
+          _InsightRow(
+            label: 'Smallest',
+            value: smallest.instrument.name,
+            detail: '${share(smallest.marketValue)} · '
+                '${Money.format(smallest.marketValue)}',
+          ),
+          _InsightRow(
+            label: 'Invested',
+            value: Money.format(
+                positions.fold(Decimal.zero, (s, p) => s + p.costBasis)),
+            detail: '${positions.length} positions',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Top gainers and top losers, ranked by return percentage.
+///
+/// Percentage, not rupees: the rupee ranking is already the diverging chart
+/// above, and it answers a different question. A ₹500 gain on a ₹1,000 position
+/// is the best thing in the portfolio and would sit at the bottom of a rupee
+/// ranking.
+class GainersLosersCard extends StatelessWidget {
+  const GainersLosersCard({required this.snap, this.gainers = true, super.key});
+
+  final PortfolioSnapshot snap;
+  final bool gainers;
+
+  @override
+  Widget build(BuildContext context) {
+    final scored = <({Position p, double r})>[
+      for (final p in snap.positions)
+        if (_returnOf(p) case final r?) (p: p, r: r),
+    ];
+    if (scored.isEmpty) return const SizedBox.shrink();
+
+    scored.sort((a, b) => gainers ? b.r.compareTo(a.r) : a.r.compareTo(b.r));
+    final shown = scored
+        .where((e) => gainers ? e.r > 0 : e.r < 0)
+        .take(5)
+        .toList();
+
+    final text = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final color = gainers ? AppColors.income : AppColors.expense;
+    // Bars are scaled within THIS card, so the best gainer fills the row. The
+    // two cards are not on a shared scale and do not claim to be — each answers
+    // "who leads this group", not "are gains bigger than losses". That question
+    // is the diverging chart's.
+    final extent =
+        shown.isEmpty ? 1.0 : shown.map((e) => e.r.abs()).reduce((a, b) => a > b ? a : b);
+
+    return _Card(
+      title: gainers ? 'Top gainers' : 'Top losers',
+      subtitle: shown.isEmpty
+          ? (gainers ? 'Nothing is up yet.' : 'Nothing is down.')
+          : 'By return.',
+      child: Column(
+        children: [
+          for (var i = 0; i < shown.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    child: Text('${i + 1}',
+                        style: text.bodySmall?.copyWith(color: muted)),
+                  ),
+                  SizedBox(
+                    width: 96,
+                    child: Text(shown[i].p.instrument.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.bodySmall),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: (shown[i].r.abs() / extent).clamp(0.0, 1.0),
+                        minHeight: 6,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation(color),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  SizedBox(
+                    width: 62,
+                    child: Text(_pct(shown[i].r),
+                        textAlign: TextAlign.right,
+                        style: text.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w700, color: color)),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Allocation by whatever [by] groups a position into.
+///
+/// One widget for asset type and sector rather than two near-identical ones:
+/// they differ only in the key, and two copies is how the sector card ends up
+/// with a legend the asset card does not have.
+class GroupAllocationCard extends StatelessWidget {
+  const GroupAllocationCard({
+    required this.snap,
+    required this.title,
+    required this.by,
+    this.unclassifiedLabel = 'Unclassified',
+    super.key,
+  });
+
+  final PortfolioSnapshot snap;
+  final String title;
+  final String? Function(Position) by;
+  final String unclassifiedLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final totals = <String, Decimal>{};
+    for (final p in snap.positions) {
+      final key = by(p) ?? unclassifiedLabel;
+      totals[key] = (totals[key] ?? Decimal.zero) + p.marketValue;
+    }
+    if (totals.isEmpty) return const SizedBox.shrink();
+
+    final entries = totals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final grand = entries.fold(Decimal.zero, (s, e) => s + e.value);
+
+    // Unclassified is pushed last and greyed rather than being given a hue.
+    // It is the absence of a category, and colouring it like one puts "not
+    // known" on the same footing as "Energy".
+    final classified =
+        entries.where((e) => e.key != unclassifiedLabel).toList();
+    final unknown =
+        entries.where((e) => e.key == unclassifiedLabel).toList();
+
+    return _Card(
+      title: title,
+      subtitle: unknown.isEmpty
+          ? null
+          : '${((unknown.first.value / grand).toDouble() * 100).round()}% not '
+              'classified yet.',
+      child: DonutChart(
+        segments: [
+          for (var i = 0; i < classified.length; i++)
+            DonutSegment(classified[i].key, classified[i].value.toDouble(),
+                _sliceColors[i % _sliceColors.length]),
+          for (final u in unknown)
+            DonutSegment(u.key, u.value.toDouble(),
+                Theme.of(context).colorScheme.outlineVariant),
+        ],
+        size: 130,
+        strokeWidth: 18,
+        centerText: Money.compact(grand.toDouble()),
+        formatValue: (v) => Money.format(Decimal.parse(v.toStringAsFixed(2))),
       ),
     );
   }

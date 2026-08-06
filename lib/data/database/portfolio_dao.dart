@@ -196,6 +196,47 @@ class PortfolioDao extends DatabaseAccessor<AppDatabase>
     };
   }
 
+  /// The price each instrument carried BEFORE its current one.
+  ///
+  /// "Before" means a different observation date, not merely an earlier row: a
+  /// refresh that runs twice in a minute writes two rows for the same day, and
+  /// comparing those would report a change of zero and call it the day's move.
+  ///
+  /// Ranked by the same authority-first rule as [latestPrices], so a manual
+  /// price cannot become the baseline that a live quote is measured against.
+  Future<Map<String, InstrumentPriceRow>> previousPrices(String vaultId) async {
+    final rows = await (select(instrumentPrices)
+          ..where((t) => t.vaultId.equals(vaultId)))
+        .get();
+
+    final byInstrument = <String, List<InstrumentPriceRow>>{};
+    for (final r in rows) {
+      (byInstrument[r.instrumentId] ??= []).add(r);
+    }
+
+    final out = <String, InstrumentPriceRow>{};
+    for (final entry in byInstrument.entries) {
+      final list = entry.value
+        ..sort((a, b) => _outranks(a, b) ? -1 : (_outranks(b, a) ? 1 : 0));
+      if (list.length < 2) continue;
+      final currentDay = _dayOf(list.first.asOf);
+      for (final candidate in list.skip(1)) {
+        if (_dayOf(candidate.asOf) != currentDay) {
+          out[entry.key] = candidate;
+          break;
+        }
+      }
+    }
+    return out;
+  }
+
+  /// Local-midnight day key. Two prices stamped at different times on the same
+  /// day describe the same close.
+  static int _dayOf(int millis) {
+    final d = DateTime.fromMillisecondsSinceEpoch(millis);
+    return DateTime(d.year, d.month, d.day).millisecondsSinceEpoch;
+  }
+
   /// Drops price history older than [keep] points per instrument.
   Future<void> prunePriceHistory(String vaultId, {int keep = 400}) async {
     final rows = await (select(instrumentPrices)

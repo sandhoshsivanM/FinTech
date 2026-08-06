@@ -349,3 +349,47 @@ Future<void> recordPriceRefresh(String vaultId) async {
   await prefs.setInt(
       _lastRefreshKey(vaultId), DateTime.now().millisecondsSinceEpoch);
 }
+
+/// How much a holding has moved since the price before its current one.
+class PriceMove {
+  const PriceMove({required this.delta, required this.since, required this.from});
+
+  /// Change per unit: current price minus the previous one.
+  final Decimal delta;
+
+  /// The date the previous price described. Rendered rather than assumed to be
+  /// yesterday: refresh here is user-initiated, so "the previous price" can be
+  /// a week old and calling that "today's change" would be a lie told daily.
+  final DateTime since;
+
+  /// The previous price itself, so a caller can show what it moved from.
+  final Decimal from;
+
+  Decimal get fraction =>
+      from <= Decimal.zero ? Decimal.zero : (delta / from).toDecimal(scaleOnInfinitePrecision: 6);
+}
+
+/// Per-instrument movement since the previous recorded price.
+///
+/// Empty until an instrument has prices on two different dates. A portfolio
+/// refreshed once has no change to report, and reporting zero would claim it
+/// had not moved.
+final priceMovesProvider =
+    FutureProvider<Map<String, PriceMove>>((ref) async {
+  final repo = ref.watch(portfolioRepositoryProvider);
+  final vaultId = ref.watch(currentVaultIdProvider);
+  final latest = await repo.latestPrices(vaultId);
+  final previous = await repo.previousPrices(vaultId);
+
+  final out = <String, PriceMove>{};
+  for (final e in previous.entries) {
+    final now = latest[e.key];
+    if (now == null) continue;
+    out[e.key] = PriceMove(
+      delta: now.price - e.value.price,
+      since: e.value.asOf,
+      from: e.value.price,
+    );
+  }
+  return out;
+});
