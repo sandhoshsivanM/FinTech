@@ -79,6 +79,75 @@ export interface Holding {
   lastPrice?: string | null;
   assetType: AssetType;
   firstPurchaseDate?: number | null; // epoch ms — for XIRR & LTCG/STCG holding period
+
+  // --- Presentation & classification, all optional -------------------------
+  // Every field below is optional so an existing vault keeps loading unchanged;
+  // absent means "not recorded", which the UI must render as such rather than
+  // as a zero. Sector/cap fall back to the bundled instrument master when
+  // unset — these overrides exist for instruments the master does not cover.
+  /** Company or scheme name. Shown instead of the bare ticker where present. */
+  name?: string | null;
+  /** Previous close, for the day-change column. Money field: a Decimal string. */
+  previousClose?: string | null;
+  /** Overrides the instrument-master sector lookup. */
+  sector?: string | null;
+  /** ISO 3166-1 alpha-2, e.g. 'IN'. Drives the country allocation. */
+  country?: string | null;
+  /** Overrides the instrument-master market-cap band. */
+  marketCapBand?: 'large' | 'mid' | 'small' | null;
+}
+
+// ---- Watchlist: instruments tracked but not owned --------------------------
+export interface WatchItem {
+  id: string;
+  vaultId: string;
+  profileId?: string;
+  symbol: string;
+  exchange: string;
+  name?: string | null;
+  /** Last recorded price. Entered by hand — there is no price feed. */
+  lastPrice?: string | null;
+  /** The price the user is watching for. Money field: a Decimal string. */
+  targetPrice?: string | null;
+  note?: string | null;
+  addedAt: number;
+}
+
+// ---- Dividends -------------------------------------------------------------
+export type DividendKind = 'dividend' | 'interest' | 'bonus' | 'buyback';
+export interface Dividend {
+  id: string;
+  vaultId: string;
+  profileId?: string;
+  symbol: string;
+  kind: DividendKind;
+  /** Total received (or expected). Money field: a Decimal string. */
+  amount: string;
+  /** Per-share payout, when known. */
+  perShare?: string | null;
+  /** Epoch ms. `payDate` in the future means this is still expected. */
+  exDate?: number | null;
+  payDate: number;
+  /** False until the money actually landed. */
+  received: boolean;
+}
+
+// ---- Alerts ----------------------------------------------------------------
+export type AlertKind = 'price_above' | 'price_below' | 'weight_above' | 'budget_over' | 'renewal_due';
+export interface Alert {
+  id: string;
+  vaultId: string;
+  profileId?: string;
+  kind: AlertKind;
+  /** Ticker for price/weight alerts; unset for the portfolio-wide kinds. */
+  symbol?: string | null;
+  label: string;
+  /** Comparison threshold. Money string for prices, percent string for weights. */
+  threshold: string;
+  active: boolean;
+  createdAt: number;
+  /** Epoch ms of the last time this alert's condition held. */
+  lastTriggeredAt?: number | null;
 }
 
 export type LiabilityKind = 'credit_card' | 'loan';
@@ -200,6 +269,9 @@ export const STORE = {
   posting: 'posting',
   pendingCapture: 'pendingCapture',
   attachment: 'attachment',
+  watchItem: 'watchItem',
+  dividend: 'dividend',
+  alert: 'alert',
 } as const;
 
 // Entity types that are scoped to the active profile (category & profile are vault-wide).
@@ -207,4 +279,5 @@ export const PROFILE_SCOPED: string[] = [
   STORE.txn, STORE.budget, STORE.goal, STORE.holding,
   STORE.liability, STORE.recurring, STORE.insurance, STORE.snapshot,
   STORE.account, STORE.posting, STORE.pendingCapture, STORE.attachment,
+  STORE.watchItem, STORE.dividend, STORE.alert,
 ];

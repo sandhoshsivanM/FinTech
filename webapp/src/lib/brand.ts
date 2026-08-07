@@ -25,5 +25,12 @@ export const APP_TITLE = 'Khazana — Private Wealth';
 /** One-line product description for metadata. */
 export const APP_DESCRIPTION = 'Offline-first, private personal finance & wealth management.';
 
-/** Short positioning line shown under the wordmark on the vault gate. */
-export const APP_TAGLINE = 'Offline · private · encrypted';
+/** Short positioning line shown under the wordmark. From the brand sheet. */
+export const APP_TAGLINE = 'Your wealth. Your vault.';
+
+/** The trust claims from the brand sheet's footer strip, shown on the gate. */
+export const TRUST_POINTS: { title: string; detail: string }[] = [
+  { title: '100% private', detail: 'No server. No tracking.' },
+  { title: 'Encrypted', detail: 'AES-256 at rest. PIN never leaves the device.' },
+  { title: 'Offline first', detail: 'Works everywhere. No internet required.' },
+];

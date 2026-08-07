@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import {
   ShieldCheck, CloudOff, KeyRound, Download, Upload,
   Globe, Lock, Trash2, Sparkles, CheckCircle2, AlertCircle,
-  Users, Plus, Pencil, Check, Briefcase, User, Heart,
+  Users, Plus, Pencil, Check, Briefcase, User, Heart, FlaskConical,
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
 import { TOUR_EVENT } from '@/components/Tour';
@@ -11,6 +11,7 @@ import { useApp, ACCENTS, type AccentName, type ThemeChoice } from '@/lib/store'
 import { loadSampleData } from '@/lib/sampleData';
 import { CURRENCIES } from '@/domain/currency';
 import { GlassCard, SectionHeader, Button, Field, Select, PageIntro, Input, Segmented } from '@/components/ui';
+import { useDemoData } from '@/components/DemoBadge';
 import { useConfirm } from '@/components/Confirm';
 import type { ProfileKind } from '@/lib/types';
 
@@ -372,6 +373,8 @@ export default function SettingsPage() {
           />
         </div>
 
+        <DemoDataRow />
+
         {/* Export */}
         <div className="pt-4 border-t border-[var(--glass-border)]">
           <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -480,6 +483,47 @@ export default function SettingsPage() {
       <p className="text-center text-xs text-muted italic px-6 pb-4">
         {APP_NAME} is fully offline. Nothing leaves this device without your explicit action.
       </p>
+    </div>
+  );
+}
+
+/**
+ * The demo-market-data switch.
+ *
+ * Khazana never fetches quotes, index levels or headlines, so the screens that
+ * would need them (Markets, News, day-change columns) are filled with figures
+ * generated on this device. This is the control that turns those surfaces off
+ * — it is the reason the DemoBadge can be trusted.
+ */
+function DemoDataRow() {
+  const [on, setOn] = useDemoData();
+  return (
+    <div className="pt-4 border-t border-[var(--line)]">
+      <div className="flex items-start gap-3">
+        <span className="w-9 h-9 rounded-full grid place-items-center bg-violet-soft text-violet shrink-0">
+          <FlaskConical size={18} />
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-sm">Demo market data</div>
+          <div className="text-xs text-muted mt-0.5 leading-relaxed">
+            Markets, News and the day-change columns need a price feed, and Khazana never contacts one — asking a
+            provider for a quote would tell it exactly what you own. With this on, those surfaces show figures
+            generated on this device and labelled <b className="text-violet font-semibold">DEMO</b>. Turn it off and
+            they show nothing rather than something misleading.
+          </div>
+        </div>
+        <button
+          role="switch"
+          aria-checked={on}
+          aria-label="Demo market data"
+          onClick={() => setOn(!on)}
+          className={`focus-ring relative w-11 h-6 rounded-full shrink-0 transition-colors duration-[250ms] ${on ? 'bg-accent' : 'bg-fill-strong'}`}
+        >
+          <span
+            className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full transition-transform duration-[250ms] ${on ? 'translate-x-5 bg-white' : 'bg-muted'}`}
+          />
+        </button>
+      </div>
     </div>
   );
 }

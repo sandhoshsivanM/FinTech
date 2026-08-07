@@ -34,8 +34,12 @@ export function Donut({
   const c = 2 * Math.PI * r;
   let offset = 0;
   return (
-    <div className="flex items-center gap-6">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
+    // Container query, not a viewport one: the same donut sits in a 300px
+    // quarter-panel and in a 700px half-panel on the same screen. Below ~380px
+    // the legend stacks under the ring so labels like "Information Technology"
+    // have the full width instead of truncating to "Inform…".
+    <div className="@container/donut flex flex-col @[380px]/donut:flex-row @[380px]/donut:items-center gap-4 @[380px]/donut:gap-5 min-w-0 w-full">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 self-center">
         <g transform={`translate(${size / 2},${size / 2}) rotate(-90)`}>
           <circle r={r} fill="none" stroke="var(--fill-strong)" strokeWidth={stroke} />
           {total > 0 &&
@@ -83,7 +87,7 @@ export function Donut({
         )}
       </svg>
       {legend && (
-        <div className="flex-1 min-w-0 space-y-2.5">
+        <div className="flex-1 min-w-0 w-full grid gap-2 @[380px]/donut:gap-2.5 grid-cols-1 @[240px]/donut:grid-cols-2 @[380px]/donut:grid-cols-1">
           {segments.map((s, i) => (
             <div key={i} className="flex items-center gap-2.5 text-[13.5px]">
               <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />

@@ -20,7 +20,11 @@ vi.mock('next/link', () => ({
     <a href={typeof href === 'string' ? href : '#'} {...rest}>{children}</a>
   ),
 }));
-vi.mock('next/navigation', () => ({ usePathname: () => '/dashboard' }));
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/dashboard',
+  // The command palette in the shell navigates on Enter.
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
+}));
 // The tour reaches into the DOM on mount; it is not what these tests are about.
 vi.mock('./Tour', () => ({ Tour: () => null }));
 
@@ -31,11 +35,18 @@ vi.mock('./Tour', () => ({ Tour: () => null }));
  */
 const FLUTTER_TABS = ['/dashboard', '/transactions', '/investments', '/score', '/settings'];
 
-/** Every route the app serves. Mirrors `_allRoutes` in the Dart test. */
+/**
+ * Every route the app serves. Mirrors `_allRoutes` in the Dart test for the
+ * routes the two clients share; the web-only screens added in the platform
+ * redesign are listed after them.
+ */
 const ALL_ROUTES = [
   '/dashboard', '/transactions', '/add', '/calendar', '/investments', '/score',
   '/liabilities', '/insurance', '/safety-net', '/budget', '/goals', '/reports',
   '/recurring', '/settings',
+  // Web-only, added with the platform redesign.
+  '/analytics', '/holdings', '/watchlist', '/markets', '/dividends', '/tax',
+  '/news', '/alerts', '/help',
 ];
 
 /** Reached from within a parent screen, so they get no nav row of their own. */

@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { ShieldCheck, Fingerprint } from 'lucide-react';
-import { APP_NAME, APP_TAGLINE } from '@/lib/brand';
+import { APP_TAGLINE, TRUST_POINTS } from '@/lib/brand';
+import { BrandMark, WordMark } from './BrandMark';
 import { useApp } from '@/lib/store';
 
 export function VaultGate() {
@@ -28,11 +29,14 @@ export function VaultGate() {
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <div className="hero-gradient w-16 h-16 rounded-2xl grid place-items-center">
-            <ShieldCheck className="text-white" size={34} />
-          </div>
-          <h1 className="mt-4 text-2xl font-extrabold">{APP_NAME}</h1>
-          <p className="text-sm text-muted">{APP_TAGLINE}</p>
+          <BrandMark size={76} className="drop-shadow-[0_12px_32px_color-mix(in_srgb,var(--accent)_35%,transparent)]" />
+          <WordMark className="mt-5 text-[26px] text-ink" />
+          {/* The rules either side of the tagline are from the brand lockup. */}
+          <p className="mt-2.5 flex items-center gap-3 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-accent">
+            <span className="h-px w-6 bg-accent-line" aria-hidden="true" />
+            {APP_TAGLINE}
+            <span className="h-px w-6 bg-accent-line" aria-hidden="true" />
+          </p>
         </div>
 
         <div className="glass p-6">
@@ -73,6 +77,18 @@ export function VaultGate() {
             </div>
           )}
         </div>
+        <ul className="mt-6 grid gap-2.5">
+          {TRUST_POINTS.map((t) => (
+            <li key={t.title} className="flex items-start gap-2.5 text-[12px] leading-snug">
+              <ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" />
+              <span>
+                <b className="font-semibold text-ink">{t.title}.</b>{' '}
+                <span className="text-muted">{t.detail}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+
       </div>
     </div>
   );

@@ -1,97 +1,263 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   KHAZANA DESIGN TOKENS
+
+   One source of truth for colour, space, type, radius, elevation and motion.
+   Both themes share identical spacing, typography, sizing and layout — only
+   colour changes between them.
+
+   Theme mechanism (unchanged, and load-bearing): `data-theme` on <html>, set
+   before paint by the inline script in layout.tsx, owned at runtime by
+   applyAppearance() in lib/store.ts, and observed by lib/useDarkMode.ts.
+   ========================================================================= */
+
 :root {
-  /* Canvas & surfaces */
-  --canvas: #f7f6f3;        /* warm paper */
-  --surface: #ffffff;       /* cards */
-  --surface-2: #fbfaf8;     /* inset / subtle fills */
-  --ink-surface: #18191f;   /* the single dark focal surface (hero) */
+  /* --- Canvas & surfaces ------------------------------------------------- */
+  /* Cream, from the light lockup on the brand sheet. Warm, not blue-grey — a
+     cool neutral under a gold accent reads as an accident. */
+  --canvas: #F5F3EC;
+  --surface: #FFFFFF;
+  --surface-2: #EFEDE4;
+  --card: #FFFFFF;
+  --card-2: #EFEDE4;
+  --ink-surface: #0E2018;   /* the single dark focal surface (hero) */
 
-  /* Text */
-  --ink: #18191f;           /* near-black */
-  --ink-soft: #56585f;
-  --muted: #9a9da4;
+  /* --- Brand ------------------------------------------------------------- */
+  /* The plate the mark sits on, and the mint from the logo lockup.
+     `--brand-mint` is LOGO ONLY — deliberately not wired to any UI state,
+     because green already means profit. See the note on --income. */
+  --brand-plate: #0F3D2A;
+  --brand-mint: #1B7F52;
 
-  /* Hairlines & elevation */
-  --line: rgba(24, 25, 31, 0.09);
-  --line-strong: rgba(24, 25, 31, 0.14);
+  /* --- Text -------------------------------------------------------------- */
+  --ink: #10201A;
+  --ink-soft: #4E5F57;
+  --muted: #86948C;
 
-  /* One restrained brand accent (deep slate-indigo) + semantics */
-  --accent: #34406b;
-  --accent-deep: #28315a;
-  --accent-glow: #5566a0;
-  --income: #1f8a5b;        /* refined green */
-  --expense: #c0492f;       /* refined terracotta */
-  --warn: #b07d12;          /* refined amber */
-  --violet: #6d5bd0;
+  /* --- Hairlines --------------------------------------------------------- */
+  --line: rgba(16, 32, 26, 0.10);
+  --line-strong: rgba(16, 32, 26, 0.16);
 
-  --radius-card: 16px;
-  --radius-btn: 11px;
+  /* --- Accent: gold ------------------------------------------------------ */
+  /* Deeper on cream than on emerald. The sheet's bright #D4A93F manages only
+     ~3.2:1 here, which fails text contrast; this step clears 4.9:1 on cream and
+     5.4:1 on a white card. */
+  --accent: #836612;
+  --accent-deep: #684F0D;
+  --accent-glow: #C9A227;
+  --accent-soft: rgba(131, 102, 18, 0.10);
+  --accent-line: rgba(131, 102, 18, 0.28);
 
-  /* Primary action color (ink in light; flips in dark so buttons stay legible) */
-  --primary: #18191f;
-  --primary-fg: #ffffff;
+  /* `income`/`expense`/`warn` are the historical names used across the app;
+     `success`/`danger`/`warning` are the spec names. Same colour, both
+     published, so no call site had to be rewritten.
 
-  /* Subtle interactive fills / hovers / chart tracks (theme-aware, so they stay
-     visible in dark mode instead of being invisible near-black tints) */
-  --fill: rgba(24, 25, 31, 0.05);
-  --fill-strong: rgba(24, 25, 31, 0.08);
+     Green is both the brand's ground colour AND the sign of a profit. Those
+     must never be confusable, so the rule is: emerald is a SURFACE, gold is the
+     ACCENT, and this green is reserved for gain. Nothing in the chrome is green.
 
-  /* Back-compat aliases (older markup referenced these tokens) */
+     Warning is burnt orange rather than amber — an amber warning beside a gold
+     accent would be two golds meaning two different things. */
+  --income: #1B7F52;
+  --expense: #C0392F;
+  --warn: #C2610F;
+  --success: var(--income);
+  --danger: var(--expense);
+  --warning: var(--warn);
+  --success-soft: rgba(27, 127, 82, 0.11);
+  --danger-soft: rgba(192, 57, 47, 0.10);
+  --warning-soft: rgba(194, 97, 15, 0.12);
+  --violet: #6E5BB8;
+  --violet-soft: rgba(110, 91, 184, 0.10);
+
+  /* --- Primary action ---------------------------------------------------- */
+  --primary: #10201A;
+  --primary-fg: #F5F3EC;
+
+  /* --- Interactive fills / chart tracks ---------------------------------- */
+  --fill: rgba(16, 32, 26, 0.045);
+  --fill-strong: rgba(16, 32, 26, 0.085);
+  --grid-line: rgba(16, 32, 26, 0.07);
+
+  /* --- Elevation --------------------------------------------------------- */
+  --shadow-1: 0 1px 2px rgba(16, 32, 26, 0.06);
+  --shadow-2: 0 4px 16px -6px rgba(16, 32, 26, 0.15), 0 1px 2px rgba(16, 32, 26, 0.05);
+  --shadow-3: 0 18px 44px -18px rgba(16, 32, 26, 0.28);
+  --glow: 0 0 0 1px rgba(131, 102, 18, 0.34), 0 6px 22px -8px rgba(131, 102, 18, 0.40);
+
+  --hero-bg:
+    radial-gradient(120% 150% at 88% -10%, rgba(201, 162, 39, 0.24), transparent 58%),
+    radial-gradient(90% 120% at 8% 110%, rgba(31, 138, 91, 0.20), transparent 60%),
+    linear-gradient(168deg, #14372A 0%, var(--ink-surface) 62%);
+
+  /* --- Back-compat aliases (older markup referenced these) --------------- */
   --glass-border: var(--line);
   --bg-top: var(--canvas);
   --bg-bottom: var(--canvas);
 }
 
-/* ---- Dark theme: flip canvas/ink/lines + primary; semantics brightened ---- */
+/* ---- Dark theme: the primary identity ---------------------------------- */
 :root[data-theme="dark"] {
-  --canvas: #0e0f13;
-  --surface: #17191f;
-  --surface-2: #1c1f27;
-  --ink-surface: #20232c;
-  --ink: #e9eaee;
-  --ink-soft: #a6a9b2;
-  --muted: #6c707b;
-  --line: rgba(255, 255, 255, 0.10);
-  --line-strong: rgba(255, 255, 255, 0.18);
-  --accent: #8b9bff;
-  --accent-deep: #6f80f0;
-  --accent-glow: #aab6ff;
-  --income: #34c98a;
-  --expense: #f06a4d;
-  --warn: #e0a93a;
-  --violet: #9d8df0;
-  --primary: #e9eaee;
-  --primary-fg: #15171c;
-  --fill: rgba(255, 255, 255, 0.06);
-  --fill-strong: rgba(255, 255, 255, 0.11);
-  --glass-border: var(--line);
-  --bg-top: var(--canvas);
-  --bg-bottom: var(--canvas);
-}
-:root[data-theme="dark"] .glass,
-:root[data-theme="dark"] .card {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  /* Near-black with a green cast, matching the brand sheet's ground rather
+     than a neutral charcoal. */
+  --canvas: #070D0A;
+  --surface: #0C1410;
+  --surface-2: #17221D;
+  --card: #111A16;
+  --card-2: #17221D;
+  --ink-surface: #0E2018;
+
+  --brand-plate: #0F3D2A;
+  --brand-mint: #3FD99A;
+
+  /* Warm off-white: it sits with the gold instead of against it. */
+  --ink: #EAF1EC;
+  --ink-soft: #93A69B;
+  --muted: #62756A;
+
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.15);
+
+  --accent: #D4A93F;
+  --accent-deep: #B08A28;
+  --accent-glow: #EFCE7A;
+  --accent-soft: rgba(212, 169, 63, 0.14);
+  --accent-line: rgba(212, 169, 63, 0.32);
+
+  --income: #23C16B;
+  --expense: #FF5A65;
+  --warn: #E8833A;
+  --success-soft: rgba(35, 193, 107, 0.13);
+  --danger-soft: rgba(255, 90, 101, 0.13);
+  --warning-soft: rgba(232, 131, 58, 0.14);
+  --violet: #8E7CC3;
+  --violet-soft: rgba(142, 124, 195, 0.16);
+
+  /* Gold carries the primary action; near-black text on it beats white (8.7:1). */
+  --primary: #D4A93F;
+  --primary-fg: #12100A;
+
+  --fill: rgba(255, 255, 255, 0.05);
+  --fill-strong: rgba(255, 255, 255, 0.09);
+  --grid-line: rgba(255, 255, 255, 0.055);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.55);
+  --shadow-2: 0 4px 16px -4px rgba(0, 0, 0, 0.65), 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 18px 48px -16px rgba(0, 0, 0, 0.8);
+  --glow: 0 0 0 1px rgba(212, 169, 63, 0.42), 0 6px 22px -6px rgba(212, 169, 63, 0.45);
+
+  --hero-bg:
+    radial-gradient(120% 150% at 88% -10%, rgba(212, 169, 63, 0.18), transparent 58%),
+    radial-gradient(90% 120% at 8% 110%, rgba(63, 217, 154, 0.10), transparent 60%),
+    linear-gradient(168deg, #122C21 0%, var(--ink-surface) 62%);
+
+  color-scheme: dark;
 }
 
+/* ============================================================================
+   Theme-invariant tokens. Identical in both themes, by design — the spec is
+   explicit that only colour changes.
+   ========================================================================= */
+:root {
+  /* Radii — the spec's 14–18px band */
+  --radius-card: 18px;
+  --radius-panel: 16px;
+  --radius-btn: 14px;
+  --radius-input: 12px;
+
+  /* 8pt spatial grid */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 40px; --s8: 48px; --s9: 64px;
+
+  /* Type scale */
+  --fs-h1: 32px; --fs-h2: 24px; --fs-h3: 20px; --fs-h4: 18px;
+  --fs-body: 16px; --fs-sm: 14px; --fs-xs: 12px; --fs-2xs: 11px;
+
+  /* Motion */
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --dur-slow: 400ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Shell metrics */
+  --nav-w: 248px;
+  --nav-rail: 76px;
+  --top-h: 64px;
+
+  /* Categorical series palette.
+     Re-validated with the dataviz six-checks against the CURRENT card surfaces
+     (#14161C dark, #FFFFFF light): lightness band, chroma floor, adjacent CVD
+     separation (worst pair ΔE 12.1 under deuteranopia — target is 8),
+     normal-vision floor 16.1, and ≥3:1 contrast. All pass in both modes.
+
+     No slot is gold-adjacent, on purpose: a series colour must never be
+     confusable with the brand accent. The amber that used to sit at c3 was
+     dropped for exactly that reason.
+
+     The ORDER is the colourblind-safety mechanism — re-ordering breaks the
+     guarantee, so treat the sequence as fixed. */
+  --c1: #4F7CFF; --c2: #C9538A; --c3: #7B61FF; --c4: #17A594;
+  --c5: #CC6435; --c6: #8E7CC3; --c7: #2E9E63; --c8: #2E92C4;
+}
+
+/* ============================================================================
+   Tailwind bridge. Every token an app surface needs is published here, so call
+   sites write `bg-card` / `text-ink-soft` rather than `bg-[var(--card)]`.
+   ========================================================================= */
 @theme inline {
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
-  --color-accent: var(--accent);
-  --color-accent-deep: var(--accent-deep);
-  --color-accent-glow: var(--accent-glow);
-  --color-income: var(--income);
-  --color-expense: var(--expense);
-  --color-warn: var(--warn);
-  --color-violet: var(--violet);
+  --color-surface-2: var(--surface-2);
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
   --color-muted: var(--muted);
+
   --color-line: var(--line);
-  --radius-card: 16px;
-  --radius-btn: 11px;
+  --color-line-strong: var(--line-strong);
+  --color-fill: var(--fill);
+  --color-fill-strong: var(--fill-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-glow: var(--accent-glow);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-warn: var(--warn);
+  --color-success: var(--income);
+  --color-danger: var(--expense);
+  --color-warning: var(--warn);
+  --color-success-soft: var(--success-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning-soft: var(--warning-soft);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+  --color-brand-plate: var(--brand-plate);
+  --color-brand-mint: var(--brand-mint);
+
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+
+  --color-c1: var(--c1); --color-c2: var(--c2); --color-c3: var(--c3); --color-c4: var(--c4);
+  --color-c5: var(--c5); --color-c6: var(--c6); --color-c7: var(--c7); --color-c8: var(--c8);
+
+  --radius-card: 18px;
+  --radius-panel: 16px;
+  --radius-btn: 14px;
+  --radius-input: 12px;
+
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ============================================================================
+   Base
+   ========================================================================= */
 * { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
@@ -101,8 +267,8 @@ body {
   min-height: 100vh;
   color: var(--ink);
   background: var(--canvas);
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 14.5px;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  font-size: var(--fs-sm);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -112,55 +278,126 @@ body {
   font-feature-settings: 'tnum' 1, 'cv01' 1, 'ss01' 1;
 }
 
-/* ---- Premium card: white surface, hairline border, whisper of elevation ---- */
-.glass,
-.card {
-  background: var(--surface);
+/* ============================================================================
+   Surfaces
+   ========================================================================= */
+
+/* The card. `.glass` is kept as an alias only because older markup still names
+   it; it is not a glass effect — see `.glass-panel` for the real one. */
+.card,
+.glass {
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
-  box-shadow: 0 1px 2px rgba(24, 25, 31, 0.04), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  box-shadow: var(--shadow-1);
+}
+
+/* Hover elevation, opt-in. */
+.lift {
+  transition: transform var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease),
+              border-color var(--dur) var(--ease);
+}
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-2);
+  border-color: var(--line-strong);
+}
+
+/* The sticky chrome surface: topbar, bottom bar, drawers.
+ *
+ * OPAQUE, deliberately. A translucent sticky bar only works when the blur
+ * behind it destroys the detail of what scrolls under — and that bet fails in
+ * two ways at once. Firefox does not reliably apply `backdrop-filter` here, and
+ * even where it does, dense content (chart axis labels, table headers) still
+ * reads through at any usable opacity. A navigation bar you can read the page
+ * through is not glassmorphism, it is a rendering bug.
+ *
+ * The blur is kept only as an enhancement over the scrim on modal overlays,
+ * where there is nothing legible behind it to bleed. */
+.glass-panel {
+  background: var(--canvas);
 }
 
 /* The single dark focal surface (net-worth hero, portfolio hero). */
 .hero-gradient,
 .ink-surface {
-  background:
-    radial-gradient(120% 140% at 100% 0%, rgba(85, 102, 160, 0.22), transparent 55%),
-    linear-gradient(180deg, #20222b 0%, var(--ink-surface) 70%);
+  position: relative;
+  overflow: hidden;
+  background: var(--hero-bg);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: var(--radius-card);
-  box-shadow: 0 18px 40px -18px rgba(24, 25, 31, 0.5);
+  box-shadow: var(--shadow-3);
 }
+/* A whisper of grid, faded out — reads as engineered rather than decorated. */
+.hero-gradient::after,
+.ink-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(120% 100% at 70% 0%, #000, transparent 70%);
+}
+.hero-gradient > *,
+.ink-surface > * { position: relative; z-index: 1; }
 
-/* Typography ------------------------------------------------------------- */
+/* ============================================================================
+   Typography
+   ========================================================================= */
 h1, h2, h3, .font-display {
   font-family: var(--font-display), var(--font-inter), sans-serif;
   letter-spacing: -0.022em;
   font-weight: 700;
+  text-wrap: balance;
 }
+h1 { font-size: var(--fs-h1); letter-spacing: -0.03em; }
+h2 { font-size: var(--fs-h2); letter-spacing: -0.025em; }
+h3 { font-size: var(--fs-h3); }
 
-/* Eyebrow / overline label used above stats. */
 .eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
 .tnum { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
 
-/* Hairline divider helpers */
+/* ============================================================================
+   Utilities
+   ========================================================================= */
 .divide-hair > * + * { border-top: 1px solid var(--line); }
 
-/* Subtle focus ring */
 .focus-ring:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: 0 0 0 2px var(--canvas), 0 0 0 4px var(--accent-line);
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+/* ============================================================================
+   Motion. Framer Motion owns component choreography; these cover the plain-CSS
+   cases (chart draw-in, bar growth) that do not need a React component.
+   ========================================================================= */
+@keyframes kz-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes kz-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes kz-grow { from { transform: scaleY(0); opacity: 0.4; } to { transform: none; opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .lift:hover { transform: none; }
+}

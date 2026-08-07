@@ -1,5 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#18191f"/>
-  <rect x="176" y="176" width="160" height="160" rx="40" fill="none" stroke="#ffffff" stroke-width="26" stroke-opacity="0.92"/>
-  <circle cx="256" cy="256" r="14" fill="#1f8a5b"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Khazana">
+  <!-- The Khazana mark: hexagon vault plate + keyhole + K.
+       Flat geometry, no gradient: this one file is the source for the favicon,
+       the PWA icon, the Tauri Mac app icon and the Flutter app icons, and a
+       bevel that reads at 1024px turns to mud at 16px.
+       Maskable-safe: the glyph sits inside the centre 80%. -->
+  <rect width="1024" height="1024" rx="228" fill="#070D0A"/>
+  <g transform="translate(512,512) scale(13.4) translate(-16,-16)">
+    <path d="M16 2.6 L27.6 9.3 L27.6 22.7 L16 29.4 L4.4 22.7 L4.4 9.3 Z" fill="#0F3D2A"/>
+    <path d="M16 2.6 L27.6 9.3 L27.6 22.7 L16 29.4 L4.4 22.7 L4.4 9.3 Z"
+          fill="none" stroke="#D4A93F" stroke-width="2.4" stroke-linejoin="round"/>
+    <circle cx="11.6" cy="13.3" r="2.35" fill="#D4A93F"/>
+    <path d="M9.75 20.1 L11.6 14.7 L13.45 20.1 Z" fill="#D4A93F"/>
+    <path d="M25.9 7.6 L13.4 16 L25.9 24.4" fill="none" stroke="#D4A93F"
+          stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>

@@ -9,6 +9,7 @@ import {
   type Budget, type Category, type Goal, type Holding, type Liability,
   type RecurringRule, type Txn, type Profile, type ProfileKind, type Insurance, type NetWorthSnapshot,
   type Account, type Posting, type PendingCapture,
+  type WatchItem, type Dividend, type Alert,
 } from './types';
 import { materialize } from '@/domain/recurrence';
 import { postingsForEntry } from '@/domain/accountLedger';
@@ -90,12 +91,16 @@ interface Data {
   accounts: Account[];
   postings: Posting[];
   pendingCaptures: PendingCapture[];
+  watchlist: WatchItem[];
+  dividends: Dividend[];
+  alerts: Alert[];
 }
 
 const emptyData: Data = {
   txns: [], categories: [], budgets: [], goals: [], holdings: [],
   liabilities: [], recurring: [], insurances: [], snapshots: [],
   accounts: [], postings: [], pendingCaptures: [],
+  watchlist: [], dividends: [], alerts: [],
 };
 
 interface AppState extends Data {
@@ -175,15 +180,33 @@ export type ThemeChoice = 'light' | 'dark' | 'system';
 export type AccentName = 'default' | 'emerald' | 'blue' | 'violet' | 'amber' | 'rose';
 
 // Each accent is tuned separately for light and dark so it always reads well.
-// [accent, accent-deep, accent-glow]. 'default' (indigo) uses the CSS defaults.
+// [accent, accent-deep, accent-glow]. 'default' is Khazana Gold and sets no
+// inline properties at all — it falls through to the CSS defaults in
+// globals.css (#836612 light / #D4A93F dark).
+//
+// The five alternates are named and toned as gemstones/metals rather than as
+// web colours, because the product's identity is a treasury. Each light step is
+// darkened until it clears 4.5:1 on white — the mid-tone that looks right on a
+// dark surface is unreadable on a light one.
+//
+// The five named accents are drawn from the same palette family as the
+// semantics, so a recoloured product still looks like one system. Keys are
+// FROZEN: they are persisted in localStorage, so renaming one silently resets
+// that user's choice. 'blue' is Indigo rather than a second Khazana Blue for
+// exactly that reason — the key had to stay even though the colour moved.
+//
+// Any change here must be mirrored in the no-FOUC script in app/layout.tsx,
+// which carries a copy of this table so the accent lands before first paint.
 export const ACCENTS: Record<Exclude<AccentName, 'default'>, {
   label: string; swatch: string; light: [string, string, string]; dark: [string, string, string];
 }> = {
-  emerald: { label: 'Emerald', swatch: '#1f8a5b', light: ['#1f8a5b', '#15724a', '#34c98a'], dark: ['#34c98a', '#1f8a5b', '#5ee0a8'] },
-  blue: { label: 'Blue', swatch: '#2563eb', light: ['#2563eb', '#1d4ed8', '#60a5fa'], dark: ['#5b8cff', '#3b6ae0', '#93b4ff'] },
-  violet: { label: 'Violet', swatch: '#6d5bd0', light: ['#6d5bd0', '#5a48b8', '#9d8df0'], dark: ['#9d8df0', '#7c6ae0', '#c2b6ff'] },
-  amber: { label: 'Amber', swatch: '#b07d12', light: ['#b07d12', '#8a610b', '#e0a93a'], dark: ['#e0a93a', '#b07d12', '#f2c869'] },
-  rose: { label: 'Rose', swatch: '#c0392f', light: ['#c0392f', '#9d2b22', '#e06a5a'], dark: ['#f06a4d', '#c0392f', '#ff9582'] },
+  // Jade sits deliberately close to the brand plate; it is the one alternate
+  // that keeps the emerald identity while moving the accent off gold.
+  emerald: { label: 'Jade', swatch: '#1B7F52', light: ['#136344', '#0D4C33', '#1B7F52'], dark: ['#3FD99A', '#1F8A5B', '#7BE9BC'] },
+  blue: { label: 'Sapphire', swatch: '#3B5FBF', light: ['#2F4C9C', '#243B7A', '#4F7CFF'], dark: ['#6E93FF', '#4A6FE0', '#A9C1FF'] },
+  violet: { label: 'Amethyst', swatch: '#6E5BB8', light: ['#584796', '#443873', '#8E7CC3'], dark: ['#A492DC', '#7E6CB8', '#C9BDEE'] },
+  amber: { label: 'Copper', swatch: '#B4642A', light: ['#8E4E20', '#703D19', '#C2610F'], dark: ['#D98A4E', '#B4642A', '#F0B183'] },
+  rose: { label: 'Garnet', swatch: '#A83A45', light: ['#8C2F38', '#6E252C', '#C0392F'], dark: ['#E0707C', '#B84B58', '#F2A6AE'] },
 };
 
 function applyAccent(name: string, dark: boolean) {
@@ -389,8 +412,10 @@ export const useApp = create<AppState>((set, get) => ({
     // Profile-scoped reads: a record with no profileId belongs to the default profile.
     const inProfile = <T extends { profileId?: string }>(r: T) => (r.profileId ?? defaultId) === active;
 
-    const [txnsAll, budgetsAll, goalsAll, holdingsAll, liabilitiesAll, recurringAll, insurancesAll, snapshotsAll, pendingAll] =
-      await Promise.all([
+    const [
+      txnsAll, budgetsAll, goalsAll, holdingsAll, liabilitiesAll, recurringAll,
+      insurancesAll, snapshotsAll, pendingAll, watchAll, dividendsAll, alertsAll,
+    ] = await Promise.all([
         listRecords<Txn>(key, STORE.txn, vaultId),
         listRecords<Budget>(key, STORE.budget, vaultId),
         listRecords<Goal>(key, STORE.goal, vaultId),
@@ -400,6 +425,9 @@ export const useApp = create<AppState>((set, get) => ({
         listRecords<Insurance>(key, STORE.insurance, vaultId),
         listRecords<NetWorthSnapshot>(key, STORE.snapshot, vaultId),
         listRecords<PendingCapture>(key, STORE.pendingCapture, vaultId),
+        listRecords<WatchItem>(key, STORE.watchItem, vaultId),
+        listRecords<Dividend>(key, STORE.dividend, vaultId),
+        listRecords<Alert>(key, STORE.alert, vaultId),
       ]);
 
     // Double-entry (v3): lazily backfill the active profile's chart of accounts
@@ -429,6 +457,9 @@ export const useApp = create<AppState>((set, get) => ({
       accounts: accountsAll.filter(inProfile),
       postings: postingsAll.filter(inProfile),
       pendingCaptures: pendingAll.filter(inProfile),
+      watchlist: watchAll.filter(inProfile).sort((a, b) => b.addedAt - a.addedAt),
+      dividends: dividendsAll.filter(inProfile).sort((a, b) => b.payDate - a.payDate),
+      alerts: alertsAll.filter(inProfile).sort((a, b) => b.createdAt - a.createdAt),
     });
   },
 

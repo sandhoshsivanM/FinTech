@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, type ReactNode } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { useApp } from '@/lib/store';
 import { VaultGate } from './VaultGate';
 import { Shell } from './Shell';
@@ -24,11 +25,21 @@ export function AppFrame({ children }: { children: ReactNode }) {
   if (status === 'loading') {
     return <div className="min-h-screen grid place-items-center text-muted">Loading…</div>;
   }
-  if (status !== 'unlocked') return <VaultGate />;
+  // `reducedMotion="user"` honours the OS setting for every Framer animation in
+  // the tree, so individual components never have to check it themselves.
+  if (status !== 'unlocked') {
+    return (
+      <MotionConfig reducedMotion="user">
+        <VaultGate />
+      </MotionConfig>
+    );
+  }
   return (
-    <ConfirmProvider>
-      <AutoLock />
-      <Shell>{children}</Shell>
-    </ConfirmProvider>
+    <MotionConfig reducedMotion="user">
+      <ConfirmProvider>
+        <AutoLock />
+        <Shell>{children}</Shell>
+      </ConfirmProvider>
+    </MotionConfig>
   );
 }
