@@ -37,6 +37,7 @@ import {
 import { investmentTotals, concentration } from '@/domain/investmentTotals';
 import { loadInstrumentMaster, lookupClassification, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { demoDayChangePct } from '@/lib/demo/marketFeed';
+import { dayChange } from '@/domain/dayChange';
 import { PageIntro, Button, Chip, Delta, Donut, Gauge, EmptyState, GlassCard, type DonutSeg } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
 import { ColumnChart } from '@/components/charts/ColumnChart';
@@ -94,10 +95,24 @@ export default function PortfolioPage() {
   }, [holdings]);
 
   // ---- Rows ---------------------------------------------------------------
+  // Whether the book carries any real previous close. Decided once for the
+  // whole table so real and fabricated moves are never mixed in one column.
+  const anyRealClose = useMemo(
+    () => holdings.some((h) => h.previousClose != null && h.previousClose !== ''),
+    [holdings],
+  );
+
   const rows = useMemo<Row[]>(() => views.map((v) => {
     const h = v.holding;
     const cls = classify(h);
-    const dayPct = demo ? demoDayChangePct(h.symbol) : null;
+    // A recorded previous close beats the demo feed every time. Only a book
+    // with no real closes at all falls back to the synthesised move, and then
+    // the whole column is badged.
+    const prev = h.previousClose;
+    const last = h.lastPrice;
+    const dayPct = prev != null && prev !== '' && last != null && last !== ''
+      ? (D(last).minus(D(prev)).div(D(prev)).times(100).toNumber())
+      : anyRealClose ? null : demo ? demoDayChangePct(h.symbol) : null;
     const current = v.current.toNumber();
     return {
       id: h.id, symbol: h.symbol, company: h.name ?? h.symbol, exchange: h.exchange,
@@ -107,11 +122,16 @@ export default function PortfolioPage() {
       dayPct, dayPnl: dayPct == null ? null : (current * dayPct) / 100,
       weight: totalValue ? (current / totalValue) * 100 : 0,
     };
-  }), [views, classify, demo, totalValue]);
+  }), [views, classify, demo, totalValue, anyRealClose]);
 
   const totalQty = rows.reduce((s, r) => s + r.qty, 0);
-  const dayPnlTotal = demo ? rows.reduce((s, r) => s + (r.dayPnl ?? 0), 0) : null;
-  const dayPctTotal = dayPnlTotal == null || totalValue === 0 ? null : (dayPnlTotal / totalValue) * 100;
+  const day = useMemo(() => dayChange(filtered, demo), [filtered, demo]);
+  const dayPnlTotal = day.pnl;
+  const dayPctTotal = day.pct;
+  // Positions with no recorded price are carried at cost and therefore show no
+  // gain — the single most common reason this screen's total sits a little
+  // below a live broker's.
+  const unpricedCount = filtered.filter((h) => h.lastPrice == null || h.lastPrice === '').length;
   const profitable = rows.filter((r) => r.pnl > 0).length;
   const losing = rows.filter((r) => r.pnl < 0).length;
 
@@ -185,9 +205,11 @@ export default function PortfolioPage() {
     [rows],
   );
   const dayColumns = useMemo(
-    () => (demo ? [...rows].sort((a, b) => Math.abs(b.dayPnl ?? 0) - Math.abs(a.dayPnl ?? 0)).slice(0, 8)
-      .map((r) => ({ label: r.symbol.slice(0, 6), value: r.dayPnl ?? 0 })) : []),
-    [rows, demo],
+    () => (dayPnlTotal == null ? [] : [...rows]
+      .filter((r) => r.dayPnl != null)
+      .sort((a, b) => Math.abs(b.dayPnl ?? 0) - Math.abs(a.dayPnl ?? 0)).slice(0, 8)
+      .map((r) => ({ label: r.symbol.slice(0, 6), value: r.dayPnl ?? 0 }))),
+    [rows, dayPnlTotal],
   );
 
   const columns: Column<Row>[] = [
@@ -328,6 +350,18 @@ export default function PortfolioPage() {
         </div>
       </StaggerItem>
 
+      {unpricedCount > 0 && (
+        <StaggerItem>
+          <div className="card p-3.5 flex items-start gap-3 flex-wrap">
+            <span className="w-7 h-7 shrink-0 rounded-[9px] grid place-items-center bg-warning-soft text-warning"><Info size={14} /></span>
+            <p className="text-[12.5px] text-ink-soft leading-relaxed flex-1 min-w-[240px]">
+              <b className="text-ink">{unpricedCount} of {filtered.length}</b> position{unpricedCount === 1 ? ' is' : 's are'} carried at cost because no price is recorded for {unpricedCount === 1 ? 'it' : 'them'}. {unpricedCount === 1 ? 'It shows' : 'They show'} no gain or loss, so the totals above understate the book. Khazana never fetches prices — importing a fresh broker CSV is what updates them.
+            </p>
+            <Button variant="ghost"><Link href="/holdings">Update prices</Link></Button>
+          </div>
+        </StaggerItem>
+      )}
+
       {(isPast || group !== 'all') && (
         <StaggerItem>
           <div className="card p-3.5 flex items-start gap-3 flex-wrap">
@@ -361,7 +395,14 @@ export default function PortfolioPage() {
             value={ghost ? '••••' : dayPnlTotal == null ? null : undefined}
             numeric={ghost || dayPnlTotal == null ? undefined : dayPnlTotal}
             format={(n) => (n >= 0 ? '+' : '−') + short(Math.abs(n), fmt.symbol)}
-            footer={dayPctTotal == null ? undefined : <><Delta value={dayPctTotal} />{demo && <span className="ml-auto"><DemoBadge label="Demo" /></span>}</>} />
+            footer={dayPctTotal == null ? undefined : (
+              <><Delta value={dayPctTotal} />
+                {!day.isReal && <span className="ml-auto"><DemoBadge label="Demo" /></span>}
+                {day.isReal && day.covered < day.total && (
+                  <span className="ml-auto text-muted">{day.covered}/{day.total} priced</span>
+                )}
+              </>
+            )} />
           <Kpi label="Holdings" icon={Layers} tone="violet" value={String(filtered.length)}
             footer={`${groupsPresent.length} asset group${groupsPresent.length === 1 ? '' : 's'}`} />
           <Kpi label="Total Quantity" icon={Hash} tone="accent" value={totalQty.toLocaleString('en-IN')} footer="Units held" />

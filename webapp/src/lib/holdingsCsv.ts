@@ -17,6 +17,11 @@ export interface CsvHolding {
   quantity: string;
   avgCost: string;
   lastPrice: string;
+  /**
+   * Yesterday's close, so today's move can be a fact rather than a guess.
+   * Empty when the export carried neither a previous close nor a day P&L.
+   */
+  previousClose: string;
   assetType: AssetType;
 }
 
@@ -34,6 +39,11 @@ const ALIASES = {
   ltp: ['ltp', 'last price', 'current price', 'market price', 'close price', 'last', 'price'],
   exchange: ['exchange', 'exch', 'market'],
   isin: ['isin'],
+  // Two routes to yesterday's close. Brokers that publish it directly are easy;
+  // Upstox, Zerodha and Groww instead publish today's P&L, from which the close
+  // is exact arithmetic — see below.
+  prevClose: ['prev close', 'previous close', 'prev. close', 'prevclose', 'yesterday'],
+  dayPnl: ["day's p&l", 'day p&l', 'day pnl', 'day change', "today's p&l", 'day p/l'],
 };
 
 function headerIndex(headers: string[], patterns: string[]): number {
@@ -82,6 +92,8 @@ export function parseHoldingsCsv(text: string, assetType: AssetType = 'equity_et
   const iAvg = headerIndex(headers, ALIASES.avg);
   const iLtp = headerIndex(headers, ALIASES.ltp);
   const iExch = headerIndex(headers, ALIASES.exchange);
+  const iPrev = headerIndex(headers, ALIASES.prevClose);
+  const iDay = headerIndex(headers, ALIASES.dayPnl);
 
   const missing = [
     iSym === -1 && 'symbol',
@@ -113,12 +125,24 @@ export function parseHoldingsCsv(text: string, assetType: AssetType = 'equity_et
     const ltp = iLtp !== -1 ? num(cols[iLtp] ?? '') : NaN;
     const exch = iExch !== -1 ? (cols[iExch] ?? '').toUpperCase() : '';
 
+    // Previous close, preferred where the broker states it. Otherwise derived
+    // from today's P&L: that column is (ltp - prevClose) * qty by definition,
+    // so the close falls straight out of it. Nothing is inferred — if neither
+    // column is present the field stays empty and the app says it cannot show
+    // a day change rather than inventing one.
+    let prev = iPrev !== -1 ? num(cols[iPrev] ?? '') : NaN;
+    if (!Number.isFinite(prev) && iDay !== -1 && Number.isFinite(ltp)) {
+      const dayPnl = num(cols[iDay] ?? '');
+      if (Number.isFinite(dayPnl)) prev = ltp - dayPnl / qty;
+    }
+
     rows.push({
       symbol: symbol.toUpperCase(),
       exchange: exch === 'BSE' ? 'BSE' : 'NSE',
       quantity: String(qty),
       avgCost: String(avg),
       lastPrice: Number.isFinite(ltp) && ltp > 0 ? String(ltp) : '',
+      previousClose: Number.isFinite(prev) && prev > 0 ? String(prev) : '',
       assetType,
     });
   }

@@ -31,7 +31,7 @@ import {
 } from '@/domain/portfolio';
 import { netWorthTotal, windowSummary } from '@/domain/finance';
 import { loadInstrumentMaster, lookupClassification, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
-import { demoDayChangePct } from '@/lib/demo/marketFeed';
+import { dayChange } from '@/domain/dayChange';
 import { GlassCard, SectionHeader, Ring, ProgressBar, Segmented, Chip, Delta, Donut, type DonutSeg } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
 import { LineChart } from '@/components/charts/LineChart';
@@ -91,11 +91,10 @@ export default function DashboardPage() {
   const totalPnl = summary.pnl.toNumber();
 
   const views = summary.views;
-  const dayPnl = useMemo(() => {
-    if (!demo) return null;
-    return views.reduce((s, v) => s + v.current.toNumber() * (demoDayChangePct(v.holding.symbol) / 100), 0);
-  }, [views, demo]);
-  const dayPct = dayPnl == null || portfolioValue === 0 ? null : (dayPnl / portfolioValue) * 100;
+  // Real where the broker export gave us a previous close; only fabricated —
+  // and then badged — when nothing real is available. See domain/dayChange.ts.
+  const day = useMemo(() => dayChange(holdings, demo), [holdings, demo]);
+  const dayPnl = day.pnl;
 
   const dividendTotal = useMemo(
     () => dividends.filter((d) => d.received).reduce((s, d) => s + D(d.amount).toNumber(), 0),
@@ -203,14 +202,23 @@ export default function DashboardPage() {
             value={ghost ? '••••' : undefined}
             numeric={ghost ? undefined : portfolioValue}
             format={(n) => short(n, fmt.symbol)}
-            footer={dayPct != null ? <><Delta value={dayPct} /> today</> : `${holdings.length} positions`}
+            // A demo day-change must never ride along on a card that carries no
+            // badge — that is exactly how a fabricated −0.31% came to sit beside
+            // a real broker's +0.24%. Only a real move earns this footer.
+            footer={day.isReal && day.pct != null
+              ? <><Delta value={day.pct} /> today</>
+              : `${holdings.length} position${holdings.length === 1 ? '' : 's'}`}
           />
           <Kpi
             label="Today's gain" icon={TrendingUp} tone={(dayPnl ?? 0) >= 0 ? 'success' : 'danger'}
             value={ghost ? '••••' : dayPnl == null ? null : undefined}
             numeric={ghost || dayPnl == null ? undefined : dayPnl}
             format={(n) => (n >= 0 ? '+' : '−') + short(Math.abs(n), fmt.symbol)}
-            footer={dayPnl == null ? undefined : <>{demo && <DemoBadge label="Demo" />}</>}
+            footer={dayPnl == null ? undefined : day.isReal
+              ? (day.covered < day.total
+                ? `${day.covered} of ${day.total} priced`
+                : 'Against yesterday\u2019s close')
+              : <DemoBadge label="Demo" />}
           />
           <Kpi
             label="Overall return" icon={Percent} tone={totalPnl >= 0 ? 'violet' : 'danger'}
@@ -231,16 +239,21 @@ export default function DashboardPage() {
             value={ghost ? '••••' : undefined}
             numeric={ghost ? undefined : cash.toNumber()}
             format={(n) => short(n, fmt.symbol)}
-            footer={`${period.income.gt(0) ? ((period.net.div(period.income).times(100).toNumber()).toFixed(0) + '% saved') : 'This month'}`}
+            footer={period.income.gt(0)
+              ? `${period.net.div(period.income).times(100).toNumber().toFixed(0)}% saved this month`
+              : 'This month'}
           />
           <Kpi label="Holdings" icon={Layers} tone="success" value={String(holdings.length)}
-            footer={`${allocationByGroup(holdings).length} asset groups`} />
+            footer={`${allocationByGroup(holdings).length} asset group${allocationByGroup(holdings).length === 1 ? '' : 's'}`} />
           <Kpi
             label="Dividends" icon={HandCoins} tone="warning"
             value={ghost ? '••••' : dividendTotal === 0 ? null : undefined}
             numeric={ghost || dividendTotal === 0 ? undefined : dividendTotal}
             format={(n) => short(n, fmt.symbol)}
-            footer={dividendTotal > 0 && portfolioValue > 0 ? `${((dividendTotal / portfolioValue) * 100).toFixed(2)}% yield` : undefined}
+            // Not called a yield: this is everything ever received over today's
+            // value, which is a different quantity from an annual dividend
+            // yield and would be read as one.
+            footer={dividendTotal > 0 && portfolioValue > 0 ? `${((dividendTotal / portfolioValue) * 100).toFixed(2)}% of value` : undefined}
           />
         </KpiRow>
       </StaggerItem>

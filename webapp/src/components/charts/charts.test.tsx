@@ -4,6 +4,7 @@ import { render, screen, cleanup, fireEvent, within } from '@testing-library/rea
 import { Gauge } from './Gauge';
 import { AreaChart } from './AreaChart';
 import { Sunburst, type SunburstNode } from './Sunburst';
+import { Donut, type DonutSeg } from './Donut';
 import { groupShades, MAX_GROUP_SHADES, ASSET_GROUP_META, ASSET_GROUP_ORDER } from '@/domain/portfolio';
 
 beforeEach(cleanup);
@@ -182,5 +183,52 @@ describe('groupShades', () => {
 
   test('light and dark ramps differ', () => {
     expect(groupShades('equity', 3, false)[2]).not.toBe(groupShades('equity', 3, true)[2]);
+  });
+});
+
+describe('Donut folding', () => {
+  const many = (n: number): DonutSeg[] =>
+    Array.from({ length: n }, (_, i) => ({ label: `ITEM${i}`, value: n - i, color: 'var(--c1)' }));
+
+  test('below the limit every segment keeps its own legend row', () => {
+    render(<Donut segments={many(4)} maxSlices={6} />);
+    expect(screen.getByText('ITEM3')).toBeTruthy();
+    expect(screen.queryByText(/Others \(/)).toBeNull();
+  });
+
+  test('the tail folds into one row that names how many are in it', () => {
+    render(<Donut segments={many(10)} maxSlices={6} />);
+    expect(screen.getByText('ITEM5')).toBeTruthy();
+    expect(screen.queryByText('ITEM6')).toBeNull();
+    expect(screen.getByText(/Others \(4\)/)).toBeTruthy();
+  });
+
+  test('clicking "Others" reveals every folded item, then hides again', () => {
+    // The whole point of the disclosure: a folded row that cannot be opened
+    // tells the reader that a third of their money is somewhere unnamed.
+    render(<Donut segments={many(10)} maxSlices={6} />);
+    const btn = screen.getByRole('button', { expanded: false });
+    fireEvent.click(btn);
+    for (let i = 6; i < 10; i++) expect(screen.getByText(`ITEM${i}`)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { expanded: true }));
+    expect(screen.queryByText('ITEM9')).toBeNull();
+  });
+
+  test('the folded share is the sum of what it hides', () => {
+    // Six of ten plus four of ten out of a hundred: the folded row reads 40%,
+    // not the share of any one member.
+    const segs: DonutSeg[] = [
+      ...Array.from({ length: 6 }, (_, i) => ({ label: `H${i}`, value: 10, color: 'var(--c1)' })),
+      ...Array.from({ length: 4 }, (_, i) => ({ label: `T${i}`, value: 10, color: 'var(--c1)' })),
+    ];
+    render(<Donut segments={segs} maxSlices={6} />);
+    const btn = screen.getByRole('button', { expanded: false });
+    expect(within(btn).getByText('40%')).toBeTruthy();
+  });
+
+  test('without maxSlices nothing is folded or dropped', () => {
+    render(<Donut segments={many(12)} />);
+    expect(screen.getByText('ITEM11')).toBeTruthy();
+    expect(screen.queryByRole('button', { expanded: false })).toBeNull();
   });
 });

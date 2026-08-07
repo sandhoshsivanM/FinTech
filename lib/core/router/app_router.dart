@@ -11,6 +11,7 @@ import '../../features/insurance/screens/insurance_screen.dart';
 import '../../features/investments/screens/add_lot_screen.dart';
 import '../../features/investments/screens/import_lots_screen.dart';
 import '../../features/investments/screens/investments_screen.dart';
+import '../../features/investments/screens/analytics_screen.dart';
 import '../../features/investments/screens/portfolio_breakdown_screen.dart';
 import '../../features/liabilities/screens/liabilities_screen.dart';
 import '../../features/reports/screens/dashboard_screen.dart';
@@ -40,6 +41,7 @@ abstract final class Routes {
   static const budget = '/app/budget';
   static const investments = '/app/investments';
   static const investmentsBreakdown = '/app/investments/breakdown';
+  static const analytics = '/app/investments/analytics';
   static const investmentsAddLot = '/app/investments/add-lot';
   static const investmentsImportLots = '/app/investments/import-lots';
   static const liabilities = '/app/liabilities';
@@ -95,6 +97,7 @@ abstract final class Routes {
     transactions: transactions,
     // Investments owns the whole balance sheet, assets and liabilities alike.
     investmentsBreakdown: investments,
+    analytics: investments,
     investmentsAddLot: investments,
     investmentsImportLots: investments,
     liabilities: investments,
@@ -152,6 +155,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             GoRoute(
               path: 'breakdown',
               builder: (context, state) => const PortfolioBreakdownScreen(),
+            ),
+            GoRoute(
+              path: 'analytics',
+              builder: (context, state) => const AnalyticsScreen(),
             ),
             GoRoute(
               path: 'add-lot',

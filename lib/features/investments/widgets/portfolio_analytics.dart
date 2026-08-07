@@ -586,14 +586,20 @@ class _CostVsValueCardState extends State<CostVsValueCard> {
           ),
           const SizedBox(height: AppSpacing.md),
           DonutChart(
+            // Every position, largest first — the old `i < 8` cut simply
+            // dropped the rest, so the ring did not add up to the centre
+            // figure. DonutChart now folds the tail into an expandable
+            // "Others" instead, which both totals correctly and keeps the
+            // detail a tap away.
             segments: [
-              for (var i = 0; i < positions.length && i < 8; i++)
+              for (var i = 0; i < positions.length; i++)
                 DonutSegment(positions[i].instrument.name,
                     pick(positions[i]).toDouble(),
                     _sliceColors[i % _sliceColors.length]),
             ],
             size: 130,
             strokeWidth: 18,
+            maxSlices: 7,
             centerText: Money.compact(grand.toDouble()),
             formatValue: (v) =>
                 Money.format(Decimal.parse(v.toStringAsFixed(2))),
@@ -794,6 +800,7 @@ class GroupAllocationCard extends StatelessWidget {
         ],
         size: 116,
         strokeWidth: 16,
+        maxSlices: 6,
         centerText: Money.compact(grand.toDouble()),
         formatValue: (v) => Money.format(Decimal.parse(v.toStringAsFixed(2))),
       ),

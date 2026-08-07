@@ -25,6 +25,7 @@ const _allRoutes = <String>[
   Routes.budget,
   Routes.investments,
   Routes.investmentsBreakdown,
+  Routes.analytics,
   Routes.investmentsAddLot,
   Routes.investmentsImportLots,
   Routes.liabilities,

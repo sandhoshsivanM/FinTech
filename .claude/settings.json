@@ -74,10 +74,32 @@
       "Bash(rm -rf /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/udd)",
       "Bash(sed -i '' 's|args:\\\\['\\\\''--no-sandbox'\\\\'','\\\\''--disable-gpu'\\\\''\\\\]|args:['\\\\''--no-sandbox'\\\\'','\\\\''--disable-gpu'\\\\'','\\\\''--disable-dev-shm-usage'\\\\'','\\\\''--user-data-dir=/private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/udd'\\\\'']|' /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/others.mjs)",
       "Bash(node -e ' *)",
-      "Bash(sips -c 1400 1680 --cropOffset 0 0 x-inv-open.png --out x-inv-crop.png)"
+      "Bash(sips -c 1400 1680 --cropOffset 0 0 x-inv-open.png --out x-inv-crop.png)",
+      "Bash(sips -Z 820 /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/sim1.png --out /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/sim1s.png)",
+      "Bash(ls test/golden/; sed -n '1,40p' test/golden/*.dart | head -50)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const r=JSON.parse\\(d\\).filter\\(x=>x.errorCount\\);console.log\\('lint errors:',r.reduce\\(\\(s,x\\)=>s+x.errorCount,0\\)\\);r.forEach\\(x=>x.messages.filter\\(m=>m.severity==2\\).forEach\\(m=>console.log\\(' ',x.filePath.split\\('/src/'\\)[1],m.line,m.ruleId\\)\\)\\)}\\)\")",
+      "Bash(awk '{print $5,$6,$7,$8,$9}')",
+      "Bash(cp -R dist/release/web /tmp/khazana-host)",
+      "Bash(curl -s -o /dev/null -w \"site %{http_code}\\\\n\" http://192.168.1.2:4321/investments.html)",
+      "Bash(/usr/bin/codesign -dv dist/release/Khazana.app)",
+      "Bash(screencapture -x -o /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/mac.png)",
+      "Bash(sips -Z 1000 /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/mac.png --out /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/macs.png)",
+      "Bash(screencapture -x -o /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/mac2.png)",
+      "Bash(sips -Z 1200 /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/mac2.png --out /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/mac2s.png)",
+      "Bash(screencapture -x -o /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/mac3.png)",
+      "Bash(sips -Z 1200 /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/mac3.png --out /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/mac3s.png)",
+      "Bash(log show *)",
+      "Bash(screencapture -x -o /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/mac4.png)",
+      "Bash(sips -Z 1200 /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/mac4.png --out /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/c3897aa3-1cdd-4eff-9530-6c81c1bf1fc9/scratchpad/mac4s.png)",
+      "Bash(sqlite3 -readonly '/Users/sandhoshsivan/Library/Application Support/Firefox/Profiles/eo0atsh3.default-release/storage/default/http+++localhost+3100/idb/159365052fsion_thec.sqlite' 'select os.name, count\\(od.object_store_id\\) from object_store os left join object_data od on od.object_store_id=os.id group by os.name;')",
+      "Bash(lsof -ti:3100)",
+      "Bash(pkill -f \"python3 -m http.server 4321\")",
+      "Bash(rm -rf /tmp/khazana-host)",
+      "Bash(awk '{print $5,$9}')"
     ],
     "additionalDirectories": [
-      "/private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/shots"
+      "/private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/shots",
+      "/Users/sandhoshsivan/Downloads/FinTech/webapp/test/golden"
     ]
   }
 }

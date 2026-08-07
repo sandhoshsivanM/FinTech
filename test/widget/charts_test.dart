@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:khazana/domain/entities/asset_group.dart';
 import 'package:khazana/presentation/asset_group_colors.dart';
 import 'package:khazana/presentation/charts/area_chart.dart';
+import 'package:khazana/presentation/charts/donut_chart.dart';
 import 'package:khazana/presentation/charts/gauge_chart.dart';
 import 'package:khazana/presentation/charts/sunburst_chart.dart';
 
@@ -196,6 +197,61 @@ void main() {
     test('light and dark ramps differ', () {
       expect(groupShades(AssetGroup.equity, 3, dark: false)[2],
           isNot(groupShades(AssetGroup.equity, 3, dark: true)[2]));
+    });
+  });
+
+  group('DonutChart folding', () {
+    List<DonutSegment> many(int n) => [
+          for (var i = 0; i < n; i++)
+            DonutSegment('ITEM$i', (n - i).toDouble(), Colors.teal),
+        ];
+
+    testWidgets('below the limit every segment keeps its own legend row',
+        (tester) async {
+      await tester.pumpWidget(wrap(DonutChart(segments: many(4), maxSlices: 6)));
+      expect(find.text('ITEM3'), findsOneWidget);
+      expect(find.textContaining('Others ('), findsNothing);
+    });
+
+    testWidgets('the tail folds into one row that names how many are in it',
+        (tester) async {
+      await tester.pumpWidget(wrap(DonutChart(segments: many(10), maxSlices: 6)));
+      expect(find.text('ITEM5'), findsOneWidget); // last of the head
+      expect(find.text('ITEM6'), findsNothing); // folded away
+      expect(find.text('Others (4)'), findsOneWidget);
+    });
+
+    testWidgets('tapping "Others" reveals every folded item, then hides again',
+        (tester) async {
+      // The whole point of the disclosure: a folded row that cannot be opened
+      // tells the reader a third of their money is somewhere unnamed.
+      await tester.pumpWidget(wrap(DonutChart(segments: many(10), maxSlices: 6)));
+      await tester.tap(find.text('Others (4)'));
+      await tester.pumpAndSettle();
+      for (var i = 6; i < 10; i++) {
+        expect(find.text('ITEM$i'), findsOneWidget);
+      }
+      await tester.tap(find.text('Others (4)'));
+      await tester.pumpAndSettle();
+      expect(find.text('ITEM9'), findsNothing);
+    });
+
+    testWidgets('the folded share is the sum of what it hides', (tester) async {
+      // 4 segments of 10 each folded out of a 100 total must read 40%, not the
+      // share of any one of them.
+      final segs = [
+        for (var i = 0; i < 6; i++) DonutSegment('H$i', 10, Colors.teal),
+        for (var i = 0; i < 4; i++) DonutSegment('T$i', 10, Colors.teal),
+      ];
+      await tester.pumpWidget(wrap(DonutChart(segments: segs, maxSlices: 6)));
+      expect(find.text('40%'), findsOneWidget);
+    });
+
+    testWidgets('without maxSlices nothing is folded or dropped',
+        (tester) async {
+      await tester.pumpWidget(wrap(DonutChart(segments: many(12))));
+      expect(find.text('ITEM11'), findsOneWidget);
+      expect(find.textContaining('Others ('), findsNothing);
     });
   });
 }

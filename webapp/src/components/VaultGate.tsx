@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
-import { ShieldCheck, Fingerprint } from 'lucide-react';
+import { ShieldCheck, Fingerprint, ShieldAlert } from 'lucide-react';
 import { APP_TAGLINE, TRUST_POINTS } from '@/lib/brand';
 import { BrandMark, WordMark } from './BrandMark';
 import { useApp } from '@/lib/store';
+import { cryptoAvailable } from '@/lib/crypto';
 
 export function VaultGate() {
   const status = useApp((s) => s.status);
@@ -18,8 +19,15 @@ export function VaultGate() {
   const isSetup = status === 'uninitialized';
   const busy = status === 'unlocking' || status === 'loading';
 
+  // Browsers expose Web Crypto only in a secure context. Reaching this build
+  // over plain http on a LAN address — the normal way to open it on a phone —
+  // leaves `crypto.subtle` undefined, and the vault cannot be encrypted at all.
+  // Say so before the PIN is typed rather than after it is submitted.
+  const secure = cryptoAvailable();
+
   const submit = () => {
     setLocalErr(null);
+    if (!secure) return;
     if (pin.length < 4) return setLocalErr('PIN must be at least 4 digits.');
     if (isSetup && pin !== confirm) return setLocalErr('PINs do not match.');
     if (isSetup) void setup(pin); else void unlock(pin);
@@ -40,6 +48,21 @@ export function VaultGate() {
         </div>
 
         <div className="glass p-6">
+          {!secure && (
+            <div className="mb-4 rounded-[10px] border border-line bg-warning-soft p-3.5 flex gap-3">
+              <ShieldAlert size={16} className="shrink-0 mt-0.5 text-warning" />
+              <div className="text-[12.5px] leading-relaxed">
+                <b className="block text-ink">This address can&rsquo;t encrypt your vault.</b>
+                <span className="text-ink-soft">
+                  Browsers only allow encryption over <b>https://</b> or on{' '}
+                  <b>localhost</b>. You are on a plain <b>http://</b> network
+                  address, where the encryption API is switched off — so Khazana
+                  will not open a vault here rather than store your finances
+                  unencrypted.
+                </span>
+              </div>
+            </div>
+          )}
           <h2 className="text-lg font-bold mb-1">{isSetup ? 'Set up your vault' : 'Unlock'}</h2>
           {isSetup && (
             <p className="text-sm text-muted mb-4">Your PIN encrypts everything in this browser. It is never stored.</p>
@@ -66,7 +89,7 @@ export function VaultGate() {
             </div>
           )}
           <button
-            onClick={submit} disabled={busy}
+            onClick={submit} disabled={busy || !secure}
             className="focus-ring mt-5 w-full rounded-btn bg-primary text-[var(--primary-fg)] font-semibold py-3 transition-shadow duration-[250ms] hover:shadow-[var(--glow)] disabled:opacity-60"
           >
             {busy ? 'Working…' : isSetup ? 'Create vault' : 'Unlock'}

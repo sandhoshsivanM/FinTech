@@ -54,6 +54,7 @@ const _sections = <_Section>[
     items: [
       (route: Routes.investments, icon: Icons.trending_up_outlined, label: 'Investments'),
       (route: Routes.investmentsBreakdown, icon: Icons.donut_small_outlined, label: 'Breakdown'),
+      (route: Routes.analytics, icon: Icons.insights_outlined, label: 'Analytics'),
       (route: Routes.liabilities, icon: Icons.credit_card_outlined, label: 'Liabilities'),
       (route: Routes.insurance, icon: Icons.umbrella_outlined, label: 'Insurance'),
       (route: Routes.goals, icon: Icons.flag_outlined, label: 'Goals'),

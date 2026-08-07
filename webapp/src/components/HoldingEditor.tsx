@@ -157,6 +157,7 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
         symbol: r.symbol, exchange: r.exchange,
         quantity: r.quantity, avgCost: r.avgCost,
         lastPrice: r.lastPrice || null,
+        previousClose: r.previousClose || null,
         assetType: r.assetType,
         firstPurchaseDate: null,
       } as unknown as Holding & { id: string } & Record<string, unknown>);

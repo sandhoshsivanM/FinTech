@@ -47,6 +47,11 @@ class InvestmentsScreen extends ConsumerWidget {
             icon: const Icon(Icons.donut_small_outlined),
             onPressed: () => context.go(Routes.investmentsBreakdown),
           ),
+          IconButton(
+            tooltip: 'Analytics',
+            icon: const Icon(Icons.insights_outlined),
+            onPressed: () => context.go(Routes.analytics),
+          ),
           const _RefreshPricesButton(),
           IconButton(
             tooltip: 'Import lots from a broker CSV',
