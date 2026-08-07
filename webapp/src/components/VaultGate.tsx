@@ -29,13 +29,13 @@ export function VaultGate() {
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <BrandMark size={76} className="drop-shadow-[0_12px_32px_color-mix(in_srgb,var(--accent)_35%,transparent)]" />
+          <BrandMark size={96} priority />
           <WordMark className="mt-5 text-[26px] text-ink" />
           {/* The rules either side of the tagline are from the brand lockup. */}
-          <p className="mt-2.5 flex items-center gap-3 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-accent">
-            <span className="h-px w-6 bg-accent-line" aria-hidden="true" />
+          <p className="mt-2.5 flex items-center gap-3 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-gold-ink">
+            <span className="h-px w-6 bg-[var(--gold)] opacity-45" aria-hidden="true" />
             {APP_TAGLINE}
-            <span className="h-px w-6 bg-accent-line" aria-hidden="true" />
+            <span className="h-px w-6 bg-[var(--gold)] opacity-45" aria-hidden="true" />
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export function VaultGate() {
           )}
           <button
             onClick={submit} disabled={busy}
-            className="mt-5 w-full rounded-[14px] bg-accent text-white font-semibold py-3 disabled:opacity-60"
+            className="focus-ring mt-5 w-full rounded-btn bg-primary text-[var(--primary-fg)] font-semibold py-3 transition-shadow duration-[250ms] hover:shadow-[var(--glow)] disabled:opacity-60"
           >
             {busy ? 'Working…' : isSetup ? 'Create vault' : 'Unlock'}
           </button>
@@ -80,7 +80,7 @@ export function VaultGate() {
         <ul className="mt-6 grid gap-2.5">
           {TRUST_POINTS.map((t) => (
             <li key={t.title} className="flex items-start gap-2.5 text-[12px] leading-snug">
-              <ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" />
+              <ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
               <span>
                 <b className="font-semibold text-ink">{t.title}.</b>{' '}
                 <span className="text-muted">{t.detail}</span>

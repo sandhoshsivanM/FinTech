@@ -37,6 +37,28 @@
     ],
     "android": {
       "debugApplicationIdSuffix": ".debug"
-    }
+    },
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "dmg": {
+        "background": "dmg-background.png",
+        "windowSize": {
+          "width": 660,
+          "height": 400
+        },
+        "appPosition": {
+          "x": 180,
+          "y": 210
+        },
+        "applicationFolderPosition": {
+          "x": 480,
+          "y": 210
+        }
+      }
+    },
+    "copyright": "Khazana. Your data stays on your device.",
+    "category": "Finance",
+    "shortDescription": "Private wealth, on your device.",
+    "longDescription": "Khazana is a privacy-first personal finance and wealth app. Your data is encrypted with AES-256 and never leaves this device \u2014 there is no server and no account."
   }
 }

@@ -254,14 +254,10 @@ function Brand({ rail }: { rail: boolean }) {
   return (
     <Link href="/dashboard" className={clsx('flex items-center gap-3 px-5 pt-[18px] pb-4', rail && 'justify-center px-0')}>
       <BrandMark size={34} className="shrink-0" />
-      {!rail && (
-        <span className="min-w-0">
-          <WordMark className="block text-[15px] leading-tight text-ink" />
-          <span className="block text-[9.5px] font-semibold uppercase tracking-[0.14em] text-muted mt-0.5">
-            Your wealth. Your vault.
-          </span>
-        </span>
-      )}
+      {/* Wordmark only. The full lockup carries the tagline under it, but at
+          248px "Your wealth. Your vault." wraps to two lines and eats a nav
+          row — so the tagline lives on the vault gate, where it has room. */}
+      {!rail && <WordMark className="min-w-0 truncate text-[15px] leading-tight text-ink" />}
     </Link>
   );
 }
@@ -295,8 +291,10 @@ function Nav({
                   'flex items-center gap-3 rounded-[11px] mb-0.5 text-[13.5px] leading-[1.45]',
                   'transition-colors duration-150 ease-standard',
                   rail ? 'justify-center p-2.5' : 'px-2.5 py-1.5',
+                  // Vault: #12352A on #20C98A. Ledger: #E1F3EB on #087A56.
+                  // Both come straight from --accent-soft / --accent.
                   active
-                    ? 'bg-accent-soft text-accent font-semibold ring-1 ring-inset ring-accent-line'
+                    ? 'bg-accent-soft text-accent font-semibold'
                     : 'text-ink-soft font-medium hover:bg-fill hover:text-ink',
                 )}
               >

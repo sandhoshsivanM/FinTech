@@ -44,7 +44,25 @@
       "Bash(curl -s -m 25 \"https://portal.amfiindia.com/spages/NAVAll.txt\")",
       "Bash(curl -s -o /dev/null -m 20 -w \"%{http_code} -> %{redirect_url}\\\\n\" \"https://www.amfiindia.com/spages/NAVAll.txt\")",
       "Bash(perl -e 'select\\(undef,undef,undef,8\\)')",
-      "Bash(curl -s -m 30 \"https://portal.amfiindia.com/spages/NAVAll.txt\")"
+      "Bash(curl -s -m 30 \"https://portal.amfiindia.com/spages/NAVAll.txt\")",
+      "Bash(kill 13752 11724)",
+      "Bash(mkdir -p dist/release)",
+      "Bash(cp webapp/src-tauri/target/release/bundle/dmg/Khazana_0.1.0_aarch64.dmg dist/release/)",
+      "Bash(rm -rf dist/release/Khazana.app)",
+      "Bash(cp -R webapp/src-tauri/target/release/bundle/macos/Khazana.app dist/release/)",
+      "Bash(awk '{print $1}')",
+      "Bash(codesign -dv dist/release/Khazana.app)",
+      "Bash(sips -g pixelWidth -g pixelHeight -g hasAlpha /tmp/khazana-mark.png)",
+      "Bash(sips -s format png -z 260 520 prev-dark.png --out prev-dark2.png)",
+      "Bash(rm -rf dist/release)",
+      "Bash(cp -R webapp/out dist/release/web)",
+      "Bash(sips -g pixelWidth -g hasAlpha dist/release/Khazana.app/Contents/Resources/icon.icns)",
+      "Bash(open /tmp/kz2/Khazana.app)",
+      "Bash(screencapture -o -x /tmp/kzapp2.png)",
+      "Bash(kill 19930)",
+      "Bash(shasum -a 256 dist/release/Khazana_0.1.0_aarch64.dmg)",
+      "Bash(awk '{print \"  sha256\",$1}')",
+      "Bash(flutter doctor *)"
     ],
     "additionalDirectories": [
       "/private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/shots"

@@ -15,7 +15,7 @@ library;
 const kAppName = 'Khazana';
 
 /// Short positioning line shown under the wordmark on the unlock screen.
-const kAppTagline = 'Offline · private · encrypted';
+const kAppTagline = 'Your wealth. Your vault.';
 
 /// Encrypted-backup file extension.
 ///

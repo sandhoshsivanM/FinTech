@@ -43,17 +43,29 @@ export function Eyebrow({ children, className }: { children: ReactNode; classNam
 }
 
 // ---- Buttons -------------------------------------------------------------
-type BtnVariant = 'primary' | 'soft' | 'ghost' | 'danger';
+/**
+ * Three variants. Not fifteen.
+ *
+ *   primary   — emerald fill. The one action a screen most wants you to take.
+ *   secondary — transparent with a border. Everything else.
+ *   ghost     — no chrome. Tertiary and in-table actions.
+ *
+ * `soft` and `danger` are kept as aliases so the ~40 existing call sites do not
+ * all have to change in one commit: `soft` maps to secondary, and `danger`
+ * is secondary tinted with the danger token rather than a fourth shape.
+ */
+type BtnVariant = 'primary' | 'secondary' | 'ghost' | 'soft' | 'danger';
+
 export function Button({
   children, variant = 'primary', className, type = 'button', ...rest
 }: { children: ReactNode; variant?: BtnVariant } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const styles: Record<BtnVariant, string> = {
-    // The glow on hover is the "buttons glow subtly" call — a tinted shadow in
-    // the button's own colour, not a generic drop shadow.
-    primary: 'bg-primary text-primary-fg shadow-[0_2px_10px_-3px_color-mix(in_srgb,var(--primary)_75%,transparent)] hover:shadow-[var(--glow)]',
-    soft: 'bg-card text-ink border border-line hover:border-line-strong hover:bg-card-2',
+    // Emerald is the INTERACTION colour. Gold is identity and never lands here.
+    primary: 'bg-primary text-[var(--primary-fg)] hover:bg-[var(--accent-deep)]',
+    secondary: 'bg-transparent text-ink border border-line-strong hover:border-[var(--accent)] hover:text-accent',
     ghost: 'text-ink-soft hover:bg-fill hover:text-ink',
-    danger: 'bg-danger-soft text-danger hover:bg-[color-mix(in_srgb,var(--danger)_18%,transparent)]',
+    soft: 'bg-transparent text-ink border border-line-strong hover:border-[var(--accent)] hover:text-accent',
+    danger: 'bg-transparent text-danger border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] hover:bg-danger-soft',
   };
   return (
     <button
@@ -62,7 +74,7 @@ export function Button({
       className={clsx(
         'focus-ring inline-flex items-center justify-center gap-2 rounded-btn h-9 px-3.5',
         'text-[13px] font-semibold tracking-[-0.01em] whitespace-nowrap',
-        'transition-[background-color,border-color,box-shadow,transform] duration-150 ease-standard',
+        'transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-standard',
         'active:translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-y-0',
         styles[variant],
         className,
