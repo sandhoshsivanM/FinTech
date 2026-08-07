@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../design_system/components/brand_mark.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -232,16 +234,7 @@ class _BrandHeader extends StatelessWidget {
           AppSpacing.md, AppSpacing.lg, AppSpacing.md, AppSpacing.sm),
       child: Row(
         children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: AppColors.accentGradient),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: const Icon(Icons.shield_rounded,
-                color: Colors.white, size: 17),
-          ),
+          const BrandMark(size: 30),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(

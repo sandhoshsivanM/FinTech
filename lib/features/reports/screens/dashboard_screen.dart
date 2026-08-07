@@ -1,5 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../design_system/components/khazana_cards.dart';
+import '../../../design_system/tokens/khazana_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -101,8 +104,10 @@ class _DashboardBody extends ConsumerWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      // Bottom pad clears the navigation bar. With a symmetric vertical pad the
+      // final card ran underneath it and looked clipped.
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.sm, AppSpacing.md, 96),
       children: [
         // 0. First-run guided tour launcher (shows once) + welcome banner.
         const TourLauncher(),
@@ -182,8 +187,10 @@ class _ColdOpenPlaceholder extends ConsumerWidget {
     final days = DateTime.now().difference(snapshot.date).inDays;
 
     return ListView(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      // Bottom pad clears the navigation bar. With a symmetric vertical pad the
+      // final card ran underneath it and looked clipped.
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.sm, AppSpacing.md, 96),
       children: [
         const _GreetingHeader(),
         const SizedBox(height: AppSpacing.md),
@@ -294,7 +301,6 @@ class _GreetingHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              const Text('👋', style: TextStyle(fontSize: 20)),
             ],
           ),
         ),
@@ -366,16 +372,20 @@ class _NetWorthHeroCard extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadii.card),
+          // The single dark focal surface. A full-bleed emerald slab reads as
+          // loud rather than premium, and it spends the interaction colour on
+          // something that is not interactive.
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: AppColors.accentGradient,
+            colors: [Color(0xFF14372A), KhazanaColors.forest],
           ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
           boxShadow: [
             BoxShadow(
-              color: AppColors.accentDeep.withValues(alpha: 0.40),
-              blurRadius: 32,
-              offset: const Offset(0, 16),
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 28,
+              offset: const Offset(0, 14),
             ),
           ],
         ),
@@ -387,12 +397,12 @@ class _NetWorthHeroCard extends ConsumerWidget {
               Row(
                 children: [
                   const Icon(Icons.account_balance_wallet,
-                      color: Colors.white70, size: 16),
+                      color: KhazanaColors.vaultGold, size: 16),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
                     'NET WORTH',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Colors.white70,
+                          color: KhazanaColors.vaultGold,
                           letterSpacing: 1.4,
                           fontWeight: FontWeight.w600,
                         ),
@@ -522,8 +532,10 @@ class _StatTilesGrid extends ConsumerWidget {
 
     return Column(
       children: [
-        Row(
-          children: [
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             Expanded(
               child: StatTile(
                 label: 'Net Cash',
@@ -549,11 +561,14 @@ class _StatTilesGrid extends ConsumerWidget {
                 onTap: () => context.go(Routes.investments),
               ),
             ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             Expanded(
               child: _AsyncMoneyTile(
                 label: 'Liabilities',
@@ -576,7 +591,8 @@ class _StatTilesGrid extends ConsumerWidget {
                 ghost: ghost,
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -1437,17 +1453,13 @@ class _TopSpendCard extends ConsumerWidget {
       );
     }
 
-    final head = rows.take(_maxSlices).toList();
-    final tail = rows.skip(_maxSlices);
-    final other = tail.fold(Decimal.zero, (s, e) => s + e.value);
-
+    // Every category, largest first. DonutChart folds the tail into "Other"
+    // and owns expanding it again, so folding here would only turn that row
+    // into a dead end.
     final segments = <DonutSegment>[
-      for (var i = 0; i < head.length; i++)
-        DonutSegment(names[head[i].key] ?? 'Uncategorised',
-            head[i].value.toDouble(), _sliceColors[i % _sliceColors.length]),
-      if (other > Decimal.zero)
-        DonutSegment('Other', other.toDouble(),
-            Theme.of(context).colorScheme.outlineVariant),
+      for (var i = 0; i < rows.length; i++)
+        DonutSegment(names[rows[i].key] ?? 'Uncategorised',
+            rows[i].value.toDouble(), _sliceColors[i % _sliceColors.length]),
     ];
 
     return _DashCard(
@@ -1458,6 +1470,8 @@ class _TopSpendCard extends ConsumerWidget {
         segments: segments,
         size: 140,
         strokeWidth: 20,
+        maxSlices: _maxSlices,
+        otherLabel: 'Other',
         centerText: Money.compact(total.toDouble()),
         centerSub: 'spent',
         formatValue: (v) => Money.format(Decimal.parse(v.toStringAsFixed(2))),
@@ -1471,14 +1485,14 @@ class _TopSpendCard extends ConsumerWidget {
 /// Not the asset-group palette: that one is checked for separation in ITS
 /// adjacency order, and borrowing it here would put those guarantees on a
 /// different set of neighbours where they have not been verified.
-const _sliceColors = <Color>[
-  Color(0xFF6C7BF0),
-  Color(0xFFEB6834),
-  Color(0xFF1BAF7A),
-  Color(0xFFEDA100),
-  Color(0xFFE87BA4),
-  Color(0xFF4A3AA7),
-];
+/// Category slices draw from the ONE shared series.
+///
+/// This used to be a private purple-led list, and `portfolio_analytics.dart`
+/// had a second, different one — so the same app showed three unrelated chart
+/// palettes and none of them matched the web client. `KhazanaColors.series` is
+/// the validated set: emerald leads, gold follows, worst adjacent pair ΔE 8.1
+/// under protanopia. Its ORDER is the colourblind-safety mechanism.
+const _sliceColors = KhazanaColors.series;
 
 /// Budgets as a row of dials.
 ///
@@ -1750,39 +1764,17 @@ class _DashCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-
-    return GlassCard(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(title,
-                      style: text.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700)),
-                ),
-                if (onTap != null)
-                  Icon(Icons.chevron_right, size: 18, color: muted),
-              ],
-            ),
-            ?subtitle == null
-                ? null
-                : Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.xs),
-                    child: Text(subtitle!,
-                        style: text.bodySmall?.copyWith(color: muted)),
-                  ),
-            const SizedBox(height: AppSpacing.sm),
-            child,
-          ],
-        ),
-      ),
+    // Delegates to the design-system card so the header/content hairline is the
+    // same one the web client draws. This card used to separate its header from
+    // its body with nothing but a SizedBox, so the two ran together and each
+    // section read as one undifferentiated block. The web card has a full-bleed
+    // 1px rule there, and that rule is what makes a dense dashboard scannable.
+    return KSectionCard(
+      title: title,
+      subtitle: subtitle,
+      onTap: onTap,
+      child: child,
     );
   }
 }
+

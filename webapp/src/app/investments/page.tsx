@@ -68,7 +68,6 @@ export default function PortfolioPage() {
   // dd/mm/yyyy, but the empty string is kept as the state so no effect has to
   // write it — deriving it here avoids a setState-in-effect cascade.
   const [asOn, setAsOn] = useState('');
-  const [allocMode, setAllocMode] = useState<'current' | 'invested'>('current');
 
   const [master, setMaster] = useState<InstrumentMaster>(EMPTY_MASTER);
   useEffect(() => { void loadInstrumentMaster().then(setMaster); }, []);
@@ -128,25 +127,14 @@ export default function PortfolioPage() {
   const isPast = asOnMs != null && now > 0 && asOnMs < now - 86_400_000;
 
   // ---- Donuts -------------------------------------------------------------
-  const byGroupSegs = useMemo<DonutSeg[]>(() => {
-    const rowsG = allocationByGroup(filtered);
-    return rowsG.map((r) => ({
-      label: r.label,
-      value: allocMode === 'current' ? r.current.toNumber() : r.invested.toNumber(),
-      color: ASSET_GROUP_META[r.key as AssetGroup]?.[dark ? 'dark' : 'light'] ?? 'var(--c1)',
-    }));
-  }, [filtered, allocMode, dark]);
-
-  /** Top holdings by weight, with the tail folded into "Others". */
+  /**
+   * Every holding, largest first. The Donut folds the tail into "Others" and
+   * owns expanding it again — pre-folding here would leave that row a dead end.
+   */
   const topSegs = useCallback((mode: 'current' | 'invested'): DonutSeg[] => {
-    const sorted = [...rows].sort((a, b) => b[mode] - a[mode]);
-    const head = sorted.slice(0, 5);
-    const tail = sorted.slice(5);
-    const segs: DonutSeg[] = head.map((r, i) => ({ label: r.symbol, value: r[mode], color: SERIES[i] }));
-    if (tail.length) {
-      segs.push({ label: `Others (${tail.length})`, value: tail.reduce((s, r) => s + r[mode], 0), color: 'var(--muted)' });
-    }
-    return segs;
+    return [...rows]
+      .sort((a, b) => b[mode] - a[mode])
+      .map((r, i) => ({ label: r.symbol, value: r[mode], color: SERIES[i % SERIES.length] }));
   }, [rows]);
 
   const assetTypeSegs = useMemo<DonutSeg[]>(() => {
@@ -162,7 +150,7 @@ export default function PortfolioPage() {
 
   const sectorSegs = useMemo<DonutSeg[]>(() => {
     const rowsS = rollup(filtered, 'sector', classify);
-    return rowsS.slice(0, 6).map((r, i) => ({
+    return rowsS.map((r, i) => ({
       label: r.label,
       value: r.current.toNumber(),
       color: r.key === UNCLASSIFIED_KEY ? 'var(--muted)' : SERIES[i % SERIES.length],
@@ -384,19 +372,22 @@ export default function PortfolioPage() {
       <div className="grid gap-5 min-w-0 grid-cols-[repeat(auto-fit,minmax(0,1fr))] min-[900px]:grid-cols-2 min-[1400px]:grid-cols-4">
         <StaggerItem>
           <Panel title="Portfolio Allocation" sub="by current value">
-            <Donut segments={topSegs('current')} size={148} stroke={20}
+            <Donut segments={topSegs('current')} size={148} stroke={20} maxSlices={7}
+              formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))}
               centerText={ghost ? '••••' : short(totalValue, fmt.symbol)} centerSub="Total" />
           </Panel>
         </StaggerItem>
         <StaggerItem>
           <Panel title="Investment Allocation" sub="by invested amount">
-            <Donut segments={topSegs('invested')} size={148} stroke={20}
+            <Donut segments={topSegs('invested')} size={148} stroke={20} maxSlices={7}
+              formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))}
               centerText={ghost ? '••••' : short(summary.invested.toNumber(), fmt.symbol)} centerSub="Total" />
           </Panel>
         </StaggerItem>
         <StaggerItem>
           <Panel title="Asset Type Allocation" sub={`${assetTypeSegs.length} type${assetTypeSegs.length === 1 ? '' : 's'}`}>
-            <Donut segments={assetTypeSegs} size={148} stroke={20}
+            <Donut segments={assetTypeSegs} size={148} stroke={20} maxSlices={6}
+              formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))}
               centerText={ghost ? '••••' : short(totalValue, fmt.symbol)} centerSub="Total" />
           </Panel>
         </StaggerItem>
@@ -471,7 +462,8 @@ export default function PortfolioPage() {
         <div className="grid gap-5 min-w-0">
           <StaggerItem>
             <Panel title="Sector Allocation" sub={sectorCount ? `${sectorCount} classified` : 'Not classified'}>
-              <Donut segments={sectorSegs} size={140} stroke={19} legend />
+              <Donut segments={sectorSegs} size={140} stroke={19} legend maxSlices={6}
+                formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))} />
             </Panel>
           </StaggerItem>
           <StaggerItem>

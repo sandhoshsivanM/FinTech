@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../design_system/tokens/khazana_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
@@ -37,16 +39,10 @@ double? _returnOf(Position p) {
 /// break, so ordering is visible in the colour itself — slice four is further
 /// along the ramp than slice two, which is true, where "orange vs teal" says
 /// nothing.
-const _sliceColors = <Color>[
-  Color(0xFF4B7BEC),
-  Color(0xFF5E8FF0),
-  Color(0xFF7B7BF0),
-  Color(0xFF9B77E8),
-  Color(0xFF6FA8DC),
-  Color(0xFF4FB3C4),
-  Color(0xFF52A88B),
-  Color(0xFFD9A05B),
-];
+/// Draws from the ONE shared series — see `KhazanaColors.series`. The local
+/// blue ramp this replaces did not match the dashboard's palette or the web
+/// client's, so the same portfolio was three different colours in three places.
+const _sliceColors = KhazanaColors.series;
 
 String _pct(double fraction) =>
     '${fraction >= 0 ? '+' : ''}${(fraction * 100).toStringAsFixed(1)}%';

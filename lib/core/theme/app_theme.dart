@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../design_system/tokens/khazana_colors.dart';
 import 'app_tokens.dart';
 
 /// Premium dark-first "glassmorphism" theme (PRD §10A dark canvas + §3B design
@@ -22,27 +23,47 @@ import 'app_tokens.dart';
 ///
 /// Large sizes also get negative letter spacing. Type set at 32px carries the
 /// tracking it was designed for at 16px, which at that size reads as loose.
+/// The design-system type scale, applied to Material's slots.
+///
+/// Sizes and line heights come from `design_system/tokens/typography.ts` and its
+/// Dart mirror, so the mobile app and the web app set the same ramp. Tabular
+/// figures are on for every slot: this is a finance app, and columns of numbers
+/// that do not line up look broken however good the rest of the design is.
+///
+/// Tracking tightens as size grows — large type needs less air between letters,
+/// which is the opposite of what Material's defaults assume.
 TextTheme _numericTextTheme(TextTheme t) {
   const figures = [FontFeature.tabularFigures()];
-  TextStyle? tight(TextStyle? s, double spacing) =>
-      s?.copyWith(fontFeatures: figures, letterSpacing: spacing);
+
+  TextStyle? spec(TextStyle? s, double size, double height, FontWeight w, double tracking) =>
+      s?.copyWith(
+        fontSize: size,
+        height: height / size,
+        fontWeight: w,
+        letterSpacing: tracking,
+        fontFeatures: figures,
+      );
 
   return t.copyWith(
-    displayLarge: tight(t.displayLarge, -1.5),
-    displayMedium: tight(t.displayMedium, -1.0),
-    displaySmall: tight(t.displaySmall, -0.8),
-    headlineLarge: tight(t.headlineLarge, -0.8),
-    headlineMedium: tight(t.headlineMedium, -0.6),
-    headlineSmall: tight(t.headlineSmall, -0.4),
-    titleLarge: tight(t.titleLarge, -0.2),
-    titleMedium: tight(t.titleMedium, -0.1),
-    titleSmall: tight(t.titleSmall, 0),
-    bodyLarge: tight(t.bodyLarge, 0),
-    bodyMedium: tight(t.bodyMedium, 0),
-    bodySmall: tight(t.bodySmall, 0),
-    labelLarge: tight(t.labelLarge, 0),
-    labelMedium: tight(t.labelMedium, 0),
-    labelSmall: tight(t.labelSmall, 0.2),
+    // Display / headings
+    displayLarge: spec(t.displayLarge, 48, 56, FontWeight.w700, -1.4),
+    displayMedium: spec(t.displayMedium, 40, 48, FontWeight.w700, -1.1),
+    displaySmall: spec(t.displaySmall, 32, 40, FontWeight.w700, -0.9),
+    headlineLarge: spec(t.headlineLarge, 32, 40, FontWeight.w700, -0.9),
+    headlineMedium: spec(t.headlineMedium, 24, 32, FontWeight.w700, -0.6),
+    headlineSmall: spec(t.headlineSmall, 20, 28, FontWeight.w600, -0.4),
+    // Titles
+    titleLarge: spec(t.titleLarge, 20, 28, FontWeight.w600, -0.3),
+    titleMedium: spec(t.titleMedium, 16, 24, FontWeight.w600, -0.15),
+    titleSmall: spec(t.titleSmall, 14, 22, FontWeight.w600, -0.1),
+    // Body
+    bodyLarge: spec(t.bodyLarge, 16, 24, FontWeight.w400, 0),
+    bodyMedium: spec(t.bodyMedium, 14, 22, FontWeight.w400, 0),
+    bodySmall: spec(t.bodySmall, 13, 20, FontWeight.w400, 0),
+    // Labels
+    labelLarge: spec(t.labelLarge, 14, 22, FontWeight.w600, 0),
+    labelMedium: spec(t.labelMedium, 13, 20, FontWeight.w500, 0),
+    labelSmall: spec(t.labelSmall, 12, 18, FontWeight.w500, 0.2),
   );
 }
 
@@ -53,15 +74,42 @@ abstract final class AppTheme {
   static ThemeData _build(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
 
+    // Vault and Ledger are a PAIR OF CHOICES, not one choice inverted. The
+    // accent in particular differs: Vault's #20C98A reads 3.0:1 on a white
+    // card, which fails text contrast, so Ledger steps down to #087A56.
+    final primary =
+        isDark ? KhazanaColors.vaultPrimary : KhazanaColors.ledgerPrimary;
+    final onPrimary =
+        isDark ? KhazanaColors.vaultPrimaryOn : KhazanaColors.ledgerPrimaryOn;
+
     final scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.accentDeep,
+      seedColor: primary,
       brightness: brightness,
     ).copyWith(
-      primary: AppColors.accent,
-      surface: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-      onSurface: isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface,
-      onSurfaceVariant:
-          isDark ? AppColors.darkOnSurfaceMuted : const Color(0xFF475569),
+      primary: primary,
+      onPrimary: onPrimary,
+      primaryContainer: isDark
+          ? KhazanaColors.vaultPrimarySoft
+          : KhazanaColors.ledgerPrimarySoft,
+      onPrimaryContainer: primary,
+      secondary: isDark ? KhazanaColors.vaultGold : KhazanaColors.ledgerGold,
+      surface: isDark
+          ? KhazanaColors.vaultSurfaceElevated
+          : KhazanaColors.ledgerSurface,
+      surfaceContainerHighest: isDark
+          ? KhazanaColors.vaultSurfaceStrong
+          : KhazanaColors.ledgerSurfaceSecondary,
+      onSurface: isDark
+          ? KhazanaColors.vaultTextPrimary
+          : KhazanaColors.ledgerTextPrimary,
+      onSurfaceVariant: isDark
+          ? KhazanaColors.vaultTextSecondary
+          : KhazanaColors.ledgerTextSecondary,
+      outline: isDark ? KhazanaColors.vaultBorder : KhazanaColors.ledgerBorder,
+      outlineVariant: isDark
+          ? KhazanaColors.vaultBorderStrong
+          : KhazanaColors.ledgerBorderStrong,
+      error: isDark ? KhazanaColors.vaultDanger : KhazanaColors.ledgerDanger,
     );
 
     final glassFill =
@@ -73,6 +121,18 @@ abstract final class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: scheme,
+      // Inter, bundled in assets/fonts. Without this the app fell back to the
+      // platform default — SF Pro on iOS, Roboto on Android — so the two mobile
+      // builds and the web app were all set in different faces.
+      fontFamily: 'Inter',
+      // Inter carries no emoji, and naming a family removes the platform's
+      // automatic fallback — which turned the greeting's wave into a tofu box.
+      // The emoji fonts must be listed explicitly.
+      fontFamilyFallback: const [
+        'Apple Color Emoji',
+        'Noto Color Emoji',
+        'Segoe UI Emoji',
+      ],
       scaffoldBackgroundColor: Colors.transparent,
       canvasColor: Colors.transparent,
       materialTapTargetSize: MaterialTapTargetSize.padded,
@@ -109,8 +169,10 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.accent,
-          foregroundColor: Colors.white,
+          backgroundColor: scheme.primary,
+          // Near-black on Vault emerald (8.9:1); white on Ledger emerald
+          // (5.4:1). White on Vault would be 2.4:1 — unreadable.
+          foregroundColor: scheme.onPrimary,
           minimumSize: const Size(0, AppSpacing.minTouchTarget),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           shape: RoundedRectangleBorder(
@@ -131,17 +193,17 @@ abstract final class AppTheme {
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.accentGlow),
+        style: TextButton.styleFrom(foregroundColor: scheme.primary),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith((s) =>
               s.contains(WidgetState.selected)
-                  ? AppColors.accent.withValues(alpha: 0.22)
+                  ? scheme.primaryContainer
                   : Colors.transparent),
           foregroundColor: WidgetStateProperty.resolveWith((s) =>
               s.contains(WidgetState.selected)
-                  ? AppColors.accentGlow
+                  ? scheme.primary
                   : scheme.onSurfaceVariant),
           side: WidgetStatePropertyAll(BorderSide(color: glassBorder)),
           shape: WidgetStatePropertyAll(RoundedRectangleBorder(
@@ -166,7 +228,7 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.button),
-          borderSide: const BorderSide(color: AppColors.accent, width: 2),
+          borderSide: BorderSide(color: scheme.primary, width: 2),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
@@ -176,10 +238,10 @@ abstract final class AppTheme {
             ? AppColors.darkSurface.withValues(alpha: 0.92)
             : Colors.white.withValues(alpha: 0.92),
         surfaceTintColor: Colors.transparent,
-        indicatorColor: AppColors.accent.withValues(alpha: 0.22),
+        indicatorColor: scheme.primaryContainer,
         iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(
               color: s.contains(WidgetState.selected)
-                  ? AppColors.accentGlow
+                  ? scheme.primary
                   : scheme.onSurfaceVariant,
             )),
         labelTextStyle: WidgetStateProperty.resolveWith(
@@ -189,7 +251,7 @@ abstract final class AppTheme {
                 ? FontWeight.w700
                 : FontWeight.w500,
             color: states.contains(WidgetState.selected)
-                ? AppColors.accentGlow
+                ? scheme.primary
                 : scheme.onSurfaceVariant,
           ),
         ),
@@ -233,7 +295,7 @@ abstract final class AppTheme {
         ),
       ),
       progressIndicatorTheme:
-          const ProgressIndicatorThemeData(color: AppColors.accent),
+          ProgressIndicatorThemeData(color: scheme.primary),
     );
   }
 }

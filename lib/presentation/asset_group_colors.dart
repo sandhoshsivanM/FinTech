@@ -17,14 +17,31 @@ import '../domain/entities/asset_group.dart';
 ///   2. Always ship the legend or direct labels. Three of these steps sit below
 ///      3:1 contrast on the light surface, so the labels are what stop identity
 ///      resting on colour alone.
+/// Asset-group colours. Mirrors `ASSET_GROUP_META` on web exactly.
+///
+/// Two slots are pinned for MEANING, not for position:
+///   * gold   -> the gold hue. A slice labelled "Gold" that renders blue (or,
+///              as the web previously had it, green) reads as a bug to anyone
+///              looking at the legend.
+///   * equity -> the emerald. It is the brand-leading colour and almost always
+///              the largest slice.
+///
+/// The remaining five were then SEARCHED rather than chosen, over every
+/// assignment, scoring the pairs that actually sit next to each other in
+/// `AssetGroup.values` draw order. The winner clears all six dataviz checks in
+/// both themes: worst adjacent pair ΔE 12.7 under deuteranopia (target 8) and a
+/// normal-vision floor of 21.7.
+///
+/// Changing one entry re-orders the adjacencies and invalidates that result, so
+/// re-run the validator if you touch this.
 Color groupColor(AssetGroup g) => switch (g) {
-      AssetGroup.equity => const Color(0xFF2A78D6),
-      AssetGroup.debt => const Color(0xFFEB6834),
-      AssetGroup.gold => const Color(0xFF1BAF7A),
-      AssetGroup.realEstate => const Color(0xFFEDA100),
-      AssetGroup.retirement => const Color(0xFFE87BA4),
-      AssetGroup.crypto => const Color(0xFF008300),
-      AssetGroup.cash => const Color(0xFF4A3AA7),
+      AssetGroup.equity => const Color(0xFF189E6E),
+      AssetGroup.debt => const Color(0xFF8E7CC3),
+      AssetGroup.gold => const Color(0xFFBE8420),
+      AssetGroup.realEstate => const Color(0xFF2E92C4),
+      AssetGroup.retirement => const Color(0xFFCC6435),
+      AssetGroup.crypto => const Color(0xFF4F7CFF),
+      AssetGroup.cash => const Color(0xFFC9538A),
     };
 
 /// Most steps a single hue family can carry before they stop separating.

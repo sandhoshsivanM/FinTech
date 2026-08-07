@@ -72,14 +72,31 @@ export const ASSET_GROUP_ORDER: AssetGroup[] = [
   'equity', 'debt', 'gold', 'real_estate', 'retirement', 'crypto', 'cash',
 ];
 
+/**
+ * Asset-group colours. Mirrored exactly by `groupColor` in the Flutter client.
+ *
+ * Two slots are pinned for MEANING: `gold` takes the gold hue, and `equity`
+ * takes the brand emerald. The previous palette had the Gold group rendering
+ * GREEN (#1baf7a) while Debt rendered orange, which reads as a bug the moment
+ * anyone looks at the legend.
+ *
+ * The other five were searched over every assignment, scored on the pairs that
+ * actually sit next to each other in ASSET_GROUP_ORDER. The result clears all
+ * six dataviz checks in both themes — worst adjacent pair ΔE 12.7 under
+ * deuteranopia (target 8), normal-vision floor 21.7.
+ *
+ * One value per group now, not a light/dark pair: these steps sit in the
+ * lightness band that works against both surfaces, which is what lets the two
+ * clients share a single set.
+ */
 export const ASSET_GROUP_META: Record<AssetGroup, { label: string; light: string; dark: string }> = {
-  equity: { label: 'Equity', light: '#2a78d6', dark: '#3987e5' },
-  debt: { label: 'Debt', light: '#eb6834', dark: '#d95926' },
-  gold: { label: 'Gold', light: '#1baf7a', dark: '#199e70' },
-  real_estate: { label: 'Real Estate', light: '#eda100', dark: '#c98500' },
-  retirement: { label: 'Retirement', light: '#e87ba4', dark: '#d55181' },
-  crypto: { label: 'Crypto', light: '#008300', dark: '#008300' },
-  cash: { label: 'Cash', light: '#4a3aa7', dark: '#9085e9' },
+  equity: { label: 'Equity', light: '#189e6e', dark: '#189e6e' },
+  debt: { label: 'Debt', light: '#8e7cc3', dark: '#8e7cc3' },
+  gold: { label: 'Gold', light: '#be8420', dark: '#be8420' },
+  real_estate: { label: 'Real Estate', light: '#2e92c4', dark: '#2e92c4' },
+  retirement: { label: 'Retirement', light: '#cc6435', dark: '#cc6435' },
+  crypto: { label: 'Crypto', light: '#4f7cff', dark: '#4f7cff' },
+  cash: { label: 'Cash', light: '#c9538a', dark: '#c9538a' },
 };
 
 export interface HoldingView {

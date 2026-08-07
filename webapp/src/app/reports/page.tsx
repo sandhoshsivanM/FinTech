@@ -124,11 +124,10 @@ export default function ReportsPage() {
       }
     }
     byCategory.sort((a, b) => b.amount - a.amount);
-    // Top 6 + Other
-    if (byCategory.length <= 6) return byCategory;
-    const top = byCategory.slice(0, 6);
-    const rest = byCategory.slice(6).reduce((s, x) => s + x.amount, 0);
-    return [...top, { id: '__other', name: 'Other', amount: rest }];
+    // Every category, largest first. The Donut folds the tail into "Other" and
+    // owns expanding it again, so folding here would only make that row a dead
+    // end — and it would make the centre count lie about how many there are.
+    return byCategory;
   }, [txns, categories]);
 
   const catDonutSegments = catSpend.map((c, i) => ({
@@ -258,6 +257,9 @@ export default function ReportsPage() {
                     centerText={String(catSpend.length)}
                     centerSub="categories"
                     legend
+                    maxSlices={6}
+                    otherLabel="Other"
+                    formatValue={(n) => fmt.money(n)}
                   />
                 </div>
               )}

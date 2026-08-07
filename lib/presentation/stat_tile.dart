@@ -67,56 +67,65 @@ class StatTile extends StatelessWidget {
     final hasIcon = icon != null;
     final tint = iconColor ?? AppColors.accent;
 
+    // Composition mirrors the web `Kpi` exactly: the icon chip and the label
+    // share ONE row, the figure sits under them, and the footer closes the
+    // tile. The old layout put the chip on its own row above the label, which
+    // cost a line of height, pushed the figure down, and made the mobile tile
+    // read as a different component from its web twin.
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment:
           hasIcon ? MainAxisAlignment.start : MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (hasIcon) ...[
-          Row(
-            children: [
+        Row(
+          children: [
+            if (hasIcon) ...[
               Container(
-                width: 34,
-                height: 34,
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
-                  color: tint.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  color: tint.withValues(alpha: 0.13),
+                  borderRadius: BorderRadius.circular(9),
                 ),
-                child: Icon(icon, color: tint, size: 18),
+                child: Icon(icon, color: tint, size: 15),
               ),
-              if (onTap != null) ...[
-                const Spacer(),
-                Icon(Icons.chevron_right_rounded,
-                    size: 16, color: scheme.outline),
-              ],
+              const SizedBox(width: AppSpacing.sm),
             ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
-        Text(
-          label,
-          style: (hasIcon
-                  ? Theme.of(context).textTheme.labelMedium
-                  : Theme.of(context).textTheme.labelSmall)
-              ?.copyWith(color: scheme.onSurfaceVariant),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (onTap != null)
+              Icon(Icons.chevron_right_rounded,
+                  size: 18, color: scheme.onSurfaceVariant),
+          ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppSpacing.sm),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
           child: Text(
             ghost ? '••••••' : value,
             style: TextStyle(
-              fontSize: emphasise ? 21 : 18,
-              fontWeight: FontWeight.w800,
+              fontSize: emphasise ? 26 : 23,
+              fontWeight: FontWeight.w700,
+              // Large figures need less air between glyphs, not more.
+              letterSpacing: -0.7,
+              height: 1.05,
               color: valueColor,
             ),
           ),
         ),
         if (footer != null) ...[
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             footer!,
             style: Theme.of(context)

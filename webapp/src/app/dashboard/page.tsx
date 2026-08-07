@@ -125,7 +125,7 @@ export default function DashboardPage() {
       }));
     }
     const rows = rollup(holdings, allocDim === 'sector' ? 'sector' : 'marketCap', classify);
-    return rows.slice(0, 8).map((r, i) => ({
+    return rows.map((r, i) => ({
       label: r.label,
       value: r.current.toNumber(),
       // The Unclassified bucket is a coverage fact, not a category — grey, so it
@@ -314,6 +314,8 @@ export default function DashboardPage() {
                   segments={allocation}
                   size={168}
                   stroke={22}
+                  maxSlices={6}
+                  formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))}
                   centerText={ghost ? '••••' : short(portfolioValue, fmt.symbol)}
                   centerSub="Total"
                 />

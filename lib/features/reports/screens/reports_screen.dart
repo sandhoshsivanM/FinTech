@@ -334,27 +334,19 @@ class _SpendingByCategoryCard extends ConsumerWidget {
       );
     }
 
-    // Sort desc, top 5 + others bucket.
+    // Sort desc and hand over the WHOLE list. DonutChart folds past `topN`
+    // into "Others" and lets that row expand back out, so pre-folding here
+    // would only cost the reader the detail.
     final sorted = grouped.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     const topN = 5;
-    final top = sorted.take(topN).toList();
-    final rest = sorted.skip(topN).toList();
-    final otherSum = rest.fold(
-        Decimal.zero, (s, e) => s + e.value);
 
     final segments = <DonutSegment>[
-      for (var i = 0; i < top.length; i++)
+      for (var i = 0; i < sorted.length; i++)
         DonutSegment(
-          catMap[top[i].key] ?? 'Other',
-          top[i].value.toDouble(),
+          catMap[sorted[i].key] ?? 'Other',
+          sorted[i].value.toDouble(),
           _kCategoryPalette[i % _kCategoryPalette.length],
-        ),
-      if (otherSum > Decimal.zero)
-        DonutSegment(
-          'Others',
-          otherSum.toDouble(),
-          _kCategoryPalette[top.length % _kCategoryPalette.length],
         ),
     ];
 
@@ -384,6 +376,7 @@ class _SpendingByCategoryCard extends ConsumerWidget {
                 segments: segments,
                 size: 140,
                 strokeWidth: 22,
+                maxSlices: topN,
                 centerText: largestPct,
                 centerSub: segments.first.label,
                 showLegend: true,

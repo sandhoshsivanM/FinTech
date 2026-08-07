@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../design_system/components/brand_mark.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/branding.dart';
@@ -58,28 +60,9 @@ class _BrandMark extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: AppColors.accentGradient),
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accent.withValues(alpha: 0.4),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.shield_rounded, color: Colors.white, size: 34),
-        ),
+        const BrandMark(size: 88, glow: true),
         const SizedBox(height: AppSpacing.md),
-        Text(kAppName,
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w800)),
+        const WordMark(fontSize: 20),
         const SizedBox(height: 2),
         Text(kAppTagline,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(

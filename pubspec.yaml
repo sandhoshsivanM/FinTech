@@ -82,7 +82,24 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    # Inter, bundled rather than fetched at runtime. `google_fonts` downloads on
+    # first use, which would break the promise that this app never touches the
+    # network — and would leave the type falling back to the platform default
+    # offline, which is exactly the inconsistency this fixes.
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+
   assets:
+    - assets/brand/khazana-mark.png
     - assets/tax_rules.json
     - assets/instrument_master.json
     - assets/fund_portfolios.json
