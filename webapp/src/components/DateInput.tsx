@@ -21,6 +21,30 @@ import { formatDate, fromInputValue, toInputValue } from '@/lib/dateFormat';
 import { parseDateCell } from '@/lib/dateParse';
 import { CalendarPopover } from './CalendarPopover';
 
+
+/**
+ * Formats keystrokes into dd/MM/yyyy as they are typed.
+ *
+ * The field used to accept any text and only judge it on blur, so you could
+ * fill a date with letters and symbols and get no signal until you clicked
+ * away. Keeping only digits and inserting the slashes means the field can
+ * never hold something that is not a date-shaped string.
+ *
+ * Deletion has to stay possible, so a trailing slash the mask would add is
+ * omitted while the user is mid-erase — otherwise backspace fights the mask
+ * and the separator is unremovable.
+ */
+export function maskDate(raw: string, deleting: boolean): string {
+  const d = raw.replace(/\D/g, '').slice(0, 8);
+  if (d.length === 0) return '';
+  if (d.length <= 2) return deleting || d.length < 2 ? d : `${d}/`;
+  if (d.length <= 4) {
+    const body = `${d.slice(0, 2)}/${d.slice(2)}`;
+    return deleting || d.length < 4 ? body : `${body}/`;
+  }
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
 export interface DateInputProps {
   /** yyyy-MM-dd, same as a native date input. */
   value: string;
@@ -72,8 +96,9 @@ export function DateInput({
   const commit = (raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed) { onChange(''); return; }
-    // Day-first, and forgiving of 8/8/26, 08-08-2026, 8 Aug 2026 — the same
-    // reader the file importer uses, so typing and importing never disagree.
+    // Day-first. The mask means only digits and slashes ever reach here, and
+    // this is the same reader the file importer uses, so a date typed by hand
+    // and one read from a statement can never land on different days.
     const ms = parseDateCell(trimmed, true);
     if (ms == null) { setText(toDisplay(value)); return; } // reject, restore
     onChange(toInputValue(ms));
@@ -109,7 +134,11 @@ export function DateInput({
         value={text}
         disabled={disabled}
         required={required}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          const native = e.nativeEvent as InputEvent;
+          const deleting = typeof native?.inputType === 'string' && native.inputType.startsWith('delete');
+          setText(maskDate(e.target.value, deleting));
+        }}
         onBlur={(e) => commit(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value); }}
         className={

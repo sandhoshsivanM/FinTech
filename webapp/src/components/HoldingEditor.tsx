@@ -15,6 +15,7 @@ import { MARKET_CAP_LABEL, SECTOR_SUGGESTIONS } from '@/domain/instrumentMaster'
 import { parseHoldingsCsv, planImport, importCounts, type CsvHolding } from '@/lib/holdingsCsv';
 import { Button, Field, Input, Select, GlassCard, Chip } from './ui';
 import { DateInput } from './DateInput';
+import { NumberInput } from './NumberInput';
 import { Combobox } from './Combobox';
 import { useConfirm } from './Confirm';
 
@@ -114,13 +115,13 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
             {Object.entries(ASSET_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </Select>
         </Field>
-        <Field label="Quantity"><Input inputMode="decimal" value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })} placeholder="100" /></Field>
-        <Field label="Average cost"><Input inputMode="decimal" value={f.avgCost} onChange={(e) => setF({ ...f, avgCost: e.target.value })} placeholder="2118.40" /></Field>
+        <Field label="Quantity"><NumberInput value={f.quantity} onChange={(v) => setF({ ...f, quantity: v })} placeholder="100" /></Field>
+        <Field label="Average cost"><NumberInput value={f.avgCost} onChange={(v) => setF({ ...f, avgCost: v })} placeholder="2118.40" /></Field>
         <Field label="Last price" hint="Blank values the position at cost">
-          <Input inputMode="decimal" value={f.lastPrice} onChange={(e) => setF({ ...f, lastPrice: e.target.value })} placeholder="2645.00" />
+          <NumberInput value={f.lastPrice} onChange={(v) => setF({ ...f, lastPrice: v })} placeholder="2645.00" />
         </Field>
         <Field label="Previous close" hint="Yesterday's close — enables Today's P&L">
-          <Input inputMode="decimal" value={f.previousClose} onChange={(e) => setF({ ...f, previousClose: e.target.value })} placeholder="2631.75" />
+          <NumberInput value={f.previousClose} onChange={(v) => setF({ ...f, previousClose: v })} placeholder="2631.75" />
         </Field>
         <Field label="First purchase" hint="Needed for XIRR and capital-gains type">
           <DateInput value={f.firstPurchaseDate} onChange={(firstPurchaseDate) => setF({ ...f, firstPurchaseDate })} />

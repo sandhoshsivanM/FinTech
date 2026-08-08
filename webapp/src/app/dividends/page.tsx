@@ -21,6 +21,7 @@ import { portfolioSummary } from '@/domain/portfolio';
 import { short } from '@/lib/format';
 import { DateInput } from '@/components/DateInput';
 import { formatDate, formatMonthShort } from '@/lib/dateFormat';
+import { NumberInput } from '@/components/NumberInput';
 
 const KIND_LABEL: Record<string, string> = { dividend: 'Dividend', interest: 'Interest', bonus: 'Bonus', buyback: 'Buyback' };
 
@@ -119,8 +120,8 @@ export default function DividendsPage() {
                   {Object.entries(KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </Select>
               </Field>
-              <Field label="Per share"><Input inputMode="decimal" value={draft.perShare} onChange={(e) => setDraft({ ...draft, perShare: e.target.value })} placeholder="6.25" /></Field>
-              <Field label="Total amount"><Input inputMode="decimal" value={draft.amount} onChange={(e) => setDraft({ ...draft, amount: e.target.value })} placeholder="13125" /></Field>
+              <Field label="Per share"><NumberInput value={draft.perShare} onChange={(v) => setDraft({ ...draft, perShare: v })} placeholder="6.25" /></Field>
+              <Field label="Total amount"><NumberInput value={draft.amount} onChange={(v) => setDraft({ ...draft, amount: v })} placeholder="13125" /></Field>
               <Field label="Pay date"><DateInput value={draft.payDate} onChange={(payDate) => setDraft({ ...draft, payDate })} /></Field>
             </div>
             <div className="flex gap-2 mt-5">

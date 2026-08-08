@@ -19,6 +19,7 @@ import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { useConfirm } from '@/components/Confirm';
 import { demoDayChangePct } from '@/lib/demo/marketFeed';
+import { NumberInput } from '@/components/NumberInput';
 
 export default function WatchlistPage() {
   const watchlist = useApp((s) => s.watchlist);
@@ -116,8 +117,8 @@ export default function WatchlistPage() {
               <Field label="Symbol"><Input value={draft.symbol} onChange={(e) => setDraft({ ...draft, symbol: e.target.value })} placeholder="DMART" /></Field>
               <Field label="Name"><Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Avenue Supermarts" /></Field>
               <Field label="Exchange"><Input value={draft.exchange} onChange={(e) => setDraft({ ...draft, exchange: e.target.value })} /></Field>
-              <Field label="Price"><Input inputMode="decimal" value={draft.lastPrice} onChange={(e) => setDraft({ ...draft, lastPrice: e.target.value })} placeholder="4218.60" /></Field>
-              <Field label="Target price"><Input inputMode="decimal" value={draft.targetPrice} onChange={(e) => setDraft({ ...draft, targetPrice: e.target.value })} placeholder="4600" /></Field>
+              <Field label="Price"><NumberInput value={draft.lastPrice} onChange={(v) => setDraft({ ...draft, lastPrice: v })} placeholder="4218.60" /></Field>
+              <Field label="Target price"><NumberInput value={draft.targetPrice} onChange={(v) => setDraft({ ...draft, targetPrice: v })} placeholder="4600" /></Field>
             </div>
             <div className="flex gap-2 mt-5">
               <Button onClick={() => void save()}>Add to watchlist</Button>

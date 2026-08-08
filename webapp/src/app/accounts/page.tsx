@@ -27,6 +27,7 @@ import {
 } from '@/components/ui';
 import { Stagger, StaggerItem, useReducedMotion } from '@/components/motion';
 import { useConfirm } from '@/components/Confirm';
+import { NumberInput } from '@/components/NumberInput';
 
 type MoneySubtype = 'bank' | 'cash';
 
@@ -313,7 +314,7 @@ function AccountForm({ editing, vaultId, onDone }: {
           <Segmented options={SUBTYPE_OPTIONS} value={subtype} onChange={setSubtype} />
         </Field>
         <Field label="Balance today" hint="What the account holds right now. Transactions move it from here.">
-          <Input inputMode="decimal" value={opening} onChange={(e) => setOpening(e.target.value)} placeholder="0" />
+          <NumberInput value={opening} onChange={(v) => setOpening(v)} placeholder="0" />
         </Field>
       </div>
 

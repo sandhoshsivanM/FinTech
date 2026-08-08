@@ -16,6 +16,7 @@ import {
   GlassCard, PageIntro, Button, Segmented, Field, Input, Select,
 } from '@/components/ui';
 import { DateInput } from '@/components/DateInput';
+import { NumberInput } from '@/components/NumberInput';
 
 // ---- Icon map: category.icon string → lucide component ----
 const ICON_MAP: Record<string, ElementType> = {
@@ -237,14 +238,10 @@ export default function AddTransactionPage() {
             >
               {fmt.symbol}
             </span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              inputMode="decimal"
+            <NumberInput
               placeholder="0.00"
               value={amountRaw}
-              onChange={(e) => setAmountRaw(e.target.value)}
+              onChange={setAmountRaw}
               className="text-4xl font-extrabold font-display w-52 bg-transparent outline-none tnum text-center"
               style={{ color: amountColor }}
               aria-label="Amount"

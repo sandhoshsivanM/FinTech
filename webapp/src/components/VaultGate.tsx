@@ -69,7 +69,7 @@ export function VaultGate() {
           )}
           <input
             type="password" inputMode="numeric" autoFocus value={pin}
-            onChange={(e) => setPin(e.target.value)}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
             onKeyDown={(e) => { if (e.key === 'Enter' && !isSetup) submit(); }}
             placeholder={isSetup ? 'Create PIN' : 'Enter PIN'}
             className="w-full rounded-[14px] bg-[var(--fill)] border border-[var(--glass-border)] px-4 py-3 outline-none focus:border-accent"
@@ -77,7 +77,7 @@ export function VaultGate() {
           {isSetup && (
             <input
               type="password" inputMode="numeric" value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              onChange={(e) => setConfirm(e.target.value.replace(/\D/g, ''))}
               onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
               placeholder="Confirm PIN"
               className="mt-3 w-full rounded-[14px] bg-[var(--fill)] border border-[var(--glass-border)] px-4 py-3 outline-none focus:border-accent"

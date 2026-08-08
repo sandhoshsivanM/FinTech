@@ -429,7 +429,7 @@ export default function SettingsPage() {
               inputMode="numeric"
               autoComplete="off"
               value={backupPin}
-              onChange={(e) => setBackupPin(e.target.value)}
+              onChange={(e) => setBackupPin(e.target.value.replace(/\D/g, ''))}
               placeholder="Used for both export and restore"
               className="mt-1 w-full rounded-xl border border-[var(--line)] bg-transparent px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)]"
             />
@@ -463,7 +463,7 @@ export default function SettingsPage() {
                 inputMode="numeric"
                 autoComplete="off"
                 value={restorePin}
-                onChange={(e) => setRestorePin(e.target.value)}
+                onChange={(e) => setRestorePin(e.target.value.replace(/\D/g, ''))}
                 placeholder="PIN this backup was exported with"
                 onKeyDown={(e) => { if (e.key === 'Enter' && pendingBackup) void runRestore(pendingBackup); }}
                 className="min-w-0 flex-1 rounded-xl border border-[var(--line)] bg-transparent px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)]"

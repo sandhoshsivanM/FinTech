@@ -16,6 +16,7 @@ import {
 import { useConfirm } from '@/components/Confirm';
 import { DateInput } from '@/components/DateInput';
 import { formatDate } from '@/lib/dateFormat';
+import { NumberInput } from '@/components/NumberInput';
 
 // ---- Icon map ----
 const ICON_MAP: Record<string, ElementType> = {
@@ -230,14 +231,10 @@ export default function RecurringPage() {
 
             <div className="grid sm:grid-cols-2 gap-3">
               <Field label="Amount">
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  inputMode="decimal"
+                <NumberInput
                   placeholder="0.00"
                   value={formAmount}
-                  onChange={(e) => setFormAmount(e.target.value)}
+                  onChange={setFormAmount}
                 />
               </Field>
               <Field label="Merchant (optional)">

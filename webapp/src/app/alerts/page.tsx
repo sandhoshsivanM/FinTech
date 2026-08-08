@@ -18,6 +18,7 @@ import { Kpi, KpiRow } from '@/components/Kpi';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { useConfirm } from '@/components/Confirm';
 import { portfolioSummary } from '@/domain/portfolio';
+import { NumberInput } from '@/components/NumberInput';
 
 const KIND_LABEL: Record<AlertKind, string> = {
   price_above: 'Price rises above',
@@ -112,7 +113,7 @@ export default function AlertsPage() {
                   disabled={draft.kind === 'budget_over' || draft.kind === 'renewal_due'} placeholder="RELIANCE" />
               </Field>
               <Field label={draft.kind === 'weight_above' ? 'Threshold (%)' : 'Threshold'}>
-                <Input inputMode="decimal" value={draft.threshold} onChange={(e) => setDraft({ ...draft, threshold: e.target.value })} placeholder="2800" />
+                <NumberInput value={draft.threshold} onChange={(v) => setDraft({ ...draft, threshold: v })} placeholder="2800" />
               </Field>
             </div>
             <div className="flex gap-2 mt-5">
