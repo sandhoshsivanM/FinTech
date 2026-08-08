@@ -21,7 +21,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
-  Wallet, Coins, Percent, TrendingUp, Layers, Hash, Plus, CalendarDays,
+  Wallet, Coins, Percent, TrendingUp, Layers, Hash, Plus,
   ChevronDown, Filter, ArrowUpRight, ArrowDownRight, Info,
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
@@ -325,17 +325,20 @@ export default function PortfolioPage() {
             </div>
 
             {/* As-on date — bounded by the recorded snapshot history. */}
-            <label className="focus-ring inline-flex items-center gap-2 h-9 px-3 rounded-btn border border-line bg-card text-[13px] font-semibold hover:border-line-strong transition-colors cursor-pointer">
-              <CalendarDays size={14} className="text-muted" />
+            {/* One pill, one calendar icon: the field renders bare and the
+                trigger is DateInput's own button, so there is no nested box
+                and nothing to misalign against the filter beside it. */}
+            <div className="inline-flex items-center gap-2 h-9 px-3 rounded-btn border border-line bg-card text-[13px] font-semibold hover:border-line-strong transition-colors">
               <span className="text-muted font-normal">As on</span>
               <DateInput
+                bare
                 value={asOnValue}
                 max={todayStr || undefined}
                 onChange={setAsOn}
                 aria-label="Show figures as on"
-                className="bg-transparent outline-none text-ink font-semibold w-[110px]"
+                className="text-ink font-semibold w-[92px] text-[13px]"
               />
-            </label>
+            </div>
 
             <Button><Link href="/holdings" className="flex items-center gap-2"><Plus size={16} />Add Investment</Link></Button>
           </div>

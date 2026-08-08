@@ -13,7 +13,8 @@ import { moneyAccounts } from '@/domain/accountLedger';
 import { PageIntro, Button, Segmented, Input, Select, EmptyState, GlassCard } from '@/components/ui';
 import { useConfirm } from '@/components/Confirm';
 import { BudgetStrip } from '@/components/BudgetStrip';
-import { formatDate, formatDayMonth } from '@/lib/dateFormat';
+import { formatDate, formatDayMonth, fromInputValue, toInputValue } from '@/lib/dateFormat';
+import { DateInput } from '@/components/DateInput';
 
 // ---- Icon map ----
 const ICON_MAP: Record<string, ElementType> = {
@@ -66,6 +67,47 @@ function amountMatches(amount: string, needle: string): boolean {
   return raw.includes(n) || String(num).includes(n) || num.toFixed(2).includes(n);
 }
 
+
+/**
+ * Ranges people actually reconcile against. Computed on click rather than at
+ * module load, so "this month" does not go stale in a long-lived tab.
+ */
+const DATE_PRESETS: { label: string; range: () => [string, string] }[] = [
+  {
+    label: 'This month',
+    range: () => {
+      const n = new Date();
+      return [toInputValue(new Date(n.getFullYear(), n.getMonth(), 1)), toInputValue(n)];
+    },
+  },
+  {
+    label: 'Last month',
+    range: () => {
+      const n = new Date();
+      return [
+        toInputValue(new Date(n.getFullYear(), n.getMonth() - 1, 1)),
+        toInputValue(new Date(n.getFullYear(), n.getMonth(), 0)),
+      ];
+    },
+  },
+  {
+    label: 'Last 3 months',
+    range: () => {
+      const n = new Date();
+      return [toInputValue(new Date(n.getFullYear(), n.getMonth() - 2, 1)), toInputValue(n)];
+    },
+  },
+  {
+    label: 'This FY',
+    range: () => {
+      // Indian financial year: 1 April to 31 March.
+      const n = new Date();
+      const startYear = n.getMonth() >= 3 ? n.getFullYear() : n.getFullYear() - 1;
+      return [toInputValue(new Date(startYear, 3, 1)), toInputValue(n)];
+    },
+  },
+];
+
 export default function TransactionsPage() {
   const txns = useApp((s) => s.txns);
   const transfers = useApp((s) => s.transfers);
@@ -79,6 +121,11 @@ export default function TransactionsPage() {
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
+  // Statement controls: a date window, and paging so a long book stays usable.
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [page, setPage] = useState(0);
   const [accountFilter, setAccountFilter] = useState('all');
 
   const catById = useMemo(() => {
@@ -91,6 +138,22 @@ export default function TransactionsPage() {
   const pickable = useMemo(() => moneyAccounts(accounts), [accounts]);
   const defaultCash = cashAcctId(activeProfileId);
   const acctName = (id?: string | null) => acctById.get(id ?? defaultCash) ?? 'Cash';
+
+  const PAGE_SIZE = 50;
+
+  /** Categories that actually appear in the book, most used first. */
+  const categoriesPresent = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const t of txns) counts.set(t.categoryId, (counts.get(t.categoryId) ?? 0) + 1);
+    return [...counts.entries()]
+      .map(([id, n]) => ({ id, name: catById.get(id)?.name ?? 'Uncategorised', count: n }))
+      .sort((a, b) => b.count - a.count);
+  }, [txns, catById]);
+  const fromMs = useMemo(() => fromInputValue(from), [from]);
+  const toMs = useMemo(() => {
+    const ms = fromInputValue(to);
+    return ms == null ? null : ms + 86_399_999; // end of that day
+  }, [to]);
 
   const filtered = useMemo<Entry[]>(() => {
     const q = search.trim().toLowerCase();
@@ -110,6 +173,15 @@ export default function TransactionsPage() {
             : e.transfer.fromAccountId === accountFilter || e.transfer.toAccountId === accountFilter;
           if (!touches) return false;
         }
+        // Inclusive on both ends: "01/08 to 31/08" must contain the 31st, which
+        // is what anyone reconciling a monthly statement expects.
+        // A transfer has no category, so any category filter excludes it —
+        // filtering by "Food" and still seeing transfers would be noise.
+        if (categoryFilter !== 'all') {
+          if (e.kind !== 'txn' || e.txn.categoryId !== categoryFilter) return false;
+        }
+        if (fromMs != null && e.date < fromMs) return false;
+        if (toMs != null && e.date > toMs) return false;
         if (!q) return true;
         // Date in the app's own format, so what the row shows is what you can
         // search — reconciling by date is as common as reconciling by amount.
@@ -132,7 +204,7 @@ export default function TransactionsPage() {
         );
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- acctName is derived from acctById
-  }, [txns, transfers, filter, accountFilter, search, catById, acctById, defaultCash]);
+  }, [txns, transfers, filter, accountFilter, categoryFilter, search, catById, acctById, defaultCash, fromMs, toMs]);
 
   async function handleDelete(e: Entry) {
     const isTransfer = e.kind === 'transfer';
@@ -175,6 +247,12 @@ export default function TransactionsPage() {
   }
 
   // Group by day
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // Filters can shrink the result under a reader sitting on page 9; clamp
+  // rather than showing an empty page they cannot navigate out of.
+  const safePage = Math.min(page, pageCount - 1);
+  const pageRows = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+
   const dayHeaders: Set<string> = new Set();
 
   return (
@@ -208,17 +286,65 @@ export default function TransactionsPage() {
           className="flex-1"
           placeholder="Search merchant, amount, date, category…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
         />
-        <Segmented options={FILTER_OPTIONS} value={filter} onChange={setFilter} />
+        <Segmented options={FILTER_OPTIONS} value={filter} onChange={(f) => { setFilter(f); setPage(0); }} />
+        {categoriesPresent.length > 1 && (
+          <div className="sm:w-[190px]">
+            <Select
+              aria-label="Filter by category"
+              value={categoryFilter}
+              onChange={(e) => { setCategoryFilter(e.target.value); setPage(0); }}
+            >
+              <option value="all">All categories</option>
+              {categoriesPresent.map((c) => (
+                <option key={c.id} value={c.id}>{c.name} ({c.count})</option>
+              ))}
+            </Select>
+          </div>
+        )}
         {pickable.length > 1 && (
           <div className="sm:w-[190px]">
-            <Select aria-label="Filter by account" value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)}>
+            <Select aria-label="Filter by account" value={accountFilter} onChange={(e) => { setAccountFilter(e.target.value); setPage(0); }}>
               <option value="all">All accounts</option>
               {pickable.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </Select>
           </div>
         )}
+      </div>
+
+      {/* Statement window. Presets cover the ranges people actually reconcile;
+          the two fields handle everything else. */}
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="w-[150px]">
+          <label className="text-xs font-semibold text-muted" htmlFor="stmt-from">From</label>
+          <div className="mt-1"><DateInput id="stmt-from" value={from} onChange={(v) => { setFrom(v); setPage(0); }} max={to || undefined} /></div>
+        </div>
+        <div className="w-[150px]">
+          <label className="text-xs font-semibold text-muted" htmlFor="stmt-to">To</label>
+          <div className="mt-1"><DateInput id="stmt-to" value={to} onChange={(v) => { setTo(v); setPage(0); }} min={from || undefined} /></div>
+        </div>
+        <div className="flex flex-wrap gap-1.5 pb-1">
+          {DATE_PRESETS.map((p) => (
+            <button
+              key={p.label}
+              type="button"
+              onClick={() => { const [f, t] = p.range(); setFrom(f); setTo(t); setPage(0); }}
+              className="px-2.5 py-1.5 rounded-lg border border-line text-[12px] font-semibold text-muted hover:text-ink hover:border-[var(--accent)] transition-colors"
+            >
+              {p.label}
+            </button>
+          ))}
+          {(from || to) && (
+            <button
+              type="button"
+              onClick={() => { setFrom(''); setTo(''); setPage(0); }}
+              className="px-2.5 py-1.5 rounded-lg border border-line text-[12px] font-semibold text-[var(--accent)] hover:underline"
+            >
+              Clear dates
+            </button>
+          )}
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -245,7 +371,7 @@ export default function TransactionsPage() {
       ) : (
         <GlassCard className="p-0 overflow-hidden">
           <div className="divide-y divide-[var(--glass-border)]">
-            {filtered.map((e) => {
+            {pageRows.map((e) => {
               const isTransfer = e.kind === 'transfer';
               const income = e.kind === 'txn' && e.txn.type === 'income';
               const cat = e.kind === 'txn' ? catById.get(e.txn.categoryId) : undefined;
@@ -325,6 +451,23 @@ export default function TransactionsPage() {
               );
             })}
           </div>
+
+          {pageCount > 1 && (
+            <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-[var(--glass-border)]">
+              <span className="text-xs text-muted tnum">
+                {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filtered.length)} of {filtered.length.toLocaleString('en-IN')}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button variant="soft" onClick={() => setPage(safePage - 1)} disabled={safePage === 0}>
+                  Previous
+                </Button>
+                <span className="text-xs text-muted tnum">Page {safePage + 1} of {pageCount}</span>
+                <Button variant="soft" onClick={() => setPage(safePage + 1)} disabled={safePage >= pageCount - 1}>
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </GlassCard>
       )}
     </div>

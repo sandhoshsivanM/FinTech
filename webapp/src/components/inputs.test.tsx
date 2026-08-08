@@ -241,3 +241,43 @@ describe('DateInput — in-app calendar', () => {
     expect(within(dialog).getByRole('button', { name: '9' })).not.toBeDisabled();
   });
 });
+
+describe('DateInput — bare variant', () => {
+  test('drops the field chrome so it can sit inside an existing pill', () => {
+    const { container } = render(
+      <DateInput bare value="2026-08-08" onChange={() => {}} aria-label="As on" />,
+    );
+    const input = screen.getByLabelText('As on');
+    // No second border or background to nest inside the surrounding control.
+    expect(input.className).not.toMatch(/border-\[var\(--line\)\]/);
+    expect(input.className).not.toMatch(/rounded-xl/);
+    // Still one calendar trigger, not zero and not two.
+    expect(container.querySelectorAll('button[aria-label="Open calendar"]')).toHaveLength(1);
+  });
+
+  test('still formats and commits exactly like the full field', async () => {
+    function Bare() {
+      const [v, setV] = useState('2026-08-08');
+      return (
+        <div>
+          <DateInput bare value={v} onChange={setV} aria-label="As on" />
+          <output data-testid="value">{v}</output>
+        </div>
+      );
+    }
+    const user = userEvent.setup();
+    render(<Bare />);
+    const input = screen.getByLabelText('As on') as HTMLInputElement;
+    expect(input.value).toBe('08/08/2026');
+
+    await user.clear(input);
+    await user.type(input, '15/09/2026');
+    await user.tab();
+    expect(screen.getByTestId('value').textContent).toBe('2026-09-15');
+  });
+
+  test('the full variant keeps its chrome', () => {
+    render(<DateInput value="2026-08-08" onChange={() => {}} aria-label="Date" />);
+    expect(screen.getByLabelText('Date').className).toMatch(/rounded-xl/);
+  });
+});

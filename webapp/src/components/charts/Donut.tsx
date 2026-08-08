@@ -82,7 +82,10 @@ export function Donut({
     // quarter-panel and in a 700px half-panel on the same screen. Below ~380px
     // the legend stacks under the ring so labels like "Information Technology"
     // have the full width instead of truncating to "Inform…".
-    <div className="@container/donut flex flex-col @[380px]/donut:flex-row @[380px]/donut:items-center gap-4 @[380px]/donut:gap-5 min-w-0 w-full">
+    // Top-aligned in both layouts, not centred. Centring made the ring float
+    // against a taller legend, so a row of donuts whose legends differ in
+    // length showed its rings at different heights — the alignment complaint.
+    <div className="@container/donut flex flex-col @[380px]/donut:flex-row @[380px]/donut:items-start gap-4 @[380px]/donut:gap-5 min-w-0 w-full">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 self-center">
         <g transform={`translate(${size / 2},${size / 2}) rotate(-90)`}>
           <circle r={r} fill="none" stroke="var(--fill-strong)" strokeWidth={stroke} />

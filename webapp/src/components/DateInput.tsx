@@ -32,6 +32,14 @@ export interface DateInputProps {
   disabled?: boolean;
   /** Extra classes for the visible text box, for inline/compact placements. */
   className?: string;
+  /**
+   * Drops the field chrome — border, background, padding.
+   *
+   * For a date sitting inside a control that already draws its own pill. With
+   * the full chrome you get a box inside a box, two calendar icons, and two
+   * different heights on one line.
+   */
+  bare?: boolean;
   'aria-label'?: string;
 }
 
@@ -42,7 +50,7 @@ function toDisplay(value: string): string {
 }
 
 export function DateInput({
-  value, onChange, id, min, max, required, disabled, className = '', ...rest
+  value, onChange, id, min, max, required, disabled, className = '', bare = false, ...rest
 }: DateInputProps) {
   const nativeRef = useRef<HTMLInputElement>(null);
   const autoId = useId();
@@ -91,7 +99,7 @@ export function DateInput({
   };
 
   return (
-    <div className="relative">
+    <div className={bare ? 'relative inline-flex items-center' : 'relative'}>
       <input
         id={inputId}
         type="text"
@@ -104,7 +112,11 @@ export function DateInput({
         onChange={(e) => setText(e.target.value)}
         onBlur={(e) => commit(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value); }}
-        className={`w-full rounded-xl border border-[var(--line)] bg-transparent px-3 py-2.5 pr-11 text-sm outline-none focus:border-[var(--accent)] disabled:opacity-50 ${className}`}
+        className={
+          bare
+            ? `bg-transparent outline-none pr-7 disabled:opacity-50 ${className}`
+            : `w-full rounded-xl border border-[var(--line)] bg-transparent px-3 py-2.5 pr-11 text-sm outline-none focus:border-[var(--accent)] disabled:opacity-50 ${className}`
+        }
         {...rest}
       />
 
@@ -113,9 +125,13 @@ export function DateInput({
         onClick={openPicker}
         disabled={disabled}
         aria-label="Open calendar"
-        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-lg text-muted hover:text-[var(--fg)] hover:bg-[var(--surface-2)] transition-colors disabled:opacity-50"
+        className={
+          bare
+            ? 'absolute right-0 top-1/2 -translate-y-1/2 p-0.5 rounded text-muted hover:text-[var(--fg)] transition-colors disabled:opacity-50'
+            : 'absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-lg text-muted hover:text-[var(--fg)] hover:bg-[var(--surface-2)] transition-colors disabled:opacity-50'
+        }
       >
-        <CalendarDays size={16} />
+        <CalendarDays size={bare ? 14 : 16} />
       </button>
 
       {calendarOpen && (

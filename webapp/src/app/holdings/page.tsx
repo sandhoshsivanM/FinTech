@@ -277,7 +277,9 @@ export default function HoldingsPage() {
                   <select
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value as AssetType | 'all')}
-                    className="rounded-lg border border-line bg-transparent px-2.5 py-1.5 text-[12.5px] font-semibold outline-none focus:border-[var(--accent)]"
+                    // Matches the toolbar's search box exactly (h-9, same
+                    // radius and surface) so the two controls sit on one line.
+                    className="h-9 rounded-input border border-line bg-surface px-3 text-[12.5px] font-semibold text-ink outline-none cursor-pointer focus:border-[var(--accent)]"
                   >
                     <option value="all">All types ({rows.length})</option>
                     {typesPresent.map(([t, n]) => (
