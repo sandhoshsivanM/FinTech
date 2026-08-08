@@ -47,6 +47,25 @@ type Entry =
   | { kind: 'txn'; id: string; date: number; txn: Txn }
   | { kind: 'transfer'; id: string; date: number; transfer: Transfer };
 
+
+/**
+ * Does a search term look like the money figure on this row?
+ *
+ * Reconciling against a spreadsheet means searching for the amount — "1500",
+ * "1,500", "₹1500.00" are all the same row to a person. The stored value is a
+ * Decimal string ("1500.00"), so both forms are compared and separators are
+ * dropped. Without this, searching an amount silently matched nothing and the
+ * transaction looked missing.
+ */
+function amountMatches(amount: string, needle: string): boolean {
+  const n = needle.replace(/[₹$,\s]/g, '');
+  if (!n || !/^[0-9]*\.?[0-9]*$/.test(n)) return false;
+  const raw = amount.replace(/[^0-9.]/g, '');
+  const num = Number(raw);
+  if (!Number.isFinite(num)) return raw.includes(n);
+  return raw.includes(n) || String(num).includes(n) || num.toFixed(2).includes(n);
+}
+
 export default function TransactionsPage() {
   const txns = useApp((s) => s.txns);
   const transfers = useApp((s) => s.transfers);
@@ -92,17 +111,24 @@ export default function TransactionsPage() {
           if (!touches) return false;
         }
         if (!q) return true;
+        // Date in the app's own format, so what the row shows is what you can
+        // search — reconciling by date is as common as reconciling by amount.
+        const dateText = formatDate(e.date).toLowerCase();
         if (e.kind === 'transfer') {
           return (e.transfer.note ?? '').toLowerCase().includes(q)
             || acctName(e.transfer.fromAccountId).toLowerCase().includes(q)
-            || acctName(e.transfer.toAccountId).toLowerCase().includes(q);
+            || acctName(e.transfer.toAccountId).toLowerCase().includes(q)
+            || dateText.includes(q)
+            || amountMatches(e.transfer.amount, q);
         }
         const cat = catById.get(e.txn.categoryId);
         return (
           (e.txn.merchant ?? '').toLowerCase().includes(q) ||
           (e.txn.note ?? '').toLowerCase().includes(q) ||
           (cat?.name ?? '').toLowerCase().includes(q) ||
-          acctName(e.txn.accountId).toLowerCase().includes(q)
+          acctName(e.txn.accountId).toLowerCase().includes(q) ||
+          dateText.includes(q) ||
+          amountMatches(e.txn.amount, q)
         );
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- acctName is derived from acctById
@@ -180,7 +206,7 @@ export default function TransactionsPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <Input
           className="flex-1"
-          placeholder="Search merchant, category, note…"
+          placeholder="Search merchant, amount, date, category…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

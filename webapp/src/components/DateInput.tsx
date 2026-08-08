@@ -19,6 +19,7 @@ import { useId, useRef, useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import { formatDate, fromInputValue, toInputValue } from '@/lib/dateFormat';
 import { parseDateCell } from '@/lib/dateParse';
+import { CalendarPopover } from './CalendarPopover';
 
 export interface DateInputProps {
   /** yyyy-MM-dd, same as a native date input. */
@@ -70,13 +71,21 @@ export function DateInput({
     onChange(toInputValue(ms));
   };
 
+  /**
+   * Touch devices get the platform picker — the wheel is faster with a thumb
+   * and already looks native. Everything else gets the in-app calendar, whose
+   * whole reason for existing is that the desktop OS popup is drawn in the
+   * system theme and anchors to the hidden input rather than to this field.
+   */
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const openPicker = () => {
+    const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+    if (!coarse) { setCalendarOpen((o) => !o); return; }
+
     const el = nativeRef.current;
-    if (!el) return;
-    // showPicker is the supported way; Safari < 16 has no such method, where
-    // focusing the native input still surfaces the platform picker.
+    if (!el) { setCalendarOpen((o) => !o); return; }
     if (typeof el.showPicker === 'function') {
-      try { el.showPicker(); return; } catch { /* falls through to click */ }
+      try { el.showPicker(); return; } catch { /* fall through */ }
     }
     el.click();
   };
@@ -108,6 +117,16 @@ export function DateInput({
       >
         <CalendarDays size={16} />
       </button>
+
+      {calendarOpen && (
+        <CalendarPopover
+          value={value}
+          min={min}
+          max={max}
+          onPick={onChange}
+          onClose={() => setCalendarOpen(false)}
+        />
+      )}
 
       {/*
         The real date control, kept for its platform picker only. Visually

@@ -25,12 +25,15 @@ import { Stagger, StaggerItem, useReducedMotion } from '@/components/motion';
 import { HoldingForm, ImportPanel } from '@/components/HoldingEditor';
 import type { Holding } from '@/lib/types';
 import { portfolioSummary, ASSET_META, ASSET_GROUP_OF } from '@/domain/portfolio';
-import { lookupClassification, loadInstrumentMaster, EMPTY_MASTER, MARKET_CAP_LABEL, type InstrumentMaster } from '@/domain/instrumentMaster';
+import type { AssetType } from '@/lib/types';
+import { classifyHolding, loadInstrumentMaster, EMPTY_MASTER, MARKET_CAP_LABEL, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { hasRealClose, rowDayPct } from '@/domain/dayChange';
 import { short } from '@/lib/format';
 
 interface Row {
   id: string;
+  /** Kept on the row so the toolbar can filter without re-reading the vault. */
+  assetType: AssetType;
   symbol: string;
   name: string;
   exchange: string;
@@ -81,7 +84,7 @@ export default function HoldingsPage() {
     const total = totalValue || 1;
     return views.map((v) => {
       const h = v.holding;
-      const cls = lookupClassification(master, { symbol: h.symbol });
+      const cls = classifyHolding(master, h);
       const group = ASSET_GROUP_OF[h.assetType];
       return {
         id: h.id,
@@ -99,6 +102,7 @@ export default function HoldingsPage() {
         pnlPct: v.pnlPct,
         dayPct: rowDayPct(h, anyRealClose, demo),
         weight: (v.current.toNumber() / total) * 100,
+        assetType: h.assetType,
         assetLabel: ASSET_META[h.assetType].label,
         colour: `var(--c${(Object.keys(ASSET_META).indexOf(h.assetType) % 8) + 1})`,
         holding: h,
@@ -109,6 +113,24 @@ export default function HoldingsPage() {
   }, [views, totalValue, master, demo, anyRealClose]);
 
   const unpriced = holdings.filter((h) => h.lastPrice == null).length;
+
+  /**
+   * Asset-type filter for the full book.
+   *
+   * Only types actually held are offered — a fixed list of all thirteen would
+   * mostly be dead options, and picking one that matches nothing looks like a
+   * broken grid rather than an empty category.
+   */
+  const [typeFilter, setTypeFilter] = useState<AssetType | 'all'>('all');
+  const typesPresent = useMemo(() => {
+    const counts = new Map<AssetType, number>();
+    for (const h of holdings) counts.set(h.assetType, (counts.get(h.assetType) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [holdings]);
+  const visibleRows = useMemo(
+    () => (typeFilter === 'all' ? rows : rows.filter((r) => r.assetType === typeFilter)),
+    [rows, typeFilter],
+  );
   const columns: Column<Row>[] = [
     {
       key: 'company', header: 'Company', locked: true, width: 210,
@@ -243,11 +265,28 @@ export default function HoldingsPage() {
             {demo && !anyRealClose && <span className="ml-auto"><DemoBadge label="Day change" title="Day change is synthesised on this device — Khazana has no price feed." /></span>}
           </div>
           <DataGrid
-            rows={rows}
+            rows={visibleRows}
             columns={columns}
             rowKey={(r) => r.id}
             searchable={(r) => `${r.name} ${r.symbol} ${r.sector} ${r.exchange} ${r.assetLabel}`}
-            searchPlaceholder={`Search ${rows.length} holdings…`}
+            searchPlaceholder={`Search ${visibleRows.length} holdings…`}
+            toolbarExtra={
+              typesPresent.length > 1 ? (
+                <label className="flex items-center gap-2 shrink-0">
+                  <span className="sr-only">Filter by asset type</span>
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value as AssetType | 'all')}
+                    className="rounded-lg border border-line bg-transparent px-2.5 py-1.5 text-[12.5px] font-semibold outline-none focus:border-[var(--accent)]"
+                  >
+                    <option value="all">All types ({rows.length})</option>
+                    {typesPresent.map(([t, n]) => (
+                      <option key={t} value={t}>{ASSET_META[t].label} ({n})</option>
+                    ))}
+                  </select>
+                </label>
+              ) : undefined
+            }
             initialSort={{ key: 'current', dir: 'desc' }}
             exportName="khazana-holdings"
             empty={

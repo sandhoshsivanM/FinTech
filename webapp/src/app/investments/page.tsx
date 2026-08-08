@@ -35,7 +35,7 @@ import {
   ASSET_META, ASSET_GROUP_META, ASSET_GROUP_OF, UNCLASSIFIED_KEY, type AssetGroup,
 } from '@/domain/portfolio';
 import { investmentTotals, concentration } from '@/domain/investmentTotals';
-import { loadInstrumentMaster, lookupClassification, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
+import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { dayChange, hasRealClose, priceAsOfLabel, rowDayPct } from '@/domain/dayChange';
 import { PageIntro, Button, Chip, Delta, Donut, Gauge, EmptyState, GlassCard, type DonutSeg } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
@@ -73,7 +73,7 @@ export default function PortfolioPage() {
   const [master, setMaster] = useState<InstrumentMaster>(EMPTY_MASTER);
   useEffect(() => { void loadInstrumentMaster().then(setMaster); }, []);
   const classify = useCallback(
-    (h: { symbol: string }) => lookupClassification(master, { symbol: h.symbol }),
+    (h: Parameters<typeof classifyHolding>[1]) => classifyHolding(master, h),
     [master],
   );
 
@@ -406,28 +406,28 @@ export default function PortfolioPage() {
       {/* ---- Four allocation donuts ----------------------------------------- */}
       <div className="grid gap-5 min-w-0 grid-cols-[repeat(auto-fit,minmax(0,1fr))] min-[900px]:grid-cols-2 min-[1400px]:grid-cols-4">
         <StaggerItem>
-          <Panel title="Portfolio Allocation" sub="by current value">
+          <Panel align="start" title="Portfolio Allocation" sub="by current value">
             <Donut segments={topSegs('current')} size={148} stroke={20} maxSlices={7}
               formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))}
               centerText={ghost ? '••••' : short(totalValue, fmt.symbol)} centerSub="Total" />
           </Panel>
         </StaggerItem>
         <StaggerItem>
-          <Panel title="Investment Allocation" sub="by invested amount">
+          <Panel align="start" title="Investment Allocation" sub="by invested amount">
             <Donut segments={topSegs('invested')} size={148} stroke={20} maxSlices={7}
               formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))}
               centerText={ghost ? '••••' : short(summary.invested.toNumber(), fmt.symbol)} centerSub="Total" />
           </Panel>
         </StaggerItem>
         <StaggerItem>
-          <Panel title="Asset Type Allocation" sub={`${assetTypeSegs.length} type${assetTypeSegs.length === 1 ? '' : 's'}`}>
+          <Panel align="start" title="Asset Type Allocation" sub={`${assetTypeSegs.length} type${assetTypeSegs.length === 1 ? '' : 's'}`}>
             <Donut segments={assetTypeSegs} size={148} stroke={20} maxSlices={6}
               formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))}
               centerText={ghost ? '••••' : short(totalValue, fmt.symbol)} centerSub="Total" />
           </Panel>
         </StaggerItem>
         <StaggerItem>
-          <Panel title="Profit vs Loss" sub="by position count">
+          <Panel align="start" title="Profit vs Loss" sub="by position count">
             <Donut
               segments={[
                 { label: `Profitable (${profitable})`, value: profitable, color: 'var(--success)' },
@@ -522,8 +522,20 @@ export default function PortfolioPage() {
 
 /** A titled card with an optional right-hand badge. */
 function Panel({
-  title, sub, children, icon, badge,
-}: { title: string; sub?: string; children: React.ReactNode; icon?: React.ReactNode; badge?: React.ReactNode }) {
+  title, sub, children, icon, badge, align = 'center',
+}: {
+  title: string; sub?: string; children: React.ReactNode;
+  icon?: React.ReactNode; badge?: React.ReactNode;
+  /**
+   * Where the body sits in the leftover space.
+   *
+   * The grid stretches every card to the tallest in the row, so a centred body
+   * floats down when its own content is short. For a row of donuts that is
+   * visible as rings at different heights — the legends differ in length, so
+   * the rings drift apart. `start` pins them to a common top edge.
+   */
+  align?: 'center' | 'start';
+}) {
   return (
     <section className="card lift h-full flex flex-col min-w-0 overflow-hidden">
       <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
@@ -534,7 +546,7 @@ function Panel({
         </div>
         {badge && <span className="shrink-0">{badge}</span>}
       </div>
-      <div className="p-5 flex-1 flex items-center min-w-0">{children}</div>
+      <div className={`p-5 flex-1 flex min-w-0 ${align === 'start' ? 'items-start' : 'items-center'}`}>{children}</div>
     </section>
   );
 }

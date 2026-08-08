@@ -58,6 +58,7 @@ export function Donut({
   formatValue?: (n: number) => string;
 }) {
   const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState<number | null>(null);
 
   const total = segments.reduce((s, x) => s + Math.max(0, x.value), 0);
   const shouldFold = maxSlices != null && segments.length > maxSlices;
@@ -70,6 +71,7 @@ export function Donut({
     : head;
 
   const pct = (v: number) => (total <= 0 ? '0%' : `${Math.round((v / total) * 100)}%`);
+  const hovered = hover != null ? arcs[hover] : undefined;
 
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
@@ -98,27 +100,48 @@ export function Donut({
                   // neighbouring fills — a real gap, not a drawn line.
                   strokeDasharray={`${Math.max(0, len - 3)} ${c}`}
                   strokeDashoffset={-offset}
-                />
+                  // Hovering an arc must answer "what is this slice worth".
+                  // Reading it off the legend means matching a colour by eye,
+                  // which is exactly what a donut is bad at.
+                  onMouseEnter={() => setHover(i)}
+                  onMouseLeave={() => setHover(null)}
+                  style={{
+                    cursor: 'default',
+                    opacity: hover == null || hover === i ? 1 : 0.35,
+                    transition: 'opacity 120ms ease',
+                  }}
+                >
+                  {/* Native tooltip too: it survives touch-less hover, print
+                      and screen readers, and costs nothing. */}
+                  <title>
+                    {`${s.label}: ${formatValue ? formatValue(s.value) : s.value} (${pct(s.value)})`}
+                  </title>
+                </circle>
               );
               offset += len;
               return el;
             })}
         </g>
-        {centerText && (
+        {/* While an arc is hovered the centre reports that slice instead of the
+            total — the value appears where the reader is already looking,
+            rather than in a tooltip that covers the neighbouring arcs. */}
+        {(hovered ? true : centerText) && (
           <text
             x="50%" y="46%" textAnchor="middle" dominantBaseline="middle"
             className="fill-ink"
             style={{ fontSize: size > 150 ? 19 : 16, fontWeight: 700, letterSpacing: '-0.02em' }}
           >
-            {centerText}
+            {hovered
+              ? (formatValue ? formatValue(hovered.value) : String(hovered.value))
+              : centerText}
           </text>
         )}
-        {centerSub && (
+        {(hovered ? true : centerSub) && (
           <text
             x="50%" y="60%" textAnchor="middle" dominantBaseline="middle"
             fill="var(--muted)" style={{ fontSize: 10.5, letterSpacing: '0.04em' }}
           >
-            {centerSub}
+            {hovered ? `${hovered.label} · ${pct(hovered.value)}` : centerSub}
           </text>
         )}
       </svg>

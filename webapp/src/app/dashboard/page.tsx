@@ -31,7 +31,7 @@ import {
   portfolioSummary, allocationByGroup, rollup, ASSET_GROUP_META, UNCLASSIFIED_KEY,
 } from '@/domain/portfolio';
 import { netWorthTotal, netWorthSeries, windowSummary, type TimeWindow } from '@/domain/finance';
-import { loadInstrumentMaster, lookupClassification, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
+import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { dayChange, priceAsOfLabel } from '@/domain/dayChange';
 import { GlassCard, SectionHeader, Ring, ProgressBar, Segmented, Chip, Delta, Donut, type DonutSeg } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
@@ -77,7 +77,7 @@ export default function DashboardPage() {
   const [master, setMaster] = useState<InstrumentMaster>(EMPTY_MASTER);
   useEffect(() => { void loadInstrumentMaster().then(setMaster); }, []);
   const classify = useCallback(
-    (h: { symbol: string }) => lookupClassification(master, { symbol: h.symbol }),
+    (h: Parameters<typeof classifyHolding>[1]) => classifyHolding(master, h),
     [master],
   );
 

@@ -197,10 +197,27 @@ describe('Donut folding', () => {
   });
 
   test('the tail folds into one row that names how many are in it', () => {
-    render(<Donut segments={many(10)} maxSlices={6} />);
+    const { container } = render(<Donut segments={many(10)} maxSlices={6} />);
     expect(screen.getByText('ITEM5')).toBeTruthy();
     expect(screen.queryByText('ITEM6')).toBeNull();
-    expect(screen.getByText(/Others \(4\)/)).toBeTruthy();
+    // Scoped to the legend: the arc also carries a <title> with the same text
+    // for its hover tooltip, so an unscoped query now matches twice.
+    const legendRows = Array.from(container.querySelectorAll('span'))
+      .map((el) => el.textContent ?? '');
+    expect(legendRows.some((t) => /Others \(4\)/.test(t))).toBe(true);
+  });
+
+  test('each arc carries its value and share as a hover tooltip', () => {
+    // Reading a slice off the legend means matching a colour by eye; hovering
+    // the arc itself is what people actually try.
+    const { container } = render(
+      <Donut segments={many(3)} formatValue={(n) => `₹${n}`} />,
+    );
+    const titles = Array.from(container.querySelectorAll('title')).map((t) => t.textContent);
+    expect(titles).toHaveLength(3);
+    expect(titles[0]).toMatch(/ITEM0/);
+    expect(titles[0]).toMatch(/₹3/);
+    expect(titles[0]).toMatch(/%/);
   });
 
   test('clicking "Others" reveals every folded item, then hides again', () => {
@@ -230,5 +247,31 @@ describe('Donut folding', () => {
     render(<Donut segments={many(12)} />);
     expect(screen.getByText('ITEM11')).toBeTruthy();
     expect(screen.queryByRole('button', { expanded: false })).toBeNull();
+  });
+});
+
+describe('sector overrides reach the allocation', () => {
+  // Regression: the holdings editor wrote `sector` faithfully and every screen
+  // then classified on the bundled master alone, so an edited holding stayed
+  // "Unclassified" no matter what was typed.
+  test('a holding sector overrides the master, and blank falls back to it', async () => {
+    const { classifyHolding } = await import('@/domain/instrumentMaster');
+    const master = {
+      schemaVersion: 1,
+      bySymbol: new Map([['INFY', { symbol: 'INFY', sector: 'Information Technology', industry: 'IT Services', cap: 'large' as const }]]),
+      byIsin: new Map(),
+    };
+
+    // Override wins.
+    expect(classifyHolding(master, { symbol: 'INFY', sector: 'My Sector' })?.sector).toBe('My Sector');
+    // Blank falls through to the master.
+    expect(classifyHolding(master, { symbol: 'INFY', sector: '' })?.sector).toBe('Information Technology');
+    expect(classifyHolding(master, { symbol: 'INFY' })?.sector).toBe('Information Technology');
+    // A symbol the master has never heard of is classified purely by the override.
+    expect(classifyHolding(master, { symbol: 'UNKNOWNXYZ', sector: 'Healthcare' })?.sector).toBe('Healthcare');
+    // Nothing anywhere stays undefined, so callers still say "Unclassified".
+    expect(classifyHolding(master, { symbol: 'UNKNOWNXYZ' })).toBeUndefined();
+    // Cap override behaves the same way.
+    expect(classifyHolding(master, { symbol: 'INFY', marketCapBand: 'small' })?.cap).toBe('small');
   });
 });

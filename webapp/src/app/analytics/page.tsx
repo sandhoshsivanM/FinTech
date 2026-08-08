@@ -17,7 +17,7 @@ import { Stagger, StaggerItem } from '@/components/motion';
 import { ColumnChart } from '@/components/charts/ColumnChart';
 import { LineChart } from '@/components/charts/LineChart';
 import { portfolioSummary, rollup, allocationByGroup } from '@/domain/portfolio';
-import { loadInstrumentMaster, lookupClassification, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
+import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { concentration, investmentTotals } from '@/domain/investmentTotals';
 import { UNCLASSIFIED_KEY } from '@/domain/portfolio';
 import { short } from '@/lib/format';
@@ -34,7 +34,7 @@ export default function AnalyticsPage() {
   const [master, setMaster] = useState<InstrumentMaster>(EMPTY_MASTER);
   useEffect(() => { void loadInstrumentMaster().then(setMaster); }, []);
   const classify = useCallback(
-    (h: { symbol: string }) => lookupClassification(master, { symbol: h.symbol }),
+    (h: Parameters<typeof classifyHolding>[1]) => classifyHolding(master, h),
     [master],
   );
 

@@ -127,6 +127,45 @@ export function lookupClassification(
   return undefined;
 }
 
+/**
+ * Classification for a holding the user actually owns.
+ *
+ * `lookupClassification` answers only "what does the bundled master say about
+ * this ticker". A Holding can also carry its own `sector` and `marketCapBand`,
+ * documented as overriding that lookup — for ETFs, foreign stock and anything
+ * unlisted the master does not cover.
+ *
+ * Every caller was using the bare master lookup, so those overrides were
+ * written by the holdings editor, stored faithfully, and then never read: you
+ * could set a sector and watch the allocation still report Unclassified.
+ * This is the function screens should use; the raw lookup is for when there is
+ * no holding, only a ticker.
+ */
+export function classifyHolding(
+  master: InstrumentMaster,
+  h: {
+    symbol: string;
+    isin?: string | null;
+    sector?: string | null;
+    marketCapBand?: MarketCapBand | null;
+  },
+): InstrumentClassification | undefined {
+  const base = lookupClassification(master, { symbol: h.symbol, isin: h.isin });
+  const sector = h.sector?.trim() || base?.sector;
+  const cap = h.marketCapBand ?? base?.cap;
+
+  // Nothing known from either source — the caller must show "Unclassified"
+  // rather than an empty-stringed classification that reads as a real bucket.
+  if (!sector && !cap) return base;
+
+  return {
+    ...base,
+    sector: sector ?? '',
+    industry: base?.industry ?? '',
+    ...(cap ? { cap } : {}),
+  };
+}
+
 /** Fetches the bundled master. A failure degrades to "no classification". */
 export async function loadInstrumentMaster(): Promise<InstrumentMaster> {
   try {
