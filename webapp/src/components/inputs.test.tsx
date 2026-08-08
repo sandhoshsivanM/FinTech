@@ -175,3 +175,69 @@ describe('Combobox', () => {
     expect(screen.getByTestId('value').textContent).toBe('Chemicals');
   });
 });
+
+describe('DateInput — in-app calendar', () => {
+  test('the calendar button opens a styled popover, not the OS picker', async () => {
+    const user = userEvent.setup();
+    render(<DateHarness initial="2026-08-09" />);
+    await user.click(screen.getByLabelText('Open calendar'));
+
+    const dialog = screen.getByRole('dialog', { name: 'Choose a date' });
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText('August 2026')).toBeInTheDocument();
+  });
+
+  test('picking a day commits it in dd/MM/yyyy', async () => {
+    const user = userEvent.setup();
+    render(<DateHarness initial="2026-08-09" />);
+    await user.click(screen.getByLabelText('Open calendar'));
+
+    const dialog = screen.getByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: '15' }));
+
+    expect(committed()).toBe('2026-08-15');
+    expect(box().value).toBe('15/08/2026');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  test('month navigation moves the grid', async () => {
+    const user = userEvent.setup();
+    render(<DateHarness initial="2026-08-09" />);
+    await user.click(screen.getByLabelText('Open calendar'));
+    await user.click(screen.getByLabelText('Previous month'));
+    expect(screen.getByText('July 2026')).toBeInTheDocument();
+    await user.click(screen.getByLabelText('Next month'));
+    await user.click(screen.getByLabelText('Next month'));
+    expect(screen.getByText('September 2026')).toBeInTheDocument();
+  });
+
+  test('Clear empties the field', async () => {
+    const user = userEvent.setup();
+    render(<DateHarness initial="2026-08-09" />);
+    await user.click(screen.getByLabelText('Open calendar'));
+    await user.click(screen.getByRole('button', { name: 'Clear' }));
+    expect(committed()).toBe('');
+  });
+
+  test('Escape closes it without changing the value', async () => {
+    const user = userEvent.setup();
+    render(<DateHarness initial="2026-08-09" />);
+    await user.click(screen.getByLabelText('Open calendar'));
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(committed()).toBe('2026-08-09');
+  });
+
+  test('days outside min/max cannot be chosen', async () => {
+    function Bounded() {
+      const [v, setV] = useState('2026-08-09');
+      return <DateInput value={v} onChange={setV} max="2026-08-10" aria-label="Date" />;
+    }
+    const user = userEvent.setup();
+    render(<Bounded />);
+    await user.click(screen.getByLabelText('Open calendar'));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('button', { name: '20' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: '9' })).not.toBeDisabled();
+  });
+});
