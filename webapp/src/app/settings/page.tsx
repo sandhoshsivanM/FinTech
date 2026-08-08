@@ -112,6 +112,13 @@ export default function SettingsPage() {
   // A backup encrypted with this PIN can be opened on any device. Left blank,
   // the export falls back to the old vault-bound format.
   const [backupPin, setBackupPin] = useState('');
+  // Restore has its own PIN box. The export PIN lives in the section above and
+  // is not necessarily the same one — a backup is opened by the PIN it was
+  // written with, which may be older than the PIN in use today.
+  const [restorePin, setRestorePin] = useState('');
+  // Held so a backup that arrived without a PIN can be retried by typing one,
+  // instead of making the user hunt for the file again on a phone.
+  const [pendingBackup, setPendingBackup] = useState<string | null>(null);
 
   // ---- Export ----
   const handleExport = async () => {
@@ -145,23 +152,34 @@ export default function SettingsPage() {
   const handleRestore = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    await runRestore(await file.text());
+    if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const runRestore = async (text: string) => {
     setRestoreNote(null);
     try {
-      const text = await file.text();
-      const n = await importBackup(text, backupPin.trim() || undefined);
+      const n = await importBackup(text, restorePin.trim() || undefined);
+      setPendingBackup(null);
       setRestoreNote({ kind: 'success', text: `Restored ${n} record${n !== 1 ? 's' : ''} from backup.` });
     } catch (err) {
-      // Say what actually went wrong. The old catch-all blamed the PIN even
-      // when the PIN was right and the file was simply bound to another vault.
+      // Say what actually went wrong, and — when the fix is "type your PIN" —
+      // keep the file so the retry is one tap rather than a second file hunt.
+      if (err instanceof BackupError && err.reason === 'needs-pin') {
+        setPendingBackup(text);
+        setRestoreNote({
+          kind: 'error',
+          text: 'This backup is PIN-protected. Type the PIN it was exported with in the box below, then press Restore.',
+        });
+        return;
+      }
+      setPendingBackup(err instanceof BackupError && err.reason === 'wrong-pin' ? text : null);
       setRestoreNote({
         kind: 'error',
         text: err instanceof BackupError
           ? err.message
           : `Restore failed: ${err instanceof Error ? err.message : String(err)}`,
       });
-    } finally {
-      // Reset file input so the same file can be re-selected if needed
-      if (fileRef.current) fileRef.current.value = '';
     }
   };
 
@@ -432,9 +450,36 @@ export default function SettingsPage() {
             </div>
             <Button variant="soft" onClick={() => fileRef.current?.click()}>
               <Upload size={15} />
-              Choose file
+              {pendingBackup ? 'Choose another file' : 'Choose file'}
             </Button>
           </div>
+
+          <div className="mt-3 max-w-sm">
+            <label className="text-xs font-semibold text-muted" htmlFor="restore-pin">Backup PIN</label>
+            <div className="flex gap-2 mt-1">
+              <input
+                id="restore-pin"
+                type="password"
+                inputMode="numeric"
+                autoComplete="off"
+                value={restorePin}
+                onChange={(e) => setRestorePin(e.target.value)}
+                placeholder="PIN this backup was exported with"
+                onKeyDown={(e) => { if (e.key === 'Enter' && pendingBackup) void runRestore(pendingBackup); }}
+                className="min-w-0 flex-1 rounded-xl border border-[var(--line)] bg-transparent px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)]"
+              />
+              {pendingBackup && (
+                <Button variant="soft" onClick={() => void runRestore(pendingBackup)} disabled={!restorePin.trim()}>
+                  Restore
+                </Button>
+              )}
+            </div>
+            <p className="mt-1.5 text-xs text-muted leading-relaxed">
+              Fill this in <b>before</b> choosing the file. Leave it blank only for an older backup being
+              restored into the very same install that created it.
+            </p>
+          </div>
+
           <input
             ref={fileRef}
             type="file"
