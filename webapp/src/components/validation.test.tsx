@@ -6,7 +6,7 @@ import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { NumberInput, sanitizeNumeric } from './NumberInput';
-import { maskDate } from './DateInput';
+import { filterDateChars } from './DateInput';
 
 beforeEach(cleanup);
 
@@ -74,26 +74,22 @@ describe('NumberInput', () => {
   });
 });
 
-describe('maskDate', () => {
+describe('filterDateChars', () => {
   test('letters and symbols never enter a date field', () => {
-    expect(maskDate('abc', false)).toBe('');
-    expect(maskDate('0!8@0#8', false)).toBe('08/08/');
+    expect(filterDateChars('abc')).toBe('');
+    expect(filterDateChars('0!8@0#8')).toBe('0808');
+    expect(filterDateChars('08/08/2026abc')).toBe('08/08/2026');
   });
 
-  test('slashes are inserted as you type', () => {
-    expect(maskDate('0', false)).toBe('0');
-    expect(maskDate('08', false)).toBe('08/');
-    expect(maskDate('0808', false)).toBe('08/08/');
-    expect(maskDate('08082026', false)).toBe('08/08/2026');
+  test('separators the user typed are preserved, not reflowed', () => {
+    // Reformatting every keystroke turned "1/2/2026" into "12/20/26" — a
+    // different day from valid input. Filtering must not rewrite.
+    expect(filterDateChars('1/2/2026')).toBe('1/2/2026');
+    expect(filterDateChars('08-08-2026')).toBe('08-08-2026');
+    expect(filterDateChars('08.08.2026')).toBe('08.08.2026');
   });
 
-  test('it stops at eight digits', () => {
-    expect(maskDate('0808202699', false)).toBe('08/08/2026');
-  });
-
-  test('deleting does not re-add the separator it is erasing', () => {
-    // Without this, backspace fights the mask and the slash cannot be removed.
-    expect(maskDate('08', true)).toBe('08');
-    expect(maskDate('0808', true)).toBe('08/08');
+  test('length is capped at a full date', () => {
+    expect(filterDateChars('08/08/2026999')).toHaveLength(10);
   });
 });

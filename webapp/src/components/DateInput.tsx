@@ -23,26 +23,20 @@ import { CalendarPopover } from './CalendarPopover';
 
 
 /**
- * Formats keystrokes into dd/MM/yyyy as they are typed.
+ * Keeps a date field to date-shaped characters.
  *
- * The field used to accept any text and only judge it on blur, so you could
- * fill a date with letters and symbols and get no signal until you clicked
- * away. Keeping only digits and inserting the slashes means the field can
- * never hold something that is not a date-shaped string.
+ * Letters and symbols are rejected on the way in, so the field can never hold
+ * "abc!" and give no signal until blur. Separators are *kept as typed* rather
+ * than reformatted: an earlier version reflowed every keystroke into
+ * dd/MM/yyyy, which turned "1/2/2026" into "12/20/26" — a different day, from
+ * input that was perfectly valid. Filtering rejects what is wrong without
+ * rewriting what is right.
  *
- * Deletion has to stay possible, so a trailing slash the mask would add is
- * omitted while the user is mid-erase — otherwise backspace fights the mask
- * and the separator is unremovable.
+ * `parseDateCell` on blur does the interpreting, so "1/2/2026", "01-02-2026"
+ * and "01.02.2026" all still land on 1 February.
  */
-export function maskDate(raw: string, deleting: boolean): string {
-  const d = raw.replace(/\D/g, '').slice(0, 8);
-  if (d.length === 0) return '';
-  if (d.length <= 2) return deleting || d.length < 2 ? d : `${d}/`;
-  if (d.length <= 4) {
-    const body = `${d.slice(0, 2)}/${d.slice(2)}`;
-    return deleting || d.length < 4 ? body : `${body}/`;
-  }
-  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+export function filterDateChars(raw: string): string {
+  return raw.replace(/[^0-9/.\-]/g, '').slice(0, 10);
 }
 
 export interface DateInputProps {
@@ -96,9 +90,9 @@ export function DateInput({
   const commit = (raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed) { onChange(''); return; }
-    // Day-first. The mask means only digits and slashes ever reach here, and
-    // this is the same reader the file importer uses, so a date typed by hand
-    // and one read from a statement can never land on different days.
+    // Day-first, and forgiving of 8/8/26 and 08-08-2026 — the same reader the
+    // file importer uses, so a date typed by hand and one read from a
+    // statement can never land on different days.
     const ms = parseDateCell(trimmed, true);
     if (ms == null) { setText(toDisplay(value)); return; } // reject, restore
     onChange(toInputValue(ms));
@@ -134,11 +128,7 @@ export function DateInput({
         value={text}
         disabled={disabled}
         required={required}
-        onChange={(e) => {
-          const native = e.nativeEvent as InputEvent;
-          const deleting = typeof native?.inputType === 'string' && native.inputType.startsWith('delete');
-          setText(maskDate(e.target.value, deleting));
-        }}
+        onChange={(e) => setText(filterDateChars(e.target.value))}
         onBlur={(e) => commit(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value); }}
         className={

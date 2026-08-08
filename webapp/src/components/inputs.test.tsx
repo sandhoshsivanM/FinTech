@@ -40,9 +40,11 @@ describe('DateInput', () => {
     expect(box().value).toBe('01/02/2026');
   });
 
-  test('accepts the forgiving formats the importer accepts', async () => {
+  test('accepts the forgiving numeric formats', async () => {
+    // Named months ("8 Aug 2026") are no longer typeable: date fields now
+    // reject letters outright. Files still parse them — see parseDateCell.
     const user = userEvent.setup();
-    for (const typed of ['08-08-2026', '8 Aug 2026']) {
+    for (const typed of ['08-08-2026', '8/8/2026', '08.08.2026']) {
       cleanup();
       render(<DateHarness />);
       await user.clear(box());
@@ -52,11 +54,21 @@ describe('DateInput', () => {
     }
   });
 
-  test('rubbish is rejected and the previous value restored', async () => {
+  test('letters cannot be typed into a date field at all', async () => {
     const user = userEvent.setup();
     render(<DateHarness initial="2026-08-08" />);
     await user.clear(box());
     await user.type(box(), 'not a date');
+    // Nothing survived the filter, so the field is simply empty.
+    expect(box().value).toBe('');
+  });
+
+  test('an impossible date is rejected and the previous value restored', async () => {
+    // 99/99/9999 passes the character filter but is not a day.
+    const user = userEvent.setup();
+    render(<DateHarness initial="2026-08-08" />);
+    await user.clear(box());
+    await user.type(box(), '99/99/9999');
     await user.tab();
     expect(committed()).toBe('2026-08-08');
     expect(box().value).toBe('08/08/2026');
