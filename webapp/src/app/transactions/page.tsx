@@ -13,6 +13,7 @@ import { moneyAccounts } from '@/domain/accountLedger';
 import { PageIntro, Button, Segmented, Input, Select, EmptyState, GlassCard } from '@/components/ui';
 import { useConfirm } from '@/components/Confirm';
 import { BudgetStrip } from '@/components/BudgetStrip';
+import { formatDate, formatDayMonth } from '@/lib/dateFormat';
 
 // ---- Icon map ----
 const ICON_MAP: Record<string, ElementType> = {
@@ -45,12 +46,6 @@ const FILTER_OPTIONS: { value: Filter; label: string }[] = [
 type Entry =
   | { kind: 'txn'; id: string; date: number; txn: Txn }
   | { kind: 'transfer'; id: string; date: number; transfer: Transfer };
-
-function formatDay(epoch: number) {
-  return new Date(epoch).toLocaleDateString('en-IN', {
-    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-  });
-}
 
 export default function TransactionsPage() {
   const txns = useApp((s) => s.txns);
@@ -241,7 +236,7 @@ export default function TransactionsPage() {
                   {showHeader && (
                     <div className="px-5 py-2 bg-[var(--fill)] border-b border-[var(--glass-border)]">
                       <span className="text-xs font-semibold text-ink-soft tracking-wide">
-                        {formatDay(e.date)}
+                        {formatDate(e.date)}
                       </span>
                     </div>
                   )}
@@ -265,9 +260,7 @@ export default function TransactionsPage() {
                         {!isTransfer && <> · <span className="text-ink-soft">{acctName(e.txn.accountId)}</span></>}
                         {(isTransfer ? e.transfer.note : e.txn.note) ? ` · ${isTransfer ? e.transfer.note : e.txn.note}` : ''}
                         {' · '}
-                        {new Date(e.date).toLocaleDateString('en-IN', {
-                          day: 'numeric', month: 'short',
-                        })}
+                        {formatDayMonth(e.date)}
                       </div>
                     </div>
 

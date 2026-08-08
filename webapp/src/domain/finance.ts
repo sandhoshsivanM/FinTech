@@ -3,8 +3,10 @@ import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
 import type { Budget, Liability, Txn } from '@/lib/types';
 
-export type TimeWindow = '7D' | '1M' | '3M';
-export const WINDOW_DAYS: Record<TimeWindow, number> = { '7D': 7, '1M': 30, '3M': 90 };
+export type TimeWindow = '7D' | '1M' | '3M' | '6M' | '12M';
+export const WINDOW_DAYS: Record<TimeWindow, number> = {
+  '7D': 7, '1M': 30, '3M': 90, '6M': 180, '12M': 365,
+};
 
 export const signed = (t: Txn): Decimal =>
   t.type === 'income' ? D(t.amount) : D(t.amount).neg();

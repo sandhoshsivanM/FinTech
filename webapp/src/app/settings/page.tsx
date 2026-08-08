@@ -14,6 +14,7 @@ import { GlassCard, SectionHeader, Button, Field, Select, PageIntro, Input, Segm
 import { useDemoData } from '@/components/DemoBadge';
 import { useConfirm } from '@/components/Confirm';
 import type { ProfileKind } from '@/lib/types';
+import { BackupError } from '@/lib/backupError';
 
 type NoteKind = 'success' | 'error';
 interface Note { kind: NoteKind; text: string }
@@ -108,13 +109,16 @@ export default function SettingsPage() {
   const [sampleBusy, setSampleBusy] = useState(false);
   const [exportBusy, setExportBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // A backup encrypted with this PIN can be opened on any device. Left blank,
+  // the export falls back to the old vault-bound format.
+  const [backupPin, setBackupPin] = useState('');
 
   // ---- Export ----
   const handleExport = async () => {
     setExportBusy(true);
     setExportNote(null);
     try {
-      const b64 = await exportBackup();
+      const b64 = await exportBackup(backupPin.trim() || undefined);
       const blob = new Blob([b64], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -124,7 +128,12 @@ export default function SettingsPage() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      setExportNote({ kind: 'success', text: 'Backup exported successfully. Keep this file safe — it is encrypted with your vault PIN.' });
+      setExportNote({
+        kind: 'success',
+        text: backupPin.trim()
+          ? 'Backup exported. It is encrypted with the PIN you just entered and can be restored on any device using that same PIN.'
+          : 'Backup exported using the older format. It can only be restored into THIS vault — enter a PIN above to make a backup you can move to another device.',
+      });
     } catch (e) {
       setExportNote({ kind: 'error', text: `Export failed: ${e instanceof Error ? e.message : String(e)}` });
     } finally {
@@ -139,10 +148,17 @@ export default function SettingsPage() {
     setRestoreNote(null);
     try {
       const text = await file.text();
-      const n = await importBackup(text);
+      const n = await importBackup(text, backupPin.trim() || undefined);
       setRestoreNote({ kind: 'success', text: `Restored ${n} record${n !== 1 ? 's' : ''} from backup.` });
-    } catch {
-      setRestoreNote({ kind: 'error', text: 'Incorrect vault or corrupted file. Make sure you are using a backup created with the same PIN.' });
+    } catch (err) {
+      // Say what actually went wrong. The old catch-all blamed the PIN even
+      // when the PIN was right and the file was simply bound to another vault.
+      setRestoreNote({
+        kind: 'error',
+        text: err instanceof BackupError
+          ? err.message
+          : `Restore failed: ${err instanceof Error ? err.message : String(err)}`,
+      });
     } finally {
       // Reset file input so the same file can be re-selected if needed
       if (fileRef.current) fileRef.current.value = '';
@@ -380,12 +396,29 @@ export default function SettingsPage() {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <div className="font-semibold text-sm">Export encrypted backup</div>
-              <div className="text-xs text-muted mt-0.5">Downloads a <code className="font-mono">.ftos</code> file encrypted with your vault PIN.</div>
+              <div className="text-xs text-muted mt-0.5">Downloads a <code className="font-mono">.ftos</code> file. Set a backup PIN to make it restorable on another device.</div>
             </div>
             <Button variant="soft" onClick={handleExport} disabled={exportBusy}>
               <Download size={15} />
               {exportBusy ? 'Exporting…' : 'Export backup'}
             </Button>
+          </div>
+          <div className="mt-3 max-w-sm">
+            <label className="text-xs font-semibold text-muted" htmlFor="backup-pin">Backup PIN</label>
+            <input
+              id="backup-pin"
+              type="password"
+              inputMode="numeric"
+              autoComplete="off"
+              value={backupPin}
+              onChange={(e) => setBackupPin(e.target.value)}
+              placeholder="Used for both export and restore"
+              className="mt-1 w-full rounded-xl border border-[var(--line)] bg-transparent px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)]"
+            />
+            <p className="mt-1.5 text-xs text-muted leading-relaxed">
+              A backup carries its own salt, so this PIN — not your current vault — is what reopens it.
+              Leave blank to write the old vault-bound format, which only ever restores into this exact install.
+            </p>
           </div>
           {exportNote && <StatusNote note={exportNote} />}
         </div>

@@ -15,6 +15,7 @@ import { parseQuickAdd } from '@/domain/nlp';
 import {
   GlassCard, PageIntro, Button, Segmented, Field, Input, Select,
 } from '@/components/ui';
+import { DateInput } from '@/components/DateInput';
 
 // ---- Icon map: category.icon string → lucide component ----
 const ICON_MAP: Record<string, ElementType> = {
@@ -342,11 +343,7 @@ export default function AddTransactionPage() {
             />
           </Field>
           <Field label="Date">
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
+            <DateInput value={date} onChange={setDate} />
           </Field>
         </div>
 

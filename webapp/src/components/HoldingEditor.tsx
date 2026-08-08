@@ -14,6 +14,8 @@ import { ASSET_META } from '@/domain/portfolio';
 import { MARKET_CAP_LABEL, SECTOR_SUGGESTIONS } from '@/domain/instrumentMaster';
 import { parseHoldingsCsv, planImport, importCounts, type CsvHolding } from '@/lib/holdingsCsv';
 import { Button, Field, Input, Select, GlassCard, Chip } from './ui';
+import { DateInput } from './DateInput';
+import { Combobox } from './Combobox';
 import { useConfirm } from './Confirm';
 
 const BLANK = {
@@ -121,16 +123,16 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
           <Input inputMode="decimal" value={f.previousClose} onChange={(e) => setF({ ...f, previousClose: e.target.value })} placeholder="2631.75" />
         </Field>
         <Field label="First purchase" hint="Needed for XIRR and capital-gains type">
-          <Input type="date" value={f.firstPurchaseDate} onChange={(e) => setF({ ...f, firstPurchaseDate: e.target.value })} />
+          <DateInput value={f.firstPurchaseDate} onChange={(firstPurchaseDate) => setF({ ...f, firstPurchaseDate })} />
         </Field>
         {/* Classification overrides. Blank falls back to the bundled instrument
             master; these exist for what the master does not cover — ETFs,
             foreign stock, anything unlisted. */}
         <Field label="Sector" hint="Blank uses the built-in lookup">
-          <Input
-            list="khazana-sectors"
+          <Combobox
             value={f.sector}
-            onChange={(e) => setF({ ...f, sector: e.target.value })}
+            onChange={(sector) => setF({ ...f, sector })}
+            options={SECTOR_SUGGESTIONS}
             placeholder="Information Technology"
           />
         </Field>
@@ -144,13 +146,6 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
           <Input value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })} placeholder="IN" maxLength={2} />
         </Field>
       </div>
-
-      {/* Outside the field: a datalist nested inside the <label> leaves the
-          label with no control to point at, which breaks the association for
-          screen readers as surely as it did for the test that caught it. */}
-      <datalist id="khazana-sectors">
-        {SECTOR_SUGGESTIONS.map((s) => <option key={s} value={s} />)}
-      </datalist>
 
       <div className="flex gap-2 mt-5 flex-wrap">
         <Button onClick={() => void save()} disabled={!valid}>{editing ? 'Save changes' : 'Add holding'}</Button>

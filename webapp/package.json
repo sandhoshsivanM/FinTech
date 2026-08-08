@@ -7,6 +7,7 @@
     "build": "next build",
     "serve": "npx --yes serve out -l 3200",
     "start": "npm run build && npm run serve",
+    "deploy": "npm run build && npx --yes netlify-cli deploy --prod --dir=out",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -21,6 +22,7 @@
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

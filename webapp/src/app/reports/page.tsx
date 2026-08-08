@@ -4,7 +4,7 @@ import { BarChart2 } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
-import { netWorthSeries, monthRange, spentForCategory } from '@/domain/finance';
+import { netWorthSeries, monthRange, spentForCategory, type TimeWindow } from '@/domain/finance';
 import {
   GlassCard,
   PageIntro,
@@ -15,6 +15,7 @@ import {
   Bars,
   Sparkline,
 } from '@/components/ui';
+import { formatMonthShort } from '@/lib/dateFormat';
 
 // ── Time window ───────────────────────────────────────────────────────────────
 
@@ -25,6 +26,11 @@ const WINDOW_OPTIONS: { value: ReportWindow; label: string }[] = [
   { value: '6', label: '6 months' },
   { value: '12', label: '12 months' },
 ];
+
+/** Report window → the TimeWindow netWorthSeries speaks. */
+const SPARK_WINDOW: Record<ReportWindow, TimeWindow> = { '3': '3M', '6': '6M', '12': '12M' };
+
+const windowLabel = (w: ReportWindow) => `${w} months`;
 
 // ── Color palette for category donut ─────────────────────────────────────────
 
@@ -41,7 +47,7 @@ const CAT_COLORS = [
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function monthLabel(year: number, month: number): string {
-  return new Date(year, month, 1).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+  return formatMonthShort(new Date(year, month, 1));
 }
 
 /** Returns an array of {year, month} going back n months including the current month */
@@ -113,12 +119,24 @@ export default function ReportsPage() {
     });
   }, [txns, months, fmt]);
 
-  // ── Spending by category — current month ─────────────────────────────────
+  // ── Selected window as an epoch range ────────────────────────────────────
+  // Single source of truth for every card below, so the donut, the stat tiles
+  // and the bar chart can never disagree about which months they cover.
+  // Starts at the first of the earliest bucket in `months` — same basis as
+  // lastNMonths — so "Expenses (Nmo)" equals the sum of the donut slices.
+  const [windowStart, windowEnd] = useMemo((): [number, number] => {
+    const now = new Date();
+    return [
+      new Date(now.getFullYear(), now.getMonth() - numMonths + 1, 1).getTime(),
+      monthRange(now)[1],
+    ];
+  }, [numMonths]);
+
+  // ── Spending by category — over the selected window ──────────────────────
   const catSpend = useMemo(() => {
-    const [first, last] = monthRange();
     const byCategory: { id: string; name: string; amount: number }[] = [];
     for (const cat of categories) {
-      const spent = spentForCategory(txns, cat.id, first, last);
+      const spent = spentForCategory(txns, cat.id, windowStart, windowEnd);
       if (spent.gt(0)) {
         byCategory.push({ id: cat.id, name: cat.name, amount: spent.toNumber() });
       }
@@ -128,7 +146,7 @@ export default function ReportsPage() {
     // owns expanding it again, so folding here would only make that row a dead
     // end — and it would make the centre count lie about how many there are.
     return byCategory;
-  }, [txns, categories]);
+  }, [txns, categories, windowStart, windowEnd]);
 
   const catDonutSegments = catSpend.map((c, i) => ({
     label: c.name,
@@ -136,30 +154,24 @@ export default function ReportsPage() {
     color: CAT_COLORS[i % CAT_COLORS.length],
   }));
 
-  // ── Net worth sparkline ───────────────────────────────────────────────────
+  // ── Net worth sparkline — over the selected window ───────────────────────
   const sparkValues = useMemo(() => {
-    return netWorthSeries(txns, '3M').map((p) => fmt.toNum(p.value));
-  }, [txns, fmt]);
+    return netWorthSeries(txns, SPARK_WINDOW[win]).map((p) => fmt.toNum(p.value));
+  }, [txns, win, fmt]);
 
   // ── Summary stats over the selected window ────────────────────────────────
   const windowStats = useMemo(() => {
-    // Compute the start epoch for this window
-    const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth() - numMonths + 1, 1);
-    const startEpoch = startDate.getTime();
-    const endEpoch = Date.now();
-
     let income = ZERO;
     let expense = ZERO;
     for (const t of txns) {
-      if (t.date < startEpoch || t.date > endEpoch) continue;
+      if (t.date < windowStart || t.date > windowEnd) continue;
       if (t.type === 'income') income = income.plus(D(t.amount));
       else expense = expense.plus(D(t.amount));
     }
     const net = income.minus(expense);
     const savingsRate = income.isZero() ? 0 : net.div(income).times(100).toNumber();
     return { income, expense, net, savingsRate };
-  }, [txns, numMonths]);
+  }, [txns, windowStart, windowEnd]);
 
   const hasTxns = txns.length > 0;
 
@@ -245,9 +257,11 @@ export default function ReportsPage() {
           <div className="grid lg:grid-cols-2 gap-4">
             {/* Spending by category */}
             <GlassCard>
-              <SectionHeader title="Spending by Category" action={<span className="text-xs text-muted">This month</span>} />
+              <SectionHeader title="Spending by Category" action={<span className="text-xs text-muted">{windowLabel(win)}</span>} />
               {catSpend.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted">No expense transactions this month.</div>
+                <div className="py-8 text-center text-sm text-muted">
+                  No expense transactions in the last {windowLabel(win)}.
+                </div>
               ) : (
                 <div className="mt-4">
                   <Donut
@@ -267,13 +281,13 @@ export default function ReportsPage() {
 
             {/* Net worth trend */}
             <GlassCard>
-              <SectionHeader title="Net Worth Trend" action={<span className="text-xs text-muted">3 months</span>} />
+              <SectionHeader title="Net Worth Trend" action={<span className="text-xs text-muted">{windowLabel(win)}</span>} />
               <div className="mt-2">
                 <Sparkline values={sparkValues} height={160} color="var(--accent)" />
               </div>
               {sparkValues.length >= 2 && (
                 <div className="mt-3 flex items-center justify-between text-sm">
-                  <span className="text-muted">3M ago</span>
+                  <span className="text-muted">{win}M ago</span>
                   <span className="font-bold tnum" style={{
                     color: sparkValues[sparkValues.length - 1] >= sparkValues[0]
                       ? 'var(--income)'

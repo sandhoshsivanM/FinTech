@@ -112,7 +112,18 @@
       "Bash(sed -n '/export interface Txn/,/^}/p;/export type AccountType/,/;/p;/export interface Posting/,/^}/p' src/lib/types.ts)",
       "Bash(sed -n '/export const STORE/,/}/p' src/lib/types.ts)",
       "Bash(sed -n '/PROFILE_SCOPED/,/]/p' src/lib/types.ts)",
-      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{for\\(const f of JSON.parse\\(d\\)\\)for\\(const m of f.messages\\)if\\(m.severity===2\\)console.log\\(f.filePath.split\\('/webapp/'\\)[1]+':'+m.line+' '+m.ruleId\\)}\\)\")"
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{for\\(const f of JSON.parse\\(d\\)\\)for\\(const m of f.messages\\)if\\(m.severity===2\\)console.log\\(f.filePath.split\\('/webapp/'\\)[1]+':'+m.line+' '+m.ruleId\\)}\\)\")",
+      "Bash(npx --yes netlify-cli --version)",
+      "Bash(npx --yes netlify-cli status)",
+      "Bash(umask 077)",
+      "Bash(chmod 600 ~/.netlify-token)",
+      "Bash(NETLIFY_AUTH_TOKEN=$\\(cat ~/.netlify-token\\) npx --yes netlify-cli api listAccountsForUser)",
+      "Bash(NETLIFY_AUTH_TOKEN=$\\(cat ~/.netlify-token\\) npx --yes netlify-cli sites:create --name khazana-app --account-slug sandhoshsivanm)",
+      "Bash(NETLIFY_AUTH_TOKEN=$\\(cat ~/.netlify-token\\) npx --yes netlify-cli deploy --prod --dir=out)",
+      "Bash(curl -s https://khazana-app.netlify.app/manifest.webmanifest)",
+      "Bash(npx --yes tauri build)",
+      "Bash(cd /Users/sandhoshsivan/Downloads/FinTech/webapp *)",
+      "Bash(node -e \"console.log\\(require\\('xlsx'\\).version\\)\")"
     ],
     "additionalDirectories": [
       "/private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/shots",

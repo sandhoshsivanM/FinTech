@@ -1,6 +1,7 @@
 import { D, ZERO } from '@/lib/money';
 import type { Holding } from '@/lib/types';
 import { demoDayChangePct, dayKey } from '@/lib/demo/marketFeed';
+import { formatDayMonth } from '@/lib/dateFormat';
 
 /**
  * Today's move across the book.
@@ -84,7 +85,7 @@ export function priceAsOfLabel(holdings: Holding[], now: number): string {
   if (stamps.length === 0) return 'Against yesterday’s close';
   const newest = Math.max(...stamps);
   if (dayKey(new Date(newest)) === dayKey(new Date(now))) return 'Against yesterday’s close';
-  return `Prices from ${new Date(newest).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+  return `Prices from ${formatDayMonth(newest)}`;
 }
 
 /**

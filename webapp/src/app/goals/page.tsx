@@ -12,6 +12,8 @@ import {
   Button, Field, Input, Select, Ring, StatStrip,
 } from '@/components/ui';
 import { useConfirm } from '@/components/Confirm';
+import { DateInput } from '@/components/DateInput';
+import { formatDate } from '@/lib/dateFormat';
 
 // ---- Goal type config ----
 const GOAL_TYPES: { value: GoalType; label: string }[] = [
@@ -315,7 +317,7 @@ export default function GoalsPage() {
                   <div className="text-xs text-muted">
                     Target date:{' '}
                     <span className="text-ink-soft font-medium">
-                      {new Date(goal.targetDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {formatDate(goal.targetDate)}
                     </span>
                   </div>
                 )}
@@ -426,11 +428,7 @@ export default function GoalsPage() {
               )}
             </div>
             <Field label="Target Date" hint="Optional — helps compute monthly savings needed">
-              <Input
-                type="date"
-                value={addDate}
-                onChange={(e) => setAddDate(e.target.value)}
-              />
+              <DateInput value={addDate} onChange={setAddDate} />
             </Field>
             <div className="flex gap-3">
               <Button

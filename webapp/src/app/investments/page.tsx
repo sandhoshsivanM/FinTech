@@ -44,6 +44,7 @@ import { MiniSparkline, RankBars } from '@/components/charts/MiniSparkline';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { Stagger, StaggerItem } from '@/components/motion';
+import { DateInput } from '@/components/DateInput';
 
 const SERIES = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)', 'var(--c7)', 'var(--c8)'];
 
@@ -327,11 +328,10 @@ export default function PortfolioPage() {
             <label className="focus-ring inline-flex items-center gap-2 h-9 px-3 rounded-btn border border-line bg-card text-[13px] font-semibold hover:border-line-strong transition-colors cursor-pointer">
               <CalendarDays size={14} className="text-muted" />
               <span className="text-muted font-normal">As on</span>
-              <input
-                type="date"
+              <DateInput
                 value={asOnValue}
                 max={todayStr || undefined}
-                onChange={(e) => setAsOn(e.target.value)}
+                onChange={setAsOn}
                 aria-label="Show figures as on"
                 className="bg-transparent outline-none text-ink font-semibold w-[110px]"
               />

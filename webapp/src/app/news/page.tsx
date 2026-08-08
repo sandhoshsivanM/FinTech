@@ -16,6 +16,7 @@ import { demoNews, agoLabel } from '@/lib/demo/news';
 import { demoIndices, demoEarnings } from '@/lib/demo/marketFeed';
 import { pct } from '@/lib/format';
 import { useState } from 'react';
+import { formatDayMonth } from '@/lib/dateFormat';
 
 export default function NewsPage() {
   const holdings = useApp((s) => s.holdings);
@@ -135,7 +136,7 @@ export default function NewsPage() {
                         <span className="block text-[13.5px] font-semibold truncate">{e.symbol}</span>
                         <span className="block text-[11.5px] text-muted">{e.quarter}</span>
                       </span>
-                      <Chip>{new Date(e.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</Chip>
+                      <Chip>{formatDayMonth(e.date)}</Chip>
                     </div>
                   ))}
                 </div>

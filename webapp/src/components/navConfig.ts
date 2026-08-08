@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, LineChart, BarChart3, TrendingUp, Table2, Star, CandlestickChart,
   Coins, Landmark, Wallet, Receipt, CalendarDays, PieChart, Repeat, Flag, CreditCard,
-  Shield, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle,
+  Shield, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle, Upload,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -73,6 +73,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'More',
     items: [
+      { href: '/import', label: 'Import', icon: Upload },
       { href: '/news', label: 'News', icon: Newspaper },
       { href: '/alerts', label: 'Alerts', icon: Bell },
       { href: '/settings', label: 'Settings', icon: Settings },

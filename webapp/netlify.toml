@@ -1,0 +1,39 @@
+# Khazana — static export hosting.
+# `npm run build` emits ./out (next.config.ts sets output:"export", trailingSlash:true),
+# so there is nothing to run server-side and no redirect rules are needed: every route
+# already ships as <route>/index.html, plus a 404.html.
+
+[build]
+  command = "npm run build"
+  publish = "out"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+# The service worker file itself must never be served stale, or a cached copy can
+# pin an old shell across deploys. (sw.js is network-first internally; this covers
+# the SW script itself.)
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# Netlify does not know the .webmanifest extension and falls back to
+# application/octet-stream, which browsers reject — killing the install prompt.
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+
+# Next.js content-hashes everything under _next/static, so it is safe to cache forever.
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Frame-Options = "DENY"

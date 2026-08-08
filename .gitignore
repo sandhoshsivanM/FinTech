@@ -50,3 +50,6 @@ app.*.map.json
 # Golden-test failure output. Regenerated on every failing run; committing it
 # means the repo carries a snapshot of one machine's font rendering.
 /test/golden/failures/
+
+# Local Netlify folder
+.netlify

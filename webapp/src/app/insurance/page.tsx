@@ -23,6 +23,8 @@ import {
   annualPremiumTotal,
   LIFE_COVER_MULTIPLE,
 } from '@/domain/insurance';
+import { DateInput } from '@/components/DateInput';
+import { formatDate } from '@/lib/dateFormat';
 
 // ---- Insurance type config ----
 
@@ -58,14 +60,6 @@ function epochToDateInput(ms: number | null | undefined): string {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
-}
-
-function formatRenewal(ms: number): string {
-  return new Date(ms).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
 }
 
 function daysUntil(ms: number): number {
@@ -261,11 +255,7 @@ export default function InsurancePage() {
               />
             </Field>
             <Field label="Renewal Date" hint="Optional">
-              <Input
-                type="date"
-                value={fRenewal}
-                onChange={(e) => setFRenewal(e.target.value)}
-              />
+              <DateInput value={fRenewal} onChange={setFRenewal} />
             </Field>
           </div>
           <div className="flex gap-3 mt-5">
@@ -464,7 +454,7 @@ export default function InsurancePage() {
                               : 'var(--ink-soft)',
                           }}
                         >
-                          {formatRenewal(p.renewalDate)}
+                          {formatDate(p.renewalDate)}
                           {renewingSoon && !overdue && (
                             <span className="ml-1 text-[11px]">
                               ({daysUntil(p.renewalDate)}d)

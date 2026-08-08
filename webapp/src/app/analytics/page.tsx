@@ -21,6 +21,7 @@ import { loadInstrumentMaster, lookupClassification, EMPTY_MASTER, type Instrume
 import { concentration, investmentTotals } from '@/domain/investmentTotals';
 import { UNCLASSIFIED_KEY } from '@/domain/portfolio';
 import { short } from '@/lib/format';
+import { formatMonthShort } from '@/lib/dateFormat';
 
 export default function AnalyticsPage() {
   const holdings = useApp((s) => s.holdings);
@@ -76,7 +77,7 @@ export default function AnalyticsPage() {
     const keys = [...byMonth.keys()];
     return keys.slice(1).map((k, i) => {
       const [y, m] = k.split('-').map(Number);
-      return { label: new Date(y, m, 1).toLocaleDateString('en-IN', { month: 'short' }), value: byMonth.get(k)! - byMonth.get(keys[i])! };
+      return { label: formatMonthShort(new Date(y, m, 1)), value: byMonth.get(k)! - byMonth.get(keys[i])! };
     }).slice(-12);
   }, [snapshots]);
 

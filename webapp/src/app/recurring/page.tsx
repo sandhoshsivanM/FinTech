@@ -14,6 +14,8 @@ import {
   PageIntro, GlassCard, Button, Segmented, Field, Input, Select, EmptyState, StatStrip,
 } from '@/components/ui';
 import { useConfirm } from '@/components/Confirm';
+import { DateInput } from '@/components/DateInput';
+import { formatDate } from '@/lib/dateFormat';
 
 // ---- Icon map ----
 const ICON_MAP: Record<string, ElementType> = {
@@ -45,12 +47,6 @@ const MONTHLY_FACTOR: Record<Frequency, number> = {
   monthly: 1,
   yearly: 1 / 12,
 };
-
-function formatDate(epoch: number) {
-  return new Date(epoch).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  });
-}
 
 export default function RecurringPage() {
   const categories = useApp((s) => s.categories);
@@ -280,11 +276,7 @@ export default function RecurringPage() {
                 </Select>
               </Field>
               <Field label="First run date">
-                <Input
-                  type="date"
-                  value={formFirstRun}
-                  onChange={(e) => setFormFirstRun(e.target.value)}
-                />
+                <DateInput value={formFirstRun} onChange={setFormFirstRun} />
               </Field>
             </div>
 

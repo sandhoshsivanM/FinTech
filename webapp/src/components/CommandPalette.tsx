@@ -15,6 +15,7 @@ import { D } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
 import { NAV_GROUPS } from './navConfig';
 import { DUR, EASE } from './motion';
+import { formatDayMonth } from '@/lib/dateFormat';
 
 interface Item {
   id: string;
@@ -83,7 +84,7 @@ export function CommandPalette() {
       out.push({
         id: `t:${t.id}`,
         label: t.merchant || catName.get(t.categoryId) || 'Transaction',
-        hint: `${catName.get(t.categoryId) ?? ''} · ${new Date(t.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · ${fmt.money(D(t.amount))}`,
+        hint: `${catName.get(t.categoryId) ?? ''} · ${formatDayMonth(t.date)} · ${fmt.money(D(t.amount))}`,
         group: 'Transactions',
         href: `/add?id=${t.id}`,
       });

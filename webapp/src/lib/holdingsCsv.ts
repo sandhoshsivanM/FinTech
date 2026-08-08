@@ -10,6 +10,7 @@
  * dropping a position from an import is worse than importing nothing.
  */
 import type { AssetType, Holding } from './types';
+import { findHeaderRow, headerIndex, num, parseDelimited } from './sheet';
 
 export interface CsvHolding {
   symbol: string;
@@ -46,47 +47,36 @@ const ALIASES = {
   dayPnl: ["day's p&l", 'day p&l', 'day pnl', 'day change', "today's p&l", 'day p/l'],
 };
 
-function headerIndex(headers: string[], patterns: string[]): number {
-  for (const p of patterns) {
-    const idx = headers.findIndex((h) => h.toLowerCase().includes(p));
-    if (idx !== -1) return idx;
-  }
-  return -1;
-}
+// Header matching, cell splitting and number cleaning all live in `sheet.ts`
+// now, so the holdings importer and the transaction importer agree on what a
+// column name and a number are. Two implementations meant `findHeaderRow`
+// could accept a row this file then failed to read.
 
-/** Splits one CSV line, honouring double-quoted fields that contain commas. */
-function splitLine(line: string): string[] {
-  const out: string[] = [];
-  let cur = '';
-  let quoted = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (quoted && line[i + 1] === '"') { cur += '"'; i++; }
-      else quoted = !quoted;
-    } else if (ch === ',' && !quoted) {
-      out.push(cur.trim());
-      cur = '';
-    } else {
-      cur += ch;
-    }
-  }
-  out.push(cur.trim());
-  return out.map((c) => c.replace(/^["']|["']$/g, '').trim());
-}
-
-/** Strips thousands separators and currency symbols before parsing a number. */
-function num(raw: string): number {
-  return parseFloat(String(raw).replace(/[₹$,\s]/g, ''));
-}
-
+/**
+ * Text entry point. Kept so callers holding a CSV string (and the existing
+ * tests) need not know about the grid representation.
+ */
 export function parseHoldingsCsv(text: string, assetType: AssetType = 'equity_etf'): CsvParseResult {
-  const lines = text.trim().split(/\r?\n/).filter((l) => l.trim());
+  return parseHoldingsRows(parseDelimited(text), assetType);
+}
+
+/**
+ * Grid entry point — what the import screen uses, so an .xlsx and a .csv take
+ * exactly the same path once `readSheet` has normalised them.
+ *
+ * Unlike the original text version this scans for the header row instead of
+ * assuming row 0. Broker exports increasingly carry a title line or an account
+ * summary above the table, and assuming row 0 rejected those files outright.
+ */
+export function parseHoldingsRows(grid: string[][], assetType: AssetType = 'equity_etf'): CsvParseResult {
+  const lines = grid.filter((r) => r.some((c) => c !== ''));
   if (lines.length < 2) {
     return { rows: [], skipped: 0, error: 'Needs a header row and at least one data row.' };
   }
 
-  const headers = splitLine(lines[0]);
+  const hIdx = findHeaderRow(lines, [ALIASES.symbol, ALIASES.qty, ALIASES.avg]);
+  const headers = lines[hIdx === -1 ? 0 : hIdx];
+  const body = lines.slice((hIdx === -1 ? 0 : hIdx) + 1);
   const iSym = headerIndex(headers, ALIASES.symbol);
   const iQty = headerIndex(headers, ALIASES.qty);
   const iAvg = headerIndex(headers, ALIASES.avg);
@@ -103,16 +93,15 @@ export function parseHoldingsCsv(text: string, assetType: AssetType = 'equity_et
   if (missing.length) {
     return {
       rows: [],
-      skipped: lines.length - 1,
-      error: `Could not find a column for ${missing.join(', ')}. Found: ${headers.join(', ')}`,
+      skipped: body.length,
+      error: `Could not find a column for ${missing.join(', ')}. Found: ${headers.filter(Boolean).join(', ')}`,
     };
   }
 
   const rows: CsvHolding[] = [];
   let skipped = 0;
 
-  for (let i = 1; i < lines.length; i++) {
-    const cols = splitLine(lines[i]);
+  for (const cols of body) {
     const symbol = cols[iSym] ?? '';
     const qty = num(cols[iQty] ?? '');
     const avg = num(cols[iAvg] ?? '');

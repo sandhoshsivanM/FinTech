@@ -1,7 +1,8 @@
 'use client';
 import { create } from 'zustand';
 import { db } from './db';
-import { deriveKey, encryptJson, decryptJson, randomBytes, bufToB64, b64ToBuf } from './crypto';
+import { deriveKey, encryptJson, decryptJson, randomBytes, bufToB64, b64ToBuf, type Encrypted } from './crypto';
+import { BackupError } from './backupError';
 import { clearVault, listRecords, getRecord, putRecord, deleteRecord } from './repo';
 import { D, ZERO } from './money';
 import {
@@ -247,8 +248,8 @@ interface AppState extends Data {
   putAttachment: (file: File) => Promise<string>;
   getAttachmentUrl: (id: string) => Promise<string | null>;
   processRecurring: () => Promise<number>;
-  exportBackup: () => Promise<string>;
-  importBackup: (b64: string) => Promise<number>;
+  exportBackup: (pin?: string) => Promise<string>;
+  importBackup: (b64: string, pin?: string) => Promise<number>;
   wipe: () => Promise<void>;
 }
 
@@ -718,22 +719,78 @@ export const useApp = create<AppState>((set, get) => ({
     return created;
   },
 
-  exportBackup: async () => {
+  /**
+   * Exports every record, encrypted.
+   *
+   * v2 carries its own freshly-generated salt and is encrypted with a key
+   * derived from `pin` + that salt. v1 used the *vault's* key, whose salt is
+   * random per vault and stored only in that browser's IndexedDB — so a v1
+   * file could only ever be restored into the exact vault that made it. The
+   * same PIN on a second device derives a different key, which is why moving
+   * data between the web app and the desktop app always failed.
+   *
+   * Passing no PIN still produces the legacy v1 shape, so nothing that already
+   * relies on the old format breaks.
+   */
+  exportBackup: async (pin?: string) => {
     const { key, vaultId } = get();
     if (!key) throw new Error('locked');
     const payload: Record<string, unknown[]> = {};
     for (const type of Object.values(STORE)) {
       payload[type] = await listRecords(key, type, vaultId);
     }
-    const enc = await encryptJson(key, { v: 1, vaultId, exportedAt: Date.now(), data: payload });
-    return bufToB64(new TextEncoder().encode(JSON.stringify(enc)).buffer);
+    const body = { v: 2, vaultId, exportedAt: Date.now(), data: payload };
+
+    if (!pin) {
+      const enc = await encryptJson(key, { ...body, v: 1 });
+      return bufToB64(new TextEncoder().encode(JSON.stringify(enc)).buffer);
+    }
+
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const portableKey = await deriveKey(pin, salt);
+    const enc = await encryptJson(portableKey, body);
+    const envelope = { v: 2, kdf: 'PBKDF2-SHA256', saltB64: bufToB64(salt.buffer), enc };
+    return bufToB64(new TextEncoder().encode(JSON.stringify(envelope)).buffer);
   },
 
-  importBackup: async (b64) => {
+  importBackup: async (b64, pin) => {
     const { key, vaultId } = get();
     if (!key) throw new Error('locked');
-    const enc = JSON.parse(new TextDecoder().decode(b64ToBuf(b64)));
-    const parsed = await decryptJson<{ data: Record<string, { id: string }[]> }>(key, enc);
+
+    let outer: { v?: number; saltB64?: string; enc?: unknown };
+    try {
+      outer = JSON.parse(new TextDecoder().decode(b64ToBuf(b64)));
+    } catch {
+      throw new BackupError('unreadable', 'That file is not a Khazana backup, or it was altered in transit. Re-export it and try again.');
+    }
+
+    // v2 is self-contained: its salt travels with it, so any vault can open it
+    // given the PIN it was exported with. v1 has no salt and is decryptable
+    // only by the vault that wrote it.
+    let openWith: CryptoKey;
+    let envelope: Encrypted;
+    if (outer && outer.v === 2 && typeof outer.saltB64 === 'string') {
+      if (!pin) {
+        throw new BackupError('needs-pin', 'This backup needs the PIN it was exported with.');
+      }
+      openWith = await deriveKey(pin, new Uint8Array(b64ToBuf(outer.saltB64)));
+      envelope = outer.enc as Encrypted;
+    } else {
+      openWith = key;
+      envelope = outer as unknown as Encrypted;
+    }
+
+    let parsed: { data: Record<string, { id: string }[]> };
+    try {
+      parsed = await decryptJson<{ data: Record<string, { id: string }[]> }>(openWith, envelope);
+    } catch {
+      throw new BackupError(
+        outer?.v === 2 ? 'wrong-pin' : 'wrong-vault',
+        outer?.v === 2
+          ? 'That PIN does not open this backup. It must be the PIN in use when the backup was exported, which is not necessarily your current one.'
+          : 'This is an older backup that can only be restored into the exact vault that created it — the same browser or app install, never a second device. Export a new backup from that device to move the data.',
+      );
+    }
     let count = 0;
     for (const type of Object.values(STORE)) {
       for (const rec of parsed.data[type] ?? []) {

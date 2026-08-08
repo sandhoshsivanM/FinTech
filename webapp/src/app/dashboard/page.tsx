@@ -30,7 +30,7 @@ import { generateNarratives, NARRATIVE_DISCLAIMER, type NarrativeTone } from '@/
 import {
   portfolioSummary, allocationByGroup, rollup, ASSET_GROUP_META, UNCLASSIFIED_KEY,
 } from '@/domain/portfolio';
-import { netWorthTotal, windowSummary } from '@/domain/finance';
+import { netWorthTotal, netWorthSeries, windowSummary, type TimeWindow } from '@/domain/finance';
 import { loadInstrumentMaster, lookupClassification, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { dayChange, priceAsOfLabel } from '@/domain/dayChange';
 import { GlassCard, SectionHeader, Ring, ProgressBar, Segmented, Chip, Delta, Donut, type DonutSeg } from '@/components/ui';
@@ -108,14 +108,49 @@ export default function DashboardPage() {
   // Real snapshots only. A range longer than the recorded history simply shows
   // everything there is rather than inventing the rest.
   const days = RANGES.find((r) => r.key === range)!.days;
-  const series = useMemo(() => {
-    // Until the clock is known (first frame) show the whole history rather than
-    // filtering against a bogus cutoff.
+
+  /**
+   * Recorded history: one snapshot per day the app was opened.
+   *
+   * Accurate, but it only starts accruing the day you install — so a vault
+   * whose data was just imported has nothing to plot for days, and the card
+   * sat empty saying "not enough history yet" while holding years of
+   * transactions. Hence the derived fallback below.
+   */
+  const snapshotSeries = useMemo(() => {
     const cutoff = days === Infinity || !now ? 0 : now - days * 86_400_000;
     const points = snapshots.filter((s) => s.date >= cutoff);
     return (points.length >= 2 ? points : snapshots).map((s) => fmt.toNum(D(s.netWorth)));
   }, [snapshots, days, fmt, now]);
-  const rangeChange = series.length >= 2 ? ((series[series.length - 1] - series[0]) / series[0]) * 100 : null;
+
+  /**
+   * Derived history, used only when there are not yet two real snapshots.
+   *
+   * Walks recorded transactions to get the cash position on each day, then
+   * adds today's investments minus liabilities as a constant. That makes the
+   * shape the user's actual cash flow and the final point equal to the headline
+   * net worth above.
+   *
+   * It is explicitly an estimate, and the card says so: there is no price
+   * history in the vault, so what a holding was worth last March is genuinely
+   * unknown and is not going to be invented here.
+   */
+  const hasRecordedHistory = snapshotSeries.length >= 2;
+  const investedNow = summary.current;
+  const derivedSeries = useMemo(() => {
+    if (hasRecordedHistory) return [];
+    const w: TimeWindow = days <= 7 ? '7D' : days <= 30 ? '1M' : days <= 90 ? '3M' : days <= 182 ? '6M' : '12M';
+    const pts = netWorthSeries(txns, w);
+    if (pts.length < 2) return [];
+    const baseline = investedNow.minus(liab);
+    return pts.map((p) => fmt.toNum(p.value.plus(baseline)));
+  }, [hasRecordedHistory, txns, days, investedNow, liab, fmt]);
+
+  const series = hasRecordedHistory ? snapshotSeries : derivedSeries;
+  const estimated = !hasRecordedHistory && derivedSeries.length >= 2;
+  const rangeChange = series.length >= 2 && series[0] !== 0
+    ? ((series[series.length - 1] - series[0]) / Math.abs(series[0])) * 100
+    : null;
 
   // ---- Allocation ---------------------------------------------------------
   const allocation = useMemo<DonutSeg[]>(() => {
@@ -298,11 +333,21 @@ export default function DashboardPage() {
               )}
             </div>
             {series.length >= 2 ? (
-              <LineChart values={series} height={260} format={(n) => short(n, fmt.symbol)}
-                ariaLabel={`Net worth over ${range}`} />
+              <>
+                <LineChart values={series} height={260} format={(n) => short(n, fmt.symbol)}
+                  ariaLabel={`Net worth over ${range}`} />
+                {estimated && (
+                  <p className="mt-3 text-[12px] text-muted leading-relaxed">
+                    Estimated from your recorded transactions, with today&apos;s investments and liabilities
+                    held constant — the vault keeps no price history, so past holding values are unknown.
+                    Daily snapshots replace this automatically once two have been recorded.
+                  </p>
+                )}
+              </>
             ) : (
               <p className="py-16 text-center text-[13px] text-muted">
-                Not enough history yet. Khazana records one snapshot a day, so the trend fills in as you use it.
+                Nothing to plot yet. Add or import transactions and the trend appears immediately;
+                Khazana also records one snapshot a day as you use it.
               </p>
             )}
           </div>

@@ -17,6 +17,33 @@ python3 -m http.server 3200 --directory out
 You can drop `out/` on any static host (Netlify, GitHub Pages, an internal
 file server, a USB stick + local server) — it needs no backend.
 
+### Live deployment
+
+**https://khazana-app.netlify.app** — Netlify, free tier, account `sandhoshsivanm`.
+Config lives in [`netlify.toml`](./netlify.toml); the site is linked via `.netlify/`
+(gitignored). To publish a new build:
+
+```bash
+npm run deploy         # = next build && netlify deploy --prod --dir=out
+```
+
+**Serve over HTTPS — always.** The vault derives its key with `crypto.subtle`
+(PBKDF2 → AES-GCM), and `crypto.subtle` is only defined in a *secure context*.
+Over plain `http://` — e.g. hitting a laptop's LAN IP from a phone — the app
+cannot unlock and surfaces `InsecureContextError` (see `src/lib/crypto.ts` and
+`src/components/VaultGate.tsx`). `localhost` counts as secure; a bare IP does not.
+
+Two host requirements that are easy to get wrong, both handled in `netlify.toml`:
+
+- `manifest.webmanifest` must be served as `application/manifest+json`. Hosts
+  that don't recognise the extension fall back to `application/octet-stream`,
+  and browsers then ignore the manifest, silently disabling the install prompt.
+- `sw.js` must be served `no-cache`, or a cached service worker can pin an old
+  shell across deploys.
+
+**Data is per-device.** Each browser/phone keeps its own IndexedDB; nothing
+syncs between them. Use the encrypted backup file to move data across devices.
+
 ## 2. Install as an app (PWA)
 
 Open the served URL in a **Chromium browser** (Chrome/Edge/Brave) → address-bar

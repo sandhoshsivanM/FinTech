@@ -19,6 +19,8 @@ import { ColumnChart } from '@/components/charts/ColumnChart';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { portfolioSummary } from '@/domain/portfolio';
 import { short } from '@/lib/format';
+import { DateInput } from '@/components/DateInput';
+import { formatDate, formatMonthShort } from '@/lib/dateFormat';
 
 const KIND_LABEL: Record<string, string> = { dividend: 'Dividend', interest: 'Interest', bonus: 'Bonus', buyback: 'Buyback' };
 
@@ -26,6 +28,7 @@ export default function DividendsPage() {
   const dividends = useApp((s) => s.dividends);
   const holdings = useApp((s) => s.holdings);
   const put = useApp((s) => s.put);
+  const vaultId = useApp((s) => s.vaultId);
   const fmt = useFmt();
   const [form, setForm] = useState(false);
   const [draft, setDraft] = useState({ symbol: '', amount: '', perShare: '', payDate: new Date().toISOString().slice(0, 10), kind: 'dividend' });
@@ -51,7 +54,7 @@ export default function DividendsPage() {
       const sum = received
         .filter((x) => x.payDate >= m.getTime() && x.payDate < next.getTime())
         .reduce((s, x) => s + D(x.amount).toNumber(), 0);
-      out.push({ label: m.toLocaleDateString('en-IN', { month: 'short' }), value: sum });
+      out.push({ label: formatMonthShort(m), value: sum });
     }
     return out;
   }, [received]);
@@ -59,12 +62,17 @@ export default function DividendsPage() {
   const save = async () => {
     if (!draft.symbol.trim() || !draft.amount) return;
     const pay = new Date(draft.payDate).getTime();
+    // Normalise before storing. A trailing space in a typed amount used to be
+    // written verbatim and then throw on every render of this page.
+    const amount = D(draft.amount).toString();
+    const perShare = draft.perShare.trim() ? D(draft.perShare).toString() : null;
     await put(STORE.dividend, {
       id: uid(),
+      vaultId,
       symbol: draft.symbol.trim().toUpperCase(),
       kind: draft.kind,
-      amount: draft.amount,
-      perShare: draft.perShare || null,
+      amount,
+      perShare,
       payDate: pay,
       exDate: null,
       received: pay <= Date.now(),
@@ -82,7 +90,7 @@ export default function DividendsPage() {
     { key: 'kind', header: 'Type', value: (d) => KIND_LABEL[d.kind] ?? d.kind, cell: (d) => <Chip>{KIND_LABEL[d.kind] ?? d.kind}</Chip> },
     { key: 'perShare', header: 'Per share', align: 'right', optional: true, value: (d) => (d.perShare ? D(d.perShare).toNumber() : 0), cell: (d) => d.perShare ? fmt.money(d.perShare) : <span className="text-muted">—</span> },
     { key: 'amount', header: 'Amount', align: 'right', value: (d) => D(d.amount).toNumber(), cell: (d) => <span className="font-semibold text-success">{fmt.money(d.amount)}</span> },
-    { key: 'payDate', header: 'Pay date', align: 'right', value: (d) => d.payDate, cell: (d) => new Date(d.payDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) },
+    { key: 'payDate', header: 'Pay date', align: 'right', value: (d) => d.payDate, cell: (d) => formatDate(d.payDate) },
     {
       key: 'status', header: 'Status', align: 'right', value: (d) => (d.received ? 'Received' : 'Expected'),
       cell: (d) => d.received
@@ -113,7 +121,7 @@ export default function DividendsPage() {
               </Field>
               <Field label="Per share"><Input inputMode="decimal" value={draft.perShare} onChange={(e) => setDraft({ ...draft, perShare: e.target.value })} placeholder="6.25" /></Field>
               <Field label="Total amount"><Input inputMode="decimal" value={draft.amount} onChange={(e) => setDraft({ ...draft, amount: e.target.value })} placeholder="13125" /></Field>
-              <Field label="Pay date"><Input type="date" value={draft.payDate} onChange={(e) => setDraft({ ...draft, payDate: e.target.value })} /></Field>
+              <Field label="Pay date"><DateInput value={draft.payDate} onChange={(payDate) => setDraft({ ...draft, payDate })} /></Field>
             </div>
             <div className="flex gap-2 mt-5">
               <Button onClick={() => void save()}>Save payout</Button>
@@ -152,7 +160,14 @@ export default function DividendsPage() {
                 <p className="text-xs text-muted mt-0.5">Received only, last twelve months</p>
               </div>
               <div className="p-5">
-                <ColumnChart columns={byMonth} height={200} format={(n) => fmt.money(n)} ariaLabel="Dividends received in each of the last twelve months" />
+                <ColumnChart
+                  columns={byMonth}
+                  height={220}
+                  showValues
+                  format={(n) => fmt.money(n)}
+                  formatLabel={(n) => short(n, fmt.symbol)}
+                  ariaLabel="Dividends received in each of the last twelve months"
+                />
               </div>
             </section>
           </StaggerItem>

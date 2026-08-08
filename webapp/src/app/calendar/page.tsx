@@ -8,6 +8,7 @@ import { aggregateByDay } from '@/domain/calendarLedger';
 import { monthRange, spentForCategory, evaluateBudget } from '@/domain/finance';
 import { PageIntro, GlassCard, ProgressBar } from '@/components/ui';
 import type { Txn } from '@/lib/types';
+import { formatLongDate } from '@/lib/dateFormat';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const dayKey = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
@@ -122,7 +123,7 @@ export default function CalendarPage() {
   const dayPanel = (
     <GlassCard className="p-4">
       <div className="text-sm font-semibold mb-2">
-        {selected ? new Date(`${selected}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' }) : 'Select a day'}
+        {selected ? formatLongDate(new Date(`${selected}T00:00:00`)) : 'Select a day'}
       </div>
       {!selected ? (
         <div className="text-sm text-muted">Tap a day to see its ledger.</div>
