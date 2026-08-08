@@ -9,6 +9,7 @@ import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
 import { STORE, type TxnType, type Frequency } from '@/lib/types';
 import { FREQ_LABEL } from '@/domain/recurrence';
+import { moneyAccounts } from '@/domain/accountLedger';
 import {
   PageIntro, GlassCard, Button, Segmented, Field, Input, Select, EmptyState, StatStrip,
 } from '@/components/ui';
@@ -59,6 +60,7 @@ export default function RecurringPage() {
   const fmt = useFmt();
   const put = useApp((s) => s.put);
   const del = useApp((s) => s.del);
+  const accounts = useApp((s) => s.accounts);
   const confirm = useConfirm();
   const processRecurring = useApp((s) => s.processRecurring);
 
@@ -72,9 +74,12 @@ export default function RecurringPage() {
   const [formType, setFormType] = useState<TxnType>('expense');
   const [formCategoryId, setFormCategoryId] = useState('');
   const [formMerchant, setFormMerchant] = useState('');
+  const [formAccountId, setFormAccountId] = useState('');
   const [formFrequency, setFormFrequency] = useState<Frequency>('monthly');
   const [formFirstRun, setFormFirstRun] = useState(() => new Date().toISOString().slice(0, 10));
   const [saving, setSaving] = useState(false);
+
+  const pickable = useMemo(() => moneyAccounts(accounts), [accounts]);
 
   const amountNum = parseFloat(formAmount.replace(/,/g, ''));
   const formValid = !isNaN(amountNum) && amountNum > 0 && !!formCategoryId;
@@ -126,12 +131,14 @@ export default function RecurringPage() {
         merchant: formMerchant.trim() || null,
         frequency: formFrequency,
         nextRun: new Date(formFirstRun).getTime(),
+        accountId: formAccountId || null,
       });
       // Reset form
       setFormAmount('');
       setFormType('expense');
       setFormCategoryId('');
       setFormMerchant('');
+      setFormAccountId('');
       setFormFrequency('monthly');
       setFormFirstRun(new Date().toISOString().slice(0, 10));
       setShowForm(false);
@@ -255,6 +262,13 @@ export default function RecurringPage() {
                   ))}
                 </Select>
               </Field>
+              {pickable.length > 0 && (
+                <Field label="Account" hint="Which account these land in">
+                  <Select value={formAccountId} onChange={(e) => setFormAccountId(e.target.value)}>
+                    {pickable.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  </Select>
+                </Field>
+              )}
               <Field label="Frequency">
                 <Select
                   value={formFrequency}

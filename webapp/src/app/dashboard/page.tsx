@@ -23,6 +23,7 @@ import { useDarkMode } from '@/lib/useDarkMode';
 import { useNow, daysUntil } from '@/lib/useNow';
 import { short, pct as fmtPct } from '@/lib/format';
 import { healthScore } from '@/domain/health';
+import { liquidBalance } from '@/domain/accountLedger';
 import { investmentTotals } from '@/domain/investmentTotals';
 import { spendingAnomalies, safeToSpend } from '@/domain/insights';
 import { generateNarratives, NARRATIVE_DISCLAIMER, type NarrativeTone } from '@/domain/narrative';
@@ -31,7 +32,7 @@ import {
 } from '@/domain/portfolio';
 import { netWorthTotal, windowSummary } from '@/domain/finance';
 import { loadInstrumentMaster, lookupClassification, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
-import { dayChange } from '@/domain/dayChange';
+import { dayChange, priceAsOfLabel } from '@/domain/dayChange';
 import { GlassCard, SectionHeader, Ring, ProgressBar, Segmented, Chip, Delta, Donut, type DonutSeg } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
 import { LineChart } from '@/components/charts/LineChart';
@@ -61,6 +62,8 @@ export default function DashboardPage() {
   const budgets = useApp((s) => s.budgets);
   const snapshots = useApp((s) => s.snapshots);
   const dividends = useApp((s) => s.dividends);
+  const accounts = useApp((s) => s.accounts);
+  const postings = useApp((s) => s.postings);
   const ghost = useApp((s) => s.ghost);
   const toggleGhost = useApp((s) => s.toggleGhost);
 
@@ -144,8 +147,11 @@ export default function DashboardPage() {
 
   // ---- Health + narratives ------------------------------------------------
   const health = useMemo(
-    () => healthScore({ txns, investments: investmentTotals(holdings), liabilities, goals, insurances, budgets, snapshots }),
-    [txns, holdings, liabilities, goals, insurances, budgets, snapshots],
+    () => healthScore({
+      txns, investments: investmentTotals(holdings), liabilities, goals, insurances, budgets, snapshots,
+      cash: liquidBalance(accounts, postings),
+    }),
+    [txns, holdings, liabilities, goals, insurances, budgets, snapshots, accounts, postings],
   );
   const ringColor =
     health.score === null ? 'var(--muted)'
@@ -217,7 +223,7 @@ export default function DashboardPage() {
             footer={dayPnl == null ? undefined : day.isReal
               ? (day.covered < day.total
                 ? `${day.covered} of ${day.total} priced`
-                : 'Against yesterday\u2019s close')
+                : priceAsOfLabel(holdings, now))
               : <DemoBadge label="Demo" />}
           />
           <Kpi

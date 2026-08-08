@@ -3,13 +3,14 @@ import { useState, useMemo, type ElementType } from 'react';
 import Link from 'next/link';
 import {
   Utensils, Bus, Home, Zap, ShoppingBag, HeartPulse, Clapperboard,
-  Landmark, Wallet, TrendingUp, Shapes, Trash2, Plus, Pencil, Download,
+  Landmark, Wallet, TrendingUp, Shapes, Trash2, Plus, Pencil, Download, ArrowRightLeft,
 } from 'lucide-react';
-import { useApp } from '@/lib/store';
+import { useApp, cashAcctId } from '@/lib/store';
 import { D } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
-import { STORE, type TxnType } from '@/lib/types';
-import { PageIntro, Button, Segmented, Input, EmptyState, GlassCard } from '@/components/ui';
+import { STORE, type Transfer, type Txn, type TxnType } from '@/lib/types';
+import { moneyAccounts } from '@/domain/accountLedger';
+import { PageIntro, Button, Segmented, Input, Select, EmptyState, GlassCard } from '@/components/ui';
 import { useConfirm } from '@/components/Confirm';
 import { BudgetStrip } from '@/components/BudgetStrip';
 
@@ -24,13 +25,26 @@ function CatIcon({ name, size = 16 }: { name?: string | null; size?: number }) {
   return <Icon size={size} />;
 }
 
-type Filter = 'all' | TxnType;
+type Filter = 'all' | TxnType | 'transfer';
 
 const FILTER_OPTIONS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'income', label: 'Income' },
   { value: 'expense', label: 'Expense' },
+  { value: 'transfer', label: 'Transfers' },
 ];
+
+/**
+ * One timeline over two entities.
+ *
+ * Transfers are stored separately from transactions on purpose — see the
+ * `Transfer` type — but they are still things that happened to your money on a
+ * date, so hiding them from this list would leave an unexplained gap between
+ * two account balances.
+ */
+type Entry =
+  | { kind: 'txn'; id: string; date: number; txn: Txn }
+  | { kind: 'transfer'; id: string; date: number; transfer: Transfer };
 
 function formatDay(epoch: number) {
   return new Date(epoch).toLocaleDateString('en-IN', {
@@ -38,17 +52,12 @@ function formatDay(epoch: number) {
   });
 }
 
-function isSameDay(a: number, b: number) {
-  const da = new Date(a);
-  const db = new Date(b);
-  return da.getFullYear() === db.getFullYear() &&
-    da.getMonth() === db.getMonth() &&
-    da.getDate() === db.getDate();
-}
-
 export default function TransactionsPage() {
   const txns = useApp((s) => s.txns);
+  const transfers = useApp((s) => s.transfers);
   const categories = useApp((s) => s.categories);
+  const accounts = useApp((s) => s.accounts);
+  const activeProfileId = useApp((s) => s.activeProfileId);
   const ghost = useApp((s) => s.ghost);
   const del = useApp((s) => s.del);
   const fmt = useFmt();
@@ -56,6 +65,7 @@ export default function TransactionsPage() {
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
+  const [accountFilter, setAccountFilter] = useState('all');
 
   const catById = useMemo(() => {
     const m = new Map<string, { name: string; icon?: string | null }>();
@@ -63,38 +73,77 @@ export default function TransactionsPage() {
     return m;
   }, [categories]);
 
-  const filtered = useMemo(() => {
+  const acctById = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
+  const pickable = useMemo(() => moneyAccounts(accounts), [accounts]);
+  const defaultCash = cashAcctId(activeProfileId);
+  const acctName = (id?: string | null) => acctById.get(id ?? defaultCash) ?? 'Cash';
+
+  const filtered = useMemo<Entry[]>(() => {
     const q = search.trim().toLowerCase();
-    return [...txns]
+    const entries: Entry[] = [
+      ...txns.map((t): Entry => ({ kind: 'txn', id: t.id, date: t.date, txn: t })),
+      ...transfers.map((t): Entry => ({ kind: 'transfer', id: t.id, date: t.date, transfer: t })),
+    ];
+    return entries
       .sort((a, b) => b.date - a.date)
-      .filter((t) => {
-        if (filter !== 'all' && t.type !== filter) return false;
+      .filter((e) => {
+        if (filter !== 'all') {
+          if (filter === 'transfer' ? e.kind !== 'transfer' : e.kind !== 'txn' || e.txn.type !== filter) return false;
+        }
+        if (accountFilter !== 'all') {
+          const touches = e.kind === 'txn'
+            ? (e.txn.accountId ?? defaultCash) === accountFilter
+            : e.transfer.fromAccountId === accountFilter || e.transfer.toAccountId === accountFilter;
+          if (!touches) return false;
+        }
         if (!q) return true;
-        const cat = catById.get(t.categoryId);
+        if (e.kind === 'transfer') {
+          return (e.transfer.note ?? '').toLowerCase().includes(q)
+            || acctName(e.transfer.fromAccountId).toLowerCase().includes(q)
+            || acctName(e.transfer.toAccountId).toLowerCase().includes(q);
+        }
+        const cat = catById.get(e.txn.categoryId);
         return (
-          (t.merchant ?? '').toLowerCase().includes(q) ||
-          (t.note ?? '').toLowerCase().includes(q) ||
-          (cat?.name ?? '').toLowerCase().includes(q)
+          (e.txn.merchant ?? '').toLowerCase().includes(q) ||
+          (e.txn.note ?? '').toLowerCase().includes(q) ||
+          (cat?.name ?? '').toLowerCase().includes(q) ||
+          acctName(e.txn.accountId).toLowerCase().includes(q)
         );
       });
-  }, [txns, filter, search, catById]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- acctName is derived from acctById
+  }, [txns, transfers, filter, accountFilter, search, catById, acctById, defaultCash]);
 
-  async function handleDelete(id: string) {
-    if (!(await confirm({ title: 'Delete this transaction?', confirmLabel: 'Delete', danger: true }))) return;
-    await del(STORE.txn, id);
+  async function handleDelete(e: Entry) {
+    const isTransfer = e.kind === 'transfer';
+    if (!(await confirm({
+      title: isTransfer ? 'Delete this transfer?' : 'Delete this transaction?',
+      message: isTransfer ? 'Both account balances move back.' : undefined,
+      confirmLabel: 'Delete', danger: true,
+    }))) return;
+    await del(isTransfer ? STORE.transfer : STORE.txn, e.id);
   }
 
   function exportCsv() {
     const esc = (s: string) => `"${(s ?? '').replace(/"/g, '""')}"`;
-    const header = ['Date', 'Type', 'Category', 'Merchant', 'Note', 'Amount (INR)'];
-    const rows = filtered.map((t) => [
-      new Date(t.date).toISOString().slice(0, 10),
-      t.type,
-      catById.get(t.categoryId)?.name ?? '',
-      t.merchant ?? '',
-      t.note ?? '',
-      D(t.amount).toFixed(2),
-    ].map((v) => esc(String(v))).join(','));
+    const header = ['Date', 'Type', 'Account', 'Category', 'Merchant', 'Note', 'Amount (INR)'];
+    const rows = filtered.map((e) => (e.kind === 'transfer'
+      ? [
+        new Date(e.date).toISOString().slice(0, 10),
+        'transfer',
+        `${acctName(e.transfer.fromAccountId)} → ${acctName(e.transfer.toAccountId)}`,
+        '', '',
+        e.transfer.note ?? '',
+        D(e.transfer.amount).toFixed(2),
+      ]
+      : [
+        new Date(e.date).toISOString().slice(0, 10),
+        e.txn.type,
+        acctName(e.txn.accountId),
+        catById.get(e.txn.categoryId)?.name ?? '',
+        e.txn.merchant ?? '',
+        e.txn.note ?? '',
+        D(e.txn.amount).toFixed(2),
+      ]).map((v) => esc(String(v))).join(','));
     const csv = [header.map(esc).join(','), ...rows].join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     const a = document.createElement('a');
@@ -111,7 +160,7 @@ export default function TransactionsPage() {
     <div className="space-y-4">
       <PageIntro
         title="Cash Flow"
-        subtitle={`${txns.length} transaction${txns.length !== 1 ? 's' : ''}`}
+        subtitle={`${txns.length} transaction${txns.length !== 1 ? 's' : ''}${transfers.length > 0 ? ` · ${transfers.length} transfer${transfers.length !== 1 ? 's' : ''}` : ''}`}
         action={
           <div className="flex items-center gap-2">
             <Button variant="soft" onClick={exportCsv} disabled={filtered.length === 0}>
@@ -141,6 +190,14 @@ export default function TransactionsPage() {
           onChange={(e) => setSearch(e.target.value)}
         />
         <Segmented options={FILTER_OPTIONS} value={filter} onChange={setFilter} />
+        {pickable.length > 1 && (
+          <div className="sm:w-[190px]">
+            <Select aria-label="Filter by account" value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)}>
+              <option value="all">All accounts</option>
+              {pickable.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </Select>
+          </div>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -167,44 +224,48 @@ export default function TransactionsPage() {
       ) : (
         <GlassCard className="p-0 overflow-hidden">
           <div className="divide-y divide-[var(--glass-border)]">
-            {filtered.map((t) => {
-              const income = t.type === 'income';
-              const cat = catById.get(t.categoryId);
-              const dayKey = new Date(t.date).toDateString();
+            {filtered.map((e) => {
+              const isTransfer = e.kind === 'transfer';
+              const income = e.kind === 'txn' && e.txn.type === 'income';
+              const cat = e.kind === 'txn' ? catById.get(e.txn.categoryId) : undefined;
+              const dayKey = new Date(e.date).toDateString();
               const showHeader = !dayHeaders.has(dayKey);
               if (showHeader) dayHeaders.add(dayKey);
 
+              // Transfers are painted neutral, never red or green: the money did
+              // not leave or arrive, it moved.
+              const tone = isTransfer ? 'var(--ink-soft)' : income ? 'var(--income)' : 'var(--expense)';
+
               return (
-                <div key={t.id}>
+                <div key={e.id}>
                   {showHeader && (
                     <div className="px-5 py-2 bg-[var(--fill)] border-b border-[var(--glass-border)]">
                       <span className="text-xs font-semibold text-ink-soft tracking-wide">
-                        {formatDay(t.date)}
+                        {formatDay(e.date)}
                       </span>
                     </div>
                   )}
                   <div className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--fill)] transition group">
-                    {/* Category icon avatar */}
                     <span
                       className="w-9 h-9 rounded-full grid place-items-center shrink-0"
-                      style={{
-                        background: (income ? 'var(--income)' : 'var(--expense)') + '1a',
-                        color: income ? 'var(--income)' : 'var(--expense)',
-                      }}
+                      style={{ background: tone + '1a', color: tone }}
                     >
-                      <CatIcon name={cat?.icon} size={16} />
+                      {isTransfer ? <ArrowRightLeft size={16} /> : <CatIcon name={cat?.icon} size={16} />}
                     </span>
 
                     {/* Details */}
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm truncate">
-                        {t.merchant || cat?.name || 'Other'}
+                        {isTransfer
+                          ? `${acctName(e.transfer.fromAccountId)} → ${acctName(e.transfer.toAccountId)}`
+                          : (e.txn.merchant || cat?.name || 'Other')}
                       </div>
                       <div className="text-xs text-muted truncate">
-                        {cat?.name}
-                        {t.note ? ` · ${t.note}` : ''}
+                        {isTransfer ? 'Transfer' : cat?.name}
+                        {!isTransfer && <> · <span className="text-ink-soft">{acctName(e.txn.accountId)}</span></>}
+                        {(isTransfer ? e.transfer.note : e.txn.note) ? ` · ${isTransfer ? e.transfer.note : e.txn.note}` : ''}
                         {' · '}
-                        {new Date(t.date).toLocaleDateString('en-IN', {
+                        {new Date(e.date).toLocaleDateString('en-IN', {
                           day: 'numeric', month: 'short',
                         })}
                       </div>
@@ -213,27 +274,29 @@ export default function TransactionsPage() {
                     {/* Amount */}
                     <span
                       className="font-bold text-sm tnum whitespace-nowrap"
-                      style={{ color: income ? 'var(--income)' : 'var(--expense)' }}
+                      style={{ color: tone }}
                     >
-                      {ghost
-                        ? (income ? '+' : '-') + '••••••'
-                        : fmt.signed(D(t.amount), income)}
+                      {isTransfer
+                        ? (ghost ? '••••••' : fmt.money(D(e.transfer.amount)))
+                        : ghost
+                          ? (income ? '+' : '-') + '••••••'
+                          : fmt.signed(D(e.txn.amount), income)}
                     </span>
 
                     {/* Edit + Delete */}
                     <div className="flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition ml-1">
                       <Link
-                        href={`/add?id=${t.id}`}
+                        href={`/add?id=${e.id}`}
                         className="p-1.5 rounded-[10px] text-ink-soft hover:text-ink hover:bg-[var(--fill)] transition"
-                        aria-label="Edit transaction"
+                        aria-label={isTransfer ? 'Edit transfer' : 'Edit transaction'}
                       >
                         <Pencil size={14} />
                       </Link>
                       <button
                         type="button"
-                        onClick={() => handleDelete(t.id)}
+                        onClick={() => handleDelete(e)}
                         className="p-1.5 rounded-[10px] text-expense hover:bg-expense/10 transition"
-                        aria-label="Delete transaction"
+                        aria-label={isTransfer ? 'Delete transfer' : 'Delete transaction'}
                       >
                         <Trash2 size={15} />
                       </button>

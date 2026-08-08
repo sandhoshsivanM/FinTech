@@ -5,6 +5,7 @@ import { ArrowRight, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import { useApp } from '@/lib/store';
 import { healthScore, type HealthCategory } from '@/domain/health';
+import { liquidBalance } from '@/domain/accountLedger';
 import { investmentTotals } from '@/domain/investmentTotals';
 import { PageIntro, GlassCard, SectionHeader, ProgressBar, Button, Gauge, AreaChart } from '@/components/ui';
 
@@ -27,6 +28,8 @@ export default function ScorePage() {
   const insurances = useApp((s) => s.insurances);
   const budgets = useApp((s) => s.budgets);
   const snapshots = useApp((s) => s.snapshots);
+  const accounts = useApp((s) => s.accounts);
+  const postings = useApp((s) => s.postings);
 
   const health = useMemo(
     () => healthScore({
@@ -37,8 +40,9 @@ export default function ScorePage() {
       insurances,
       budgets,
       snapshots,
+      cash: liquidBalance(accounts, postings),
     }),
-    [txns, holdings, liabilities, goals, insurances, budgets, snapshots],
+    [txns, holdings, liabilities, goals, insurances, budgets, snapshots, accounts, postings],
   );
 
   // Days with no score are skipped rather than plotted at zero — the chart shows

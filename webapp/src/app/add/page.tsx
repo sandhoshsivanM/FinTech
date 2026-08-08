@@ -1,14 +1,16 @@
 'use client';
-import { useEffect, useState, type ElementType } from 'react';
+import { useEffect, useMemo, useState, type ElementType } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Utensils, Bus, Home, Zap, ShoppingBag, HeartPulse, Clapperboard,
   Landmark, Wallet, TrendingUp, Shapes, Sparkles, X,
 } from 'lucide-react';
-import { useApp, uid } from '@/lib/store';
+import { useApp, uid, cashAcctId, lsGet, lsSet, LAST_ACCOUNT_KEY } from '@/lib/store';
 import { D } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
 import { STORE, type TxnType } from '@/lib/types';
+import { moneyAccounts } from '@/domain/accountLedger';
 import { parseQuickAdd } from '@/domain/nlp';
 import {
   GlassCard, PageIntro, Button, Segmented, Field, Input, Select,
@@ -25,27 +27,53 @@ function CatIcon({ name, size = 18 }: { name?: string | null; size?: number }) {
   return <Icon size={size} />;
 }
 
-const TYPE_OPTIONS: { value: TxnType; label: string }[] = [
+/**
+ * Expense, income, or a move between your own accounts.
+ *
+ * Transfer is a mode here but NOT a `TxnType` — it saves a `Transfer` record,
+ * which is a separate entity precisely so budgets, reports and the health score
+ * can never mistake moving money for spending it. See the type's doc comment.
+ */
+type Mode = TxnType | 'transfer';
+
+const MODE_OPTIONS: { value: Mode; label: string }[] = [
   { value: 'expense', label: 'Expense' },
   { value: 'income', label: 'Income' },
+  { value: 'transfer', label: 'Transfer' },
 ];
 
 export default function AddTransactionPage() {
   const router = useRouter();
   const categories = useApp((s) => s.categories);
+  const accounts = useApp((s) => s.accounts);
+  const activeProfileId = useApp((s) => s.activeProfileId);
   const vaultId = useApp((s) => s.vaultId);
   const put = useApp((s) => s.put);
   const fmt = useFmt();
 
+  const money = useMemo(() => moneyAccounts(accounts), [accounts]);
+
   // Form state
-  const [type, setType] = useState<TxnType>('expense');
+  const [mode, setMode] = useState<Mode>('expense');
+  const type: TxnType = mode === 'transfer' ? 'expense' : mode;
   const [amountRaw, setAmountRaw] = useState('');
   const [categoryId, setCategoryId] = useState<string>('');
   const [merchant, setMerchant] = useState('');
   const [note, setNote] = useState('');
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [attachmentRef, setAttachmentRef] = useState<string | null>(null);
+  const [accountId, setAccountId] = useState('');
+  const [toAccountId, setToAccountId] = useState('');
   const putAttachment = useApp((s) => s.putAttachment);
+
+  // Default to whichever account was used last: most people spend from the same
+  // one most days, and re-picking it every time is the kind of friction that
+  // stops a transaction being recorded at all.
+  useEffect(() => {
+    if (accountId || money.length === 0) return;
+    const remembered = lsGet(LAST_ACCOUNT_KEY);
+    setAccountId(money.some((a) => a.id === remembered) ? remembered! : money[0].id);
+  }, [money, accountId]);
 
   // Quick-add state
   const [quickText, setQuickText] = useState('');
@@ -58,17 +86,31 @@ export default function AddTransactionPage() {
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('id');
     if (!id) return;
-    const t = useApp.getState().txns.find((x) => x.id === id);
-    if (!t) return;
+    const state = useApp.getState();
+    const t = state.txns.find((x) => x.id === id);
+    if (t) {
+      setEditId(id);
+      setMode(t.type);
+      setAmountRaw(String(t.amount));
+      setCategoryId(t.categoryId);
+      setMerchant(t.merchant ?? '');
+      setNote(t.note ?? '');
+      setDate(new Date(t.date).toISOString().slice(0, 10));
+      setCreatedAt(t.createdAt ?? Date.now());
+      setAttachmentRef(t.attachmentRef ?? null);
+      if (t.accountId) setAccountId(t.accountId);
+      return;
+    }
+    const tr = state.transfers.find((x) => x.id === id);
+    if (!tr) return;
     setEditId(id);
-    setType(t.type);
-    setAmountRaw(String(t.amount));
-    setCategoryId(t.categoryId);
-    setMerchant(t.merchant ?? '');
-    setNote(t.note ?? '');
-    setDate(new Date(t.date).toISOString().slice(0, 10));
-    setCreatedAt(t.createdAt ?? Date.now());
-    setAttachmentRef(t.attachmentRef ?? null);
+    setMode('transfer');
+    setAmountRaw(String(tr.amount));
+    setAccountId(tr.fromAccountId);
+    setToAccountId(tr.toAccountId);
+    setNote(tr.note ?? '');
+    setDate(new Date(tr.date).toISOString().slice(0, 10));
+    setCreatedAt(tr.createdAt ?? Date.now());
   }, []);
 
   async function handleAttach(file: File | undefined) {
@@ -84,11 +126,20 @@ export default function AddTransactionPage() {
   // Derived
   const amountNum = parseFloat(amountRaw.replace(/,/g, ''));
   const amountValid = !isNaN(amountNum) && amountNum > 0;
+  // A transfer to the account it came from is not a transfer. Blocking it here
+  // keeps a no-op pair of postings out of the ledger.
+  const sameAccount = mode === 'transfer' && !!accountId && accountId === toAccountId;
+  const canSave = amountValid && !saving
+    && (mode !== 'transfer' || (!!accountId && !!toAccountId && !sameAccount));
+  // Neutral for a transfer: it is neither a gain nor a loss, and painting it
+  // red would say the opposite of what the entity exists to express.
+  const amountColor = mode === 'transfer' ? 'var(--ink)'
+    : type === 'income' ? 'var(--income)' : 'var(--expense)';
 
   function handleQuickParse() {
     const parsed = parseQuickAdd(quickText, categories.map((c) => c.name));
     if (parsed.amount) setAmountRaw(parsed.amount);
-    setType(parsed.type);
+    setMode(parsed.type);
     if (parsed.merchant) setMerchant(parsed.merchant);
     if (parsed.note) setNote(parsed.note);
     if (parsed.categoryName) {
@@ -100,21 +151,37 @@ export default function AddTransactionPage() {
   }
 
   async function handleSave() {
-    if (!amountValid) return;
+    if (!canSave) return;
     setSaving(true);
     try {
-      await put(STORE.txn, {
-        id: editId ?? uid(),
-        vaultId,
-        amount: String(D(amountRaw.replace(/,/g, '')).toFixed(2)),
-        type,
-        categoryId,
-        merchant: merchant.trim() || null,
-        note: note.trim() || null,
-        date: new Date(date).getTime(),
-        createdAt,
-        attachmentRef,
-      });
+      const amount = String(D(amountRaw.replace(/,/g, '')).toFixed(2));
+      if (mode === 'transfer') {
+        await put(STORE.transfer, {
+          id: editId ?? uid(),
+          vaultId,
+          amount,
+          fromAccountId: accountId,
+          toAccountId,
+          date: new Date(date).getTime(),
+          note: note.trim() || null,
+          createdAt,
+        });
+      } else {
+        await put(STORE.txn, {
+          id: editId ?? uid(),
+          vaultId,
+          amount,
+          type,
+          categoryId,
+          merchant: merchant.trim() || null,
+          note: note.trim() || null,
+          date: new Date(date).getTime(),
+          createdAt,
+          attachmentRef,
+          accountId: accountId || cashAcctId(activeProfileId),
+        });
+        if (accountId) lsSet(LAST_ACCOUNT_KEY, accountId);
+      }
       router.push(editId ? '/transactions' : '/dashboard');
     } finally {
       setSaving(false);
@@ -124,7 +191,9 @@ export default function AddTransactionPage() {
   return (
     <div className="space-y-5">
       <PageIntro
-        title={editId ? 'Edit Transaction' : 'Add Transaction'}
+        title={editId
+          ? (mode === 'transfer' ? 'Edit Transfer' : 'Edit Transaction')
+          : 'Add Transaction'}
         action={
           <Button variant="ghost" onClick={() => router.back()}>
             <X size={16} /> Cancel
@@ -132,7 +201,9 @@ export default function AddTransactionPage() {
         }
       />
 
-      {/* Quick-add bar */}
+      {/* Quick-add bar. Parses spend/earn phrasing only, so it has nothing to
+          offer a transfer. */}
+      {mode !== 'transfer' && (
       <GlassCard>
         <p className="text-xs font-semibold text-ink-soft mb-2">Quick add</p>
         <div className="flex gap-2">
@@ -148,11 +219,12 @@ export default function AddTransactionPage() {
           </Button>
         </div>
       </GlassCard>
+      )}
 
       <GlassCard className="space-y-5">
-        {/* Expense / Income toggle */}
+        {/* Expense / Income / Transfer toggle */}
         <div className="flex justify-center">
-          <Segmented options={TYPE_OPTIONS} value={type} onChange={setType} />
+          <Segmented options={MODE_OPTIONS} value={mode} onChange={setMode} />
         </div>
 
         {/* Big amount input */}
@@ -160,7 +232,7 @@ export default function AddTransactionPage() {
           <div className="flex items-center gap-2">
             <span
               className="text-4xl font-extrabold font-display"
-              style={{ color: type === 'income' ? 'var(--income)' : 'var(--expense)' }}
+              style={{ color: amountColor }}
             >
               {fmt.symbol}
             </span>
@@ -173,7 +245,7 @@ export default function AddTransactionPage() {
               value={amountRaw}
               onChange={(e) => setAmountRaw(e.target.value)}
               className="text-4xl font-extrabold font-display w-52 bg-transparent outline-none tnum text-center"
-              style={{ color: type === 'income' ? 'var(--income)' : 'var(--expense)' }}
+              style={{ color: amountColor }}
               aria-label="Amount"
             />
           </div>
@@ -183,7 +255,30 @@ export default function AddTransactionPage() {
           <p className="text-[11px] text-muted">Amount is stored in INR</p>
         </div>
 
-        {/* Category grid */}
+        {/* Transfer takes two accounts where the others take a category: money
+            moving between your own accounts has no category, and offering one
+            would invite filing it as spending. */}
+        {mode === 'transfer' ? (
+          <div className="grid sm:grid-cols-2 gap-3">
+            <Field label="From account">
+              <Select value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+                <option value="">Choose an account…</option>
+                {money.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </Select>
+            </Field>
+            <Field label="To account" hint={sameAccount ? 'Pick a different account' : undefined}>
+              <Select value={toAccountId} onChange={(e) => setToAccountId(e.target.value)}>
+                <option value="">Choose an account…</option>
+                {money.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </Select>
+            </Field>
+            {money.length < 2 && (
+              <p className="sm:col-span-2 text-[12.5px] text-muted leading-relaxed">
+                A transfer needs two accounts. <Link href="/accounts" className="text-accent font-semibold">Add another</Link> first.
+              </p>
+            )}
+          </div>
+        ) : (
         <div>
           <p className="text-xs font-semibold text-ink-soft mb-2">Category</p>
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
@@ -218,19 +313,30 @@ export default function AddTransactionPage() {
             })}
           </div>
         </div>
+        )}
 
         {/* Fields row */}
-        <div className="grid sm:grid-cols-3 gap-3">
-          <Field label="Merchant (optional)">
-            <Input
-              placeholder="e.g. BigBasket"
-              value={merchant}
-              onChange={(e) => setMerchant(e.target.value)}
-            />
-          </Field>
+        <div className="grid sm:grid-cols-2 min-[900px]:grid-cols-4 gap-3">
+          {mode !== 'transfer' && (
+            <Field label="Account" hint={money.length === 0 ? 'Add one on the Accounts page' : undefined}>
+              <Select value={accountId} onChange={(e) => setAccountId(e.target.value)} disabled={money.length === 0}>
+                {money.length === 0 && <option value="">Cash</option>}
+                {money.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </Select>
+            </Field>
+          )}
+          {mode !== 'transfer' && (
+            <Field label="Merchant (optional)">
+              <Input
+                placeholder="e.g. BigBasket"
+                value={merchant}
+                onChange={(e) => setMerchant(e.target.value)}
+              />
+            </Field>
+          )}
           <Field label="Note (optional)">
             <Input
-              placeholder="e.g. Weekly groceries"
+              placeholder={mode === 'transfer' ? 'e.g. Monthly emergency-fund top-up' : 'e.g. Weekly groceries'}
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
@@ -244,7 +350,9 @@ export default function AddTransactionPage() {
           </Field>
         </div>
 
-        {/* Receipt attachment (encrypted, stored on-device) */}
+        {/* Receipt attachment (encrypted, stored on-device). Not offered for a
+            transfer — there is no receipt for moving your own money. */}
+        {mode !== 'transfer' && (
         <Field label="Receipt (optional)">
           {attachmentRef ? (
             <div className="flex items-center gap-2 text-sm">
@@ -264,6 +372,7 @@ export default function AddTransactionPage() {
             />
           )}
         </Field>
+        )}
 
         {/* Actions */}
         <div className="flex gap-3 justify-end pt-1">
@@ -273,9 +382,11 @@ export default function AddTransactionPage() {
           <Button
             variant="primary"
             onClick={handleSave}
-            disabled={!amountValid || saving}
+            disabled={!canSave}
           >
-            {saving ? 'Saving…' : editId ? 'Update Transaction' : 'Save Transaction'}
+            {saving ? 'Saving…'
+              : mode === 'transfer' ? (editId ? 'Update Transfer' : 'Save Transfer')
+                : editId ? 'Update Transaction' : 'Save Transaction'}
           </Button>
         </div>
       </GlassCard>

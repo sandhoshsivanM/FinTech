@@ -1,6 +1,6 @@
 import { D, ZERO } from '@/lib/money';
 import type { Holding } from '@/lib/types';
-import { demoDayChangePct } from '@/lib/demo/marketFeed';
+import { demoDayChangePct, dayKey } from '@/lib/demo/marketFeed';
 
 /**
  * Today's move across the book.
@@ -37,6 +37,56 @@ export const NO_DAY_CHANGE: DayChange = {
   pnl: null, pct: null, isReal: false, covered: 0, total: 0,
 };
 
+/** A holding whose day move can be stated as fact rather than synthesised. */
+function isPriced(h: Holding): boolean {
+  return h.previousClose != null && h.previousClose !== ''
+    && h.lastPrice != null && h.lastPrice !== '';
+}
+
+/**
+ * Whether the book carries any real previous close.
+ *
+ * Decided once per table, not per row: the moment one position can be measured
+ * for real, every other row must say "—" rather than fall back to the demo
+ * feed, or a single column would mix fact and fiction with nothing to tell
+ * them apart.
+ */
+export function hasRealClose(holdings: Holding[]): boolean {
+  return holdings.some((h) => h.previousClose != null && h.previousClose !== '');
+}
+
+/**
+ * One row's move today, as a percentage.
+ *
+ * @param anyReal result of `hasRealClose` for the whole book — pass it in
+ *   rather than recomputing, so every row in a table shares one verdict.
+ * @param demo whether the demo market feed is switched on.
+ */
+export function rowDayPct(h: Holding, anyReal: boolean, demo: boolean): number | null {
+  if (isPriced(h)) {
+    return D(h.lastPrice!).minus(D(h.previousClose!)).div(D(h.previousClose!)).times(100).toNumber();
+  }
+  if (anyReal || !demo) return null;
+  return demoDayChangePct(h.symbol);
+}
+
+/**
+ * What a real day change is actually measuring.
+ *
+ * Prices only move when a broker file is imported, so "today" can quietly mean
+ * last Thursday. When the newest price predates today the label names its date
+ * rather than letting the card imply a live figure. Presentation only — a
+ * stale close is still a real close, and gating the calculation on freshness
+ * would blank the card every Monday morning.
+ */
+export function priceAsOfLabel(holdings: Holding[], now: number): string {
+  const stamps = holdings.filter(isPriced).map((h) => h.priceAsOf).filter((t): t is number => t != null);
+  if (stamps.length === 0) return 'Against yesterday’s close';
+  const newest = Math.max(...stamps);
+  if (dayKey(new Date(newest)) === dayKey(new Date(now))) return 'Against yesterday’s close';
+  return `Prices from ${new Date(newest).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+}
+
 /**
  * @param demo whether the demo market feed is switched on. Only consulted when
  *   no holding carries a real previous close.
@@ -45,9 +95,7 @@ export function dayChange(holdings: Holding[], demo: boolean): DayChange {
   const total = holdings.length;
   if (total === 0) return { ...NO_DAY_CHANGE };
 
-  const real = holdings.filter(
-    (h) => h.previousClose != null && h.previousClose !== '' && h.lastPrice != null && h.lastPrice !== '',
-  );
+  const real = holdings.filter(isPriced);
 
   if (real.length > 0) {
     let pnl = ZERO;

@@ -95,11 +95,29 @@
       "Bash(lsof -ti:3100)",
       "Bash(pkill -f \"python3 -m http.server 4321\")",
       "Bash(rm -rf /tmp/khazana-host)",
-      "Bash(awk '{print $5,$9}')"
+      "Bash(awk '{print $5,$9}')",
+      "Bash(npx eslint *)",
+      "Bash(npx next *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\);console.log\\(JSON.stringify\\(p.devDependencies,null,2\\)\\)\")",
+      "Bash(perl -0pi -e 's/render\\\\\\(<HoldingsPage \\\\/>\\\\\\);/renderPage\\(\\);/g' src/app/holdings/page.test.tsx)",
+      "Bash(perl -0pi -e 's/<HoldingForm key=\\\\{editing\\\\.id\\\\} editing/<HoldingForm editing/' src/app/holdings/page.tsx)",
+      "Bash(perl -0pi -e 's/editorRef\\\\.current\\\\?\\\\.scrollIntoView/void 0 \\\\&\\\\& editorRef.current?.scrollIntoView/' src/app/holdings/page.tsx)",
+      "Bash(sed -n '/export interface Account/,/^}/p' src/lib/types.ts)",
+      "Bash(sed -n '/export type GoalType/,/^}/p;/export interface Goal/,/^}/p' src/lib/types.ts)",
+      "Bash(flutter --version)",
+      "Bash(node -e \"const m=require\\('./public/instrument_master.json'\\);const s=new Set\\(\\);const arr=Array.isArray\\(m\\)?m:\\(m.instruments||m.rows||[]\\);for\\(const r of arr\\) if\\(r.sector\\) s.add\\(r.sector\\); console.log\\([...s].sort\\(\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(hdiutil info *)",
+      "Bash(codesign -dv webapp/src-tauri/target/release/bundle/macos/Khazana.app)",
+      "Bash(codesign -dv build/macos/Build/Products/Release/Khazana.app)",
+      "Bash(sed -n '/export interface Txn/,/^}/p;/export type AccountType/,/;/p;/export interface Posting/,/^}/p' src/lib/types.ts)",
+      "Bash(sed -n '/export const STORE/,/}/p' src/lib/types.ts)",
+      "Bash(sed -n '/PROFILE_SCOPED/,/]/p' src/lib/types.ts)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{for\\(const f of JSON.parse\\(d\\)\\)for\\(const m of f.messages\\)if\\(m.severity===2\\)console.log\\(f.filePath.split\\('/webapp/'\\)[1]+':'+m.line+' '+m.ruleId\\)}\\)\")"
     ],
     "additionalDirectories": [
       "/private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/shots",
-      "/Users/sandhoshsivan/Downloads/FinTech/webapp/test/golden"
+      "/Users/sandhoshsivan/Downloads/FinTech/webapp/test/golden",
+      "/Users/sandhoshsivan/Downloads/FinTech/webapp/src-tauri/target/release/bundle/macos"
     ]
   }
 }

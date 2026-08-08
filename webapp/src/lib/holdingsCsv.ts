@@ -9,7 +9,7 @@
  * Anything else is counted as skipped and reported to the user — silently
  * dropping a position from an import is worse than importing nothing.
  */
-import type { AssetType } from './types';
+import type { AssetType, Holding } from './types';
 
 export interface CsvHolding {
   symbol: string;
@@ -148,4 +148,96 @@ export function parseHoldingsCsv(text: string, assetType: AssetType = 'equity_et
   }
 
   return { rows, skipped };
+}
+
+/* -------------------------------------------------------------------------- */
+
+export interface ImportPlan {
+  /** Records ready to persist. A matched position keeps its existing id. */
+  records: Holding[];
+  created: number;
+  updated: number;
+}
+
+/** Match key for an import: the same ticker on the same exchange is the same position. */
+function positionKey(symbol: string, exchange: string): string {
+  return `${symbol.toUpperCase()}|${exchange.toUpperCase()}`;
+}
+
+function byPosition(existing: Holding[]): Map<string, Holding> {
+  const byKey = new Map<string, Holding>();
+  for (const h of existing) {
+    const k = positionKey(h.symbol, h.exchange);
+    // First wins: if a past double-import left duplicates, update the one the
+    // book would show first rather than picking arbitrarily.
+    if (!byKey.has(k)) byKey.set(k, h);
+  }
+  return byKey;
+}
+
+/**
+ * How the import splits between new and existing positions.
+ *
+ * Separate from `planImport` because the preview needs this during render,
+ * where minting ids and reading the clock are not allowed.
+ */
+export function importCounts(rows: CsvHolding[], existing: Holding[]): { created: number; updated: number } {
+  const byKey = byPosition(existing);
+  let created = 0;
+  let updated = 0;
+  for (const r of rows) {
+    if (byKey.has(positionKey(r.symbol, r.exchange))) updated++; else created++;
+  }
+  return { created, updated };
+}
+
+/**
+ * Reconcile parsed rows against the book already on file.
+ *
+ * Refreshing prices means re-importing, and re-importing used to mint a new id
+ * per row — so a second import doubled every position. Matching on
+ * symbol + exchange makes the import an update, which is what a broker export
+ * actually is.
+ *
+ * Two rules earn their keep here:
+ *
+ *  - Everything the CSV cannot know is preserved: purchase date, name, sector,
+ *    country, cap band, and the asset type the user already chose. The
+ *    "import as" dropdown classifies new rows only; it must not reclassify a
+ *    position someone typed by hand.
+ *  - Prices move as a set. `lastPrice` and `previousClose` are only ever taken
+ *    from the same row, never mixed across imports — a fresh price against a
+ *    stale close would compute a day change that never happened. An export
+ *    with no price column at all leaves the recorded prices alone.
+ */
+export function planImport(
+  rows: CsvHolding[],
+  existing: Holding[],
+  ctx: { vaultId: string; newId: () => string; now: number },
+): ImportPlan {
+  const byKey = byPosition(existing);
+
+  let created = 0;
+  let updated = 0;
+  const records = rows.map((r) => {
+    const prior = byKey.get(positionKey(r.symbol, r.exchange));
+    if (prior) updated++; else created++;
+    const priced = r.lastPrice !== '';
+    return {
+      ...(prior ?? {}),
+      id: prior?.id ?? ctx.newId(),
+      vaultId: prior?.vaultId ?? ctx.vaultId,
+      symbol: r.symbol,
+      exchange: r.exchange,
+      quantity: r.quantity,
+      avgCost: r.avgCost,
+      lastPrice: priced ? r.lastPrice : (prior?.lastPrice ?? null),
+      previousClose: priced ? (r.previousClose || null) : (prior?.previousClose ?? null),
+      priceAsOf: priced ? ctx.now : (prior?.priceAsOf ?? null),
+      assetType: prior?.assetType ?? r.assetType,
+      firstPurchaseDate: prior?.firstPurchaseDate ?? null,
+    } satisfies Holding;
+  });
+
+  return { records, created, updated };
 }

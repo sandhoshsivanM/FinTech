@@ -36,8 +36,7 @@ import {
 } from '@/domain/portfolio';
 import { investmentTotals, concentration } from '@/domain/investmentTotals';
 import { loadInstrumentMaster, lookupClassification, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
-import { demoDayChangePct } from '@/lib/demo/marketFeed';
-import { dayChange } from '@/domain/dayChange';
+import { dayChange, hasRealClose, priceAsOfLabel, rowDayPct } from '@/domain/dayChange';
 import { PageIntro, Button, Chip, Delta, Donut, Gauge, EmptyState, GlassCard, type DonutSeg } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
 import { ColumnChart } from '@/components/charts/ColumnChart';
@@ -97,10 +96,7 @@ export default function PortfolioPage() {
   // ---- Rows ---------------------------------------------------------------
   // Whether the book carries any real previous close. Decided once for the
   // whole table so real and fabricated moves are never mixed in one column.
-  const anyRealClose = useMemo(
-    () => holdings.some((h) => h.previousClose != null && h.previousClose !== ''),
-    [holdings],
-  );
+  const anyRealClose = useMemo(() => hasRealClose(holdings), [holdings]);
 
   const rows = useMemo<Row[]>(() => views.map((v) => {
     const h = v.holding;
@@ -108,11 +104,7 @@ export default function PortfolioPage() {
     // A recorded previous close beats the demo feed every time. Only a book
     // with no real closes at all falls back to the synthesised move, and then
     // the whole column is badged.
-    const prev = h.previousClose;
-    const last = h.lastPrice;
-    const dayPct = prev != null && prev !== '' && last != null && last !== ''
-      ? (D(last).minus(D(prev)).div(D(prev)).times(100).toNumber())
-      : anyRealClose ? null : demo ? demoDayChangePct(h.symbol) : null;
+    const dayPct = rowDayPct(h, anyRealClose, demo);
     const current = v.current.toNumber();
     return {
       id: h.id, symbol: h.symbol, company: h.name ?? h.symbol, exchange: h.exchange,
@@ -398,8 +390,10 @@ export default function PortfolioPage() {
             footer={dayPctTotal == null ? undefined : (
               <><Delta value={dayPctTotal} />
                 {!day.isReal && <span className="ml-auto"><DemoBadge label="Demo" /></span>}
-                {day.isReal && day.covered < day.total && (
-                  <span className="ml-auto text-muted">{day.covered}/{day.total} priced</span>
+                {day.isReal && (
+                  <span className="ml-auto text-muted">
+                    {day.covered < day.total ? `${day.covered}/${day.total} priced` : priceAsOfLabel(filtered, now)}
+                  </span>
                 )}
               </>
             )} />
@@ -470,10 +464,12 @@ export default function PortfolioPage() {
           </Panel>
         </StaggerItem>
         <StaggerItem>
-          <Panel title="Today's P&L by Stock" sub="top 8 by movement" badge={demo ? <DemoBadge label="Demo" /> : undefined}>
-            {demo && dayColumns.length > 0
+          {/* Badged on the source of the numbers, not on the demo switch: with
+              real closes imported these columns are facts even while demo is on. */}
+          <Panel title="Today's P&L by Stock" sub="top 8 by movement" badge={!day.isReal && dayColumns.length > 0 ? <DemoBadge label="Demo" /> : undefined}>
+            {dayColumns.length > 0
               ? <ColumnChart columns={dayColumns} height={190} format={(n) => fmt.money(n)} ariaLabel="Today's profit and loss by stock" />
-              : <p className="py-14 text-center text-[12.5px] text-muted">Day change needs a price feed. Turn demo market data on in Settings to preview it.</p>}
+              : <p className="py-14 text-center text-[12.5px] text-muted">Import a broker file with a previous-close or day-P&L column to see this, or turn demo market data on in Settings to preview it.</p>}
           </Panel>
         </StaggerItem>
       </div>

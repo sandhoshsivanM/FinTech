@@ -1,9 +1,10 @@
 import { describe, test, expect } from 'vitest';
 import {
   accountBalances, allEntriesBalanced, isBalanced, netWorth,
-  netWorthFromAccounts, postingsForEntry,
+  netWorthFromAccounts, postingsForEntry, postingsForTransfer,
+  liquidBalance, moneyAccounts,
 } from './accountLedger';
-import type { Account, AccountType, Holding, Posting, TxnType } from '@/lib/types';
+import type { Account, AccountType, Holding, Posting, Transfer, TxnType } from '@/lib/types';
 
 // Parity fixtures shared with test/unit/account_ledger_test.dart — same inputs,
 // same expected numbers on both engines.
@@ -93,5 +94,60 @@ describe('accountLedger', () => {
       { id: 'a:cr', vaultId: 'v', entryId: 'a', accountId: 'salary', amount: '-400' },
     ];
     expect(allEntriesBalanced(bad)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('transfers between accounts', () => {
+  const from = acct('salary-ac', 'asset', 'bank', '100000');
+  const to = acct('fund-ac', 'asset', 'bank', '20000');
+  const move = (amount: string): Transfer => ({
+    id: 'tr1', vaultId: 'v', amount, fromAccountId: 'salary-ac', toAccountId: 'fund-ac',
+    date: 0, createdAt: 0,
+  });
+
+  test('debits the destination and credits the source', () => {
+    const p = postingsForTransfer(move('25000'));
+    expect(isBalanced(p)).toBe(true);
+    const b = accountBalances([from, to], p);
+    expect(b.get('salary-ac')!.toString()).toBe('75000');
+    expect(b.get('fund-ac')!.toString()).toBe('45000');
+  });
+
+  test('leaves net worth untouched — moving money is not earning it', () => {
+    const before = netWorthFromAccounts([from, to], []);
+    const after = netWorthFromAccounts([from, to], postingsForTransfer(move('25000')));
+    expect(after.toString()).toBe(before.toString());
+    expect(after.toString()).toBe('120000');
+  });
+
+  test('never lands in an income or expense account', () => {
+    // The whole reason a transfer is not a TxnType: nothing here can be read as
+    // spending by code that sums expense accounts.
+    const touched = postingsForTransfer(move('25000')).map((p) => p.accountId);
+    expect(touched).not.toContain('groceries');
+    expect(touched).not.toContain('salary');
+  });
+});
+
+describe('liquidBalance', () => {
+  const bank = acct('b1', 'asset', 'bank', '50000');
+  const wallet = acct('w1', 'asset', 'cash', '2000');
+  const gold = acct('g1', 'asset', 'manual_asset', '900000');
+  const archived: Account = { ...acct('b2', 'asset', 'bank', '7000'), archived: true };
+
+  test('counts bank and cash, and nothing else', () => {
+    // A manual asset is real net worth but it is not spendable, and an archived
+    // account is not in play at all.
+    expect(moneyAccounts([bank, wallet, gold, archived]).map((a) => a.id)).toEqual(['b1', 'w1']);
+    expect(liquidBalance([bank, wallet, gold, archived], []).toString()).toBe('52000');
+  });
+
+  test('includes opening balances, which summing transactions cannot', () => {
+    // The reason the dashboard's cash figure moved to the ledger: money already
+    // in the bank was invisible to a sum over transactions.
+    const p = entry('e', '3000', 'expense', 'b1', 'groceries');
+    expect(liquidBalance([bank, groceries], p).toString()).toBe('47000');
   });
 });

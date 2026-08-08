@@ -8,11 +8,12 @@ import {
   STORE, PROFILE_SCOPED,
   type Budget, type Category, type Goal, type Holding, type Liability,
   type RecurringRule, type Txn, type Profile, type ProfileKind, type Insurance, type NetWorthSnapshot,
-  type Account, type Posting, type PendingCapture,
+  type Account, type Posting, type Transfer, type PendingCapture,
   type WatchItem, type Dividend, type Alert,
 } from './types';
 import { materialize } from '@/domain/recurrence';
-import { postingsForEntry } from '@/domain/accountLedger';
+import { postingsForEntry, postingsForTransfer, accountBalances, liquidBalance } from '@/domain/accountLedger';
+import Decimal from 'decimal.js';
 import { healthScore } from '@/domain/health';
 import { investmentTotals } from '@/domain/investmentTotals';
 
@@ -20,20 +21,129 @@ const VAULT_ID = 'default';
 const VERIFIER = 'FTOS-OK';
 
 // Bump when the persisted data shape changes; add a step in runMigrations().
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
-async function runMigrations(from: number, _key: CryptoKey, _vaultId: string): Promise<void> {
+async function runMigrations(from: number, key: CryptoKey, vaultId: string): Promise<void> {
   let v = from;
-  // if (v < 2) { /* transform records */ v = 2; }
+  if (v < 2) {
+    await repairPostings(key, vaultId);
+    v = 2;
+  }
   void v;
+}
+
+/**
+ * Gives every transaction the balanced postings it should always have had.
+ *
+ * Three write paths used to skip the ledger entirely — `processRecurring` and
+ * the sample-data loader both called `putRecord` directly, and
+ * `backfillDoubleEntry` only fires for a profile with no accounts, so it could
+ * never repair one. The result was a chart of accounts with no postings behind
+ * it, which is invisible until per-account balances are shown and then reads
+ * as "your bank is empty".
+ *
+ * Idempotent: entries that already have postings are left alone.
+ */
+export async function repairPostings(key: CryptoKey, vaultId: string): Promise<void> {
+  const [txns, transfers, postings, categories, profiles, accounts] = await Promise.all([
+    listRecords<Txn>(key, STORE.txn, vaultId),
+    listRecords<Transfer>(key, STORE.transfer, vaultId),
+    listRecords<Posting>(key, STORE.posting, vaultId),
+    listRecords<Category>(key, STORE.category, vaultId),
+    listRecords<Profile>(key, STORE.profile, vaultId),
+    listRecords<Account>(key, STORE.account, vaultId),
+  ]);
+  const covered = new Set(postings.map((p) => p.entryId));
+  const orphanTxns = txns.filter((t) => !covered.has(t.id));
+  const orphanTransfers = transfers.filter((t) => !covered.has(t.id));
+  if (orphanTxns.length === 0 && orphanTransfers.length === 0) return;
+
+  const fallbackProfile = profiles[0]?.id ?? 'default';
+  const byName = new Map(categories.map((c) => [c.id, c.name]));
+  const existing = new Set(accounts.map((a) => a.id));
+  for (const t of orphanTxns) {
+    await writeEntryPostings(key, vaultId, t.profileId ?? fallbackProfile, t, byName, existing);
+  }
+  for (const t of orphanTransfers) {
+    await writeTransferPostings(key, vaultId, t.profileId ?? fallbackProfile, t);
+  }
 }
 
 /// Deterministic v3 account ids — keep the lazy backfill idempotent and isolated
 /// per profile (matches the Flutter Drift migration).
-const cashAcctId = (profileId: string) => `acct-cash-${profileId}`;
+export const cashAcctId = (profileId: string) => `acct-cash-${profileId}`;
 const openingAcctId = (profileId: string) => `acct-opening-${profileId}`;
 const incomeAcctId = (profileId: string) => `acct-income-${profileId}`;
 const expenseAcctId = (profileId: string, categoryId: string) => `acct-exp-${profileId}-${categoryId}`;
+
+/**
+ * Seeds the accounts every profile has regardless of what it has recorded.
+ * A brand-new vault needs these before it has a single transaction, or the
+ * Accounts page opens empty.
+ */
+async function ensureStructuralAccounts(
+  key: CryptoKey, vaultId: string, profileId: string, existing: Set<string>,
+): Promise<void> {
+  const base = { vaultId, profileId, openingBalance: '0' };
+  const structural: Account[] = [
+    { ...base, id: cashAcctId(profileId), name: 'Cash', type: 'asset', subtype: 'cash' },
+    { ...base, id: openingAcctId(profileId), name: 'Opening Balances', type: 'equity', subtype: 'equity' },
+    { ...base, id: incomeAcctId(profileId), name: 'Income', type: 'income', subtype: 'income' },
+  ];
+  for (const a of structural) {
+    if (existing.has(a.id)) continue;
+    existing.add(a.id);
+    await putRecord(key, STORE.account, vaultId, a.id, a);
+  }
+}
+
+/**
+ * Writes one transaction's balanced postings, creating any structural account
+ * it needs first. The single place transactions enter the ledger.
+ *
+ * Mirrors Flutter's `LedgerWriter.writeEntry`, including its central rule:
+ * the money leg is `t.accountId ?? cash`, so a transaction tagged with a bank
+ * account moves that account and an untagged one falls back to Cash.
+ *
+ * Posting ids are deterministic (`<entryId>:dr` / `:cr`), so calling this again
+ * for an edited entry overwrites its legs rather than duplicating them.
+ *
+ * @param categoryNames id → name, used to name a freshly created expense account.
+ * @param existing ids already known to exist, mutated as accounts are seeded.
+ *   Pass one across a loop to avoid re-reading the chart per transaction.
+ */
+async function writeEntryPostings(
+  key: CryptoKey, vaultId: string, profileId: string, t: Txn,
+  categoryNames: Map<string, string>, existing: Set<string>,
+): Promise<void> {
+  await ensureStructuralAccounts(key, vaultId, profileId, existing);
+  if (t.type === 'expense' && !existing.has(expenseAcctId(profileId, t.categoryId))) {
+    existing.add(expenseAcctId(profileId, t.categoryId));
+    await putRecord(key, STORE.account, vaultId, expenseAcctId(profileId, t.categoryId), {
+      id: expenseAcctId(profileId, t.categoryId), vaultId, profileId,
+      name: categoryNames.get(t.categoryId) ?? 'Expense',
+      type: 'expense', subtype: 'expense', openingBalance: '0',
+    } satisfies Account);
+  }
+
+  const legs = postingsForEntry({
+    entryId: t.id, vaultId, amount: t.amount, type: t.type,
+    moneyAccountId: t.accountId ?? cashAcctId(profileId),
+    categoryAccountId: t.type === 'income' ? incomeAcctId(profileId) : expenseAcctId(profileId, t.categoryId),
+  });
+  for (const leg of legs) {
+    await putRecord(key, STORE.posting, vaultId, leg.id, { ...leg, profileId });
+  }
+}
+
+/** Persists a transfer's two legs. Ids are deterministic, so edits overwrite. */
+async function writeTransferPostings(
+  key: CryptoKey, vaultId: string, profileId: string, t: Transfer,
+): Promise<void> {
+  for (const leg of postingsForTransfer(t)) {
+    await putRecord(key, STORE.posting, vaultId, leg.id, { ...leg, profileId });
+  }
+}
 
 /// Lazily migrates a profile to double-entry: seeds its chart of accounts and
 /// converts each existing transaction into balanced postings, so net worth is
@@ -43,19 +153,21 @@ async function backfillDoubleEntry(
   categories: Category[], txns: Txn[],
 ): Promise<void> {
   const cashId = cashAcctId(profileId);
-  const seed = (a: Account) => putRecord(key, STORE.account, vaultId, a.id, a);
-  await seed({ id: cashId, vaultId, profileId, name: 'Cash', type: 'asset', subtype: 'cash', openingBalance: '0' });
-  await seed({ id: openingAcctId(profileId), vaultId, profileId, name: 'Opening Balances', type: 'equity', subtype: 'equity', openingBalance: '0' });
-  await seed({ id: incomeAcctId(profileId), vaultId, profileId, name: 'Income', type: 'income', subtype: 'income', openingBalance: '0' });
+  const existing = new Set<string>();
+  const names = new Map(categories.map((c) => [c.id, c.name]));
+  // Seed an expense account per category up front, not just for categories that
+  // happen to appear in this profile's history: the chart of accounts should
+  // describe what can be spent on, not only what has been.
   for (const c of categories) {
-    await seed({ id: expenseAcctId(profileId, c.id), vaultId, profileId, name: c.name, type: 'expense', subtype: 'expense', openingBalance: '0' });
+    await putRecord(key, STORE.account, vaultId, expenseAcctId(profileId, c.id), {
+      id: expenseAcctId(profileId, c.id), vaultId, profileId,
+      name: c.name, type: 'expense', subtype: 'expense', openingBalance: '0',
+    } satisfies Account);
+    existing.add(expenseAcctId(profileId, c.id));
   }
+  await ensureStructuralAccounts(key, vaultId, profileId, existing);
   for (const t of txns) {
-    const contra = t.type === 'income' ? incomeAcctId(profileId) : expenseAcctId(profileId, t.categoryId);
-    const legs = postingsForEntry({ entryId: t.id, vaultId, amount: t.amount, type: t.type, moneyAccountId: cashId, categoryAccountId: contra });
-    for (const leg of legs) {
-      await putRecord(key, STORE.posting, vaultId, leg.id, { ...leg, profileId });
-    }
+    await writeEntryPostings(key, vaultId, profileId, t, names, existing);
     if (!t.accountId) {
       await putRecord(key, STORE.txn, vaultId, t.id, { ...t, accountId: cashId, profileId: t.profileId ?? profileId });
     }
@@ -90,6 +202,7 @@ interface Data {
   snapshots: NetWorthSnapshot[];
   accounts: Account[];
   postings: Posting[];
+  transfers: Transfer[];
   pendingCaptures: PendingCapture[];
   watchlist: WatchItem[];
   dividends: Dividend[];
@@ -99,7 +212,7 @@ interface Data {
 const emptyData: Data = {
   txns: [], categories: [], budgets: [], goals: [], holdings: [],
   liabilities: [], recurring: [], insurances: [], snapshots: [],
-  accounts: [], postings: [], pendingCaptures: [],
+  accounts: [], postings: [], transfers: [], pendingCaptures: [],
   watchlist: [], dividends: [], alerts: [],
 };
 
@@ -130,6 +243,7 @@ interface AppState extends Data {
   reload: () => Promise<void>;
   put: (type: string, value: { id: string } & Record<string, unknown>) => Promise<void>;
   del: (type: string, id: string) => Promise<void>;
+  reassignTxnAccounts: (fromAccountId: string, toAccountId: string) => Promise<number>;
   putAttachment: (file: File) => Promise<string>;
   getAttachmentUrl: (id: string) => Promise<string | null>;
   processRecurring: () => Promise<number>;
@@ -149,6 +263,8 @@ const CURRENCY_KEY = 'khazana-currency';
 const ACTIVE_PROFILE_KEY = 'khazana-active-profile';
 const THEME_KEY = 'khazana-theme';
 const ACCENT_KEY = 'khazana-accent';
+/** Account the add-transaction form defaults to. A convenience, not vault data. */
+export const LAST_ACCOUNT_KEY = 'khazana-last-account';
 
 const LEGACY_KEY: Record<string, string> = {
   [CURRENCY_KEY]: 'ftos-currency',
@@ -161,7 +277,7 @@ const LEGACY_KEY: Record<string, string> = {
  * Reads a preference, migrating it off the pre-rebrand key on first hit.
  * Returns null when neither key is present. Safe when localStorage is absent.
  */
-function lsGet(key: string): string | null {
+export function lsGet(key: string): string | null {
   if (typeof localStorage === 'undefined') return null;
   const current = localStorage.getItem(key);
   if (current !== null) return current;
@@ -174,6 +290,12 @@ function lsGet(key: string): string | null {
     localStorage.setItem(key, old);
   }
   return old;
+}
+
+/** Writes a preference. Safe when localStorage is absent or full. */
+export function lsSet(key: string, value: string): void {
+  if (typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(key, value); } catch { /* quota or private mode */ }
 }
 
 export type ThemeChoice = 'light' | 'dark' | 'system';
@@ -355,13 +477,17 @@ export const useApp = create<AppState>((set, get) => ({
   captureSnapshot: async () => {
     const {
       key, vaultId, activeProfileId, txns, holdings, liabilities,
-      goals, insurances, budgets, snapshots,
+      goals, insurances, budgets, snapshots, accounts, postings,
     } = get();
     if (!key || !activeProfileId) return;
     const day = new Date().toISOString().slice(0, 10);
     const id = `snap-${activeProfileId}-${day}`;
     const investments = investmentTotals(holdings);
-    const cash = txns.reduce((s, t) => (t.type === 'income' ? s.plus(D(t.amount)) : s.minus(D(t.amount))), ZERO);
+    // From the ledger, not from summing transactions: opening balances are real
+    // money, and a dashboard that ignores them would contradict the Accounts
+    // page. Liabilities stay on their own table (they carry an APR and a term),
+    // so only asset accounts count here and nothing is double-counted.
+    const cash = liquidBalance(accounts, postings);
     const invest = investments.marketValue;
     const liab = liabilities.reduce((s, l) => s.plus(D(l.principal)), ZERO);
     // Both health fields stay null when the score cannot be computed. A day
@@ -369,7 +495,7 @@ export const useApp = create<AppState>((set, get) => ({
     // grade into the Score page's history chart for a day the app had no
     // opinion about.
     const health = healthScore({
-      txns, investments, liabilities, goals, insurances, budgets, snapshots,
+      txns, investments, liabilities, goals, insurances, budgets, snapshots, cash,
     });
     const snap: NetWorthSnapshot = {
       id, vaultId, profileId: activeProfileId, date: Date.now(),
@@ -415,6 +541,7 @@ export const useApp = create<AppState>((set, get) => ({
     const [
       txnsAll, budgetsAll, goalsAll, holdingsAll, liabilitiesAll, recurringAll,
       insurancesAll, snapshotsAll, pendingAll, watchAll, dividendsAll, alertsAll,
+      transfersAll,
     ] = await Promise.all([
         listRecords<Txn>(key, STORE.txn, vaultId),
         listRecords<Budget>(key, STORE.budget, vaultId),
@@ -428,6 +555,7 @@ export const useApp = create<AppState>((set, get) => ({
         listRecords<WatchItem>(key, STORE.watchItem, vaultId),
         listRecords<Dividend>(key, STORE.dividend, vaultId),
         listRecords<Alert>(key, STORE.alert, vaultId),
+        listRecords<Transfer>(key, STORE.transfer, vaultId),
       ]);
 
     // Double-entry (v3): lazily backfill the active profile's chart of accounts
@@ -442,20 +570,34 @@ export const useApp = create<AppState>((set, get) => ({
       listRecords<Posting>(key, STORE.posting, vaultId),
     ]);
 
+    // A goal linked to an account reports that account's balance, not the
+    // number someone last typed. Substituted here, in the one place the slice
+    // is built, so the goals page, the health score and the safety net all see
+    // the same figure without threading a balances map through their
+    // signatures. The stored record keeps its manual value, unused while linked.
+    const accountsInProfile = accountsAll.filter(inProfile);
+    const balances = accountBalances(accountsInProfile, postingsAll.filter(inProfile));
+    const goalsInProfile = goalsAll.filter(inProfile).map((g) => (
+      g.accountId && balances.has(g.accountId)
+        ? { ...g, currentAmount: Decimal.max(ZERO, balances.get(g.accountId)!).toString() }
+        : g
+    ));
+
     set({
       categories,
       profiles,
       activeProfileId: active,
       txns: txnsReloaded.filter(inProfile),
       budgets: budgetsAll.filter(inProfile),
-      goals: goalsAll.filter(inProfile),
+      goals: goalsInProfile,
       holdings: holdingsAll.filter(inProfile),
       liabilities: liabilitiesAll.filter(inProfile),
       recurring: recurringAll.filter(inProfile),
       insurances: insurancesAll.filter(inProfile),
       snapshots: snapshotsAll.filter(inProfile).sort((a, b) => a.date - b.date),
-      accounts: accountsAll.filter(inProfile),
+      accounts: accountsInProfile,
       postings: postingsAll.filter(inProfile),
+      transfers: transfersAll.filter(inProfile).sort((a, b) => b.date - a.date),
       pendingCaptures: pendingAll.filter(inProfile),
       watchlist: watchAll.filter(inProfile).sort((a, b) => b.addedAt - a.addedAt),
       dividends: dividendsAll.filter(inProfile).sort((a, b) => b.payDate - a.payDate),
@@ -473,20 +615,17 @@ export const useApp = create<AppState>((set, get) => ({
     // Double-entry (PRD §16): a transaction also moves a money account and
     // writes balanced postings, mirroring the Flutter LedgerWriter.
     if (type === STORE.txn) {
-      const cashId = cashAcctId(profileId);
-      record = { ...record, accountId: (value.accountId as string | undefined) ?? cashId };
-      const t = record as unknown as Txn;
-      const contra = t.type === 'income'
-        ? incomeAcctId(profileId)
-        : expenseAcctId(profileId, t.categoryId);
-      const legs = postingsForEntry({
-        entryId: t.id, vaultId, amount: t.amount, type: t.type,
-        moneyAccountId: cashId, categoryAccountId: contra,
-      });
+      record = { ...record, accountId: (value.accountId as string | undefined) ?? cashAcctId(profileId) };
       await putRecord(key, type, vaultId, value.id, record);
-      for (const leg of legs) {
-        await putRecord(key, STORE.posting, vaultId, leg.id, { ...leg, profileId });
-      }
+      const { categories, accounts } = get();
+      await writeEntryPostings(
+        key, vaultId, profileId, record as unknown as Txn,
+        new Map(categories.map((c) => [c.id, c.name])),
+        new Set(accounts.map((a) => a.id)),
+      );
+    } else if (type === STORE.transfer) {
+      await putRecord(key, type, vaultId, value.id, record);
+      await writeTransferPostings(key, vaultId, profileId, record as unknown as Transfer);
     } else {
       await putRecord(key, type, vaultId, value.id, record);
     }
@@ -495,13 +634,39 @@ export const useApp = create<AppState>((set, get) => ({
 
   del: async (type, id) => {
     const { key, vaultId } = get();
-    // Drop an entry's postings alongside the transaction.
-    if (type === STORE.txn && key) {
+    // Drop an entry's postings alongside it. Both transactions and transfers
+    // own two deterministically-named legs; orphaned legs would keep moving
+    // account balances for a record that no longer exists.
+    if ((type === STORE.txn || type === STORE.transfer) && key) {
       await deleteRecord(STORE.posting, `${id}:dr`);
       await deleteRecord(STORE.posting, `${id}:cr`);
     }
     await deleteRecord(type, id);
     await get().reload();
+  },
+
+  /**
+   * Moves every transaction on one account to another, rewriting its postings.
+   *
+   * The one-off after adding real accounts: history recorded before they
+   * existed all sits on the built-in Cash account. Rewriting the postings is
+   * the point — leaving them behind would keep the old account's balance moving
+   * for transactions that no longer belong to it.
+   */
+  reassignTxnAccounts: async (fromAccountId, toAccountId) => {
+    const { key, vaultId, activeProfileId, txns, categories, accounts } = get();
+    if (!key || fromAccountId === toAccountId) return 0;
+    const moving = txns.filter((t) => (t.accountId ?? fromAccountId) === fromAccountId);
+    if (moving.length === 0) return 0;
+    const names = new Map(categories.map((c) => [c.id, c.name]));
+    const existing = new Set(accounts.map((a) => a.id));
+    for (const t of moving) {
+      const next = { ...t, accountId: toAccountId };
+      await putRecord(key, STORE.txn, vaultId, t.id, next);
+      await writeEntryPostings(key, vaultId, t.profileId ?? activeProfileId, next, names, existing);
+    }
+    await get().reload();
+    return moving.length;
   },
 
   putAttachment: async (file) => {
@@ -524,8 +689,13 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   processRecurring: async () => {
-    const { key, vaultId, activeProfileId, recurring } = get();
+    const { key, vaultId, activeProfileId, recurring, categories, accounts } = get();
     if (!key) return 0;
+    // Generated transactions go through the ledger like any other. They used to
+    // be written straight to storage, which left them with no postings at all —
+    // invisible until per-account balances made the hole obvious.
+    const names = new Map(categories.map((c) => [c.id, c.name]));
+    const existing = new Set(accounts.map((a) => a.id));
     let created = 0;
     for (const rule of recurring) {
       const { runs, nextRun } = materialize(rule);
@@ -534,8 +704,10 @@ export const useApp = create<AppState>((set, get) => ({
           id: uid(), vaultId, profileId: activeProfileId, amount: rule.amount, type: rule.type,
           categoryId: rule.categoryId, merchant: rule.merchant ?? null,
           note: 'Recurring', date: when, createdAt: Date.now(),
+          accountId: rule.accountId ?? cashAcctId(activeProfileId),
         };
         await putRecord(key, STORE.txn, vaultId, t.id, t);
+        await writeEntryPostings(key, vaultId, activeProfileId, t, names, existing);
         created++;
       }
       if (runs.length > 0) {

@@ -72,6 +72,15 @@ export interface HealthInputs {
   txns: Txn[];
   investments: InvestmentTotals;
   liabilities: Liability[];
+  /**
+   * Liquid balance from the ledger (`liquidBalance` in accountLedger).
+   *
+   * Optional so callers with no chart of accounts — and the tests — still get
+   * the old behaviour of summing transactions. Pass it wherever accounts exist:
+   * summing transactions silently omits opening balances, so a user who told
+   * the app what was already in the bank would see it ignored here.
+   */
+  cash?: Decimal;
   goals?: Goal[];
   insurances?: Insurance[];
   budgets?: Budget[];
@@ -158,7 +167,7 @@ export function healthScore(input: HealthInputs): HealthScore {
 
   const s90 = windowSummary(input.txns, '3M', now);
   const monthlyExpense = s90.expense.div(3);
-  const cash = netWorthTotal(input.txns);
+  const cash = input.cash ?? netWorthTotal(input.txns);
   const invested = input.investments.marketValue;
   const debt = input.liabilities.reduce((a, l) => a.plus(D(l.principal)), ZERO);
   const assets = cash.plus(invested);

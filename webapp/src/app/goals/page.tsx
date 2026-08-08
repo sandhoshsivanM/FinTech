@@ -1,10 +1,12 @@
 'use client';
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { Target, Trash2, Plus, PiggyBank, Home, Car, Plane, GraduationCap, Pencil } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
 import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
 import { STORE, type GoalType } from '@/lib/types';
+import { moneyAccounts } from '@/domain/accountLedger';
 import {
   PageIntro, GlassCard, SectionHeader, EmptyState,
   Button, Field, Input, Select, Ring, StatStrip,
@@ -64,6 +66,7 @@ function epochToDateInput(epochMs: number): string {
 
 export default function GoalsPage() {
   const goals = useApp((s) => s.goals);
+  const accounts = useApp((s) => s.accounts);
   const ghost = useApp((s) => s.ghost);
   const vaultId = useApp((s) => s.vaultId);
   const put = useApp((s) => s.put);
@@ -101,6 +104,9 @@ export default function GoalsPage() {
   const [addTarget, setAddTarget] = useState('');
   const [addCurrent, setAddCurrent] = useState('0');
   const [addDate, setAddDate] = useState('');
+  const [addAccountId, setAddAccountId] = useState('');
+
+  const pickable = useMemo(() => moneyAccounts(accounts), [accounts]);
 
   function resetForm() {
     setAddName('');
@@ -108,6 +114,7 @@ export default function GoalsPage() {
     setAddTarget('');
     setAddCurrent('0');
     setAddDate('');
+    setAddAccountId('');
     setEditingId(null);
     setShowAdd(false);
   }
@@ -121,6 +128,7 @@ export default function GoalsPage() {
     setAddTarget(D(goal.targetAmount).toString());
     setAddCurrent(D(goal.currentAmount).toString());
     setAddDate(goal.targetDate ? epochToDateInput(goal.targetDate) : '');
+    setAddAccountId(goal.accountId ?? '');
     setShowAdd(true);
   }
 
@@ -156,8 +164,11 @@ export default function GoalsPage() {
       name: addName.trim(),
       goalType: addType,
       targetAmount: D(target).toString(),
+      // Kept for goals tracked by hand. A linked goal's figure comes from its
+      // account on load, so whatever sits here is ignored rather than shown.
       currentAmount: D(isNaN(current) ? 0 : current).toString(),
       targetDate: targetDate ?? undefined,
+      accountId: addAccountId || null,
     });
     resetForm();
   }
@@ -317,8 +328,15 @@ export default function GoalsPage() {
                   {trackHint}
                 </div>
 
-                {/* Contribute inline — hidden when goal achieved */}
-                {!achieved && (
+                {/* Contribute inline — hidden when achieved, and when the goal
+                    reads a real account: there, adding money means transferring
+                    it, and a button that only moved the number would make the
+                    goal disagree with the bank. */}
+                {goal.accountId ? (
+                  <Link href="/add" className="text-[12.5px] font-semibold text-accent hover:underline">
+                    Transfer money in →
+                  </Link>
+                ) : !achieved && (
                   <div className="flex gap-2">
                     <Input
                       type="number"
@@ -379,16 +397,33 @@ export default function GoalsPage() {
                   onChange={(e) => setAddTarget(e.target.value)}
                 />
               </Field>
-              <Field label="Current Amount" hint="What you've already saved">
-                <Input
-                  type="number"
-                  min="0"
-                  step="1"
-                  placeholder="0"
-                  value={addCurrent}
-                  onChange={(e) => setAddCurrent(e.target.value)}
-                />
-              </Field>
+              {/* Hidden once linked: the account is the answer, and two places
+                  to record the same number is two numbers that disagree. */}
+              {!addAccountId && (
+                <Field label="Current Amount" hint="What you've already saved">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value={addCurrent}
+                    onChange={(e) => setAddCurrent(e.target.value)}
+                  />
+                </Field>
+              )}
+              {pickable.length > 0 && (
+                <Field
+                  label="Held in"
+                  hint={addAccountId
+                    ? 'Progress follows this account’s balance'
+                    : 'Optional — link the account this money sits in'}
+                >
+                  <Select value={addAccountId} onChange={(e) => setAddAccountId(e.target.value)}>
+                    <option value="">Track by hand</option>
+                    {pickable.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  </Select>
+                </Field>
+              )}
             </div>
             <Field label="Target Date" hint="Optional — helps compute monthly savings needed">
               <Input

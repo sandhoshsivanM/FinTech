@@ -11,7 +11,7 @@
  * demo switch and carries the badge. Everything else is computed from the
  * user's own records.
  */
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Table2, Coins, TrendingUp, Landmark, Plus, Upload, Pencil } from 'lucide-react';
 import { useApp } from '@/lib/store';
@@ -21,12 +21,12 @@ import { PageIntro, Button, Chip, Delta } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
-import { Stagger, StaggerItem } from '@/components/motion';
+import { Stagger, StaggerItem, useReducedMotion } from '@/components/motion';
 import { HoldingForm, ImportPanel } from '@/components/HoldingEditor';
 import type { Holding } from '@/lib/types';
 import { portfolioSummary, ASSET_META, ASSET_GROUP_OF } from '@/domain/portfolio';
 import { lookupClassification, loadInstrumentMaster, EMPTY_MASTER, MARKET_CAP_LABEL, type InstrumentMaster } from '@/domain/instrumentMaster';
-import { demoDayChangePct } from '@/lib/demo/marketFeed';
+import { hasRealClose, rowDayPct } from '@/domain/dayChange';
 import { short } from '@/lib/format';
 
 interface Row {
@@ -57,13 +57,26 @@ export default function HoldingsPage() {
   const [master, setMaster] = useState<InstrumentMaster>(EMPTY_MASTER);
   const [panel, setPanel] = useState<'none' | 'add' | 'import'>('none');
   const [editing, setEditing] = useState<Holding | null>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
 
   useEffect(() => { void loadInstrumentMaster().then(setMaster); }, []);
+
+  // The editor opens above the table, and the pencil that opens it is in a row
+  // that may be a thousand pixels down. Without this the click reads as dead:
+  // the form is there, just off the top of the screen.
+  useEffect(() => {
+    if (!editing && panel === 'none') return;
+    editorRef.current?.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+  }, [editing, panel, reduced]);
 
   const summary = useMemo(() => portfolioSummary(holdings), [holdings]);
 
   const totalValue = summary.current.toNumber();
   const views = summary.views;
+  // One verdict for the whole grid, shared with /investments and the dashboard
+  // KPI so the three screens can never disagree about the same column.
+  const anyRealClose = useMemo(() => hasRealClose(holdings), [holdings]);
   const rows = useMemo<Row[]>(() => {
     const total = totalValue || 1;
     return views.map((v) => {
@@ -84,7 +97,7 @@ export default function HoldingsPage() {
         current: v.current.toNumber(),
         pnl: v.pnl.toNumber(),
         pnlPct: v.pnlPct,
-        dayPct: demo ? demoDayChangePct(h.symbol) : null,
+        dayPct: rowDayPct(h, anyRealClose, demo),
         weight: (v.current.toNumber() / total) * 100,
         assetLabel: ASSET_META[h.assetType].label,
         colour: `var(--c${(Object.keys(ASSET_META).indexOf(h.assetType) % 8) + 1})`,
@@ -93,7 +106,7 @@ export default function HoldingsPage() {
         ...(group ? {} : {}),
       };
     });
-  }, [views, totalValue, master, demo]);
+  }, [views, totalValue, master, demo, anyRealClose]);
 
   const unpriced = holdings.filter((h) => h.lastPrice == null).length;
   const columns: Column<Row>[] = [
@@ -184,16 +197,23 @@ export default function HoldingsPage() {
         />
       </StaggerItem>
 
-      {editing && (
-        <StaggerItem>
-          <HoldingForm editing={editing} onDone={() => setEditing(null)} />
-        </StaggerItem>
-      )}
-      {panel === 'add' && !editing && (
-        <StaggerItem><HoldingForm onDone={() => setPanel('none')} /></StaggerItem>
-      )}
-      {panel === 'import' && !editing && (
-        <StaggerItem><ImportPanel onDone={() => setPanel('none')} /></StaggerItem>
+      {(editing || panel !== 'none') && (
+        <div ref={editorRef} className="grid gap-6 min-w-0 scroll-mt-24">
+          {editing && (
+            <StaggerItem>
+              {/* Keyed on the position: the form seeds its fields once, on
+                  mount, so without this switching rows would reuse the mounted
+                  instance and keep showing the holding clicked first. */}
+              <HoldingForm key={editing.id} editing={editing} onDone={() => setEditing(null)} />
+            </StaggerItem>
+          )}
+          {panel === 'add' && !editing && (
+            <StaggerItem><HoldingForm onDone={() => setPanel('none')} /></StaggerItem>
+          )}
+          {panel === 'import' && !editing && (
+            <StaggerItem><ImportPanel onDone={() => setPanel('none')} /></StaggerItem>
+          )}
+        </div>
       )}
 
       <StaggerItem>
@@ -220,7 +240,7 @@ export default function HoldingsPage() {
               <h2 className="text-[18px] font-semibold tracking-[-0.02em]">All positions</h2>
               <p className="text-xs text-muted mt-0.5">Sort, filter and export the full book</p>
             </div>
-            {demo && <span className="ml-auto"><DemoBadge label="Day change" title="Day change is synthesised on this device — Khazana has no price feed." /></span>}
+            {demo && !anyRealClose && <span className="ml-auto"><DemoBadge label="Day change" title="Day change is synthesised on this device — Khazana has no price feed." /></span>}
           </div>
           <DataGrid
             rows={rows}

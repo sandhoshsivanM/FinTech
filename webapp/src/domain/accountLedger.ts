@@ -5,7 +5,7 @@
 // accounts plus market-priced holdings (PRD §16).
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
-import type { Account, AccountType, Holding, Posting, TxnType } from '@/lib/types';
+import type { Account, AccountType, Holding, Posting, Transfer, TxnType } from '@/lib/types';
 
 export const isDebitNormal = (t: AccountType): boolean =>
   t === 'asset' || t === 'expense';
@@ -36,6 +36,21 @@ export function postingsForEntry(args: EntryArgs): Posting[] {
   ];
 }
 
+/**
+ * Balanced postings for a transfer between two of your own accounts.
+ *
+ * Debit the destination, credit the source. Both are asset accounts, so the
+ * two legs cancel in `netWorthFromAccounts` — moving money does not create or
+ * destroy any, and the Accounts page must not imply otherwise.
+ */
+export function postingsForTransfer(t: Transfer): Posting[] {
+  const mag = D(t.amount).abs();
+  return [
+    { id: `${t.id}:dr`, vaultId: t.vaultId, entryId: t.id, accountId: t.toAccountId, amount: mag.toString() },
+    { id: `${t.id}:cr`, vaultId: t.vaultId, entryId: t.id, accountId: t.fromAccountId, amount: mag.neg().toString() },
+  ];
+}
+
 /** Whether a set of postings (typically one entry's) is balanced. */
 export function isBalanced(postings: Posting[]): boolean {
   return postings.reduce((s, p) => s.plus(D(p.amount)), ZERO).isZero();
@@ -58,6 +73,28 @@ export function accountBalances(accounts: Account[], postings: Posting[]): Map<s
     balances.set(p.accountId, (balances.get(p.accountId) ?? ZERO).plus(D(p.amount)));
   }
   return balances;
+}
+
+/** Subtypes that hold spendable money. Mirrors the Flutter accounts screen. */
+export const MONEY_SUBTYPES = ['bank', 'cash'] as const;
+
+/** Accounts a balance can meaningfully be shown for, newest naming first. */
+export function moneyAccounts(accounts: Account[]): Account[] {
+  return accounts.filter(
+    (a) => !a.archived && a.type === 'asset' && (MONEY_SUBTYPES as readonly string[]).includes(a.subtype),
+  );
+}
+
+/**
+ * Everything liquid: the balance of every live bank and cash account.
+ *
+ * The figure the dashboard calls "cash". Distinct from `netWorthFromAccounts`,
+ * which also counts manual assets, and from summing transactions, which misses
+ * opening balances entirely.
+ */
+export function liquidBalance(accounts: Account[], postings: Posting[]): Decimal {
+  const balances = accountBalances(accounts, postings);
+  return moneyAccounts(accounts).reduce((s, a) => s.plus(balances.get(a.id) ?? ZERO), ZERO);
 }
 
 /** Net worth from the chart of accounts alone (asset + liability balances). */

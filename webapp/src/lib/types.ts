@@ -57,9 +57,19 @@ export interface Goal {
   name: string;
   goalType: GoalType;
   targetAmount: string;
+  /**
+   * Saved so far. When `accountId` is set the store substitutes the linked
+   * account's balance here on load, so readers never need to know which kind
+   * of goal they have; the stored value is then a stale leftover, not truth.
+   */
   currentAmount: string;
   targetDate?: number | null;
   notes?: string | null;
+  /**
+   * The account holding this goal's money. An emergency fund lives in a real
+   * bank account — tracking it twice guarantees the two drift apart.
+   */
+  accountId?: string | null;
 }
 
 // Keys must match Dart's AssetType.key and the entries in assets/tax_rules.json.
@@ -89,6 +99,13 @@ export interface Holding {
   name?: string | null;
   /** Previous close, for the day-change column. Money field: a Decimal string. */
   previousClose?: string | null;
+  /**
+   * When `lastPrice`/`previousClose` were recorded (epoch ms). There is no
+   * price feed, so a price is only ever as fresh as the last import — this is
+   * what lets the day-change card name the day it is measuring, instead of
+   * implying "now". Absent means the prices predate this field.
+   */
+  priceAsOf?: number | null;
   /** Overrides the instrument-master sector lookup. */
   sector?: string | null;
   /** ISO 3166-1 alpha-2, e.g. 'IN'. Drives the country allocation. */
@@ -176,6 +193,8 @@ export interface RecurringRule {
   merchant?: string | null;
   frequency: Frequency;
   nextRun: number;
+  /** Account the generated transactions move. Falls back to Cash when unset. */
+  accountId?: string | null;
 }
 
 // ---- Insurance (policies + coverage-gap analysis) ----
@@ -211,9 +230,36 @@ export interface Posting {
   id: string;
   vaultId: string;
   profileId?: string;
-  entryId: string; // the Txn this leg belongs to
+  entryId: string; // the Txn or Transfer this leg belongs to
   accountId: string;
   amount: string; // debit-signed (debit +, credit −); entry-wide sum == 0
+}
+
+/**
+ * Money moved between two of your own accounts — salary account to emergency
+ * fund, say.
+ *
+ * Deliberately NOT a third `TxnType`. Two dozen places across the domain and
+ * the pages branch on `type === 'income'` as a binary, so a transfer wearing a
+ * Txn's clothes would be counted as spending by budgets, cash-flow reports,
+ * the health score and the safety net — the emergency fund would look like an
+ * expense every month it was funded. A separate record cannot be miscounted by
+ * code that never loads it.
+ *
+ * Its postings debit the destination and credit the source, so the entry
+ * balances and net worth is unchanged, which is the truth: moving your own
+ * money neither earns nor spends it.
+ */
+export interface Transfer {
+  id: string;
+  vaultId: string;
+  profileId?: string;
+  amount: string; // positive magnitude
+  fromAccountId: string;
+  toAccountId: string;
+  date: number; // epoch ms
+  note?: string | null;
+  createdAt: number;
 }
 
 // ---- Auto-capture drafts (SMS / notification parser, parsed values only) ----
@@ -267,6 +313,7 @@ export const STORE = {
   snapshot: 'snapshot',
   account: 'account',
   posting: 'posting',
+  transfer: 'transfer',
   pendingCapture: 'pendingCapture',
   attachment: 'attachment',
   watchItem: 'watchItem',
@@ -278,6 +325,6 @@ export const STORE = {
 export const PROFILE_SCOPED: string[] = [
   STORE.txn, STORE.budget, STORE.goal, STORE.holding,
   STORE.liability, STORE.recurring, STORE.insurance, STORE.snapshot,
-  STORE.account, STORE.posting, STORE.pendingCapture, STORE.attachment,
+  STORE.account, STORE.posting, STORE.transfer, STORE.pendingCapture, STORE.attachment,
   STORE.watchItem, STORE.dividend, STORE.alert,
 ];

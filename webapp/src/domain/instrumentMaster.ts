@@ -21,6 +21,37 @@ export const MARKET_CAP_LABEL: Record<MarketCapBand, string> = {
   small: 'Small cap',
 };
 
+/**
+ * The sector names used by the bundled master, offered as suggestions when a
+ * holding is classified by hand.
+ *
+ * A suggestion list, not a closed set: the taxonomy is NSE's equity one, and
+ * plenty of what people hold — gold and silver ETFs, sector funds, foreign
+ * stock — has no place in it. The field stays free text so those can be
+ * grouped sensibly instead of all landing in "Unclassified" together.
+ */
+export const SECTOR_SUGGESTIONS: readonly string[] = [
+  'Automobile and Auto Components',
+  'Capital Goods',
+  'Chemicals',
+  'Commodities',
+  'Construction',
+  'Construction Materials',
+  'Consumer Durables',
+  'Consumer Services',
+  'Fast Moving Consumer Goods',
+  'Financial Services',
+  'Healthcare',
+  'Information Technology',
+  'Media Entertainment & Publication',
+  'Metals & Mining',
+  'Oil Gas & Consumable Fuels',
+  'Power',
+  'Realty',
+  'Services',
+  'Telecommunication',
+];
+
 export interface InstrumentClassification {
   symbol?: string;
   isin?: string;

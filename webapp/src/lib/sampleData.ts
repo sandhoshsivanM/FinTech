@@ -15,7 +15,7 @@
  */
 import { putRecord, clearVault } from './repo';
 import { STORE, type Category } from './types';
-import { useApp, uid } from './store';
+import { useApp, uid, repairPostings } from './store';
 
 const now = Date.now();
 const DAY = 86400000;
@@ -95,14 +95,49 @@ export async function loadSampleData() {
   const put = (type: string, value: { id: string } & Record<string, unknown>) =>
     putRecord(key, type, vaultId, value.id, value);
 
-  const txn = (amount: string, type: 'expense' | 'income', category: string, dAgo: number, merchant?: string) =>
-    put(STORE.txn, { id: uid(), vaultId, amount, type, categoryId: cat(category), merchant, note: 'Sample', date: daysAgo(dAgo), createdAt: now });
+  // ---- Accounts -----------------------------------------------------------
+  // Three real accounts, the shape most people actually have: salary lands in
+  // one, day-to-day spending leaves another, the emergency fund sits apart.
+  // Opening balances are what each held before this sample history begins.
+  const profileId = useApp.getState().activeProfileId;
+  const accountTasks: Promise<unknown>[] = [];
+  const acct = (id: string, name: string, openingBalance: string) => {
+    const full = `acct-${id}-${profileId}`;
+    accountTasks.push(put(STORE.account, {
+      id: full, vaultId, profileId, name, type: 'asset', subtype: 'bank', openingBalance,
+    }));
+    return full;
+  };
+  const SALARY = acct('salary', 'HDFC Salary', '180000');
+  const SPENDS = acct('spends', 'ICICI Spends', '42000');
+  const EMERGENCY = acct('emergency', 'Emergency Fund', '1420000');
+  await Promise.all(accountTasks);
+
+  const txn = (
+    amount: string, type: 'expense' | 'income', category: string, dAgo: number,
+    merchant?: string, accountId: string = SPENDS,
+  ) =>
+    put(STORE.txn, { id: uid(), vaultId, profileId, amount, type, categoryId: cat(category), merchant, note: 'Sample', date: daysAgo(dAgo), createdAt: now, accountId });
 
   const tasks: Promise<unknown>[] = [];
 
   // ---- Cash flow ----------------------------------------------------------
-  tasks.push(txn('2400000', 'income', 'Salary', 95, 'Opening balance'));
-  for (const d of [90, 60, 30, 1]) tasks.push(txn('285000', 'income', 'Salary', d, 'Aurelius Systems'));
+  // Pay lands in the salary account; everything else leaves the spends account.
+  tasks.push(txn('2400000', 'income', 'Salary', 95, 'Opening balance', SALARY));
+  for (const d of [90, 60, 30, 1]) tasks.push(txn('285000', 'income', 'Salary', d, 'Aurelius Systems', SALARY));
+
+  // ---- Transfers ----------------------------------------------------------
+  // Salary out to spending money and to the emergency fund. Neither is income
+  // or expense, and the Budget and Reports screens should stay blind to them.
+  const transfer = (amount: string, from: string, to: string, dAgo: number, note: string) =>
+    put(STORE.transfer, {
+      id: uid(), vaultId, profileId, amount, fromAccountId: from, toAccountId: to,
+      date: daysAgo(dAgo), note, createdAt: now,
+    });
+  for (const d of [89, 59, 29]) {
+    tasks.push(transfer('150000', SALARY, SPENDS, d, 'Monthly spending float'));
+    tasks.push(transfer('25000', SALARY, EMERGENCY, d, 'Emergency fund top-up'));
+  }
   for (const d of [92, 62, 32, 2]) {
     tasks.push(txn('58000', 'expense', 'Rent', d, 'Landlord'));
     tasks.push(txn('4310', 'expense', 'Utilities', d, 'Tata Power'));
@@ -180,11 +215,12 @@ export async function loadSampleData() {
   tasks.push(budget('Health', '6000'));
 
   // ---- Goals --------------------------------------------------------------
-  const goal = (name: string, goalType: string, target: string, current: string, inDays?: number) =>
-    put(STORE.goal, { id: uid(), vaultId, name, goalType, targetAmount: target, currentAmount: current, targetDate: inDays ? now + inDays * DAY : null });
+  const goal = (name: string, goalType: string, target: string, current: string, inDays?: number, accountId?: string) =>
+    put(STORE.goal, { id: uid(), vaultId, profileId, name, goalType, targetAmount: target, currentAmount: current, targetDate: inDays ? now + inDays * DAY : null, accountId: accountId ?? null });
   tasks.push(goal('Retirement corpus', 'custom', '120000000', '48263910', 6570));
   tasks.push(goal('Home down payment', 'house', '9000000', '3840000', 580));
-  tasks.push(goal('Emergency Fund', 'emergency_fund', '1800000', '1420000'));
+  // Linked: its progress is the account's balance, not a number typed here.
+  tasks.push(goal('Emergency Fund', 'emergency_fund', '1800000', '0', undefined, EMERGENCY));
   tasks.push(goal('Child education', 'education', '15000000', '2260000', 3200));
   tasks.push(goal('Kyoto, spring', 'vacation', '450000', '186000', 240));
 
@@ -223,5 +259,9 @@ export async function loadSampleData() {
   }
 
   await Promise.all(tasks);
+  // These records were written straight to storage for speed, which skips the
+  // ledger. Build the postings now, or every account balance would read as its
+  // opening balance and the sample vault would look broken.
+  await repairPostings(key, vaultId);
   await useApp.getState().reload();
 }

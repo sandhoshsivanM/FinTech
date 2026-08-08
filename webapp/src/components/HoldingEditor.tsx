@@ -6,18 +6,20 @@
  * screen became the Portfolio Overview they moved here, next to the position
  * grid they operate on.
  */
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { CheckCircle2, Upload, X, Trash2 } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
 import { STORE, type AssetType, type Holding } from '@/lib/types';
 import { ASSET_META } from '@/domain/portfolio';
-import { parseHoldingsCsv, type CsvHolding } from '@/lib/holdingsCsv';
+import { MARKET_CAP_LABEL, SECTOR_SUGGESTIONS } from '@/domain/instrumentMaster';
+import { parseHoldingsCsv, planImport, importCounts, type CsvHolding } from '@/lib/holdingsCsv';
 import { Button, Field, Input, Select, GlassCard, Chip } from './ui';
 import { useConfirm } from './Confirm';
 
 const BLANK = {
-  symbol: '', name: '', exchange: 'NSE', quantity: '', avgCost: '', lastPrice: '',
+  symbol: '', name: '', exchange: 'NSE', quantity: '', avgCost: '', lastPrice: '', previousClose: '',
   assetType: 'equity_etf' as AssetType, firstPurchaseDate: '',
+  sector: '', marketCapBand: '', country: '',
 };
 
 /* -------------------------------------------------------------------------- */
@@ -35,8 +37,12 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
     quantity: editing.quantity,
     avgCost: editing.avgCost,
     lastPrice: editing.lastPrice ?? '',
+    previousClose: editing.previousClose ?? '',
     assetType: editing.assetType,
     firstPurchaseDate: editing.firstPurchaseDate ? new Date(editing.firstPurchaseDate).toISOString().slice(0, 10) : '',
+    sector: editing.sector ?? '',
+    marketCapBand: editing.marketCapBand ?? '',
+    country: editing.country ?? '',
   } : BLANK));
 
   const valid = f.symbol.trim() && parseFloat(f.quantity) > 0 && parseFloat(f.avgCost) >= 0;
@@ -44,6 +50,11 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
   const save = async () => {
     if (!valid) return;
     await put(STORE.holding, {
+      // Spread first so fields this form does not surface — sector, country,
+      // marketCapBand, priceAsOf — survive an edit. Writing a bare literal here
+      // used to wipe them, which quietly disarmed the day-change column every
+      // time a position was touched.
+      ...(editing ?? {}),
       id: editing?.id ?? uid(),
       vaultId,
       symbol: f.symbol.trim().toUpperCase(),
@@ -52,10 +63,17 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
       quantity: String(parseFloat(f.quantity)),
       avgCost: String(parseFloat(f.avgCost)),
       lastPrice: f.lastPrice ? String(parseFloat(f.lastPrice)) : null,
+      previousClose: f.previousClose ? String(parseFloat(f.previousClose)) : null,
       assetType: f.assetType,
       // Without a purchase date there is no holding period, so the Tax Center
       // cannot classify the gain. The field says as much in its hint.
       firstPurchaseDate: f.firstPurchaseDate ? new Date(f.firstPurchaseDate).getTime() : null,
+      // Blank means "not overridden", which falls back to the instrument
+      // master — not "Unclassified". Storing '' would pin the holding to an
+      // empty sector and defeat the lookup.
+      sector: f.sector.trim() || null,
+      marketCapBand: (f.marketCapBand || null) as Holding['marketCapBand'],
+      country: f.country.trim().toUpperCase() || null,
     } as unknown as Holding & { id: string } & Record<string, unknown>);
     onDone();
   };
@@ -99,10 +117,40 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
         <Field label="Last price" hint="Blank values the position at cost">
           <Input inputMode="decimal" value={f.lastPrice} onChange={(e) => setF({ ...f, lastPrice: e.target.value })} placeholder="2645.00" />
         </Field>
+        <Field label="Previous close" hint="Yesterday's close — enables Today's P&L">
+          <Input inputMode="decimal" value={f.previousClose} onChange={(e) => setF({ ...f, previousClose: e.target.value })} placeholder="2631.75" />
+        </Field>
         <Field label="First purchase" hint="Needed for XIRR and capital-gains type">
           <Input type="date" value={f.firstPurchaseDate} onChange={(e) => setF({ ...f, firstPurchaseDate: e.target.value })} />
         </Field>
+        {/* Classification overrides. Blank falls back to the bundled instrument
+            master; these exist for what the master does not cover — ETFs,
+            foreign stock, anything unlisted. */}
+        <Field label="Sector" hint="Blank uses the built-in lookup">
+          <Input
+            list="khazana-sectors"
+            value={f.sector}
+            onChange={(e) => setF({ ...f, sector: e.target.value })}
+            placeholder="Information Technology"
+          />
+        </Field>
+        <Field label="Market cap" hint="Blank uses the built-in lookup">
+          <Select value={f.marketCapBand} onChange={(e) => setF({ ...f, marketCapBand: e.target.value })}>
+            <option value="">Auto</option>
+            {Object.entries(MARKET_CAP_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </Select>
+        </Field>
+        <Field label="Country" hint="Two-letter code, e.g. IN">
+          <Input value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })} placeholder="IN" maxLength={2} />
+        </Field>
       </div>
+
+      {/* Outside the field: a datalist nested inside the <label> leaves the
+          label with no control to point at, which breaks the association for
+          screen readers as surely as it did for the test that caught it. */}
+      <datalist id="khazana-sectors">
+        {SECTOR_SUGGESTIONS.map((s) => <option key={s} value={s} />)}
+      </datalist>
 
       <div className="flex gap-2 mt-5 flex-wrap">
         <Button onClick={() => void save()} disabled={!valid}>{editing ? 'Save changes' : 'Add holding'}</Button>
@@ -122,6 +170,7 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
 export function ImportPanel({ onDone }: { onDone: () => void }) {
   const put = useApp((s) => s.put);
   const vaultId = useApp((s) => s.vaultId);
+  const holdings = useApp((s) => s.holdings);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [text, setText] = useState('');
@@ -130,14 +179,26 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
   const [skipped, setSkipped] = useState(0);
   const [error, setError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
-  const [imported, setImported] = useState(0);
+  const [imported, setImported] = useState<{ created: number; updated: number } | null>(null);
+
+  // Whether the export carries day-change data at all. Worth saying out loud
+  // before the import, not after: without it Today's P&L stays synthetic, and
+  // that is the single most common reason it disagrees with the broker's app.
+  const withClose = preview?.filter((r) => r.previousClose !== '').length ?? 0;
+
+  // Counts only — the records themselves are built at confirm time, since
+  // minting ids and stamping the clock are not render-phase work.
+  const counts = useMemo(
+    () => (preview?.length ? importCounts(preview, holdings) : null),
+    [preview, holdings],
+  );
 
   const parse = (raw: string, type = assetType) => {
     const res = parseHoldingsCsv(raw, type);
     setPreview(res.rows);
     setSkipped(res.skipped);
     setError(res.error);
-    setImported(0);
+    setImported(null);
   };
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,19 +211,12 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
 
   const confirmImport = async () => {
     if (!preview?.length) return;
+    const plan = planImport(preview, holdings, { vaultId, newId: uid, now: Date.now() });
     setBusy(true);
-    for (const r of preview) {
-      await put(STORE.holding, {
-        id: uid(), vaultId,
-        symbol: r.symbol, exchange: r.exchange,
-        quantity: r.quantity, avgCost: r.avgCost,
-        lastPrice: r.lastPrice || null,
-        previousClose: r.previousClose || null,
-        assetType: r.assetType,
-        firstPurchaseDate: null,
-      } as unknown as Holding & { id: string } & Record<string, unknown>);
+    for (const rec of plan.records) {
+      await put(STORE.holding, rec as unknown as Holding & { id: string } & Record<string, unknown>);
     }
-    setImported(preview.length);
+    setImported({ created: plan.created, updated: plan.updated });
     setPreview(null);
     setText('');
     setBusy(false);
@@ -179,12 +233,17 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
       <p className="text-[13px] text-ink-soft leading-relaxed mb-4">
         Export your holdings from Zerodha Console, Upstox, Groww or any broker and drop the file here. Columns are matched
         automatically — <b className="text-ink">symbol</b>, <b className="text-ink">quantity</b> and <b className="text-ink">average cost</b> are
-        required; last price and exchange are used when present. Nothing is uploaded; the file is read in this browser.
+        required; last price and exchange are used when present. Keep the
+        <b className="text-ink"> previous close</b> or <b className="text-ink">day P&L</b> column if your broker offers one — it is what makes
+        Today&rsquo;s P&L a real figure instead of a demo one. Positions you already hold are updated in place, so re-importing
+        refreshes prices rather than duplicating the book. Nothing is uploaded; the file is read in this browser.
       </p>
 
-      {imported > 0 && (
+      {imported && (
         <div className="flex items-center gap-2 text-success font-semibold text-[13px] mb-4">
-          <CheckCircle2 size={16} /> Imported {imported} holding{imported === 1 ? '' : 's'}.
+          <CheckCircle2 size={16} />
+          Imported {imported.created + imported.updated} holding{imported.created + imported.updated === 1 ? '' : 's'}
+          {imported.updated > 0 && ` — ${imported.created} new, ${imported.updated} updated`}.
         </div>
       )}
 
@@ -226,7 +285,11 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
         <div className="mt-5">
           <div className="flex items-center gap-2 mb-2.5 flex-wrap">
             <span className="text-[13px] font-semibold">{preview.length} row{preview.length === 1 ? '' : 's'} ready</span>
+            {counts && counts.updated > 0 && <Chip tone="accent">{counts.created} new, {counts.updated} updating existing</Chip>}
             {skipped > 0 && <Chip tone="warning">{skipped} skipped — missing symbol, quantity or cost</Chip>}
+            {preview.length > 0 && withClose === 0 && (
+              <Chip tone="warning">No previous-close or day-P&L column — Today&rsquo;s P&L will stay in demo</Chip>
+            )}
           </div>
           {preview.length === 0 ? (
             <p className="text-[13px] text-danger">No usable rows found.</p>
@@ -236,7 +299,7 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
                 <table className="w-full text-[13px] border-separate border-spacing-0">
                   <thead>
                     <tr>
-                      {['Symbol', 'Exch', 'Qty', 'Avg cost', 'Last price'].map((h, i) => (
+                      {['Symbol', 'Exch', 'Qty', 'Avg cost', 'Last price', 'Prev close'].map((h, i) => (
                         <th key={h} className={`sticky top-0 bg-card-2 border-b border-line px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.05em] text-muted ${i > 1 ? 'text-right' : 'text-left'}`}>{h}</th>
                       ))}
                     </tr>
@@ -249,6 +312,9 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
                         <td className="px-3 py-2 border-b border-line text-right tnum">{r.quantity}</td>
                         <td className="px-3 py-2 border-b border-line text-right tnum">{r.avgCost}</td>
                         <td className="px-3 py-2 border-b border-line text-right tnum">{r.lastPrice || <span className="text-muted">—</span>}</td>
+                        <td className="px-3 py-2 border-b border-line text-right tnum">
+                          {r.previousClose ? Number(r.previousClose).toFixed(2) : <span className="text-muted">—</span>}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -257,7 +323,10 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
               {preview.length > 60 && <p className="text-[11.5px] text-muted mt-2">Showing the first 60 of {preview.length}. All will be imported.</p>}
               <div className="flex gap-2 mt-4">
                 <Button onClick={() => void confirmImport()} disabled={busy}>
-                  {busy ? 'Importing…' : `Import ${preview.length} holding${preview.length === 1 ? '' : 's'}`}
+                  {busy ? 'Importing…'
+                    : counts && counts.updated > 0
+                      ? `Import ${preview.length} — ${counts.created} new, ${counts.updated} updated`
+                      : `Import ${preview.length} holding${preview.length === 1 ? '' : 's'}`}
                 </Button>
                 <Button variant="ghost" onClick={() => { setPreview(null); setText(''); }}>Clear</Button>
               </div>
