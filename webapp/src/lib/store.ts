@@ -791,10 +791,62 @@ export const useApp = create<AppState>((set, get) => ({
           : 'This is an older backup that can only be restored into the exact vault that created it — the same browser or app install, never a second device. Export a new backup from that device to move the data.',
       );
     }
+    /*
+     * Profile reconciliation.
+     *
+     * Every record is profile-scoped, and `reload` reads only the active
+     * profile (`(r.profileId ?? default) === active`). Profile ids are random
+     * per vault, so importing a backup verbatim wrote 367 perfectly good
+     * records under an id this device has never heard of — present in the
+     * vault, invisible on every screen, under a second profile with the same
+     * name as the one you were looking at.
+     *
+     * So profiles are matched on what actually identifies them to a person —
+     * name and kind — and the incoming ids are rewritten to the local ones.
+     * "Personal" from the Mac lands in "Personal" here instead of beside it.
+     */
+    const incomingProfiles = (parsed.data[STORE.profile] ?? []) as unknown as Profile[];
+    const localProfiles = await listRecords<Profile>(key, STORE.profile, vaultId);
+    const sameProfile = (a: Profile, b: Profile) =>
+      a.name.trim().toLowerCase() === b.name.trim().toLowerCase() && a.kind === b.kind;
+
+    const profileIdMap = new Map<string, string>();
+    const absorbed = new Set<string>();
+    for (const p of incomingProfiles) {
+      const match = localProfiles.find((l) => sameProfile(l, p));
+      if (match) {
+        profileIdMap.set(p.id, match.id);
+        absorbed.add(p.id); // don't write a duplicate profile row
+      }
+    }
+
+    const { activeProfileId } = get();
+    const knownLocally = new Set(localProfiles.map((p) => p.id));
+    /**
+     * Where a record should live. An id we mapped wins; an id this vault
+     * already knows is kept; anything else — a backup with no profile records,
+     * or a profile that was deleted — falls back to the profile in front of
+     * the user, because silently invisible data is the worse failure.
+     */
+    const remap = (pid: string | undefined): string | undefined => {
+      if (!pid) return pid;
+      const mapped = profileIdMap.get(pid);
+      if (mapped) return mapped;
+      if (knownLocally.has(pid)) return pid;
+      if (incomingProfiles.some((p) => p.id === pid)) return pid; // its profile ships with it
+      return activeProfileId;
+    };
+
     let count = 0;
     for (const type of Object.values(STORE)) {
       for (const rec of parsed.data[type] ?? []) {
-        await putRecord(key, type, vaultId, rec.id, { ...rec, vaultId });
+        if (type === STORE.profile && absorbed.has(rec.id)) continue;
+        const scoped = rec as { id: string; profileId?: string };
+        await putRecord(key, type, vaultId, rec.id, {
+          ...rec,
+          vaultId,
+          ...(('profileId' in scoped) ? { profileId: remap(scoped.profileId) } : {}),
+        });
         count++;
       }
     }
