@@ -50,7 +50,9 @@ describe('ColumnChart', () => {
 
   test('values are off by default, so existing charts are unchanged', () => {
     render(<ColumnChart columns={MONTHS} format={(n) => `₹${n}`} />);
-    expect(screen.queryByText('₹232')).toBeNull();
+    // Present but hidden. The slot is reserved deliberately: inserting the
+    // label on hover pushed the bar down and made the widget jump.
+    expect(screen.getByText('₹232')).toHaveStyle({ visibility: 'hidden' });
   });
 
   test('negative periods render below the axis and still label', () => {

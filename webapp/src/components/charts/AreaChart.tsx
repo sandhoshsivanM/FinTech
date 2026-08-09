@@ -1,5 +1,5 @@
 'use client';
-import { useId } from 'react';
+import { useId, useRef, useState } from 'react';
 import { CHART } from './tokens';
 import { useEntrance } from './useEntrance';
 
@@ -17,14 +17,24 @@ export function AreaChart({
   height = 140,
   color = 'var(--accent)',
   emptyLabel = 'Not enough data yet',
+  format,
+  labels,
 }: {
   values: number[];
   height?: number;
   color?: string;
   emptyLabel?: string;
+  /** Renders the hovered point's figure. Without it the readout is the raw number. */
+  format?: (n: number) => string;
+  /** Label for the hovered point, e.g. a date. Index-aligned with `values`. */
+  labels?: string[];
 }) {
   const gradientId = useId();
   const { progress, transition } = useEntrance(values.length);
+  // A trend line with no readout makes the reader estimate a value off an
+  // unlabelled axis. Hovering names the point instead.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [hover, setHover] = useState<number | null>(null);
 
   if (values.length < CHART.minSeriesPoints) return <EmptyChart label={emptyLabel} />;
   const min = Math.min(...values);
@@ -41,7 +51,29 @@ export function AreaChart({
   const line = `M ${pts.join(' L ')}`;
   const area = `${line} L ${W},${H} L 0,${H} Z`;
 
+  const onMove = (e: React.MouseEvent) => {
+    const box = wrapRef.current?.getBoundingClientRect();
+    if (!box || box.width === 0) return;
+    // preserveAspectRatio="none" stretches the viewBox, so the nearest point is
+    // found from the fraction across the element, not from SVG coordinates.
+    const frac = (e.clientX - box.left) / box.width;
+    setHover(Math.max(0, Math.min(values.length - 1, Math.round(frac * (values.length - 1)))));
+  };
+
+  const readout = hover != null ? values[hover] : null;
+
   return (
+    <div ref={wrapRef} className="relative" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+      {/* Overlaid, not stacked: a flow element here changed the component's
+          height on hover and nudged everything below it. */}
+      <div className="absolute top-0 left-0 right-0 text-center pointer-events-none z-10">
+        {readout != null && (
+          <span className="text-[12px] font-semibold tnum">
+            {labels?.[hover!] && <span className="text-muted font-normal mr-2">{labels[hover!]}</span>}
+            <span style={{ color }}>{format ? format(readout) : readout.toLocaleString('en-IN')}</span>
+          </span>
+        )}
+      </div>
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={height} preserveAspectRatio="none">
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -71,7 +103,14 @@ export function AreaChart({
         strokeDashoffset={1 - progress}
         style={{ transition: `stroke-dashoffset ${transition}` }}
       />
+      {hover != null && (
+        <g>
+          <line x1={hover * dx} y1={0} x2={hover * dx} y2={H} stroke="var(--line-strong)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          <circle cx={hover * dx} cy={y(values[hover])} r={4} fill={color} stroke="var(--surface)" strokeWidth={2} vectorEffect="non-scaling-stroke" />
+        </g>
+      )}
     </svg>
+    </div>
   );
 }
 

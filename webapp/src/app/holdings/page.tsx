@@ -26,6 +26,7 @@ import { HoldingForm, ImportPanel } from '@/components/HoldingEditor';
 import type { Holding } from '@/lib/types';
 import { portfolioSummary, ASSET_META, ASSET_GROUP_OF } from '@/domain/portfolio';
 import type { AssetType } from '@/lib/types';
+import { accrue } from '@/domain/fixedIncome';
 import { classifyHolding, loadInstrumentMaster, EMPTY_MASTER, MARKET_CAP_LABEL, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { hasRealClose, rowDayPct } from '@/domain/dayChange';
 import { short } from '@/lib/format';
@@ -50,6 +51,8 @@ interface Row {
   weight: number;
   assetLabel: string;
   colour: string;
+  /** Set for interest-bearing holdings; null for everything priced by market. */
+  income: { ratePct: string; accrued: number; maturesInDays: number | null; matured: boolean; nextPayout: number | null } | null;
   holding: Holding;
 }
 
@@ -104,6 +107,18 @@ export default function HoldingsPage() {
         weight: (v.current.toNumber() / total) * 100,
         assetType: h.assetType,
         assetLabel: ASSET_META[h.assetType].label,
+        income: (() => {
+          const a = accrue(h);
+          return a
+            ? {
+                ratePct: h.couponRatePct ?? '',
+                accrued: a.accrued.toNumber(),
+                maturesInDays: a.daysToMaturity,
+                matured: a.matured,
+                nextPayout: a.nextPayout,
+              }
+            : null;
+        })(),
         colour: `var(--c${(Object.keys(ASSET_META).indexOf(h.assetType) % 8) + 1})`,
         holding: h,
         // group is used only for the tint above; keep the reference honest.
@@ -156,7 +171,33 @@ export default function HoldingsPage() {
     { key: 'cap', header: 'Market cap', optional: true, value: (r) => r.cap, cell: (r) => <span className="text-ink-soft">{r.cap}</span> },
     { key: 'qty', header: 'Qty', align: 'right', value: (r) => r.qty, cell: (r) => r.qty.toLocaleString('en-IN') },
     { key: 'avg', header: 'Avg price', align: 'right', optional: true, value: (r) => r.avg, cell: (r) => <span className="text-ink-soft">{fmt.money(r.avg)}</span> },
-    { key: 'ltp', header: 'Price', align: 'right', value: (r) => r.ltp, cell: (r) => fmt.money(r.ltp) },
+    {
+      key: 'ltp', header: 'Price / Rate', align: 'right', value: (r) => r.ltp,
+      // An FD has no quote; printing its cost as a "price" implies a market
+      // value it does not have. Its rate is the number that matters.
+      cell: (r) => (r.income
+        ? <span className="text-ink-soft tnum">{r.income.ratePct}% p.a.</span>
+        : fmt.money(r.ltp)),
+    },
+    {
+      key: 'accrued', header: 'Interest earned', align: 'right', optional: true,
+      value: (r) => r.income?.accrued ?? 0,
+      cell: (r) => (r.income
+        ? <span className="tnum text-success">{fmt.money(r.income.accrued)}</span>
+        : <span className="text-muted">—</span>),
+    },
+    {
+      key: 'matures', header: 'Matures', align: 'right', optional: true,
+      value: (r) => r.income?.maturesInDays ?? Number.MAX_SAFE_INTEGER,
+      cell: (r) => {
+        if (!r.income) return <span className="text-muted">—</span>;
+        if (r.income.matured) return <Chip tone="warning">Matured</Chip>;
+        if (r.income.maturesInDays == null) return <span className="text-muted">—</span>;
+        const y = Math.floor(r.income.maturesInDays / 365);
+        const m = Math.floor((r.income.maturesInDays % 365) / 30);
+        return <span className="text-ink-soft tnum">{y > 0 ? `${y}y ` : ''}{m}m</span>;
+      },
+    },
     { key: 'current', header: 'Value', align: 'right', value: (r) => r.current, cell: (r) => <span className="font-semibold">{fmt.money(r.current)}</span> },
     { key: 'invested', header: 'Invested', align: 'right', optional: true, value: (r) => r.invested, cell: (r) => <span className="text-ink-soft">{fmt.money(r.invested)}</span> },
     {

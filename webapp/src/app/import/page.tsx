@@ -11,7 +11,7 @@
  * matched generically, so choosing the wrong bank cannot reject a valid file.
  */
 import { useMemo, useState } from 'react';
-import { Download, Loader2, Upload } from 'lucide-react';
+import { Download, Loader2, Undo2, Upload } from 'lucide-react';
 import { useApp, uid, cashAcctId } from '@/lib/store';
 import { STORE, type AssetType, type Dividend, type Holding, type Txn, type TxnType } from '@/lib/types';
 import { useFmt } from '@/lib/useFmt';
@@ -25,8 +25,9 @@ import { BROKERS, BANK_GROUPS, findBroker, findBank } from '@/lib/institutions';
 import { downloadCsv, holdingsTemplate, transactionsTemplate } from '@/lib/importTemplates';
 import { moneyAccounts } from '@/domain/accountLedger';
 import {
-  GlassCard, PageIntro, SectionHeader, Segmented, Button, Field, Select,
+  GlassCard, PageIntro, SectionHeader, Segmented, Button, Field, Select, Chip,
 } from '@/components/ui';
+import { useConfirm } from '@/components/Confirm';
 import {
   InstitutionGrid, ExportGuide, DropZone, ErrorNote, InfoNote, PreviewTable,
 } from '@/components/import/ImportBits';
@@ -68,7 +69,71 @@ export default function ImportPage() {
       />
 
       {tab === 'assets' ? <AssetsImport /> : <MoneyImport />}
+
+      <ImportHistory />
     </div>
+  );
+}
+
+/* ========================================================================== */
+/* History                                                                    */
+/* ========================================================================== */
+
+/**
+ * Every import run, newest first, each reversible.
+ *
+ * An import is the only action here that writes hundreds of records at once,
+ * and until now the only way back was restoring a backup — assuming one
+ * existed. Undo removes exactly what a run created.
+ */
+function ImportHistory() {
+  const batches = useApp((s) => s.importBatches);
+  const undoImportBatch = useApp((s) => s.undoImportBatch);
+  const confirm = useConfirm();
+  const [busy, setBusy] = useState('');
+
+  if (batches.length === 0) return null;
+
+  const undo = async (b: (typeof batches)[number]) => {
+    const ok = await confirm({
+      title: `Undo this import?`,
+      message: `Removes the ${b.created.length} record${b.created.length === 1 ? '' : 's'} this run added.`
+        + (b.updatedCount > 0
+          ? ` The ${b.updatedCount} it updated stay as they are — their previous values were never recorded.`
+          : ''),
+      confirmLabel: 'Undo import',
+      danger: true,
+    });
+    if (!ok) return;
+    setBusy(b.id);
+    try { await undoImportBatch(b.id); } finally { setBusy(''); }
+  };
+
+  return (
+    <GlassCard>
+      <SectionHeader title="Import history" action={<span className="text-xs text-muted">{batches.length} run{batches.length === 1 ? '' : 's'}</span>} />
+      <div className="mt-3 divide-y divide-[var(--line)]">
+        {batches.slice(0, 10).map((b) => (
+          <div key={b.id} className="flex items-center gap-3 py-2.5 text-sm">
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold truncate">{b.filename || 'Untitled file'}</div>
+              <div className="text-xs text-muted">
+                {formatDate(b.at)} · {b.kind === 'holdings' ? 'Holdings' : 'Transactions'} ·{' '}
+                {b.created.length} added{b.updatedCount > 0 && `, ${b.updatedCount} updated`}
+              </div>
+            </div>
+            {b.undone ? (
+              <Chip>Undone</Chip>
+            ) : (
+              <Button variant="ghost" onClick={() => void undo(b)} disabled={busy === b.id}>
+                {busy === b.id ? <Loader2 size={15} className="animate-spin" /> : <Undo2 size={15} />}
+                Undo
+              </Button>
+            )}
+          </div>
+        ))}
+      </div>
+    </GlassCard>
   );
 }
 
@@ -80,6 +145,7 @@ function AssetsImport() {
   const holdings = useApp((s) => s.holdings);
   const vaultId = useApp((s) => s.vaultId);
   const put = useApp((s) => s.put);
+  const recordImportBatch = useApp((s) => s.recordImportBatch);
 
   const [source, setSource] = useState<AssetSource>('broker');
   const [mode, setMode] = useState<WriteMode>('update');
@@ -131,9 +197,18 @@ function AssetsImport() {
       const plan = planImport(rows, mode === 'update' ? holdings : [], {
         vaultId, newId: uid, now: Date.now(),
       });
+      const existingIds = new Set(holdings.map((h) => h.id));
+      const created: { type: string; id: string }[] = [];
       for (const rec of plan.records) {
+        if (!existingIds.has(rec.id)) created.push({ type: STORE.holding, id: rec.id });
         await put(STORE.holding, rec as unknown as Holding & { id: string } & Record<string, unknown>);
       }
+      // Recorded before the success banner: an import with no way back is the
+      // one destructive action in the app.
+      await recordImportBatch({
+        at: Date.now(), filename, kind: 'holdings',
+        created, updatedCount: plan.updated,
+      });
       setDone({ created: plan.created, updated: plan.updated });
       setRows(null);
       setFilename('');
@@ -263,6 +338,7 @@ function MoneyImport() {
   const vaultId = useApp((s) => s.vaultId);
   const activeProfileId = useApp((s) => s.activeProfileId);
   const put = useApp((s) => s.put);
+  const recordImportBatch = useApp((s) => s.recordImportBatch);
   const fmt = useFmt();
 
   const money = useMemo(() => moneyAccounts(accounts), [accounts]);
@@ -324,6 +400,7 @@ function MoneyImport() {
     setBusy(true);
     try {
       const now = Date.now();
+      const created: { type: string; id: string }[] = [];
       for (const r of plan.fresh) {
         if (r.kind === 'transfer') {
           // Named endpoints are matched to existing accounts; an unknown name
@@ -331,8 +408,10 @@ function MoneyImport() {
           // somewhere visible rather than being dropped.
           const from = money.find((a) => a.name.toLowerCase() === r.fromAccount.toLowerCase());
           const to = money.find((a) => a.name.toLowerCase() === r.toAccount.toLowerCase());
+          const transferId = uid();
+          created.push({ type: STORE.transfer, id: transferId });
           await put(STORE.transfer, {
-            id: uid(),
+            id: transferId,
             vaultId,
             amount: r.amount,
             fromAccountId: from?.id ?? effectiveAccount,
@@ -342,8 +421,10 @@ function MoneyImport() {
             createdAt: now,
           });
         } else {
+          const txnId = uid();
+          created.push({ type: STORE.txn, id: txnId });
           await put(STORE.txn, {
-            id: uid(),
+            id: txnId,
             vaultId,
             amount: r.amount,
             type: r.kind,
@@ -367,8 +448,10 @@ function MoneyImport() {
           const dk = dividendKindOf(r.description, r.kind);
           const symbol = dk ? matchHolding(r.description, holdings) : null;
           if (dk && symbol) {
+            const divId = uid();
+            created.push({ type: STORE.dividend, id: divId });
             await put(STORE.dividend, {
-              id: uid(),
+              id: divId,
               vaultId,
               symbol,
               kind: dk,
@@ -381,6 +464,10 @@ function MoneyImport() {
           }
         }
       }
+      await recordImportBatch({
+        at: now, filename, kind: 'transactions',
+        created, updatedCount: 0,
+      });
       setDone({ added: plan.fresh.length, skippedDupes: plan.duplicates.length });
       setParsed(null);
       setFilename('');

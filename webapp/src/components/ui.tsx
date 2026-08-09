@@ -8,7 +8,7 @@
  * published through `@theme` in globals.css, so components spell them as
  * `bg-card` / `rounded-btn` rather than as arbitrary `[var(--…)]` values.
  */
-import { type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type HTMLAttributes } from 'react';
+import { useState, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 
 /**
@@ -236,25 +236,64 @@ export { AreaChart as Sparkline } from './charts/AreaChart';
 export interface BarGroup { label: string; values: { value: number; color: string }[] }
 export function Bars({ groups, height = 200, formatY }: { groups: BarGroup[]; height?: number; formatY?: (n: number) => string }) {
   const max = Math.max(1, ...groups.flatMap((g) => g.values.map((v) => v.value)));
+  const fmt = (n: number) => (formatY ? formatY(n) : String(n));
+  // A `title` attribute is an OS tooltip: it waits a second, is styled by the
+  // platform, and never appears on a touch screen at all. Hovering a bar has
+  // to state its figure in the chart itself.
+  const [hover, setHover] = useState<number | null>(null);
+  const active = hover != null ? groups[hover] : null;
+
   return (
-    <div className="flex items-end gap-2" style={{ height }}>
-      {groups.map((g, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
-          <div className="flex items-end justify-center gap-[2px] w-full" style={{ height: height - 22 }}>
-            {g.values.map((v, j) => (
-              <div
-                key={j}
-                // 4px data-end radius, anchored to the baseline; the 2px gap
-                // between adjacent fills is the surface showing through.
-                className="rounded-t-[4px] w-3 max-w-full transition-[height] duration-500 ease-standard"
-                title={formatY ? formatY(v.value) : String(v.value)}
-                style={{ height: `${(v.value / max) * 100}%`, background: v.color, minHeight: v.value > 0 ? 3 : 0 }}
-              />
+    // The readout is absolutely positioned: as a flow element it added height
+    // the caller never budgeted for, so cards holding this chart grew the
+    // moment it was hovered.
+    <div className="relative">
+      <div className="absolute -top-1 left-0 right-0 text-center pointer-events-none z-10">
+        {active && (
+          <span className="text-[12px] font-semibold tnum">
+            <span className="text-muted font-normal">{active.label}</span>
+            {active.values.map((v, j) => (
+              <span key={j} className="ml-2.5" style={{ color: v.color }}>{fmt(v.value)}</span>
             ))}
+          </span>
+        )}
+      </div>
+      <div className="flex items-end gap-2" style={{ height }}>
+        {groups.map((g, i) => (
+          <div
+            key={i}
+            className="flex-1 flex flex-col items-center gap-1.5 min-w-0 cursor-default"
+            onMouseEnter={() => setHover(i)}
+            onMouseLeave={() => setHover(null)}
+          >
+            <div className="flex items-end justify-center gap-[2px] w-full" style={{ height: height - 22 }}>
+              {g.values.map((v, j) => (
+                <div
+                  key={j}
+                  // 4px data-end radius, anchored to the baseline; the 2px gap
+                  // between adjacent fills is the surface showing through.
+                  className="rounded-t-[4px] w-3 max-w-full transition-[height,opacity] duration-500 ease-standard"
+                  title={fmt(v.value)}
+                  style={{
+                    height: `${(v.value / max) * 100}%`,
+                    background: v.color,
+                    minHeight: v.value > 0 ? 3 : 0,
+                    opacity: hover == null || hover === i ? 1 : 0.35,
+                  }}
+                />
+              ))}
+            </div>
+            <span
+              className={clsx(
+                'text-[10.5px] truncate w-full text-center transition-colors',
+                hover === i ? 'font-bold text-ink' : 'font-medium text-muted',
+              )}
+            >
+              {g.label}
+            </span>
           </div>
-          <span className="text-[10.5px] font-medium text-muted truncate w-full text-center">{g.label}</span>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

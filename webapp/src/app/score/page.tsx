@@ -84,7 +84,7 @@ export default function ScorePage() {
 
       <GlassCard>
         <SectionHeader title="Score history" />
-        <AreaChart values={history} height={130} emptyLabel="Your score trend will appear here" />
+        <AreaChart values={history} height={130} emptyLabel="Your score trend will appear here" format={(n) => String(Math.round(n))} />
       </GlassCard>
 
       <div className="flex flex-wrap gap-2.5">

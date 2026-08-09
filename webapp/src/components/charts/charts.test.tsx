@@ -275,3 +275,63 @@ describe('sector overrides reach the allocation', () => {
     expect(classifyHolding(master, { symbol: 'INFY', marketCapBand: 'small' })?.cap).toBe('small');
   });
 });
+
+describe('hover readouts', () => {
+  // A `title` attribute is an OS tooltip: delayed, platform-styled, and absent
+  // entirely on touch. Every chart has to state its figure itself.
+  test('ColumnChart names the hovered period and its value', async () => {
+    const { ColumnChart } = await import('./ColumnChart');
+    const { container } = render(
+      <ColumnChart columns={[{ label: 'Jul 26', value: 22 }, { label: 'Aug 26', value: 232 }]}
+        format={(n) => `₹${n}`} />,
+    );
+    // Hidden until hovered — but always occupying its slot, so the bar does
+    // not move when it appears.
+    expect(screen.getByText('₹232')).toHaveStyle({ visibility: 'hidden' });
+
+    const cols = container.querySelectorAll('div.flex-1');
+    fireEvent.mouseEnter(cols[1]);
+    expect(screen.getByText('₹232')).toHaveStyle({ visibility: 'visible' });
+  });
+
+  test('Bars names the hovered group and every series in it', async () => {
+    const { Bars } = await import('../ui');
+    const { container } = render(
+      <Bars
+        groups={[
+          { label: 'Jul 26', values: [{ value: 100, color: 'green' }, { value: 40, color: 'red' }] },
+          { label: 'Aug 26', values: [{ value: 300, color: 'green' }, { value: 90, color: 'red' }] },
+        ]}
+        formatY={(n) => `₹${n}`}
+      />,
+    );
+    expect(screen.queryByText('₹300')).toBeNull();
+
+    const groups = container.querySelectorAll('div.flex-1');
+    fireEvent.mouseEnter(groups[1]);
+    // Twice on purpose: once in the readout, once as the axis label beneath.
+    expect(screen.getAllByText('Aug 26')).toHaveLength(2);
+    expect(screen.getByText('₹300')).toBeInTheDocument();
+    expect(screen.getByText('₹90')).toBeInTheDocument();
+  });
+
+  test('AreaChart reports the nearest point as the pointer moves', async () => {
+    const { AreaChart } = await import('./AreaChart');
+    const { container } = render(
+      <AreaChart values={[10, 20, 30, 40]} format={(n) => `₹${n}`} />,
+    );
+    const wrap = container.firstChild as HTMLElement;
+    // jsdom has no layout, so give the element a box to measure against.
+    wrap.getBoundingClientRect = () => ({ left: 0, width: 400, top: 0, height: 100,
+      right: 400, bottom: 100, x: 0, y: 0, toJSON: () => {} }) as DOMRect;
+
+    fireEvent.mouseMove(wrap, { clientX: 400 });
+    expect(screen.getByText('₹40')).toBeInTheDocument();
+
+    fireEvent.mouseMove(wrap, { clientX: 0 });
+    expect(screen.getByText('₹10')).toBeInTheDocument();
+
+    fireEvent.mouseLeave(wrap);
+    expect(screen.queryByText('₹10')).toBeNull();
+  });
+});

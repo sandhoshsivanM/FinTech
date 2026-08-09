@@ -1,6 +1,7 @@
 // Portfolio analytics (PRD §6 / WealthCare FinClean). Pure Decimal math.
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
+import { accrue } from './fixedIncome';
 import type { AssetType, Holding } from '@/lib/types';
 import {
   MARKET_CAP_LABEL,
@@ -107,11 +108,17 @@ export interface HoldingView {
   pnlPct: number;
 }
 
-export function holdingView(h: Holding): HoldingView {
+export function holdingView(h: Holding, now: number = Date.now()): HoldingView {
   const qty = D(h.quantity);
   const invested = qty.times(D(h.avgCost));
-  const price = D(h.lastPrice ?? h.avgCost);
-  const current = qty.times(price);
+
+  // A bond or FD has no market price; it is worth principal plus the interest
+  // earned so far. Valuing it as quantity × price reported ₹0 return for the
+  // instrument's entire life. `accrue` returns null unless a rate and a start
+  // date are actually recorded, so nothing is invented for a bare row.
+  const acc = accrue(h, now);
+  const current = acc ? acc.value : qty.times(D(h.lastPrice ?? h.avgCost));
+
   const pnl = current.minus(invested);
   const pnlPct = invested.isZero() ? 0 : pnl.div(invested).times(100).toNumber();
   return { holding: h, invested, current, pnl, pnlPct };
@@ -126,8 +133,8 @@ export interface PortfolioSummary {
   allocation: { type: AssetType; label: string; color: string; value: number }[];
 }
 
-export function portfolioSummary(holdings: Holding[]): PortfolioSummary {
-  const views = holdings.map(holdingView);
+export function portfolioSummary(holdings: Holding[], now: number = Date.now()): PortfolioSummary {
+  const views = holdings.map((h) => holdingView(h, now));
   const invested = views.reduce((s, v) => s.plus(v.invested), ZERO);
   const current = views.reduce((s, v) => s.plus(v.current), ZERO);
   const pnl = current.minus(invested);

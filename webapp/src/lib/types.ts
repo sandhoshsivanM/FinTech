@@ -112,6 +112,27 @@ export interface Holding {
   country?: string | null;
   /** Overrides the instrument-master market-cap band. */
   marketCapBand?: 'large' | 'mid' | 'small' | null;
+
+  // --- Fixed income -------------------------------------------------------
+  // A bond, FD, PPF or SSY is not `quantity × price`: it is principal plus the
+  // interest earned so far. Without these fields such a holding valued at cost
+  // forever and reported exactly ₹0 return for its whole life — the return was
+  // not mis-displayed, it was unrepresentable.
+  //
+  // Principal is not stored again here: it is `quantity × avgCost`, the same
+  // figure every other asset type uses, so the two can never disagree.
+  /** Annual rate as a percentage, e.g. '7.1'. Decimal string. */
+  couponRatePct?: string | null;
+  /** Epoch ms. Interest stops accruing here. */
+  maturityDate?: number | null;
+  /**
+   * How the interest is paid.
+   *
+   * `cumulative` compounds and is collected at maturity (a standard FD, PPF).
+   * The rest pay out periodically, so the principal stays put and only the
+   * interest since the last payout is unrealised.
+   */
+  payoutFrequency?: 'cumulative' | 'monthly' | 'quarterly' | 'half_yearly' | 'annual' | null;
 }
 
 // ---- Watchlist: instruments tracked but not owned --------------------------
@@ -147,6 +168,38 @@ export interface Dividend {
   payDate: number;
   /** False until the money actually landed. */
   received: boolean;
+}
+
+// ---- Import batches --------------------------------------------------------
+/**
+ * One run of the importer, so it can be undone.
+ *
+ * An import is the only action in the app that writes hundreds of records at
+ * once, and it had no reverse. A file with the wrong account, the wrong sign
+ * convention, or the wrong profile left the user re-entering data by hand or
+ * restoring a backup — assuming they had one. Recording which ids a run
+ * created makes the mistake cheap.
+ *
+ * Only *created* ids are listed. An import that updated an existing holding is
+ * not reversed: undo removes what the run added, it does not resurrect a prior
+ * value it never captured. The UI says so rather than implying a full rewind.
+ */
+export interface ImportBatch {
+  id: string;
+  vaultId: string;
+  profileId?: string;
+  /** Epoch ms. */
+  at: number;
+  /** File the rows came from, for recognising the run later. */
+  filename: string;
+  /** 'transactions' | 'holdings' — what the run was importing. */
+  kind: 'transactions' | 'holdings';
+  /** Records this run created, as `type:id` pairs. */
+  created: { type: string; id: string }[];
+  /** Records this run overwrote. Counted, reported, and not reversible. */
+  updatedCount: number;
+  /** True once the batch has been rolled back. Kept for the history list. */
+  undone?: boolean;
 }
 
 // ---- Alerts ----------------------------------------------------------------
@@ -319,6 +372,7 @@ export const STORE = {
   watchItem: 'watchItem',
   dividend: 'dividend',
   alert: 'alert',
+  importBatch: 'importBatch',
 } as const;
 
 // Entity types that are scoped to the active profile (category & profile are vault-wide).
@@ -326,5 +380,5 @@ export const PROFILE_SCOPED: string[] = [
   STORE.txn, STORE.budget, STORE.goal, STORE.holding,
   STORE.liability, STORE.recurring, STORE.insurance, STORE.snapshot,
   STORE.account, STORE.posting, STORE.transfer, STORE.pendingCapture, STORE.attachment,
-  STORE.watchItem, STORE.dividend, STORE.alert,
+  STORE.watchItem, STORE.dividend, STORE.alert, STORE.importBatch,
 ];

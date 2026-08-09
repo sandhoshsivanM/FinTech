@@ -6,6 +6,7 @@ import { render, screen, cleanup, within, waitFor } from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
 import type { Account, Category, Txn } from '@/lib/types';
+import { ConfirmProvider } from '@/components/Confirm';
 import ImportPage from './page';
 
 vi.mock('next/link', () => ({
@@ -27,9 +28,12 @@ const cat = (id: string, name: string): Category => ({ id, vaultId: 'v', name })
 const put = vi.fn<(type: string, value: { id: string } & Record<string, unknown>) => Promise<void>>(
   async () => {},
 );
+/** Every import run is recorded so it can be undone; assertions below check it. */
+const recordBatch = vi.fn(async () => 'batch-1');
 
 function seed(over: Record<string, unknown> = {}) {
   put.mockClear();
+  recordBatch.mockClear();
   useApp.setState({
     activeProfileId: PROFILE,
     vaultId: 'v',
@@ -41,6 +45,9 @@ function seed(over: Record<string, unknown> = {}) {
     transfers: [],
     ghost: false,
     currencyCode: 'INR',
+    importBatches: [],
+    recordImportBatch: recordBatch,
+    undoImportBatch: vi.fn(async () => 0),
     put,
     ...over,
   } as unknown as Parameters<typeof useApp.setState>[0]);
@@ -68,13 +75,13 @@ beforeEach(() => { cleanup(); seed(); });
 
 describe('Import — structure', () => {
   test('offers both halves of the import flow', () => {
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     expect(screen.getByText('Assets')).toBeInTheDocument();
     expect(screen.getByText('Income & Expenses')).toBeInTheDocument();
   });
 
   test('assets tab lists brokers and explains how to export', () => {
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     expect(screen.getByText('Select Broker')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Zerodha/ })).toBeInTheDocument();
     expect(screen.getByText(/How to export from Zerodha/i)).toBeInTheDocument();
@@ -82,14 +89,14 @@ describe('Import — structure', () => {
 
   test('selecting a broker swaps the instructions', async () => {
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await user.click(screen.getByRole('button', { name: /Groww/ }));
     expect(screen.getByText(/How to export from Groww/i)).toBeInTheDocument();
   });
 
   test('money tab groups banks by country', async () => {
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await user.click(screen.getByText('Income & Expenses'));
     expect(screen.getByText('India')).toBeInTheDocument();
     expect(screen.getByText('Qatar')).toBeInTheDocument();
@@ -106,7 +113,7 @@ describe('Import — transactions', () => {
 
   test('previews before writing anything', async () => {
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await user.click(screen.getByText('Income & Expenses'));
     await upload(user, 'statement.csv', STATEMENT);
 
@@ -117,7 +124,7 @@ describe('Import — transactions', () => {
 
   test('preview shows the parsed direction and auto-detected category', async () => {
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await user.click(screen.getByText('Income & Expenses'));
     await upload(user, 'statement.csv', STATEMENT);
 
@@ -130,7 +137,7 @@ describe('Import — transactions', () => {
 
   test('confirming writes one record per fresh row', async () => {
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await user.click(screen.getByText('Income & Expenses'));
     await upload(user, 'statement.csv', STATEMENT);
     await user.click(await screen.findByRole('button', { name: /Import 2 transactions/ }));
@@ -150,7 +157,7 @@ describe('Import — transactions', () => {
     seed({ txns: [existing] });
 
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await user.click(screen.getByText('Income & Expenses'));
     await upload(user, 'statement.csv', STATEMENT);
 
@@ -160,7 +167,7 @@ describe('Import — transactions', () => {
 
   test('an unreadable file explains itself instead of failing silently', async () => {
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await user.click(screen.getByText('Income & Expenses'));
     await upload(user, 'junk.csv', 'Foo,Bar\n1,2');
 
@@ -174,7 +181,7 @@ describe('Import — holdings', () => {
 
   test('previews positions without writing', async () => {
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await upload(user, 'holdings.csv', BROKER);
 
     await expectText('2 rows ready');
@@ -183,7 +190,7 @@ describe('Import — holdings', () => {
 
   test('confirming writes each position', async () => {
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await upload(user, 'holdings.csv', BROKER);
     await user.click(await screen.findByRole('button', { name: /Import 2 rows/ }));
 
@@ -203,7 +210,7 @@ describe('Import — Append vs Update by Name', () => {
   test('Update by Name reuses the existing position id', async () => {
     seed({ holdings: [existingInfy] });
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await upload(user, 'h.csv', BROKER);
     await expectText('matched to existing positions');
     await user.click(await screen.findByRole('button', { name: /Import 1 row/ }));
@@ -216,7 +223,7 @@ describe('Import — Append vs Update by Name', () => {
   test('Append adds a new position even when the name matches', async () => {
     seed({ holdings: [existingInfy] });
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await user.click(screen.getByRole('button', { name: 'Append' }));
     await upload(user, 'h.csv', BROKER);
     await expectText('all will be added as new positions');
@@ -241,7 +248,7 @@ describe('Import — dividends from a bank statement', () => {
   test('writes both the income transaction and the dividend record', async () => {
     seed({ holdings: [held] });
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await user.click(screen.getByText('Income & Expenses'));
     await upload(user, 's.csv', STMT);
     await user.click(await screen.findByRole('button', { name: /Import 1 transaction/ }));
@@ -260,7 +267,7 @@ describe('Import — dividends from a bank statement', () => {
   test('a dividend for an unheld company writes only the transaction', async () => {
     seed({ holdings: [] });
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await user.click(screen.getByText('Income & Expenses'));
     await upload(user, 's.csv', STMT);
     await user.click(await screen.findByRole('button', { name: /Import 1 transaction/ }));
@@ -274,11 +281,93 @@ describe('Import — dividends from a bank statement', () => {
   test('an ordinary salary credit creates no dividend record', async () => {
     seed({ holdings: [held] });
     const user = userEvent.setup();
-    render(<ImportPage />);
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
     await user.click(screen.getByText('Income & Expenses'));
     await upload(user, 's.csv', 'Date,Narration,Withdrawal Amt.,Deposit Amt.\n02/05/2026,SALARY CREDIT,,85000.00');
     await user.click(await screen.findByRole('button', { name: /Import 1 transaction/ }));
 
     expect(put.mock.calls.map(([store]) => store)).not.toContain('dividend');
+  });
+});
+
+describe('Import — undo', () => {
+  const BROKER = 'Symbol,Qty,Avg Cost,LTP\nINFY,10,1400,1500\nTCS,5,3500,3600';
+  const STATEMENT = [
+    'Date,Narration,Withdrawal Amt.,Deposit Amt.',
+    '02/05/2026,SALARY CREDIT,,85000.00',
+    '03/05/2026,UPI-SWIGGY,450.50,',
+  ].join('\n');
+
+  test('a holdings import records exactly the ids it created', async () => {
+    const user = userEvent.setup();
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
+    await upload(user, 'holdings.csv', BROKER);
+    await user.click(await screen.findByRole('button', { name: /Import 2 rows/ }));
+
+    expect(recordBatch).toHaveBeenCalledTimes(1);
+    const batch = recordBatch.mock.calls[0][0] as {
+      kind: string; filename: string; created: { type: string; id: string }[]; updatedCount: number;
+    };
+    expect(batch.kind).toBe('holdings');
+    expect(batch.filename).toBe('holdings.csv');
+    expect(batch.created).toHaveLength(2);
+    expect(batch.created.every((c) => c.type === 'holding')).toBe(true);
+  });
+
+  test('an update is counted but not listed as created — it cannot be rewound', async () => {
+    // The prior value was never captured, so undo must not claim to restore it.
+    seed({
+      holdings: [{
+        id: 'h-existing', vaultId: 'v', profileId: PROFILE, symbol: 'INFY',
+        exchange: 'NSE', quantity: '5', avgCost: '1200', assetType: 'equity_etf',
+      }],
+    });
+    const user = userEvent.setup();
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
+    await upload(user, 'holdings.csv', BROKER);
+    await user.click(await screen.findByRole('button', { name: /Import 2 rows/ }));
+
+    const batch = recordBatch.mock.calls[0][0] as { created: { id: string }[]; updatedCount: number };
+    expect(batch.updatedCount).toBe(1);
+    expect(batch.created).toHaveLength(1);
+    expect(batch.created.some((c) => c.id === 'h-existing')).toBe(false);
+  });
+
+  test('a transaction import records every record it wrote', async () => {
+    const user = userEvent.setup();
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
+    await user.click(screen.getByText('Income & Expenses'));
+    await upload(user, 'statement.csv', STATEMENT);
+    await user.click(await screen.findByRole('button', { name: /Import 2 transactions/ }));
+
+    const batch = recordBatch.mock.calls[0][0] as { kind: string; created: { type: string }[] };
+    expect(batch.kind).toBe('transactions');
+    expect(batch.created).toHaveLength(2);
+  });
+
+  test('history lists past runs with an undo control', () => {
+    seed({
+      importBatches: [{
+        id: 'b1', vaultId: 'v', profileId: PROFILE, at: new Date(2026, 7, 9).getTime(),
+        filename: 'hdfc-may.csv', kind: 'transactions',
+        created: [{ type: 'txn', id: 't1' }], updatedCount: 0,
+      }],
+    });
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
+    expect(screen.getByText('hdfc-may.csv')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Undo/ })).toBeInTheDocument();
+  });
+
+  test('an already-undone run is marked, not offered again', () => {
+    seed({
+      importBatches: [{
+        id: 'b1', vaultId: 'v', profileId: PROFILE, at: Date.now(),
+        filename: 'old.csv', kind: 'holdings',
+        created: [], updatedCount: 0, undone: true,
+      }],
+    });
+    render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
+    expect(screen.getByText('Undone')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Undo/ })).toBeNull();
   });
 });

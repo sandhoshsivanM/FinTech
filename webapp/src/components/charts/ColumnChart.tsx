@@ -8,6 +8,7 @@
  * against, so it must be visible, not implied.
  */
 import clsx from 'clsx';
+import { useState } from 'react';
 
 export interface Column { label: string; value: number }
 
@@ -32,6 +33,7 @@ export function ColumnChart({
   showValues?: boolean;
   ariaLabel?: string;
 }) {
+  const [hover, setHover] = useState<number | null>(null);
   if (columns.length === 0) return null;
   const max = Math.max(...columns.map((c) => Math.abs(c.value))) * 1.16 || 1;
   const plotH = height - 26;
@@ -43,6 +45,7 @@ export function ColumnChart({
       role="img"
       aria-label={ariaLabel ?? `${positives} positive of ${columns.length} periods`}
       className="relative flex gap-[2px] items-stretch"
+      onMouseLeave={() => setHover(null)}
     >
       <span className="absolute left-0 right-0 h-px bg-line-strong z-[1]" style={{ top: half }} />
       {columns.map((c, i) => {
@@ -54,11 +57,22 @@ export function ColumnChart({
         const barH = empty ? 0 : Math.max((Math.abs(c.value) / max) * half, 3);
         const up = c.value >= 0;
         return (
-          <div key={`${c.label}-${i}`} className="flex-1 min-w-0 flex flex-col items-center gap-1.5">
+          <div
+            key={`${c.label}-${i}`}
+            className="flex-1 min-w-0 flex flex-col items-center gap-1.5 cursor-default"
+            onMouseEnter={() => setHover(i)}
+            style={{ opacity: hover == null || hover === i ? 1 : 0.4, transition: 'opacity 120ms ease' }}
+          >
             <div className="w-full flex flex-col items-center justify-center" style={{ height: plotH }}>
               <div className="w-full flex flex-col items-center justify-end" style={{ height: half }}>
-                {showValues && !empty && up && (
-                  <span className="text-[10px] font-bold tnum text-ink mb-0.5 whitespace-nowrap">
+                {/* Always rendered, only its visibility toggles. Inserting it
+                    on hover pushed the bar down — the widget visibly jumped
+                    under the cursor. Reserving the slot keeps it still. */}
+                {!empty && up && (
+                  <span
+                    className="text-[10px] font-bold tnum text-ink mb-0.5 whitespace-nowrap"
+                    style={{ visibility: showValues || hover === i ? 'visible' : 'hidden' }}
+                  >
                     {(formatLabel ?? format)(c.value)}
                   </span>
                 )}
@@ -66,14 +80,18 @@ export function ColumnChart({
               </div>
               <div className="w-full flex flex-col items-center justify-start" style={{ height: half }}>
                 {!up && !empty && <Bar h={barH} up={false} title={`${c.label}: ${format(c.value)}`} />}
-                {showValues && !empty && !up && (
-                  <span className="text-[10px] font-bold tnum text-ink mt-0.5 whitespace-nowrap">
+                {!empty && !up && (
+                  <span
+                    className="text-[10px] font-bold tnum text-ink mt-0.5 whitespace-nowrap"
+                    style={{ visibility: showValues || hover === i ? 'visible' : 'hidden' }}
+                  >
                     {(formatLabel ?? format)(c.value)}
                   </span>
                 )}
               </div>
             </div>
-            <span className="text-[11px] font-semibold text-muted truncate max-w-full">{c.label}</span>
+            <span className={clsx('text-[11px] truncate max-w-full transition-colors',
+              hover === i ? 'font-bold text-ink' : 'font-semibold text-muted')}>{c.label}</span>
           </div>
         );
       })}

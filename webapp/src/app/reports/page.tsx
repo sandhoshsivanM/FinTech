@@ -283,7 +283,12 @@ export default function ReportsPage() {
             <GlassCard>
               <SectionHeader title="Net Worth Trend" action={<span className="text-xs text-muted">{windowLabel(win)}</span>} />
               <div className="mt-2">
-                <Sparkline values={sparkValues} height={160} color="var(--accent)" />
+                <Sparkline
+                  values={sparkValues}
+                  height={160}
+                  color="var(--accent)"
+                  format={(n) => fmt.money(n)}
+                />
               </div>
               {sparkValues.length >= 2 && (
                 <div className="mt-3 flex items-center justify-between text-sm">

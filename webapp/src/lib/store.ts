@@ -9,6 +9,7 @@ import {
   STORE, PROFILE_SCOPED,
   type Budget, type Category, type Goal, type Holding, type Liability,
   type RecurringRule, type Txn, type Profile, type ProfileKind, type Insurance, type NetWorthSnapshot,
+  type ImportBatch,
   type Account, type Posting, type Transfer, type PendingCapture,
   type WatchItem, type Dividend, type Alert,
 } from './types';
@@ -201,6 +202,7 @@ interface Data {
   recurring: RecurringRule[];
   insurances: Insurance[];
   snapshots: NetWorthSnapshot[];
+  importBatches: ImportBatch[];
   accounts: Account[];
   postings: Posting[];
   transfers: Transfer[];
@@ -212,7 +214,7 @@ interface Data {
 
 const emptyData: Data = {
   txns: [], categories: [], budgets: [], goals: [], holdings: [],
-  liabilities: [], recurring: [], insurances: [], snapshots: [],
+  liabilities: [], recurring: [], insurances: [], snapshots: [], importBatches: [],
   accounts: [], postings: [], transfers: [], pendingCaptures: [],
   watchlist: [], dividends: [], alerts: [],
 };
@@ -250,6 +252,10 @@ interface AppState extends Data {
   processRecurring: () => Promise<number>;
   exportBackup: (pin?: string) => Promise<string>;
   importBackup: (b64: string, pin?: string) => Promise<number>;
+  /** Records one import run so it can be reversed. Returns the batch id. */
+  recordImportBatch: (b: Omit<ImportBatch, 'id' | 'vaultId' | 'profileId'>) => Promise<string>;
+  /** Deletes everything a run created. Returns how many records were removed. */
+  undoImportBatch: (batchId: string) => Promise<number>;
   wipe: () => Promise<void>;
 }
 
@@ -542,7 +548,7 @@ export const useApp = create<AppState>((set, get) => ({
     const [
       txnsAll, budgetsAll, goalsAll, holdingsAll, liabilitiesAll, recurringAll,
       insurancesAll, snapshotsAll, pendingAll, watchAll, dividendsAll, alertsAll,
-      transfersAll,
+      transfersAll, batchesAll,
     ] = await Promise.all([
         listRecords<Txn>(key, STORE.txn, vaultId),
         listRecords<Budget>(key, STORE.budget, vaultId),
@@ -557,6 +563,7 @@ export const useApp = create<AppState>((set, get) => ({
         listRecords<Dividend>(key, STORE.dividend, vaultId),
         listRecords<Alert>(key, STORE.alert, vaultId),
         listRecords<Transfer>(key, STORE.transfer, vaultId),
+        listRecords<ImportBatch>(key, STORE.importBatch, vaultId),
       ]);
 
     // Double-entry (v3): lazily backfill the active profile's chart of accounts
@@ -596,6 +603,7 @@ export const useApp = create<AppState>((set, get) => ({
       recurring: recurringAll.filter(inProfile),
       insurances: insurancesAll.filter(inProfile),
       snapshots: snapshotsAll.filter(inProfile).sort((a, b) => a.date - b.date),
+      importBatches: batchesAll.filter(inProfile).sort((a, b) => b.at - a.at),
       accounts: accountsInProfile,
       postings: postingsAll.filter(inProfile),
       transfers: transfersAll.filter(inProfile).sort((a, b) => b.date - a.date),
@@ -732,6 +740,49 @@ export const useApp = create<AppState>((set, get) => ({
    * Passing no PIN still produces the legacy v1 shape, so nothing that already
    * relies on the old format breaks.
    */
+  recordImportBatch: async (b) => {
+    const { key, vaultId, activeProfileId } = get();
+    if (!key) throw new Error('locked');
+    const id = uid();
+    await putRecord(key, STORE.importBatch, vaultId, id, {
+      ...b, id, vaultId, profileId: activeProfileId,
+    } satisfies ImportBatch);
+    await get().reload();
+    return id;
+  },
+
+  /**
+   * Reverses an import.
+   *
+   * Deletes only the ids the run created — an import that refreshed an
+   * existing holding's price is not rewound, because the prior value was never
+   * captured. The batch is marked undone rather than deleted, so the history
+   * still shows that it happened.
+   */
+  undoImportBatch: async (batchId) => {
+    const { key, vaultId, importBatches } = get();
+    if (!key) throw new Error('locked');
+    const batch = importBatches.find((b) => b.id === batchId);
+    if (!batch || batch.undone) return 0;
+
+    let removed = 0;
+    for (const rec of batch.created) {
+      await deleteRecord(rec.type, rec.id);
+      removed++;
+    }
+    // Postings are derived, so anything that belonged to a deleted entry has to
+    // go with it or the ledger stops balancing.
+    const postings = await listRecords<Posting>(key, STORE.posting, vaultId);
+    const goneIds = new Set(batch.created.map((r) => r.id));
+    for (const p of postings) {
+      if (goneIds.has(p.entryId)) { await deleteRecord(STORE.posting, p.id); removed++; }
+    }
+
+    await putRecord(key, STORE.importBatch, vaultId, batch.id, { ...batch, undone: true });
+    await get().reload();
+    return removed;
+  },
+
   exportBackup: async (pin?: string) => {
     const { key, vaultId } = get();
     if (!key) throw new Error('locked');

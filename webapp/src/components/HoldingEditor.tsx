@@ -16,6 +16,7 @@ import { parseHoldingsCsv, planImport, importCounts, type CsvHolding } from '@/l
 import { Button, Field, Input, Select, GlassCard, Chip } from './ui';
 import { DateInput } from './DateInput';
 import { NumberInput } from './NumberInput';
+import { isFixedIncome, PAYOUT_LABEL } from '@/domain/fixedIncome';
 import { Combobox } from './Combobox';
 import { useConfirm } from './Confirm';
 
@@ -23,6 +24,7 @@ const BLANK = {
   symbol: '', name: '', exchange: 'NSE', quantity: '', avgCost: '', lastPrice: '', previousClose: '',
   assetType: 'equity_etf' as AssetType, firstPurchaseDate: '',
   sector: '', marketCapBand: '', country: '',
+  couponRatePct: '', maturityDate: '', payoutFrequency: 'cumulative',
 };
 
 /* -------------------------------------------------------------------------- */
@@ -46,7 +48,15 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
     sector: editing.sector ?? '',
     marketCapBand: editing.marketCapBand ?? '',
     country: editing.country ?? '',
+    couponRatePct: editing.couponRatePct ?? '',
+    maturityDate: editing.maturityDate ? new Date(editing.maturityDate).toISOString().slice(0, 10) : '',
+    payoutFrequency: editing.payoutFrequency ?? 'cumulative',
   } : BLANK));
+
+  // A bond or FD is valued by accrual, not by price, so it needs a rate and a
+  // term. Shown only for those types — asking a stock for its coupon would be
+  // noise, and leaving the fields off entirely is what made the return ₹0.
+  const fixedIncome = isFixedIncome(f.assetType);
 
   const valid = f.symbol.trim() && parseFloat(f.quantity) > 0 && parseFloat(f.avgCost) >= 0;
 
@@ -77,6 +87,11 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
       sector: f.sector.trim() || null,
       marketCapBand: (f.marketCapBand || null) as Holding['marketCapBand'],
       country: f.country.trim().toUpperCase() || null,
+      // Cleared when the type is not interest-bearing, so switching a bond to
+      // a stock cannot leave a stale coupon quietly driving its valuation.
+      couponRatePct: fixedIncome && f.couponRatePct.trim() ? f.couponRatePct.trim() : null,
+      maturityDate: fixedIncome && f.maturityDate ? new Date(f.maturityDate).getTime() : null,
+      payoutFrequency: fixedIncome ? (f.payoutFrequency as Holding['payoutFrequency']) : null,
     } as unknown as Holding & { id: string } & Record<string, unknown>);
     onDone();
   };
@@ -146,7 +161,30 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
         <Field label="Country" hint="Two-letter code, e.g. IN">
           <Input value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })} placeholder="IN" maxLength={2} />
         </Field>
+
+        {fixedIncome && (
+          <>
+            <Field label="Interest rate" hint="Annual %, e.g. 7.1">
+              <NumberInput value={f.couponRatePct} onChange={(v) => setF({ ...f, couponRatePct: v })} placeholder="7.1" />
+            </Field>
+            <Field label="Maturity date" hint="Interest stops accruing here">
+              <DateInput value={f.maturityDate} onChange={(maturityDate) => setF({ ...f, maturityDate })} />
+            </Field>
+            <Field label="Interest payout" hint="Cumulative compounds until maturity">
+              <Select value={f.payoutFrequency} onChange={(e) => setF({ ...f, payoutFrequency: e.target.value })}>
+                {Object.entries(PAYOUT_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </Select>
+            </Field>
+          </>
+        )}
       </div>
+
+      {fixedIncome && (
+        <p className="mt-3 text-[12px] text-muted leading-relaxed">
+          Quantity 1 and average cost = the amount deposited. Value is principal plus interest
+          earned to date, so it grows daily rather than sitting at cost until maturity.
+        </p>
+      )}
 
       <div className="flex gap-2 mt-5 flex-wrap">
         <Button onClick={() => void save()} disabled={!valid}>{editing ? 'Save changes' : 'Add holding'}</Button>
