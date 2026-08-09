@@ -2,6 +2,7 @@
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
 import { accrue } from './fixedIncome';
+import { findCurrency } from './currency';
 import type { AssetType, Holding } from '@/lib/types';
 import {
   MARKET_CAP_LABEL,
@@ -110,19 +111,48 @@ export interface HoldingView {
 
 export function holdingView(h: Holding, now: number = Date.now()): HoldingView {
   const qty = D(h.quantity);
-  const invested = qty.times(D(h.avgCost));
+
+  // Cost and market value convert at their own rates. A US holding's cost was
+  // paid in dollars at the rate of that day; converting it at today's rate
+  // reports an FX movement as a capital gain, and the two are not the same
+  // thing. Absent currency means INR, so an ordinary holding is unaffected.
+  const { costRate, priceRate } = fxRates(h);
+
+  const invested = qty.times(D(h.avgCost)).times(costRate);
 
   // A bond or FD has no market price; it is worth principal plus the interest
   // earned so far. Valuing it as quantity × price reported ₹0 return for the
   // instrument's entire life. `accrue` returns null unless a rate and a start
   // date are actually recorded, so nothing is invented for a bare row.
   const acc = accrue(h, now);
-  const current = acc ? acc.value : qty.times(D(h.lastPrice ?? h.avgCost));
+  const current = acc
+    ? acc.value.times(costRate)
+    : qty.times(D(h.lastPrice ?? h.avgCost)).times(priceRate);
 
   const pnl = current.minus(invested);
   const pnlPct = invested.isZero() ? 0 : pnl.div(invested).times(100).toNumber();
   return { holding: h, invested, current, pnl, pnlPct };
 }
+
+/**
+ * INR per unit of the holding's currency, for cost and for market value.
+ *
+ * They differ deliberately: cost uses the rate recorded at purchase where one
+ * exists, market value always uses the current rate. When no purchase rate was
+ * recorded both fall back to the current rate — the figure is then an
+ * approximation, and `hasApproximateFx` lets the UI say so.
+ */
+export function fxRates(h: Holding): { costRate: Decimal; priceRate: Decimal } {
+  const code = h.currency ?? 'INR';
+  if (code === 'INR') return { costRate: D(1), priceRate: D(1) };
+  const priceRate = D(findCurrency(code).rateToInr);
+  const costRate = h.fxRateAtPurchase ? D(h.fxRateAtPurchase) : priceRate;
+  return { costRate, priceRate };
+}
+
+/** True when a foreign holding's cost is being converted at today's rate. */
+export const hasApproximateFx = (h: Holding): boolean =>
+  (h.currency ?? 'INR') !== 'INR' && !h.fxRateAtPurchase;
 
 export interface PortfolioSummary {
   invested: Decimal;

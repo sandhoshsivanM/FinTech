@@ -29,7 +29,11 @@ const put = vi.fn<(type: string, value: { id: string } & Record<string, unknown>
   async () => {},
 );
 /** Every import run is recorded so it can be undone; assertions below check it. */
-const recordBatch = vi.fn(async () => 'batch-1');
+type BatchArg = {
+  at: number; filename: string; kind: 'transactions' | 'holdings';
+  created: { type: string; id: string }[]; updatedCount: number;
+};
+const recordBatch = vi.fn<(b: BatchArg) => Promise<string>>(async () => 'batch-1');
 
 function seed(over: Record<string, unknown> = {}) {
   put.mockClear();
@@ -305,9 +309,7 @@ describe('Import — undo', () => {
     await user.click(await screen.findByRole('button', { name: /Import 2 rows/ }));
 
     expect(recordBatch).toHaveBeenCalledTimes(1);
-    const batch = recordBatch.mock.calls[0][0] as {
-      kind: string; filename: string; created: { type: string; id: string }[]; updatedCount: number;
-    };
+    const batch = recordBatch.mock.calls[0][0];
     expect(batch.kind).toBe('holdings');
     expect(batch.filename).toBe('holdings.csv');
     expect(batch.created).toHaveLength(2);
@@ -327,7 +329,7 @@ describe('Import — undo', () => {
     await upload(user, 'holdings.csv', BROKER);
     await user.click(await screen.findByRole('button', { name: /Import 2 rows/ }));
 
-    const batch = recordBatch.mock.calls[0][0] as { created: { id: string }[]; updatedCount: number };
+    const batch = recordBatch.mock.calls[0][0];
     expect(batch.updatedCount).toBe(1);
     expect(batch.created).toHaveLength(1);
     expect(batch.created.some((c) => c.id === 'h-existing')).toBe(false);
@@ -340,7 +342,7 @@ describe('Import — undo', () => {
     await upload(user, 'statement.csv', STATEMENT);
     await user.click(await screen.findByRole('button', { name: /Import 2 transactions/ }));
 
-    const batch = recordBatch.mock.calls[0][0] as { kind: string; created: { type: string }[] };
+    const batch = recordBatch.mock.calls[0][0];
     expect(batch.kind).toBe('transactions');
     expect(batch.created).toHaveLength(2);
   });

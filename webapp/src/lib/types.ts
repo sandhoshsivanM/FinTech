@@ -28,6 +28,15 @@ export interface Txn {
   // an optional receipt attachment. Postings remain the authoritative ledger.
   accountId?: string | null;
   attachmentRef?: string | null; // record id on web, sandbox path on mobile
+  /**
+   * Ticked off against a bank statement.
+   *
+   * Reconciliation is the difference between "my book says X" and "my bank
+   * says X" — without a per-entry mark there is no way to find *which* entries
+   * explain a gap, which is why it was previously done by hand in a
+   * spreadsheet. Absent means never reconciled, not "not cleared".
+   */
+  cleared?: boolean;
 }
 
 export interface Category {
@@ -121,6 +130,26 @@ export interface Holding {
   //
   // Principal is not stored again here: it is `quantity × avgCost`, the same
   // figure every other asset type uses, so the two can never disagree.
+  // --- Currency -----------------------------------------------------------
+  // Every amount used to be assumed INR and converted only for display. A US
+  // holding bought through Vested or Stockal is genuinely priced in dollars,
+  // so storing its cost as if it were rupees baked in an error that compounds
+  // silently and can never be recovered from the record.
+  //
+  // Absent means INR, so existing holdings are unchanged and no migration
+  // rewrites anything.
+  /** ISO 4217 of `avgCost` and `lastPrice`, e.g. 'USD'. Absent means INR. */
+  currency?: string | null;
+  /**
+   * Units of INR per one unit of `currency` on the purchase date.
+   *
+   * Kept so cost and market value convert at their own rates: converting a
+   * 2019 purchase at today's rate reports an FX movement as if it were a
+   * capital gain. Absent falls back to the current rate, and the UI says the
+   * figure is approximate rather than implying precision it does not have.
+   */
+  fxRateAtPurchase?: string | null;
+
   /** Annual rate as a percentage, e.g. '7.1'. Decimal string. */
   couponRatePct?: string | null;
   /** Epoch ms. Interest stops accruing here. */
@@ -168,6 +197,37 @@ export interface Dividend {
   payDate: number;
   /** False until the money actually landed. */
   received: boolean;
+}
+
+// ---- Purchase lots ---------------------------------------------------------
+/**
+ * One dated purchase of a holding.
+ *
+ * A `Holding` carries a single `avgCost` and one `firstPurchaseDate`, which is
+ * enough to value a position and not enough to tax it. Buy the same stock in
+ * March and again in November, sell in December, and the gain is part
+ * short-term and part long-term — a single average cannot express that, so the
+ * Tax Centre was producing a confident number that could not be right.
+ *
+ * Lots are additive and optional. A holding with none behaves exactly as
+ * before via a synthetic lot derived from its own fields, so nothing changes
+ * until real lots are recorded. The invariant that keeps the two honest: the
+ * lots of a holding must sum to its quantity, and their weighted cost must
+ * equal its average cost.
+ */
+export interface HoldingLot {
+  id: string;
+  vaultId: string;
+  profileId?: string;
+  /** The position this purchase belongs to. */
+  holdingId: string;
+  /** Units bought in this tranche. */
+  quantity: string;
+  /** Price paid per unit, excluding charges. */
+  costPerUnit: string;
+  /** Epoch ms. Drives the holding period, so it decides STCG vs LTCG. */
+  purchaseDate: number;
+  note?: string | null;
 }
 
 // ---- Import batches --------------------------------------------------------
@@ -313,6 +373,8 @@ export interface Transfer {
   date: number; // epoch ms
   note?: string | null;
   createdAt: number;
+  /** Ticked off against a bank statement — see `Txn.cleared`. */
+  cleared?: boolean;
 }
 
 // ---- Auto-capture drafts (SMS / notification parser, parsed values only) ----
@@ -373,6 +435,7 @@ export const STORE = {
   dividend: 'dividend',
   alert: 'alert',
   importBatch: 'importBatch',
+  lot: 'lot',
 } as const;
 
 // Entity types that are scoped to the active profile (category & profile are vault-wide).
@@ -380,5 +443,5 @@ export const PROFILE_SCOPED: string[] = [
   STORE.txn, STORE.budget, STORE.goal, STORE.holding,
   STORE.liability, STORE.recurring, STORE.insurance, STORE.snapshot,
   STORE.account, STORE.posting, STORE.transfer, STORE.pendingCapture, STORE.attachment,
-  STORE.watchItem, STORE.dividend, STORE.alert, STORE.importBatch,
+  STORE.watchItem, STORE.dividend, STORE.alert, STORE.importBatch, STORE.lot,
 ];

@@ -16,6 +16,8 @@ import {
   Sparkline,
 } from '@/components/ui';
 import { formatMonthShort } from '@/lib/dateFormat';
+import { balanceSheet } from '@/domain/statements';
+import type Decimal from 'decimal.js';
 
 // ── Time window ───────────────────────────────────────────────────────────────
 
@@ -81,6 +83,82 @@ function StatTile({
         {ghost ? '••••••' : value}
       </span>
     </GlassCard>
+  );
+}
+
+/**
+ * What you own and what you owe, straight from the chart of accounts.
+ *
+ * The ledger has produced exactly one figure until now — a per-account balance.
+ * These are the same records answering the question people actually ask.
+ */
+function BalanceSheetCard() {
+  const accounts = useApp((s) => s.accounts);
+  const postings = useApp((s) => s.postings);
+  const ghost = useApp((s) => s.ghost);
+  const fmt = useFmt();
+
+  const bs = useMemo(() => balanceSheet(accounts, postings), [accounts, postings]);
+  if (bs.assets.length === 0 && bs.liabilities.length === 0) return null;
+
+  const money = (v: Parameters<typeof fmt.money>[0]) => (ghost ? '••••••' : fmt.money(v));
+
+  return (
+    <GlassCard>
+      <SectionHeader
+        title="Balance Sheet"
+        action={<span className="text-xs text-muted">From your chart of accounts</span>}
+      />
+      <div className="mt-4 grid md:grid-cols-2 gap-6">
+        <Side title="Assets" lines={bs.assets} total={bs.totalAssets} color="var(--income)" money={money} />
+        <Side title="Liabilities" lines={bs.liabilities} total={bs.totalLiabilities} color="var(--expense)" money={money} />
+      </div>
+
+      <div className="mt-5 pt-4 border-t border-[var(--line)] flex items-baseline justify-between">
+        <span className="text-sm font-bold">Net worth</span>
+        <span className="text-xl font-extrabold tnum"
+          style={{ color: bs.netWorth.gte(0) ? 'var(--income)' : 'var(--expense)' }}>
+          {money(bs.netWorth)}
+        </span>
+      </div>
+
+      {!bs.balanced && (
+        <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--warn)' }}>
+          The books are out by {money(bs.discrepancy.abs())}. Something is posted against an account
+          this statement does not classify — Diagnostics will name it.
+        </p>
+      )}
+    </GlassCard>
+  );
+}
+
+function Side({ title, lines, total, color, money }: {
+  title: string;
+  lines: { id: string; label: string; amount: Decimal }[];
+  total: Decimal;
+  color: string;
+  money: (v: Decimal) => string;
+}) {
+  return (
+    <div>
+      <h4 className="text-xs font-bold text-muted tracking-wide uppercase">{title}</h4>
+      {lines.length === 0 ? (
+        <p className="mt-2 text-sm text-muted">None recorded.</p>
+      ) : (
+        <div className="mt-2 divide-y divide-[var(--line)]">
+          {lines.map((l) => (
+            <div key={l.id} className="flex items-baseline justify-between gap-3 py-1.5 text-sm">
+              <span className="min-w-0 truncate text-muted">{l.label}</span>
+              <span className="tnum shrink-0">{money(l.amount)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="mt-2 pt-2 border-t border-[var(--line)] flex items-baseline justify-between text-sm">
+        <span className="font-semibold">Total</span>
+        <span className="font-bold tnum" style={{ color }}>{money(total)}</span>
+      </div>
+    </div>
   );
 }
 
@@ -252,6 +330,9 @@ export default function ReportsPage() {
               />
             </div>
           </GlassCard>
+
+          {/* Balance sheet — the same postings, asked a different question */}
+          <BalanceSheetCard />
 
           {/* Category donut + Net worth sparkline */}
           <div className="grid lg:grid-cols-2 gap-4">

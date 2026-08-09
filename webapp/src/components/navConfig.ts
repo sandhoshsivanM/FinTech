@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, LineChart, BarChart3, TrendingUp, Table2, Star, CandlestickChart,
   Coins, Landmark, Wallet, Receipt, CalendarDays, PieChart, Repeat, Flag, CreditCard,
-  Shield, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle, Upload,
+  Shield, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle, Upload, Stethoscope, Scale,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -56,6 +56,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/accounts', label: 'Accounts', icon: Wallet },
       { href: '/transactions', label: 'Transactions', icon: Receipt },
       { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+      { href: '/reconcile', label: 'Reconcile', icon: Scale },
       { href: '/budget', label: 'Budget', icon: PieChart },
       { href: '/recurring', label: 'Recurring', icon: Repeat },
       { href: '/goals', label: 'Goals', icon: Flag },
@@ -76,6 +77,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/import', label: 'Import', icon: Upload },
       { href: '/news', label: 'News', icon: Newspaper },
       { href: '/alerts', label: 'Alerts', icon: Bell },
+      { href: '/diagnostics', label: 'Diagnostics', icon: Stethoscope },
       { href: '/settings', label: 'Settings', icon: Settings },
       { href: '/help', label: 'Help', icon: HelpCircle },
     ],
