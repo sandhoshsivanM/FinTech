@@ -16,8 +16,10 @@
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
 import type {
-  Account, Category, Dividend, Holding, Posting, Transfer, Txn,
+  Account, Category, Dividend, Holding, HoldingLot, Posting, Transfer, Txn,
 } from '@/lib/types';
+import { reconcileLots } from './lots';
+import { hasApproximateFx } from './portfolio';
 
 export type CheckLevel = 'ok' | 'warn' | 'error';
 
@@ -32,6 +34,8 @@ export interface Check {
 }
 
 export interface DiagnosticsInput {
+  /** Optional: a vault with no lots is normal, not a fault. */
+  lots?: HoldingLot[];
   txns: Txn[];
   transfers: Transfer[];
   postings: Posting[];
@@ -55,6 +59,7 @@ function isCleanMoney(v: string | null | undefined): boolean {
 
 export function runDiagnostics(input: DiagnosticsInput): Check[] {
   const { txns, transfers, postings, accounts, categories, holdings, dividends } = input;
+  const lots = input.lots ?? [];
   const checks: Check[] = [];
 
   /* ---- Ledger integrity ------------------------------------------------ */
@@ -159,6 +164,39 @@ export function runDiagnostics(input: DiagnosticsInput): Check[] {
         id: 'holding-dates', label: 'Purchase dates', level: 'warn',
         detail: `${noDate.length} holding${noDate.length === 1 ? ' has' : 's have'} no purchase date, so the Tax Centre cannot tell short-term gains from long-term.`,
         offenders: noDate.slice(0, 20),
+      });
+
+  /* ---- Lots ------------------------------------------------------------ */
+
+  // Two records of the same truth drift. Drift here means the Tax Centre and
+  // the portfolio disagree about the same position.
+  const drifted = holdings
+    .filter((h) => lots.some((l) => l.holdingId === h.id))
+    .filter((h) => !reconcileLots(h, lots).ok)
+    .map((h) => h.id);
+  const withLots = new Set(lots.map((l) => l.holdingId)).size;
+  checks.push(drifted.length === 0
+    ? {
+        id: 'lot-reconciliation', label: 'Purchase lots', level: 'ok',
+        detail: withLots === 0
+          ? 'No purchase lots recorded. Capital gains use the position average, which cannot split a part short-term sale.'
+          : `All ${withLots} position${withLots === 1 ? '' : 's'} with lots reconcile to their recorded quantity and average cost.`,
+      }
+    : {
+        id: 'lot-reconciliation', label: 'Purchase lots', level: 'error',
+        detail: `${drifted.length} position${drifted.length === 1 ? "'s lots do" : "s' lots do"} not add up to the recorded quantity or average cost, so tax figures and portfolio value disagree.`,
+        offenders: drifted,
+      });
+
+  /* ---- Currency --------------------------------------------------------- */
+
+  const approxFx = holdings.filter(hasApproximateFx).map((h) => h.id);
+  checks.push(approxFx.length === 0
+    ? { id: 'fx-rates', label: 'Exchange rates', level: 'ok', detail: 'Every foreign holding records the rate it was bought at.' }
+    : {
+        id: 'fx-rates', label: 'Exchange rates', level: 'warn',
+        detail: `${approxFx.length} foreign holding${approxFx.length === 1 ? ' has' : 's have'} no purchase exchange rate, so cost is converted at today's rate and currency movement is reported as a capital gain.`,
+        offenders: approxFx,
       });
 
   return checks;

@@ -9,7 +9,7 @@ import {
   STORE, PROFILE_SCOPED,
   type Budget, type Category, type Goal, type Holding, type Liability,
   type RecurringRule, type Txn, type Profile, type ProfileKind, type Insurance, type NetWorthSnapshot,
-  type ImportBatch,
+  type ImportBatch, type HoldingLot,
   type Account, type Posting, type Transfer, type PendingCapture,
   type WatchItem, type Dividend, type Alert,
 } from './types';
@@ -203,6 +203,7 @@ interface Data {
   insurances: Insurance[];
   snapshots: NetWorthSnapshot[];
   importBatches: ImportBatch[];
+  lots: HoldingLot[];
   accounts: Account[];
   postings: Posting[];
   transfers: Transfer[];
@@ -214,7 +215,7 @@ interface Data {
 
 const emptyData: Data = {
   txns: [], categories: [], budgets: [], goals: [], holdings: [],
-  liabilities: [], recurring: [], insurances: [], snapshots: [], importBatches: [],
+  liabilities: [], recurring: [], insurances: [], snapshots: [], importBatches: [], lots: [],
   accounts: [], postings: [], transfers: [], pendingCaptures: [],
   watchlist: [], dividends: [], alerts: [],
 };
@@ -548,7 +549,7 @@ export const useApp = create<AppState>((set, get) => ({
     const [
       txnsAll, budgetsAll, goalsAll, holdingsAll, liabilitiesAll, recurringAll,
       insurancesAll, snapshotsAll, pendingAll, watchAll, dividendsAll, alertsAll,
-      transfersAll, batchesAll,
+      transfersAll, batchesAll, lotsAll,
     ] = await Promise.all([
         listRecords<Txn>(key, STORE.txn, vaultId),
         listRecords<Budget>(key, STORE.budget, vaultId),
@@ -564,6 +565,7 @@ export const useApp = create<AppState>((set, get) => ({
         listRecords<Alert>(key, STORE.alert, vaultId),
         listRecords<Transfer>(key, STORE.transfer, vaultId),
         listRecords<ImportBatch>(key, STORE.importBatch, vaultId),
+        listRecords<HoldingLot>(key, STORE.lot, vaultId),
       ]);
 
     // Double-entry (v3): lazily backfill the active profile's chart of accounts
@@ -604,6 +606,7 @@ export const useApp = create<AppState>((set, get) => ({
       insurances: insurancesAll.filter(inProfile),
       snapshots: snapshotsAll.filter(inProfile).sort((a, b) => a.date - b.date),
       importBatches: batchesAll.filter(inProfile).sort((a, b) => b.at - a.at),
+      lots: lotsAll.filter(inProfile).sort((a, b) => a.purchaseDate - b.purchaseDate),
       accounts: accountsInProfile,
       postings: postingsAll.filter(inProfile),
       transfers: transfersAll.filter(inProfile).sort((a, b) => b.date - a.date),

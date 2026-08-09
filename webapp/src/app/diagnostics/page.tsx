@@ -55,10 +55,11 @@ export default function DiagnosticsPage() {
   const dividends = useApp((s) => s.dividends);
   const profiles = useApp((s) => s.profiles);
   const importBatches = useApp((s) => s.importBatches);
+  const lots = useApp((s) => s.lots);
 
   const checks = useMemo(
-    () => runDiagnostics({ txns, transfers, postings, accounts, categories, holdings, dividends }),
-    [txns, transfers, postings, accounts, categories, holdings, dividends],
+    () => runDiagnostics({ txns, transfers, postings, accounts, categories, holdings, dividends, lots }),
+    [txns, transfers, postings, accounts, categories, holdings, dividends, lots],
   );
   const level = worstLevel(checks);
 
@@ -70,6 +71,7 @@ export default function DiagnosticsPage() {
     ['Categories', categories.length],
     ['Holdings', holdings.length],
     ['Dividends', dividends.length],
+    ['Purchase lots', lots.length],
     ['Profiles', profiles.length],
     ['Imports', importBatches.length],
   ];

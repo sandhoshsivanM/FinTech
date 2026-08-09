@@ -17,6 +17,7 @@ import { Button, Field, Input, Select, GlassCard, Chip } from './ui';
 import { DateInput } from './DateInput';
 import { NumberInput } from './NumberInput';
 import { isFixedIncome, PAYOUT_LABEL } from '@/domain/fixedIncome';
+import { CURRENCIES } from '@/domain/currency';
 import { Combobox } from './Combobox';
 import { useConfirm } from './Confirm';
 
@@ -25,6 +26,7 @@ const BLANK = {
   assetType: 'equity_etf' as AssetType, firstPurchaseDate: '',
   sector: '', marketCapBand: '', country: '',
   couponRatePct: '', maturityDate: '', payoutFrequency: 'cumulative',
+  currency: 'INR', fxRateAtPurchase: '',
 };
 
 /* -------------------------------------------------------------------------- */
@@ -51,6 +53,8 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
     couponRatePct: editing.couponRatePct ?? '',
     maturityDate: editing.maturityDate ? new Date(editing.maturityDate).toISOString().slice(0, 10) : '',
     payoutFrequency: editing.payoutFrequency ?? 'cumulative',
+    currency: editing.currency ?? 'INR',
+    fxRateAtPurchase: editing.fxRateAtPurchase ?? '',
   } : BLANK));
 
   // A bond or FD is valued by accrual, not by price, so it needs a rate and a
@@ -92,6 +96,11 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
       couponRatePct: fixedIncome && f.couponRatePct.trim() ? f.couponRatePct.trim() : null,
       maturityDate: fixedIncome && f.maturityDate ? new Date(f.maturityDate).getTime() : null,
       payoutFrequency: fixedIncome ? (f.payoutFrequency as Holding['payoutFrequency']) : null,
+      // INR is the base, so recording it explicitly would be noise. A purchase
+      // rate only means anything for a foreign holding.
+      currency: f.currency && f.currency !== 'INR' ? f.currency : null,
+      fxRateAtPurchase: f.currency !== 'INR' && f.fxRateAtPurchase.trim()
+        ? f.fxRateAtPurchase.trim() : null,
     } as unknown as Holding & { id: string } & Record<string, unknown>);
     onDone();
   };
@@ -161,6 +170,17 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
         <Field label="Country" hint="Two-letter code, e.g. IN">
           <Input value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })} placeholder="IN" maxLength={2} />
         </Field>
+
+        <Field label="Currency" hint="Currency of the cost and price above">
+          <Select value={f.currency} onChange={(e) => setF({ ...f, currency: e.target.value })}>
+            {CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.name}</option>)}
+          </Select>
+        </Field>
+        {f.currency !== 'INR' && (
+          <Field label="Exchange rate at purchase" hint={`INR per 1 ${f.currency}. Blank uses today's rate.`}>
+            <NumberInput value={f.fxRateAtPurchase} onChange={(v) => setF({ ...f, fxRateAtPurchase: v })} placeholder="83.30" />
+          </Field>
+        )}
 
         {fixedIncome && (
           <>
