@@ -83,7 +83,10 @@ export function rowDayPct(h: Holding, anyReal: boolean, demo: boolean): number |
 export function priceAsOfLabel(holdings: Holding[], now: number): string {
   const stamps = holdings.filter(isPriced).map((h) => h.priceAsOf).filter((t): t is number => t != null);
   if (stamps.length === 0) return 'Against yesterday’s close';
-  const newest = Math.max(...stamps);
+  // Reduced, not `Math.max(...stamps)`: spreading an array into an argument
+  // list throws `RangeError` once a portfolio is large enough, and the failure
+  // would land on the dashboard of exactly the users who hold the most.
+  const newest = stamps.reduce((m, t) => (t > m ? t : m), stamps[0]);
   if (dayKey(new Date(newest)) === dayKey(new Date(now))) return 'Against yesterday’s close';
   return `Prices from ${formatDayMonth(newest)}`;
 }

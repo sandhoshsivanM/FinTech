@@ -57,10 +57,11 @@ export default function DiagnosticsPage() {
   const importBatches = useApp((s) => s.importBatches);
   const lots = useApp((s) => s.lots);
   const unreadableRecords = useApp((s) => s.unreadableRecords);
+  const attachmentIds = useApp((s) => s.attachmentIds);
 
   const checks = useMemo(
-    () => runDiagnostics({ txns, transfers, postings, accounts, categories, holdings, dividends, lots, unreadableRecords }),
-    [txns, transfers, postings, accounts, categories, holdings, dividends, lots, unreadableRecords],
+    () => runDiagnostics({ txns, transfers, postings, accounts, categories, holdings, dividends, lots, unreadableRecords, attachmentIds }),
+    [txns, transfers, postings, accounts, categories, holdings, dividends, lots, unreadableRecords, attachmentIds],
   );
   const level = worstLevel(checks);
 

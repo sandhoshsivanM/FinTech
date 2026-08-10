@@ -5,7 +5,7 @@ import { deriveKey, encryptJson, decryptJson, randomBytes, bufToB64, b64ToBuf, t
 import { BackupError } from './backupError';
 import { decodeBackup, encodeBackup } from './backupFormat';
 import {
-  clearVault, listRecords, getRecord, putRecord, deleteRecord, applyMutations,
+  clearVault, listRecords, listRecordIds, getRecord, putRecord, deleteRecord, applyMutations,
   type Mutation, type ReadFailure,
 } from './repo';
 import { D, ZERO } from './money';
@@ -301,6 +301,12 @@ interface Data {
    * them lets the loss reach the user's only copy.
    */
   unreadableRecords: ReadFailure[];
+  /**
+   * Ids of the stored receipts. Ids only — the payloads are base64 images and
+   * holding them all in memory would be pointless. Diagnostics uses these to
+   * find receipts nothing references and references with no receipt.
+   */
+  attachmentIds: string[];
   txns: Txn[];
   categories: Category[];
   budgets: Budget[];
@@ -325,7 +331,7 @@ const emptyData: Data = {
   txns: [], categories: [], budgets: [], goals: [], holdings: [],
   liabilities: [], recurring: [], insurances: [], snapshots: [], importBatches: [], lots: [],
   accounts: [], postings: [], transfers: [], pendingCaptures: [],
-  watchlist: [], dividends: [], alerts: [], unreadableRecords: [],
+  watchlist: [], dividends: [], alerts: [], unreadableRecords: [], attachmentIds: [],
 };
 
 interface AppState extends Data {
@@ -734,6 +740,7 @@ export const useApp = create<AppState>((set, get) => ({
       dividends: dividendsAll.filter(inProfile).sort((a, b) => b.payDate - a.payDate),
       alerts: alertsAll.filter(inProfile).sort((a, b) => b.createdAt - a.createdAt),
       unreadableRecords: failures,
+      attachmentIds: await listRecordIds(STORE.attachment, vaultId),
     });
   },
 
@@ -815,12 +822,15 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   putAttachment: async (file) => {
-    const { key, vaultId } = get();
+    const { key, vaultId, activeProfileId } = get();
     if (!key) throw new Error('Vault is locked');
     const data = bufToB64(await file.arrayBuffer());
     const id = uid();
+    // `attachment` is in PROFILE_SCOPED, but this wrote no profileId — so
+    // receipts were effectively vault-wide while every other part of the app
+    // treated them as belonging to a profile.
     await putRecord(key, STORE.attachment, vaultId, id, {
-      id, mime: file.type || 'image/jpeg', data,
+      id, vaultId, profileId: activeProfileId, mime: file.type || 'image/jpeg', data,
     });
     return id;
   },

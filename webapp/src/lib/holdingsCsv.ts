@@ -223,6 +223,9 @@ export function planImport(
       lastPrice: priced ? r.lastPrice : (prior?.lastPrice ?? null),
       previousClose: priced ? (r.previousClose || null) : (prior?.previousClose ?? null),
       priceAsOf: priced ? ctx.now : (prior?.priceAsOf ?? null),
+      // Records where the figure came from, so the UI can say so and a manual
+      // override is never mistaken for a broker's number (§7.1).
+      priceSource: priced ? ('import' as const) : (prior?.priceSource ?? null),
       assetType: prior?.assetType ?? r.assetType,
       firstPurchaseDate: prior?.firstPurchaseDate ?? null,
     } satisfies Holding;

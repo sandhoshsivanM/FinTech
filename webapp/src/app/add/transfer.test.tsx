@@ -7,6 +7,10 @@ import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
 import type { Account } from '@/lib/types';
 import AddTransactionPage from './page';
+import { ConfirmProvider } from '@/components/Confirm';
+
+/** The page asks for confirmation on high-impact edits, so it needs the host. */
+const renderPage = () => render(<ConfirmProvider><AddTransactionPage /></ConfirmProvider>);
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
@@ -44,7 +48,7 @@ describe('add screen — transfers', () => {
 
   test('a transfer saves as a Transfer, not a transaction', async () => {
     const user = userEvent.setup();
-    render(<AddTransactionPage />);
+    renderPage();
 
     await user.click(screen.getByRole('button', { name: 'Transfer' }));
     await user.type(screen.getByLabelText('Amount'), '25000');
@@ -63,7 +67,7 @@ describe('add screen — transfers', () => {
 
   test('will not save a transfer to the same account', async () => {
     const user = userEvent.setup();
-    render(<AddTransactionPage />);
+    renderPage();
 
     await user.click(screen.getByRole('button', { name: 'Transfer' }));
     await user.type(screen.getByLabelText('Amount'), '25000');
@@ -76,7 +80,7 @@ describe('add screen — transfers', () => {
 
   test('a transfer needs both ends before it can be saved', async () => {
     const user = userEvent.setup();
-    render(<AddTransactionPage />);
+    renderPage();
     await user.click(screen.getByRole('button', { name: 'Transfer' }));
     await user.type(screen.getByLabelText('Amount'), '500');
     expect(screen.getByRole('button', { name: 'Save Transfer' })).toBeDisabled();
@@ -84,7 +88,7 @@ describe('add screen — transfers', () => {
 
   test('an expense records the account it moved', async () => {
     const user = userEvent.setup();
-    render(<AddTransactionPage />);
+    renderPage();
 
     await user.type(screen.getByLabelText('Amount'), '1200');
     await user.selectOptions(screen.getByLabelText(/^Account/), 'a2');
@@ -99,7 +103,7 @@ describe('add screen — transfers', () => {
   test('with no accounts yet, a transaction still falls back to Cash', async () => {
     seed([]);
     const user = userEvent.setup();
-    render(<AddTransactionPage />);
+    renderPage();
 
     await user.type(screen.getByLabelText('Amount'), '300');
     await user.click(screen.getByRole('button', { name: 'Food' }));

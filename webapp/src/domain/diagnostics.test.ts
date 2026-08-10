@@ -25,6 +25,38 @@ const holding = (id: string, over: Partial<Holding> = {}): Holding => ({
 
 const find = (cs: ReturnType<typeof runDiagnostics>, id: string) => cs.find((c) => c.id === id)!;
 
+describe('receipts', () => {
+  // Deleting a transaction used to leave its receipt in the vault forever, and
+  // replacing one abandoned the old blob — both unreachable, both still riding
+  // along in every backup.
+  test('a receipt nothing points at is reported', () => {
+    const cs = runDiagnostics({ ...base, txns: [txn('t1')], attachmentIds: ['att-1'] });
+    const c = find(cs, 'attachment-links');
+    expect(c.level).toBe('warn');
+    expect(c.offenders).toEqual(['att-1']);
+  });
+
+  test('a transaction claiming a receipt that is gone is an error', () => {
+    const cs = runDiagnostics({
+      ...base, txns: [txn('t1', { attachmentRef: 'att-gone' })], attachmentIds: [],
+    });
+    const c = find(cs, 'attachment-links');
+    expect(c.level).toBe('error');
+    expect(c.offenders).toEqual(['t1']);
+  });
+
+  test('a matched pair passes', () => {
+    const cs = runDiagnostics({
+      ...base, txns: [txn('t1', { attachmentRef: 'att-1' })], attachmentIds: ['att-1'],
+    });
+    expect(find(cs, 'attachment-links').level).toBe('ok');
+  });
+
+  test('a vault with no receipts is not a fault', () => {
+    expect(find(runDiagnostics({ ...base, attachmentIds: [] }), 'attachment-links').level).toBe('ok');
+  });
+});
+
 describe('balance sheet', () => {
   // The Reports card used to print "the books are out by X — Diagnostics will
   // name it" while Diagnostics had no such check. Now it does, and X is a real

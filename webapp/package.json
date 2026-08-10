@@ -11,7 +11,9 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:cov": "vitest run --coverage"
+    "test:cov": "vitest run --coverage",
+    "icons": "node scripts/gen-icons.mjs",
+    "mark": "node scripts/extract-mark.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

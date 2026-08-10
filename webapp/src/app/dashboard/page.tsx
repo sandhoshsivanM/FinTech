@@ -95,6 +95,7 @@ export default function DashboardPage() {
   const period = useMemo(() => windowSummary(txns, month), [txns, month]);
 
   const portfolioValue = summary.current.toNumber();
+  const unpricedCount = useMemo(() => holdings.filter((h) => !h.lastPrice).length, [holdings]);
   const invested = summary.invested.toNumber();
   const totalPnl = summary.pnl.toNumber();
 
@@ -231,6 +232,14 @@ export default function DashboardPage() {
             <h1 className="text-[var(--fs-h1)] leading-[1.15] font-bold tracking-[-0.03em] font-display">Dashboard</h1>
             <p className="text-ink-soft text-sm mt-1.5">
               Net worth {mask(fmt.money(cash.plus(summary.current).minus(liab)))} · {holdings.length} positions
+              {/* The `lastPrice ?? avgCost` fallback was disclosed on
+                  Investments and Holdings but not here, so the headline figure
+                  quietly carried unpriced positions at cost (§7.1). */}
+              {unpricedCount > 0 && (
+                <span className="text-muted">
+                  {' '}· {unpricedCount} carried at cost
+                </span>
+              )}
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">

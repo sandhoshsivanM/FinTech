@@ -24,6 +24,14 @@ export interface Txn {
   note?: string | null;
   date: number; // epoch ms
   createdAt: number;
+  /**
+   * When this entry was last corrected. Absent means never edited.
+   *
+   * Not an audit trail — the previous values are gone. It exists so a reader
+   * can tell a record that has been changed since it was captured from one
+   * that has not, which matters when a figure disagrees with a statement.
+   */
+  updatedAt?: number;
   // Double-entry header (PRD §16): the money account the spend/income moves, and
   // an optional receipt attachment. Postings remain the authoritative ledger.
   accountId?: string | null;
@@ -87,6 +95,9 @@ export type AssetType =
   | 'real_estate' | 'crypto' | 'fd' | 'ppf_epf' | 'nps'
   | 'ssy' | 'sgb' | 'ulip';
 
+/** Provenance of a recorded price. See `Holding.priceSource`. */
+export type PriceSource = 'manual' | 'import';
+
 export interface Holding {
   id: string;
   vaultId: string;
@@ -115,6 +126,15 @@ export interface Holding {
    * implying "now". Absent means the prices predate this field.
    */
   priceAsOf?: number | null;
+  /**
+   * Where `lastPrice` came from.
+   *
+   * A hand-typed price and one read out of a broker export were previously
+   * indistinguishable, so nothing could weigh them against each other or tell
+   * the user which they were looking at (§7.1). Absent means unrecorded, which
+   * is not the same as manual.
+   */
+  priceSource?: PriceSource | null;
   /** Overrides the instrument-master sector lookup. */
   sector?: string | null;
   /** ISO 3166-1 alpha-2, e.g. 'IN'. Drives the country allocation. */
@@ -373,6 +393,14 @@ export interface Transfer {
   date: number; // epoch ms
   note?: string | null;
   createdAt: number;
+  /**
+   * When this entry was last corrected. Absent means never edited.
+   *
+   * Not an audit trail — the previous values are gone. It exists so a reader
+   * can tell a record that has been changed since it was captured from one
+   * that has not, which matters when a figure disagrees with a statement.
+   */
+  updatedAt?: number;
   /** Ticked off against a bank statement — see `Txn.cleared`. */
   cleared?: boolean;
 }

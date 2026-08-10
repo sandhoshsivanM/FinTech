@@ -41,7 +41,14 @@ export interface InvestmentTotals {
   unpricedCount: number;
   /** How much of `marketValue` is carried at cost rather than a real quote. */
   indicativeValue: Decimal;
-  /** Most recent price observation, or null. Always null on web — see above. */
+  /**
+   * The newest price observation across the priced holdings, or null when
+   * nothing carries a date.
+   *
+   * Was declared and hard-coded null at every construction site, so any screen
+   * that trusted it showed nothing. It is real now that holdings record
+   * `priceAsOf`, and it is what lets a total say how old it is.
+   */
   lastPricedAt: number | null;
 }
 
@@ -89,6 +96,7 @@ export function investmentTotals(holdings: Holding[]): InvestmentTotals {
   let cost = ZERO;
   let indicative = ZERO;
   let unpriced = 0;
+  let newest: number | null = null;
 
   for (const h of holdings) {
     const v = holdingView(h);
@@ -99,6 +107,8 @@ export function investmentTotals(holdings: Holding[]): InvestmentTotals {
     if (h.lastPrice == null || h.lastPrice === '') {
       unpriced += 1;
       indicative = indicative.plus(v.current);
+    } else if (h.priceAsOf != null && (newest == null || h.priceAsOf > newest)) {
+      newest = h.priceAsOf;
     }
   }
 
@@ -109,7 +119,7 @@ export function investmentTotals(holdings: Holding[]): InvestmentTotals {
     positionCount: holdings.length,
     unpricedCount: unpriced,
     indicativeValue: indicative,
-    lastPricedAt: null,
+    lastPricedAt: newest,
   };
 }
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The Vault plate. Matches the dark theme's --bg and the plate the
+         generated PNG icons are composited on. -->
+    <color name="ic_launcher_background">#070D0A</color>
+</resources>

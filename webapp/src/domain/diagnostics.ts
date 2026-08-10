@@ -39,6 +39,8 @@ export interface DiagnosticsInput {
   lots?: HoldingLot[];
   /** Records that would not decrypt on the last load. Optional; empty is normal. */
   unreadableRecords?: { type: string; id: string }[];
+  /** Ids of stored receipts. Omit to skip the receipt checks entirely. */
+  attachmentIds?: string[];
   txns: Txn[];
   transfers: Transfer[];
   postings: Posting[];
@@ -64,6 +66,7 @@ export function runDiagnostics(input: DiagnosticsInput): Check[] {
   const { txns, transfers, postings, accounts, categories, holdings, dividends } = input;
   const lots = input.lots ?? [];
   const unreadable = input.unreadableRecords ?? [];
+  const attachmentIds = input.attachmentIds;
   const checks: Check[] = [];
 
   /* ---- Storage readability --------------------------------------------- */
@@ -134,6 +137,39 @@ export function runDiagnostics(input: DiagnosticsInput): Check[] {
           ? bs.unclassified.map((l) => l.id).slice(0, 20)
           : unbalanced.slice(0, 20),
       });
+
+  /* ---- Receipts -------------------------------------------------------- */
+
+  // Two failures, opposite directions. A receipt nothing points at is dead
+  // weight that still inflates every backup; a transaction pointing at a
+  // receipt that is gone shows an "attached" badge that opens nothing.
+  if (attachmentIds != null) {
+    const stored = new Set(attachmentIds);
+    const referenced = new Set(txns.map((t) => t.attachmentRef).filter((r): r is string => !!r));
+    const orphans = attachmentIds.filter((id) => !referenced.has(id));
+    const dangling = txns.filter((t) => t.attachmentRef && !stored.has(t.attachmentRef));
+
+    if (dangling.length > 0) {
+      checks.push({
+        id: 'attachment-links', label: 'Receipts', level: 'error',
+        detail: `${dangling.length} transaction${dangling.length === 1 ? '' : 's'} claim a receipt that is no longer in the vault, so the attachment cannot be opened.`,
+        offenders: dangling.map((t) => t.id).slice(0, 20),
+      });
+    } else if (orphans.length > 0) {
+      checks.push({
+        id: 'attachment-links', label: 'Receipts', level: 'warn',
+        detail: `${orphans.length} stored receipt${orphans.length === 1 ? ' is' : 's are'} not attached to any transaction. ${orphans.length === 1 ? 'It' : 'They'} take up space and are included in every backup.`,
+        offenders: orphans.slice(0, 20),
+      });
+    } else {
+      checks.push({
+        id: 'attachment-links', label: 'Receipts', level: 'ok',
+        detail: attachmentIds.length === 0
+          ? 'No receipts stored.'
+          : `All ${attachmentIds.length} stored receipt${attachmentIds.length === 1 ? ' is' : 's are'} attached to a transaction.`,
+      });
+    }
+  }
 
   /* ---- Money values ---------------------------------------------------- */
 

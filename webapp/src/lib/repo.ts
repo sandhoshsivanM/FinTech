@@ -36,6 +36,18 @@ export async function listRecords<T>(
   return out;
 }
 
+/**
+ * The ids of every record of a type, without decrypting any of them.
+ *
+ * Dexie's primary key is `<type>:<id>`, so the ids are already in the index.
+ * Used for attachments, where the payload is a base64 image and decrypting the
+ * lot just to learn which ids exist would be absurd.
+ */
+export async function listRecordIds(type: string, vaultId: string): Promise<string[]> {
+  const keys = await db.records.where('[type+vaultId]').equals([type, vaultId]).primaryKeys();
+  return (keys as string[]).map((k) => k.slice(type.length + 1));
+}
+
 export async function getRecord<T>(
   key: CryptoKey,
   type: string,

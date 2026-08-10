@@ -4,10 +4,15 @@ import Image from 'next/image';
  * The Khazana mark.
  *
  * This renders the SUPPLIED brand artwork — the rendered gold hexagon with its
- * keyhole and K — not a redrawn approximation of it. The master lives at
- * `public/khazana-mark.png` (1024px, transparent) and every platform icon is a
- * resize of that same file, so the app, the Mac build, the favicon and the
- * installer can never drift from each other or from the brand sheet.
+ * keyhole and K — not a redrawn approximation of it. The master is lifted off
+ * the brand sheet by `scripts/extract-mark.mjs` into
+ * `assets/brand/khazana-mark.png` (1024px, transparent), and every platform
+ * icon is generated from that one file by `scripts/gen-icons.mjs`. The app, the
+ * Mac build, the favicon and the installer therefore cannot drift from each
+ * other or from the brand sheet — which is exactly what had happened: macOS
+ * carried a different render, the PWA manifest pointed at a flat vector that
+ * was a different drawing again, and Flutter web still shipped the stock
+ * Flutter logo.
  *
  * Because it is raster, it is used at 24px and above. Below that the 3D bevel
  * and the keyhole stop resolving, so the favicon set is pre-composited on the

@@ -23,7 +23,7 @@ import { Kpi, KpiRow } from '@/components/Kpi';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { holdingView, ASSET_META } from '@/domain/portfolio';
-import { computeGain, TAX_RULES } from '@/domain/tax';
+import { estimatePortfolioTax, TAX_RULES } from '@/domain/tax';
 import { short } from '@/lib/format';
 
 interface TaxRow {
@@ -42,29 +42,48 @@ export default function TaxPage() {
   const fmt = useFmt();
   const now = new Date();
 
-  const rows = useMemo<TaxRow[]>(() => holdings.map((h) => {
-    const v = holdingView(h);
-    const asset = ASSET_META[h.assetType];
-    if (h.firstPurchaseDate == null || h.firstPurchaseDate <= 0) {
-      // No purchase date means no holding period — the gain type is genuinely
-      // unknown, and guessing would put a number on the wrong side of the
-      // long-term threshold.
+  // Priced as one portfolio, not position by position: the long-term exemption
+  // is a single annual allowance, and estimating each holding on its own gave
+  // every one of them the full amount (§8).
+  const estimate = useMemo(() => estimatePortfolioTax(
+    holdings
+      .filter((h) => h.firstPurchaseDate != null && h.firstPurchaseDate > 0)
+      .map((h) => {
+        const v = holdingView(h);
+        return {
+          id: h.id, assetType: h.assetType,
+          firstPurchase: new Date(h.firstPurchaseDate!),
+          buyValue: v.invested, saleValue: v.current,
+        };
+      }),
+    now,
+  ), [holdings, now]);
+
+  const rows = useMemo<TaxRow[]>(() => {
+    const byId = new Map(estimate.rows.map((r) => [r.id, r]));
+    return holdings.map((h) => {
+      const v = holdingView(h);
+      const asset = ASSET_META[h.assetType];
+      const g = byId.get(h.id);
+      if (!g) {
+        // No purchase date means no holding period — the gain type is genuinely
+        // unknown, and guessing would put a number on the wrong side of the
+        // long-term threshold.
+        return {
+          id: h.id, symbol: h.symbol, assetLabel: asset.label,
+          gain: v.pnl.toNumber(), gainType: null, rateLabel: 'Purchase date missing', tax: 0, heldDays: null,
+        };
+      }
       return {
         id: h.id, symbol: h.symbol, assetLabel: asset.label,
-        gain: v.pnl.toNumber(), gainType: null, rateLabel: 'Purchase date missing', tax: 0, heldDays: null,
+        gain: g.gain.toNumber(),
+        gainType: g.gainType,
+        rateLabel: g.rateLabel,
+        tax: g.estimatedTax.toNumber(),
+        heldDays: Math.floor((now.getTime() - h.firstPurchaseDate!) / 86400_000),
       };
-    }
-    const bought = new Date(h.firstPurchaseDate);
-    const g = computeGain(h.assetType, bought, now, v.invested, v.current);
-    return {
-      id: h.id, symbol: h.symbol, assetLabel: asset.label,
-      gain: g.gain.toNumber(),
-      gainType: g.gainType,
-      rateLabel: g.rateLabel,
-      tax: g.estimatedTax.toNumber(),
-      heldDays: Math.floor((now.getTime() - h.firstPurchaseDate) / 86400_000),
-    };
-  }), [holdings, now]);
+    });
+  }, [holdings, estimate, now]);
 
   const priced = rows.filter((r) => r.gainType != null);
   const unknown = rows.filter((r) => r.gainType == null);
@@ -114,17 +133,34 @@ export default function TaxPage() {
   return (
     <Stagger className="grid gap-6">
       <StaggerItem>
-        <PageIntro title="Tax Center" subtitle="Estimated capital gains if every position were sold today · India FY25 rules" />
+        <PageIntro title="Tax Center" subtitle={`Estimated capital gains if every position were sold today · ${estimate.ruleSet}`} />
       </StaggerItem>
 
       <StaggerItem>
         <KpiRow cols={4}>
-          <Kpi label="Est. total tax" numeric={sum(priced, 'tax')} format={short} icon={Landmark} tone="danger" footer={`Across ${priced.length} position${priced.length === 1 ? '' : 's'}`} />
+          <Kpi label="Est. total tax" numeric={estimate.estimatedTax.toNumber()} format={short} icon={Landmark} tone="danger"
+            footer={estimate.exemptionUsed.gt(0)
+              ? `After ${fmt.money(estimate.exemptionUsed)} exemption`
+              : `Across ${priced.length} position${priced.length === 1 ? '' : 's'}`} />
           <Kpi label="Long-term gain" numeric={sum(ltcg, 'gain')} format={short} icon={Clock} tone="success" footer={`${ltcg.length} holding${ltcg.length === 1 ? '' : 's'} · est. ${fmt.money(sum(ltcg, 'tax'))}`} />
           <Kpi label="Short-term gain" numeric={sum(stcg, 'gain')} format={short} icon={TrendingUp} tone="warning" footer={`${stcg.length} holding${stcg.length === 1 ? '' : 's'} · est. ${fmt.money(sum(stcg, 'tax'))}`} />
           <Kpi label="Unclassified" value={unknown.length ? String(unknown.length) : null} icon={CircleHelp} tone="violet" footer={unknown.length ? 'Missing a purchase date' : undefined} />
         </KpiRow>
       </StaggerItem>
+
+      {estimate.slabCount > 0 && (
+        <StaggerItem>
+          <div className="card p-4 flex items-start gap-3 border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
+            <span className="w-8 h-8 shrink-0 rounded-[10px] grid place-items-center bg-warning-soft text-warning"><CircleHelp size={16} /></span>
+            <p className="text-[13px] text-ink-soft leading-relaxed">
+              <b className="text-ink font-semibold">{fmt.money(estimate.slabGain)} of gain is taxed at your slab rate.</b>{' '}
+              {estimate.slabCount} position{estimate.slabCount === 1 ? '' : 's'} — debt funds, bonds, FDs and NPS —
+              are taxed at your marginal rate, which Khazana does not know. That gain is <b>not</b> included in the
+              estimate above, so your actual bill will be higher by whatever your slab implies.
+            </p>
+          </div>
+        </StaggerItem>
+      )}
 
       {unknown.length > 0 && (
         <StaggerItem>
@@ -148,7 +184,10 @@ export default function TaxPage() {
             searchable={(r) => `${r.symbol} ${r.assetLabel}`} searchPlaceholder="Search holdings…"
             initialSort={{ key: 'tax', dir: 'desc' }} exportName="khazana-capital-gains" />
           <p className="px-5 py-3 text-[11px] text-muted border-t border-line bg-fill">
-            Estimates only, using {Object.keys(TAX_RULES).length} asset-type rules for India FY25. Surcharge, cess, set-offs and carried-forward losses are not modelled. This is not tax advice.
+            Estimates only, using {Object.keys(TAX_RULES).length} asset-type rules · {estimate.ruleSet} · rule set v{estimate.ruleSchemaVersion}.
+            The long-term exemption is applied once across the whole portfolio, as it would be on a return.
+            Surcharge, cess, set-offs, carried-forward losses and indexation are not modelled. CAS, AIS/26AS import
+            and filing-ready computation are deferred features, not omissions. This is not tax advice.
           </p>
         </section>
       </StaggerItem>

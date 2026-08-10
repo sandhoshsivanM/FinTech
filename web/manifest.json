@@ -3,9 +3,9 @@
     "short_name": "Khazana",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "Khazana — offline-first, private personal finance & wealth management.",
+    "background_color": "#070D0A",
+    "theme_color": "#070D0A",
+    "description": "Khazana \u2014 offline-first, private personal finance & wealth management.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

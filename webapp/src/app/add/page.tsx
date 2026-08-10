@@ -16,7 +16,18 @@ import {
   GlassCard, PageIntro, Button, Segmented, Field, Input, Select,
 } from '@/components/ui';
 import { DateInput } from '@/components/DateInput';
+import { useConfirm } from '@/components/Confirm';
+import { formatDate } from '@/lib/dateFormat';
+import { startOfDay } from '@/domain/period';
 import { NumberInput } from '@/components/NumberInput';
+
+/**
+ * Receipt size cap. Base64 inflates a file by a third, the result lives in one
+ * encrypted record, and it rides along in every future backup — so an
+ * unbounded photo is a permanent tax on every export.
+ */
+const MAX_RECEIPT_MB = 4;
+const MAX_RECEIPT_BYTES = MAX_RECEIPT_MB * 1024 * 1024;
 
 // ---- Icon map: category.icon string → lucide component ----
 const ICON_MAP: Record<string, ElementType> = {
@@ -52,6 +63,7 @@ export default function AddTransactionPage() {
   const vaultId = useApp((s) => s.vaultId);
   const put = useApp((s) => s.put);
   const fmt = useFmt();
+  const confirm = useConfirm();
 
   const money = useMemo(() => moneyAccounts(accounts), [accounts]);
 
@@ -83,6 +95,8 @@ export default function AddTransactionPage() {
   const [saving, setSaving] = useState(false);
   const [attaching, setAttaching] = useState(false);
   const [attachError, setAttachError] = useState<string | null>(null);
+  /** Receipts this edit replaced, deleted once the edit is saved. */
+  const [staleRefs, setStaleRefs] = useState<string[]>([]);
 
   // Edit mode: prefill from ?id= (read off the URL to avoid Suspense constraints)
   const [editId, setEditId] = useState<string | null>(null);
@@ -147,8 +161,10 @@ export default function AddTransactionPage() {
     try {
       const next = await putAttachment(file);
       // Replacing a receipt used to abandon the previous blob in the vault:
-      // unreachable, uncounted, and still inflating every export.
-      if (attachmentRef) await del(STORE.attachment, attachmentRef);
+      // unreachable, uncounted, and still inflating every export. It is retired
+      // on save rather than now, because deleting it here and then cancelling
+      // would leave the saved transaction pointing at a receipt that is gone.
+      if (attachmentRef) setStaleRefs((r) => [...r, attachmentRef]);
       setAttachmentRef(next);
     } catch (e) {
       setAttachError(
@@ -159,19 +175,24 @@ export default function AddTransactionPage() {
     }
   }
 
-  async function handleRemoveAttachment() {
-    const ref = attachmentRef;
+  function handleRemoveAttachment() {
+    if (attachmentRef) setStaleRefs((r) => [...r, attachmentRef]);
     setAttachmentRef(null);
     setAttachError(null);
-    if (ref) {
+  }
+
+  /** Drops the receipts this edit replaced, once the edit is actually saved. */
+  async function retireStaleAttachments() {
+    for (const ref of staleRefs) {
+      if (ref === attachmentRef) continue;
       try {
         await del(STORE.attachment, ref);
       } catch {
-        // The reference is already gone from the form, so the receipt will not
-        // be saved onto the transaction either way. A stranded blob is caught
-        // by the orphan-attachment check in Diagnostics.
+        // A blob left behind is inert and reported by the orphan-attachment
+        // check in Diagnostics; failing the save over it would be worse.
       }
     }
+    setStaleRefs([]);
   }
 
   // Derived
@@ -201,8 +222,50 @@ export default function AddTransactionPage() {
     }
   }
 
+  /**
+   * What this edit is about to change, in the user's terms.
+   *
+   * Amount, date and account are the three fields that move a balance, a budget
+   * and a report at once — an accidental keystroke in any of them silently
+   * rewrites history, so they are confirmed rather than just saved (§6.3).
+   * Merchant, note and category are cheap to get wrong and cheap to fix.
+   */
+  function highImpactChanges(): string[] {
+    if (!editId) return [];
+    const original = useApp.getState().txns.find((t) => t.id === editId)
+      ?? useApp.getState().transfers.find((t) => t.id === editId);
+    if (!original) return [];
+
+    const changes: string[] = [];
+    const nextAmount = D(amountRaw.replace(/,/g, '')).toFixed(2);
+    if (!D(original.amount).eq(D(nextAmount))) {
+      changes.push(`amount ${fmt.money(D(original.amount))} → ${fmt.money(D(nextAmount))}`);
+    }
+    const nextDate = new Date(date).getTime();
+    if (startOfDay(original.date) !== startOfDay(nextDate)) {
+      changes.push(`date ${formatDate(original.date)} → ${formatDate(nextDate)}`);
+    }
+    const originalAccount = 'fromAccountId' in original ? original.fromAccountId : original.accountId;
+    if (originalAccount && originalAccount !== accountId) {
+      const name = (id: string) => accounts.find((a) => a.id === id)?.name ?? 'Cash';
+      changes.push(`account ${name(originalAccount)} → ${name(accountId)}`);
+    }
+    return changes;
+  }
+
   async function handleSave() {
     if (!canSave) return;
+
+    const changes = highImpactChanges();
+    if (changes.length > 0) {
+      const ok = await confirm({
+        title: 'Change this transaction?',
+        message: `This edit changes ${changes.join(', ')}. Account balances, budgets and reports will all be recalculated from the corrected entry.`,
+        confirmLabel: 'Save change',
+      });
+      if (!ok) return;
+    }
+
     setSaving(true);
     try {
       const amount = String(D(amountRaw.replace(/,/g, '')).toFixed(2));
@@ -216,6 +279,7 @@ export default function AddTransactionPage() {
           date: new Date(date).getTime(),
           note: note.trim() || null,
           createdAt,
+          ...(editId ? { updatedAt: Date.now() } : {}),
         });
       } else {
         await put(STORE.txn, {
@@ -228,11 +292,14 @@ export default function AddTransactionPage() {
           note: note.trim() || null,
           date: new Date(date).getTime(),
           createdAt,
+          ...(editId ? { updatedAt: Date.now() } : {}),
           attachmentRef,
           accountId: accountId || cashAcctId(activeProfileId),
         });
         if (accountId) lsSet(LAST_ACCOUNT_KEY, accountId);
       }
+      // Safe now: the record that references the surviving receipt is written.
+      await retireStaleAttachments();
       router.push(editId ? '/transactions' : '/dashboard');
     } finally {
       setSaving(false);
@@ -400,7 +467,7 @@ export default function AddTransactionPage() {
           {attachmentRef ? (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-income font-medium">Receipt attached</span>
-              <Button variant="ghost" onClick={() => { void handleRemoveAttachment(); }}>
+              <Button variant="ghost" onClick={handleRemoveAttachment}>
                 <X size={14} /> Remove
               </Button>
             </div>

@@ -36,10 +36,14 @@ export default function SafetyNetPage() {
   const health = get('health');
   const ringColor = sn.score >= 70 ? 'var(--income)' : sn.score >= 40 ? 'var(--warn)' : 'var(--expense)';
 
+  // `lastPrice ?? avgCost` again: a position with no quote is carried at what
+  // it cost. Marked, because a retirement figure that quietly assumes zero
+  // growth is the kind of number people plan around (§7.1).
   const retireHoldings = holdings
     .filter((h) => RETIREMENT.has(h.assetType))
-    .map((h) => ({ h, value: D(h.quantity).times(D(h.lastPrice ?? h.avgCost)) }))
+    .map((h) => ({ h, value: D(h.quantity).times(D(h.lastPrice ?? h.avgCost)), atCost: !h.lastPrice }))
     .sort((a, b) => b.value.minus(a.value).toNumber());
+  const retireAtCost = retireHoldings.filter((r) => r.atCost).length;
 
   return (
     <div className="space-y-6">
@@ -119,20 +123,30 @@ export default function SafetyNetPage() {
           />
         ) : (
           <div className="divide-y divide-[var(--line)]">
-            {retireHoldings.map(({ h, value }) => (
+            {retireHoldings.map(({ h, value, atCost }) => (
               <div key={h.id} className="flex items-center gap-3 py-2.5">
                 <span className="text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
                   style={{ background: ASSET_META[h.assetType].color + '1a', color: ASSET_META[h.assetType].color }}>
                   {ASSET_META[h.assetType].label}
                 </span>
                 <span className="flex-1 min-w-0 truncate font-medium">{h.symbol}</span>
-                <span className="font-semibold tnum">{m(value)}</span>
+                <span className="font-semibold tnum">
+                  {m(value)}
+                  {atCost && <span className="ml-1 text-[11px] font-normal text-muted">at cost</span>}
+                </span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2.5 mt-0.5">
               <span className="text-sm text-ink-soft">Total safe & retirement</span>
               <span className="font-bold tnum">{m(retireHoldings.reduce((s, r) => s.plus(r.value), D(0)))}</span>
             </div>
+            {retireAtCost > 0 && (
+              <p className="pt-2 text-xs text-muted leading-relaxed">
+                {retireAtCost} of these {retireAtCost === 1 ? 'has' : 'have'} no recorded price and
+                {retireAtCost === 1 ? ' is' : ' are'} counted at what {retireAtCost === 1 ? 'it' : 'they'} cost,
+                so this total assumes no growth on {retireAtCost === 1 ? 'it' : 'them'}.
+              </p>
+            )}
           </div>
         )}
       </GlassCard>

@@ -93,6 +93,14 @@ describe('the per-row rule', () => {
 describe('priceAsOfLabel', () => {
   const now = Date.UTC(2026, 7, 7, 6, 0); // 07 Aug 2026, 11:30 IST
 
+  test('a large portfolio does not blow the argument limit', () => {
+    // `Math.max(...stamps)` threw RangeError past ~100k entries, so the
+    // dashboards that failed would have been the biggest portfolios.
+    const many = Array.from({ length: 200_000 }, (_, i) =>
+      h({ symbol: `S${i}`, lastPrice: '110', previousClose: '100', priceAsOf: now - i }));
+    expect(() => priceAsOfLabel(many, now)).not.toThrow();
+  });
+
   test('prices taken today read as a live comparison', () => {
     const book = [h({ symbol: 'A', lastPrice: '110', previousClose: '100', priceAsOf: now - 3_600_000 })];
     expect(priceAsOfLabel(book, now)).toBe('Against yesterday’s close');

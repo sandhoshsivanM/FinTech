@@ -28,8 +28,12 @@ export default function MarketsPage() {
   const session = marketState();
 
   const universe = useMemo(() => {
-    const held = holdings.map((h) => ({ symbol: h.symbol, name: h.name ?? h.symbol, price: D(h.lastPrice ?? h.avgCost).toNumber(), owned: true }));
-    const watched = watchlist.map((w) => ({ symbol: w.symbol, name: w.name ?? w.symbol, price: w.lastPrice ? D(w.lastPrice).toNumber() : 0, owned: false }));
+    // A held position with no price falls back to its average cost, which is
+    // disclosed wherever the total is shown. A watchlist item has no cost to
+    // fall back to, so its price stays null and renders as "no price" — it used
+    // to render as ₹0, the one place a missing price silently became zero (§7.1).
+    const held = holdings.map((h) => ({ symbol: h.symbol, name: h.name ?? h.symbol, price: D(h.lastPrice ?? h.avgCost).toNumber(), unpriced: !h.lastPrice, owned: true }));
+    const watched = watchlist.map((w) => ({ symbol: w.symbol, name: w.name ?? w.symbol, price: w.lastPrice ? D(w.lastPrice).toNumber() : null, unpriced: !w.lastPrice, owned: false }));
     return [...held, ...watched].map((x) => ({ ...x, dayPct: demoDayChangePct(x.symbol) }));
   }, [holdings, watchlist]);
 
@@ -112,7 +116,14 @@ export default function MarketsPage() {
                         <span className="block text-[11.5px] text-muted">{m.symbol} · {m.owned ? 'Held' : 'Watchlist'}</span>
                       </span>
                       <span className="text-right">
-                        {m.price > 0 && <span className="block text-[13px] font-semibold tnum">{fmt.money(m.price)}</span>}
+                        {m.price != null && m.price > 0
+                          ? (
+                            <span className="block text-[13px] font-semibold tnum">
+                              {fmt.money(m.price)}
+                              {m.unpriced && <span className="text-muted font-normal"> at cost</span>}
+                            </span>
+                          )
+                          : <span className="block text-[13px] text-muted">No price recorded</span>}
                         <span className={`block text-[12px] font-semibold tnum ${m.dayPct >= 0 ? 'text-success' : 'text-danger'}`}>{pct(m.dayPct)}</span>
                       </span>
                     </div>

@@ -66,6 +66,8 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
 
   const save = async () => {
     if (!valid) return;
+    const nextPrice = f.lastPrice ? String(parseFloat(f.lastPrice)) : null;
+    const priceChanged = nextPrice !== (editing?.lastPrice ?? null);
     await put(STORE.holding, {
       // Spread first so fields this form does not surface — sector, country,
       // marketCapBand, priceAsOf — survive an edit. Writing a bare literal here
@@ -81,6 +83,14 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
       avgCost: String(parseFloat(f.avgCost)),
       lastPrice: f.lastPrice ? String(parseFloat(f.lastPrice)) : null,
       previousClose: f.previousClose ? String(parseFloat(f.previousClose)) : null,
+      // A price typed now is as of now. The spread above deliberately carries
+      // `priceAsOf` through an edit so an untouched price keeps its real date —
+      // but carrying it across a *changed* price made a freshly typed figure
+      // claim a freshness it does not have, and the day-change column then
+      // reported it under the old date (§7.1).
+      ...(priceChanged
+        ? { priceAsOf: f.lastPrice ? Date.now() : null, priceSource: f.lastPrice ? 'manual' as const : null }
+        : {}),
       assetType: f.assetType,
       // Without a purchase date there is no holding period, so the Tax Center
       // cannot classify the gain. The field says as much in its hint.
