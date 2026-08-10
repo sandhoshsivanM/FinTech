@@ -6,7 +6,9 @@ import clsx from 'clsx';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { D } from '@/lib/money';
-import { evaluateBudget, monthRange, spentForCategory } from '@/domain/finance';
+import { evaluateBudget, budgetRollover, spentForCategory } from '@/domain/finance';
+import { currentMonth } from '@/domain/period';
+import { useNow } from '@/lib/useNow';
 import { GlassCard } from '@/components/ui';
 
 const MAX_SHOWN = 3;
@@ -31,26 +33,27 @@ export function BudgetStrip() {
   const fmt = useFmt();
   const [open, setOpen] = useState(true);
 
+  const now = useNow(60_000);
   const ranked = useMemo(() => {
-    const [first, last] = monthRange();
+    const month = currentMonth(now || undefined);
     return budgets
       .map((b) => {
-        const spent = spentForCategory(txns, b.categoryId, first, last);
-        const limit = D(b.amountLimit);
+        const spent = spentForCategory(txns, b.categoryId, month);
+        const progress = evaluateBudget(b, spent, budgetRollover(b, txns, month));
         return {
           budget: b,
-          progress: evaluateBudget(b, spent),
+          progress,
           spent,
-          limit,
+          limit: progress.limit,
           // Uncapped: BudgetProgress.fraction clamps to 1 for the bar, so
           // ranking by it would tie every overspent budget together.
-          ratio: limit.lte(0) ? 0 : spent.div(limit).toNumber(),
+          ratio: progress.ratio,
         };
       })
       // Ranked by closeness to the limit, not by size — a ₹500 budget at 98%
       // needs attention more than a ₹50,000 one at 20%.
       .sort((a, b) => b.ratio - a.ratio);
-  }, [budgets, txns]);
+  }, [budgets, txns, now]);
 
   if (ranked.length === 0) return null;
 

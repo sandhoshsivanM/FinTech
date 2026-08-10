@@ -1,12 +1,12 @@
 // Pure financial logic ported from the Flutter app's domain/services.
+//
+// Every period-bound function here takes a resolved `DateRange` (domain/period)
+// rather than a window token or a pair of loose numbers, so a caller cannot
+// query one span and caption the screen with another.
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
 import type { Budget, Liability, Txn } from '@/lib/types';
-
-export type TimeWindow = '7D' | '1M' | '3M' | '6M' | '12M';
-export const WINDOW_DAYS: Record<TimeWindow, number> = {
-  '7D': 7, '1M': 30, '3M': 90, '6M': 180, '12M': 365,
-};
+import { contains, shiftMonths, startOfDay, type DateRange } from './period';
 
 export const signed = (t: Txn): Decimal =>
   t.type === 'income' ? D(t.amount) : D(t.amount).neg();
@@ -16,12 +16,18 @@ export const netWorthTotal = (txns: Txn[]): Decimal =>
 
 export interface WindowSummary { income: Decimal; expense: Decimal; net: Decimal }
 
-export function windowSummary(txns: Txn[], w: TimeWindow, now = Date.now()): WindowSummary {
-  const start = now - WINDOW_DAYS[w] * 86400000;
+/**
+ * Income, expense and net over a range.
+ *
+ * Takes a resolved `DateRange` rather than a window token, so the caller
+ * cannot query one period and label the screen with another — which is exactly
+ * what Reports and the Dashboard were both doing.
+ */
+export function windowSummary(txns: Txn[], range: DateRange): WindowSummary {
   let income = ZERO;
   let expense = ZERO;
   for (const t of txns) {
-    if (t.date < start || t.date > now) continue;
+    if (!contains(range, t.date)) continue;
     if (t.type === 'income') income = income.plus(D(t.amount));
     else expense = expense.plus(D(t.amount));
   }
@@ -30,50 +36,100 @@ export function windowSummary(txns: Txn[], w: TimeWindow, now = Date.now()): Win
 
 export interface NetWorthPoint { date: number; value: Decimal }
 
-export function netWorthSeries(txns: Txn[], w: TimeWindow, now = Date.now()): NetWorthPoint[] {
-  const dayMs = 86400000;
-  const endDay = Math.floor(now / dayMs) * dayMs;
-  const startDay = endDay - WINDOW_DAYS[w] * dayMs;
-  let running = txns.filter((t) => t.date < startDay).reduce((s, t) => s.plus(signed(t)), ZERO);
+/**
+ * A running net-worth line, one point per day in the range.
+ *
+ * Days are local calendar days via `startOfDay`, not `Math.floor(ms / 86400000)`
+ * — that buckets by UTC day, so for anyone east of Greenwich an evening
+ * transaction lands on the following day's point.
+ */
+export function netWorthSeries(txns: Txn[], range: DateRange): NetWorthPoint[] {
+  const endDay = startOfDay(range.end);
+  let running = txns.filter((t) => t.date < range.start).reduce((s, t) => s.plus(signed(t)), ZERO);
   const deltas = new Map<number, Decimal>();
   for (const t of txns) {
-    const day = Math.floor(t.date / dayMs) * dayMs;
-    if (day < startDay || day > endDay) continue;
+    if (!contains(range, t.date)) continue;
+    const day = startOfDay(t.date);
     deltas.set(day, (deltas.get(day) ?? ZERO).plus(signed(t)));
   }
   const points: NetWorthPoint[] = [];
-  for (let day = startDay; day <= endDay; day += dayMs) {
-    running = running.plus(deltas.get(day) ?? ZERO);
-    points.push({ date: day, value: running });
+  // Stepped with setDate rather than by adding 86,400,000ms: across a
+  // daylight-saving change a calendar day is 23 or 25 hours, and fixed-width
+  // steps drift off midnight and start dropping or duplicating points.
+  for (const d = new Date(startOfDay(range.start)); d.getTime() <= endDay; d.setDate(d.getDate() + 1)) {
+    running = running.plus(deltas.get(d.getTime()) ?? ZERO);
+    points.push({ date: d.getTime(), value: running });
   }
   return points;
 }
 
 // ---- Budget (PRD §7C) ----
+
+/**
+ * `warning` means the user's own alert threshold has been crossed; `over`
+ * means the budget is actually exceeded.
+ *
+ * These used to be 70% and >90%, both hardcoded — so `over` was reported while
+ * a tenth of the budget was still unspent, and the `alertThresholdPct` the user
+ * had set was read by nothing.
+ */
 export type BudgetStatus = 'ok' | 'warning' | 'over';
+
+/** Used when a budget carries no explicit threshold (§4.3). */
+export const DEFAULT_ALERT_THRESHOLD_PCT = 90;
+
 export interface BudgetProgress {
-  budget: Budget; spent: Decimal; remaining: Decimal; fraction: number; status: BudgetStatus;
+  budget: Budget;
+  spent: Decimal;
+  /** Carried in from the previous period; zero unless rollover is enabled. */
+  rollover: Decimal;
+  /** Allocation + rollover. What `remaining` is measured against. */
+  limit: Decimal;
+  remaining: Decimal;
+  /** 0–1, clamped, for progress bars. `spent / limit` unclamped is `ratio`. */
+  fraction: number;
+  ratio: number;
+  thresholdPct: number;
+  status: BudgetStatus;
 }
 
-export function monthRange(d = new Date()): [number, number] {
-  const first = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
-  const last = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime() - 1;
-  return [first, last];
+/**
+ * What an unspent budget carries into the next period.
+ *
+ * Only the immediately preceding period, and never a deficit: overspending in
+ * July should not silently shrink August's budget, and compounding the carry
+ * across every month a budget has ever existed produces a number no user can
+ * check against anything.
+ */
+export function budgetRollover(budget: Budget, txns: Txn[], range: DateRange): Decimal {
+  if (!budget.rolloverEnabled) return ZERO;
+  const prior = shiftMonths(range.start, -1);
+  const spent = spentForCategory(txns, budget.categoryId, prior);
+  const unspent = D(budget.amountLimit).minus(spent);
+  return unspent.gt(0) ? unspent : ZERO;
 }
 
-export function spentForCategory(txns: Txn[], categoryId: string, first: number, last: number): Decimal {
-  return txns
-    .filter((t) => t.type === 'expense' && t.categoryId === categoryId && t.date >= first && t.date <= last)
-    .reduce((s, t) => s.plus(D(t.amount)), ZERO);
-}
-
-export function evaluateBudget(budget: Budget, spent: Decimal): BudgetProgress {
-  const limit = D(budget.amountLimit);
+export function evaluateBudget(budget: Budget, spent: Decimal, rollover: Decimal = ZERO): BudgetProgress {
+  const limit = D(budget.amountLimit).plus(rollover);
   const remaining = limit.minus(spent);
   const ratio = limit.isZero() ? 0 : spent.div(limit).toNumber();
+  const thresholdPct = budget.alertThresholdPct > 0
+    ? budget.alertThresholdPct
+    : DEFAULT_ALERT_THRESHOLD_PCT;
   const pct = ratio * 100;
-  const status: BudgetStatus = pct > 90 ? 'over' : pct >= 70 ? 'warning' : 'ok';
-  return { budget, spent, remaining, fraction: Math.min(Math.max(ratio, 0), 1), status };
+  const status: BudgetStatus = pct > 100 ? 'over' : pct >= thresholdPct ? 'warning' : 'ok';
+  return {
+    budget, spent, rollover, limit, remaining,
+    fraction: Math.min(Math.max(ratio, 0), 1),
+    ratio, thresholdPct, status,
+  };
+}
+
+/** What was spent in one category over a range. Always derived, never stored. */
+export function spentForCategory(txns: Txn[], categoryId: string, range: DateRange): Decimal {
+  return txns
+    .filter((t) => t.type === 'expense' && t.categoryId === categoryId && contains(range, t.date))
+    .reduce((s, t) => s.plus(D(t.amount)), ZERO);
 }
 
 // ---- Debt payoff (PRD §14) ----

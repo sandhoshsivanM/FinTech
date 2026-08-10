@@ -5,7 +5,8 @@ import { useApp } from '@/lib/store';
 import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
 import { aggregateByDay } from '@/domain/calendarLedger';
-import { monthRange, spentForCategory, evaluateBudget } from '@/domain/finance';
+import { spentForCategory, evaluateBudget, budgetRollover } from '@/domain/finance';
+import { forMonth } from '@/domain/period';
 import { PageIntro, GlassCard, ProgressBar } from '@/components/ui';
 import type { Txn } from '@/lib/types';
 import { formatLongDate } from '@/lib/dateFormat';
@@ -151,10 +152,10 @@ export default function CalendarPage() {
   );
 
   const budgetPanel = (() => {
-    const [first, last] = monthRange(cursor);
+    const month = forMonth(cursor.getTime());
     const rows = budgets.map((b) => {
-      const spent = spentForCategory(txns, b.categoryId, first, last);
-      return { b, prog: evaluateBudget(b, spent) };
+      const spent = spentForCategory(txns, b.categoryId, month);
+      return { b, prog: evaluateBudget(b, spent, budgetRollover(b, txns, month)) };
     });
     if (rows.length === 0) return null;
     return (

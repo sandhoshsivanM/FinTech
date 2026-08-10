@@ -6,9 +6,9 @@ import { D, ZERO } from '@/lib/money';
 import type { Goal, Insurance, Txn } from '@/lib/types';
 import { retirementValue, type InvestmentTotals } from './investmentTotals';
 import { windowSummary } from './finance';
+import { contains, trailingDays } from './period';
 import { coverageGaps, annualPremiumTotal } from './insurance';
 
-const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const EMERGENCY_MONTHS_TARGET = 6;
 
 export interface SafetyComponent {
@@ -52,9 +52,10 @@ export function safetyNet(
   now = Date.now(),
 ): SafetyNet {
   // Bases shared with the Insurance page / health score.
-  const monthlyExpense = windowSummary(txns, '3M', now).expense.div(3);
+  const monthlyExpense = windowSummary(txns, trailingDays(90, now)).expense.div(3);
+  const year = trailingDays(365, now);
   const annualIncome = txns
-    .filter((t) => t.type === 'income' && t.date >= now - YEAR_MS)
+    .filter((t) => t.type === 'income' && contains(year, t.date))
     .reduce((s, t) => s.plus(D(t.amount)), ZERO);
 
   // ---- Emergency fund ----

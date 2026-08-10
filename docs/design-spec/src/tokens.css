@@ -1,0 +1,251 @@
+/* ============================================================================
+   KHAZANA DESIGN TOKENS — spec-document edition
+
+   DERIVED FROM, not imported from, webapp/src/app/globals.css. Every value here
+   is copied verbatim from that file; `check-tokens.mjs` asserts it stays that
+   way, so this document cannot silently drift from the app.
+
+   The one change is the SELECTOR. The app themes on `:root[data-theme]`, which
+   allows exactly one theme per document. A spec needs Vault and Ledger side by
+   side on the same page, so both palettes are republished as `.thm-dark` and
+   `.thm-light` classes that can be nested anywhere.
+   ========================================================================= */
+
+/* ======================= LEDGER — the light theme ======================= */
+/* Not pure white everywhere: the page is #F5F7F5 and cards are #FFFFFF, so a
+   card is the brightest surface. That single step is what gives the light
+   theme depth without a shadow. */
+.thm-light {
+  --canvas: #F5F7F5;
+  --surface: #FFFFFF;
+  --surface-2: #EDF2EF;
+  --card: #FFFFFF;
+  --card-2: #EDF2EF;
+  --ink-surface: #0D1713;
+
+  --line: #DCE4DF;
+  --line-strong: #C7D2CC;
+
+  --ink: #101613;
+  --ink-soft: #53625B;
+  --muted: #718079;
+  --disabled: #A7B1AC;
+
+  /* Emerald = INTERACTION */
+  --accent: #087A56;
+  --accent-deep: #066A4A;
+  --accent-glow: #18C98A;
+  --accent-soft: #E1F3EB;
+  --accent-line: rgba(8, 122, 86, 0.26);
+  --accent-on: #FFFFFF;
+
+  /* Gold = IDENTITY. Deliberately never a button colour. */
+  --gold: #A97922;
+  --gold-soft: #F6EEDB;
+  /* #A97922 reads 3.9:1 on a card — fine for a graphic (3:1), under the 4.5:1
+     body-text bar. Marks and fills keep --gold; anything that is words uses
+     this darker step. */
+  --gold-ink: #8E641B;
+  --brand-plate: #0D3D2B;
+
+  --income: #087A56;
+  --expense: #C73D46;
+  --warn: #A97922;
+  --info: #2672C8;
+  --success: var(--income);
+  --danger: var(--expense);
+  --warning: var(--warn);
+  --success-soft: #E1F3EB;
+  --danger-soft: rgba(199, 61, 70, 0.10);
+  --warning-soft: #F6EEDB;
+  --violet: #6E5BB8;
+  --violet-soft: rgba(110, 91, 184, 0.10);
+
+  --primary: #087A56;
+  --primary-fg: #FFFFFF;
+
+  --fill: rgba(16, 22, 19, 0.04);
+  --fill-strong: rgba(16, 22, 19, 0.075);
+  --grid-line: rgba(16, 22, 19, 0.07);
+
+  /* Ledger lifts with one very subtle shadow. Precise, not floating. */
+  --shadow-1: 0 1px 2px rgba(16, 22, 19, 0.05);
+  --shadow-2: 0 2px 8px rgba(16, 22, 19, 0.08);
+  --shadow-3: 0 18px 44px -18px rgba(16, 22, 19, 0.22);
+  --glow: 0 0 0 3px var(--accent-soft);
+
+  --hero-bg:
+    radial-gradient(120% 150% at 88% -10%, rgba(217, 173, 82, 0.20), transparent 58%),
+    radial-gradient(90% 120% at 8% 110%, rgba(24, 201, 138, 0.16), transparent 60%),
+    linear-gradient(168deg, #13291F 0%, var(--ink-surface) 62%);
+
+  --glass-border: var(--line);
+}
+
+/* ======================== VAULT — the dark theme ========================= */
+/* Four surface levels, deliberately. Jumping straight from near-black to a
+   bright card is what makes dark UI look flat; each step up the ladder is a
+   small, even lift:  #080D0B -> #101714 -> #151E1A -> #1A2520              */
+.thm-dark {
+  --canvas: #080D0B;
+  --surface: #101714;
+  --surface-2: #1A2520;
+  --card: #151E1A;
+  --card-2: #1A2520;
+  --ink-surface: #0D1713;
+
+  --line: #26342E;
+  --line-strong: #34443C;
+
+  --ink: #F4F7F5;
+  --ink-soft: #A0ADA7;
+  --muted: #718079;
+  --disabled: #4E5A55;
+
+  --accent: #20C98A;
+  --accent-deep: #2BDB99;
+  --accent-glow: #2BDB99;
+  --accent-soft: #12352A;
+  --accent-line: rgba(32, 201, 138, 0.30);
+  --accent-on: #06110C;
+
+  --gold: #D9AD52;
+  --gold-soft: #302718;
+  /* On Vault, gold already reads 9.4:1, so the text step is the same colour. */
+  --gold-ink: #D9AD52;
+  --brand-plate: #0D3D2B;
+
+  --income: #20C98A;
+  --expense: #F06464;
+  --warn: #E5B84D;
+  --info: #63A8FF;
+  --success: var(--income);
+  --danger: var(--expense);
+  --warning: var(--warn);
+  --success-soft: #12352A;
+  --danger-soft: rgba(240, 100, 100, 0.13);
+  --warning-soft: #302718;
+  --violet: #8E7CC3;
+  --violet-soft: rgba(142, 124, 195, 0.16);
+
+  /* Near-black on emerald reads 9.4:1; white would be 2.4:1. */
+  --primary: #20C98A;
+  --primary-fg: #06110C;
+
+  --fill: rgba(255, 255, 255, 0.045);
+  --fill-strong: rgba(255, 255, 255, 0.08);
+  --grid-line: rgba(255, 255, 255, 0.055);
+
+  /* Vault uses BORDERS, not shadows. A drop shadow on a near-black canvas is
+     invisible, and faking depth with a glow is what makes finance UI look like
+     a crypto exchange. Only true overlays get one. */
+  --shadow-1: none;
+  --shadow-2: none;
+  --shadow-3: 0 24px 48px -24px rgba(0, 0, 0, 0.75);
+  --glow: 0 0 0 3px rgba(32, 201, 138, 0.22);
+
+  --hero-bg:
+    radial-gradient(120% 150% at 88% -10%, rgba(217, 173, 82, 0.16), transparent 58%),
+    radial-gradient(90% 120% at 8% 110%, rgba(32, 201, 138, 0.10), transparent 60%),
+    linear-gradient(168deg, #12241C 0%, var(--ink-surface) 62%);
+
+  --glass-border: var(--line);
+}
+
+/* ============================================================================
+   Theme-invariant tokens. Identical in both themes, by design — the spec is
+   explicit that only colour changes.
+   ========================================================================= */
+:root {
+  /* Radii — prescribed per component. "Everything is a giant rounded
+     rectangle" is the generic look this system avoids: a button is tighter
+     than a card, a card is tighter than a modal. */
+  --radius-card: 14px;
+  --radius-panel: 16px;
+  --radius-btn: 9px;
+  --radius-input: 10px;
+  --radius-modal: 18px;
+  --radius-pill: 999px;
+
+  /* 8pt spatial grid */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 40px; --s8: 48px; --s9: 64px;
+
+  /* Type scale */
+  --fs-h1: 32px; --fs-h2: 24px; --fs-h3: 20px; --fs-h4: 18px;
+  --fs-body: 16px; --fs-sm: 14px; --fs-xs: 12px; --fs-2xs: 11px;
+
+  /* Motion */
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --dur-slow: 400ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Shell metrics */
+  --nav-w: 248px;
+  --nav-rail: 76px;
+  --top-h: 64px;
+
+  /* Categorical series palette. Emerald leads, gold follows — the brand
+     hierarchy. Validated with the dataviz six-checks in BOTH themes: worst
+     adjacent pair ΔE 8.1 under protanopia (target 8), normal-vision floor
+     18.2, all ≥3:1. THE ORDER IS THE COLOURBLIND-SAFETY MECHANISM — do not
+     re-order, and never sort chart slices by value. */
+  --c1: #189E6E; --c2: #BE8420; --c3: #2E92C4; --c4: #C9538A;
+  --c5: #4F7CFF; --c6: #CC6435; --c7: #8E7CC3; --c8: #2E9E63;
+}
+
+/* ============================================================================
+   Surfaces — the handful of app classes the artboards reuse verbatim.
+   ========================================================================= */
+.card,
+.glass {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-1);
+}
+
+/* The sticky chrome surface: topbar, bottom bar, drawers. OPAQUE, deliberately
+   — a navigation bar you can read the page through is not glassmorphism, it is
+   a rendering bug. */
+.glass-panel { background: var(--canvas); }
+
+/* The single dark focal surface (net-worth hero, portfolio hero). */
+.hero-gradient,
+.ink-surface {
+  position: relative;
+  overflow: hidden;
+  background: var(--hero-bg);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-3);
+}
+/* A whisper of grid, faded out — reads as engineered rather than decorated. */
+.hero-gradient::after,
+.ink-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(120% 100% at 70% 0%, #000, transparent 70%);
+}
+.hero-gradient > *,
+.ink-surface > * { position: relative; z-index: 1; }
+
+.eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+
+.divide-hair > * + * { border-top: 1px solid var(--line); }

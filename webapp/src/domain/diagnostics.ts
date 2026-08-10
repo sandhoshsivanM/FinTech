@@ -20,6 +20,7 @@ import type {
 } from '@/lib/types';
 import { reconcileLots } from './lots';
 import { hasApproximateFx } from './portfolio';
+import { balanceSheet } from './statements';
 
 export type CheckLevel = 'ok' | 'warn' | 'error';
 
@@ -36,6 +37,8 @@ export interface Check {
 export interface DiagnosticsInput {
   /** Optional: a vault with no lots is normal, not a fault. */
   lots?: HoldingLot[];
+  /** Records that would not decrypt on the last load. Optional; empty is normal. */
+  unreadableRecords?: { type: string; id: string }[];
   txns: Txn[];
   transfers: Transfer[];
   postings: Posting[];
@@ -60,7 +63,21 @@ function isCleanMoney(v: string | null | undefined): boolean {
 export function runDiagnostics(input: DiagnosticsInput): Check[] {
   const { txns, transfers, postings, accounts, categories, holdings, dividends } = input;
   const lots = input.lots ?? [];
+  const unreadable = input.unreadableRecords ?? [];
   const checks: Check[] = [];
+
+  /* ---- Storage readability --------------------------------------------- */
+
+  // A record that will not decrypt is skipped on read, so it is missing from
+  // every screen *and* from the next backup export. Silence here means the loss
+  // reaches the user's only copy without anyone noticing.
+  checks.push(unreadable.length === 0
+    ? { id: 'record-readable', label: 'Record readability', level: 'ok', detail: 'Every record in the vault decrypts.' }
+    : {
+        id: 'record-readable', label: 'Record readability', level: 'error',
+        detail: `${unreadable.length} record${unreadable.length === 1 ? '' : 's'} cannot be decrypted. They are missing from every screen and will not be included in a backup — restore from your most recent good backup before exporting again.`,
+        offenders: unreadable.map((r) => `${r.type}:${r.id}`).slice(0, 20),
+      });
 
   /* ---- Ledger integrity ------------------------------------------------ */
 
@@ -99,6 +116,23 @@ export function runDiagnostics(input: DiagnosticsInput): Check[] {
         id: 'posting-accounts', label: 'Posting accounts', level: 'error',
         detail: `${orphanPostings.length} posting${orphanPostings.length === 1 ? '' : 's'} reference an account that no longer exists, so their value is missing from every balance.`,
         offenders: orphanPostings.slice(0, 20),
+      });
+
+  // Assets + liabilities + equity, with opening capital and retained earnings
+  // derived, is identically zero for a well-formed ledger. This is where that
+  // check belongs: the Balance Sheet is a financial statement and a reader
+  // there wants a total, not an internal consistency report (§3.4).
+  const bs = balanceSheet(accounts, postings);
+  checks.push(bs.balanced
+    ? { id: 'balance-sheet', label: 'Balance sheet', level: 'ok', detail: 'Assets equal liabilities plus equity.' }
+    : {
+        id: 'balance-sheet', label: 'Balance sheet', level: 'error',
+        detail: bs.unclassified.length > 0
+          ? `The books are out by ${bs.discrepancy.abs().toString()}, against ${bs.unclassified.length} account id${bs.unclassified.length === 1 ? '' : 's'} the chart of accounts does not contain.`
+          : `The books are out by ${bs.discrepancy.abs().toString()}. An entry's postings do not sum to zero, so assets do not equal liabilities plus equity.`,
+        offenders: bs.unclassified.length > 0
+          ? bs.unclassified.map((l) => l.id).slice(0, 20)
+          : unbalanced.slice(0, 20),
       });
 
   /* ---- Money values ---------------------------------------------------- */

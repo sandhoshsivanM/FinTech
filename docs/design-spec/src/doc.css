@@ -1,0 +1,271 @@
+/* ============================================================================
+   The specification document's own chrome.
+
+   Nothing in this file describes Khazana. It describes the PAGE the artboards
+   are printed on: sheet geometry, frame labels, callout badges, specimen
+   grids. Keeping it separate from tokens.css is what lets `check-tokens.mjs`
+   diff the token file against the app without tripping over document styling.
+   ========================================================================= */
+
+/* Inter, from the fonts the Flutter client already bundles, so the PDF carries
+   real type instead of a substituted system face. */
+@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; font-display: block;
+  src: url('../../assets/fonts/Inter-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; font-display: block;
+  src: url('../../assets/fonts/Inter-Medium.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; font-display: block;
+  src: url('../../assets/fonts/Inter-SemiBold.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 700; font-style: normal; font-display: block;
+  src: url('../../assets/fonts/Inter-Bold.ttf') format('truetype'); }
+
+/* 1680 x 1188 CSS px at exactly 96dpi. Landscape ~√2, which fits a 1440px
+   artboard at 82% beside a full annotation column. */
+@page { size: 17.5in 12.375in; margin: 0; }
+
+* { box-sizing: border-box; }
+*, *::before, *::after { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+html, body { margin: 0; padding: 0; background: #fff; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.006em;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---- The sheet ---------------------------------------------------------- */
+.page {
+  position: relative;
+  width: 1680px;
+  height: 1188px;
+  overflow: hidden;
+  padding: 52px 56px 56px;
+  background: #FBFCFB;
+  color: #101613;
+  page-break-after: always;
+  break-after: page;
+  display: flex;
+  flex-direction: column;
+}
+.page:last-child { page-break-after: auto; break-after: auto; }
+
+/* Dark sheets, for the cover and part dividers. */
+.page.sheet-dark { background: #080D0B; color: #F4F7F5; }
+.page.sheet-plate { background: #0D3D2B; color: #F4F7F5; }
+
+/* ---- Running head ------------------------------------------------------- */
+.rh {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-bottom: 14px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid #DCE4DF;
+  flex: none;
+}
+.sheet-dark .rh, .sheet-plate .rh { border-color: rgba(255,255,255,0.14); }
+
+.rh-part {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #087A56;
+}
+.sheet-dark .rh-part, .sheet-plate .rh-part { color: #D9AD52; }
+.rh-title { font-size: 19px; font-weight: 700; letter-spacing: -0.025em; }
+.rh-sub { font-size: 12.5px; color: #718079; margin-left: 2px; }
+.rh-spacer { margin-left: auto; }
+.rh-meta { font-size: 11px; color: #718079; letter-spacing: 0.04em; }
+
+/* Page number, bottom-right of every sheet. */
+.folio {
+  position: absolute; right: 56px; bottom: 26px;
+  font-size: 11px; font-weight: 600; color: #A7B1AC; letter-spacing: 0.06em;
+}
+.sheet-dark .folio, .sheet-plate .folio { color: rgba(255,255,255,0.42); }
+
+.body { flex: 1; min-height: 0; }
+
+/* ---- Artboard framing --------------------------------------------------- */
+/* A screen page is one scaled frame plus a fixed annotation rail. */
+.frame-row { display: flex; gap: 36px; height: 100%; }
+.frame-col { width: 1180px; flex: none; }
+.note-col  { flex: 1; min-width: 0; }
+
+/* The label strip that sits above a frame, mimicking a Figma frame name. */
+.fname {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11.5px; font-weight: 600; color: #53625B;
+  margin-bottom: 8px; letter-spacing: -0.01em;
+}
+.fname b { color: #101613; font-weight: 700; }
+.fname .dim { color: #A7B1AC; font-weight: 500; }
+.sheet-dark .fname { color: #A0ADA7; }
+.sheet-dark .fname b { color: #F4F7F5; }
+
+.tchip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.tchip.vault  { background: #0D1713; color: #D9AD52; }
+.tchip.ledger { background: #E1F3EB; color: #087A56; }
+.tchip i { width: 7px; height: 7px; border-radius: 999px; background: currentColor; display: block; }
+
+/* The frame itself: a hairline box that clips a 1440px render scaled to fit. */
+.frame {
+  position: relative;
+  width: 1180px;
+  border: 1px solid #C7D2CC;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+.frame-scale {
+  width: 1440px;
+  transform: scale(0.8194444);      /* 1180 / 1440 */
+  transform-origin: 0 0;
+}
+/* Mobile artboards render at their true 390px width, no scaling. */
+.frame.mobile { width: 390px; border-radius: 22px; }
+.frame.mobile .frame-scale { width: 390px; transform: none; }
+
+/* ---- Callouts ----------------------------------------------------------- */
+/* Anchored inside the mockup markup rather than positioned over it by
+   percentage, so a callout cannot drift away from what it points at. */
+.cal-host { position: relative; }
+.cal {
+  position: absolute; top: -9px; right: -9px; z-index: 40;
+  width: 21px; height: 21px; border-radius: 999px;
+  background: #C73D46; color: #fff;
+  font-size: 11.5px; font-weight: 700; line-height: 21px; text-align: center;
+  box-shadow: 0 0 0 2.5px #FBFCFB;
+  font-variant-numeric: tabular-nums;
+}
+.cal.tl { left: -9px; right: auto; }
+.cal.bl { top: auto; bottom: -9px; left: -9px; right: auto; }
+.cal.br { top: auto; bottom: -9px; }
+
+/* The numbered list in the annotation rail. */
+.notes { list-style: none; margin: 0; padding: 0; }
+.notes li {
+  display: flex; gap: 10px; padding: 9px 0;
+  border-top: 1px solid #E7EDE9; font-size: 12px; line-height: 1.55; color: #53625B;
+}
+.notes li:first-child { border-top: 0; padding-top: 0; }
+.notes .n {
+  flex: none; width: 19px; height: 19px; border-radius: 999px;
+  background: #C73D46; color: #fff; font-size: 10.5px; font-weight: 700;
+  line-height: 19px; text-align: center; margin-top: 1px;
+}
+.notes b { color: #101613; font-weight: 600; }
+.notes code, .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; }
+.notes code { background: #EDF2EF; padding: 1px 4px; border-radius: 4px; color: #087A56; }
+
+/* Annotation-rail furniture. */
+.note-h {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #A7B1AC; margin: 22px 0 10px;
+}
+.note-h:first-child { margin-top: 0; }
+.note-p { font-size: 12.5px; line-height: 1.6; color: #53625B; margin: 0 0 12px; }
+.note-p b { color: #101613; font-weight: 600; }
+
+/* Key/value spec rows. */
+.kv { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.kv td { padding: 5px 0; border-top: 1px solid #E7EDE9; vertical-align: top; }
+.kv tr:first-child td { border-top: 0; }
+.kv td:first-child { color: #718079; width: 44%; padding-right: 10px; }
+.kv td:last-child { color: #101613; font-weight: 600; text-align: right; }
+
+/* ---- Generic document furniture ----------------------------------------- */
+.lede { font-size: 15px; line-height: 1.62; color: #53625B; max-width: 880px; }
+.lede b, .lede strong { color: #101613; font-weight: 600; }
+.sheet-dark .lede { color: #A0ADA7; }
+.sheet-dark .lede b { color: #F4F7F5; }
+
+.rule { height: 1px; background: #DCE4DF; margin: 22px 0; }
+
+.grid { display: grid; gap: 18px; }
+.g2 { grid-template-columns: repeat(2, 1fr); }
+.g3 { grid-template-columns: repeat(3, 1fr); }
+.g4 { grid-template-columns: repeat(4, 1fr); }
+.g5 { grid-template-columns: repeat(5, 1fr); }
+.g6 { grid-template-columns: repeat(6, 1fr); }
+
+/* A pale panel that groups specimens on a white sheet. */
+.panel {
+  border: 1px solid #DCE4DF; border-radius: 12px; background: #fff;
+  padding: 20px; min-width: 0;
+}
+.panel-h {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.13em;
+  text-transform: uppercase; color: #718079; margin: 0 0 14px;
+}
+.panel-note { font-size: 11.5px; line-height: 1.55; color: #718079; margin: 12px 0 0; }
+.panel-note b { color: #101613; font-weight: 600; }
+
+/* Specimen stages: a strip of component previews on the true theme canvas. */
+.stage { border-radius: 12px; padding: 20px; border: 1px solid; }
+.stage.thm-dark  { background: #080D0B; border-color: #26342E; color: #F4F7F5; }
+.stage.thm-light { background: #F5F7F5; border-color: #DCE4DF; color: #101613; }
+.stage-h {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
+  margin: 0 0 14px; opacity: 0.55;
+}
+.row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.col { display: flex; flex-direction: column; gap: 12px; }
+
+/* Colour swatches. */
+.sw { border-radius: 9px; overflow: hidden; border: 1px solid #DCE4DF; background: #fff; }
+.sw .chip { height: 54px; }
+.sw .meta { padding: 7px 9px 9px; }
+.sw .nm { font-size: 11px; font-weight: 700; letter-spacing: -0.01em; color: #101613; }
+.sw .hx { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 10px; color: #718079; margin-top: 1px; }
+.sw .use { font-size: 10px; color: #A7B1AC; margin-top: 3px; line-height: 1.4; }
+
+/* Two full 22-token palettes have to share one sheet, so the colour page uses a
+   shorter chip. The hex and the usage note stay — they are the payload. */
+.sw.tight .chip { height: 40px; }
+.sw.tight .meta { padding: 6px 8px 8px; }
+.sw.tight .use { margin-top: 2px; }
+
+/* Tables used in the appendix and spec pages. */
+.tbl { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.tbl th {
+  text-align: left; font-size: 9.5px; font-weight: 700; letter-spacing: 0.11em;
+  text-transform: uppercase; color: #A7B1AC; padding: 0 10px 7px 0; border-bottom: 1px solid #DCE4DF;
+}
+.tbl td { padding: 6px 10px 6px 0; border-bottom: 1px solid #EEF2F0; color: #53625B; vertical-align: top; }
+.tbl td b { color: #101613; font-weight: 600; }
+.tbl .num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
+.tbl tr:last-child td { border-bottom: 0; }
+
+/* Inline tags. */
+.tag {
+  display: inline-block; padding: 1.5px 7px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.02em;
+  background: #EDF2EF; color: #53625B;
+}
+.tag.ok   { background: #E1F3EB; color: #087A56; }
+.tag.warn { background: #F6EEDB; color: #8E641B; }
+.tag.bad  { background: rgba(199,61,70,.10); color: #C73D46; }
+.tag.info { background: rgba(38,114,200,.10); color: #2672C8; }
+
+/* Flow-diagram primitives (Part E). */
+.flow { display: flex; align-items: stretch; gap: 0; }
+.fnode {
+  flex: 1; min-width: 0; border: 1px solid #DCE4DF; border-radius: 10px;
+  background: #fff; padding: 12px 14px;
+}
+.fnode .t { font-size: 12.5px; font-weight: 700; color: #101613; letter-spacing: -0.015em; }
+.fnode .d { font-size: 11px; color: #718079; margin-top: 3px; line-height: 1.45; }
+.fnode.accent { border-color: rgba(8,122,86,.30); background: #E1F3EB; }
+.fnode.term   { border-color: #C7D2CC; background: #EDF2EF; }
+.farrow {
+  flex: none; width: 34px; display: grid; place-items: center;
+  color: #A7B1AC; font-size: 15px;
+}
+.fbranch { font-size: 10px; font-weight: 700; color: #718079; text-align: center; letter-spacing: .04em; }

@@ -3,7 +3,11 @@ import { create } from 'zustand';
 import { db } from './db';
 import { deriveKey, encryptJson, decryptJson, randomBytes, bufToB64, b64ToBuf, type Encrypted } from './crypto';
 import { BackupError } from './backupError';
-import { clearVault, listRecords, getRecord, putRecord, deleteRecord } from './repo';
+import { decodeBackup, encodeBackup } from './backupFormat';
+import {
+  clearVault, listRecords, getRecord, putRecord, deleteRecord, applyMutations,
+  type Mutation, type ReadFailure,
+} from './repo';
 import { D, ZERO } from './money';
 import {
   STORE, PROFILE_SCOPED,
@@ -18,8 +22,12 @@ import { postingsForEntry, postingsForTransfer, accountBalances, liquidBalance }
 import Decimal from 'decimal.js';
 import { healthScore } from '@/domain/health';
 import { investmentTotals } from '@/domain/investmentTotals';
+import { runDiagnostics, type Check } from '@/domain/diagnostics';
 
 const VAULT_ID = 'default';
+
+/** Stamped into every backup header so a file can name the build that wrote it. */
+const APP_VERSION = '1.0.0';
 const VERIFIER = 'FTOS-OK';
 
 // Bump when the persisted data shape changes; add a step in runMigrations().
@@ -71,6 +79,74 @@ export async function repairPostings(key: CryptoKey, vaultId: string): Promise<v
   }
 }
 
+/**
+ * Removes a record of the *other* entry kind that already holds this id.
+ *
+ * The add screen reuses one `editId` across its mode selector, so editing a
+ * transaction and switching it to a transfer wrote a `Transfer` under the
+ * transaction's id while the original `Txn` stayed in the vault. Two records
+ * then shared one id and both claimed the same `<id>:dr` / `:cr` legs — the
+ * entry appeared twice in the timeline and its postings described only one of
+ * them. Changing kind must retire the old record, not shadow it.
+ */
+export function supersedeMutations(
+  state: { txns: Txn[]; transfers: Transfer[] }, writing: string, id: string,
+): Mutation[] {
+  const other = writing === STORE.txn ? STORE.transfer : STORE.txn;
+  const exists = other === STORE.transfer
+    ? state.transfers.some((t) => t.id === id)
+    : state.txns.some((t) => t.id === id);
+  return exists ? [{ op: 'delete', type: other, id }] : [];
+}
+
+/** Ids already in the chart of accounts, as a set the mutation builders mutate. */
+const accountIdSet = (state: { accounts: Account[] }) => new Set(state.accounts.map((a) => a.id));
+
+/**
+ * Everything one `put` must write, as an atomic batch.
+ *
+ * Double-entry (PRD §16): a transaction also moves a money account and writes
+ * balanced postings, mirroring the Flutter LedgerWriter. The record and its two
+ * legs belong together — written as separate calls, a failure between them left
+ * an entry with a single leg, which unbalances the ledger and moves one account
+ * balance without the other.
+ */
+function entryMutations(
+  state: Data & { vaultId: string; activeProfileId: string },
+  type: string,
+  value: { id: string } & Record<string, unknown>,
+  existing: Set<string>,
+): Mutation[] {
+  const { vaultId, activeProfileId } = state;
+  const needsProfile = PROFILE_SCOPED.includes(type) && !value.profileId;
+  const profileId = (value.profileId as string | undefined) ?? activeProfileId;
+  const record = needsProfile ? { ...value, profileId } : value;
+
+  if (type === STORE.txn) {
+    const withAccount = {
+      ...record,
+      accountId: (value.accountId as string | undefined) ?? cashAcctId(profileId),
+    };
+    return [
+      ...supersedeMutations(state, STORE.txn, value.id),
+      { op: 'put', type, id: value.id, value: withAccount },
+      ...entryPostingMutations(
+        vaultId, profileId, withAccount as unknown as Txn,
+        new Map(state.categories.map((c) => [c.id, c.name])),
+        existing,
+      ),
+    ];
+  }
+  if (type === STORE.transfer) {
+    return [
+      ...supersedeMutations(state, STORE.transfer, value.id),
+      { op: 'put', type, id: value.id, value: record },
+      ...transferPostingMutations(vaultId, profileId, record as unknown as Transfer),
+    ];
+  }
+  return [{ op: 'put', type, id: value.id, value: record }];
+}
+
 /// Deterministic v3 account ids — keep the lazy backfill idempotent and isolated
 /// per profile (matches the Flutter Drift migration).
 export const cashAcctId = (profileId: string) => `acct-cash-${profileId}`;
@@ -83,20 +159,28 @@ const expenseAcctId = (profileId: string, categoryId: string) => `acct-exp-${pro
  * A brand-new vault needs these before it has a single transaction, or the
  * Accounts page opens empty.
  */
-async function ensureStructuralAccounts(
-  key: CryptoKey, vaultId: string, profileId: string, existing: Set<string>,
-): Promise<void> {
+function structuralAccountMutations(
+  vaultId: string, profileId: string, existing: Set<string>,
+): Mutation[] {
   const base = { vaultId, profileId, openingBalance: '0' };
   const structural: Account[] = [
     { ...base, id: cashAcctId(profileId), name: 'Cash', type: 'asset', subtype: 'cash' },
     { ...base, id: openingAcctId(profileId), name: 'Opening Balances', type: 'equity', subtype: 'equity' },
     { ...base, id: incomeAcctId(profileId), name: 'Income', type: 'income', subtype: 'income' },
   ];
+  const out: Mutation[] = [];
   for (const a of structural) {
     if (existing.has(a.id)) continue;
     existing.add(a.id);
-    await putRecord(key, STORE.account, vaultId, a.id, a);
+    out.push({ op: 'put', type: STORE.account, id: a.id, value: a });
   }
+  return out;
+}
+
+async function ensureStructuralAccounts(
+  key: CryptoKey, vaultId: string, profileId: string, existing: Set<string>,
+): Promise<void> {
+  await applyMutations(key, vaultId, structuralAccountMutations(vaultId, profileId, existing));
 }
 
 /**
@@ -114,18 +198,21 @@ async function ensureStructuralAccounts(
  * @param existing ids already known to exist, mutated as accounts are seeded.
  *   Pass one across a loop to avoid re-reading the chart per transaction.
  */
-async function writeEntryPostings(
-  key: CryptoKey, vaultId: string, profileId: string, t: Txn,
+function entryPostingMutations(
+  vaultId: string, profileId: string, t: Txn,
   categoryNames: Map<string, string>, existing: Set<string>,
-): Promise<void> {
-  await ensureStructuralAccounts(key, vaultId, profileId, existing);
+): Mutation[] {
+  const out: Mutation[] = structuralAccountMutations(vaultId, profileId, existing);
   if (t.type === 'expense' && !existing.has(expenseAcctId(profileId, t.categoryId))) {
     existing.add(expenseAcctId(profileId, t.categoryId));
-    await putRecord(key, STORE.account, vaultId, expenseAcctId(profileId, t.categoryId), {
-      id: expenseAcctId(profileId, t.categoryId), vaultId, profileId,
-      name: categoryNames.get(t.categoryId) ?? 'Expense',
-      type: 'expense', subtype: 'expense', openingBalance: '0',
-    } satisfies Account);
+    out.push({
+      op: 'put', type: STORE.account, id: expenseAcctId(profileId, t.categoryId),
+      value: {
+        id: expenseAcctId(profileId, t.categoryId), vaultId, profileId,
+        name: categoryNames.get(t.categoryId) ?? 'Expense',
+        type: 'expense', subtype: 'expense', openingBalance: '0',
+      } satisfies Account,
+    });
   }
 
   const legs = postingsForEntry({
@@ -134,17 +221,30 @@ async function writeEntryPostings(
     categoryAccountId: t.type === 'income' ? incomeAcctId(profileId) : expenseAcctId(profileId, t.categoryId),
   });
   for (const leg of legs) {
-    await putRecord(key, STORE.posting, vaultId, leg.id, { ...leg, profileId });
+    out.push({ op: 'put', type: STORE.posting, id: leg.id, value: { ...leg, profileId } });
   }
+  return out;
 }
 
-/** Persists a transfer's two legs. Ids are deterministic, so edits overwrite. */
+/** A transfer's two legs. Ids are deterministic, so edits overwrite. */
+function transferPostingMutations(vaultId: string, profileId: string, t: Transfer): Mutation[] {
+  return postingsForTransfer(t).map((leg) => ({
+    op: 'put' as const, type: STORE.posting, id: leg.id, value: { ...leg, profileId },
+  }));
+}
+
+/** Writes one transaction's postings on their own. Used by repair paths. */
+async function writeEntryPostings(
+  key: CryptoKey, vaultId: string, profileId: string, t: Txn,
+  categoryNames: Map<string, string>, existing: Set<string>,
+): Promise<void> {
+  await applyMutations(key, vaultId, entryPostingMutations(vaultId, profileId, t, categoryNames, existing));
+}
+
 async function writeTransferPostings(
   key: CryptoKey, vaultId: string, profileId: string, t: Transfer,
 ): Promise<void> {
-  for (const leg of postingsForTransfer(t)) {
-    await putRecord(key, STORE.posting, vaultId, leg.id, { ...leg, profileId });
-  }
+  await applyMutations(key, vaultId, transferPostingMutations(vaultId, profileId, t));
 }
 
 /// Lazily migrates a profile to double-entry: seeds its chart of accounts and
@@ -193,6 +293,14 @@ export const DEFAULT_CATEGORIES: { name: string; icon: string }[] = [
 export type VaultStatus = 'loading' | 'uninitialized' | 'locked' | 'unlocking' | 'unlocked';
 
 interface Data {
+  /**
+   * Records in the vault that would not decrypt on the last load.
+   *
+   * Surfaced in Diagnostics rather than swallowed: these are invisible to every
+   * screen and are also absent from the next backup, so staying quiet about
+   * them lets the loss reach the user's only copy.
+   */
+  unreadableRecords: ReadFailure[];
   txns: Txn[];
   categories: Category[];
   budgets: Budget[];
@@ -217,7 +325,7 @@ const emptyData: Data = {
   txns: [], categories: [], budgets: [], goals: [], holdings: [],
   liabilities: [], recurring: [], insurances: [], snapshots: [], importBatches: [], lots: [],
   accounts: [], postings: [], transfers: [], pendingCaptures: [],
-  watchlist: [], dividends: [], alerts: [],
+  watchlist: [], dividends: [], alerts: [], unreadableRecords: [],
 };
 
 interface AppState extends Data {
@@ -246,13 +354,20 @@ interface AppState extends Data {
   captureSnapshot: () => Promise<void>;
   reload: () => Promise<void>;
   put: (type: string, value: { id: string } & Record<string, unknown>) => Promise<void>;
+  /** Many records as one atomic batch and one reload. See `putMany` below. */
+  putMany: (entries: { type: string; value: { id: string } & Record<string, unknown> }[]) => Promise<void>;
   del: (type: string, id: string) => Promise<void>;
   reassignTxnAccounts: (fromAccountId: string, toAccountId: string) => Promise<number>;
   putAttachment: (file: File) => Promise<string>;
   getAttachmentUrl: (id: string) => Promise<string | null>;
   processRecurring: () => Promise<number>;
   exportBackup: (pin?: string) => Promise<string>;
-  importBackup: (b64: string, pin?: string) => Promise<number>;
+  /**
+   * @param mode `replace` (default) makes the vault match the backup, which is
+   *   what "restore" means. `merge` layers the backup over what is already
+   *   here, for pulling in a second device's data.
+   */
+  importBackup: (b64: string, pin?: string, mode?: 'replace' | 'merge') => Promise<number>;
   /** Records one import run so it can be reversed. Returns the batch id. */
   recordImportBatch: (b: Omit<ImportBatch, 'id' | 'vaultId' | 'profileId'>) => Promise<string>;
   /** Deletes everything a run created. Returns how many records were removed. */
@@ -516,21 +631,25 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   reload: async () => {
+    // Records that will not decrypt are collected rather than skipped in
+    // silence: one used to vanish from every screen *and* from the next backup
+    // export, so the loss propagated into the user's only copy unannounced.
+    const failures: ReadFailure[] = [];
     const { key, vaultId } = get();
     if (!key) return;
 
     // Categories are vault-wide (shared across profiles); seed defaults once.
-    let categories = await listRecords<Category>(key, STORE.category, vaultId);
+    let categories = await listRecords<Category>(key, STORE.category, vaultId, failures);
     if (categories.length === 0) {
       for (const c of DEFAULT_CATEGORIES) {
         const cat: Category = { id: uid(), vaultId, name: c.name, icon: c.icon };
         await putRecord(key, STORE.category, vaultId, cat.id, cat);
       }
-      categories = await listRecords<Category>(key, STORE.category, vaultId);
+      categories = await listRecords<Category>(key, STORE.category, vaultId, failures);
     }
 
     // Profiles: seed a default if none exist.
-    let profiles = await listRecords<Profile>(key, STORE.profile, vaultId);
+    let profiles = await listRecords<Profile>(key, STORE.profile, vaultId, failures);
     if (profiles.length === 0) {
       const p: Profile = { id: uid(), vaultId, name: 'Personal', kind: 'self', createdAt: Date.now() };
       await putRecord(key, STORE.profile, vaultId, p.id, p);
@@ -551,33 +670,33 @@ export const useApp = create<AppState>((set, get) => ({
       insurancesAll, snapshotsAll, pendingAll, watchAll, dividendsAll, alertsAll,
       transfersAll, batchesAll, lotsAll,
     ] = await Promise.all([
-        listRecords<Txn>(key, STORE.txn, vaultId),
-        listRecords<Budget>(key, STORE.budget, vaultId),
-        listRecords<Goal>(key, STORE.goal, vaultId),
-        listRecords<Holding>(key, STORE.holding, vaultId),
-        listRecords<Liability>(key, STORE.liability, vaultId),
-        listRecords<RecurringRule>(key, STORE.recurring, vaultId),
-        listRecords<Insurance>(key, STORE.insurance, vaultId),
-        listRecords<NetWorthSnapshot>(key, STORE.snapshot, vaultId),
-        listRecords<PendingCapture>(key, STORE.pendingCapture, vaultId),
-        listRecords<WatchItem>(key, STORE.watchItem, vaultId),
-        listRecords<Dividend>(key, STORE.dividend, vaultId),
-        listRecords<Alert>(key, STORE.alert, vaultId),
-        listRecords<Transfer>(key, STORE.transfer, vaultId),
-        listRecords<ImportBatch>(key, STORE.importBatch, vaultId),
-        listRecords<HoldingLot>(key, STORE.lot, vaultId),
+        listRecords<Txn>(key, STORE.txn, vaultId, failures),
+        listRecords<Budget>(key, STORE.budget, vaultId, failures),
+        listRecords<Goal>(key, STORE.goal, vaultId, failures),
+        listRecords<Holding>(key, STORE.holding, vaultId, failures),
+        listRecords<Liability>(key, STORE.liability, vaultId, failures),
+        listRecords<RecurringRule>(key, STORE.recurring, vaultId, failures),
+        listRecords<Insurance>(key, STORE.insurance, vaultId, failures),
+        listRecords<NetWorthSnapshot>(key, STORE.snapshot, vaultId, failures),
+        listRecords<PendingCapture>(key, STORE.pendingCapture, vaultId, failures),
+        listRecords<WatchItem>(key, STORE.watchItem, vaultId, failures),
+        listRecords<Dividend>(key, STORE.dividend, vaultId, failures),
+        listRecords<Alert>(key, STORE.alert, vaultId, failures),
+        listRecords<Transfer>(key, STORE.transfer, vaultId, failures),
+        listRecords<ImportBatch>(key, STORE.importBatch, vaultId, failures),
+        listRecords<HoldingLot>(key, STORE.lot, vaultId, failures),
       ]);
 
     // Double-entry (v3): lazily backfill the active profile's chart of accounts
     // + postings the first time it has none, then read them back.
-    let accountsAll = await listRecords<Account>(key, STORE.account, vaultId);
+    let accountsAll = await listRecords<Account>(key, STORE.account, vaultId, failures);
     if (!accountsAll.some(inProfile)) {
       await backfillDoubleEntry(key, vaultId, active, categories, txnsAll.filter(inProfile));
-      accountsAll = await listRecords<Account>(key, STORE.account, vaultId);
+      accountsAll = await listRecords<Account>(key, STORE.account, vaultId, failures);
     }
     const [txnsReloaded, postingsAll] = await Promise.all([
-      listRecords<Txn>(key, STORE.txn, vaultId),
-      listRecords<Posting>(key, STORE.posting, vaultId),
+      listRecords<Txn>(key, STORE.txn, vaultId, failures),
+      listRecords<Posting>(key, STORE.posting, vaultId, failures),
     ]);
 
     // A goal linked to an account reports that account's balance, not the
@@ -614,46 +733,60 @@ export const useApp = create<AppState>((set, get) => ({
       watchlist: watchAll.filter(inProfile).sort((a, b) => b.addedAt - a.addedAt),
       dividends: dividendsAll.filter(inProfile).sort((a, b) => b.payDate - a.payDate),
       alerts: alertsAll.filter(inProfile).sort((a, b) => b.createdAt - a.createdAt),
+      unreadableRecords: failures,
     });
   },
 
   put: async (type, value) => {
-    const { key, vaultId, activeProfileId } = get();
+    const { key, vaultId } = get();
     if (!key) return;
-    const needsProfile = PROFILE_SCOPED.includes(type) && !value.profileId;
-    const profileId = (value.profileId as string | undefined) ?? activeProfileId;
-    let record = needsProfile ? { ...value, profileId } : value;
+    await applyMutations(key, vaultId, entryMutations(get(), type, value, accountIdSet(get())));
+    await get().reload();
+  },
 
-    // Double-entry (PRD §16): a transaction also moves a money account and
-    // writes balanced postings, mirroring the Flutter LedgerWriter.
-    if (type === STORE.txn) {
-      record = { ...record, accountId: (value.accountId as string | undefined) ?? cashAcctId(profileId) };
-      await putRecord(key, type, vaultId, value.id, record);
-      const { categories, accounts } = get();
-      await writeEntryPostings(
-        key, vaultId, profileId, record as unknown as Txn,
-        new Map(categories.map((c) => [c.id, c.name])),
-        new Set(accounts.map((a) => a.id)),
-      );
-    } else if (type === STORE.transfer) {
-      await putRecord(key, type, vaultId, value.id, record);
-      await writeTransferPostings(key, vaultId, profileId, record as unknown as Transfer);
-    } else {
-      await putRecord(key, type, vaultId, value.id, record);
-    }
+  /**
+   * Writes many records as a single transaction and reloads once.
+   *
+   * Import used to call `put` per row, and `put` reloads the whole vault —
+   * which means decrypting every record in it. A five-hundred-row statement
+   * therefore decrypted the vault five hundred times, and a failure partway
+   * through left half a statement imported with no way to undo the rest.
+   */
+  putMany: async (entries) => {
+    const { key, vaultId } = get();
+    if (!key || entries.length === 0) return;
+    // One shared account set across the batch, so a structural or per-category
+    // expense account is created once rather than once per row.
+    const existing = accountIdSet(get());
+    const mutations = entries.flatMap((e) => entryMutations(get(), e.type, e.value, existing));
+    await applyMutations(key, vaultId, mutations);
     await get().reload();
   },
 
   del: async (type, id) => {
     const { key, vaultId } = get();
+    if (!key) {
+      await deleteRecord(type, id);
+      await get().reload();
+      return;
+    }
     // Drop an entry's postings alongside it. Both transactions and transfers
     // own two deterministically-named legs; orphaned legs would keep moving
     // account balances for a record that no longer exists.
-    if ((type === STORE.txn || type === STORE.transfer) && key) {
-      await deleteRecord(STORE.posting, `${id}:dr`);
-      await deleteRecord(STORE.posting, `${id}:cr`);
+    const mutations: Mutation[] = [{ op: 'delete', type, id }];
+    if (type === STORE.txn || type === STORE.transfer) {
+      mutations.push(
+        { op: 'delete', type: STORE.posting, id: `${id}:dr` },
+        { op: 'delete', type: STORE.posting, id: `${id}:cr` },
+      );
     }
-    await deleteRecord(type, id);
+    // A receipt outlives nothing. Left behind it is unreachable, still counted
+    // against storage, and still inflating every future backup.
+    if (type === STORE.txn) {
+      const ref = get().txns.find((t) => t.id === id)?.attachmentRef;
+      if (ref) mutations.push({ op: 'delete', type: STORE.attachment, id: ref });
+    }
+    await applyMutations(key, vaultId, mutations);
     await get().reload();
   },
 
@@ -789,60 +922,61 @@ export const useApp = create<AppState>((set, get) => ({
   exportBackup: async (pin?: string) => {
     const { key, vaultId } = get();
     if (!key) throw new Error('locked');
+
+    // A record that will not decrypt is silently absent from `listRecords`, so
+    // exporting while the vault holds one writes the loss into the backup and
+    // makes it permanent. Refuse, and point at the screen that names them.
+    const failures: ReadFailure[] = [];
     const payload: Record<string, unknown[]> = {};
     for (const type of Object.values(STORE)) {
-      payload[type] = await listRecords(key, type, vaultId);
+      payload[type] = await listRecords(key, type, vaultId, failures);
     }
-    const body = { v: 2, vaultId, exportedAt: Date.now(), data: payload };
+    if (failures.length > 0) {
+      throw new BackupError(
+        'unreadable',
+        `${failures.length} record${failures.length === 1 ? '' : 's'} in this vault cannot be read, and a backup taken now would not contain ${failures.length === 1 ? 'it' : 'them'}. Open Diagnostics to see which.`,
+      );
+    }
+
+    const body = { vaultId, exportedAt: Date.now(), data: payload };
 
     if (!pin) {
+      // Legacy v1: encrypted with the vault's own key, so it can only ever be
+      // restored into the vault that wrote it. Kept for callers that predate
+      // the PIN prompt; the UI always passes a PIN.
       const enc = await encryptJson(key, { ...body, v: 1 });
       return bufToB64(new TextEncoder().encode(JSON.stringify(enc)).buffer);
     }
-
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const portableKey = await deriveKey(pin, salt);
-    const enc = await encryptJson(portableKey, body);
-    const envelope = { v: 2, kdf: 'PBKDF2-SHA256', saltB64: bufToB64(salt.buffer), enc };
-    return bufToB64(new TextEncoder().encode(JSON.stringify(envelope)).buffer);
+    return encodeBackup(body, pin, SCHEMA_VERSION, APP_VERSION);
   },
 
-  importBackup: async (b64, pin) => {
+  importBackup: async (b64, pin, mode = 'replace') => {
     const { key, vaultId } = get();
     if (!key) throw new Error('locked');
 
-    let outer: { v?: number; saltB64?: string; enc?: unknown };
-    try {
-      outer = JSON.parse(new TextDecoder().decode(b64ToBuf(b64)));
-    } catch {
-      throw new BackupError('unreadable', 'That file is not a Khazana backup, or it was altered in transit. Re-export it and try again.');
-    }
+    // Every gate runs before anything is written. `decodeBackup` reads and
+    // validates; the vault is untouched until it returns cleanly (§6.1).
+    const decoded = await decodeBackup(b64, pin, key, SCHEMA_VERSION);
+    const parsed = decoded.body as unknown as { data: Record<string, { id: string }[]> };
 
-    // v2 is self-contained: its salt travels with it, so any vault can open it
-    // given the PIN it was exported with. v1 has no salt and is decryptable
-    // only by the vault that wrote it.
-    let openWith: CryptoKey;
-    let envelope: Encrypted;
-    if (outer && outer.v === 2 && typeof outer.saltB64 === 'string') {
-      if (!pin) {
-        throw new BackupError('needs-pin', 'This backup needs the PIN it was exported with.');
-      }
-      openWith = await deriveKey(pin, new Uint8Array(b64ToBuf(outer.saltB64)));
-      envelope = outer.enc as Encrypted;
-    } else {
-      openWith = key;
-      envelope = outer as unknown as Encrypted;
-    }
-
-    let parsed: { data: Record<string, { id: string }[]> };
-    try {
-      parsed = await decryptJson<{ data: Record<string, { id: string }[]> }>(openWith, envelope);
-    } catch {
+    // The ledger the file claims to hold must actually balance. A backup that
+    // restores into a broken book is not a recovery, and finding out after the
+    // swap is too late.
+    const incoming = <T,>(type: string) => (parsed.data[type] ?? []) as unknown as T[];
+    const failed = runDiagnostics({
+      txns: incoming<Txn>(STORE.txn),
+      transfers: incoming<Transfer>(STORE.transfer),
+      postings: incoming<Posting>(STORE.posting),
+      accounts: incoming<Account>(STORE.account),
+      categories: incoming<Category>(STORE.category),
+      holdings: incoming<Holding>(STORE.holding),
+      dividends: incoming<Dividend>(STORE.dividend),
+      lots: incoming<HoldingLot>(STORE.lot),
+    }).filter((c: Check) => c.level === 'error');
+    if (failed.length > 0) {
       throw new BackupError(
-        outer?.v === 2 ? 'wrong-pin' : 'wrong-vault',
-        outer?.v === 2
-          ? 'That PIN does not open this backup. It must be the PIN in use when the backup was exported, which is not necessarily your current one.'
-          : 'This is an older backup that can only be restored into the exact vault that created it — the same browser or app install, never a second device. Export a new backup from that device to move the data.',
+        'unreadable',
+        `This backup does not pass its own integrity checks (${failed[0].label}: ${failed[0].detail}) so it has not been restored. Your vault is unchanged.`,
       );
     }
     /*
@@ -891,19 +1025,55 @@ export const useApp = create<AppState>((set, get) => ({
       return activeProfileId;
     };
 
+    const mutations: Mutation[] = [];
+
+    /*
+     * Replace, not merge.
+     *
+     * Restoring used to write the backup's records over the live vault and
+     * leave everything else in place, which is a merge wearing the word
+     * "restore": records deleted since the backup came back from the dead, and
+     * a failure partway through left a half-and-half vault with no way back.
+     * `replace` clears the vault first so what you get is the book you exported.
+     * `merge` is still available for pulling a second device's data in.
+     */
+    if (mode === 'replace') {
+      for (const type of Object.values(STORE)) {
+        for (const rec of await listRecords<{ id: string }>(key, type, vaultId)) {
+          mutations.push({ op: 'delete', type, id: rec.id });
+        }
+      }
+    }
+
     let count = 0;
     for (const type of Object.values(STORE)) {
       for (const rec of parsed.data[type] ?? []) {
         if (type === STORE.profile && absorbed.has(rec.id)) continue;
         const scoped = rec as { id: string; profileId?: string };
-        await putRecord(key, type, vaultId, rec.id, {
-          ...rec,
-          vaultId,
-          ...(('profileId' in scoped) ? { profileId: remap(scoped.profileId) } : {}),
+        mutations.push({
+          op: 'put', type, id: rec.id,
+          value: {
+            ...rec,
+            vaultId,
+            ...(('profileId' in scoped) ? { profileId: remap(scoped.profileId) } : {}),
+          },
         });
         count++;
       }
     }
+
+    // One transaction: the vault is either the old book or the new one, never
+    // a mixture. This is the webapp's equivalent of the plan's "restore to a
+    // new database and swap" — there is no second database to stage into, so
+    // the atomicity comes from the write itself.
+    await applyMutations(key, vaultId, mutations);
+
+    // An older backup's records are in an older shape; bring them forward
+    // before anything reads them.
+    if (decoded.schemaVersion != null && decoded.schemaVersion < SCHEMA_VERSION) {
+      await runMigrations(decoded.schemaVersion, key, vaultId);
+    }
+
     await get().reload();
     return count;
   },

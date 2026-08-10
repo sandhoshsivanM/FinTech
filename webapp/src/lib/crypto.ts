@@ -4,8 +4,20 @@
 const ITERATIONS = 600000;
 const KEY_LEN_BITS = 256;
 
+/**
+ * Chunked rather than `String.fromCharCode(...bytes)`: spreading a whole buffer
+ * into an argument list throws `RangeError` past roughly 100k elements, and a
+ * backup of a real vault is far larger than that. The one place this mattered
+ * was the only place it was never exercised — a small test vault encodes fine.
+ */
 function bufToB64(buf: ArrayBufferLike): string {
-  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const bytes = new Uint8Array(buf);
+  const CHUNK = 0x8000;
+  let s = '';
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    s += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(s);
 }
 function b64ToBuf(b64: string): Uint8Array {
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));

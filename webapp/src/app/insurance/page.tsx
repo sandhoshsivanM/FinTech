@@ -25,6 +25,7 @@ import {
 } from '@/domain/insurance';
 import { DateInput } from '@/components/DateInput';
 import { formatDate } from '@/lib/dateFormat';
+import { contains, trailingDays } from '@/domain/period';
 
 // ---- Insurance type config ----
 
@@ -154,9 +155,9 @@ export default function InsurancePage() {
 
   // Estimate annual income from income-type txns in the last 365 days
   const annualIncome = useMemo(() => {
-    const cutoff = Date.now() - 365 * 24 * 60 * 60 * 1000;
+    const year = trailingDays(365);
     return txns
-      .filter((t) => t.type === 'income' && t.date >= cutoff)
+      .filter((t) => t.type === 'income' && contains(year, t.date))
       .reduce((s, t) => s.plus(D(t.amount)), ZERO);
   }, [txns]);
 

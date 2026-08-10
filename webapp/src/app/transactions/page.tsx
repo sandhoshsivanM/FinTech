@@ -14,6 +14,7 @@ import { PageIntro, Button, Segmented, Input, Select, EmptyState, GlassCard } fr
 import { useConfirm } from '@/components/Confirm';
 import { BudgetStrip } from '@/components/BudgetStrip';
 import { formatDate, formatDayMonth, fromInputValue, toInputValue } from '@/lib/dateFormat';
+import { PRESETS, PRESET_LABELS, type PresetKey } from '@/domain/period';
 import { DateInput } from '@/components/DateInput';
 
 // ---- Icon map ----
@@ -69,44 +70,22 @@ function amountMatches(amount: string, needle: string): boolean {
 
 
 /**
- * Ranges people actually reconcile against. Computed on click rather than at
- * module load, so "this month" does not go stale in a long-lived tab.
+ * Ranges people actually reconcile against, resolved from the shared period
+ * model so "last 3 months" here means the same days it means on Reports.
+ * Computed on click rather than at module load, so a long-lived tab does not
+ * go stale across a month boundary.
  */
-const DATE_PRESETS: { label: string; range: () => [string, string] }[] = [
-  {
-    label: 'This month',
-    range: () => {
-      const n = new Date();
-      return [toInputValue(new Date(n.getFullYear(), n.getMonth(), 1)), toInputValue(n)];
-    },
-  },
-  {
-    label: 'Last month',
-    range: () => {
-      const n = new Date();
-      return [
-        toInputValue(new Date(n.getFullYear(), n.getMonth() - 1, 1)),
-        toInputValue(new Date(n.getFullYear(), n.getMonth(), 0)),
-      ];
-    },
-  },
-  {
-    label: 'Last 3 months',
-    range: () => {
-      const n = new Date();
-      return [toInputValue(new Date(n.getFullYear(), n.getMonth() - 2, 1)), toInputValue(n)];
-    },
-  },
-  {
-    label: 'This FY',
-    range: () => {
-      // Indian financial year: 1 April to 31 March.
-      const n = new Date();
-      const startYear = n.getMonth() >= 3 ? n.getFullYear() : n.getFullYear() - 1;
-      return [toInputValue(new Date(startYear, 3, 1)), toInputValue(n)];
-    },
-  },
+const DATE_PRESETS: { label: string; key: PresetKey }[] = [
+  { label: PRESET_LABELS.thisMonth, key: 'thisMonth' },
+  { label: PRESET_LABELS.lastMonth, key: 'lastMonth' },
+  { label: PRESET_LABELS.last3Months, key: 'last3Months' },
+  { label: PRESET_LABELS.financialYear, key: 'financialYear' },
 ];
+
+const presetInputRange = (key: PresetKey): [string, string] => {
+  const r = PRESETS[key]();
+  return [toInputValue(r.start), toInputValue(r.end)];
+};
 
 export default function TransactionsPage() {
   const txns = useApp((s) => s.txns);
@@ -329,7 +308,7 @@ export default function TransactionsPage() {
             <button
               key={p.label}
               type="button"
-              onClick={() => { const [f, t] = p.range(); setFrom(f); setTo(t); setPage(0); }}
+              onClick={() => { const [f, t] = presetInputRange(p.key); setFrom(f); setTo(t); setPage(0); }}
               className="px-2.5 py-1.5 rounded-lg border border-line text-[12px] font-semibold text-muted hover:text-ink hover:border-[var(--accent)] transition-colors"
             >
               {p.label}

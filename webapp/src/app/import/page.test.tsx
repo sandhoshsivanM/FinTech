@@ -23,11 +23,22 @@ const acct = (id: string, name: string): Account => ({
 
 const cat = (id: string, name: string): Category => ({ id, vaultId: 'v', name });
 
-// Typed to the store's own put signature so the call assertions below can read
-// the record that was written rather than casting an untyped tuple.
+// Typed to the store's own signatures so the call assertions below can read the
+// records that were written rather than casting an untyped tuple.
 const put = vi.fn<(type: string, value: { id: string } & Record<string, unknown>) => Promise<void>>(
   async () => {},
 );
+type Entry = { type: string; value: { id: string } & Record<string, unknown> };
+/**
+ * A statement import writes every row as one atomic batch, so assertions read
+ * the batch rather than counting calls. `writes()` flattens it back to the
+ * (type, record) pairs the per-row assertions were written against.
+ */
+const putMany = vi.fn<(entries: Entry[]) => Promise<void>>(async () => {});
+const writes = (): [string, { id: string } & Record<string, unknown>][] => [
+  ...putMany.mock.calls.flatMap(([entries]) => entries.map((e) => [e.type, e.value] as [string, { id: string } & Record<string, unknown>])),
+  ...put.mock.calls.map(([type, value]) => [type, value] as [string, { id: string } & Record<string, unknown>]),
+];
 /** Every import run is recorded so it can be undone; assertions below check it. */
 type BatchArg = {
   at: number; filename: string; kind: 'transactions' | 'holdings';
@@ -37,6 +48,7 @@ const recordBatch = vi.fn<(b: BatchArg) => Promise<string>>(async () => 'batch-1
 
 function seed(over: Record<string, unknown> = {}) {
   put.mockClear();
+  putMany.mockClear();
   recordBatch.mockClear();
   useApp.setState({
     activeProfileId: PROFILE,
@@ -53,6 +65,7 @@ function seed(over: Record<string, unknown> = {}) {
     recordImportBatch: recordBatch,
     undoImportBatch: vi.fn(async () => 0),
     put,
+    putMany,
     ...over,
   } as unknown as Parameters<typeof useApp.setState>[0]);
 }
@@ -123,7 +136,7 @@ describe('Import — transactions', () => {
 
     await expectText('2 new transactions ready');
     // The whole point of the preview: nothing is persisted yet.
-    expect(put).not.toHaveBeenCalled();
+    expect(writes()).toHaveLength(0);
   });
 
   test('preview shows the parsed direction and auto-detected category', async () => {
@@ -146,8 +159,8 @@ describe('Import — transactions', () => {
     await upload(user, 'statement.csv', STATEMENT);
     await user.click(await screen.findByRole('button', { name: /Import 2 transactions/ }));
 
-    expect(put).toHaveBeenCalledTimes(2);
-    const kinds = put.mock.calls.map(([, rec]) => rec.type);
+    expect(writes()).toHaveLength(2);
+    const kinds = writes().map(([, rec]) => rec.type);
     expect(kinds).toContain('income');
     expect(kinds).toContain('expense');
   });
@@ -176,7 +189,7 @@ describe('Import — transactions', () => {
     await upload(user, 'junk.csv', 'Foo,Bar\n1,2');
 
     expect(await screen.findByText(/Could not find a header row/i)).toBeInTheDocument();
-    expect(put).not.toHaveBeenCalled();
+    expect(writes()).toHaveLength(0);
   });
 });
 
@@ -189,7 +202,7 @@ describe('Import — holdings', () => {
     await upload(user, 'holdings.csv', BROKER);
 
     await expectText('2 rows ready');
-    expect(put).not.toHaveBeenCalled();
+    expect(writes()).toHaveLength(0);
   });
 
   test('confirming writes each position', async () => {
@@ -198,8 +211,8 @@ describe('Import — holdings', () => {
     await upload(user, 'holdings.csv', BROKER);
     await user.click(await screen.findByRole('button', { name: /Import 2 rows/ }));
 
-    expect(put).toHaveBeenCalledTimes(2);
-    const symbols = put.mock.calls.map(([, rec]) => rec.symbol);
+    expect(writes()).toHaveLength(2);
+    const symbols = writes().map(([, rec]) => rec.symbol);
     expect(symbols).toEqual(expect.arrayContaining(['INFY', 'TCS']));
   });
 });
@@ -219,9 +232,9 @@ describe('Import — Append vs Update by Name', () => {
     await expectText('matched to existing positions');
     await user.click(await screen.findByRole('button', { name: /Import 1 row/ }));
 
-    expect(put).toHaveBeenCalledTimes(1);
+    expect(writes()).toHaveLength(1);
     // Same id → the broker export updates the position instead of doubling it.
-    expect(put.mock.calls[0][1].id).toBe('h1');
+    expect(writes()[0][1].id).toBe('h1');
   });
 
   test('Append adds a new position even when the name matches', async () => {
@@ -233,8 +246,8 @@ describe('Import — Append vs Update by Name', () => {
     await expectText('all will be added as new positions');
     await user.click(await screen.findByRole('button', { name: /Import 1 row/ }));
 
-    expect(put).toHaveBeenCalledTimes(1);
-    expect(put.mock.calls[0][1].id).not.toBe('h1');
+    expect(writes()).toHaveLength(1);
+    expect(writes()[0][1].id).not.toBe('h1');
   });
 });
 
@@ -257,11 +270,11 @@ describe('Import — dividends from a bank statement', () => {
     await upload(user, 's.csv', STMT);
     await user.click(await screen.findByRole('button', { name: /Import 1 transaction/ }));
 
-    const types = put.mock.calls.map(([store]) => store);
+    const types = writes().map(([store]) => store);
     expect(types).toContain('txn');
     expect(types).toContain('dividend');
 
-    const div = put.mock.calls.find(([store]) => store === 'dividend')![1];
+    const div = writes().find(([store]) => store === 'dividend')![1];
     expect(div.symbol).toBe('RELIANCE');
     expect(div.kind).toBe('dividend');
     expect(div.amount).toBe('1240.00');
@@ -276,7 +289,7 @@ describe('Import — dividends from a bank statement', () => {
     await upload(user, 's.csv', STMT);
     await user.click(await screen.findByRole('button', { name: /Import 1 transaction/ }));
 
-    const types = put.mock.calls.map(([store]) => store);
+    const types = writes().map(([store]) => store);
     expect(types).toContain('txn');
     // Never attach a payout to a position that does not exist.
     expect(types).not.toContain('dividend');
@@ -290,7 +303,7 @@ describe('Import — dividends from a bank statement', () => {
     await upload(user, 's.csv', 'Date,Narration,Withdrawal Amt.,Deposit Amt.\n02/05/2026,SALARY CREDIT,,85000.00');
     await user.click(await screen.findByRole('button', { name: /Import 1 transaction/ }));
 
-    expect(put.mock.calls.map(([store]) => store)).not.toContain('dividend');
+    expect(writes().map(([store]) => store)).not.toContain('dividend');
   });
 });
 

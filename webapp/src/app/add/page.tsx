@@ -67,6 +67,7 @@ export default function AddTransactionPage() {
   const [accountId, setAccountId] = useState('');
   const [toAccountId, setToAccountId] = useState('');
   const putAttachment = useApp((s) => s.putAttachment);
+  const del = useApp((s) => s.del);
 
   // Default to whichever account was used last: most people spend from the same
   // one most days, and re-picking it every time is the kind of friction that
@@ -81,6 +82,7 @@ export default function AddTransactionPage() {
   const [quickText, setQuickText] = useState('');
   const [saving, setSaving] = useState(false);
   const [attaching, setAttaching] = useState(false);
+  const [attachError, setAttachError] = useState<string | null>(null);
 
   // Edit mode: prefill from ?id= (read off the URL to avoid Suspense constraints)
   const [editId, setEditId] = useState<string | null>(null);
@@ -115,13 +117,60 @@ export default function AddTransactionPage() {
     setCreatedAt(tr.createdAt ?? Date.now());
   }, []);
 
+  /**
+   * A receipt is stored as an encrypted record and referenced by id.
+   *
+   * This used to be `try { … } finally { … }` with no `catch`, invoked without
+   * `await` from the change handler — so a locked vault or a storage quota
+   * error became an unhandled rejection, the spinner cleared, and the screen
+   * reported nothing at all. The user saved a transaction believing the
+   * receipt was on it (§6.2: no silent success state).
+   */
   async function handleAttach(file: File | undefined) {
     if (!file) return;
+    setAttachError(null);
+
+    if (!file.type.startsWith('image/')) {
+      setAttachError('That is not an image. Attach a photo or a scan of the receipt.');
+      return;
+    }
+    // Base64 inflates by a third and the whole thing lives in one encrypted
+    // record, which also rides along in every future backup.
+    if (file.size > MAX_RECEIPT_BYTES) {
+      setAttachError(
+        `That image is ${(file.size / 1_048_576).toFixed(1)} MB. Receipts are limited to ${MAX_RECEIPT_MB} MB so backups stay a manageable size.`,
+      );
+      return;
+    }
+
     setAttaching(true);
     try {
-      setAttachmentRef(await putAttachment(file));
+      const next = await putAttachment(file);
+      // Replacing a receipt used to abandon the previous blob in the vault:
+      // unreachable, uncounted, and still inflating every export.
+      if (attachmentRef) await del(STORE.attachment, attachmentRef);
+      setAttachmentRef(next);
+    } catch (e) {
+      setAttachError(
+        e instanceof Error ? `Could not save that receipt: ${e.message}` : 'Could not save that receipt.',
+      );
     } finally {
       setAttaching(false);
+    }
+  }
+
+  async function handleRemoveAttachment() {
+    const ref = attachmentRef;
+    setAttachmentRef(null);
+    setAttachError(null);
+    if (ref) {
+      try {
+        await del(STORE.attachment, ref);
+      } catch {
+        // The reference is already gone from the form, so the receipt will not
+        // be saved onto the transaction either way. A stranded blob is caught
+        // by the orphan-attachment check in Diagnostics.
+      }
     }
   }
 
@@ -351,7 +400,7 @@ export default function AddTransactionPage() {
           {attachmentRef ? (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-income font-medium">Receipt attached</span>
-              <Button variant="ghost" onClick={() => setAttachmentRef(null)}>
+              <Button variant="ghost" onClick={() => { void handleRemoveAttachment(); }}>
                 <X size={14} /> Remove
               </Button>
             </div>
@@ -360,10 +409,15 @@ export default function AddTransactionPage() {
               type="file"
               accept="image/*"
               disabled={attaching}
-              onChange={(e) => handleAttach(e.target.files?.[0])}
+              onChange={(e) => { void handleAttach(e.target.files?.[0]); }}
               className="text-sm"
               aria-label="Attach receipt image"
             />
+          )}
+          {attachError && (
+            <p role="alert" className="mt-1.5 text-xs" style={{ color: 'var(--expense)' }}>
+              {attachError}
+            </p>
           )}
         </Field>
         )}

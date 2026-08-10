@@ -337,7 +337,7 @@ function MoneyImport() {
   const categories = useApp((s) => s.categories);
   const vaultId = useApp((s) => s.vaultId);
   const activeProfileId = useApp((s) => s.activeProfileId);
-  const put = useApp((s) => s.put);
+  const putMany = useApp((s) => s.putMany);
   const recordImportBatch = useApp((s) => s.recordImportBatch);
   const fmt = useFmt();
 
@@ -401,6 +401,10 @@ function MoneyImport() {
     try {
       const now = Date.now();
       const created: { type: string; id: string }[] = [];
+      // Collected and written as one batch: a row at a time meant one full
+      // vault decrypt per row, and a failure partway through left half a
+      // statement imported with nothing to undo the rest.
+      const batch: { type: string; value: { id: string } & Record<string, unknown> }[] = [];
       for (const r of plan.fresh) {
         if (r.kind === 'transfer') {
           // Named endpoints are matched to existing accounts; an unknown name
@@ -410,7 +414,7 @@ function MoneyImport() {
           const to = money.find((a) => a.name.toLowerCase() === r.toAccount.toLowerCase());
           const transferId = uid();
           created.push({ type: STORE.transfer, id: transferId });
-          await put(STORE.transfer, {
+          batch.push({ type: STORE.transfer, value: {
             id: transferId,
             vaultId,
             amount: r.amount,
@@ -419,11 +423,11 @@ function MoneyImport() {
             date: r.date,
             note: r.description || r.notes || null,
             createdAt: now,
-          });
+          } });
         } else {
           const txnId = uid();
           created.push({ type: STORE.txn, id: txnId });
-          await put(STORE.txn, {
+          batch.push({ type: STORE.txn, value: {
             id: txnId,
             vaultId,
             amount: r.amount,
@@ -434,7 +438,7 @@ function MoneyImport() {
             date: r.date,
             createdAt: now,
             accountId: effectiveAccount,
-          } satisfies Txn as unknown as Txn & { id: string } & Record<string, unknown>);
+          } satisfies Txn as unknown as Txn & { id: string } & Record<string, unknown> });
 
           // A dividend credit is two facts: money arrived (the transaction
           // above, which is what moves net worth) and a payout was made on a
@@ -450,7 +454,7 @@ function MoneyImport() {
           if (dk && symbol) {
             const divId = uid();
             created.push({ type: STORE.dividend, id: divId });
-            await put(STORE.dividend, {
+            batch.push({ type: STORE.dividend, value: {
               id: divId,
               vaultId,
               symbol,
@@ -460,10 +464,11 @@ function MoneyImport() {
               exDate: null,
               payDate: r.date,
               received: true, // it is in the statement, so the money landed
-            } satisfies Dividend as unknown as Dividend & { id: string } & Record<string, unknown>);
+            } satisfies Dividend as unknown as Dividend & { id: string } & Record<string, unknown> });
           }
         }
       }
+      await putMany(batch);
       await recordImportBatch({
         at: now, filename, kind: 'transactions',
         created, updatedCount: 0,

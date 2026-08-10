@@ -5,7 +5,11 @@ import { useApp, uid } from '@/lib/store';
 import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
 import { STORE } from '@/lib/types';
-import { monthRange, spentForCategory, evaluateBudget } from '@/domain/finance';
+import {
+  spentForCategory, evaluateBudget, budgetRollover, DEFAULT_ALERT_THRESHOLD_PCT,
+} from '@/domain/finance';
+import { currentMonth } from '@/domain/period';
+import { useNow } from '@/lib/useNow';
 import {
   PageIntro, GlassCard, SectionHeader, EmptyState,
   Button, Field, Input, Select, ProgressBar, StatStrip,
@@ -44,21 +48,32 @@ export default function BudgetPage() {
 
   const fmt = useFmt();
 
-  const [first, last] = useMemo(() => monthRange(), []);
+  // Tied to the clock, not memoised on mount: a tab left open overnight into a
+  // new month used to keep showing the old month's window under a "this month"
+  // heading.
+  // `useNow` reports 0 until its first tick; falling back to the default keeps
+  // the prerender on the real current month rather than January 1970.
+  const now = useNow(60_000);
+  const month = useMemo(() => currentMonth(now || undefined), [now]);
 
   // Per-budget evaluated progress
   const evaluated = useMemo(() =>
     budgets.map((b) => {
-      const spent = spentForCategory(txns, b.categoryId, first, last);
-      return { ...evaluateBudget(b, spent), catName: categories.find((c) => c.id === b.categoryId)?.name ?? 'Unknown' };
+      const spent = spentForCategory(txns, b.categoryId, month);
+      const rollover = budgetRollover(b, txns, month);
+      return {
+        ...evaluateBudget(b, spent, rollover),
+        catName: categories.find((c) => c.id === b.categoryId)?.name ?? 'Unknown',
+      };
     }),
-    [budgets, txns, categories, first, last],
+    [budgets, txns, categories, month],
   );
 
-  // Summary totals
+  // Summary totals. Budgeted counts rollover, so it matches what the per-budget
+  // rows are measured against.
   const totalBudgeted = useMemo(() =>
-    budgets.reduce((s, b) => s.plus(D(b.amountLimit)), ZERO),
-    [budgets],
+    evaluated.reduce((s, e) => s.plus(e.limit), ZERO),
+    [evaluated],
   );
   const totalSpent = useMemo(() =>
     evaluated.reduce((s, e) => s.plus(e.spent), ZERO),
@@ -101,7 +116,8 @@ export default function BudgetPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [addCategoryId, setAddCategoryId] = useState('');
   const [addLimit, setAddLimit] = useState('');
-  const [addThreshold, setAddThreshold] = useState('80');
+  const [addThreshold, setAddThreshold] = useState(String(DEFAULT_ALERT_THRESHOLD_PCT));
+  const [addRollover, setAddRollover] = useState(false);
 
   // Categories not already budgeted
   const availableCategories = useMemo(() => {
@@ -118,12 +134,13 @@ export default function BudgetPage() {
       vaultId,
       categoryId: addCategoryId,
       amountLimit: D(limit).toString(),
-      rolloverEnabled: false,
-      alertThresholdPct: isNaN(pct) ? 80 : Math.min(100, Math.max(0, pct)),
+      rolloverEnabled: addRollover,
+      alertThresholdPct: isNaN(pct) ? DEFAULT_ALERT_THRESHOLD_PCT : Math.min(100, Math.max(1, pct)),
     });
     setAddCategoryId('');
     setAddLimit('');
-    setAddThreshold('80');
+    setAddThreshold(String(DEFAULT_ALERT_THRESHOLD_PCT));
+    setAddRollover(false);
     setShowAdd(false);
   }
 
@@ -135,7 +152,7 @@ export default function BudgetPage() {
     <div className="space-y-6">
       <PageIntro
         title="Budget"
-        subtitle={`${budgets.length} budget${budgets.length !== 1 ? 's' : ''} this month`}
+        subtitle={`${budgets.length} budget${budgets.length !== 1 ? 's' : ''} · ${month.label} · Monthly`}
         action={
           <Button variant="primary" onClick={() => { setShowAdd(true); }}>
             <Plus size={16} /> Add Budget
@@ -331,18 +348,35 @@ export default function BudgetPage() {
                     onChange={(e) => setAddLimit(e.target.value)}
                   />
                 </Field>
-                <Field label="Alert threshold (%)" hint="Default 80%">
+                <Field label="Alert threshold (%)" hint="Warn at this share of the limit">
                   <Input
                     type="number"
                     min="1"
                     max="100"
                     step="1"
-                    placeholder="80"
+                    placeholder="90"
                     value={addThreshold}
                     onChange={(e) => setAddThreshold(e.target.value)}
                   />
                 </Field>
               </div>
+              {/* Off by default (§4.3): rollover changes what next month's limit
+                  means, so it is opted into per category rather than assumed. */}
+              <label className="flex items-start gap-3 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={addRollover}
+                  onChange={(e) => setAddRollover(e.target.checked)}
+                />
+                <span>
+                  Roll over what is left
+                  <span className="block text-xs text-muted">
+                    Adds last month&rsquo;s unspent amount to this month&rsquo;s limit. Overspending
+                    is never carried forward.
+                  </span>
+                </span>
+              </label>
               <div className="flex gap-3">
                 <Button
                   variant="primary"

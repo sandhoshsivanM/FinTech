@@ -21,6 +21,7 @@ import { portfolioSummary } from '@/domain/portfolio';
 import { short } from '@/lib/format';
 import { DateInput } from '@/components/DateInput';
 import { formatDate, formatMonthShort } from '@/lib/dateFormat';
+import { contains, monthsBack, monthsIn } from '@/domain/period';
 import { NumberInput } from '@/components/NumberInput';
 
 const KIND_LABEL: Record<string, string> = { dividend: 'Dividend', interest: 'Interest', bonus: 'Bonus', buyback: 'Buyback' };
@@ -45,17 +46,14 @@ export default function DividendsPage() {
   const portfolioValue = useMemo(() => portfolioSummary(holdings).current, [holdings]);
   const yieldPct = portfolioValue.gt(0) ? totalReceived.div(portfolioValue).times(100).toNumber() : null;
 
-  /** Last twelve months, oldest first. */
+  /** Last twelve months, oldest first. Same buckets every other chart uses. */
   const byMonth = useMemo(() => {
     const out: { label: string; value: number }[] = [];
-    const d = new Date();
-    for (let i = 11; i >= 0; i--) {
-      const m = new Date(d.getFullYear(), d.getMonth() - i, 1);
-      const next = new Date(d.getFullYear(), d.getMonth() - i + 1, 1);
+    for (const m of monthsIn(monthsBack(12))) {
       const sum = received
-        .filter((x) => x.payDate >= m.getTime() && x.payDate < next.getTime())
+        .filter((x) => contains(m, x.payDate))
         .reduce((s, x) => s + D(x.amount).toNumber(), 0);
-      out.push({ label: formatMonthShort(m), value: sum });
+      out.push({ label: formatMonthShort(m.start), value: sum });
     }
     return out;
   }, [received]);

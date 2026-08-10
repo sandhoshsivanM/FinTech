@@ -4,7 +4,9 @@ import { BarChart2 } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
-import { netWorthSeries, monthRange, spentForCategory, type TimeWindow } from '@/domain/finance';
+import { netWorthSeries, spentForCategory } from '@/domain/finance';
+import { contains, monthsBack, monthsIn } from '@/domain/period';
+import { useNow } from '@/lib/useNow';
 import {
   GlassCard,
   PageIntro,
@@ -15,7 +17,7 @@ import {
   Bars,
   Sparkline,
 } from '@/components/ui';
-import { formatMonthShort } from '@/lib/dateFormat';
+import { formatMonthShort, formatDate } from '@/lib/dateFormat';
 import { balanceSheet } from '@/domain/statements';
 import type Decimal from 'decimal.js';
 
@@ -29,11 +31,6 @@ const WINDOW_OPTIONS: { value: ReportWindow; label: string }[] = [
   { value: '12', label: '12 months' },
 ];
 
-/** Report window → the TimeWindow netWorthSeries speaks. */
-const SPARK_WINDOW: Record<ReportWindow, TimeWindow> = { '3': '3M', '6': '6M', '12': '12M' };
-
-const windowLabel = (w: ReportWindow) => `${w} months`;
-
 // ── Color palette for category donut ─────────────────────────────────────────
 
 const CAT_COLORS = [
@@ -45,23 +42,6 @@ const CAT_COLORS = [
   '#06b6d4',
   '#ec4899',
 ];
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function monthLabel(year: number, month: number): string {
-  return formatMonthShort(new Date(year, month, 1));
-}
-
-/** Returns an array of {year, month} going back n months including the current month */
-function lastNMonths(n: number): { year: number; month: number }[] {
-  const now = new Date();
-  const result: { year: number; month: number }[] = [];
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    result.push({ year: d.getFullYear(), month: d.getMonth() });
-  }
-  return result;
-}
 
 // ── Stat tile ─────────────────────────────────────────────────────────────────
 
@@ -107,11 +87,12 @@ function BalanceSheetCard() {
     <GlassCard>
       <SectionHeader
         title="Balance Sheet"
-        action={<span className="text-xs text-muted">From your chart of accounts</span>}
+        action={<span className="text-xs text-muted">As of {formatDate(bs.asOf)}</span>}
       />
-      <div className="mt-4 grid md:grid-cols-2 gap-6">
+      <div className="mt-4 grid md:grid-cols-3 gap-6">
         <Side title="Assets" lines={bs.assets} total={bs.totalAssets} color="var(--income)" money={money} />
         <Side title="Liabilities" lines={bs.liabilities} total={bs.totalLiabilities} color="var(--expense)" money={money} />
+        <Side title="Equity" lines={bs.equity} total={bs.totalEquity} color="var(--muted)" money={money} />
       </div>
 
       <div className="mt-5 pt-4 border-t border-[var(--line)] flex items-baseline justify-between">
@@ -122,10 +103,11 @@ function BalanceSheetCard() {
         </span>
       </div>
 
+      {/* A financial statement reports position. Internal consistency problems
+          belong in Diagnostics, which names the offending records (§3.4). */}
       {!bs.balanced && (
         <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--warn)' }}>
-          The books are out by {money(bs.discrepancy.abs())}. Something is posted against an account
-          this statement does not classify — Diagnostics will name it.
+          These figures are incomplete. Diagnostics has the details.
         </p>
       )}
     </GlassCard>
@@ -172,23 +154,27 @@ export default function ReportsPage() {
 
   const [win, setWin] = useState<ReportWindow>('3');
   const numMonths = parseInt(win, 10);
+  const now = useNow(60_000);
 
-  // ── Month range buckets ──────────────────────────────────────────────────
-  const months = useMemo(() => lastNMonths(numMonths), [numMonths]);
+  // ── The one resolved range every card on this page reads ─────────────────
+  // Reports is explicitly historical (§4.2). Previously the KPI tiles and donut
+  // used calendar months while the sparkline used a trailing 90/180/365 days,
+  // and both were captioned "3 months" — two different periods under one label.
+  const range = useMemo(() => monthsBack(numMonths, now || undefined), [numMonths, now]);
+  const months = useMemo(() => monthsIn(range), [range]);
 
   // ── Bar chart data: income + expense per month ───────────────────────────
   const barGroups = useMemo(() => {
-    return months.map(({ year, month }) => {
-      const [first, last] = monthRange(new Date(year, month, 1));
+    return months.map((m) => {
       let income = ZERO;
       let expense = ZERO;
       for (const t of txns) {
-        if (t.date < first || t.date > last) continue;
+        if (!contains(m, t.date)) continue;
         if (t.type === 'income') income = income.plus(D(t.amount));
         else expense = expense.plus(D(t.amount));
       }
       return {
-        label: monthLabel(year, month),
+        label: formatMonthShort(m.start),
         values: [
           { value: fmt.toNum(income), color: 'var(--income)' },
           { value: fmt.toNum(expense), color: 'var(--expense)' },
@@ -197,24 +183,11 @@ export default function ReportsPage() {
     });
   }, [txns, months, fmt]);
 
-  // ── Selected window as an epoch range ────────────────────────────────────
-  // Single source of truth for every card below, so the donut, the stat tiles
-  // and the bar chart can never disagree about which months they cover.
-  // Starts at the first of the earliest bucket in `months` — same basis as
-  // lastNMonths — so "Expenses (Nmo)" equals the sum of the donut slices.
-  const [windowStart, windowEnd] = useMemo((): [number, number] => {
-    const now = new Date();
-    return [
-      new Date(now.getFullYear(), now.getMonth() - numMonths + 1, 1).getTime(),
-      monthRange(now)[1],
-    ];
-  }, [numMonths]);
-
   // ── Spending by category — over the selected window ──────────────────────
   const catSpend = useMemo(() => {
     const byCategory: { id: string; name: string; amount: number }[] = [];
     for (const cat of categories) {
-      const spent = spentForCategory(txns, cat.id, windowStart, windowEnd);
+      const spent = spentForCategory(txns, cat.id, range);
       if (spent.gt(0)) {
         byCategory.push({ id: cat.id, name: cat.name, amount: spent.toNumber() });
       }
@@ -224,7 +197,7 @@ export default function ReportsPage() {
     // owns expanding it again, so folding here would only make that row a dead
     // end — and it would make the centre count lie about how many there are.
     return byCategory;
-  }, [txns, categories, windowStart, windowEnd]);
+  }, [txns, categories, range]);
 
   const catDonutSegments = catSpend.map((c, i) => ({
     label: c.name,
@@ -232,24 +205,24 @@ export default function ReportsPage() {
     color: CAT_COLORS[i % CAT_COLORS.length],
   }));
 
-  // ── Net worth sparkline — over the selected window ───────────────────────
+  // ── Net worth sparkline — the same range as everything else ──────────────
   const sparkValues = useMemo(() => {
-    return netWorthSeries(txns, SPARK_WINDOW[win]).map((p) => fmt.toNum(p.value));
-  }, [txns, win, fmt]);
+    return netWorthSeries(txns, range).map((p) => fmt.toNum(p.value));
+  }, [txns, range, fmt]);
 
   // ── Summary stats over the selected window ────────────────────────────────
   const windowStats = useMemo(() => {
     let income = ZERO;
     let expense = ZERO;
     for (const t of txns) {
-      if (t.date < windowStart || t.date > windowEnd) continue;
+      if (!contains(range, t.date)) continue;
       if (t.type === 'income') income = income.plus(D(t.amount));
       else expense = expense.plus(D(t.amount));
     }
     const net = income.minus(expense);
     const savingsRate = income.isZero() ? 0 : net.div(income).times(100).toNumber();
     return { income, expense, net, savingsRate };
-  }, [txns, windowStart, windowEnd]);
+  }, [txns, range]);
 
   const hasTxns = txns.length > 0;
 
@@ -257,7 +230,7 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <PageIntro
         title="Reports"
-        subtitle="Spending analysis and financial trends"
+        subtitle={`Historical · ${range.label}`}
         action={
           <Segmented
             options={WINDOW_OPTIONS}
@@ -280,13 +253,13 @@ export default function ReportsPage() {
           {/* Summary stat tiles */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatTile
-              label={`Income (${win}mo)`}
+              label={`Income · ${range.label}`}
               value={fmt.money(windowStats.income)}
               color="var(--income)"
               ghost={ghost}
             />
             <StatTile
-              label={`Expenses (${win}mo)`}
+              label={`Expenses · ${range.label}`}
               value={fmt.money(windowStats.expense)}
               color="var(--expense)"
               ghost={ghost}
@@ -338,10 +311,10 @@ export default function ReportsPage() {
           <div className="grid lg:grid-cols-2 gap-4">
             {/* Spending by category */}
             <GlassCard>
-              <SectionHeader title="Spending by Category" action={<span className="text-xs text-muted">{windowLabel(win)}</span>} />
+              <SectionHeader title="Spending by Category" action={<span className="text-xs text-muted">{range.label}</span>} />
               {catSpend.length === 0 ? (
                 <div className="py-8 text-center text-sm text-muted">
-                  No expense transactions in the last {windowLabel(win)}.
+                  No expense transactions between {range.label}.
                 </div>
               ) : (
                 <div className="mt-4">
@@ -362,7 +335,7 @@ export default function ReportsPage() {
 
             {/* Net worth trend */}
             <GlassCard>
-              <SectionHeader title="Net Worth Trend" action={<span className="text-xs text-muted">{windowLabel(win)}</span>} />
+              <SectionHeader title="Net Worth Trend" action={<span className="text-xs text-muted">{range.label}</span>} />
               <div className="mt-2">
                 <Sparkline
                   values={sparkValues}
@@ -373,7 +346,7 @@ export default function ReportsPage() {
               </div>
               {sparkValues.length >= 2 && (
                 <div className="mt-3 flex items-center justify-between text-sm">
-                  <span className="text-muted">{win}M ago</span>
+                  <span className="text-muted">{formatDate(range.start)}</span>
                   <span className="font-bold tnum" style={{
                     color: sparkValues[sparkValues.length - 1] >= sparkValues[0]
                       ? 'var(--income)'
@@ -383,7 +356,7 @@ export default function ReportsPage() {
                       ? '••••••'
                       : `${fmt.symbol}${Math.round(sparkValues[sparkValues.length - 1]).toLocaleString()}`}
                   </span>
-                  <span className="text-muted">Today</span>
+                  <span className="text-muted">{formatDate(range.end)}</span>
                 </div>
               )}
             </GlassCard>

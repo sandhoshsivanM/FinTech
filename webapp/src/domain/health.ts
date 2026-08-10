@@ -9,7 +9,8 @@
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
 import type { Budget, Goal, Insurance, Liability, NetWorthSnapshot, Txn } from '@/lib/types';
-import { monthRange, netWorthTotal, spentForCategory, windowSummary } from './finance';
+import { netWorthTotal, spentForCategory, windowSummary } from './finance';
+import { currentMonth, trailingDays } from './period';
 import {
   concentration,
   growthValue,
@@ -165,7 +166,10 @@ export function healthScore(input: HealthInputs): HealthScore {
   const budgets = input.budgets ?? [];
   const snapshots = input.snapshots ?? [];
 
-  const s90 = windowSummary(input.txns, '3M', now);
+  // A rolling 90-day average, not three calendar months: an average that
+  // included the current part-month would divide two-and-a-bit months of
+  // spending by three and understate what the user actually spends.
+  const s90 = windowSummary(input.txns, trailingDays(90, now));
   const monthlyExpense = s90.expense.div(3);
   const cash = input.cash ?? netWorthTotal(input.txns);
   const invested = input.investments.marketValue;
@@ -401,10 +405,10 @@ function budgetAdherence(
   now: number,
 ): { value: number; detail: string } | null {
   if (budgets.length === 0) return null;
-  const [first, last] = monthRange(new Date(now));
+  const month = currentMonth(now);
   let within = 0;
   for (const b of budgets) {
-    const spent = spentForCategory(txns, b.categoryId, first, last);
+    const spent = spentForCategory(txns, b.categoryId, month);
     // Compare raw amounts: BudgetProgress.fraction caps at 1 for the progress
     // bar, so comparing fractions makes every overspend read as exactly at limit.
     if (spent.lte(D(b.amountLimit))) within += 1;

@@ -161,7 +161,7 @@ export default function SettingsPage() {
     try {
       const n = await importBackup(text, restorePin.trim() || undefined);
       setPendingBackup(null);
-      setRestoreNote({ kind: 'success', text: `Restored ${n} record${n !== 1 ? 's' : ''} from backup.` });
+      setRestoreNote({ kind: 'success', text: `Restored ${n} record${n !== 1 ? 's' : ''}. This vault now matches the backup.` });
     } catch (err) {
       // Say what actually went wrong, and — when the fix is "type your PIN" —
       // keep the file so the retry is one tap rather than a second file hunt.
@@ -446,7 +446,12 @@ export default function SettingsPage() {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <div className="font-semibold text-sm">Restore from backup</div>
-              <div className="text-xs text-muted mt-0.5">Select a <code className="font-mono">.ftos</code> backup file to merge records into this vault.</div>
+              <div className="text-xs text-muted mt-0.5">
+                Select a <code className="font-mono">.ftos</code> backup file. Restoring
+                <b> replaces </b> this vault with the backup, so anything recorded since it
+                was taken will be gone. The file is fully checked first &mdash; if it fails,
+                nothing here changes.
+              </div>
             </div>
             <Button variant="soft" onClick={() => fileRef.current?.click()}>
               <Upload size={15} />

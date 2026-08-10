@@ -25,6 +25,42 @@ const holding = (id: string, over: Partial<Holding> = {}): Holding => ({
 
 const find = (cs: ReturnType<typeof runDiagnostics>, id: string) => cs.find((c) => c.id === id)!;
 
+describe('balance sheet', () => {
+  // The Reports card used to print "the books are out by X — Diagnostics will
+  // name it" while Diagnostics had no such check. Now it does, and X is a real
+  // fault rather than the user's lifetime savings.
+  const income = (id: string): Account =>
+    ({ id, vaultId: 'v', name: id, type: 'income', subtype: 'income', openingBalance: '0' });
+
+  test('earning more than you spend is not a fault', () => {
+    const cs = runDiagnostics({
+      ...base, txns: [txn('t1')], accounts: [acct('a1'), income('a-inc')],
+      postings: [leg('p1', 't1', 'a1', '85000'), leg('p2', 't1', 'a-inc', '-85000')],
+    });
+    expect(find(cs, 'balance-sheet').level).toBe('ok');
+  });
+
+  test('an unbalanced entry is reported here too', () => {
+    const cs = runDiagnostics({
+      ...base, txns: [txn('t1')], accounts: [acct('a1'), income('a-inc')],
+      postings: [leg('p1', 't1', 'a1', '85000'), leg('p2', 't1', 'a-inc', '-84000')],
+    });
+    const c = find(cs, 'balance-sheet');
+    expect(c.level).toBe('error');
+    expect(c.detail).toContain('1000');
+  });
+
+  test('a posting against an unknown account names that account', () => {
+    const cs = runDiagnostics({
+      ...base, txns: [txn('t1')], accounts: [acct('a1')],
+      postings: [leg('p1', 't1', 'a1', '500'), leg('p2', 't1', 'a-gone', '-500')],
+    });
+    const c = find(cs, 'balance-sheet');
+    expect(c.level).toBe('error');
+    expect(c.offenders).toContain('a-gone');
+  });
+});
+
 describe('ledger integrity', () => {
   test('balanced postings pass', () => {
     const cs = runDiagnostics({

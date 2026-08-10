@@ -30,7 +30,8 @@ import { generateNarratives, NARRATIVE_DISCLAIMER, type NarrativeTone } from '@/
 import {
   portfolioSummary, allocationByGroup, rollup, ASSET_GROUP_META, UNCLASSIFIED_KEY,
 } from '@/domain/portfolio';
-import { netWorthTotal, netWorthSeries, windowSummary, type TimeWindow } from '@/domain/finance';
+import { netWorthTotal, netWorthSeries, windowSummary } from '@/domain/finance';
+import { currentMonth, custom, trailingDays } from '@/domain/period';
 import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { dayChange, priceAsOfLabel } from '@/domain/dayChange';
 import { GlassCard, SectionHeader, Ring, ProgressBar, Segmented, Chip, Delta, Donut, type DonutSeg } from '@/components/ui';
@@ -87,7 +88,11 @@ export default function DashboardPage() {
   const summary = useMemo(() => portfolioSummary(holdings), [holdings]);
   const cash = useMemo(() => netWorthTotal(txns), [txns]);
   const liab = useMemo(() => liabilities.reduce((s, l) => s.plus(D(l.principal)), ZERO), [liabilities]);
-  const period = useMemo(() => windowSummary(txns, '1M'), [txns]);
+  // The daily financial home is the current calendar month (§4.1). This used to
+  // be a trailing 30 days captioned "this month" — on the 9th of August that
+  // silently counted three weeks of July into a figure labelled August.
+  const month = useMemo(() => currentMonth(now || undefined), [now]);
+  const period = useMemo(() => windowSummary(txns, month), [txns, month]);
 
   const portfolioValue = summary.current.toNumber();
   const invested = summary.invested.toNumber();
@@ -139,12 +144,18 @@ export default function DashboardPage() {
   const investedNow = summary.current;
   const derivedSeries = useMemo(() => {
     if (hasRecordedHistory) return [];
-    const w: TimeWindow = days <= 7 ? '7D' : days <= 30 ? '1M' : days <= 90 ? '3M' : days <= 182 ? '6M' : '12M';
-    const pts = netWorthSeries(txns, w);
+    // `ALL` is Infinity days; fall back to the oldest transaction so the range
+    // is finite and the series still covers everything recorded. Reduced rather
+    // than spread into Math.min — a few thousand transactions would overflow
+    // the argument limit and throw.
+    const span = Number.isFinite(days)
+      ? trailingDays(days, now || undefined)
+      : custom(txns.reduce((m, t) => Math.min(m, t.date), now || Date.now()), now || Date.now());
+    const pts = netWorthSeries(txns, span);
     if (pts.length < 2) return [];
     const baseline = investedNow.minus(liab);
     return pts.map((p) => fmt.toNum(p.value.plus(baseline)));
-  }, [hasRecordedHistory, txns, days, investedNow, liab, fmt]);
+  }, [hasRecordedHistory, txns, days, investedNow, liab, fmt, now]);
 
   const series = hasRecordedHistory ? snapshotSeries : derivedSeries;
   const estimated = !hasRecordedHistory && derivedSeries.length >= 2;
@@ -281,8 +292,8 @@ export default function DashboardPage() {
             numeric={ghost ? undefined : cash.toNumber()}
             format={(n) => short(n, fmt.symbol)}
             footer={period.income.gt(0)
-              ? `${period.net.div(period.income).times(100).toNumber().toFixed(0)}% saved this month`
-              : 'This month'}
+              ? `${period.net.div(period.income).times(100).toNumber().toFixed(0)}% saved · ${month.label}`
+              : month.label}
           />
           <Kpi label="Holdings" icon={Layers} tone="success" value={String(holdings.length)}
             footer={`${allocationByGroup(holdings).length} asset group${allocationByGroup(holdings).length === 1 ? '' : 's'}`} />
