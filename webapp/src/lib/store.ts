@@ -10,7 +10,7 @@ import {
 } from './repo';
 import { D, ZERO } from './money';
 import {
-  STORE, PROFILE_SCOPED,
+  STORE, PROFILE_SCOPED, isSpending,
   type Budget, type Category, type Goal, type Holding, type Liability,
   type RecurringRule, type Txn, type Profile, type ProfileKind, type Insurance, type NetWorthSnapshot,
   type ImportBatch, type HoldingLot,
@@ -31,7 +31,7 @@ const APP_VERSION = '1.0.0';
 const VERIFIER = 'FTOS-OK';
 
 // Bump when the persisted data shape changes; add a step in runMigrations().
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 async function runMigrations(from: number, key: CryptoKey, vaultId: string): Promise<void> {
   let v = from;
@@ -39,7 +39,57 @@ async function runMigrations(from: number, key: CryptoKey, vaultId: string): Pro
     await repairPostings(key, vaultId);
     v = 2;
   }
+  if (v < 3) {
+    await reclassifyInvestments(key, vaultId);
+    v = 3;
+  }
   void v;
+}
+
+/**
+ * Moves already-recorded investment purchases out of consumer spending (§3.2).
+ *
+ * Before there was an `investment` transaction kind, the only way to record a
+ * SIP or a stock purchase was as an expense against the built-in "Investment"
+ * category. Those rows are real and correct in every respect except their
+ * classification, so they are re-typed rather than asked about: leaving them as
+ * expenses keeps every budget and savings rate wrong, and deleting them would
+ * destroy the user's history.
+ *
+ * Matched on the category *name*, because category ids are per-vault. Renaming
+ * a category to something else means it is left alone, which is the safe
+ * direction — a false negative leaves the old behaviour, a false positive would
+ * silently reclassify genuine spending.
+ */
+async function reclassifyInvestments(key: CryptoKey, vaultId: string): Promise<void> {
+  const [txns, categories, accounts, profiles] = await Promise.all([
+    listRecords<Txn>(key, STORE.txn, vaultId),
+    listRecords<Category>(key, STORE.category, vaultId),
+    listRecords<Account>(key, STORE.account, vaultId),
+    listRecords<Profile>(key, STORE.profile, vaultId),
+  ]);
+
+  const investmentCategoryIds = new Set(
+    categories.filter((c) => c.name.trim().toLowerCase() === 'investment').map((c) => c.id),
+  );
+  const moving = txns.filter((t) => t.type === 'expense' && investmentCategoryIds.has(t.categoryId));
+  if (moving.length === 0) return;
+
+  const fallbackProfile = profiles[0]?.id ?? 'default';
+  const names = new Map(categories.map((c) => [c.id, c.name]));
+  const existing = new Set(accounts.map((a) => a.id));
+
+  for (const t of moving) {
+    const next: Txn = { ...t, type: 'investment' };
+    const profileId = t.profileId ?? fallbackProfile;
+    // Record and postings together: the old legs debited an expense account and
+    // must be replaced, not added to. Posting ids are deterministic, so writing
+    // the new pair overwrites the old rather than leaving both in the ledger.
+    await applyMutations(key, vaultId, [
+      { op: 'put', type: STORE.txn, id: t.id, value: next },
+      ...entryPostingMutations(vaultId, profileId, next, names, existing),
+    ]);
+  }
 }
 
 /**
@@ -152,6 +202,15 @@ function entryMutations(
 export const cashAcctId = (profileId: string) => `acct-cash-${profileId}`;
 const openingAcctId = (profileId: string) => `acct-opening-${profileId}`;
 const incomeAcctId = (profileId: string) => `acct-income-${profileId}`;
+/**
+ * Where investment purchases land (§3.2).
+ *
+ * An asset account, not an expense one — that single fact is what stops a SIP
+ * showing up as overspending. The money moves from one asset you hold (cash) to
+ * another (the portfolio), so the balance sheet is unchanged and no expense is
+ * created.
+ */
+const investAcctId = (profileId: string) => `acct-investments-${profileId}`;
 const expenseAcctId = (profileId: string, categoryId: string) => `acct-exp-${profileId}-${categoryId}`;
 
 /**
@@ -167,6 +226,7 @@ function structuralAccountMutations(
     { ...base, id: cashAcctId(profileId), name: 'Cash', type: 'asset', subtype: 'cash' },
     { ...base, id: openingAcctId(profileId), name: 'Opening Balances', type: 'equity', subtype: 'equity' },
     { ...base, id: incomeAcctId(profileId), name: 'Income', type: 'income', subtype: 'income' },
+    { ...base, id: investAcctId(profileId), name: 'Investments', type: 'asset', subtype: 'investment' },
   ];
   const out: Mutation[] = [];
   for (const a of structural) {
@@ -198,12 +258,19 @@ async function ensureStructuralAccounts(
  * @param existing ids already known to exist, mutated as accounts are seeded.
  *   Pass one across a loop to avoid re-reading the chart per transaction.
  */
+/** The non-money side of an entry. The whole of §3.2 at the ledger level. */
+function contraAccountFor(profileId: string, t: Txn): string {
+  if (t.type === 'income') return incomeAcctId(profileId);
+  if (t.type === 'investment') return investAcctId(profileId);
+  return expenseAcctId(profileId, t.categoryId);
+}
+
 function entryPostingMutations(
   vaultId: string, profileId: string, t: Txn,
   categoryNames: Map<string, string>, existing: Set<string>,
 ): Mutation[] {
   const out: Mutation[] = structuralAccountMutations(vaultId, profileId, existing);
-  if (t.type === 'expense' && !existing.has(expenseAcctId(profileId, t.categoryId))) {
+  if (isSpending(t.type) && !existing.has(expenseAcctId(profileId, t.categoryId))) {
     existing.add(expenseAcctId(profileId, t.categoryId));
     out.push({
       op: 'put', type: STORE.account, id: expenseAcctId(profileId, t.categoryId),
@@ -218,7 +285,7 @@ function entryPostingMutations(
   const legs = postingsForEntry({
     entryId: t.id, vaultId, amount: t.amount, type: t.type,
     moneyAccountId: t.accountId ?? cashAcctId(profileId),
-    categoryAccountId: t.type === 'income' ? incomeAcctId(profileId) : expenseAcctId(profileId, t.categoryId),
+    categoryAccountId: contraAccountFor(profileId, t),
   });
   for (const leg of legs) {
     out.push({ op: 'put', type: STORE.posting, id: leg.id, value: { ...leg, profileId } });

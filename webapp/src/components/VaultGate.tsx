@@ -49,7 +49,7 @@ export function VaultGate() {
 
         <div className="glass p-6">
           {!secure && (
-            <div className="mb-4 rounded-[10px] border border-line bg-warning-soft p-3.5 flex gap-3">
+            <div className="mb-4 rounded-[var(--radius-card)] border border-line bg-warning-soft p-3.5 flex gap-3">
               <ShieldAlert size={16} className="shrink-0 mt-0.5 text-warning" />
               <div className="text-[12.5px] leading-relaxed">
                 <b className="block text-ink">This address can&rsquo;t encrypt your vault.</b>
@@ -72,7 +72,7 @@ export function VaultGate() {
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
             onKeyDown={(e) => { if (e.key === 'Enter' && !isSetup) submit(); }}
             placeholder={isSetup ? 'Create PIN' : 'Enter PIN'}
-            className="w-full rounded-[14px] bg-[var(--fill)] border border-[var(--glass-border)] px-4 py-3 outline-none focus:border-accent"
+            className="w-full rounded-[var(--radius-panel)] bg-[var(--fill)] border border-[var(--glass-border)] px-4 py-3 outline-none focus:border-accent"
           />
           {isSetup && (
             <input
@@ -80,7 +80,7 @@ export function VaultGate() {
               onChange={(e) => setConfirm(e.target.value.replace(/\D/g, ''))}
               onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
               placeholder="Confirm PIN"
-              className="mt-3 w-full rounded-[14px] bg-[var(--fill)] border border-[var(--glass-border)] px-4 py-3 outline-none focus:border-accent"
+              className="mt-3 w-full rounded-[var(--radius-panel)] bg-[var(--fill)] border border-[var(--glass-border)] px-4 py-3 outline-none focus:border-accent"
             />
           )}
           {(localErr || error) && (

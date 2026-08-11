@@ -33,6 +33,9 @@ export function aggregateByDay(txns: Txn[]): Map<string, DayLedger> {
     const k = dayKey(t.date);
     keys.add(k);
     (ids.get(k) ?? ids.set(k, []).get(k)!).push(t.id);
+    // An investment purchase is neither the green nor the red number on a day
+    // cell — it is money you still have, in a different place (§3.2).
+    if (t.type === 'investment') continue;
     if (t.type === 'income') income.set(k, (income.get(k) ?? ZERO).plus(D(t.amount)));
     else expense.set(k, (expense.get(k) ?? ZERO).plus(D(t.amount)));
     if (t.attachmentRef != null) attach.set(k, true);

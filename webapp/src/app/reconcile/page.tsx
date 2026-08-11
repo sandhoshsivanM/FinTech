@@ -134,7 +134,7 @@ export default function ReconcilePage() {
               </p>
               <div className="mt-3 space-y-1.5">
                 {suggestions.slice(0, 5).map((e) => (
-                  <div key={e.id} className="flex items-center gap-3 text-sm rounded-lg border border-[var(--warn)]/40 bg-[var(--warn)]/10 px-3 py-2">
+                  <div key={e.id} className="flex items-center gap-3 text-sm rounded-[var(--radius-btn)] border border-[var(--warn)]/40 bg-[var(--warn)]/10 px-3 py-2">
                     <span className="text-muted tnum">{formatDate(e.date)}</span>
                     <span className="flex-1 min-w-0 truncate">{e.description}</span>
                     <span className="tnum font-semibold">{fmt.money(e.delta)}</span>

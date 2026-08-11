@@ -22,7 +22,7 @@ interface Note { kind: NoteKind; text: string }
 function StatusNote({ note }: { note: Note }) {
   const isOk = note.kind === 'success';
   return (
-    <div className={`flex items-start gap-2 rounded-[12px] px-3.5 py-2.5 text-sm mt-3 ${isOk ? 'bg-income/10 text-income' : 'bg-expense/10 text-expense'}`}>
+    <div className={`flex items-start gap-2 rounded-[var(--radius-panel)] px-3.5 py-2.5 text-sm mt-3 ${isOk ? 'bg-income/10 text-income' : 'bg-expense/10 text-expense'}`}>
       {isOk ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> : <AlertCircle size={16} className="mt-0.5 shrink-0" />}
       <span>{note.text}</span>
     </div>
@@ -308,14 +308,14 @@ export default function SettingsPage() {
                     <>
                       <button
                         onClick={() => void commitRename(p.id)}
-                        className="p-1.5 rounded-[8px] text-income hover:bg-income/10 transition-colors"
+                        className="p-1.5 rounded-[var(--radius-btn)] text-income hover:bg-income/10 transition-colors"
                         title="Save name"
                       >
                         <Check size={14} />
                       </button>
                       <button
                         onClick={() => cancelRename(p.id)}
-                        className="p-1.5 rounded-[8px] text-muted hover:bg-[var(--glass-border)] transition-colors text-xs font-medium"
+                        className="p-1.5 rounded-[var(--radius-btn)] text-muted hover:bg-[var(--glass-border)] transition-colors text-xs font-medium"
                         title="Cancel"
                       >
                         ✕
@@ -326,14 +326,14 @@ export default function SettingsPage() {
                       {!isActive && (
                         <button
                           onClick={() => void setActiveProfile(p.id)}
-                          className="px-2.5 py-1 rounded-[8px] text-[12px] font-semibold text-accent hover:bg-accent/10 border border-accent/25 transition-colors"
+                          className="px-2.5 py-1 rounded-[var(--radius-btn)] text-[12px] font-semibold text-accent hover:bg-accent/10 border border-accent/25 transition-colors"
                         >
                           Switch
                         </button>
                       )}
                       <button
                         onClick={() => startRename(p.id, p.name)}
-                        className="p-1.5 rounded-[8px] text-muted hover:text-ink hover:bg-[var(--glass-border)] transition-colors"
+                        className="p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-ink hover:bg-[var(--glass-border)] transition-colors"
                         title="Rename"
                       >
                         <Pencil size={14} />
@@ -341,7 +341,7 @@ export default function SettingsPage() {
                       {profiles.length > 1 && (
                         <button
                           onClick={() => void handleDelete(p.id, p.name)}
-                          className="p-1.5 rounded-[8px] text-muted hover:text-expense hover:bg-expense/10 transition-colors"
+                          className="p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-expense hover:bg-expense/10 transition-colors"
                           title="Delete profile"
                         >
                           <Trash2 size={14} />
@@ -431,7 +431,7 @@ export default function SettingsPage() {
               value={backupPin}
               onChange={(e) => setBackupPin(e.target.value.replace(/\D/g, ''))}
               placeholder="Used for both export and restore"
-              className="mt-1 w-full rounded-xl border border-[var(--line)] bg-transparent px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)]"
+              className="mt-1 w-full rounded-[var(--radius-card)] border border-[var(--line)] bg-transparent px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)]"
             />
             <p className="mt-1.5 text-xs text-muted leading-relaxed">
               A backup carries its own salt, so this PIN — not your current vault — is what reopens it.
@@ -471,7 +471,7 @@ export default function SettingsPage() {
                 onChange={(e) => setRestorePin(e.target.value.replace(/\D/g, ''))}
                 placeholder="PIN this backup was exported with"
                 onKeyDown={(e) => { if (e.key === 'Enter' && pendingBackup) void runRestore(pendingBackup); }}
-                className="min-w-0 flex-1 rounded-xl border border-[var(--line)] bg-transparent px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)]"
+                className="min-w-0 flex-1 rounded-[var(--radius-card)] border border-[var(--line)] bg-transparent px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)]"
               />
               {pendingBackup && (
                 <Button variant="soft" onClick={() => void runRestore(pendingBackup)} disabled={!restorePin.trim()}>

@@ -59,7 +59,7 @@ export default function HelpPage() {
               <div className="p-5 grid gap-3">
                 {SHORTCUTS.map(([keys, what]) => (
                   <div key={keys} className="flex items-start gap-3">
-                    <kbd className="shrink-0 text-[10.5px] font-semibold px-1.5 py-1 rounded-md bg-fill-strong text-ink-soft border border-line">{keys}</kbd>
+                    <kbd className="shrink-0 text-[10.5px] font-semibold px-1.5 py-1 rounded-[var(--radius-btn)] bg-fill-strong text-ink-soft border border-line">{keys}</kbd>
                     <span className="text-[12.5px] text-ink-soft leading-snug">{what}</span>
                   </div>
                 ))}

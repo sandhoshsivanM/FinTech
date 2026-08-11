@@ -7,15 +7,18 @@ import {
   Eye, EyeOff, Lock, Menu, X, Plus, ChevronDown, Check, Search,
   Sun, Moon, Monitor, PanelLeft, Bell, RefreshCw, Download,
   CreditCard, ShieldAlert, BellRing, Inbox,
+  User, Users, Briefcase,
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
 import { useApp, type ThemeChoice } from '@/lib/store';
+import type { ProfileKind } from '@/lib/types';
+import { evaluateAlerts, triggered } from '@/domain/alerts';
 import { marketState } from '@/lib/marketClock';
 import { useNow } from '@/lib/useNow';
 import { demoIndices, demoSeries } from '@/lib/demo/marketFeed';
 import { MiniSparkline } from './charts/MiniSparkline';
 import { BrandMark, WordMark } from './BrandMark';
-import { DemoBadge, useDemoData } from './DemoBadge';
+import { useDemoData } from './DemoBadge';
 import { NAV_GROUPS, BOTTOM_NAV, TITLES, isActive } from './navConfig';
 import { Tour } from './Tour';
 import { CommandPalette } from './CommandPalette';
@@ -82,7 +85,7 @@ export function Shell({ children }: { children: ReactNode }) {
           >
             <div className="flex items-center justify-between pr-3">
               <Brand rail={false} />
-              <button onClick={() => setDrawer(false)} className="focus-ring text-ink-soft p-2 rounded-lg" aria-label="Close navigation">
+              <button onClick={() => setDrawer(false)} className="focus-ring text-ink-soft p-2 rounded-[var(--radius-btn)]" aria-label="Close navigation">
                 <X size={20} />
               </button>
             </div>
@@ -118,14 +121,14 @@ function TopBar({ title, onMenu, onRail }: { title: string; onMenu: () => void; 
   return (
     <header className="sticky top-0 z-30 flex items-center gap-2 px-4 min-[900px]:px-8 h-16 border-b border-line glass-panel">
       <button
-        className="min-[900px]:hidden focus-ring w-9 h-9 grid place-items-center rounded-[10px] text-ink-soft hover:bg-fill"
+        className="min-[900px]:hidden focus-ring w-9 h-9 grid place-items-center rounded-[var(--radius-card)] text-ink-soft hover:bg-fill"
         onClick={onMenu}
         aria-label="Open navigation"
       >
         <Menu size={20} />
       </button>
       <button
-        className="hidden min-[900px]:grid focus-ring w-9 h-9 place-items-center rounded-[10px] text-ink-soft hover:bg-fill hover:text-ink transition-colors"
+        className="hidden min-[900px]:grid focus-ring w-9 h-9 place-items-center rounded-[var(--radius-card)] text-ink-soft hover:bg-fill hover:text-ink transition-colors"
         onClick={onRail}
         aria-label="Collapse navigation"
         title="Collapse navigation"
@@ -167,7 +170,7 @@ function IconBtn({
       title={label}
       aria-label={label}
       className={clsx(
-        'focus-ring w-9 h-9 shrink-0 grid place-items-center rounded-[10px] text-ink-soft',
+        'focus-ring w-9 h-9 shrink-0 grid place-items-center rounded-[var(--radius-card)] text-ink-soft',
         'hover:bg-fill hover:text-ink transition-colors duration-150',
         className,
       )}
@@ -194,7 +197,7 @@ function SearchButton() {
     >
       <Search size={15} className="shrink-0" />
       <span className="truncate">Search holdings, transactions, reports…</span>
-      <kbd className="ml-auto shrink-0 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-md bg-fill-strong border border-line">⌘K</kbd>
+      <kbd className="ml-auto shrink-0 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-[var(--radius-btn)] bg-fill-strong border border-line">⌘K</kbd>
     </button>
   );
 }
@@ -224,11 +227,27 @@ function MarketPill() {
   );
 }
 
+/**
+ * A profile's mark: the kind of profile it is, not the first letter of its name.
+ *
+ * `P`, `S`, `B` in a circle is the address-book avatar again — the same idiom
+ * that made the ticker tiles and the broker chips read as template. A profile
+ * is not a person you are contacting; it is a *book of accounts*, and which
+ * kind it is (your own, a spouse's, a business') is the one thing worth showing
+ * at a glance. An initial cannot distinguish two profiles both called "Personal
+ * savings"; the kind can.
+ */
+const PROFILE_ICON = { self: User, spouse: Users, business: Briefcase } as const;
+
+function ProfileMark({ kind, size = 15 }: { kind?: ProfileKind; size?: number }) {
+  const Icon = PROFILE_ICON[kind ?? 'self'] ?? User;
+  return <Icon size={size} strokeWidth={1.75} aria-hidden />;
+}
+
 function PortfolioSelector() {
   const profiles = useApp((s) => s.profiles);
   const activeId = useApp((s) => s.activeProfileId);
   const active = profiles.find((p) => p.id === activeId);
-  const initial = (active?.name ?? 'P').charAt(0).toUpperCase();
   return (
     <Link
       href="/settings"
@@ -238,8 +257,8 @@ function PortfolioSelector() {
       )}
       title="Switch portfolio"
     >
-      <span className="w-[26px] h-[26px] grid place-items-center rounded-[8px] bg-accent-soft text-accent text-[11.5px] font-bold ring-1 ring-inset ring-accent-line">
-        {initial}
+      <span className="w-[26px] h-[26px] grid place-items-center rounded-[var(--radius-btn)] bg-accent-soft text-accent ring-1 ring-inset ring-accent-line">
+        <ProfileMark kind={active?.kind} size={14} />
       </span>
       <span className="hidden min-[1024px]:block min-w-0 text-left">
         <span className="block text-[13px] font-semibold leading-tight truncate max-w-[130px]">{active?.name ?? 'Portfolio'}</span>
@@ -288,7 +307,7 @@ function Nav({
                 data-tour={`nav-${n.href.replace('/', '')}`}
                 title={rail ? n.label : undefined}
                 className={clsx(
-                  'flex items-center gap-3 rounded-[11px] mb-0.5 text-[13.5px] leading-[1.45]',
+                  'flex items-center gap-3 rounded-[var(--radius-card)] mb-0.5 text-[13.5px] leading-[1.45]',
                   'transition-colors duration-150 ease-standard',
                   rail ? 'justify-center p-2.5' : 'px-2.5 py-1.5',
                   // Vault: #12352A on #20C98A. Ledger: #E1F3EB on #087A56.
@@ -388,17 +407,15 @@ function ProfileMenu() {
   const setActive = useApp((s) => s.setActiveProfile);
   const [open, setOpen] = useState(false);
   const active = profiles.find((p) => p.id === activeId);
-  const initial = (active?.name ?? 'P').charAt(0).toUpperCase();
-
   return (
     <div className="relative shrink-0">
       <button
         data-tour="profile"
         onClick={() => setOpen((o) => !o)}
         aria-label="Profile menu"
-        className="focus-ring w-8 h-8 grid place-items-center rounded-full text-[12px] font-bold bg-accent text-[var(--primary-fg)]"
+        className="focus-ring w-8 h-8 grid place-items-center rounded-full bg-accent text-[var(--primary-fg)]"
       >
-        {initial}
+        <ProfileMark kind={active?.kind} />
       </button>
       {open && (
         <>
@@ -409,10 +426,10 @@ function ProfileMenu() {
               <button
                 key={p.id}
                 onClick={() => { void setActive(p.id); setOpen(false); }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] hover:bg-fill text-left transition-colors"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[var(--radius-card)] hover:bg-fill text-left transition-colors"
               >
-                <span className="w-7 h-7 grid place-items-center rounded-full bg-fill text-ink text-[12px] font-semibold shrink-0">
-                  {p.name.charAt(0).toUpperCase()}
+                <span className="w-7 h-7 grid place-items-center rounded-full bg-fill text-ink-soft shrink-0">
+                  <ProfileMark kind={p.kind} size={14} />
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block text-[13.5px] font-medium truncate">{p.name}</span>
@@ -425,7 +442,7 @@ function ProfileMenu() {
             <Link
               href="/settings"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-2.5 py-2 rounded-[10px] text-[13px] font-medium text-ink-soft hover:bg-fill transition-colors"
+              className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] text-[13px] font-medium text-ink-soft hover:bg-fill transition-colors"
             >
               <Plus size={15} /> Manage profiles
             </Link>
@@ -491,11 +508,13 @@ function MarketStatusCard() {
           <div className={clsx('text-[11px] font-semibold tnum', nifty.changePct >= 0 ? 'text-success' : 'text-danger')}>
             {nifty.changePct >= 0 ? '+' : '−'}{Math.abs(nifty.changePct).toFixed(2)}%
           </div>
-          <div className="mt-1.5 flex items-center gap-2">
-            <MiniSparkline values={series} width={110} height={30}
-              color={nifty.changePct >= 0 ? 'var(--success)' : 'var(--danger)'} />
-            <DemoBadge label="Demo" />
-          </div>
+          <MiniSparkline values={series} width={110} height={30}
+            color={nifty.changePct >= 0 ? 'var(--success)' : 'var(--danger)'} />
+          {/* One quiet line, not a badge. A `DEMO` chip sitting inside
+              production chrome tells the user they are looking at a prototype;
+              the honest thing is to label the data once, in the widget that
+              carries it, in the same voice as everything else. */}
+          <div className="mt-1 text-[10.5px] text-muted">Sample index data</div>
         </>
       ) : (
         <p className="mt-2 text-[11px] text-muted leading-relaxed">
@@ -577,6 +596,9 @@ function NotificationsMenu() {
   const holdings = useApp((s) => s.holdings);
   const recurring = useApp((s) => s.recurring);
   const insurances = useApp((s) => s.insurances);
+  const budgets = useApp((s) => s.budgets);
+  const categories = useApp((s) => s.categories);
+  const txns = useApp((s) => s.txns);
   const [open, setOpen] = useState(false);
   const now = useNow();
 
@@ -585,14 +607,15 @@ function NotificationsMenu() {
     if (!now) return out;
     const DAY = 86_400_000;
 
-    const priceOf = new Map(holdings.map((h) => [h.symbol, Number(h.lastPrice ?? h.avgCost)]));
-    for (const a of alerts) {
-      if (!a.active || !a.symbol) continue;
-      const price = priceOf.get(a.symbol);
-      if (price == null) continue;
-      const t = Number(a.threshold);
-      const hit = (a.kind === 'price_above' && price > t) || (a.kind === 'price_below' && price < t);
-      if (hit) out.push({ id: `a-${a.id}`, icon: 'alert', title: a.label, sub: 'Condition met', href: '/alerts' });
+    // The shared evaluator (§5). This menu used to run its own cut-down copy
+    // that handled only price_above/price_below, skipped anything without a
+    // symbol, and compared with `Number()` — so the bell and the Alerts page
+    // could disagree about the very same rule, and a budget or renewal alert
+    // never appeared here at all.
+    for (const e of triggered(evaluateAlerts({
+      alerts, holdings, budgets, categories, txns, insurances, now,
+    }))) {
+      out.push({ id: `a-${e.alert.id}`, icon: 'alert', title: e.alert.label, sub: e.message, href: '/alerts' });
     }
     for (const b of recurring) {
       const days = Math.ceil((b.nextRun - now) / DAY);
@@ -620,7 +643,7 @@ function NotificationsMenu() {
       }
     }
     return out;
-  }, [alerts, holdings, recurring, insurances, now]);
+  }, [alerts, holdings, budgets, categories, txns, recurring, insurances, now]);
 
   const ICONS = { alert: BellRing, bill: CreditCard, policy: ShieldAlert } as const;
 
@@ -645,7 +668,8 @@ function NotificationsMenu() {
                 <Inbox size={22} className="mx-auto text-muted mb-2.5" />
                 <p className="text-[13px] font-medium">Nothing needs attention</p>
                 <p className="text-[11.5px] text-muted mt-1 leading-relaxed">
-                  Triggered alerts, bills due this week and renewals due this month show up here.
+                  Alerts whose condition is met, bills due this week and renewals due this month show
+                  up here. Rules are checked while Khazana is open — never in the background.
                 </p>
               </div>
             ) : (
@@ -660,8 +684,8 @@ function NotificationsMenu() {
                       className="flex items-center gap-3 px-4 py-2.5 border-b border-line last:border-0 hover:bg-fill transition-colors"
                     >
                       <span className={clsx(
-                        'w-8 h-8 shrink-0 rounded-[10px] grid place-items-center',
-                        n.icon === 'alert' ? 'bg-danger-soft text-danger' : n.icon === 'bill' ? 'bg-warning-soft text-warning' : 'bg-accent-soft text-accent',
+                        'shrink-0 grid place-items-center',
+                        n.icon === 'alert' ? 'text-danger' : n.icon === 'bill' ? 'text-warning' : 'text-accent',
                       )}>
                         <Icon size={15} />
                       </span>

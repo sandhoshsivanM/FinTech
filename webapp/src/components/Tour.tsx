@@ -100,7 +100,7 @@ export function Tour() {
     <div className="fixed inset-0 z-[200]">
       {/* dim the page; spotlight the control if visible */}
       {rect ? (
-        <div className="absolute rounded-[14px] transition-all duration-300 pointer-events-none"
+        <div className="absolute rounded-[var(--radius-panel)] transition-all duration-300 pointer-events-none"
           style={{ top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12, boxShadow: '0 0 0 9999px rgba(12,14,22,0.55)', border: '2px solid var(--accent)' }} />
       ) : (
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(12,14,22,0.55)' }} />

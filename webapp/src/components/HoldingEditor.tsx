@@ -131,7 +131,7 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
     <GlassCard>
       <div className="flex items-center gap-3 mb-5">
         <h3 className="text-[15px] font-semibold tracking-[-0.02em]">{editing ? `Edit ${editing.symbol}` : 'Add a holding'}</h3>
-        <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-lg text-muted hover:text-ink hover:bg-fill transition-colors">
+        <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-ink hover:bg-fill transition-colors">
           <X size={16} />
         </button>
       </div>
@@ -290,7 +290,7 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
     <GlassCard>
       <div className="flex items-center gap-3 mb-2">
         <h3 className="text-[15px] font-semibold tracking-[-0.02em]">Import holdings from CSV</h3>
-        <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-lg text-muted hover:text-ink hover:bg-fill transition-colors">
+        <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-ink hover:bg-fill transition-colors">
           <X size={16} />
         </button>
       </div>

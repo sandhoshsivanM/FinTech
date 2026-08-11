@@ -269,7 +269,7 @@ export default function GoalsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 min-w-0">
                     <span
-                      className="w-8 h-8 rounded-[10px] grid place-items-center shrink-0"
+                      className="w-8 h-8 rounded-[var(--radius-card)] grid place-items-center shrink-0"
                       style={{ background: color + '22', color }}
                     >
                       {GOAL_ICON_MAP[goal.goalType]}
@@ -282,7 +282,7 @@ export default function GoalsPage() {
                   <div className="flex items-center gap-1 shrink-0 ml-2">
                     <button
                       type="button"
-                      className="p-1.5 rounded-[10px] text-ink-soft hover:bg-black/5 transition"
+                      className="p-1.5 rounded-[var(--radius-card)] text-ink-soft hover:bg-black/5 transition"
                       aria-label="Edit goal"
                       onClick={() => startEdit(goal.id)}
                     >
@@ -290,7 +290,7 @@ export default function GoalsPage() {
                     </button>
                     <button
                       type="button"
-                      className="p-1.5 rounded-[10px] text-expense hover:bg-expense/10 transition"
+                      className="p-1.5 rounded-[var(--radius-card)] text-expense hover:bg-expense/10 transition"
                       aria-label="Delete goal"
                       onClick={() => deleteGoal(goal.id)}
                     >
@@ -324,7 +324,7 @@ export default function GoalsPage() {
 
                 {/* Track hint pill */}
                 <div
-                  className="text-xs font-semibold px-2.5 py-1.5 rounded-[10px] truncate"
+                  className="text-xs font-semibold px-2.5 py-1.5 rounded-[var(--radius-card)] truncate"
                   style={{ background: color + '18', color }}
                 >
                   {trackHint}

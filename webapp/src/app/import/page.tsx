@@ -523,7 +523,7 @@ function MoneyImport() {
               <Download size={16} /> Download CSV Template
             </Button>
           </div>
-          <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--line)]">
+          <div className="mt-4 overflow-x-auto rounded-[var(--radius-card)] border border-[var(--line)]">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--line)] bg-[var(--surface-2)]">
@@ -629,7 +629,7 @@ function MoneyImport() {
 
 function ModeBanner({ mode, noun }: { mode: WriteMode; noun: string }) {
   return (
-    <div className="rounded-xl border border-[var(--warn)]/40 bg-[var(--warn)]/10 p-3.5 text-sm leading-relaxed">
+    <div className="rounded-[var(--radius-card)] border border-[var(--warn)]/40 bg-[var(--warn)]/10 p-3.5 text-sm leading-relaxed">
       {mode === 'update' ? (
         <>
           <b>Update by Name mode:</b> {noun} whose names match existing ones will have their value,

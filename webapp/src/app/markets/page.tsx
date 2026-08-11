@@ -16,6 +16,7 @@ import { Kpi, KpiRow } from '@/components/Kpi';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { LineChart } from '@/components/charts/LineChart';
+import { AssetMark } from '@/components/primitives';
 import { demoIndices, demoDayChangePct, demoSeries, rangeLabels } from '@/lib/demo/marketFeed';
 import { marketState } from '@/lib/marketClock';
 import { pct } from '@/lib/format';
@@ -108,9 +109,7 @@ export default function MarketsPage() {
                 <div>
                   {list.map((m) => (
                     <div key={m.symbol} className="flex items-center gap-3 px-5 py-3 border-b border-line last:border-0 hover:bg-fill transition-colors">
-                      <span className={`w-[30px] h-[30px] shrink-0 rounded-[9px] grid place-items-center text-[11px] font-bold text-white bg-[var(--${tone === 'success' ? 'c6' : 'c8'})]`}>
-                        {m.symbol.slice(0, 2)}
-                      </span>
+                      <AssetMark colour={`var(--${tone === 'success' ? 'c6' : 'c8'})`} />
                       <span className="flex-1 min-w-0">
                         <span className="block text-[13.5px] font-semibold truncate">{m.name}</span>
                         <span className="block text-[11.5px] text-muted">{m.symbol} · {m.owned ? 'Held' : 'Watchlist'}</span>

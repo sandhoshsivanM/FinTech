@@ -43,7 +43,7 @@ export function Kpi({
   return (
     <div className={clsx('card lift p-4 grid gap-2.5 content-start min-w-0', className)}>
       <div className="flex items-center gap-2 min-w-0">
-        <span className={clsx('w-7 h-7 shrink-0 rounded-[9px] grid place-items-center', TONE[tone])}>
+        <span className={clsx('w-7 h-7 shrink-0 rounded-[var(--radius-btn)] grid place-items-center', TONE[tone])}>
           <Icon size={15} strokeWidth={2} />
         </span>
         <span className="text-[11.5px] font-semibold text-ink-soft truncate">{label}</span>

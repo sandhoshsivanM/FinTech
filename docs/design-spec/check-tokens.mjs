@@ -28,9 +28,40 @@ const spec = readFileSync(SPEC, 'utf8').toLowerCase();
 /** Strip comments so a hex mentioned only in prose is not treated as a token. */
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '');
 
-const hexes = new Set((strip(app).match(/#[0-9a-fA-F]{6}\b/g) ?? []).map((h) => h.toLowerCase()));
+/**
+ * Only the TOKEN blocks are compared, not the whole stylesheet.
+ *
+ * globals.css also carries component css — a scrollbar border, a grid-paper
+ * background — whose colour literals are not tokens and were never meant to
+ * appear in the spec. Scanning the entire file reported those as drift, which
+ * is the kind of false alarm that teaches people to ignore a guard.
+ */
+function tokenBlocks(src) {
+  const out = [];
+  for (const sel of [':root {', ':root[data-theme="dark"] {']) {
+    let from = 0;
+    for (;;) {
+      const start = src.indexOf(sel, from);
+      if (start < 0) break;
+      const open = src.indexOf('{', start);
+      let depth = 0;
+      for (let i = open; i < src.length; i++) {
+        if (src[i] === '{') depth++;
+        else if (src[i] === '}') {
+          depth--;
+          if (depth === 0) { out.push(src.slice(open + 1, i)); from = i; break; }
+        }
+      }
+      if (from <= start) break;
+    }
+  }
+  return out.join('\n');
+}
+
+const tokens = strip(tokenBlocks(app));
+const hexes = new Set((tokens.match(/#[0-9a-fA-F]{6}\b/g) ?? []).map((h) => h.toLowerCase()));
 const rgbas = new Set(
-  (strip(app).match(/rgba?\([^)]*\)/g) ?? []).map((s) => s.replace(/\s+/g, '').toLowerCase()),
+  (tokens.match(/rgba?\([^)]*\)/g) ?? []).map((s) => s.replace(/\s+/g, '').toLowerCase()),
 );
 
 const specNoWs = spec.replace(/\s+/g, '');
@@ -40,10 +71,18 @@ const missingRgba = [...rgbas].filter((r) => !specNoWs.includes(r));
 
 // Structural invariants worth failing on independently of colour.
 const invariants = [
-  [/--radius-card:\s*14px/, '--radius-card: 14px'],
-  [/--radius-btn:\s*9px/, '--radius-btn: 9px'],
-  [/--radius-input:\s*10px/, '--radius-input: 10px'],
-  [/--radius-modal:\s*18px/, '--radius-modal: 18px'],
+  // The Product Design Hardening scale: four radii, and no others. The app
+  // reached twelve before this was tightened.
+  [/--radius-sm:\s*6px/, '--radius-sm: 6px'],
+  [/--radius-btn:\s*8px/, '--radius-btn: 8px'],
+  [/--radius-input:\s*8px/, '--radius-input: 8px'],
+  [/--radius-card:\s*10px/, '--radius-card: 10px'],
+  [/--radius-panel:\s*12px/, '--radius-panel: 12px'],
+  [/--radius-modal:\s*12px/, '--radius-modal: 12px'],
+  // Control ladder and icon sizes, likewise fixed by the spec.
+  [/--control-sm:\s*32px/, '--control-sm: 32px'],
+  [/--control-md:\s*36px/, '--control-md: 36px'],
+  [/--control-lg:\s*40px/, '--control-lg: 40px'],
   [/--nav-w:\s*248px/, '--nav-w: 248px'],
   [/--nav-rail:\s*76px/, '--nav-rail: 76px'],
   [/--top-h:\s*64px/, '--top-h: 64px'],

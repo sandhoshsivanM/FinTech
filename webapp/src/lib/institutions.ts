@@ -8,15 +8,35 @@
  * selects guidance and a couple of parsing hints, never a code path that can
  * reject a valid file.
  *
- * `initials` and `color` render a text badge rather than a bundled logo:
- * shipping bank trademarks would bloat the export and invite a licensing
- * question for zero functional gain.
+ * `color` carries each institution's brand hue, and `kind` says what the
+ * institution IS — a broker, a depository, a fund platform, a bank. Together
+ * they drive a semantic icon.
+ *
+ * Deliberately NOT a bundled logo: shipping bank trademarks would bloat the
+ * export and invite a licensing question for zero functional gain. Equally
+ * deliberately not the initials-in-a-coloured-square this used to render —
+ * "5p", "TT", "St" told the reader nothing the adjacent name did not, and a
+ * grid of two-letter tiles is the contact-avatar idiom borrowed from address
+ * books, which is a large part of why the screen read as generic.
  */
+
+/**
+ * What kind of institution this is. Drives the icon, so the picker communicates
+ * something real: a depository is not a broker, and a fund platform is neither.
+ */
+export type InstitutionKind =
+  | 'broker'      /* domestic equity / discount broker */
+  | 'global'      /* gives access to overseas markets */
+  | 'depository'  /* CDSL / NSDL — holds the securities themselves */
+  | 'funds'       /* mutual-fund platform or registrar */
+  | 'bank';
 
 export interface Institution {
   id: string;
   name: string;
+  /** Retained for the accessible label and for search; no longer rendered. */
   initials: string;
+  kind: InstitutionKind;
   color: string;
   /** Ordered how-to-export steps. Markdown-free; links go in `links`. */
   steps: string[];
@@ -29,7 +49,7 @@ export interface Institution {
 
 export const BROKERS: Institution[] = [
   {
-    id: 'zerodha', name: 'Zerodha', initials: 'Z', color: '#387ED1',
+    id: 'zerodha', name: 'Zerodha', initials: 'Z', kind: 'broker', color: '#387ED1',
     steps: [
       'Log in to Kite',
       'Go to Holdings',
@@ -40,7 +60,7 @@ export const BROKERS: Institution[] = [
     note: 'Console → Portfolio → Holdings also exports XLSX, which works here too.',
   },
   {
-    id: 'groww', name: 'Groww', initials: 'G', color: '#00D09C',
+    id: 'groww', name: 'Groww', initials: 'G', kind: 'broker', color: '#00D09C',
     steps: [
       'Open Groww on web',
       'Go to Stocks → Holdings',
@@ -50,20 +70,20 @@ export const BROKERS: Institution[] = [
     note: "Groww exports today's P&L rather than a previous close. The importer derives the close from it, so the day-change column still works.",
   },
   {
-    id: 'indmoney', name: 'INDmoney', initials: 'IN', color: '#1B1B1B',
+    id: 'indmoney', name: 'INDmoney', initials: 'IN', kind: 'broker', color: '#1B1B1B',
     steps: ['Open INDmoney on web', 'Go to Portfolio → Stocks', 'Export the holdings report', 'Upload the file below'],
   },
   {
-    id: 'upstox', name: 'Upstox', initials: 'U', color: '#7C3AED',
+    id: 'upstox', name: 'Upstox', initials: 'U', kind: 'broker', color: '#7C3AED',
     steps: ['Log in to Upstox', 'Go to Portfolio → Holdings', 'Download the holdings report', 'Upload the file below'],
     note: "Upstox publishes day P&L instead of a previous close; the importer converts it.",
   },
   {
-    id: 'icicidirect', name: 'ICICI Direct', initials: 'I', color: '#F26522',
+    id: 'icicidirect', name: 'ICICI Direct', initials: 'I', kind: 'broker', color: '#F26522',
     steps: ['Log in to ICICI Direct', 'Portfolio → Equity → Holdings', 'Export to Excel', 'Upload the file below'],
   },
   {
-    id: 'cdsl', name: 'CDSL', initials: 'C', color: '#0F5298',
+    id: 'cdsl', name: 'CDSL', initials: 'C', kind: 'depository', color: '#0F5298',
     steps: [
       'Log in to CDSL Easi',
       'Go to Holdings Statement',
@@ -73,41 +93,41 @@ export const BROKERS: Institution[] = [
     note: 'A depository statement lists ISIN and quantity but usually no average cost — rows without a cost are reported as skipped rather than imported at zero.',
   },
   {
-    id: 'angelone', name: 'Angel One', initials: 'A', color: '#E5322D',
+    id: 'angelone', name: 'Angel One', initials: 'A', kind: 'broker', color: '#E5322D',
     steps: ['Log in to Angel One', 'Portfolio → Holdings', 'Download the report', 'Upload the file below'],
   },
   {
-    id: 'aionion', name: 'Aionion', initials: 'A', color: '#166534',
+    id: 'aionion', name: 'Aionion', initials: 'A', kind: 'broker', color: '#166534',
     steps: ['Log in to Aionion', 'Open Holdings', 'Export the holdings report', 'Upload the file below'],
   },
   {
-    id: 'chola', name: 'Chola Securities', initials: 'CS', color: '#B91C1C',
+    id: 'chola', name: 'Chola Securities', initials: 'CS', kind: 'broker', color: '#B91C1C',
     steps: ['Log in to Chola Securities', 'Portfolio → Holdings', 'Export the report', 'Upload the file below'],
   },
   {
-    id: 'mstock', name: 'mstock', initials: 'M', color: '#DC2626',
+    id: 'mstock', name: 'mstock', initials: 'M', kind: 'broker', color: '#DC2626',
     steps: ['Log in to mstock', 'Portfolio → Holdings', 'Download as CSV', 'Upload the file below'],
   },
   {
-    id: '5paisa', name: '5paisa', initials: '5p', color: '#2563EB',
+    id: '5paisa', name: '5paisa', initials: '5p', kind: 'broker', color: '#2563EB',
     steps: ['Log in to 5paisa', 'Portfolio → Equity Holdings', 'Export the report', 'Upload the file below'],
   },
   {
-    id: 'vested', name: 'Vested', initials: 'V', color: '#059669',
+    id: 'vested', name: 'Vested', initials: 'V', kind: 'global', color: '#059669',
     steps: ['Log in to Vested', 'Portfolio → Holdings', 'Export the holdings CSV', 'Upload the file below'],
     note: 'US holdings are priced in USD. Import them as their own asset class and set the currency in Settings — the importer does not convert.',
   },
   {
-    id: 'tickertape', name: 'Tickertape', initials: 'TT', color: '#EA580C',
+    id: 'tickertape', name: 'Tickertape', initials: 'TT', kind: 'broker', color: '#EA580C',
     steps: ['Log in to Tickertape', 'Open your Portfolio', 'Export holdings as CSV', 'Upload the file below'],
   },
   {
-    id: 'stockal', name: 'Stockal', initials: 'St', color: '#1D4ED8',
+    id: 'stockal', name: 'Stockal', initials: 'St', kind: 'global', color: '#1D4ED8',
     steps: ['Log in to Stockal', 'Portfolio → Holdings', 'Export the report', 'Upload the file below'],
     note: 'US holdings are priced in USD; the importer does not convert currency.',
   },
   {
-    id: 'ibkr', name: 'Interactive Brokers', initials: 'IB', color: '#B91C1C',
+    id: 'ibkr', name: 'Interactive Brokers', initials: 'IB', kind: 'global', color: '#B91C1C',
     steps: [
       'Log in to Client Portal',
       'Performance & Reports → Flex Queries (or Statements)',
@@ -117,12 +137,12 @@ export const BROKERS: Institution[] = [
     note: 'IBKR statements contain several stacked sections. The importer finds the positions header automatically and ignores the rest.',
   },
   {
-    id: 'kuvera', name: 'Kuvera', initials: 'K', color: '#7C3AED',
+    id: 'kuvera', name: 'Kuvera', initials: 'K', kind: 'funds', color: '#7C3AED',
     steps: ['Log in to Kuvera', 'Go to Reports → Holdings', 'Download the report', 'Upload the file below'],
     note: 'Mutual funds — import these as Equity Funds or Debt Funds rather than stocks.',
   },
   {
-    id: 'mfcentral', name: 'MFCentral CAS', initials: 'MF', color: '#0F766E',
+    id: 'mfcentral', name: 'MFCentral CAS', initials: 'MF', kind: 'funds', color: '#0F766E',
     steps: [
       'Log in to MFCentral',
       'Request a Consolidated Account Statement (CAS)',
@@ -132,7 +152,7 @@ export const BROKERS: Institution[] = [
     note: 'A password-protected CAS must have its password removed before upload; the importer cannot decrypt it.',
   },
   {
-    id: 'kotakneo', name: 'Kotak Neo', initials: 'K', color: '#DC2626',
+    id: 'kotakneo', name: 'Kotak Neo', initials: 'K', kind: 'broker', color: '#DC2626',
     steps: ['Log in to Kotak Neo', 'Portfolio → Holdings', 'Download the holdings report', 'Upload the file below'],
   },
 ];
@@ -149,7 +169,7 @@ export const BANK_GROUPS: BankGroup[] = [
     country: 'India',
     banks: [
       {
-        id: 'hdfc', name: 'HDFC Bank', initials: 'HD', color: '#004C8F',
+        id: 'hdfc', name: 'HDFC Bank', initials: 'HD', kind: 'bank', color: '#004C8F',
         steps: [
           'Log in to NetBanking',
           'Go to Accounts → Statement',
@@ -161,7 +181,7 @@ export const BANK_GROUPS: BankGroup[] = [
         note: 'HDFC prepends account details above the column titles. The importer scans past them to find the real header row.',
       },
       {
-        id: 'sbi', name: 'State Bank of India', initials: 'SBI', color: '#1F4E9C',
+        id: 'sbi', name: 'State Bank of India', initials: 'SBI', kind: 'bank', color: '#1F4E9C',
         steps: [
           'Log in to OnlineSBI / YONO',
           'Go to Account Statement',
@@ -171,7 +191,7 @@ export const BANK_GROUPS: BankGroup[] = [
         note: 'SBI exports carry a multi-line header block and a trailing summary; both are skipped automatically.',
       },
       {
-        id: 'icici', name: 'ICICI Bank', initials: 'IC', color: '#AE275F',
+        id: 'icici', name: 'ICICI Bank', initials: 'IC', kind: 'bank', color: '#AE275F',
         steps: [
           'Log in to iMobile or Internet Banking',
           'Accounts → Statement / Transaction history',
@@ -180,7 +200,7 @@ export const BANK_GROUPS: BankGroup[] = [
         ],
       },
       {
-        id: 'idfc', name: 'IDFC FIRST Bank', initials: 'ID', color: '#9B1C31',
+        id: 'idfc', name: 'IDFC FIRST Bank', initials: 'ID', kind: 'bank', color: '#9B1C31',
         steps: [
           'Log in to IDFC FIRST net banking',
           'Accounts → Account Statement',
@@ -189,7 +209,7 @@ export const BANK_GROUPS: BankGroup[] = [
         ],
       },
       {
-        id: 'kotak', name: 'Kotak Mahindra Bank', initials: 'KO', color: '#ED1C24',
+        id: 'kotak', name: 'Kotak Mahindra Bank', initials: 'KO', kind: 'bank', color: '#ED1C24',
         steps: [
           'Log in to Kotak net banking',
           'Go to Accounts → Account Statement',
@@ -203,7 +223,7 @@ export const BANK_GROUPS: BankGroup[] = [
     country: 'Qatar',
     banks: [
       {
-        id: 'doha', name: 'Doha Bank', initials: 'DB', color: '#9D2235',
+        id: 'doha', name: 'Doha Bank', initials: 'DB', kind: 'bank', color: '#9D2235',
         steps: [
           'Log in to Doha Bank internet banking',
           'Accounts → Account Statement',
@@ -213,7 +233,7 @@ export const BANK_GROUPS: BankGroup[] = [
         note: 'Statements are in QAR. Set your display currency in Settings — the importer stores the figures as-is and does not convert.',
       },
       {
-        id: 'cbq', name: 'Commercial Bank of Qatar', initials: 'CB', color: '#003B71',
+        id: 'cbq', name: 'Commercial Bank of Qatar', initials: 'CB', kind: 'bank', color: '#003B71',
         steps: [
           'Log in to CBQ internet banking',
           'Accounts → Statement',

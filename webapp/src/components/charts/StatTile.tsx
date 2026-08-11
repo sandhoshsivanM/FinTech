@@ -53,7 +53,7 @@ export function StatTile({
       <div aria-hidden>
         {icon && (
           <div
-            className="w-[34px] h-[34px] rounded-[10px] grid place-items-center mb-2"
+            className="w-[34px] h-[34px] rounded-[var(--radius-card)] grid place-items-center mb-2"
             style={{ background: `color-mix(in srgb, ${iconColor ?? 'var(--accent)'} 12%, transparent)`, color: iconColor ?? 'var(--accent)' }}
           >
             {icon}

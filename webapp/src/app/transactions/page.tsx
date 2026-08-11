@@ -34,6 +34,7 @@ const FILTER_OPTIONS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'income', label: 'Income' },
   { value: 'expense', label: 'Expense' },
+  { value: 'investment', label: 'Investments' },
   { value: 'transfer', label: 'Transfers' },
 ];
 
@@ -309,7 +310,7 @@ export default function TransactionsPage() {
               key={p.label}
               type="button"
               onClick={() => { const [f, t] = presetInputRange(p.key); setFrom(f); setTo(t); setPage(0); }}
-              className="px-2.5 py-1.5 rounded-lg border border-line text-[12px] font-semibold text-muted hover:text-ink hover:border-[var(--accent)] transition-colors"
+              className="px-2.5 py-1.5 rounded-[var(--radius-btn)] border border-line text-[12px] font-semibold text-muted hover:text-ink hover:border-[var(--accent)] transition-colors"
             >
               {p.label}
             </button>
@@ -318,7 +319,7 @@ export default function TransactionsPage() {
             <button
               type="button"
               onClick={() => { setFrom(''); setTo(''); setPage(0); }}
-              className="px-2.5 py-1.5 rounded-lg border border-line text-[12px] font-semibold text-[var(--accent)] hover:underline"
+              className="px-2.5 py-1.5 rounded-[var(--radius-btn)] border border-line text-[12px] font-semibold text-[var(--accent)] hover:underline"
             >
               Clear dates
             </button>
@@ -411,7 +412,7 @@ export default function TransactionsPage() {
                     <div className="flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition ml-1">
                       <Link
                         href={`/add?id=${e.id}`}
-                        className="p-1.5 rounded-[10px] text-ink-soft hover:text-ink hover:bg-[var(--fill)] transition"
+                        className="p-1.5 rounded-[var(--radius-card)] text-ink-soft hover:text-ink hover:bg-[var(--fill)] transition"
                         aria-label={isTransfer ? 'Edit transfer' : 'Edit transaction'}
                       >
                         <Pencil size={14} />
@@ -419,7 +420,7 @@ export default function TransactionsPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(e)}
-                        className="p-1.5 rounded-[10px] text-expense hover:bg-expense/10 transition"
+                        className="p-1.5 rounded-[var(--radius-card)] text-expense hover:bg-expense/10 transition"
                         aria-label={isTransfer ? 'Delete transfer' : 'Delete transaction'}
                       >
                         <Trash2 size={15} />

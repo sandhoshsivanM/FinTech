@@ -399,7 +399,7 @@ export default function InsurancePage() {
                     <div className="flex items-center gap-0.5 shrink-0">
                       <button
                         type="button"
-                        className="p-1.5 rounded-[9px] text-ink-soft hover:bg-black/5 transition-colors"
+                        className="p-1.5 rounded-[var(--radius-btn)] text-ink-soft hover:bg-black/5 transition-colors"
                         aria-label="Edit policy"
                         onClick={() => startEdit(p)}
                       >
@@ -407,7 +407,7 @@ export default function InsurancePage() {
                       </button>
                       <button
                         type="button"
-                        className="p-1.5 rounded-[9px] text-muted hover:text-expense hover:bg-[rgba(192,73,47,0.08)] transition-colors"
+                        className="p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-expense hover:bg-[rgba(192,73,47,0.08)] transition-colors"
                         aria-label="Delete policy"
                         onClick={() => deletePolicy(p.id, p.name)}
                       >

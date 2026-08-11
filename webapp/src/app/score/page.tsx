@@ -58,7 +58,7 @@ export default function ScorePage() {
   return (
     <div className="space-y-6">
       <PageIntro
-        title="Score"
+        title="Financial Health"
         subtitle="Your financial health score and the four areas behind it."
       />
 

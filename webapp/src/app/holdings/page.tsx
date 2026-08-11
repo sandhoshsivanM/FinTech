@@ -23,6 +23,7 @@ import { DataGrid, type Column } from '@/components/DataGrid';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { Stagger, StaggerItem, useReducedMotion } from '@/components/motion';
 import { HoldingForm, ImportPanel } from '@/components/HoldingEditor';
+import { AssetMark } from '@/components/primitives';
 import type { Holding } from '@/lib/types';
 import { portfolioSummary, ASSET_META, ASSET_GROUP_OF } from '@/domain/portfolio';
 import type { AssetType } from '@/lib/types';
@@ -152,12 +153,7 @@ export default function HoldingsPage() {
       value: (r) => r.name,
       cell: (r) => (
         <div className="flex items-center gap-2.5">
-          <span
-            className="w-[30px] h-[30px] shrink-0 rounded-[9px] grid place-items-center text-[11px] font-bold text-white"
-            style={{ background: r.colour }}
-          >
-            {r.symbol.slice(0, 2)}
-          </span>
+          <AssetMark colour={r.colour} title={r.assetLabel} />
           <span className="min-w-0">
             <span className="block font-semibold tracking-[-0.01em] truncate">{r.name}</span>
             <span className="block text-[11px] text-muted">{r.symbol}</span>
@@ -223,7 +219,7 @@ export default function HoldingsPage() {
         <button
           onClick={() => { setEditing(r.holding); setPanel('none'); }}
           aria-label={`Edit ${r.symbol}`}
-          className="focus-ring p-1.5 rounded-lg text-muted hover:text-accent hover:bg-accent-soft transition-colors"
+          className="focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-accent hover:bg-accent-soft transition-colors"
         >
           <Pencil size={15} />
         </button>

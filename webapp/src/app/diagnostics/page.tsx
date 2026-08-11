@@ -35,7 +35,7 @@ function CheckRow({ check }: { check: Check }) {
             <summary className="text-xs text-[var(--accent)] cursor-pointer font-semibold">
               Show affected records
             </summary>
-            <pre className="mt-1.5 text-[11px] text-muted bg-[var(--surface-2)] rounded-lg p-2 overflow-x-auto">
+            <pre className="mt-1.5 text-[11px] text-muted bg-[var(--surface-2)] rounded-[var(--radius-btn)] p-2 overflow-x-auto">
               {check.offenders.join('\n')}
             </pre>
           </details>
@@ -94,7 +94,7 @@ export default function DiagnosticsPage() {
         <SectionHeader title="Record counts" />
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 min-[1100px]:grid-cols-5 gap-3">
           {counts.map(([label, n]) => (
-            <div key={label} className="rounded-xl border border-[var(--line)] p-3">
+            <div key={label} className="rounded-[var(--radius-card)] border border-[var(--line)] p-3">
               <div className="text-xs text-muted">{label}</div>
               <div className="text-xl font-bold tnum mt-0.5">{n.toLocaleString('en-IN')}</div>
             </div>

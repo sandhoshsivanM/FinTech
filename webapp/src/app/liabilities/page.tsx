@@ -221,7 +221,7 @@ export default function LiabilitiesPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     <span
-                      className="w-9 h-9 rounded-[12px] grid place-items-center"
+                      className="w-9 h-9 rounded-[var(--radius-panel)] grid place-items-center"
                       style={{
                         background: l.kind === 'credit_card' ? 'var(--violet)22' : 'var(--accent)22',
                         color: l.kind === 'credit_card' ? 'var(--violet)' : 'var(--accent)',
@@ -237,7 +237,7 @@ export default function LiabilitiesPage() {
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      className="p-1.5 rounded-[10px] text-ink-soft hover:bg-black/5 transition"
+                      className="p-1.5 rounded-[var(--radius-card)] text-ink-soft hover:bg-black/5 transition"
                       aria-label="Edit liability"
                       onClick={() => startEdit(l.id)}
                     >
@@ -245,7 +245,7 @@ export default function LiabilitiesPage() {
                     </button>
                     <button
                       type="button"
-                      className="p-1.5 rounded-[10px] text-expense hover:bg-expense/10 transition"
+                      className="p-1.5 rounded-[var(--radius-card)] text-expense hover:bg-expense/10 transition"
                       aria-label="Delete liability"
                       onClick={() => deleteLiability(l.id)}
                     >
@@ -415,7 +415,7 @@ export default function LiabilitiesPage() {
             </div>
 
             {simResult && (
-              <div className="rounded-[14px] bg-[var(--fill)] p-4 space-y-3">
+              <div className="rounded-[var(--radius-panel)] bg-[var(--fill)] p-4 space-y-3">
                 {!simResult.feasible ? (
                   <div className="flex items-start gap-2 text-expense">
                     <AlertTriangle size={16} className="mt-0.5 shrink-0" />

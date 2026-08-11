@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, LineChart, BarChart3, TrendingUp, Table2, Star, CandlestickChart,
-  Coins, Landmark, Wallet, Receipt, CalendarDays, PieChart, Repeat, Flag, CreditCard,
+  Coins, Landmark, Wallet, Receipt, CalendarDays, CalendarClock, PieChart, Repeat, Flag, CreditCard,
   Shield, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle, Upload, Stethoscope, Scale,
   type LucideIcon,
 } from 'lucide-react';
@@ -35,8 +35,12 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Overview',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { href: '/analytics', label: 'Analytics', icon: LineChart },
+      // "Score" named the mechanism, not the thing. A user does not come
+      // looking for a score; they come asking whether they are doing all right.
+      { href: '/score', label: 'Financial Health', icon: Gauge },
       { href: '/reports', label: 'Reports', icon: BarChart3 },
+      { href: '/forecast', label: 'Forecast', icon: CalendarClock },
+      { href: '/analytics', label: 'Analytics', icon: LineChart },
     ],
   },
   {
@@ -47,7 +51,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/watchlist', label: 'Watchlist', icon: Star },
       { href: '/markets', label: 'Markets', icon: CandlestickChart },
       { href: '/dividends', label: 'Dividends', icon: Coins },
-      { href: '/tax', label: 'Tax Center', icon: Landmark },
+      { href: '/tax', label: 'Tax Centre', icon: Landmark },
     ],
   },
   {
@@ -56,7 +60,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/accounts', label: 'Accounts', icon: Wallet },
       { href: '/transactions', label: 'Transactions', icon: Receipt },
       { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-      { href: '/reconcile', label: 'Reconcile', icon: Scale },
       { href: '/budget', label: 'Budget', icon: PieChart },
       { href: '/recurring', label: 'Recurring', icon: Repeat },
       { href: '/goals', label: 'Goals', icon: Flag },
@@ -68,16 +71,19 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/liabilities', label: 'Liabilities', icon: CreditCard },
       { href: '/insurance', label: 'Insurance', icon: Shield },
       { href: '/safety-net', label: 'Safety Net', icon: LifeBuoy },
-      { href: '/score', label: 'Score', icon: Gauge },
     ],
   },
   {
-    label: 'More',
+    // Things you operate the vault WITH, rather than things you look at.
+    // Reconcile and Import were sitting in the middle of the money list, where
+    // they read as another financial screen instead of as a tool.
+    label: 'Tools',
     items: [
       { href: '/import', label: 'Import', icon: Upload },
-      { href: '/news', label: 'News', icon: Newspaper },
+      { href: '/reconcile', label: 'Reconcile', icon: Scale },
       { href: '/alerts', label: 'Alerts', icon: Bell },
       { href: '/diagnostics', label: 'Diagnostics', icon: Stethoscope },
+      { href: '/news', label: 'News', icon: Newspaper },
       { href: '/settings', label: 'Settings', icon: Settings },
       { href: '/help', label: 'Help', icon: HelpCircle },
     ],

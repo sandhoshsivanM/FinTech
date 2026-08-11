@@ -147,7 +147,7 @@ export function CommandPalette() {
                 className="flex-1 bg-transparent outline-none text-[15px] text-ink placeholder:text-muted"
                 aria-label="Search"
               />
-              <kbd className="text-[10.5px] font-semibold px-1.5 py-0.5 rounded-md bg-fill-strong text-muted border border-line">ESC</kbd>
+              <kbd className="text-[10.5px] font-semibold px-1.5 py-0.5 rounded-[var(--radius-btn)] bg-fill-strong text-muted border border-line">ESC</kbd>
             </div>
 
             <div className="max-h-[52vh] overflow-y-auto py-1.5">

@@ -171,7 +171,7 @@ export default function RecurringPage() {
       {/* Run feedback */}
       {runMsg && (
         <div
-          className="rounded-[14px] px-4 py-2.5 text-sm font-medium"
+          className="rounded-[var(--radius-panel)] px-4 py-2.5 text-sm font-medium"
           style={{ background: 'var(--income)', color: '#fff' }}
         >
           {runMsg}
@@ -373,7 +373,7 @@ export default function RecurringPage() {
                 <button
                   type="button"
                   onClick={() => handleDelete(rule.id)}
-                  className="opacity-0 group-hover:opacity-100 focus:opacity-100 ml-1 p-1.5 rounded-[10px] text-expense hover:bg-expense/10 transition shrink-0"
+                  className="opacity-0 group-hover:opacity-100 focus:opacity-100 ml-1 p-1.5 rounded-[var(--radius-card)] text-expense hover:bg-expense/10 transition shrink-0"
                   aria-label="Delete recurring rule"
                 >
                   <Trash2 size={15} />

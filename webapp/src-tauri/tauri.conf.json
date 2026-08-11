@@ -38,6 +38,16 @@
     "android": {
       "debugApplicationIdSuffix": ".debug"
     },
+    "windows": {
+      "nsis": {
+        "installMode": "perMachine",
+        "languages": ["English"],
+        "displayLanguageSelector": false
+      },
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      }
+    },
     "macOS": {
       "minimumSystemVersion": "11.0",
       "dmg": {

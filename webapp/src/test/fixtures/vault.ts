@@ -26,9 +26,10 @@ export const ACCT = {
   food: 'acct-exp-food',
   rent: 'acct-exp-rent',
   opening: 'acct-opening',
+  investments: 'acct-investments',
 } as const;
 
-export const CAT = { food: 'c-food', rent: 'c-rent', salary: 'c-salary' } as const;
+export const CAT = { food: 'c-food', rent: 'c-rent', salary: 'c-salary', investment: 'c-investment' } as const;
 
 export interface Vault {
   accounts: Account[];
@@ -69,12 +70,14 @@ export function buildVault(now: number): Vault {
     account(ACCT.food, 'Food', 'expense'),
     account(ACCT.rent, 'Rent', 'expense'),
     account(ACCT.opening, 'Opening Balances', 'equity', '0', 'equity'),
+    account(ACCT.investments, 'Investments', 'asset', '0', 'investment'),
   ];
 
   const categories: Category[] = [
     { id: CAT.food, vaultId: VAULT, name: 'Food' },
     { id: CAT.rent, vaultId: VAULT, name: 'Rent' },
     { id: CAT.salary, vaultId: VAULT, name: 'Salary' },
+    { id: CAT.investment, vaultId: VAULT, name: 'Investment' },
   ];
 
   const txn = (
@@ -93,6 +96,11 @@ export function buildVault(now: number): Vault {
     txn('t-food-1', '2400', 'expense', CAT.food, 35, ACCT.card),
     txn('t-food-2', '1850', 'expense', CAT.food, 6, ACCT.card),
     txn('t-food-3', '640', 'expense', CAT.food, 2, ACCT.cash),
+    // A SIP. Money leaves the bank and becomes a holding — it is not spending,
+    // and §3.2 is the rule that says so. Deliberately tagged to the Investment
+    // category so the fixture reproduces the exact shape that used to be
+    // counted against a budget.
+    txn('t-sip-1', '25000', 'investment', CAT.investment, 12, ACCT.bank),
   ];
 
   const transfers: Transfer[] = [
@@ -110,7 +118,9 @@ export function buildVault(now: number): Vault {
 
   // The point of the fixture: postings come from the real posting functions.
   const categoryAccount = (t: Txn) =>
-    t.type === 'income' ? ACCT.income : t.categoryId === CAT.food ? ACCT.food : ACCT.rent;
+    t.type === 'income' ? ACCT.income
+      : t.type === 'investment' ? ACCT.investments
+        : t.categoryId === CAT.food ? ACCT.food : ACCT.rent;
 
   const postings: Posting[] = [
     ...txns.flatMap((t) => postingsForEntry({

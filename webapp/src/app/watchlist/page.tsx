@@ -20,6 +20,7 @@ import { Stagger, StaggerItem } from '@/components/motion';
 import { useConfirm } from '@/components/Confirm';
 import { demoDayChangePct } from '@/lib/demo/marketFeed';
 import { NumberInput } from '@/components/NumberInput';
+import { AssetMark } from '@/components/primitives';
 
 export default function WatchlistPage() {
   const watchlist = useApp((s) => s.watchlist);
@@ -74,7 +75,7 @@ export default function WatchlistPage() {
       key: 'instrument', header: 'Instrument', locked: true, width: 200, value: (r) => r.name ?? r.symbol,
       cell: (r) => (
         <div className="flex items-center gap-2.5">
-          <span className="w-[30px] h-[30px] shrink-0 rounded-[9px] grid place-items-center text-[11px] font-bold text-white bg-[var(--c1)]">{r.symbol.slice(0, 2)}</span>
+          <AssetMark colour="var(--c1)" />
           <span className="min-w-0">
             <span className="block font-semibold truncate">{r.name ?? r.symbol}</span>
             <span className="block text-[11px] text-muted">{r.symbol} · {r.exchange}</span>
@@ -93,7 +94,7 @@ export default function WatchlistPage() {
     {
       key: 'actions', header: '', align: 'right',
       cell: (r) => (
-        <button onClick={() => void remove(r)} aria-label={`Remove ${r.symbol}`} className="focus-ring p-1.5 rounded-lg text-muted hover:text-danger hover:bg-danger-soft transition-colors">
+        <button onClick={() => void remove(r)} aria-label={`Remove ${r.symbol}`} className="focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-danger hover:bg-danger-soft transition-colors">
           <Trash2 size={15} />
         </button>
       ),

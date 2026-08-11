@@ -134,7 +134,7 @@ export function DateInput({
         className={
           bare
             ? `bg-transparent outline-none pr-7 disabled:opacity-50 ${className}`
-            : `w-full rounded-xl border border-[var(--line)] bg-transparent px-3 py-2.5 pr-11 text-sm outline-none focus:border-[var(--accent)] disabled:opacity-50 ${className}`
+            : `w-full rounded-[var(--radius-card)] border border-[var(--line)] bg-transparent px-3 py-2.5 pr-11 text-sm outline-none focus:border-[var(--accent)] disabled:opacity-50 ${className}`
         }
         {...rest}
       />
@@ -147,7 +147,7 @@ export function DateInput({
         className={
           bare
             ? 'absolute right-0 top-1/2 -translate-y-1/2 p-0.5 rounded text-muted hover:text-[var(--fg)] transition-colors disabled:opacity-50'
-            : 'absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-lg text-muted hover:text-[var(--fg)] hover:bg-[var(--surface-2)] transition-colors disabled:opacity-50'
+            : 'absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-[var(--radius-btn)] text-muted hover:text-[var(--fg)] hover:bg-[var(--surface-2)] transition-colors disabled:opacity-50'
         }
       >
         <CalendarDays size={bare ? 14 : 16} />

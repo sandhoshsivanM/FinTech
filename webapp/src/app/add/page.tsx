@@ -52,6 +52,10 @@ type Mode = TxnType | 'transfer';
 const MODE_OPTIONS: { value: Mode; label: string }[] = [
   { value: 'expense', label: 'Expense' },
   { value: 'income', label: 'Income' },
+  // Buying a holding is its own kind of event (§3.2). Without this the only way
+  // to record a SIP was as an expense, which is what put investments inside
+  // budgets and made a saving month read as an overspending one.
+  { value: 'investment', label: 'Investment' },
   { value: 'transfer', label: 'Transfer' },
 ];
 
@@ -70,6 +74,7 @@ export default function AddTransactionPage() {
   // Form state
   const [mode, setMode] = useState<Mode>('expense');
   const type: TxnType = mode === 'transfer' ? 'expense' : mode;
+
   const [amountRaw, setAmountRaw] = useState('');
   const [categoryId, setCategoryId] = useState<string>('');
   const [merchant, setMerchant] = useState('');
@@ -205,7 +210,8 @@ export default function AddTransactionPage() {
     && (mode !== 'transfer' || (!!accountId && !!toAccountId && !sameAccount));
   // Neutral for a transfer: it is neither a gain nor a loss, and painting it
   // red would say the opposite of what the entity exists to express.
-  const amountColor = mode === 'transfer' ? 'var(--ink)'
+  // Investment is neutral, like a transfer: the money moved, it was not lost.
+  const amountColor = mode === 'transfer' || mode === 'investment' ? 'var(--ink)'
     : type === 'income' ? 'var(--income)' : 'var(--expense)';
 
   function handleQuickParse() {
@@ -403,7 +409,7 @@ export default function AddTransactionPage() {
                   key={cat.id}
                   type="button"
                   onClick={() => setCategoryId(cat.id)}
-                  className="flex flex-col items-center gap-1 p-2 rounded-[14px] border transition text-xs font-medium"
+                  className="flex flex-col items-center gap-1 p-2 rounded-[var(--radius-panel)] border transition text-xs font-medium"
                   style={{
                     background: selected ? 'var(--accent)' : 'var(--surface-2)',
                     borderColor: selected ? 'var(--accent)' : 'var(--line)',
@@ -413,7 +419,7 @@ export default function AddTransactionPage() {
                   aria-pressed={selected}
                 >
                   <span
-                    className="w-8 h-8 rounded-[10px] grid place-items-center"
+                    className="w-8 h-8 rounded-[var(--radius-card)] grid place-items-center"
                     style={{
                       background: selected ? 'rgba(255,255,255,0.25)' : 'color-mix(in srgb, var(--accent) 14%, transparent)',
                       color: selected ? '#fff' : 'var(--accent)',

@@ -92,7 +92,7 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
   return (
     <div
       role="group"
-      className={clsx('inline-flex p-[3px] gap-px rounded-[11px] bg-fill max-w-full overflow-x-auto no-scrollbar', className)}
+      className={clsx('inline-flex p-[3px] gap-px rounded-[var(--radius-card)] bg-fill max-w-full overflow-x-auto no-scrollbar', className)}
     >
       {options.map((o) => (
         <button
@@ -101,7 +101,7 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={clsx(
-            'focus-ring shrink-0 px-3 py-1.5 rounded-[9px] text-[12.5px] font-semibold tracking-[-0.01em]',
+            'focus-ring shrink-0 px-3 py-1.5 rounded-[var(--radius-btn)] text-[12.5px] font-semibold tracking-[-0.01em]',
             'transition-colors duration-150 ease-standard',
             value === o.value ? 'bg-surface text-ink shadow-[var(--shadow-1)]' : 'text-muted hover:text-ink',
           )}

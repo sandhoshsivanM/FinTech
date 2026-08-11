@@ -5,16 +5,38 @@
 // query one span and caption the screen with another.
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
-import type { Budget, Liability, Txn } from '@/lib/types';
+import { isSpending, type Budget, type Liability, type Txn } from '@/lib/types';
 import { contains, shiftMonths, startOfDay, type DateRange } from './period';
 
+/**
+ * The effect on spendable cash.
+ *
+ * An investment purchase is negative here for the same reason an expense is —
+ * the money left the account. What separates them is that the investment is
+ * still yours, which is why it is excluded from `WindowSummary.expense` below
+ * and counted again as a holding.
+ */
 export const signed = (t: Txn): Decimal =>
   t.type === 'income' ? D(t.amount) : D(t.amount).neg();
 
 export const netWorthTotal = (txns: Txn[]): Decimal =>
   txns.reduce((s, t) => s.plus(signed(t)), ZERO);
 
-export interface WindowSummary { income: Decimal; expense: Decimal; net: Decimal }
+export interface WindowSummary {
+  income: Decimal;
+  expense: Decimal;
+  /**
+   * Cash put into holdings over the window.
+   *
+   * Tracked separately rather than dropped, so the money is still accounted
+   * for: income − expense − invested explains where every rupee went, and a
+   * screen can say "you did not overspend, you invested" instead of silently
+   * losing the difference.
+   */
+  invested: Decimal;
+  /** Income − expense. Investment is not spending, so it is not subtracted. */
+  net: Decimal;
+}
 
 /**
  * Income, expense and net over a range.
@@ -26,12 +48,14 @@ export interface WindowSummary { income: Decimal; expense: Decimal; net: Decimal
 export function windowSummary(txns: Txn[], range: DateRange): WindowSummary {
   let income = ZERO;
   let expense = ZERO;
+  let invested = ZERO;
   for (const t of txns) {
     if (!contains(range, t.date)) continue;
     if (t.type === 'income') income = income.plus(D(t.amount));
+    else if (t.type === 'investment') invested = invested.plus(D(t.amount));
     else expense = expense.plus(D(t.amount));
   }
-  return { income, expense, net: income.minus(expense) };
+  return { income, expense, invested, net: income.minus(expense) };
 }
 
 export interface NetWorthPoint { date: number; value: Decimal }
@@ -125,10 +149,16 @@ export function evaluateBudget(budget: Budget, spent: Decimal, rollover: Decimal
   };
 }
 
-/** What was spent in one category over a range. Always derived, never stored. */
+/**
+ * What was spent in one category over a range. Always derived, never stored.
+ *
+ * `isSpending` rather than a literal comparison: an investment tagged to a
+ * category must not consume that category's budget, and routing every consumer
+ * through one predicate is what stops two screens disagreeing about it.
+ */
 export function spentForCategory(txns: Txn[], categoryId: string, range: DateRange): Decimal {
   return txns
-    .filter((t) => t.type === 'expense' && t.categoryId === categoryId && contains(range, t.date))
+    .filter((t) => isSpending(t.type) && t.categoryId === categoryId && contains(range, t.date))
     .reduce((s, t) => s.plus(D(t.amount)), ZERO);
 }
 

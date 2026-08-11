@@ -86,18 +86,18 @@ export function CalendarPopover({
       ref={ref}
       role="dialog"
       aria-label="Choose a date"
-      className="absolute z-50 mt-1 right-0 w-[17rem] rounded-xl border border-[var(--line)] bg-[var(--surface)] shadow-lg p-3"
+      className="absolute z-50 mt-1 right-0 w-[17rem] rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] shadow-lg p-3"
     >
       <div className="flex items-center gap-1 mb-2">
         <button type="button" aria-label="Previous month" onClick={() => step(-1)}
-          className="p-1.5 rounded-lg text-muted hover:text-[var(--fg)] hover:bg-[var(--surface-2)]">
+          className="p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-[var(--fg)] hover:bg-[var(--surface-2)]">
           <ChevronLeft size={15} />
         </button>
         <span className="flex-1 text-center text-sm font-bold">
           {MONTHS[cursor.month]} {cursor.year}
         </span>
         <button type="button" aria-label="Next month" onClick={() => step(1)}
-          className="p-1.5 rounded-lg text-muted hover:text-[var(--fg)] hover:bg-[var(--surface-2)]">
+          className="p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-[var(--fg)] hover:bg-[var(--surface-2)]">
           <ChevronRight size={15} />
         </button>
       </div>
@@ -122,7 +122,7 @@ export function CalendarPopover({
               aria-pressed={isSelected}
               onClick={() => { onPick(toInputValue(c.ms)); onClose(); }}
               className={[
-                'h-8 rounded-lg text-[12.5px] tnum transition-colors',
+                'h-8 rounded-[var(--radius-btn)] text-[12.5px] tnum transition-colors',
                 disabled ? 'opacity-25 cursor-not-allowed' : 'hover:bg-[var(--surface-2)]',
                 c.outside ? 'text-muted' : '',
                 isSelected ? 'bg-[var(--accent)] text-white font-bold hover:bg-[var(--accent)]' : '',

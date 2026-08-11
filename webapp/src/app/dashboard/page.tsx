@@ -23,7 +23,7 @@ import { useDarkMode } from '@/lib/useDarkMode';
 import { useNow, daysUntil } from '@/lib/useNow';
 import { short, pct as fmtPct } from '@/lib/format';
 import { healthScore } from '@/domain/health';
-import { liquidBalance } from '@/domain/accountLedger';
+import { liquidBalance, moneyAccounts } from '@/domain/accountLedger';
 import { investmentTotals } from '@/domain/investmentTotals';
 import { spendingAnomalies, safeToSpend } from '@/domain/insights';
 import { generateNarratives, NARRATIVE_DISCLAIMER, type NarrativeTone } from '@/domain/narrative';
@@ -31,11 +31,14 @@ import {
   portfolioSummary, allocationByGroup, rollup, ASSET_GROUP_META, UNCLASSIFIED_KEY,
 } from '@/domain/portfolio';
 import { netWorthTotal, netWorthSeries, windowSummary } from '@/domain/finance';
-import { currentMonth, custom, trailingDays } from '@/domain/period';
+import { currentMonth, custom, trailingDays, type DateRange } from '@/domain/period';
+import { MonthNav } from '@/components/MonthNav';
 import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { dayChange, priceAsOfLabel } from '@/domain/dayChange';
 import { GlassCard, SectionHeader, Ring, ProgressBar, Segmented, Chip, Delta, Donut, type DonutSeg } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
+import {
+  PageHeader, Section, Metric, MetricRow, MoneyValue, LedgerLine, AssetMark } from '@/components/primitives';
 import { LineChart } from '@/components/charts/LineChart';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { Stagger, StaggerItem } from '@/components/motion';
@@ -91,11 +94,31 @@ export default function DashboardPage() {
   // The daily financial home is the current calendar month (§4.1). This used to
   // be a trailing 30 days captioned "this month" — on the 9th of August that
   // silently counted three weeks of July into a figure labelled August.
-  const month = useMemo(() => currentMonth(now || undefined), [now]);
+  const [pinnedMonth, setPinnedMonth] = useState<DateRange | null>(null);
+  const month = useMemo(
+    () => pinnedMonth ?? currentMonth(now || undefined),
+    [pinnedMonth, now],
+  );
   const period = useMemo(() => windowSummary(txns, month), [txns, month]);
 
   const portfolioValue = summary.current.toNumber();
   const unpricedCount = useMemo(() => holdings.filter((h) => !h.lastPrice).length, [holdings]);
+  const moneyAccountCount = useMemo(() => moneyAccounts(accounts).length, [accounts]);
+
+  /**
+   * Net-worth movement this month, from recorded snapshots only.
+   *
+   * Null when there is no snapshot from before the month began — an absent
+   * comparison is stated as absent rather than shown as a change of zero,
+   * which would read as "you stood still".
+   */
+  const monthChange = useMemo(() => {
+    if (!now) return null;
+    const before = snapshots.filter((s) => s.date < month.start).sort((a, b) => b.date - a.date)[0];
+    if (!before) return null;
+    const delta = cash.plus(summary.current).minus(liab).minus(D(before.netWorth));
+    return { s: delta.toNumber(), abs: delta.abs() };
+  }, [snapshots, month, cash, summary, liab, now]);
   const invested = summary.invested.toNumber();
   const totalPnl = summary.pnl.toNumber();
 
@@ -225,98 +248,118 @@ export default function DashboardPage() {
 
   return (
     <Stagger className="grid gap-6">
-      {/* ---- Headline ------------------------------------------------------ */}
+      {/* ---- Position ------------------------------------------------------ */}
+      {/* A statement, not a card grid. The old shape was seven bordered KPI
+          cards in a row — the classic generated-dashboard composition, where
+          every figure shouts equally and none of them is the point. Here net
+          worth is the point, its parts sit under it, and this month reads like
+          the summary of an account. */}
       <StaggerItem>
-        <div className="flex items-end gap-4 flex-wrap">
-          <div className="min-w-0">
-            <h1 className="text-[var(--fs-h1)] leading-[1.15] font-bold tracking-[-0.03em] font-display">Dashboard</h1>
-            <p className="text-ink-soft text-sm mt-1.5">
-              Net worth {mask(fmt.money(cash.plus(summary.current).minus(liab)))} · {holdings.length} positions
-              {/* The `lastPrice ?? avgCost` fallback was disclosed on
-                  Investments and Holdings but not here, so the headline figure
-                  quietly carried unpriced positions at cost (§7.1). */}
-              {unpricedCount > 0 && (
-                <span className="text-muted">
-                  {' '}· {unpricedCount} carried at cost
-                </span>
-              )}
-            </p>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={toggleGhost}
-              data-tour="networth"
-              className="focus-ring inline-flex items-center gap-2 h-9 px-3 rounded-btn border border-line bg-card text-[13px] font-semibold text-ink-soft hover:text-ink hover:border-line-strong transition-colors"
-            >
-              {ghost ? <EyeOff size={15} /> : <Eye size={15} />}
-              {ghost ? 'Amounts hidden' : 'Hide amounts'}
-            </button>
-          </div>
-        </div>
+        <PageHeader
+          title="Dashboard"
+          meta={`${month.label}${unpricedCount > 0 ? ` · ${unpricedCount} position${unpricedCount === 1 ? '' : 's'} carried at cost` : ''}`}
+          action={
+            <>
+              <MonthNav
+                month={month}
+                now={now || undefined}
+                onChange={(m) => setPinnedMonth(m.start === currentMonth(now || undefined).start ? null : m)}
+              />
+              <button
+                onClick={toggleGhost}
+                data-tour="networth"
+                className="focus-ring inline-flex items-center gap-2 h-[var(--control-md)] px-3 rounded-[var(--radius-btn)] border border-line bg-card text-[13px] font-semibold text-ink-soft hover:text-ink hover:border-line-strong transition-colors"
+              >
+                {ghost ? <EyeOff size={15} /> : <Eye size={15} />}
+                {ghost ? 'Amounts hidden' : 'Hide amounts'}
+              </button>
+            </>
+          }
+        />
       </StaggerItem>
 
-      {/* ---- Seven KPIs ---------------------------------------------------- */}
       <StaggerItem>
-        <KpiRow cols={7}>
-          <Kpi
-            label="Portfolio value" icon={Wallet} tone="accent"
-            value={ghost ? '••••' : undefined}
-            numeric={ghost ? undefined : portfolioValue}
-            format={(n) => short(n, fmt.symbol)}
-            // A demo day-change must never ride along on a card that carries no
-            // badge — that is exactly how a fabricated −0.31% came to sit beside
-            // a real broker's +0.24%. Only a real move earns this footer.
-            footer={day.isReal && day.pct != null
-              ? <><Delta value={day.pct} /> today</>
-              : `${holdings.length} position${holdings.length === 1 ? '' : 's'}`}
-          />
-          <Kpi
-            label="Today's gain" icon={TrendingUp} tone={(dayPnl ?? 0) >= 0 ? 'success' : 'danger'}
-            value={ghost ? '••••' : dayPnl == null ? null : undefined}
-            numeric={ghost || dayPnl == null ? undefined : dayPnl}
-            format={(n) => (n >= 0 ? '+' : '−') + short(Math.abs(n), fmt.symbol)}
-            footer={dayPnl == null ? undefined : day.isReal
-              ? (day.covered < day.total
-                ? `${day.covered} of ${day.total} priced`
-                : priceAsOfLabel(holdings, now))
-              : <DemoBadge label="Demo" />}
-          />
-          <Kpi
-            label="Overall return" icon={Percent} tone={totalPnl >= 0 ? 'violet' : 'danger'}
-            value={ghost ? '••••' : undefined}
-            numeric={ghost ? undefined : totalPnl}
-            format={(n) => (n >= 0 ? '+' : '−') + short(Math.abs(n), fmt.symbol)}
-            footer={<><Delta value={summary.pnlPct} /> all time</>}
-          />
-          <Kpi
-            label="Total invested" icon={Coins} tone="warning"
-            value={ghost ? '••••' : undefined}
-            numeric={ghost ? undefined : invested}
-            format={(n) => short(n, fmt.symbol)}
-            footer="Cost basis"
-          />
-          <Kpi
-            label="Available cash" icon={Landmark} tone="accent"
-            value={ghost ? '••••' : undefined}
-            numeric={ghost ? undefined : cash.toNumber()}
-            format={(n) => short(n, fmt.symbol)}
-            footer={period.income.gt(0)
-              ? `${period.net.div(period.income).times(100).toNumber().toFixed(0)}% saved · ${month.label}`
-              : month.label}
-          />
-          <Kpi label="Holdings" icon={Layers} tone="success" value={String(holdings.length)}
-            footer={`${allocationByGroup(holdings).length} asset group${allocationByGroup(holdings).length === 1 ? '' : 's'}`} />
-          <Kpi
-            label="Dividends" icon={HandCoins} tone="warning"
-            value={ghost ? '••••' : dividendTotal === 0 ? null : undefined}
-            numeric={ghost || dividendTotal === 0 ? undefined : dividendTotal}
-            format={(n) => short(n, fmt.symbol)}
-            // Not called a yield: this is everything ever received over today's
-            // value, which is a different quantity from an annual dividend
-            // yield and would be read as one.
-            footer={dividendTotal > 0 && portfolioValue > 0 ? `${((dividendTotal / portfolioValue) * 100).toFixed(2)}% of value` : undefined}
-          />
-        </KpiRow>
+        <Section title="Net worth" first>
+          <MoneyValue size="xl" hidden={ghost}>
+            {fmt.money(cash.plus(summary.current).minus(liab))}
+          </MoneyValue>
+          {monthChange != null && (
+            <div className="mt-1.5 text-[13px]">
+              <MoneyValue tone="delta" sign={monthChange.s} size="sm" hidden={ghost}>
+                {`${monthChange.s >= 0 ? '+' : '−'}${fmt.money(monthChange.abs)}`}
+              </MoneyValue>
+              <span className="text-muted"> this month</span>
+            </div>
+          )}
+
+          <MetricRow className="mt-6">
+            <Metric label="Cash" value={fmt.money(cash)} hidden={ghost}
+              sub={`${moneyAccountCount} account${moneyAccountCount === 1 ? '' : 's'}`} />
+            <Metric label="Investments" value={fmt.money(summary.current)} hidden={ghost}
+              sub={`${holdings.length} position${holdings.length === 1 ? '' : 's'}`} />
+            <Metric label="Invested" value={fmt.money(summary.invested)} hidden={ghost}
+              sub="Cost basis" />
+            <Metric
+              label="Unrealised P&L"
+              value={`${totalPnl >= 0 ? '+' : '−'}${fmt.money(Math.abs(totalPnl))}`}
+              tone="delta" sign={totalPnl} hidden={ghost}
+              sub={`${summary.pnlPct >= 0 ? '+' : ''}${summary.pnlPct.toFixed(2)}% all time`}
+            />
+          </MetricRow>
+        </Section>
+      </StaggerItem>
+
+      {/* ---- This month ---------------------------------------------------- */}
+      {/* The dedicated current-month surface: you should not have to choose a
+          reporting window to learn where you are this month. */}
+      <StaggerItem>
+        <Section title="This month" description={month.label}>
+          <div className="grid gap-x-10 md:grid-cols-2">
+            <div>
+              <LedgerLine label="Income" value={fmt.money(period.income)} hidden={ghost} />
+              <LedgerLine label="Expenses" value={fmt.money(period.expense)} hidden={ghost} />
+              {period.invested.gt(0) && (
+                <LedgerLine label="Invested" value={fmt.money(period.invested)} hidden={ghost} />
+              )}
+              <LedgerLine
+                label="Net cash flow" value={fmt.money(period.net)}
+                tone="delta" sign={period.net.toNumber()} emphasis hidden={ghost}
+              />
+            </div>
+            <div className="mt-5 md:mt-0 flex flex-col justify-center gap-1">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">
+                Savings rate
+              </div>
+              <div className="flex items-baseline gap-2">
+                <MoneyValue size="lg" hidden={ghost}>
+                  {period.income.gt(0)
+                    ? `${period.net.div(period.income).times(100).toNumber().toFixed(0)}%`
+                    : '—'}
+                </MoneyValue>
+                {period.income.gt(0) && (
+                  <span className="text-[12px] text-muted">of income kept</span>
+                )}
+              </div>
+              {dayPnl != null && day.isReal && (
+                <div className="mt-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">
+                    Day change
+                  </div>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <MoneyValue tone="delta" sign={dayPnl} size="md" hidden={ghost}>
+                      {`${dayPnl >= 0 ? '+' : '−'}${fmt.money(Math.abs(dayPnl))}`}
+                    </MoneyValue>
+                    <span className="text-[12px] text-muted">
+                      {day.covered < day.total
+                        ? `${day.covered} of ${day.total} priced`
+                        : priceAsOfLabel(holdings, now)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </Section>
       </StaggerItem>
 
       {/* ---- Performance --------------------------------------------------- */}
@@ -429,7 +472,7 @@ export default function DashboardPage() {
                     <div className="grid gap-2.5">
                       {list.map((v) => (
                         <div key={v.holding.id} className="flex items-center gap-3">
-                          <span className={`w-8 h-8 shrink-0 rounded-[10px] grid place-items-center ${up ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
+                          <span className={`w-8 h-8 shrink-0 rounded-[var(--radius-card)] grid place-items-center ${up ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
                             {up ? <ArrowUpRight size={15} /> : <ArrowDownRight size={15} />}
                           </span>
                           <span className="min-w-0 flex-1">
@@ -508,7 +551,7 @@ export default function DashboardPage() {
                 {narratives.slice(0, 5).map((n) => (
                   <div key={n.id} className="flex gap-3 px-5 py-3.5 border-b border-line last:border-0">
                     <span
-                      className="w-8 h-8 mt-0.5 shrink-0 rounded-[10px] grid place-items-center"
+                      className="w-8 h-8 mt-0.5 shrink-0 rounded-[var(--radius-card)] grid place-items-center"
                       style={{ background: `color-mix(in srgb, ${toneColor(n.tone)} 13%, transparent)`, color: toneColor(n.tone) }}
                     >
                       <Sparkles size={15} />
@@ -559,10 +602,7 @@ export default function DashboardPage() {
                         <tr key={v.holding.id} className="hover:bg-fill transition-colors">
                           <td className="px-3 py-2.5 border-b border-line">
                             <div className="flex items-center gap-2.5">
-                              <span className="w-[30px] h-[30px] shrink-0 rounded-[9px] grid place-items-center text-[11px] font-bold text-white"
-                                style={{ background: SERIES_COLOURS[i % SERIES_COLOURS.length] }}>
-                                {v.holding.symbol.slice(0, 2)}
-                              </span>
+                              <AssetMark colour={SERIES_COLOURS[i % SERIES_COLOURS.length]} />
                               <span className="min-w-0">
                                 <span className="block font-semibold truncate">{v.holding.name ?? v.holding.symbol}</span>
                                 <span className="block text-[11px] text-muted">{v.holding.symbol}</span>
@@ -599,7 +639,7 @@ export default function DashboardPage() {
                 const due = daysUntil(b.nextRun, now);
                 return (
                   <div key={b.id} className="flex items-center gap-3 px-5 py-3 border-b border-line last:border-0 hover:bg-fill transition-colors">
-                    <span className="w-9 h-9 shrink-0 rounded-[11px] grid place-items-center bg-warning-soft text-warning">
+                    <span className="w-9 h-9 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-warning-soft text-warning">
                       <CreditCard size={16} />
                     </span>
                     <span className="flex-1 min-w-0">

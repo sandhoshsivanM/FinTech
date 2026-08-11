@@ -39,10 +39,14 @@ export interface SafeToSpend { remaining: Decimal; perDay: Decimal; daysLeft: nu
 
 export function safeToSpend(txns: Txn[], recurring: RecurringRule[], now = Date.now()): SafeToSpend {
   const month = currentMonth(now);
-  let income = ZERO, expense = ZERO;
+  // Investment is counted as an outflow here but NOT as expense: the cash has
+  // genuinely left the current account, so it is not safe to spend twice — but
+  // it is not spending either, and calling it that is what §3.2 rules out.
+  let income = ZERO, expense = ZERO, invested = ZERO;
   for (const t of txns) {
     if (!contains(month, t.date)) continue;
     if (t.type === 'income') income = income.plus(D(t.amount));
+    else if (t.type === 'investment') invested = invested.plus(D(t.amount));
     else expense = expense.plus(D(t.amount));
   }
   // recurring expenses still due before month end
@@ -57,7 +61,7 @@ export function safeToSpend(txns: Txn[], recurring: RecurringRule[], now = Date.
       guard++;
     }
   }
-  const remaining = Decimal.max(ZERO, income.minus(expense).minus(upcoming));
+  const remaining = Decimal.max(ZERO, income.minus(expense).minus(invested).minus(upcoming));
   const daysLeft = Math.max(1, Math.ceil((month.end - now) / 86400000));
   return { remaining, perDay: remaining.div(daysLeft), daysLeft };
 }

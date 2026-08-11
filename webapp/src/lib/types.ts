@@ -1,7 +1,34 @@
 // Domain entity shapes. Money fields are Decimal strings (serialized); convert
 // with D() at use. Mirrors the Flutter app's entities.
 
-export type TxnType = 'expense' | 'income';
+/**
+ * What a transaction *is*, in accounting terms (Hardening Plan §3.2).
+ *
+ * `investment` is the third kind because buying a holding is not spending. It
+ * moves cash out of a money account and into an asset you still own, so net
+ * worth is unchanged — whereas an expense destroys the money. Modelling it as
+ * an expense, which is what "Investment" being an ordinary spend category
+ * amounted to, inflated every budget, every expense total and the savings rate,
+ * and made a month where someone invested well look like a month where they
+ * overspent badly.
+ *
+ * Transfers are deliberately NOT here: they are a separate `Transfer` entity,
+ * because a movement between two of your own accounts has two endpoints and one
+ * amount, which this shape cannot express.
+ */
+export type TxnType = 'expense' | 'income' | 'investment';
+
+/** The kinds that reduce spendable cash. Both leave the money account. */
+export const CASH_OUT_TYPES: readonly TxnType[] = ['expense', 'investment'];
+
+/**
+ * The only kind budgets and expense reporting may count.
+ *
+ * Exported so the rule lives in one place: every consumer that means "spending"
+ * asks here rather than writing `type === 'expense'` and quietly disagreeing
+ * with the next screen along.
+ */
+export const isSpending = (t: TxnType): boolean => t === 'expense';
 
 // ---- Profiles (data-isolated: self / spouse / business) ----
 export type ProfileKind = 'self' | 'spouse' | 'business';
@@ -283,21 +310,73 @@ export interface ImportBatch {
 }
 
 // ---- Alerts ----------------------------------------------------------------
+/**
+ * What kind of thing an alert watches (Hardening Plan §5.2).
+ *
+ * Separate from `kind` below, which is the comparison. Conflating the two —
+ * which is what a single flat enum did — meant nothing could say "this is a
+ * market alert, and market alerts are only as fresh as your last price import".
+ */
+export type AlertType = 'FINANCIAL' | 'SCHEDULED' | 'MARKET';
+
 export type AlertKind = 'price_above' | 'price_below' | 'weight_above' | 'budget_over' | 'renewal_due';
+
+/**
+ * Where an alert is in its life (§5.3).
+ *
+ * Three states, deliberately: the original plan rejected a five-state lifecycle
+ * and it was right to. `ARMED` is watching, `TRIGGERED` means the condition
+ * held and the user has not acknowledged it, `DISMISSED` means they have. A
+ * dismissed alert re-arms once its condition stops holding, so a budget you
+ * fixed can warn you again next month.
+ */
+export type AlertState = 'ARMED' | 'TRIGGERED' | 'DISMISSED';
+
+export const ALERT_TYPE_OF: Record<AlertKind, AlertType> = {
+  price_above: 'MARKET',
+  price_below: 'MARKET',
+  weight_above: 'MARKET',
+  budget_over: 'FINANCIAL',
+  renewal_due: 'SCHEDULED',
+};
+
 export interface Alert {
   id: string;
   vaultId: string;
   profileId?: string;
   kind: AlertKind;
-  /** Ticker for price/weight alerts; unset for the portfolio-wide kinds. */
+  /** Ticker for price/weight alerts; category id for budget_over; unset otherwise. */
   symbol?: string | null;
   label: string;
-  /** Comparison threshold. Money string for prices, percent string for weights. */
+  /** Comparison threshold. Money for prices, percent for weights and budgets, days for renewals. */
   threshold: string;
   active: boolean;
   createdAt: number;
+
+  /**
+   * Where this alert stands. Absent on records written before §5, which are
+   * read as ARMED — the safe default, since it means "watching".
+   */
+  state?: AlertState;
+  /**
+   * When the rule was last actually checked.
+   *
+   * The honesty field. Khazana has no server and no background worker, so a
+   * rule is only evaluated while the app is open. Showing when that last
+   * happened is the difference between an alert surface and a promise the app
+   * cannot keep.
+   */
+  lastEvaluatedAt?: number | null;
   /** Epoch ms of the last time this alert's condition held. */
   lastTriggeredAt?: number | null;
+  /**
+   * How old the data behind the last evaluation was.
+   *
+   * Only meaningful for MARKET alerts: a price alert evaluated just now against
+   * a price imported last Tuesday is not a current market alert, and §7.1 says
+   * it must not pretend to be one.
+   */
+  dataAsOf?: number | null;
 }
 
 export type LiabilityKind = 'credit_card' | 'loan';

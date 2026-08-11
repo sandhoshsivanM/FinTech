@@ -25,7 +25,16 @@ export interface EntryArgs {
   categoryAccountId: string; // income or expense contra account
 }
 
-/** Balanced two-leg postings for a simple transaction. Sum is always zero. */
+/**
+ * Balanced two-leg postings for a simple transaction. Sum is always zero.
+ *
+ * All three kinds share one shape — money account on one side, contra account
+ * on the other — and what makes an investment purchase different from a spend
+ * is only which contra account the caller supplies: an `asset` account for an
+ * investment, an `expense` account for a spend. That is the whole of §3.2 at
+ * the ledger level, and it is why the balance sheet reports an investment as
+ * something you still own rather than as money that left.
+ */
 export function postingsForEntry(args: EntryArgs): Posting[] {
   const mag = D(args.amount).abs();
   const debit = args.type === 'income' ? args.moneyAccountId : args.categoryAccountId;

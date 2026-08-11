@@ -7,24 +7,62 @@
  * products.
  */
 import { useRef, useState, type ReactNode } from 'react';
-import { UploadCloud, FileWarning, CheckCircle2 } from 'lucide-react';
+import {
+  UploadCloud, FileWarning, CheckCircle2,
+  CandlestickChart, Globe, Vault, Layers, Landmark,
+} from 'lucide-react';
 import { GlassCard } from '@/components/ui';
 import { ACCEPTED_EXTENSIONS } from '@/lib/sheet';
 import type { Institution } from '@/lib/institutions';
 
 /* ---- Institution picker --------------------------------------------------- */
 
+/**
+ * One icon per kind of institution, from the single Lucide family.
+ *
+ * This replaces a coloured square containing one or two letters — "5p", "TT",
+ * "St". Those initials are not anybody's mark, they say nothing the name beside
+ * them does not, and a grid of them is the contact-avatar pattern lifted from
+ * an address book. An icon that distinguishes a *depository* from a *broker*
+ * from a *bank* carries information instead, which is the whole difference
+ * between decoration and design.
+ *
+ * Real logos stay out on purpose: bundling bank trademarks bloats the export
+ * and invites a licensing question, for no functional gain.
+ */
+const KIND_ICON = {
+  broker: CandlestickChart,
+  global: Globe,
+  depository: Vault,
+  funds: Layers,
+  bank: Landmark,
+} as const;
+
+const KIND_LABEL = {
+  broker: 'Broker',
+  global: 'International broker',
+  depository: 'Depository',
+  funds: 'Mutual-fund platform',
+  bank: 'Bank',
+} as const;
+
 export function InstitutionBadge({ inst }: { inst: Institution }) {
+  const Icon = KIND_ICON[inst.kind];
   return (
-    <span
+    <Icon
+      size={16}
+      strokeWidth={1.75}
       aria-hidden
-      className="w-6 h-6 shrink-0 rounded-md grid place-items-center text-[10px] font-bold text-white"
-      style={{ background: inst.color }}
-    >
-      {inst.initials}
-    </span>
+      className="shrink-0"
+      // The brand hue is kept — it is the one genuinely identifying thing about
+      // an institution — but it now tints a mark rather than filling a tile.
+      style={{ color: inst.color }}
+    />
   );
 }
+
+/** The institution kind, spelled out. Used as the accessible description. */
+export const institutionKindLabel = (inst: Institution) => KIND_LABEL[inst.kind];
 
 export function InstitutionGrid({
   institutions,
@@ -45,7 +83,7 @@ export function InstitutionGrid({
             type="button"
             onClick={() => onSelect(inst.id)}
             aria-pressed={active}
-            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-card)] border text-sm font-semibold transition-colors ${
               active
                 ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
                 : 'border-[var(--line)] hover:border-[var(--accent)]/50'
@@ -122,7 +160,7 @@ export function DropZone({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') ref.current?.click(); }}
-      className={`rounded-xl border-2 border-dashed p-10 text-center cursor-pointer transition-colors ${
+      className={`rounded-[var(--radius-card)] border-2 border-dashed p-10 text-center cursor-pointer transition-colors ${
         over ? 'border-[var(--accent)] bg-[var(--accent)]/5' : 'border-[var(--line)] hover:border-[var(--accent)]/50'
       }`}
     >
@@ -153,7 +191,7 @@ export function DropZone({
 
 export function ErrorNote({ children }: { children: ReactNode }) {
   return (
-    <div className="flex gap-2.5 rounded-xl border border-[var(--expense)]/40 bg-[var(--expense)]/10 p-3.5 text-sm">
+    <div className="flex gap-2.5 rounded-[var(--radius-card)] border border-[var(--expense)]/40 bg-[var(--expense)]/10 p-3.5 text-sm">
       <FileWarning size={17} className="shrink-0 mt-0.5" style={{ color: 'var(--expense)' }} />
       <div className="leading-relaxed">{children}</div>
     </div>
@@ -164,7 +202,7 @@ export function InfoNote({ children, tone = 'warn' }: { children: ReactNode; ton
   const color = tone === 'ok' ? 'var(--income)' : 'var(--warn)';
   return (
     <div
-      className="flex gap-2.5 rounded-xl border p-3.5 text-sm"
+      className="flex gap-2.5 rounded-[var(--radius-card)] border p-3.5 text-sm"
       style={{ borderColor: `color-mix(in srgb, ${color} 40%, transparent)`, background: `color-mix(in srgb, ${color} 10%, transparent)` }}
     >
       <CheckCircle2 size={17} className="shrink-0 mt-0.5" style={{ color }} />
@@ -188,7 +226,7 @@ export function PreviewTable({
 }) {
   return (
     <div>
-      <div className="overflow-x-auto rounded-xl border border-[var(--line)]">
+      <div className="overflow-x-auto rounded-[var(--radius-card)] border border-[var(--line)]">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--line)] bg-[var(--surface-2)]">

@@ -151,7 +151,7 @@ export default function TaxPage() {
       {estimate.slabCount > 0 && (
         <StaggerItem>
           <div className="card p-4 flex items-start gap-3 border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
-            <span className="w-8 h-8 shrink-0 rounded-[10px] grid place-items-center bg-warning-soft text-warning"><CircleHelp size={16} /></span>
+            <span className="w-8 h-8 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-warning-soft text-warning"><CircleHelp size={16} /></span>
             <p className="text-[13px] text-ink-soft leading-relaxed">
               <b className="text-ink font-semibold">{fmt.money(estimate.slabGain)} of gain is taxed at your slab rate.</b>{' '}
               {estimate.slabCount} position{estimate.slabCount === 1 ? '' : 's'} — debt funds, bonds, FDs and NPS —
@@ -165,7 +165,7 @@ export default function TaxPage() {
       {unknown.length > 0 && (
         <StaggerItem>
           <div className="card p-4 flex items-start gap-3 border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
-            <span className="w-8 h-8 shrink-0 rounded-[10px] grid place-items-center bg-warning-soft text-warning"><CircleHelp size={16} /></span>
+            <span className="w-8 h-8 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-warning-soft text-warning"><CircleHelp size={16} /></span>
             <p className="text-[13px] text-ink-soft leading-relaxed">
               <b className="text-ink font-semibold">{unknown.length} holding{unknown.length === 1 ? ' has' : 's have'} no purchase date.</b>{' '}
               Without one there is no holding period, so the gain cannot be classified as short or long term. Those positions are excluded from the totals above rather than assumed.

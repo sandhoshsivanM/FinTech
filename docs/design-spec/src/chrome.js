@@ -16,6 +16,7 @@ export const NAV_GROUPS = [
     ['/dashboard', 'Dashboard', 'layout-dashboard'],
     ['/analytics', 'Analytics', 'line-chart'],
     ['/reports', 'Reports', 'bar-chart-3'],
+    ['/forecast', 'Forecast', 'calendar-clock'],
   ]],
   ['Invest', [
     ['/investments', 'Portfolio', 'trending-up'],
@@ -23,13 +24,12 @@ export const NAV_GROUPS = [
     ['/watchlist', 'Watchlist', 'star'],
     ['/markets', 'Markets', 'candlestick-chart'],
     ['/dividends', 'Dividends', 'coins'],
-    ['/tax', 'Tax Center', 'landmark'],
+    ['/tax', 'Tax Centre', 'landmark'],
   ]],
   ['Money', [
     ['/accounts', 'Accounts', 'wallet'],
     ['/transactions', 'Transactions', 'receipt'],
     ['/calendar', 'Calendar', 'calendar-days'],
-    ['/reconcile', 'Reconcile', 'scale'],
     ['/budget', 'Budget', 'pie-chart'],
     ['/recurring', 'Recurring', 'repeat'],
     ['/goals', 'Goals', 'flag'],
@@ -38,13 +38,14 @@ export const NAV_GROUPS = [
     ['/liabilities', 'Liabilities', 'credit-card'],
     ['/insurance', 'Insurance', 'shield'],
     ['/safety-net', 'Safety Net', 'life-buoy'],
-    ['/score', 'Score', 'gauge'],
   ]],
-  ['More', [
+  // Things you operate the vault WITH, rather than things you look at.
+  ['Tools', [
     ['/import', 'Import', 'upload'],
-    ['/news', 'News', 'newspaper'],
+    ['/reconcile', 'Reconcile', 'scale'],
     ['/alerts', 'Alerts', 'bell'],
     ['/diagnostics', 'Diagnostics', 'stethoscope'],
+    ['/news', 'News', 'newspaper'],
     ['/settings', 'Settings', 'settings'],
     ['/help', 'Help', 'circle-help'],
   ]],
@@ -55,7 +56,7 @@ export const BOTTOM_NAV = [
   ['/dashboard', 'Overview', 'layout-dashboard'],
   ['/transactions', 'Cash Flow', 'receipt'],
   ['/investments', 'Investments', 'trending-up'],
-  ['/score', 'Score', 'gauge'],
+  ['/score', 'Financial Health', 'gauge'],
   ['/settings', 'Settings', 'settings'],
 ];
 

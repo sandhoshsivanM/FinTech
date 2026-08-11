@@ -165,10 +165,10 @@ export function DataGrid<T>({
                         if (next.has(c.key)) next.delete(c.key); else next.add(c.key);
                         return next;
                       })}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[9px] hover:bg-fill text-left text-[13px] disabled:opacity-40"
+                      className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[var(--radius-btn)] hover:bg-fill text-left text-[13px] disabled:opacity-40"
                     >
                       <span className={clsx(
-                        'w-4 h-4 rounded-[5px] grid place-items-center text-[10px] font-bold shrink-0',
+                        'w-4 h-4 rounded-[var(--radius-sm)] grid place-items-center text-[10px] font-bold shrink-0',
                         on ? 'bg-accent text-white' : 'border border-line-strong',
                       )}>
                         {on ? '✓' : ''}
@@ -290,7 +290,7 @@ function PageBtn({
       aria-label={label}
       aria-current={current ? 'page' : undefined}
       className={clsx(
-        'focus-ring min-w-[28px] h-7 px-2 rounded-[8px] text-[12px] font-semibold border transition-colors',
+        'focus-ring min-w-[28px] h-7 px-2 rounded-[var(--radius-btn)] text-[12px] font-semibold border transition-colors',
         current ? 'bg-accent-soft text-accent border-accent-line' : 'text-ink-soft border-transparent hover:bg-fill',
         disabled && 'opacity-35 cursor-not-allowed hover:bg-transparent',
       )}

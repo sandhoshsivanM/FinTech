@@ -12,6 +12,7 @@ import { useApp } from '@/lib/store';
 import { PageIntro, Chip, GlassCard, EmptyState, Segmented } from '@/components/ui';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { Stagger, StaggerItem } from '@/components/motion';
+import { AssetMark } from '@/components/primitives';
 import { demoNews, agoLabel } from '@/lib/demo/news';
 import { demoIndices, demoEarnings } from '@/lib/demo/marketFeed';
 import { pct } from '@/lib/format';
@@ -78,7 +79,7 @@ export default function NewsPage() {
             <div>
               {stories.map((s) => (
                 <article key={s.id} className="flex gap-3 px-5 py-4 border-b border-line last:border-0 hover:bg-fill transition-colors">
-                  <span className="w-8 h-8 mt-0.5 shrink-0 rounded-[10px] grid place-items-center bg-accent-soft text-accent">
+                  <span className="w-8 h-8 mt-0.5 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-accent-soft text-accent">
                     <Newspaper size={15} />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -129,9 +130,7 @@ export default function NewsPage() {
                 <div>
                   {earnings.map((e) => (
                     <div key={e.symbol} className="flex items-center gap-3 px-5 py-3 border-b border-line last:border-0">
-                      <span className="w-[30px] h-[30px] shrink-0 rounded-[9px] grid place-items-center text-[11px] font-bold text-white bg-[var(--c5)]">
-                        {e.symbol.slice(0, 2)}
-                      </span>
+                      <AssetMark colour="var(--c5)" />
                       <span className="flex-1 min-w-0">
                         <span className="block text-[13.5px] font-semibold truncate">{e.symbol}</span>
                         <span className="block text-[11.5px] text-muted">{e.quarter}</span>

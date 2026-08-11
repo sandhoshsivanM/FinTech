@@ -157,7 +157,7 @@ export default function AccountsPage() {
         <StaggerItem>
           <GlassCard>
             <div className="flex items-start gap-3 flex-wrap">
-              <span className="w-9 h-9 shrink-0 rounded-[10px] grid place-items-center bg-accent-soft text-accent">
+              <span className="w-9 h-9 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-accent-soft text-accent">
                 <ArrowRightLeft size={17} />
               </span>
               <div className="min-w-0 flex-1">
@@ -228,14 +228,14 @@ export default function AccountsPage() {
                       <button
                         onClick={() => { setAdding(false); setEditing(a); }}
                         aria-label={`Edit ${a.name}`}
-                        className="focus-ring p-1.5 rounded-lg text-muted hover:text-accent hover:bg-accent-soft transition-colors"
+                        className="focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-accent hover:bg-accent-soft transition-colors"
                       >
                         <Pencil size={15} />
                       </button>
                       <button
                         onClick={() => void removeAccount(a)}
                         aria-label={`Remove ${a.name}`}
-                        className="focus-ring p-1.5 rounded-lg text-muted hover:text-danger hover:bg-danger-soft transition-colors"
+                        className="focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-danger hover:bg-danger-soft transition-colors"
                       >
                         {(postingCount.get(a.id) ?? 0) > 0 ? <Archive size={15} /> : <Trash2 size={15} />}
                       </button>
@@ -301,7 +301,7 @@ function AccountForm({ editing, vaultId, onDone }: {
         <h3 className="text-[15px] font-semibold tracking-[-0.02em]">
           {editing ? `Edit ${editing.name}` : 'Add an account'}
         </h3>
-        <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-lg text-muted hover:text-ink hover:bg-fill transition-colors">
+        <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-ink hover:bg-fill transition-colors">
           <X size={16} />
         </button>
       </div>

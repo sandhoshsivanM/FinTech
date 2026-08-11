@@ -262,7 +262,7 @@ describe('DateInput — bare variant', () => {
     const input = screen.getByLabelText('As on');
     // No second border or background to nest inside the surrounding control.
     expect(input.className).not.toMatch(/border-\[var\(--line\)\]/);
-    expect(input.className).not.toMatch(/rounded-xl/);
+    expect(input.className).not.toMatch(/rounded-\[var\(--radius-card\)\]/);
     // Still one calendar trigger, not zero and not two.
     expect(container.querySelectorAll('button[aria-label="Open calendar"]')).toHaveLength(1);
   });
@@ -290,6 +290,6 @@ describe('DateInput — bare variant', () => {
 
   test('the full variant keeps its chrome', () => {
     render(<DateInput value="2026-08-08" onChange={() => {}} aria-label="Date" />);
-    expect(screen.getByLabelText('Date').className).toMatch(/rounded-xl/);
+    expect(screen.getByLabelText('Date').className).toMatch(/rounded-\[var\(--radius-card\)\]/);
   });
 });

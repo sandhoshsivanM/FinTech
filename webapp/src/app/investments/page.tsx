@@ -45,6 +45,7 @@ import { DataGrid, type Column } from '@/components/DataGrid';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { DateInput } from '@/components/DateInput';
+import { AssetMark } from '@/components/primitives';
 
 const SERIES = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)', 'var(--c7)', 'var(--c8)'];
 
@@ -210,10 +211,7 @@ export default function PortfolioPage() {
       key: 'symbol', header: 'Symbol', locked: true, width: 190, value: (r) => r.symbol,
       cell: (r) => (
         <div className="flex items-center gap-2.5">
-          <span className="w-[30px] h-[30px] shrink-0 rounded-[9px] grid place-items-center text-[11px] font-bold text-white"
-            style={{ background: SERIES[r.symbol.charCodeAt(0) % SERIES.length] }}>
-            {r.symbol.slice(0, 2)}
-          </span>
+          <AssetMark colour={SERIES[r.symbol.charCodeAt(0) % SERIES.length]} />
           <span className="min-w-0">
             <span className="block font-semibold truncate">{r.symbol}</span>
             <span className="block text-[11px] text-muted truncate">{r.company}</span>
@@ -302,7 +300,7 @@ export default function PortfolioPage() {
                   <div className="absolute right-0 mt-2 w-52 z-50 card p-1.5 shadow-[var(--shadow-2)]">
                     <button
                       onClick={() => { setGroup('all'); setGroupOpen(false); }}
-                      className={`w-full text-left px-2.5 py-2 rounded-[9px] text-[13px] transition-colors ${group === 'all' ? 'bg-accent-soft text-accent font-semibold' : 'hover:bg-fill'}`}
+                      className={`w-full text-left px-2.5 py-2 rounded-[var(--radius-btn)] text-[13px] transition-colors ${group === 'all' ? 'bg-accent-soft text-accent font-semibold' : 'hover:bg-fill'}`}
                     >
                       All Holdings <span className="text-muted font-normal">({holdings.length})</span>
                     </button>
@@ -312,7 +310,7 @@ export default function PortfolioPage() {
                         <button
                           key={g}
                           onClick={() => { setGroup(g); setGroupOpen(false); }}
-                          className={`w-full text-left px-2.5 py-2 rounded-[9px] text-[13px] flex items-center gap-2 transition-colors ${group === g ? 'bg-accent-soft text-accent font-semibold' : 'hover:bg-fill'}`}
+                          className={`w-full text-left px-2.5 py-2 rounded-[var(--radius-btn)] text-[13px] flex items-center gap-2 transition-colors ${group === g ? 'bg-accent-soft text-accent font-semibold' : 'hover:bg-fill'}`}
                         >
                           <span className="w-2.5 h-2.5 rounded-[3px] shrink-0" style={{ background: ASSET_GROUP_META[g][dark ? 'dark' : 'light'] }} />
                           {ASSET_GROUP_META[g].label} <span className="ml-auto text-muted font-normal">{n}</span>
@@ -348,7 +346,7 @@ export default function PortfolioPage() {
       {unpricedCount > 0 && (
         <StaggerItem>
           <div className="card p-3.5 flex items-start gap-3 flex-wrap">
-            <span className="w-7 h-7 shrink-0 rounded-[9px] grid place-items-center bg-warning-soft text-warning"><Info size={14} /></span>
+            <span className="w-7 h-7 shrink-0 rounded-[var(--radius-btn)] grid place-items-center bg-warning-soft text-warning"><Info size={14} /></span>
             <p className="text-[12.5px] text-ink-soft leading-relaxed flex-1 min-w-[240px]">
               <b className="text-ink">{unpricedCount} of {filtered.length}</b> position{unpricedCount === 1 ? ' is' : 's are'} carried at cost because no price is recorded for {unpricedCount === 1 ? 'it' : 'them'}. {unpricedCount === 1 ? 'It shows' : 'They show'} no gain or loss, so the totals above understate the book. Khazana never fetches prices — importing a fresh broker CSV is what updates them.
             </p>
@@ -360,7 +358,7 @@ export default function PortfolioPage() {
       {(isPast || group !== 'all') && (
         <StaggerItem>
           <div className="card p-3.5 flex items-start gap-3 flex-wrap">
-            <span className="w-7 h-7 shrink-0 rounded-[9px] grid place-items-center bg-accent-soft text-accent"><Info size={14} /></span>
+            <span className="w-7 h-7 shrink-0 rounded-[var(--radius-btn)] grid place-items-center bg-accent-soft text-accent"><Info size={14} /></span>
             <p className="text-[12.5px] text-ink-soft leading-relaxed flex-1 min-w-[240px]">
               {group !== 'all' && <>Showing <b className="text-ink">{groupLabel}</b> only — {filtered.length} of {holdings.length} holdings. </>}
               {isPast && <>Net-worth history is cut at your chosen date. Position values are marked to the last recorded price, because holdings have no per-day price history.</>}

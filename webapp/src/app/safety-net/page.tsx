@@ -77,7 +77,7 @@ export default function SafetyNetPage() {
         <GlassCard>
           <SectionHeader title="Emergency fund" action={<CardLink href="/goals" label="Goals" />} />
           <div className="flex items-center gap-2.5 mb-3">
-            <span className="w-9 h-9 rounded-[10px] grid place-items-center bg-income/12 text-income"><PiggyBank size={18} /></span>
+            <span className="w-9 h-9 rounded-[var(--radius-card)] grid place-items-center bg-income/12 text-income"><PiggyBank size={18} /></span>
             <div className="text-[22px] font-bold tnum">{m(emergency.current)}</div>
             <div className="text-sm text-muted">of {m(emergency.recommended)} target</div>
           </div>

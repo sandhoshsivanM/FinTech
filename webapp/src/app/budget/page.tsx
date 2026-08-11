@@ -8,7 +8,8 @@ import { STORE } from '@/lib/types';
 import {
   spentForCategory, evaluateBudget, budgetRollover, DEFAULT_ALERT_THRESHOLD_PCT,
 } from '@/domain/finance';
-import { currentMonth } from '@/domain/period';
+import { currentMonth, type DateRange } from '@/domain/period';
+import { MonthNav } from '@/components/MonthNav';
 import { useNow } from '@/lib/useNow';
 import {
   PageIntro, GlassCard, SectionHeader, EmptyState,
@@ -54,7 +55,10 @@ export default function BudgetPage() {
   // `useNow` reports 0 until its first tick; falling back to the default keeps
   // the prerender on the real current month rather than January 1970.
   const now = useNow(60_000);
-  const month = useMemo(() => currentMonth(now || undefined), [now]);
+  // `null` means "follow the clock", so a tab left open rolls into the new
+  // month on its own; picking a month pins it until the user comes back.
+  const [pinned, setPinned] = useState<DateRange | null>(null);
+  const month = useMemo(() => pinned ?? currentMonth(now || undefined), [pinned, now]);
 
   // Per-budget evaluated progress
   const evaluated = useMemo(() =>
@@ -154,9 +158,16 @@ export default function BudgetPage() {
         title="Budget"
         subtitle={`${budgets.length} budget${budgets.length !== 1 ? 's' : ''} · ${month.label} · Monthly`}
         action={
-          <Button variant="primary" onClick={() => { setShowAdd(true); }}>
-            <Plus size={16} /> Add Budget
-          </Button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <MonthNav
+              month={month}
+              now={now || undefined}
+              onChange={(m) => setPinned(m.start === currentMonth(now || undefined).start ? null : m)}
+            />
+            <Button variant="primary" onClick={() => { setShowAdd(true); }}>
+              <Plus size={16} /> Add Budget
+            </Button>
+          </div>
         }
       />
 
@@ -170,7 +181,7 @@ export default function BudgetPage() {
               sub: `${budgets.length} categor${budgets.length !== 1 ? 'ies' : 'y'}`,
             },
             {
-              label: 'Spent this month',
+              label: 'Spent',
               value: mask(fmt.money(totalSpent)),
               sub: `${usedPct} of budget`,
               accent: overallFraction > 1 ? 'var(--expense)' : undefined,
@@ -202,7 +213,7 @@ export default function BudgetPage() {
               { label: 'Wants', pct: 30, color: 'var(--violet)' },
               { label: 'Savings', pct: 20, color: 'var(--income)' },
             ].map((item) => (
-              <div key={item.label} className="text-center p-3 rounded-[14px] bg-[var(--fill)]">
+              <div key={item.label} className="text-center p-3 rounded-[var(--radius-panel)] bg-[var(--fill)]">
                 <div className="text-lg font-extrabold" style={{ color: item.color }}>{item.pct}%</div>
                 <div className="text-xs text-ink-soft mt-0.5">{item.label}</div>
               </div>
@@ -276,7 +287,7 @@ export default function BudgetPage() {
                         <div className="flex items-center gap-1 shrink-0 ml-2">
                           <button
                             type="button"
-                            className="p-1.5 rounded-[10px] text-ink-soft hover:bg-black/5 transition"
+                            className="p-1.5 rounded-[var(--radius-card)] text-ink-soft hover:bg-black/5 transition"
                             aria-label="Edit budget"
                             onClick={() => startEdit(budget.id, budget.amountLimit, budget.alertThresholdPct)}
                           >
@@ -284,7 +295,7 @@ export default function BudgetPage() {
                           </button>
                           <button
                             type="button"
-                            className="p-1.5 rounded-[10px] text-expense hover:bg-expense/10 transition"
+                            className="p-1.5 rounded-[var(--radius-card)] text-expense hover:bg-expense/10 transition"
                             aria-label="Delete budget"
                             onClick={() => deleteBudget(budget.id)}
                           >

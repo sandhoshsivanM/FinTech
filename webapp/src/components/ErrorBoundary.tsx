@@ -61,19 +61,19 @@ export class ErrorBoundary extends Component<Props, State> {
             Your data is safe — it is stored encrypted on this device and nothing here changed it.
             Try again, or move to another screen and come back.
           </p>
-          <pre className="mt-4 text-left text-[11px] text-muted bg-[var(--surface-2)] rounded-xl p-3 overflow-x-auto">
+          <pre className="mt-4 text-left text-[11px] text-muted bg-[var(--surface-2)] rounded-[var(--radius-card)] p-3 overflow-x-auto">
             {error.message || String(error)}
           </pre>
           <div className="mt-4 flex gap-2 justify-center">
             <button
               onClick={() => this.setState({ error: null })}
-              className="px-4 py-2 rounded-xl text-sm font-semibold border border-[var(--line)] hover:border-[var(--accent)]"
+              className="px-4 py-2 rounded-[var(--radius-card)] text-sm font-semibold border border-[var(--line)] hover:border-[var(--accent)]"
             >
               Try again
             </button>
             <button
               onClick={() => { location.href = '/dashboard'; }}
-              className="px-4 py-2 rounded-xl text-sm font-semibold border border-[var(--line)] hover:border-[var(--accent)]"
+              className="px-4 py-2 rounded-[var(--radius-card)] text-sm font-semibold border border-[var(--line)] hover:border-[var(--accent)]"
             >
               Go to Dashboard
             </button>

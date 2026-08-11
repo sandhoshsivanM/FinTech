@@ -7,17 +7,20 @@
  * process, so an alert "fires" when you open the app and its condition holds.
  * The page says that plainly rather than implying a notification will arrive.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Bell, BellRing, Plus, Trash2, CircleCheck } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { D } from '@/lib/money';
-import { STORE, type Alert, type AlertKind } from '@/lib/types';
+import { ALERT_TYPE_OF, STORE, type Alert, type AlertKind } from '@/lib/types';
 import { PageIntro, Button, Chip, Field, Input, Select, EmptyState, GlassCard } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { useConfirm } from '@/components/Confirm';
 import { portfolioSummary } from '@/domain/portfolio';
+import { evaluateAlerts, stateOf } from '@/domain/alerts';
+import { useNow } from '@/lib/useNow';
+import { formatDate } from '@/lib/dateFormat';
 import { NumberInput } from '@/components/NumberInput';
 
 const KIND_LABEL: Record<AlertKind, string> = {
@@ -31,6 +34,11 @@ const KIND_LABEL: Record<AlertKind, string> = {
 export default function AlertsPage() {
   const alerts = useApp((s) => s.alerts);
   const holdings = useApp((s) => s.holdings);
+  const budgets = useApp((s) => s.budgets);
+  const categories = useApp((s) => s.categories);
+  const txns = useApp((s) => s.txns);
+  const insurances = useApp((s) => s.insurances);
+  const now = useNow(60_000);
   const put = useApp((s) => s.put);
   const del = useApp((s) => s.del);
   const fmt = useFmt();
@@ -40,22 +48,48 @@ export default function AlertsPage() {
 
   const summary = useMemo(() => portfolioSummary(holdings), [holdings]);
 
-  /** Which alerts hold right now, against data already on the device. */
-  const totalValue = summary.current.toNumber();
-  const views = summary.views;
-  const firing = useMemo(() => {
-    const total = totalValue || 1;
-    const bySymbol = new Map(views.map((v) => [v.holding.symbol, v]));
-    return new Set(alerts.filter((a) => {
-      if (!a.active) return false;
-      const t = D(a.threshold).toNumber();
-      const v = a.symbol ? bySymbol.get(a.symbol) : undefined;
-      if (a.kind === 'price_above' && v) return D(v.holding.lastPrice ?? v.holding.avgCost).toNumber() > t;
-      if (a.kind === 'price_below' && v) return D(v.holding.lastPrice ?? v.holding.avgCost).toNumber() < t;
-      if (a.kind === 'weight_above' && v) return (v.current.toNumber() / total) * 100 > t;
-      return false;
-    }).map((a) => a.id));
-  }, [alerts, views, totalValue]);
+  /**
+   * One evaluator, shared with the notification bell (§5).
+   *
+   * This screen used to carry its own implementation and `Shell.tsx` carried a
+   * second one that handled fewer kinds — so an alert could be "met" here and
+   * absent from the bell. Both now call `evaluateAlerts`.
+   */
+  const run = useMemo(() => evaluateAlerts({
+    alerts, holdings, budgets, categories, txns, insurances, now: now || Date.now(),
+  }), [alerts, holdings, budgets, categories, txns, insurances, now]);
+
+  const byId = useMemo(
+    () => new Map(run.evaluations.map((e) => [e.alert.id, e])),
+    [run],
+  );
+  const firing = useMemo(
+    () => new Set(run.evaluations.filter((e) => e.met).map((e) => e.alert.id)),
+    [run],
+  );
+
+  /**
+   * Persist what the run learned.
+   *
+   * Evaluation state has to survive the screen, or `lastEvaluatedAt` would
+   * reset every time it mounted and could never answer "when was this last
+   * checked". Written only when something actually changed.
+   */
+  useEffect(() => {
+    if (!now || run.changed === 0) return;
+    void (async () => {
+      for (const a of run.updated) {
+        const before = alerts.find((x) => x.id === a.id);
+        if (!before) continue;
+        if (before.state === a.state
+          && (before.lastTriggeredAt ?? null) === (a.lastTriggeredAt ?? null)
+          && (before.dataAsOf ?? null) === (a.dataAsOf ?? null)
+          && before.lastEvaluatedAt != null) continue;
+        await put(STORE.alert, a as unknown as Alert & { id: string } & Record<string, unknown>);
+      }
+    })();
+    // `run` is derived from `alerts`; depending on it alone avoids a write loop.
+  }, [run.changed, now]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = async () => {
     if (!draft.threshold) return;
@@ -70,7 +104,10 @@ export default function AlertsPage() {
       threshold: draft.threshold,
       active: true,
       createdAt: Date.now(),
+      state: 'ARMED',
+      lastEvaluatedAt: null,
       lastTriggeredAt: null,
+      dataAsOf: null,
     } as unknown as Alert & { id: string } & Record<string, unknown>);
     setDraft({ kind: 'price_above', symbol: '', threshold: '' });
     setForm(false);
@@ -92,9 +129,11 @@ export default function AlertsPage() {
 
       <StaggerItem>
         <div className="card p-4 flex items-start gap-3">
-          <span className="w-8 h-8 shrink-0 rounded-[10px] grid place-items-center bg-accent-soft text-accent"><Bell size={16} /></span>
+          <span className="w-8 h-8 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-accent-soft text-accent"><Bell size={16} /></span>
           <p className="text-[13px] text-ink-soft leading-relaxed">
-            Alerts are evaluated when you open Khazana, using prices already stored in your vault. There is no server and no push notification, so nothing is checked while the app is closed.
+            Alerts are evaluated when you open Khazana and while this screen is on, using data already
+            in your vault. There is no server and no push notification, so <b className="text-ink font-semibold">nothing
+            is checked while the app is closed</b> — every rule below shows when it was last actually looked at.
           </p>
         </div>
       </StaggerItem>
@@ -136,10 +175,11 @@ export default function AlertsPage() {
         <>
           <StaggerItem>
             <KpiRow cols={4}>
-              <Kpi label="Total alerts" value={String(alerts.length)} icon={Bell} tone="accent" footer={`${alerts.filter((a) => a.active).length} active`} />
-              <Kpi label="Conditions met" value={String(firing.size)} icon={BellRing} tone={firing.size ? 'danger' : 'success'} footer="Right now" />
-              <Kpi label="Paused" value={String(alerts.filter((a) => !a.active).length)} icon={CircleCheck} tone="warning" footer="Not being checked" />
-              <Kpi label="Instruments covered" value={String(new Set(alerts.map((a) => a.symbol).filter(Boolean)).size)} icon={Bell} tone="violet" footer="Distinct symbols" />
+              <Kpi label="Rules" value={String(alerts.length)} icon={Bell} tone="accent" footer={`${alerts.filter((a) => a.active).length} watching`} />
+              <Kpi label="Triggered" value={String(firing.size)} icon={BellRing} tone={firing.size ? 'danger' : 'success'}
+                footer={now ? `As of ${formatDate(now)}` : 'Checking…'} />
+              <Kpi label="Paused" value={String(alerts.filter((a) => !a.active).length)} icon={CircleCheck} tone="warning" footer="Not evaluated" />
+              <Kpi label="Instruments covered" value={String(new Set(alerts.map((a) => a.symbol).filter(Boolean)).size)} icon={Bell} tone="violet" footer="Instruments watched" />
             </KpiRow>
           </StaggerItem>
 
@@ -150,23 +190,43 @@ export default function AlertsPage() {
               </div>
               {alerts.map((a) => {
                 const on = firing.has(a.id);
+                const evaluation = byId.get(a.id);
                 return (
                   <div key={a.id} className="flex items-center gap-3 px-5 py-3.5 border-b border-line last:border-0 hover:bg-fill transition-colors">
-                    <span className={`w-9 h-9 shrink-0 rounded-[11px] grid place-items-center ${on ? 'bg-danger-soft text-danger' : a.active ? 'bg-accent-soft text-accent' : 'bg-fill text-muted'}`}>
+                    <span className={`w-9 h-9 shrink-0 rounded-[var(--radius-card)] grid place-items-center ${on ? 'bg-danger-soft text-danger' : a.active ? 'bg-accent-soft text-accent' : 'bg-fill text-muted'}`}>
                       {on ? <BellRing size={16} /> : <Bell size={16} />}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="text-[13.5px] font-semibold truncate">{a.label}</div>
-                      <div className="text-[11.5px] text-muted mt-0.5">
-                        {KIND_LABEL[a.kind]} {a.kind === 'weight_above' ? `${a.threshold}%` : fmt.money(a.threshold)}
+                      {/* The rendered condition, not the raw threshold: §5.4
+                          asks for "Food spending is 90% of the August budget",
+                          not "Budget exceeded 300". */}
+                      <div className="text-[11.5px] text-muted mt-0.5 truncate">
+                        {evaluation?.message ?? `${KIND_LABEL[a.kind]} ${a.kind === 'weight_above' ? `${a.threshold}%` : fmt.money(a.threshold)}`}
+                      </div>
+                      <div className="text-[11px] text-muted mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                        <span>{ALERT_TYPE_OF[a.kind]}</span>
+                        <span>{stateOf(a)}</span>
+                        {/* When it was last actually looked at. The honesty the
+                            whole section exists for. */}
+                        <span>
+                          {a.lastEvaluatedAt
+                            ? `Checked ${formatDate(a.lastEvaluatedAt)}`
+                            : a.active ? 'Not yet checked' : 'Paused'}
+                        </span>
+                        {/* A market rule is only as current as the price it read. */}
+                        {evaluation?.dataAsOf != null && (
+                          <span>Price data {formatDate(evaluation.dataAsOf)}</span>
+                        )}
                       </div>
                     </div>
+                    {evaluation?.unevaluable && <Chip tone="warning">Cannot check</Chip>}
                     {on && <Chip tone="danger">Condition met</Chip>}
                     <button onClick={() => void toggle(a)} className="focus-ring">
                       <Chip tone={a.active ? 'success' : 'neutral'}>{a.active ? 'Active' : 'Paused'}</Chip>
                     </button>
                     <button onClick={() => void remove(a)} aria-label="Delete alert"
-                      className="focus-ring p-1.5 rounded-lg text-muted hover:text-danger hover:bg-danger-soft transition-colors">
+                      className="focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-danger hover:bg-danger-soft transition-colors">
                       <Trash2 size={15} />
                     </button>
                   </div>

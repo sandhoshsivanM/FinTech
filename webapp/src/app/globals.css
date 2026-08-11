@@ -17,36 +17,40 @@
   /* Not pure white everywhere: the page is #F5F7F5 and cards are #FFFFFF, so a
      card is the brightest surface. That single step is what gives the light
      theme depth without a shadow. */
-  --canvas: #F5F7F5;
+  --canvas: #F6F7F5;
   --surface: #FFFFFF;
-  --surface-2: #EDF2EF;
+  --surface-2: #FBFCFA;
   --card: #FFFFFF;
-  --card-2: #EDF2EF;
+  --card-2: #FBFCFA;
   --ink-surface: #0D1713;   /* the single dark focal surface (hero) */
 
-  --line: #DCE4DF;
-  --line-strong: #C7D2CC;
+  --line: #E2E6E1;
+  --line-strong: #CFD6D0;
 
-  --ink: #101613;
-  --ink-soft: #53625B;
-  --muted: #718079;
-  --disabled: #A7B1AC;
+  --ink: #151815;
+  --ink-soft: #69716B;
+  --muted: #929A94;
+  --disabled: #B3BAB5;
 
-  /* --- Emerald = INTERACTION --------------------------------------------- */
-  /* Primary buttons, active nav, links, focus. Never gold — see below. */
-  --accent: #087A56;
-  --accent-deep: #066A4A;
-  --accent-glow: #18C98A;
-  --accent-soft: #E1F3EB;
-  --accent-line: rgba(8, 122, 86, 0.26);
+  /* --- Deep green = INTERACTION ------------------------------------------ */
+  /* Primary buttons, active nav, links, focus. Deliberately a DARKER green
+     than `--income`: when the button colour and the profit colour were the
+     same token, green meant "act", "gain", "selected", "progress", "on track"
+     and "brand" simultaneously, and a colour that means six things means none.
+     Interaction is the deep vault green; a gain is the lighter one. */
+  --accent: #176B4D;
+  --accent-deep: #0D3B2E;
+  --accent-glow: #2A9970;
+  --accent-soft: #E7F0EB;
+  --accent-line: rgba(23, 107, 77, 0.24);
   --accent-on: #FFFFFF;
 
   /* --- Gold = IDENTITY ---------------------------------------------------- */
   /* The mark, the wordmark, wealth-flavoured brand moments. Deliberately NOT a
      button colour: making gold the interaction colour is what turns a premium
      product into a gold-painted generic one. */
-  --gold: #A97922;
-  --gold-soft: #F6EEDB;
+  --gold: #C99A3D;
+  --gold-soft: #F7F0E2;
   /* Gold as SMALL TEXT needs a darker step. #A97922 reads 3.9:1 on a card —
      enough for a graphic (3:1) but under the 4.5:1 body-text bar. The mark and
      fills keep --gold; anything that is words uses this. */
@@ -57,24 +61,24 @@
      `success`/`danger`/`warning` are the semantic ones. Same colour, both
      published, so no call site had to be rewritten.
 
-     Success and Primary are the SAME emerald, by design decision: in this
-     system a gain and an action share the brand's interaction colour. The cost
-     is that a primary button and a profit figure read alike; the benefit is one
-     unambiguous brand green instead of two competing ones. */
-  --income: #087A56;
-  --expense: #C73D46;
-  --warn: #A97922;
-  --info: #2672C8;
+     Success and Primary are now DIFFERENT greens. They used to be one token,
+     which is the root of the "green does everything" problem: the eye stopped
+     being able to tell an action from a gain. A gain is `--income`; an action
+     is `--accent`, which is darker and reads as chrome rather than as data. */
+  --income: #19734D;
+  --expense: #B54444;
+  --warn: #A97824;
+  --info: #5966A8;
   --success: var(--income);
   --danger: var(--expense);
   --warning: var(--warn);
-  --success-soft: #E1F3EB;
-  --danger-soft: rgba(199, 61, 70, 0.10);
-  --warning-soft: #F6EEDB;
+  --success-soft: #E8F1EC;
+  --danger-soft: rgba(181, 68, 68, 0.09);
+  --warning-soft: #F7F0E2;
   --violet: #6E5BB8;
   --violet-soft: rgba(110, 91, 184, 0.10);
 
-  --primary: #087A56;
+  --primary: #176B4D;
   --primary-fg: #FFFFFF;
 
   --fill: rgba(16, 22, 19, 0.04);
@@ -104,47 +108,50 @@
    small, even lift:
        #080D0B -> #101714 -> #151E1A -> #1A2520                              */
 :root[data-theme="dark"] {
-  --canvas: #080D0B;
-  --surface: #101714;
-  --surface-2: #1A2520;
-  --card: #151E1A;
-  --card-2: #1A2520;
+  --canvas: #0B0F0D;
+  --surface: #111713;
+  --surface-2: #161D18;
+  --card: #111713;
+  --card-2: #161D18;
   --ink-surface: #0D1713;
 
-  --line: #26342E;
-  --line-strong: #34443C;
+  --line: #263029;
+  --line-strong: #35423A;
 
-  --ink: #F4F7F5;
-  --ink-soft: #A0ADA7;
-  --muted: #718079;
-  --disabled: #4E5A55;
+  --ink: #F1F4F1;
+  --ink-soft: #A5AEA8;
+  --muted: #68736C;
+  --disabled: #4C554F;
 
-  --accent: #20C98A;
-  --accent-deep: #2BDB99;
-  --accent-glow: #2BDB99;
-  --accent-soft: #12352A;
-  --accent-line: rgba(32, 201, 138, 0.30);
-  --accent-on: #06110C;
+  /* Dark is a separate palette, not an inversion. The interaction green is
+     again a step deeper than the gain green, so the two keep their distinct
+     jobs on this ground too. */
+  --accent: #3A8B68;
+  --accent-deep: #1B5A43;
+  --accent-glow: #4FA57E;
+  --accent-soft: #16281F;
+  --accent-line: rgba(58, 139, 104, 0.34);
+  --accent-on: #F1F4F1;
 
-  --gold: #D9AD52;
-  --gold-soft: #302718;
+  --gold: #D5A94E;
+  --gold-soft: #2A2317;
   /* On Vault, gold already reads 9.4:1, so the text step is the same colour. */
-  --gold-ink: #D9AD52;
+  --gold-ink: #D5A94E;
   --brand-plate: #0D3D2B;
 
-  --income: #20C98A;
-  --expense: #F06464;
-  --warn: #E5B84D;
-  --info: #63A8FF;
-  --success-soft: #12352A;
-  --danger-soft: rgba(240, 100, 100, 0.13);
-  --warning-soft: #302718;
+  --income: #4FB98A;
+  --expense: #D97070;
+  --warn: #D2A254;
+  --info: #8E99D6;
+  --success-soft: #16281F;
+  --danger-soft: rgba(217, 112, 112, 0.13);
+  --warning-soft: #2A2317;
   --violet: #8E7CC3;
   --violet-soft: rgba(142, 124, 195, 0.16);
 
   /* Near-black on emerald reads 9.4:1; white would be 2.4:1. */
-  --primary: #20C98A;
-  --primary-fg: #06110C;
+  --primary: #3A8B68;
+  --primary-fg: #F1F4F1;
 
   --fill: rgba(255, 255, 255, 0.045);
   --fill-strong: rgba(255, 255, 255, 0.08);
@@ -171,20 +178,45 @@
    explicit that only colour changes.
    ========================================================================= */
 :root {
-  /* Radii — the spec's 14–18px band */
-  /* Prescribed per component. "Everything is a giant rounded rectangle" is the
-     generic look this system avoids: a button is tighter than a card, a card is
-     tighter than a modal. */
-  --radius-card: 14px;
-  --radius-panel: 16px;
-  --radius-btn: 9px;
-  --radius-input: 10px;
-  --radius-modal: 18px;
+  /* --- Radius: four values, and no others -------------------------------- */
+  /* The app reached twelve distinct radii and forty-six separate pills, which
+     is the signature of software that was assembled rather than designed. The
+     scale is deliberately tight and deliberately SMALL: a soft 14–18px corner
+     on every surface is the generic-SaaS tell. Financial software is squarer
+     than a marketing site because it is denser.
+     Anything outside these is a defect, not a preference. */
+  --radius-sm: 6px;    /* badges that are not pills, chart chrome */
+  --radius-btn: 8px;   /* buttons, inputs, selects, segmented controls */
+  --radius-input: 8px; /* alias, so a form never disagrees with a button */
+  --radius-card: 10px;
+  --radius-panel: 12px;
+  --radius-modal: 12px;
+  /* A pill is for a status word that is genuinely a token — a count, a state.
+     It is not a container style. */
   --radius-pill: 999px;
 
-  /* 8pt spatial grid */
+  /* --- Spacing: the design-system scale ---------------------------------- */
+  /* xs 4 · sm 8 · md 12 · lg 16 · xl 24 · 2xl 32 · 3xl 48 */
+  --space-xs: 4px;  --space-sm: 8px;  --space-md: 12px;
+  --space-lg: 16px; --space-xl: 24px; --space-2xl: 32px; --space-3xl: 48px;
+  /* Legacy aliases; the same values under the older names. */
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px;
   --s5: 24px; --s6: 32px; --s7: 40px; --s8: 48px; --s9: 64px;
+
+  /* --- Control heights --------------------------------------------------- */
+  /* One ladder for every interactive control, so a button, an input and a
+     select on the same row line up without anyone nudging a padding value. */
+  --control-sm: 32px;
+  --control-md: 36px;
+  --control-lg: 40px;
+
+  /* --- Icon sizes -------------------------------------------------------- */
+  /* One family (Lucide), one stroke, these sizes. Mixing families or sizes is
+     the fastest way back to an assembled look. */
+  --icon-nav: 18px;
+  --icon-table: 16px;
+  --icon-inline: 15px;
+  --icon-action: 16px;
 
   /* Type scale */
   --fs-h1: 32px; --fs-h2: 24px; --fs-h3: 20px; --fs-h4: 18px;
@@ -376,15 +408,26 @@ body {
 /* ============================================================================
    Typography
    ========================================================================= */
-h1, h2, h3, .font-display {
-  font-family: var(--font-display), var(--font-inter), sans-serif;
-  letter-spacing: -0.022em;
-  font-weight: 700;
-  text-wrap: balance;
+/* In `@layer base`, deliberately.
+
+   Tailwind v4 emits utilities inside a cascade layer, and UNLAYERED css beats
+   layered css no matter what the specificity is. These started life unlayered,
+   so a bare `h2 { font-size: 24px }` silently overrode `text-[11px]` on every
+   heading in the app — a utility class simply had no effect on a heading, which
+   is not a rule anyone would guess. Section labels rendered at 24px because of
+   it. Layering them restores the obvious behaviour: these are the defaults, and
+   a utility class on the element wins. */
+@layer base {
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display), var(--font-inter), sans-serif;
+    letter-spacing: -0.022em;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  h1 { font-size: var(--fs-h1); letter-spacing: -0.03em; }
+  h2 { font-size: var(--fs-h2); letter-spacing: -0.025em; }
+  h3 { font-size: var(--fs-h3); }
 }
-h1 { font-size: var(--fs-h1); letter-spacing: -0.03em; }
-h2 { font-size: var(--fs-h2); letter-spacing: -0.025em; }
-h3 { font-size: var(--fs-h3); }
 
 .eyebrow {
   font-size: 10.5px;

@@ -67,11 +67,11 @@ export default function CalendarPage() {
   const grid = (
     <GlassCard className="p-4">
       <div className="flex items-center justify-between mb-3">
-        <button aria-label="Previous month" onClick={() => shift(-1)} className="p-1.5 rounded-lg hover:bg-[var(--fill)]">
+        <button aria-label="Previous month" onClick={() => shift(-1)} className="p-1.5 rounded-[var(--radius-btn)] hover:bg-[var(--fill)]">
           <ChevronLeft size={18} />
         </button>
         <div className="font-semibold">{monthLabel}</div>
-        <button aria-label="Next month" onClick={() => shift(1)} className="p-1.5 rounded-lg hover:bg-[var(--fill)]">
+        <button aria-label="Next month" onClick={() => shift(1)} className="p-1.5 rounded-[var(--radius-btn)] hover:bg-[var(--fill)]">
           <ChevronRight size={18} />
         </button>
       </div>
@@ -90,7 +90,7 @@ export default function CalendarPage() {
             <button
               key={key}
               onClick={() => setSelected(key)}
-              className={`aspect-square rounded-lg border p-1 flex flex-col items-start text-left transition-colors ${
+              className={`aspect-square rounded-[var(--radius-btn)] border p-1 flex flex-col items-start text-left transition-colors ${
                 isSelected ? 'border-[var(--accent)] border-2'
                 : isToday ? 'border-[var(--accent)]/40 bg-[var(--accent)]/[0.06]'
                 : 'border-[var(--line)] hover:bg-[var(--fill)]'
@@ -141,7 +141,9 @@ export default function CalendarPage() {
                   {t.attachmentRef && <Paperclip size={10} />}
                 </div>
               </div>
-              <div className={`text-sm font-semibold ${t.type === 'income' ? 'text-income' : 'text-expense'}`}>
+              <div className={`text-sm font-semibold ${
+                t.type === 'investment' ? 'text-muted' : t.type === 'income' ? 'text-income' : 'text-expense'
+              }`}>
                 {mask(fmt.signed(D(t.amount), t.type === 'income'))}
               </div>
             </div>

@@ -160,7 +160,7 @@ export function Donut({
               <button
                 onClick={() => setOpen((o) => !o)}
                 aria-expanded={open}
-                className="focus-ring w-full flex items-center gap-2.5 text-[13.5px] rounded-md py-0.5 hover:bg-fill transition-colors"
+                className="focus-ring w-full flex items-center gap-2.5 text-[13.5px] rounded-[var(--radius-btn)] py-0.5 hover:bg-fill transition-colors"
               >
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ background: otherColor }} />
                 <span className="flex-1 min-w-0 text-ink-soft truncate text-left">

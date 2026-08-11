@@ -100,7 +100,7 @@ export function Combobox({
         onChange={(e) => { onChange(e.target.value); setOpen(true); setActive(0); }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        className="w-full rounded-xl border border-[var(--line)] bg-transparent px-3 py-2.5 pr-10 text-sm outline-none focus:border-[var(--accent)] disabled:opacity-50"
+        className="w-full rounded-[var(--radius-card)] border border-[var(--line)] bg-transparent px-3 py-2.5 pr-10 text-sm outline-none focus:border-[var(--accent)] disabled:opacity-50"
         {...rest}
       />
 
@@ -110,7 +110,7 @@ export function Combobox({
         aria-label={open ? 'Hide suggestions' : 'Show suggestions'}
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
-        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-lg text-muted hover:text-[var(--fg)] transition-colors disabled:opacity-50"
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-[var(--radius-btn)] text-muted hover:text-[var(--fg)] transition-colors disabled:opacity-50"
       >
         <ChevronDown size={15} className={open ? 'rotate-180 transition-transform' : 'transition-transform'} />
       </button>
@@ -120,7 +120,7 @@ export function Combobox({
           id={listId}
           ref={listRef}
           role="listbox"
-          className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-[var(--line)] bg-[var(--surface)] shadow-lg py-1"
+          className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] shadow-lg py-1"
         >
           {matches.map((o, i) => (
             <li

@@ -79,8 +79,8 @@ describe('accounts', () => {
 
   test('the bank account agrees with the entries that touched it', () => {
     // 100,000 opening + 570,000 salary − 90,000 rent − 50,000 transfer out
-    // − 4,250 card payment.
-    expect(balances.get(ACCT.bank)!.toString()).toBe('525750');
+    // − 4,250 card payment − 25,000 into the SIP.
+    expect(balances.get(ACCT.bank)!.toString()).toBe('500750');
   });
 
   test('a credit card carries a credit balance, not a negative asset', () => {
@@ -144,6 +144,66 @@ describe('budget', () => {
       .reduce((s, t) => s.plus(D(t.amount)), ZERO);
     expect(spentAcrossBudgets.lte(expenseTotal)).toBe(true);
   });
+});
+
+describe('investment purchases are not spending (§3.2)', () => {
+  // The defect this suite exists to prevent coming back: "Investment" was an
+  // ordinary spend category, so a SIP consumed a budget, inflated the expense
+  // total and wrecked the savings rate — a month of disciplined investing read
+  // as a month of overspending.
+  const month = currentMonth(NOW);
+  const allTime = custom(0, NOW);
+
+  test('a SIP never reaches a budget', () => {
+    expect(spentForCategory(v.txns, CAT.investment, allTime).toString()).toBe('0');
+  });
+
+  test('a SIP is not counted as expense', () => {
+    const s = windowSummary(v.txns, allTime);
+    const byHand = v.txns
+      .filter((t) => t.type === 'expense')
+      .reduce((acc, t) => acc.plus(D(t.amount)), ZERO);
+    expect(s.expense.toString()).toBe(byHand.toString());
+    expect(s.invested.toString()).toBe('25000');
+  });
+
+  test('it is reported, not silently dropped', () => {
+    // Money that left the account must still be accounted for somewhere.
+    expect(windowSummary(v.txns, allTime).invested.gt(0)).toBe(true);
+  });
+
+  test('it does not change net income, so it cannot move the savings rate', () => {
+    const withSip = windowSummary(v.txns, allTime);
+    const withoutSip = windowSummary(v.txns.filter((t) => t.type !== 'investment'), allTime);
+    expect(withSip.net.toString()).toBe(withoutSip.net.toString());
+  });
+
+  test('it moves cash out but leaves net worth unchanged', () => {
+    // Cash down 25,000, Investments asset up 25,000.
+    const balances = accountBalances(v.accounts, v.postings);
+    expect(balances.get(ACCT.investments)!.toString()).toBe('25000');
+    const noSip = v.postings.filter((p) => p.entryId !== 't-sip-1');
+    expect(netWorthFromAccounts(v.accounts, v.postings).toString())
+      .toBe(netWorthFromAccounts(v.accounts, noSip).toString());
+  });
+
+  test('it posts to an asset account, never an expense account', () => {
+    const legs = v.postings.filter((p) => p.entryId === 't-sip-1');
+    const typeOf = (id: string) => v.accounts.find((a) => a.id === id)!.type;
+    expect(legs.map((l) => typeOf(l.accountId)).sort()).toEqual(['asset', 'asset']);
+  });
+
+  test('the books still balance with an investment in them', () => {
+    expect(balanceSheet(v.accounts, v.postings, NOW).balanced).toBe(true);
+  });
+
+  test('retained earnings ignore it', () => {
+    const bs = balanceSheet(v.accounts, v.postings, NOW);
+    const s = windowSummary(v.txns, allTime);
+    expect(bs.retainedEarnings.toString()).toBe(s.income.minus(s.expense).toString());
+  });
+
+  void month;
 });
 
 describe('reports', () => {
