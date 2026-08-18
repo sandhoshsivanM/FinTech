@@ -6,13 +6,32 @@ import 'presentation/app_shell.dart' show isDesktopPlatform;
 import 'core/branding.dart';
 import 'core/router/app_router.dart';
 import 'core/router/layout_providers.dart';
+import 'core/services/notification_providers.dart';
+import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/settings/providers/theme_providers.dart';
 import 'presentation/app_background.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: KhazanaApp()));
+
+  // Eager, and before runApp, for one reason: a notification tapped from a cold
+  // start is waiting in getNotificationAppLaunchDetails(), and nothing reads it
+  // unless the plugin is initialised. Left lazy — as it was — every such tap
+  // landed on the dashboard regardless of what the notification was about.
+  //
+  // Cheap and safe to do here: it loads the tz database and registers channels,
+  // touches no vault data, and asks for no permission (that happens in Settings,
+  // on a tap, once the user knows what they are agreeing to).
+  final notifications = NotificationService();
+  await notifications.init();
+
+  runApp(ProviderScope(
+    overrides: [
+      notificationServiceProvider.overrideWithValue(notifications),
+    ],
+    child: const KhazanaApp(),
+  ));
 }
 
 class KhazanaApp extends ConsumerWidget {

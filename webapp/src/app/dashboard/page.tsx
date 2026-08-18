@@ -58,6 +58,7 @@ const toneColor = (t: NarrativeTone) =>
 export default function DashboardPage() {
   const txns = useApp((s) => s.txns);
   const holdings = useApp((s) => s.holdings);
+  const fxRates = useApp((s) => s.fxRates);
   const liabilities = useApp((s) => s.liabilities);
   const recurring = useApp((s) => s.recurring);
   const categories = useApp((s) => s.categories);
@@ -88,7 +89,7 @@ export default function DashboardPage() {
   const mask = (s: string) => (ghost ? '••••••' : s);
 
   // ---- Headline figures ---------------------------------------------------
-  const summary = useMemo(() => portfolioSummary(holdings), [holdings]);
+  const summary = useMemo(() => portfolioSummary(holdings, undefined, fxRates), [holdings, fxRates]);
   const cash = useMemo(() => netWorthTotal(txns), [txns]);
   const liab = useMemo(() => liabilities.reduce((s, l) => s.plus(D(l.principal)), ZERO), [liabilities]);
   // The daily financial home is the current calendar month (§4.1). This used to

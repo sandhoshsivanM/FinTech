@@ -49,8 +49,20 @@ dependencies:
   # one.
   shared_preferences: ^2.3.2
 
-  # Local notifications (overspend alerts) — no server push (PRD §2).
+  # Local notifications — no server push (PRD §2), and none is needed for the
+  # part that matters: zonedSchedule hands the reminder to Android's AlarmManager
+  # / iOS's UNUserNotificationCenter, and the OS fires it with the app closed,
+  # force-quit and offline. Push would only buy us conditions that change
+  # off-device (a market price), at the cost of a server that knows what the
+  # user watches.
   flutter_local_notifications: ^19.4.2
+
+  # zonedSchedule takes a TZDateTime, so the tz database is no longer an
+  # implementation detail of the plugin — it is ours. flutter_timezone supplies
+  # the device's actual zone; without it tz.local is UTC and every 9am reminder
+  # fires at the wrong hour. Both BSD-3.
+  timezone: ^0.10.1
+  flutter_timezone: ^4.1.1
 
   # File parsing + picking (bank/broker import)
   excel: ^4.0.6

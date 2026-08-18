@@ -17,7 +17,12 @@
 //   wrapper the origin is tauri://localhost, where a service-worker fetch of a
 //   custom protocol can fail outright — which turned the bug above from
 //   intermittent into reliable.
-const CACHE = 'khazana-shell-v4';
+//
+// v5 adds a notificationclick handler. Nothing else about the caching changed
+// — the version bump is what makes the new handler take effect, since the
+// activate step below deletes every cache that is not the current name and a
+// worker with an unchanged body would not be treated as new.
+const CACHE = 'khazana-shell-v5';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -88,4 +93,47 @@ self.addEventListener('fetch', (event) => {
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
   event.respondWith(networkFirst(req));
+});
+
+
+// --- Notifications ----------------------------------------------------------
+//
+// There is deliberately NO 'push' listener here, and there should not be one.
+//
+// Web Push would mean a server holding the VAPID private key, storing a
+// subscription per device, deciding when to send, and composing the message —
+// so "Groceries budget 90% used" would be written by a machine that is not this
+// one. The relay (Google's, Mozilla's, Apple's) could not read the payload, but
+// the sender necessarily could, and that is the whole claim in THREAT-MODEL.md.
+// Khazana therefore shows notifications only from code running in this browser,
+// about data already decrypted in this browser.
+//
+// The cost of that is stated plainly rather than hidden: on the web nothing is
+// checked while the app is closed. The Notification Triggers API, which would
+// have allowed a locally scheduled notification, never shipped. The mobile apps
+// do not have this limitation, because there the OS holds the alarm.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/dashboard';
+
+  event.waitUntil((async () => {
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of clients) {
+      let sameOrigin = false;
+      try {
+        sameOrigin = new URL(client.url).origin === self.location.origin;
+      } catch {
+        sameOrigin = false;
+      }
+      if (!sameOrigin) continue;
+      await client.focus();
+      // postMessage, not client.navigate(): a hard navigate re-mounts the app,
+      // which throws away the unlocked vault key and puts the PIN screen in
+      // front of someone who was already looking at their data. The client
+      // listens for this and routes with the router instead.
+      client.postMessage({ type: 'khazana:navigate', url });
+      return;
+    }
+    await self.clients.openWindow(url);
+  })());
 });

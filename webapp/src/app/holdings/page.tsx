@@ -59,6 +59,7 @@ interface Row {
 
 export default function HoldingsPage() {
   const holdings = useApp((s) => s.holdings);
+  const fxRates = useApp((s) => s.fxRates);
   const fmt = useFmt();
   const [demo] = useDemoData();
   const [master, setMaster] = useState<InstrumentMaster>(EMPTY_MASTER);
@@ -77,7 +78,7 @@ export default function HoldingsPage() {
     editorRef.current?.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
   }, [editing, panel, reduced]);
 
-  const summary = useMemo(() => portfolioSummary(holdings), [holdings]);
+  const summary = useMemo(() => portfolioSummary(holdings, undefined, fxRates), [holdings, fxRates]);
 
   const totalValue = summary.current.toNumber();
   const views = summary.views;

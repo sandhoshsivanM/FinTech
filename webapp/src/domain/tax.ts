@@ -74,6 +74,19 @@ const FY25_RULES: Record<AssetType, Rule> = {
   // which this engine cannot see, so it models the taxable case. Understating
   // tax is the worse of the two errors.
   ulip: { stcgRate: 20, ltcgRate: 12.5, ltcgThresholdMonths: 12, ltcgExemption: '125000' },
+  // Foreign shares and ETFs — QQQ, VOO, US single stocks.
+  //
+  // NOT equity for Indian tax purposes. Section 112A's concessions (12-month
+  // threshold, 12.5%, the ₹1.25 L exemption) are conditional on STT having been
+  // paid, and no STT is paid on a US exchange. So these follow the rules for
+  // securities unlisted in India: 24 months to qualify as long term, 12.5%
+  // without indexation from 23 Jul 2024, no exemption, and short-term gains at
+  // the holder's slab rate rather than a flat 20%.
+  //
+  // `ltcgExemption: '0'` is load-bearing, not decorative: estimatePortfolioTax
+  // pools the exemption by amount, so a '0' rule gets its own empty pool and
+  // cannot draw down the ₹1.25 L allowance that domestic equity is entitled to.
+  foreign_equity: { stcgRate: null, ltcgRate: 12.5, ltcgThresholdMonths: 24, ltcgExemption: '0' },
 };
 
 /**
@@ -88,6 +101,9 @@ const PRE_FY25_RULES: Record<AssetType, Rule> = {
   gold_etf: { stcgRate: null, ltcgRate: 20, ltcgThresholdMonths: 36, ltcgExemption: '0' },
   real_estate: { stcgRate: null, ltcgRate: 20, ltcgThresholdMonths: 24, ltcgExemption: '0' },
   sgb: { stcgRate: null, ltcgRate: 10, ltcgThresholdMonths: 12, ltcgExemption: '0' },
+  // Before 23 Jul 2024 the same disposal was 20% with indexation. Indexation
+  // itself is not modelled, so this overstates slightly — the safer direction.
+  foreign_equity: { stcgRate: null, ltcgRate: 20, ltcgThresholdMonths: 24, ltcgExemption: '0' },
 };
 
 /** Newest first. `rulesFor` walks this and takes the first that has taken effect. */

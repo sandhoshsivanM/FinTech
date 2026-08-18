@@ -29,6 +29,7 @@ const KIND_LABEL: Record<string, string> = { dividend: 'Dividend', interest: 'In
 export default function DividendsPage() {
   const dividends = useApp((s) => s.dividends);
   const holdings = useApp((s) => s.holdings);
+  const fxRates = useApp((s) => s.fxRates);
   const put = useApp((s) => s.put);
   const vaultId = useApp((s) => s.vaultId);
   const fmt = useFmt();
@@ -43,7 +44,7 @@ export default function DividendsPage() {
 
   const totalReceived = received.reduce((s, d) => s.plus(D(d.amount)), ZERO);
   const totalUpcoming = upcoming.reduce((s, d) => s.plus(D(d.amount)), ZERO);
-  const portfolioValue = useMemo(() => portfolioSummary(holdings).current, [holdings]);
+  const portfolioValue = useMemo(() => portfolioSummary(holdings, undefined, fxRates).current, [holdings, fxRates]);
   const yieldPct = portfolioValue.gt(0) ? totalReceived.div(portfolioValue).times(100).toNumber() : null;
 
   /** Last twelve months, oldest first. Same buckets every other chart uses. */

@@ -6,15 +6,24 @@ import { VaultGate } from './VaultGate';
 import { Shell } from './Shell';
 import { AutoLock } from './AutoLock';
 import { ConfirmProvider } from './Confirm';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ErrorBoundary } from './ErrorBoundary';
+import { onNotificationNavigate } from '@/lib/notify';
+import { useNotificationDriver } from '@/lib/useNotificationDriver';
 
 export function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const status = useApp((s) => s.status);
   const init = useApp((s) => s.init);
 
   useEffect(() => { void init(); }, [init]);
+
+  // Tapping a notification. The worker posts rather than navigating, so this
+  // routes in place — a hard navigation would re-mount the app, discard the
+  // in-memory vault key, and put the PIN screen in front of someone who was
+  // already looking at their data.
+  useEffect(() => onNotificationNavigate((url) => router.push(url)), [router]);
 
   // Register the offline service worker (production builds only — it conflicts
   // with the dev/Turbopack HMR pipeline).
@@ -59,6 +68,9 @@ export function AppFrame({ children }: { children: ReactNode }) {
     <MotionConfig reducedMotion="user">
       <ConfirmProvider>
         <AutoLock />
+        {/* Mounted inside the unlocked branch only: it reads decrypted records,
+            which do not exist until the vault is open. */}
+        <NotificationDriver />
         <Shell>
           {/* Per-route: a screen that throws must not take the shell with it. */}
           <ErrorBoundary resetKey={pathname}>{children}</ErrorBoundary>
@@ -66,4 +78,16 @@ export function AppFrame({ children }: { children: ReactNode }) {
       </ConfirmProvider>
     </MotionConfig>
   );
+}
+
+/**
+ * Runs the notification scheduler for as long as a window is open.
+ *
+ * A component rather than a hook call in [AppFrame] because the hook reads
+ * decrypted records, and AppFrame renders before the vault is unlocked — hooks
+ * cannot be conditional, but a child can be.
+ */
+function NotificationDriver() {
+  useNotificationDriver();
+  return null;
 }

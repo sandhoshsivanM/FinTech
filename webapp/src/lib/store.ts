@@ -15,14 +15,14 @@ import {
   type RecurringRule, type Txn, type Profile, type ProfileKind, type Insurance, type NetWorthSnapshot,
   type ImportBatch, type HoldingLot,
   type Account, type Posting, type Transfer, type PendingCapture,
-  type WatchItem, type Dividend, type Alert,
+  type WatchItem, type Dividend, type Alert, type FxRate,
 } from './types';
 import { materialize } from '@/domain/recurrence';
 import { postingsForEntry, postingsForTransfer, accountBalances, liquidBalance } from '@/domain/accountLedger';
 import Decimal from 'decimal.js';
 import { healthScore } from '@/domain/health';
 import { investmentTotals } from '@/domain/investmentTotals';
-import { runDiagnostics, type Check } from '@/domain/diagnostics';
+import { runDiagnostics, restoreBlockers } from '@/domain/diagnostics';
 
 const VAULT_ID = 'default';
 
@@ -369,6 +369,11 @@ interface Data {
    */
   unreadableRecords: ReadFailure[];
   /**
+   * Exchange rates the user has recorded. Vault-wide, not profile-scoped: an
+   * exchange rate is a fact about the world, not about a profile.
+   */
+  fxRates: FxRate[];
+  /**
    * Ids of the stored receipts. Ids only — the payloads are base64 images and
    * holding them all in memory would be pointless. Diagnostics uses these to
    * find receipts nothing references and references with no receipt.
@@ -399,6 +404,7 @@ const emptyData: Data = {
   liabilities: [], recurring: [], insurances: [], snapshots: [], importBatches: [], lots: [],
   accounts: [], postings: [], transfers: [], pendingCaptures: [],
   watchlist: [], dividends: [], alerts: [], unreadableRecords: [], attachmentIds: [],
+  fxRates: [],
 };
 
 interface AppState extends Data {
@@ -808,6 +814,9 @@ export const useApp = create<AppState>((set, get) => ({
       alerts: alertsAll.filter(inProfile).sort((a, b) => b.createdAt - a.createdAt),
       unreadableRecords: failures,
       attachmentIds: await listRecordIds(STORE.attachment, vaultId),
+      // Not profile-filtered: the rupee's value against the dollar does not
+      // depend on whose portfolio is open.
+      fxRates: await listRecords<FxRate>(key, STORE.fxRate, vaultId, failures),
     });
   },
 
@@ -1036,11 +1045,21 @@ export const useApp = create<AppState>((set, get) => ({
     const decoded = await decodeBackup(b64, pin, key, SCHEMA_VERSION);
     const parsed = decoded.body as unknown as { data: Record<string, { id: string }[]> };
 
-    // The ledger the file claims to hold must actually balance. A backup that
-    // restores into a broken book is not a recovery, and finding out after the
-    // swap is too late.
+    /*
+     * The ledger the file claims to hold must actually balance. A backup that
+     * restores into a broken book is not a recovery, and finding out after the
+     * swap is too late.
+     *
+     * Only the *structural* checks gate the restore (`restoreBlockers`). This
+     * used to be every error-level check, which meant a check about data the
+     * user had not typed yet could refuse an intact file — and `fxRates` was
+     * not passed here, so `fx-current` saw no rates at all and rejected every
+     * backup holding a single foreign position. Both halves are fixed: the
+     * rates the file carries are handed to the checker, and the gate no longer
+     * cares what that checker concludes about them.
+     */
     const incoming = <T,>(type: string) => (parsed.data[type] ?? []) as unknown as T[];
-    const failed = runDiagnostics({
+    const failed = restoreBlockers(runDiagnostics({
       txns: incoming<Txn>(STORE.txn),
       transfers: incoming<Transfer>(STORE.transfer),
       postings: incoming<Posting>(STORE.posting),
@@ -1049,11 +1068,15 @@ export const useApp = create<AppState>((set, get) => ({
       holdings: incoming<Holding>(STORE.holding),
       dividends: incoming<Dividend>(STORE.dividend),
       lots: incoming<HoldingLot>(STORE.lot),
-    }).filter((c: Check) => c.level === 'error');
+      fxRates: incoming<FxRate>(STORE.fxRate),
+    }));
     if (failed.length > 0) {
+      // Every reason, not just the first: fixing one and being told about the
+      // next is a worse afternoon than being told about both now.
+      const reasons = failed.map((c) => `${c.label}: ${c.detail}`).join('; ');
       throw new BackupError(
         'unreadable',
-        `This backup does not pass its own integrity checks (${failed[0].label}: ${failed[0].detail}) so it has not been restored. Your vault is unchanged.`,
+        `This backup does not pass its own integrity checks (${reasons}) so it has not been restored. Your vault is unchanged.`,
       );
     }
     /*

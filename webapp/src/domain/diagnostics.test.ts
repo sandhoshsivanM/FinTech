@@ -2,7 +2,8 @@
 // by nothing at the time.
 import { describe, expect, test } from 'vitest';
 import { runDiagnostics, worstLevel } from './diagnostics';
-import type { Account, Category, Holding, Posting, Txn } from '@/lib/types';
+import { FX_STALE_DAYS } from './currency';
+import type { Account, Category, FxRate, Holding, Posting, Txn } from '@/lib/types';
 
 const base = {
   txns: [] as Txn[], transfers: [], postings: [] as Posting[],
@@ -177,6 +178,43 @@ describe('references', () => {
     const c = find(cs, 'txn-categories');
     expect(c.level).toBe('warn');
     expect(c.offenders).toContain('t1');
+  });
+});
+
+describe('current exchange rates', () => {
+  // A rate nobody has written down is not the same problem as one written down
+  // a year ago, and neither is a problem at all for a vault that only holds
+  // rupees. This check had no coverage until a restore was refused over it.
+  const DAY = 86_400_000;
+  const now = Date.UTC(2026, 7, 18);
+  const rate = (code: string, asOf: number): FxRate =>
+    ({ id: code, code, rateToInr: '88', asOf, source: 'manual' });
+  const usd = holding('h1', { currency: 'USD' });
+
+  test('a recorded, recent rate passes', () => {
+    const cs = runDiagnostics({ ...base, holdings: [usd], fxRates: [rate('USD', now - DAY)], now });
+    expect(find(cs, 'fx-current').level).toBe('ok');
+  });
+
+  test('a rate that was never recorded is an error, because the seed is a guess', () => {
+    const cs = runDiagnostics({ ...base, holdings: [usd], fxRates: [], now });
+    const c = find(cs, 'fx-current');
+    expect(c.level).toBe('error');
+    expect(c.offenders).toEqual(['USD']);
+  });
+
+  test('a rate older than the staleness window is a warning, not an error', () => {
+    const cs = runDiagnostics({
+      ...base, holdings: [usd], fxRates: [rate('USD', now - (FX_STALE_DAYS + 1) * DAY)], now,
+    });
+    const c = find(cs, 'fx-current');
+    expect(c.level).toBe('warn');
+    expect(c.offenders).toEqual(['USD']);
+  });
+
+  test('a rupees-only vault is never asked about exchange rates at all', () => {
+    const cs = runDiagnostics({ ...base, holdings: [holding('h1')], fxRates: [], now });
+    expect(cs.find((c) => c.id === 'fx-current')).toBeUndefined();
   });
 });
 

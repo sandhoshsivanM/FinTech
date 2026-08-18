@@ -1,0 +1,596 @@
+{
+  "_comment": [
+    "Shared cases for lib/domain/services/notification_scheduler.dart and",
+    "webapp/src/domain/notificationScheduler.ts. Both suites load this file and",
+    "must agree on every value.",
+    "",
+    "Why a fixture rather than two hand-written suites: the same arrangement was",
+    "tried for the health score and the two implementations drifted anyway, so",
+    "test/fixtures/health_cases.json now exists for exactly this reason. A",
+    "notification scheduler is worse to let drift, because the dedupe key is the",
+    "identity an already-scheduled OS alarm is cancelled by. If the two sides",
+    "disagree on a key by one character, the Flutter app quietly accumulates",
+    "duplicate alarms it can no longer reach.",
+    "",
+    "Vitest cannot import from outside webapp/, so this file is duplicated to",
+    "webapp/src/domain/__fixtures__/notification_cases.json rather than",
+    "symlinked. Duplicated files drift; both suites assert the two copies are",
+    "byte-identical. If that assertion fails, copy this file over that one.",
+    "",
+    "Times are ISO 8601 with an explicit offset, so both languages parse them to",
+    "the same instant without either suite doing timezone arithmetic of its own.",
+    "Each case's `prefs` is merged over `basePrefs`.",
+    "",
+    "The epoch-day integers inside the expected dedupe keys (20686, 20711, ...)",
+    "are days since 1970-01-01 in local time. They are only readable next to the",
+    "date they came from, so: 2026-08-18 is 20683, and each later day counts up."
+  ],
+
+  "basePrefs": {
+    "enabled": true,
+    "categories": ["budget", "bills", "renewals", "goals", "market", "digest"],
+    "quietStartMin": 1320,
+    "quietEndMin": 480,
+    "reminderHour": 9,
+    "billsLeadDays": 3,
+    "renewalsLeadDays": 14,
+    "goalsLeadDays": 30,
+    "digestHour": null,
+    "cooldownHours": 24,
+    "hideAmounts": true
+  },
+
+  "routes": { "budget": "/budget", "dashboard": "/dashboard" },
+
+  "stableIds": {
+    "_comment": [
+      "FNV-1a 32-bit, masked to the positive-int range. Pinned as literals, not",
+      "recomputed by the test, because the whole point is that these numbers are",
+      "the same on both platforms and the same next year. The empty string and",
+      "the non-ASCII key are here to pin the seed and the UTF-8 encoding."
+    ],
+    "": 18652613,
+    "khazana": 761689677,
+    "₹ non-ascii ✓": 2035792502,
+    "budget:c-food:2026-08:90": 694152160,
+    "bill:r1:20684": 225300953,
+    "renewal:i1:20700:14": 1762072395,
+    "goal:g1:20800": 670814004,
+    "digest:2026-08-18": 1976068324
+  },
+
+  "cases": [
+    {
+      "name": "the lead time places the reminder, and one whose moment has passed becomes missed",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "dueEvents": [
+        { "id": "r1", "category": "bills", "label": "Rent", "dueAt": "2026-08-21T00:00:00+05:30", "deepLink": "/recurring" },
+        { "id": "r2", "category": "bills", "label": "Electricity", "dueAt": "2026-08-22T00:00:00+05:30", "deepLink": "/recurring", "amountText": "2,400" }
+      ],
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "bill:r2:20687",
+            "fireAt": "2026-08-19T09:00:00+05:30",
+            "category": "bills",
+            "title": "Due soon: Electricity",
+            "body": "Electricity is scheduled in 3 days.",
+            "deepLink": "/recurring"
+          }
+        ],
+        "missed": [
+          {
+            "dedupeKey": "bill:r1:20686",
+            "fireAt": "2026-08-18T09:00:00+05:30",
+            "category": "bills",
+            "title": "Due soon: Rent",
+            "body": "Rent is scheduled in 3 days.",
+            "deepLink": "/recurring"
+          }
+        ],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "a reminder already delivered is not re-offered as missed",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "deliveries": { "bill:r1:20686": "2026-08-18T09:00:00+05:30" },
+      "dueEvents": [
+        { "id": "r1", "category": "bills", "label": "Rent", "dueAt": "2026-08-21T00:00:00+05:30", "deepLink": "/recurring" }
+      ],
+      "expect": { "immediate": [], "scheduled": [], "missed": [], "truncated": 0 }
+    },
+
+    {
+      "name": "an event already in the past is neither scheduled nor missed",
+      "_why": "Nothing is gained by telling someone their rent was due last Tuesday.",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "dueEvents": [
+        { "id": "r1", "category": "bills", "label": "Rent", "dueAt": "2026-08-11T00:00:00+05:30", "deepLink": "/recurring" }
+      ],
+      "expect": { "immediate": [], "scheduled": [], "missed": [], "truncated": 0 }
+    },
+
+    {
+      "name": "hideAmounts off appends the figure",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": { "hideAmounts": false },
+      "dueEvents": [
+        { "id": "r2", "category": "bills", "label": "Electricity", "dueAt": "2026-08-22T00:00:00+05:30", "deepLink": "/recurring", "amountText": "2,400" }
+      ],
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "bill:r2:20687",
+            "fireAt": "2026-08-19T09:00:00+05:30",
+            "category": "bills",
+            "title": "Due soon: Electricity",
+            "body": "Electricity is scheduled in 3 days. (2,400)",
+            "deepLink": "/recurring"
+          }
+        ],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "quiet hours push a late-evening reminder to the next morning",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": { "reminderHour": 23 },
+      "dueEvents": [
+        { "id": "r1", "category": "bills", "label": "Rent", "dueAt": "2026-08-25T00:00:00+05:30", "deepLink": "/recurring" }
+      ],
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "bill:r1:20690",
+            "fireAt": "2026-08-23T08:00:00+05:30",
+            "category": "bills",
+            "title": "Due soon: Rent",
+            "body": "Rent is scheduled in 2 days.",
+            "deepLink": "/recurring"
+          }
+        ],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "quiet hours in the small hours stay on the same local day",
+      "_why": "The wrap is the whole difficulty: 23:00 belongs to tomorrow morning, 03:00 to this one.",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": { "reminderHour": 3 },
+      "dueEvents": [
+        { "id": "r1", "category": "bills", "label": "Rent", "dueAt": "2026-08-25T00:00:00+05:30", "deepLink": "/recurring" }
+      ],
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "bill:r1:20690",
+            "fireAt": "2026-08-22T08:00:00+05:30",
+            "category": "bills",
+            "title": "Due soon: Rent",
+            "body": "Rent is scheduled in 3 days.",
+            "deepLink": "/recurring"
+          }
+        ],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "a west-of-UTC offset works the same way",
+      "_why": "Every other case is +05:30, where the local day and the UTC day mostly line up. A negative offset is where floor-division bugs surface.",
+      "now": "2026-08-18T10:00:00-05:00",
+      "tzOffsetMinutes": -300,
+      "dueEvents": [
+        { "id": "r1", "category": "bills", "label": "Rent", "dueAt": "2026-08-25T00:00:00-05:00", "deepLink": "/recurring" }
+      ],
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "bill:r1:20690",
+            "fireAt": "2026-08-22T09:00:00-05:00",
+            "category": "bills",
+            "title": "Due soon: Rent",
+            "body": "Rent is scheduled in 3 days.",
+            "deepLink": "/recurring"
+          }
+        ],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "a budget past its threshold fires immediately",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "budgets": [
+        { "categoryId": "c-food", "categoryName": "Food", "thresholdPct": 90, "spentPct": 94, "period": "2026-08", "amountText": "9,400 of 10,000" }
+      ],
+      "expect": {
+        "immediate": [
+          {
+            "dedupeKey": "budget:c-food:2026-08:90",
+            "fireAt": "2026-08-18T10:00:00+05:30",
+            "category": "budget",
+            "title": "Budget alert: Food",
+            "body": "You've used 94% of your Food budget, past your 90% alert.",
+            "deepLink": "/budget"
+          }
+        ],
+        "scheduled": [],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "the cooldown silences a second budget alert on the same day",
+      "_why": "This is the bug the whole dedupe scheme exists for: checkAndNotify() fired once per saved transaction, so five grocery runs produced five identical notifications.",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "deliveries": { "budget:c-food:2026-08:90": "2026-08-18T08:00:00+05:30" },
+      "budgets": [
+        { "categoryId": "c-food", "categoryName": "Food", "thresholdPct": 90, "spentPct": 96, "period": "2026-08" }
+      ],
+      "expect": { "immediate": [], "scheduled": [], "missed": [], "truncated": 0 }
+    },
+
+    {
+      "name": "the budget speaks again once the cooldown lapses",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "deliveries": { "budget:c-food:2026-08:90": "2026-08-17T08:00:00+05:30" },
+      "budgets": [
+        { "categoryId": "c-food", "categoryName": "Food", "thresholdPct": 90, "spentPct": 96, "period": "2026-08" }
+      ],
+      "expect": {
+        "immediate": [
+          {
+            "dedupeKey": "budget:c-food:2026-08:90",
+            "fireAt": "2026-08-18T10:00:00+05:30",
+            "category": "budget",
+            "title": "Budget alert: Food",
+            "body": "You've used 96% of your Food budget, past your 90% alert.",
+            "deepLink": "/budget"
+          }
+        ],
+        "scheduled": [],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "a new month is a new key, so August's silence does not cover September",
+      "_why": "Dismissing 'Food is over budget' in August must not silence it forever.",
+      "now": "2026-09-02T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "deliveries": { "budget:c-food:2026-08:90": "2026-08-31T10:00:00+05:30" },
+      "budgets": [
+        { "categoryId": "c-food", "categoryName": "Food", "thresholdPct": 90, "spentPct": 91, "period": "2026-09" }
+      ],
+      "expect": {
+        "immediate": [
+          {
+            "dedupeKey": "budget:c-food:2026-09:90",
+            "fireAt": "2026-09-02T10:00:00+05:30",
+            "category": "budget",
+            "title": "Budget alert: Food",
+            "body": "You've used 91% of your Food budget, past your 90% alert.",
+            "deepLink": "/budget"
+          }
+        ],
+        "scheduled": [],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "past 100% the wording changes from warning to fact",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "budgets": [
+        { "categoryId": "c-food", "categoryName": "Food", "thresholdPct": 90, "spentPct": 118, "period": "2026-08" }
+      ],
+      "expect": {
+        "immediate": [
+          {
+            "dedupeKey": "budget:c-food:2026-08:90",
+            "fireAt": "2026-08-18T10:00:00+05:30",
+            "category": "budget",
+            "title": "Over budget: Food",
+            "body": "You've used 118% of your Food budget this month.",
+            "deepLink": "/budget"
+          }
+        ],
+        "scheduled": [],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "a budget below its threshold says nothing",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "budgets": [
+        { "categoryId": "c-food", "categoryName": "Food", "thresholdPct": 90, "spentPct": 89, "period": "2026-08" }
+      ],
+      "expect": { "immediate": [], "scheduled": [], "missed": [], "truncated": 0 }
+    },
+
+    {
+      "name": "renewals carry the lead days in their key",
+      "_why": "Changing the lead from 14 days to 30 must schedule a new reminder rather than silently colliding with the old one.",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "dueEvents": [
+        { "id": "i1", "category": "renewals", "label": "HDFC Term Plan", "dueAt": "2026-09-15T00:00:00+05:30", "deepLink": "/insurance" }
+      ],
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "renewal:i1:20711:14",
+            "fireAt": "2026-09-01T09:00:00+05:30",
+            "category": "renewals",
+            "title": "Renewal due: HDFC Term Plan",
+            "body": "HDFC Term Plan renews in 14 days.",
+            "deepLink": "/insurance"
+          }
+        ],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "maxPending keeps the soonest and reports what fell off",
+      "_why": "iOS drops the 65th pending notification without an error, so the cut has to happen here, deliberately, and be countable.",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "maxPending": 2,
+      "prefs": { "billsLeadDays": 0 },
+      "dueEvents": [
+        { "id": "d", "category": "bills", "label": "D", "dueAt": "2026-08-28T00:00:00+05:30", "deepLink": "/recurring" },
+        { "id": "b", "category": "bills", "label": "B", "dueAt": "2026-08-26T00:00:00+05:30", "deepLink": "/recurring" },
+        { "id": "a", "category": "bills", "label": "A", "dueAt": "2026-08-25T00:00:00+05:30", "deepLink": "/recurring" },
+        { "id": "c", "category": "bills", "label": "C", "dueAt": "2026-08-27T00:00:00+05:30", "deepLink": "/recurring" }
+      ],
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "bill:a:20690",
+            "fireAt": "2026-08-25T09:00:00+05:30",
+            "category": "bills",
+            "title": "Due soon: A",
+            "body": "A is scheduled today.",
+            "deepLink": "/recurring"
+          },
+          {
+            "dedupeKey": "bill:b:20691",
+            "fireAt": "2026-08-26T09:00:00+05:30",
+            "category": "bills",
+            "title": "Due soon: B",
+            "body": "B is scheduled today.",
+            "deepLink": "/recurring"
+          }
+        ],
+        "missed": [],
+        "truncated": 2
+      }
+    },
+
+    {
+      "name": "the digest counts only what is due within a day of when it fires",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": { "categories": ["bills", "digest"], "digestHour": 20, "billsLeadDays": 0 },
+      "dueEvents": [
+        { "id": "e1", "category": "bills", "label": "Rent", "dueAt": "2026-08-19T09:00:00+05:30", "deepLink": "/recurring" },
+        { "id": "e2", "category": "bills", "label": "Premium", "dueAt": "2026-08-19T21:00:00+05:30", "deepLink": "/recurring" },
+        { "id": "e3", "category": "bills", "label": "Broadband", "dueAt": "2026-08-18T18:00:00+05:30", "deepLink": "/recurring" }
+      ],
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "digest:2026-08-18",
+            "fireAt": "2026-08-18T20:00:00+05:30",
+            "category": "digest",
+            "title": "Khazana: 2 things coming up",
+            "body": "As of your last visit, 2 items were due within a day. Open Khazana for the current picture.",
+            "deepLink": "/dashboard"
+          },
+          {
+            "dedupeKey": "bill:e1:20684",
+            "fireAt": "2026-08-19T09:00:00+05:30",
+            "category": "bills",
+            "title": "Due soon: Rent",
+            "body": "Rent is scheduled today.",
+            "deepLink": "/recurring"
+          },
+          {
+            "dedupeKey": "bill:e2:20684",
+            "fireAt": "2026-08-19T09:00:00+05:30",
+            "category": "bills",
+            "title": "Due soon: Premium",
+            "body": "Premium is scheduled today.",
+            "deepLink": "/recurring"
+          }
+        ],
+        "missed": [
+          {
+            "dedupeKey": "bill:e3:20683",
+            "fireAt": "2026-08-18T09:00:00+05:30",
+            "category": "bills",
+            "title": "Due soon: Broadband",
+            "body": "Broadband is scheduled today.",
+            "deepLink": "/recurring"
+          }
+        ],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "the digest stays quiet when nothing is coming up",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": { "categories": ["digest"], "digestHour": 20 },
+      "expect": { "immediate": [], "scheduled": [], "missed": [], "truncated": 0 }
+    },
+
+    {
+      "name": "the digest ignores categories the user switched off",
+      "_why": "Counting a silenced category would advertise reminders that deliberately never arrive.",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": { "categories": ["digest"], "digestHour": 20 },
+      "dueEvents": [
+        { "id": "e1", "category": "bills", "label": "Rent", "dueAt": "2026-08-19T09:00:00+05:30", "deepLink": "/recurring" }
+      ],
+      "expect": { "immediate": [], "scheduled": [], "missed": [], "truncated": 0 }
+    },
+
+    {
+      "name": "market alerts fire now and honour the cooldown",
+      "_why": "A price crossing cannot be known in advance, so market rules are the one kind that can only ever be immediate.",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "deliveries": { "rule:a2:hit": "2026-08-18T09:30:00+05:30" },
+      "marketAlerts": [
+        { "dedupeKey": "rule:a1:hit", "fireAt": "1970-01-01T00:00:00Z", "category": "market", "title": "RELIANCE is above 3,000", "body": "RELIANCE is 3,012, above 3,000.", "deepLink": "/alerts" },
+        { "dedupeKey": "rule:a2:hit", "fireAt": "1970-01-01T00:00:00Z", "category": "market", "title": "TCS is below 4,000", "body": "TCS is 3,940, below 4,000.", "deepLink": "/alerts" }
+      ],
+      "expect": {
+        "immediate": [
+          {
+            "dedupeKey": "rule:a1:hit",
+            "fireAt": "2026-08-18T10:00:00+05:30",
+            "category": "market",
+            "title": "RELIANCE is above 3,000",
+            "body": "RELIANCE is 3,012, above 3,000.",
+            "deepLink": "/alerts"
+          }
+        ],
+        "scheduled": [],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "the master switch off produces nothing at all",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": { "enabled": false },
+      "budgets": [
+        { "categoryId": "c-food", "categoryName": "Food", "thresholdPct": 90, "spentPct": 118, "period": "2026-08" }
+      ],
+      "dueEvents": [
+        { "id": "r1", "category": "bills", "label": "Rent", "dueAt": "2026-08-22T00:00:00+05:30", "deepLink": "/recurring" }
+      ],
+      "expect": { "immediate": [], "scheduled": [], "missed": [], "truncated": 0 }
+    },
+
+    {
+      "name": "a switched-off category is silent while the others carry on",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": { "categories": ["budget"] },
+      "budgets": [
+        { "categoryId": "c-food", "categoryName": "Food", "thresholdPct": 90, "spentPct": 94, "period": "2026-08" }
+      ],
+      "dueEvents": [
+        { "id": "r2", "category": "bills", "label": "Electricity", "dueAt": "2026-08-22T00:00:00+05:30", "deepLink": "/recurring" }
+      ],
+      "expect": {
+        "immediate": [
+          {
+            "dedupeKey": "budget:c-food:2026-08:90",
+            "fireAt": "2026-08-18T10:00:00+05:30",
+            "category": "budget",
+            "title": "Budget alert: Food",
+            "body": "You've used 94% of your Food budget, past your 90% alert.",
+            "deepLink": "/budget"
+          }
+        ],
+        "scheduled": [],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "a zero-length quiet window silences nothing",
+      "_why": "quietStart == quietEnd is what the UI produces when someone sets both ends the same. Reading it as 'quiet all day' would mute the app permanently.",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": { "quietStartMin": 480, "quietEndMin": 480, "reminderHour": 3 },
+      "dueEvents": [
+        { "id": "r1", "category": "bills", "label": "Rent", "dueAt": "2026-08-25T00:00:00+05:30", "deepLink": "/recurring" }
+      ],
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "bill:r1:20690",
+            "fireAt": "2026-08-22T03:00:00+05:30",
+            "category": "bills",
+            "title": "Due soon: Rent",
+            "body": "Rent is scheduled in 3 days.",
+            "deepLink": "/recurring"
+          }
+        ],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+
+    {
+      "name": "goals get their own long lead and their own wording",
+      "now": "2026-08-18T10:00:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": { "categories": ["goals"] },
+      "dueEvents": [
+        { "id": "g1", "category": "goals", "label": "Emergency Fund", "dueAt": "2026-10-15T00:00:00+05:30", "deepLink": "/goals" }
+      ],
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "goal:g1:20741",
+            "fireAt": "2026-09-15T09:00:00+05:30",
+            "category": "goals",
+            "title": "Goal date: Emergency Fund",
+            "body": "Emergency Fund reaches its target date in 30 days.",
+            "deepLink": "/goals"
+          }
+        ],
+        "missed": [],
+        "truncated": 0
+      }
+    }
+  ]
+}

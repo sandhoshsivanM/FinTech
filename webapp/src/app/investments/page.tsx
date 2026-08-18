@@ -25,6 +25,7 @@ import {
   ChevronDown, Filter, ArrowUpRight, ArrowDownRight, Info,
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { usesSeedRate } from '@/domain/currency';
 import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
 import { useDarkMode } from '@/lib/useDarkMode';
@@ -57,6 +58,7 @@ interface Row {
 
 export default function PortfolioPage() {
   const holdings = useApp((s) => s.holdings);
+  const fxRates = useApp((s) => s.fxRates);
   const snapshots = useApp((s) => s.snapshots);
   const ghost = useApp((s) => s.ghost);
   const fmt = useFmt();
@@ -85,7 +87,12 @@ export default function PortfolioPage() {
     () => (group === 'all' ? holdings : holdings.filter((h) => ASSET_GROUP_OF[h.assetType] === group)),
     [holdings, group],
   );
-  const summary = useMemo(() => portfolioSummary(filtered), [filtered]);
+  const summary = useMemo(() => portfolioSummary(filtered, undefined, fxRates), [filtered, fxRates]);
+
+  /** Currencies held but never given a rate — valued at a built-in guess. */
+  const seedFxCodes = useMemo(() => [...new Set(
+    filtered.map((h) => h.currency).filter((c): c is string => usesSeedRate(c, fxRates)),
+  )].sort(), [filtered, fxRates]);
   const views = summary.views;
   const totalValue = summary.current.toNumber();
 
@@ -351,6 +358,27 @@ export default function PortfolioPage() {
               <b className="text-ink">{unpricedCount} of {filtered.length}</b> position{unpricedCount === 1 ? ' is' : 's are'} carried at cost because no price is recorded for {unpricedCount === 1 ? 'it' : 'them'}. {unpricedCount === 1 ? 'It shows' : 'They show'} no gain or loss, so the totals above understate the book. Khazana never fetches prices — importing a fresh broker CSV is what updates them.
             </p>
             <Button variant="ghost"><Link href="/holdings">Update prices</Link></Button>
+          </div>
+        </StaggerItem>
+      )}
+
+      {/* A guessed exchange rate is more damaging than a missing price: it
+          mis-values the position silently, on every screen, and the number
+          looks exactly as authoritative as a real one. A $102 purchase that
+          actually cost ₹9,800 was reported as ₹8,497 with nothing to say why. */}
+      {seedFxCodes.length > 0 && (
+        <StaggerItem>
+          <div className="card p-3.5 flex items-start gap-3 flex-wrap">
+            <span className="w-7 h-7 shrink-0 rounded-[var(--radius-btn)] grid place-items-center bg-danger-soft text-danger"><Info size={14} /></span>
+            <p className="text-[12.5px] text-ink-soft leading-relaxed flex-1 min-w-[240px]">
+              <b className="text-ink">
+                {seedFxCodes.join(', ')} {seedFxCodes.length === 1 ? 'is' : 'are'} being converted at a built-in rate you have never set.
+              </b>{' '}
+              Every holding in {seedFxCodes.length === 1 ? 'that currency' : 'those currencies'} is
+              valued at a guess, so the rupee figures above are only as good as that guess. Set the
+              real rate and they correct immediately.
+            </p>
+            <Button variant="ghost"><Link href="/settings">Set exchange rate</Link></Button>
           </div>
         </StaggerItem>
       )}

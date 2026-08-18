@@ -2,8 +2,8 @@
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
 import { accrue } from './fixedIncome';
-import { findCurrency } from './currency';
-import type { AssetType, Holding } from '@/lib/types';
+import { resolveRate } from './currency';
+import type { AssetType, FxRate, Holding } from '@/lib/types';
 import {
   MARKET_CAP_LABEL,
   type InstrumentClassification,
@@ -31,6 +31,7 @@ export const ASSET_META: Record<AssetType, { label: string; color: string }> = {
   ssy: { label: 'Sukanya Samriddhi', color: '#5b7c8a' },
   sgb: { label: 'Sovereign Gold Bond', color: '#8a6d1f' },
   ulip: { label: 'ULIP', color: '#7a5b9a' },
+  foreign_equity: { label: 'Foreign Equity', color: '#3d6b9a' },
 };
 
 /** Chart-facing buckets. Eleven asset types collapse to seven groups. */
@@ -40,6 +41,10 @@ export type AssetGroup =
 export const ASSET_GROUP_OF: Record<AssetType, AssetGroup> = {
   equity_etf: 'equity',
   equity_mf: 'equity',
+  // Equity exposure wherever it is listed — the allocation charts care about
+  // what the money is invested in, not which exchange it trades on. The tax
+  // difference lives in domain/tax.ts, which is where it belongs.
+  foreign_equity: 'equity',
   debt_mf: 'debt',
   bond: 'debt',
   gold_etf: 'gold',
@@ -109,14 +114,19 @@ export interface HoldingView {
   pnlPct: number;
 }
 
-export function holdingView(h: Holding, now: number = Date.now()): HoldingView {
+/**
+ * @param rates recorded exchange rates. Optional and last so every existing
+ *   call site keeps compiling; omitting it falls back to the seed rates, which
+ *   is the behaviour that existed before rates could be recorded at all.
+ */
+export function holdingView(h: Holding, now: number = Date.now(), rates: FxRate[] = []): HoldingView {
   const qty = D(h.quantity);
 
   // Cost and market value convert at their own rates. A US holding's cost was
   // paid in dollars at the rate of that day; converting it at today's rate
   // reports an FX movement as a capital gain, and the two are not the same
   // thing. Absent currency means INR, so an ordinary holding is unaffected.
-  const { costRate, priceRate } = fxRates(h);
+  const { costRate, priceRate } = fxRates(h, rates);
 
   const invested = qty.times(D(h.avgCost)).times(costRate);
 
@@ -142,10 +152,10 @@ export function holdingView(h: Holding, now: number = Date.now()): HoldingView {
  * recorded both fall back to the current rate — the figure is then an
  * approximation, and `hasApproximateFx` lets the UI say so.
  */
-export function fxRates(h: Holding): { costRate: Decimal; priceRate: Decimal } {
+export function fxRates(h: Holding, rates: FxRate[] = []): { costRate: Decimal; priceRate: Decimal } {
   const code = h.currency ?? 'INR';
   if (code === 'INR') return { costRate: D(1), priceRate: D(1) };
-  const priceRate = D(findCurrency(code).rateToInr);
+  const priceRate = resolveRate(code, rates);
   const costRate = h.fxRateAtPurchase ? D(h.fxRateAtPurchase) : priceRate;
   return { costRate, priceRate };
 }
@@ -163,8 +173,10 @@ export interface PortfolioSummary {
   allocation: { type: AssetType; label: string; color: string; value: number }[];
 }
 
-export function portfolioSummary(holdings: Holding[], now: number = Date.now()): PortfolioSummary {
-  const views = holdings.map((h) => holdingView(h, now));
+export function portfolioSummary(
+  holdings: Holding[], now: number = Date.now(), rates: FxRate[] = [],
+): PortfolioSummary {
+  const views = holdings.map((h) => holdingView(h, now, rates));
   const invested = views.reduce((s, v) => s.plus(v.invested), ZERO);
   const current = views.reduce((s, v) => s.plus(v.current), ZERO);
   const pnl = current.minus(invested);

@@ -120,10 +120,41 @@ export interface Goal {
 export type AssetType =
   | 'equity_etf' | 'equity_mf' | 'debt_mf' | 'gold_etf' | 'bond' | 'cash'
   | 'real_estate' | 'crypto' | 'fd' | 'ppf_epf' | 'nps'
-  | 'ssy' | 'sgb' | 'ulip';
+  | 'ssy' | 'sgb' | 'ulip'
+  /**
+   * Shares and ETFs listed outside India — QQQ, VOO, individual US stocks.
+   *
+   * A separate type because Indian tax does not treat them as equity: there is
+   * no STT, so they get none of section 112A's concessions. Filed as
+   * `equity_etf` they would claim a 12-month long-term threshold and the
+   * ₹1.25 L exemption, and be materially under-taxed. See domain/tax.ts.
+   */
+  | 'foreign_equity';
 
 /** Provenance of a recorded price. See `Holding.priceSource`. */
 export type PriceSource = 'manual' | 'import';
+
+/**
+ * An exchange rate the user has recorded, as a dated observation.
+ *
+ * Rates used to live only as constants in `domain/currency.ts` — `USD: 83.3`,
+ * with no way to change it. Every dollar-denominated holding was therefore
+ * valued at 83.30 forever, and the error was invisible because nothing on
+ * screen said where the number came from or when it was true.
+ *
+ * Shaped like a price for the same reason (§7.1): a rate is only ever as fresh
+ * as the last time somebody wrote it down, and a figure that cannot state its
+ * own age cannot be trusted.
+ */
+export interface FxRate {
+  /** The currency code, so a write for USD always replaces the USD rate. */
+  id: string;
+  code: string;
+  /** INR per one unit of `code`. A Decimal string, like every money value. */
+  rateToInr: string;
+  asOf: number;
+  source: PriceSource;
+}
 
 export interface Holding {
   id: string;
@@ -543,6 +574,7 @@ export const STORE = {
   alert: 'alert',
   importBatch: 'importBatch',
   lot: 'lot',
+  fxRate: 'fxRate',
 } as const;
 
 // Entity types that are scoped to the active profile (category & profile are vault-wide).

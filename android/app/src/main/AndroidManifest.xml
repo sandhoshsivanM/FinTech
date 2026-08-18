@@ -4,6 +4,22 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.READ_SMS"/>
 
+    <!-- Outbound local notifications: bill/renewal/goal reminders and budget
+         alerts. Entirely on-device — the OS holds the alarm, nothing is pushed.
+
+         Deliberately absent: SCHEDULE_EXACT_ALARM and USE_EXACT_ALARM. Android
+         14 stopped auto-granting the first, and Play policy restricts the second
+         to alarm-clock and calendar apps, so a finance app declaring it gets
+         rejected. We schedule with inexactAllowWhileIdle instead, which still
+         fires through Doze; a reminder that arrives at 09:40 instead of 09:00 is
+         invisible for "your rent is due in three days".
+
+         BOOT_COMPLETED is what lets the plugin's boot receiver below restore
+         pending alarms — the OS drops all of them on reboot. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+
     <application
         android:label="Khazana"
         android:name="${applicationName}"
@@ -49,6 +65,28 @@
             android:permission="android.permission.BROADCAST_SMS">
             <intent-filter android:priority="999">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
+            </intent-filter>
+        </receiver>
+
+        <!-- flutter_local_notifications' own receivers. These deliver scheduled
+             reminders, and re-register them after a reboot or an app update —
+             without the boot receiver every pending reminder is silently lost
+             the next time the phone restarts.
+
+             Not to be confused with KhazanaNotificationListener above: that one
+             *reads* incoming bank notifications for transaction capture. These
+             two *post* ours. -->
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
+            android:exported="false"/>
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
 

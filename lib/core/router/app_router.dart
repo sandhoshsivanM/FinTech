@@ -24,11 +24,13 @@ import '../../features/transactions/screens/recurring_screen.dart';
 import '../../features/transactions/screens/search_screen.dart';
 import '../../features/transactions/screens/transactions_screen.dart';
 import '../../features/settings/screens/currency_settings_screen.dart';
+import '../../features/settings/screens/notification_settings_screen.dart';
 import '../../features/settings/screens/market_data_settings_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../presentation/app_shell.dart';
 import '../../presentation/unlock_gate_screen.dart';
 import '../di/providers.dart';
+import '../services/notification_providers.dart';
 import '../security/vault_state.dart';
 
 /// Routes. `/unlock` is the only location reachable while locked (PRD §3 gate).
@@ -57,6 +59,7 @@ abstract final class Routes {
   static const calendar = '/app/calendar';
   static const marketData = '/app/settings/market-data';
   static const currency = '/app/settings/currency';
+  static const notifications = '/app/settings/notifications';
   static const settings = '/app/settings';
 
   /// Which bottom-nav tab "owns" [location] — i.e. which tab should read as
@@ -107,6 +110,7 @@ abstract final class Routes {
     // Settings owns its own sub-pages.
     marketData: settings,
     currency: settings,
+    notifications: settings,
     settings: settings,
     dashboard: dashboard,
   };
@@ -122,14 +126,36 @@ final routerProvider = Provider<GoRouter>((ref) {
     (_, next) => refresh.value = next,
   );
 
+  // A notification tap sets a destination and waits. Merged into the refresh
+  // listenable so a tap while the app is already open re-runs the redirect
+  // instead of sitting there until something else navigates.
+  final deepLink = ref.read(notificationServiceProvider).pendingDeepLink;
+
+  /// Takes the pending destination, if there is one, exactly once.
+  ///
+  /// A tap always arrives at `/unlock` when the vault is locked, which is most
+  /// of the time — the app locks on backgrounding. Without somewhere to park the
+  /// destination across the PIN screen, every notification tap ended on the
+  /// dashboard, which is the one screen it was never about.
+  String? takeDeepLink() {
+    final route = deepLink.value;
+    if (route == null || !route.startsWith('/app/')) return null;
+    deepLink.value = null;
+    return route;
+  }
+
   return GoRouter(
     initialLocation: Routes.unlock,
-    refreshListenable: refresh,
+    refreshListenable: Listenable.merge([refresh, deepLink]),
     redirect: (context, state) {
       final unlocked = ref.read(vaultUnlockProvider) is VaultUnlocked;
       final atGate = state.matchedLocation == Routes.unlock;
+      // Locked: hold the destination rather than dropping it. It is consumed
+      // below, on the redirect that follows a successful unlock.
       if (!unlocked) return atGate ? null : Routes.unlock;
-      if (atGate) return Routes.dashboard;
+      if (atGate) return takeDeepLink() ?? Routes.dashboard;
+      final pending = takeDeepLink();
+      if (pending != null && pending != state.matchedLocation) return pending;
       return null;
     },
     routes: [
@@ -184,6 +210,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           _tab(Routes.settings, const SettingsScreen()),
           _tab(Routes.marketData, const MarketDataSettingsScreen()),
           _tab(Routes.currency, const CurrencySettingsScreen()),
+          _tab(Routes.notifications, const NotificationSettingsScreen()),
         ],
       ),
     ],

@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
-import '../../../core/services/notification_service.dart';
+import '../../../core/services/notification_providers.dart';
 import '../../../domain/entities/budget.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/budget_calculator.dart';
+import '../../../domain/services/notification_scheduler.dart';
 import '../../transactions/providers/category_providers.dart';
 import '../../transactions/providers/transaction_providers.dart';
 
@@ -14,9 +15,6 @@ const _uuid = Uuid();
 
 final budgetCalculatorProvider =
     Provider<BudgetCalculator>((ref) => const BudgetCalculator());
-
-final notificationServiceProvider =
-    Provider<NotificationService>((ref) => NotificationService());
 
 /// Streams the vault's budgets.
 final budgetListProvider = StreamProvider<List<Budget>>((ref) {
@@ -68,21 +66,51 @@ class BudgetActions {
 
   /// Re-evaluates budgets after a change and fires an overspend notification
   /// for any category at/over its alert threshold (PRD §7A).
+  ///
+  /// This used to notify unconditionally, once per budget, on every saved
+  /// transaction — so five grocery runs in an over-budget month produced five
+  /// identical alerts. It now goes through [planNotifications], which owns the
+  /// dedupe key and the cooldown, and which is the same code the web client
+  /// runs.
+  ///
+  /// Budgets are the one trigger where being serverless is *better*: spend only
+  /// changes when the user records a transaction on this device, so the device
+  /// knows first. A server could not tell them without being sent the ledger.
   Future<void> checkAndNotify() async {
-    final progress = _ref.read(budgetProgressProvider);
+    final prefs = _ref.read(notifyPrefsProvider);
+    if (!prefs.allows(NotifyCategory.budget)) return;
+
     final calc = _ref.read(budgetCalculatorProvider);
-    final categories =
-        _ref.read(categoryListProvider).valueOrNull ?? const [];
+    final categories = _ref.read(categoryListProvider).valueOrNull ?? const [];
     final byId = {for (final c in categories) c.id: c};
-    final notifier = _ref.read(notificationServiceProvider);
-    for (final p in progress) {
-      if (calc.isAtAlertThreshold(p.budget, p.spent)) {
-        await notifier.showOverspendAlert(
-          id: p.budget.categoryId.hashCode & 0x7fffffff,
-          categoryName: byId[p.budget.categoryId]?.name ?? 'Category',
-          thresholdPct: p.budget.alertThresholdPct,
-        );
-      }
+    final now = DateTime.now();
+    final period =
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}';
+
+    final plan = planNotifications(NotificationPlanInput(
+      now: now.millisecondsSinceEpoch,
+      tzOffsetMinutes: now.timeZoneOffset.inMinutes,
+      routes: notifyRoutes,
+      prefs: prefs,
+      deliveries: _ref.read(deliveryLogProvider),
+      budgets: [
+        for (final p in _ref.read(budgetProgressProvider))
+          BudgetFact(
+            categoryId: p.budget.categoryId,
+            categoryName: byId[p.budget.categoryId]?.name ?? 'Category',
+            thresholdPct: p.budget.alertThresholdPct,
+            spentPct: calc.spentPct(p.budget, p.spent),
+            period: period,
+          ),
+      ],
+    ));
+
+    final service = _ref.read(notificationServiceProvider);
+    for (final n in plan.immediate) {
+      await service.showFrom(n);
     }
+    _ref
+        .read(deliveryLogProvider.notifier)
+        .record(plan.immediate, now.millisecondsSinceEpoch);
   }
 }

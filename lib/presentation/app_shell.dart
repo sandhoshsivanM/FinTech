@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/di/providers.dart';
 import '../core/router/app_router.dart';
+import '../core/services/notification_sync_service.dart';
 import '../features/capture/providers/capture_providers.dart';
 import 'desktop_shell.dart';
 
@@ -78,7 +79,18 @@ class _AppShellState extends ConsumerState<AppShell>
     if (state == AppLifecycleState.paused) {
       // Not forced: with the lock turned off, backgrounding the app must not
       // put a PIN screen in front of someone who asked never to see one.
+      //
+      // No reconcile here, deliberately. Reading due dates needs the vault key,
+      // and this is the moment it is being purged — a reconcile started now
+      // would race the lock and lose. The reminders were already written down on
+      // unlock, on resume, and after every write that changed a date, so the OS
+      // is holding a current set by the time we get here.
       ref.read(vaultUnlockProvider.notifier).lock();
+    }
+    if (state == AppLifecycleState.resumed) {
+      // Catches a timezone change after travel: reminders are anchored to the
+      // wall clock of wherever they were written.
+      ref.read(notificationSyncProvider).scheduleReconcile();
     }
   }
 

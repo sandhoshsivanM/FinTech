@@ -34,6 +34,7 @@ const KIND_LABEL: Record<AlertKind, string> = {
 export default function AlertsPage() {
   const alerts = useApp((s) => s.alerts);
   const holdings = useApp((s) => s.holdings);
+  const fxRates = useApp((s) => s.fxRates);
   const budgets = useApp((s) => s.budgets);
   const categories = useApp((s) => s.categories);
   const txns = useApp((s) => s.txns);
@@ -46,7 +47,7 @@ export default function AlertsPage() {
   const [form, setForm] = useState(false);
   const [draft, setDraft] = useState<{ kind: AlertKind; symbol: string; threshold: string }>({ kind: 'price_above', symbol: '', threshold: '' });
 
-  const summary = useMemo(() => portfolioSummary(holdings), [holdings]);
+  const summary = useMemo(() => portfolioSummary(holdings, undefined, fxRates), [holdings, fxRates]);
 
   /**
    * One evaluator, shared with the notification bell (§5).
@@ -134,6 +135,10 @@ export default function AlertsPage() {
             Alerts are evaluated when you open Khazana and while this screen is on, using data already
             in your vault. There is no server and no push notification, so <b className="text-ink font-semibold">nothing
             is checked while the app is closed</b> — every rule below shows when it was last actually looked at.
+            {' '}With system notifications turned on in Settings, Khazana tells your operating system the
+            moment a rule fires, but still only while a Khazana window is open. Date-based reminders —
+            bills, renewals, goal dates — do arrive with the app closed on the Android and iOS apps,
+            because those are handed to the phone&rsquo;s own scheduler in advance.
           </p>
         </div>
       </StaggerItem>

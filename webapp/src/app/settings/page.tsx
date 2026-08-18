@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 import {
   ShieldCheck, CloudOff, KeyRound, Download, Upload,
   Globe, Lock, Trash2, Sparkles, CheckCircle2, AlertCircle,
@@ -9,12 +9,26 @@ import { APP_NAME } from '@/lib/brand';
 import { TOUR_EVENT } from '@/components/Tour';
 import { useApp, ACCENTS, type AccentName, type ThemeChoice } from '@/lib/store';
 import { loadSampleData } from '@/lib/sampleData';
-import { CURRENCIES } from '@/domain/currency';
+import {
+  CURRENCIES, findCurrency, isRateStale, rateAsOf, resolveRate,
+} from '@/domain/currency';
 import { GlassCard, SectionHeader, Button, Field, Select, PageIntro, Input, Segmented } from '@/components/ui';
 import { useDemoData } from '@/components/DemoBadge';
 import { useConfirm } from '@/components/Confirm';
-import type { ProfileKind } from '@/lib/types';
+import { STORE, type FxRate, type ProfileKind } from '@/lib/types';
+import { NumberInput } from '@/components/NumberInput';
+import { formatDate } from '@/lib/dateFormat';
+import { useNow } from '@/lib/useNow';
+import { D } from '@/lib/money';
 import { BackupError } from '@/lib/backupError';
+import { type NotifyCategory, type NotifyPrefs } from '@/domain/notificationScheduler';
+import {
+  getNotifyPrefsServerSnapshot, getNotifyPrefsSnapshot, saveNotifyPrefs, subscribeNotifyPrefs,
+} from '@/lib/notifyPrefs';
+import {
+  notifyPermission, notifyPermissionChanged, requestNotifyPermission, subscribePermission,
+  type NotifyPermission,
+} from '@/lib/notify';
 
 type NoteKind = 'success' | 'error';
 interface Note { kind: NoteKind; text: string }
@@ -386,6 +400,12 @@ export default function SettingsPage() {
         </div>
       </GlassCard>
 
+      {/* Notifications */}
+      <GlassCard>
+        <SectionHeader title="Notifications" />
+        <NotificationsSection />
+      </GlassCard>
+
       {/* Privacy & Backup */}
       <GlassCard>
         <SectionHeader title="Privacy & Backup" />
@@ -499,7 +519,7 @@ export default function SettingsPage() {
       <GlassCard>
         <SectionHeader title="Display Currency" />
         <p className="text-xs text-muted mb-3">
-          All amounts are stored in INR and converted for display using built-in exchange rates. Rates can be updated in the Market Data settings.
+          All amounts are stored in INR and converted for display. Rates are yours to set, below.
         </p>
         <Field label="Currency">
           <Select
@@ -518,6 +538,9 @@ export default function SettingsPage() {
           <span className="text-xs text-muted">Currently displaying in <strong>{currencyCode}</strong></span>
         </div>
       </GlassCard>
+
+      {/* Exchange rates */}
+      <ExchangeRates />
 
       {/* Data */}
       <GlassCard>
@@ -620,6 +643,223 @@ function PrivacyRow({ icon, title, sub }: { icon: React.ReactNode; title: string
         <div className="text-xs text-muted">{sub}</div>
       </div>
       <CheckCircle2 size={18} className="text-income shrink-0" />
+    </div>
+  );
+}
+
+/**
+ * Exchange rates, as dated observations the user owns.
+ *
+ * Rates used to be constants in `domain/currency.ts` — `USD: 83.3` — with no way
+ * to change them, while the copy above claimed they could be "updated in the
+ * Market Data settings", a screen that did not exist. Every dollar-denominated
+ * holding was therefore valued at 83.30 forever, and nothing on screen admitted
+ * it.
+ *
+ * Only currencies actually in use are listed. A settings screen offering ten
+ * rates to somebody who holds one foreign asset is a chore, not a feature.
+ */
+function ExchangeRates() {
+  const holdings = useApp((s) => s.holdings);
+  const fxRates = useApp((s) => s.fxRates);
+  const currencyCode = useApp((s) => s.currencyCode);
+  const vaultId = useApp((s) => s.vaultId);
+  const put = useApp((s) => s.put);
+  const now = useNow(60_000);
+  const [draft, setDraft] = useState<Record<string, string>>({});
+
+  const inUse = Array.from(new Set([
+    ...holdings.map((h) => h.currency ?? 'INR'),
+    currencyCode,
+  ])).filter((c) => c !== 'INR').sort();
+
+  if (inUse.length === 0) return null;
+
+  const save = async (code: string) => {
+    const raw = draft[code];
+    if (!raw || !(D(raw).gt(0))) return;
+    await put(STORE.fxRate, {
+      id: code, code, rateToInr: D(raw).toString(),
+      asOf: Date.now(), source: 'manual',
+    } as unknown as FxRate & { id: string } & Record<string, unknown>);
+    setDraft((d) => ({ ...d, [code]: '' }));
+  };
+
+  return (
+    <GlassCard>
+      <SectionHeader title="Exchange rates" />
+      <p className="text-xs text-muted mb-4">
+        Khazana has no price feed, so a rate is only as good as the last time you set it.
+        Each one shows the day it was recorded.
+      </p>
+      <div className="grid gap-4">
+        {inUse.map((code) => {
+          const cur = findCurrency(code);
+          const rate = resolveRate(code, fxRates);
+          const at = rateAsOf(code, fxRates);
+          const stale = now ? isRateStale(code, fxRates, now) : false;
+          return (
+            <div key={code} className="flex items-end gap-3 flex-wrap">
+              <div className="min-w-[7rem]">
+                <div className="text-[13px] font-semibold">{code} → INR</div>
+                <div className="text-[11px] text-muted">{cur.name}</div>
+              </div>
+              <Field label={`₹ per 1 ${cur.symbol}`}>
+                <NumberInput
+                  value={draft[code] ?? ''}
+                  onChange={(v) => setDraft((d) => ({ ...d, [code]: v }))}
+                  placeholder={rate.toString()}
+                />
+              </Field>
+              <Button variant="soft" onClick={() => void save(code)} disabled={!draft[code]}>
+                Set rate
+              </Button>
+              <div className="text-[11px] leading-relaxed pb-2.5">
+                <span className="tnum font-medium">₹{rate.toString()}</span>{' '}
+                {/* An unrecorded rate is a built-in guess and says so — the
+                    difference between "we know" and "we assumed" is the whole
+                    point of showing this at all. */}
+                {at == null ? (
+                  <span className="text-warn">built-in default, never set</span>
+                ) : stale ? (
+                  <span className="text-warn">set {formatDate(at)} — likely stale</span>
+                ) : (
+                  <span className="text-muted">set {formatDate(at)}</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </GlassCard>
+  );
+}
+
+/**
+ * Notification settings.
+ *
+ * Also where permission is asked for — on a click, having read what it does.
+ * A web permission prompt fired on load is how an origin gets permanently
+ * denied, and the user cannot undo that from inside the app.
+ */
+function NotificationsSection() {
+  // useSyncExternalStore, not an effect: localStorage and Notification are both
+  // undefined while the static export is prerendered, and reading them in an
+  // effect to call setState causes a cascading render. This is the shape React
+  // provides for a store that only exists on the client.
+  const prefs = useSyncExternalStore(
+    subscribeNotifyPrefs, getNotifyPrefsSnapshot, getNotifyPrefsServerSnapshot,
+  );
+  const permission = useSyncExternalStore(
+    subscribePermission, notifyPermission, () => 'unsupported' as NotifyPermission,
+  );
+
+  const update = (next: NotifyPrefs) => saveNotifyPrefs(next);
+
+  const toggleMaster = async (on: boolean) => {
+    if (on) {
+      const result = await requestNotifyPermission();
+      notifyPermissionChanged();
+      // Recording "on" while the browser says no would leave a switch claiming
+      // something the app cannot do.
+      if (result !== 'granted') return;
+    }
+    update({ ...prefs, enabled: on });
+  };
+
+  const toggleCategory = (c: NotifyCategory, on: boolean) => update({
+    ...prefs,
+    categories: on ? [...prefs.categories, c] : prefs.categories.filter((x) => x !== c),
+  });
+
+  const CATEGORIES: { key: NotifyCategory; title: string; sub: string }[] = [
+    { key: 'bills', title: 'Bills and recurring', sub: 'When a scheduled transaction is due' },
+    { key: 'renewals', title: 'Insurance renewals', sub: 'When a policy is about to renew' },
+    { key: 'goals', title: 'Goal target dates', sub: 'As a savings goal reaches its date' },
+    { key: 'budget', title: 'Budget thresholds', sub: 'When a transaction crosses one' },
+    { key: 'market', title: 'Price and weight alerts', sub: 'Against the last price you entered' },
+    { key: 'digest', title: 'While you were away', sub: 'What passed since your last visit' },
+  ];
+
+  if (permission === 'unsupported') {
+    return (
+      <div className="text-xs text-muted leading-relaxed">
+        This browser does not offer notifications. On iPhone and iPad they are available from iOS 16.4,
+        but only once Khazana has been added to the Home Screen.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <NotifyToggle
+        title="Show system notifications"
+        sub="Posted by this browser, about data already decrypted on this device. Nothing is sent anywhere."
+        on={prefs.enabled}
+        onChange={(v) => { void toggleMaster(v); }}
+      />
+
+      {permission === 'denied' && (
+        <div className="text-xs text-danger leading-relaxed">
+          Your browser is blocking notifications for Khazana. That has to be changed in the browser&rsquo;s
+          site settings — a page cannot ask again once it has been refused.
+        </div>
+      )}
+
+      <div className="space-y-1 pt-1">
+        {CATEGORIES.map((c) => (
+          <NotifyToggle
+            key={c.key}
+            title={c.title}
+            sub={c.sub}
+            on={prefs.categories.includes(c.key)}
+            disabled={!prefs.enabled}
+            onChange={(v) => toggleCategory(c.key, v)}
+          />
+        ))}
+      </div>
+
+      <NotifyToggle
+        title="Keep amounts out of the notification"
+        sub="A notification preview is the one place Khazana's data is visible without your PIN."
+        on={prefs.hideAmounts}
+        disabled={!prefs.enabled}
+        onChange={(v) => update({ ...prefs, hideAmounts: v })}
+      />
+
+      <div className="text-xs text-muted leading-relaxed pt-3 border-t border-[var(--line)]">
+        <b className="text-ink font-semibold">What this cannot do.</b> The web has no way to run a
+        notification while its tab is closed: there is no server here to push one, and the browser API
+        for scheduling one locally was never shipped. So Khazana notifies you the moment a rule fires
+        while a window is open, and on your next visit tells you what passed in between. The Android
+        and iOS apps do not have this limit — there the phone&rsquo;s own scheduler holds the reminder,
+        so bills, renewals and goal dates arrive with the app closed.
+      </div>
+    </div>
+  );
+}
+
+function NotifyToggle({ title, sub, on, onChange, disabled = false }: {
+  title: string; sub: string; on: boolean; onChange: (v: boolean) => void; disabled?: boolean;
+}) {
+  return (
+    <div className={`flex items-start gap-3 ${disabled ? 'opacity-50' : ''}`}>
+      <div className="flex-1 min-w-0">
+        <div className="font-medium text-sm">{title}</div>
+        <div className="text-xs text-muted mt-0.5 leading-relaxed">{sub}</div>
+      </div>
+      <button
+        role="switch"
+        aria-checked={on}
+        aria-label={title}
+        disabled={disabled}
+        onClick={() => onChange(!on)}
+        className={`focus-ring relative w-11 h-6 rounded-full shrink-0 transition-colors duration-[250ms] ${on ? 'bg-accent' : 'bg-fill-strong'} ${disabled ? 'cursor-not-allowed' : ''}`}
+      >
+        <span
+          className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full transition-transform duration-[250ms] ${on ? 'translate-x-5 bg-white' : 'bg-muted'}`}
+        />
+      </button>
     </div>
   );
 }

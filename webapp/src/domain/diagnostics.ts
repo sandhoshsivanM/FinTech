@@ -16,10 +16,11 @@
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
 import type {
-  Account, Category, Dividend, Holding, HoldingLot, Posting, Transfer, Txn,
+  Account, Category, Dividend, FxRate, Holding, HoldingLot, Posting, Transfer, Txn,
 } from '@/lib/types';
 import { reconcileLots } from './lots';
 import { hasApproximateFx } from './portfolio';
+import { FX_STALE_DAYS, isRateStale, rateAsOf } from './currency';
 import { balanceSheet } from './statements';
 
 export type CheckLevel = 'ok' | 'warn' | 'error';
@@ -41,6 +42,10 @@ export interface DiagnosticsInput {
   unreadableRecords?: { type: string; id: string }[];
   /** Ids of stored receipts. Omit to skip the receipt checks entirely. */
   attachmentIds?: string[];
+  /** Recorded exchange rates, for the currency-freshness checks. */
+  fxRates?: FxRate[];
+  /** Clock, injected so the staleness checks are testable. */
+  now?: number;
   txns: Txn[];
   transfers: Transfer[];
   postings: Posting[];
@@ -67,6 +72,8 @@ export function runDiagnostics(input: DiagnosticsInput): Check[] {
   const lots = input.lots ?? [];
   const unreadable = input.unreadableRecords ?? [];
   const attachmentIds = input.attachmentIds;
+  const fxRates = input.fxRates ?? [];
+  const now = input.now ?? Date.now();
   const checks: Check[] = [];
 
   /* ---- Storage readability --------------------------------------------- */
@@ -269,6 +276,31 @@ export function runDiagnostics(input: DiagnosticsInput): Check[] {
         offenders: approxFx,
       });
 
+  // The other half of the same problem. A purchase rate that was never recorded
+  // is one failure; a CURRENT rate nobody has touched for months is another,
+  // and it silently mis-values every foreign holding at once. Unrecorded is
+  // reported louder than merely old, because a built-in seed is a guess.
+  const foreignCodes = [...new Set(
+    holdings.map((h) => h.currency ?? 'INR').filter((c) => c !== 'INR'),
+  )];
+  if (foreignCodes.length > 0) {
+    const never = foreignCodes.filter((c) => rateAsOf(c, fxRates) == null);
+    const stale = foreignCodes.filter((c) => isRateStale(c, fxRates, now));
+    checks.push(never.length > 0
+      ? {
+          id: 'fx-current', label: 'Current exchange rates', level: 'error',
+          detail: `No exchange rate has ever been recorded for ${never.join(', ')}, so those holdings are valued using a built-in default that may be years out of date. Set it in Settings → Exchange rates.`,
+          offenders: never,
+        }
+      : stale.length > 0
+        ? {
+            id: 'fx-current', label: 'Current exchange rates', level: 'warn',
+            detail: `The rate for ${stale.join(', ')} has not been updated in over ${FX_STALE_DAYS} days. Every holding in that currency is valued at it.`,
+            offenders: stale,
+          }
+        : { id: 'fx-current', label: 'Current exchange rates', level: 'ok', detail: 'Recorded and recent for every currency you hold.' });
+  }
+
   return checks;
 }
 
@@ -276,3 +308,22 @@ export const worstLevel = (checks: Check[]): CheckLevel =>
   checks.some((c) => c.level === 'error') ? 'error'
     : checks.some((c) => c.level === 'warn') ? 'warn'
       : 'ok';
+
+/**
+ * The checks a restore refuses on. Deliberately an allowlist, not
+ * `level === 'error'`: these describe structural corruption — a book that does
+ * not balance is not a recovery. Everything else at error level describes data
+ * the user has not supplied yet (`fx-current`: a rate never set) or state the
+ * incoming snapshot cannot have (`record-readable`, `attachment-links`), and
+ * must never stand between someone and their only backup.
+ *
+ * A restore blocked on a rate nobody had typed yet is what prompted this: the
+ * file was intact, and there was no way through the message.
+ */
+export const RESTORE_BLOCKING: ReadonlySet<string> = new Set([
+  'ledger-balanced', 'posting-accounts', 'balance-sheet', 'lot-reconciliation',
+]);
+
+/** The subset of `checks` that is reason enough to refuse a restore. */
+export const restoreBlockers = (checks: Check[]): Check[] =>
+  checks.filter((c) => c.level === 'error' && RESTORE_BLOCKING.has(c.id));

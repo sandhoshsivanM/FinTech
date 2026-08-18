@@ -136,6 +136,15 @@ class _SettingsBody extends ConsumerWidget {
         const _SectionHeader('Appearance'),
         const _ThemeTile(),
         const Divider(),
+        const _SectionHeader('Notifications'),
+        ListTile(
+          leading: const Icon(Icons.notifications_outlined),
+          title: const Text('Notifications'),
+          subtitle: const Text('Reminders for bills, renewals and budgets'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.go(Routes.notifications),
+        ),
+        const Divider(),
         const _SectionHeader('Vault'),
         ListTile(
           leading: const Icon(Icons.account_balance_wallet_outlined),

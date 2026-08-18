@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import {
   Eye, EyeOff, Lock, Menu, X, Plus, ChevronDown, Check, Search,
   Sun, Moon, Monitor, PanelLeft, Bell, RefreshCw, Download,
-  CreditCard, ShieldAlert, BellRing, Inbox,
+  CreditCard, ShieldAlert, BellRing, Inbox, History,
   User, Users, Briefcase,
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
@@ -15,6 +15,7 @@ import type { ProfileKind } from '@/lib/types';
 import { evaluateAlerts, triggered } from '@/domain/alerts';
 import { marketState } from '@/lib/marketClock';
 import { useNow } from '@/lib/useNow';
+import { useNotificationDriver } from '@/lib/useNotificationDriver';
 import { demoIndices, demoSeries } from '@/lib/demo/marketFeed';
 import { MiniSparkline } from './charts/MiniSparkline';
 import { BrandMark, WordMark } from './BrandMark';
@@ -601,11 +602,25 @@ function NotificationsMenu() {
   const txns = useApp((s) => s.txns);
   const [open, setOpen] = useState(false);
   const now = useNow();
+  // Reminders whose moment passed while Khazana was closed. On mobile the OS
+  // would have delivered these; here there is no scheduler and no push, so the
+  // next visit is the only chance they get to be said at all.
+  const { plan, acknowledgeMissed } = useNotificationDriver();
 
   const items = useMemo(() => {
-    const out: { id: string; icon: 'alert' | 'bill' | 'policy'; title: string; sub: string; href: string }[] = [];
+    const out: { id: string; icon: 'alert' | 'bill' | 'policy' | 'missed'; title: string; sub: string; href: string }[] = [];
     if (!now) return out;
     const DAY = 86_400_000;
+
+    for (const m of plan.missed) {
+      out.push({
+        id: `m-${m.dedupeKey}`,
+        icon: 'missed',
+        title: m.title,
+        sub: `While you were away — ${m.body}`,
+        href: m.deepLink ?? '/dashboard',
+      });
+    }
 
     // The shared evaluator (§5). This menu used to run its own cut-down copy
     // that handled only price_above/price_below, skipped anything without a
@@ -643,13 +658,23 @@ function NotificationsMenu() {
       }
     }
     return out;
-  }, [alerts, holdings, budgets, categories, txns, recurring, insurances, now]);
+  }, [alerts, holdings, budgets, categories, txns, recurring, insurances, now, plan.missed]);
 
-  const ICONS = { alert: BellRing, bill: CreditCard, policy: ShieldAlert } as const;
+  const ICONS = { alert: BellRing, bill: CreditCard, policy: ShieldAlert, missed: History } as const;
 
   return (
     <div className="relative shrink-0">
-      <IconBtn label={`Notifications${items.length ? ` (${items.length})` : ''}`} onClick={() => setOpen((o) => !o)} className="relative">
+      <IconBtn
+        label={`Notifications${items.length ? ` (${items.length})` : ''}`}
+        onClick={() => {
+          // Opening the menu *is* the delivery for a missed reminder — there is
+          // no other channel it could have arrived through. Marking it here is
+          // what stops it being offered again on every visit forever.
+          if (!open) acknowledgeMissed();
+          setOpen((o) => !o);
+        }}
+        className="relative"
+      >
         <Bell size={18} />
         {items.length > 0 && (
           <span className="absolute top-1.5 right-2 w-[7px] h-[7px] rounded-full bg-danger ring-2 ring-[var(--canvas)]" />
@@ -669,7 +694,8 @@ function NotificationsMenu() {
                 <p className="text-[13px] font-medium">Nothing needs attention</p>
                 <p className="text-[11.5px] text-muted mt-1 leading-relaxed">
                   Alerts whose condition is met, bills due this week and renewals due this month show
-                  up here. Rules are checked while Khazana is open — never in the background.
+                  up here. Rules are checked while Khazana is open — never in the background. Turn on
+                  system notifications in Settings to hear about one the moment it fires.
                 </p>
               </div>
             ) : (
@@ -685,7 +711,9 @@ function NotificationsMenu() {
                     >
                       <span className={clsx(
                         'shrink-0 grid place-items-center',
-                        n.icon === 'alert' ? 'text-danger' : n.icon === 'bill' ? 'text-warning' : 'text-accent',
+                              n.icon === 'alert' ? 'text-danger'
+                          : n.icon === 'bill' ? 'text-warning'
+                            : n.icon === 'missed' ? 'text-muted' : 'text-accent',
                       )}>
                         <Icon size={15} />
                       </span>

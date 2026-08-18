@@ -25,6 +25,7 @@ import { formatMonthShort } from '@/lib/dateFormat';
 
 export default function AnalyticsPage() {
   const holdings = useApp((s) => s.holdings);
+  const fxRates = useApp((s) => s.fxRates);
   const snapshots = useApp((s) => s.snapshots);
   const fmt = useFmt();
 
@@ -38,7 +39,7 @@ export default function AnalyticsPage() {
     [master],
   );
 
-  const summary = useMemo(() => portfolioSummary(holdings), [holdings]);
+  const summary = useMemo(() => portfolioSummary(holdings, undefined, fxRates), [holdings, fxRates]);
   const totals = useMemo(() => investmentTotals(holdings), [holdings]);
   const groups = useMemo(() => allocationByGroup(holdings), [holdings]);
   const sectors = useMemo(() => rollup(holdings, 'sector', classify), [holdings, classify]);

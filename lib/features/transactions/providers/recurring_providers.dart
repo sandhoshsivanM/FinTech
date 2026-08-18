@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
+import '../../../core/services/notification_providers.dart';
 import '../../../data/database/app_database.dart';
 import '../../../domain/entities/recurring_rule.dart';
 import '../../../domain/entities/transaction.dart';
+import '../../../domain/services/notification_scheduler.dart';
 import '../../../domain/services/recurrence_calculator.dart';
-import '../../budget/providers/budget_providers.dart';
 
 const _uuid = Uuid();
 
@@ -83,13 +84,22 @@ class RecurringActions {
       });
       await repo.save(rule.copyWith(nextRun: result.newNextRun));
     }
-    if (created > 0) {
-      // Local-only notification (PRD §2 no server push).
-      await _ref.read(notificationServiceProvider).showInfo(
-            id: 909001,
+    if (created > 0 &&
+        _ref.read(notifyPrefsProvider).allows(NotifyCategory.bills)) {
+      // Local-only notification (PRD §2 no server push). The id was hardcoded
+      // to 909001, which meant a second run the same day silently replaced the
+      // first instead of reporting its own work; keying it to the day makes each
+      // run identifiable and still collapses repeats within one.
+      final key = 'recurring-materialised:'
+          '${today.year}-${today.month}-${today.day}';
+      await _ref.read(notificationServiceProvider).showFrom(PlannedNotification(
+            dedupeKey: key,
+            fireAt: today.millisecondsSinceEpoch,
+            category: NotifyCategory.bills,
             title: 'Recurring transactions added',
             body: '$created scheduled transaction(s) were recorded.',
-          );
+            deepLink: '/app/transactions',
+          ));
     }
     return created;
   }

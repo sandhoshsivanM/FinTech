@@ -99,6 +99,69 @@ describe('the long-term exemption is annual, not per position', () => {
   });
 });
 
+describe('foreign equity is not Indian equity (QQQ and friends)', () => {
+  // A US-listed ETF pays no STT, so section 112A's concessions do not apply to
+  // it. Filed as `equity_etf` it would claim a 12-month long-term threshold and
+  // a share of the ₹1.25 L exemption, and come out materially under-taxed.
+  const BOUGHT_13M = new Date(2025, 6, 9);  // 13 months before SALE
+  const BOUGHT_25M = new Date(2024, 6, 9);  // 25 months before SALE
+
+  test('13 months is still SHORT term — the trap that made this a separate type', () => {
+    // The same holding period on an Indian ETF would be long term.
+    expect(computeGain('equity_etf', BOUGHT_13M, SALE, D('100000'), D('200000')).gainType)
+      .toBe('long_term');
+    expect(computeGain('foreign_equity', BOUGHT_13M, SALE, D('100000'), D('200000')).gainType)
+      .toBe('short_term');
+  });
+
+  test('24 months qualifies it as long term at 12.5%', () => {
+    const r = computeGain('foreign_equity', BOUGHT_25M, SALE, D('100000'), D('200000'));
+    expect(r.gainType).toBe('long_term');
+    expect(r.rate).toBe(12.5);
+  });
+
+  test('a short-term foreign gain is taxed at slab, not at 20%', () => {
+    const r = computeGain('foreign_equity', BOUGHT_13M, SALE, D('100000'), D('200000'));
+    expect(r.isSlab).toBe(true);
+    expect(r.rateLabel).toBe('As per your tax slab');
+  });
+
+  test('it draws NOTHING from the ₹1.25 L equity allowance', () => {
+    // The load-bearing assertion. Both positions are long term with a gain; the
+    // exemption belongs to the Indian one alone.
+    const e = estimatePortfolioTax([
+      { id: 'qqq', assetType: 'foreign_equity', firstPurchase: BOUGHT_25M, buyValue: D('100000'), saleValue: D('400000') },
+      { id: 'nifty', assetType: 'equity_etf', firstPurchase: BOUGHT_25M, buyValue: D('100000'), saleValue: D('300000') },
+    ], SALE);
+    expect(e.rows.find((r) => r.id === 'qqq')!.exemptionUsed.toString()).toBe('0');
+    expect(e.rows.find((r) => r.id === 'nifty')!.exemptionUsed.toString()).toBe('125000');
+    expect(e.exemptionUsed.toString()).toBe('125000');
+  });
+
+  test('long-term foreign gain is taxed on the whole gain', () => {
+    const e = estimatePortfolioTax(
+      [pos('qqq', 'foreign_equity', 300_000, BOUGHT_25M)], SALE,
+    );
+    // 300,000 at 12.5%, no exemption.
+    expect(e.estimatedTax.toString()).toBe('37500');
+  });
+
+  test('a short-term foreign gain is separated out, not counted as zero tax', () => {
+    const e = estimatePortfolioTax(
+      [pos('qqq', 'foreign_equity', 200_000, BOUGHT_13M)], SALE,
+    );
+    expect(e.estimatedTax.toString()).toBe('0');
+    expect(e.slabGain.toString()).toBe('200000');
+    expect(e.slabCount).toBe(1);
+  });
+
+  test('a pre-July-2024 disposal uses the older 20% rate', () => {
+    const r = computeGain('foreign_equity', new Date(2021, 0, 1), new Date(2023, 5, 1), D('0'), D('100000'));
+    expect(r.rate).toBe(20);
+    expect(r.ruleSet).toContain('before');
+  });
+});
+
 describe('slab-rate assets are reported, not silently zero', () => {
   test('their gain is separated out rather than counted as no tax', () => {
     // Debt funds, bonds, FDs and NPS contributed ₹0 to the headline with
