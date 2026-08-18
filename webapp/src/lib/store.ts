@@ -1162,6 +1162,36 @@ export const useApp = create<AppState>((set, get) => ({
       }
     }
 
+    /*
+     * Put back the local profile rows the records still point at.
+     *
+     * The clear pass above deletes every profile row, and an incoming profile
+     * that was absorbed is skipped on the way back in — so after a replace,
+     * nothing rewrites the row whose id remapping just stamped onto all 367
+     * records. `reload` then finds no profiles at all, seeds a fresh one with
+     * a new id, and filters the entire restore off every screen: "Restored 367
+     * records" followed by an empty Transactions page. The same symptom the
+     * remapping above exists to prevent, arriving by the opposite route.
+     *
+     * Only rows something actually references are kept, so a local profile the
+     * backup has no data for is still cleared — replace stays replace.
+     */
+    if (mode === 'replace') {
+      const written = new Set(
+        mutations.filter((m) => m.op === 'put' && m.type === STORE.profile).map((m) => m.id),
+      );
+      const referenced = new Set(
+        mutations.flatMap((m) => (m.op === 'put'
+          ? [(m.value as { profileId?: string }).profileId]
+          : [])).filter((p): p is string => p != null),
+      );
+      for (const p of localProfiles) {
+        if (referenced.has(p.id) && !written.has(p.id)) {
+          mutations.push({ op: 'put', type: STORE.profile, id: p.id, value: { ...p, vaultId } });
+        }
+      }
+    }
+
     // One transaction: the vault is either the old book or the new one, never
     // a mixture. This is the webapp's equivalent of the plan's "restore to a
     // new database and swap" — there is no second database to stage into, so

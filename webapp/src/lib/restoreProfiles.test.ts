@@ -94,3 +94,108 @@ describe('restoring a backup onto a second device', () => {
     expect(remap(phone.id)).toBe(phone.id);
   });
 });
+
+/**
+ * Mirrors the whole of importBackup's mutation build, deletes included.
+ *
+ * The tests above model remapping alone, and every one of them assumes the
+ * local profile is still there to be remapped onto. Under `mode: 'replace'` —
+ * the default, and the only mode the UI uses — it is not: the clear pass
+ * deletes every local profile row first. That is the gap this models.
+ *
+ * @returns the profile ids that still have a row, and the restored records.
+ */
+function planRestore(
+  incoming: Profile[],
+  local: Profile[],
+  active: string,
+  records: { id: string; profileId?: string }[],
+  mode: 'replace' | 'merge' = 'replace',
+) {
+  const { remap, absorbed } = buildRemap(incoming, local, active);
+
+  const profileRows = new Map<string, Profile>(local.map((p) => [p.id, p]));
+  if (mode === 'replace') profileRows.clear();               // the clear pass
+  for (const p of incoming) {
+    if (absorbed.has(p.id)) continue;                        // no duplicate row
+    profileRows.set(p.id, p);
+  }
+  // What the fix adds: a local profile the records still point at is written
+  // back, because the clear pass just deleted the row those ids refer to.
+  if (mode === 'replace') {
+    const referenced = new Set(records.map((r) => remap(r.profileId)).filter(Boolean));
+    for (const p of local) if (referenced.has(p.id) && !profileRows.has(p.id)) profileRows.set(p.id, p);
+  }
+
+  return {
+    profileIds: [...profileRows.keys()],
+    records: records.map((r) => ({ ...r, profileId: remap(r.profileId) })),
+  };
+}
+
+/** Mirrors reload()'s profile seeding and active-profile fallback. */
+function afterReload(profileIds: string[], previouslyActive: string) {
+  // "Profiles: seed a default if none exist" — a brand new id, matching nothing.
+  const ids = profileIds.length > 0 ? profileIds : ['p-freshly-seeded'];
+  const dflt = ids[0];
+  const active = ids.includes(previouslyActive) ? previouslyActive : dflt;
+  return { active, dflt };
+}
+
+describe('a replace must not delete the profile the records were remapped onto', () => {
+  // "Restored 367 records" and every screen still empty — the same symptom as
+  // the verbatim-id bug above, arriving by the opposite route. Remapping put
+  // the records on the local profile's id, and then the clear pass deleted the
+  // row that id names: absorbed incoming profiles are skipped on the way back
+  // in, so nothing rewrites it. reload() then finds no profiles at all, seeds
+  // a fresh one, and filters the entire restore off the screen.
+  const mac = prof('p-mac-abc', 'Personal');
+  const phone = prof('p-phone-xyz', 'Personal');
+
+  test('the absorbed profile still has a row after the clear pass', () => {
+    const { profileIds } = planRestore([mac], [phone], phone.id, [{ id: 't1', profileId: mac.id }]);
+    expect(profileIds).toContain(phone.id);
+  });
+
+  test('the restored records are visible, not orphaned', () => {
+    const plan = planRestore([mac], [phone], phone.id, [{ id: 't1', profileId: mac.id }]);
+    const { active, dflt } = afterReload(plan.profileIds, phone.id);
+    expect(plan.records.every((r) => inProfile(r, active, dflt))).toBe(true);
+  });
+
+  test('the profile in front of the user stays selected', () => {
+    const plan = planRestore([mac], [phone], phone.id, [{ id: 't1', profileId: mac.id }]);
+    expect(afterReload(plan.profileIds, phone.id).active).toBe(phone.id);
+  });
+
+  test('an old backup carrying no profile rows lands somewhere visible', () => {
+    // remap falls back to activeProfileId — a local id, whose row the clear
+    // pass also deleted. Same orphaning, no absorption involved.
+    const plan = planRestore([], [phone], phone.id, [{ id: 't1', profileId: 'p-legacy' }]);
+    const { active, dflt } = afterReload(plan.profileIds, phone.id);
+    expect(plan.records.every((r) => inProfile(r, active, dflt))).toBe(true);
+  });
+
+  test('a local profile nothing points at is still cleared — replace stays replace', () => {
+    const business = prof('p-phone-biz', 'Business', 'business');
+    const { profileIds } = planRestore(
+      [mac], [phone, business], phone.id, [{ id: 't1', profileId: mac.id }],
+    );
+    expect(profileIds).not.toContain(business.id);
+  });
+
+  test('a genuinely new profile from the backup is written', () => {
+    const spouse = prof('p-mac-spouse', 'Spouse', 'spouse');
+    const { profileIds } = planRestore(
+      [mac, spouse], [phone], phone.id, [{ id: 't1', profileId: spouse.id }],
+    );
+    expect(profileIds).toContain(spouse.id);
+  });
+
+  test('a merge leaves the local rows alone', () => {
+    const { profileIds } = planRestore(
+      [mac], [phone], phone.id, [{ id: 't1', profileId: mac.id }], 'merge',
+    );
+    expect(profileIds).toContain(phone.id);
+  });
+});
