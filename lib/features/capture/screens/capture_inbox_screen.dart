@@ -115,29 +115,18 @@ class _PermissionCard extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Grant notification access and SMS permission so bank alerts are '
-            'parsed on-device. The raw text is discarded immediately — only the '
-            'amount, merchant and date are kept.',
+            'Grant notification access so bank alerts are parsed on-device. The '
+            'raw text is discarded immediately — only the amount, merchant and '
+            'date are kept.',
             style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.4),
           ),
           const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              OutlinedButton.icon(
-                onPressed: channel.openNotificationAccessSettings,
-                icon: const Icon(Icons.notifications_active_outlined, size: 18),
-                label: const Text('Notification access'),
-              ),
-              OutlinedButton.icon(
-                onPressed: channel.requestSmsPermission,
-                icon: const Icon(Icons.sms_outlined, size: 18),
-                label: const Text('Allow SMS'),
-              ),
-            ],
+          OutlinedButton.icon(
+            onPressed: channel.openNotificationAccessSettings,
+            icon: const Icon(Icons.notifications_active_outlined, size: 18),
+            label: const Text('Notification access'),
           ),
         ],
       ),
@@ -156,7 +145,7 @@ class _UnsupportedCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Automatic SMS / notification capture is available on Android only. '
+              'Automatic notification capture is available on Android only. '
               'You can still add transactions manually.',
               style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,

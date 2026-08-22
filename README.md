@@ -5,7 +5,7 @@ Khazana is a **privacy-total, serverless** personal-finance app. All data lives
 database, and no account server by design. It ships as **two parallel client
 apps that share the same domain logic**:
 
-- **Flutter app** (iOS / Android / Web) — Dart, Riverpod, go_router, Drift ORM
+- **Flutter app** (iOS / Android / macOS) — Dart, Riverpod, go_router, Drift ORM
   over **SQLCipher (AES-256)** encrypted SQLite.
 - **Next.js web app** (`webapp/`) — React 19, TypeScript, Zustand, Dexie /
   IndexedDB, **Web Crypto AES-256-GCM**, optionally packaged as a desktop app

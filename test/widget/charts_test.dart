@@ -166,7 +166,7 @@ void main() {
   group('groupShades', () {
     test('the first step is the group colour itself', () {
       for (final g in AssetGroup.values) {
-        expect(groupShades(g, 3, dark: false).first, groupColor(g));
+        expect(groupShades(g, 3, dark: false).first, groupColor(g, dark: false));
       }
     });
 

@@ -203,6 +203,16 @@ function SearchButton() {
   );
 }
 
+/**
+ * Market session in the topbar — the fallback for when the sidebar's fuller
+ * [MarketStatusCard] is not on screen.
+ *
+ * Exactly one of the two shows at any width. They used to both render on an
+ * expanded desktop sidebar, putting "NSE Closed · 18:51" twice on the same
+ * screen — which is what made the market feel like the app's headline concern
+ * rather than a status line. The sidebar appears at 900px and the card only
+ * when it is expanded, so this pill stands down precisely there.
+ */
 function MarketPill() {
   // Ticks once a minute so the clock stays honest without a render storm.
   const [state, setState] = useState(() => marketState());
@@ -210,12 +220,15 @@ function MarketPill() {
     const id = setInterval(() => setState(marketState()), 60_000);
     return () => clearInterval(id);
   }, []);
+  const rail = useSyncExternalStore(subscribeRail, () => readRail(), () => false);
   const open = state.phase === 'open';
   const pre = state.phase === 'pre-open';
   return (
     <span
       className={clsx(
         'hidden min-[720px]:inline-flex items-center gap-2 h-8 px-3 rounded-full text-[11.5px] font-semibold whitespace-nowrap',
+        // The expanded sidebar carries the card; do not say it twice.
+        !rail && 'min-[900px]:hidden',
         open && 'bg-success-soft text-success ring-1 ring-inset ring-[color-mix(in_srgb,var(--success)_26%,transparent)]',
         pre && 'bg-warning-soft text-warning ring-1 ring-inset ring-[color-mix(in_srgb,var(--warning)_30%,transparent)]',
         !open && !pre && 'bg-fill text-muted ring-1 ring-inset ring-line',
@@ -285,6 +298,7 @@ function Brand({ rail }: { rail: boolean }) {
 function Nav({
   path, rail, className, onNavigate,
 }: { path: string; rail: boolean; className?: string; onNavigate?: () => void }) {
+  const isPro = useApp((s) => s.pro.isPro);
   return (
     <nav data-tour="nav" className={className}>
       {NAV_GROUPS.map((group, gi) => (
@@ -308,7 +322,7 @@ function Nav({
                 data-tour={`nav-${n.href.replace('/', '')}`}
                 title={rail ? n.label : undefined}
                 className={clsx(
-                  'flex items-center gap-3 rounded-[var(--radius-card)] mb-0.5 text-[13.5px] leading-[1.45]',
+                  'group/nav relative flex items-center gap-3 rounded-[var(--radius-card)] mb-0.5 text-[13.5px] leading-[1.45]',
                   'transition-colors duration-150 ease-standard',
                   rail ? 'justify-center p-2.5' : 'px-2.5 py-1.5',
                   // Vault: #12352A on #20C98A. Ledger: #E1F3EB on #087A56.
@@ -322,6 +336,33 @@ function Nav({
                 {!rail && <span className="truncate">{n.label}</span>}
                 {!rail && n.badge != null && (
                   <span className="ml-auto text-[10px] font-bold px-1.5 rounded-full bg-danger text-white">{n.badge}</span>
+                )}
+                {/* A quiet lock, not a hard stop. The row still navigates —
+                    the screen renders the real content blurred behind the
+                    paywall — because hiding gated rows would make the sidebar
+                    change shape on purchase, and would stop anyone discovering
+                    what they are being sold. */}
+                {!rail && n.pro && !isPro && n.badge == null && (
+                  <span className="ml-auto rounded-full bg-accent-soft px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-[0.08em] text-accent">
+                    Pro
+                  </span>
+                )}
+                {/* Always in the accessible name, so a screen reader hears
+                    "Portfolio, allocation returns performance" and never has to
+                    guess how it differs from "Holdings". Shown to sighted users
+                    on hover or keyboard focus, positioned rather than inlined:
+                    twenty-five two-line rows would not fit, and reserving the
+                    space only on hover would make the list jump. */}
+                {n.description && (
+                  <>
+                    <span className="sr-only">. {n.description}</span>
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-full top-1/2 z-40 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-[var(--radius-btn)] border border-line bg-card px-2.5 py-1.5 text-[12px] font-medium text-ink-soft shadow-lg group-hover/nav:block group-focus-visible/nav:block"
+                    >
+                      {n.description}
+                    </span>
+                  </>
                 )}
               </Link>
             );

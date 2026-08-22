@@ -1,0 +1,150 @@
+{
+  "$comment": [
+    "The canonical Free/Pro map. This file is the single source of truth and is",
+    "loaded by BOTH test suites — test/unit/feature_gate_test.dart and",
+    "webapp/src/lib/entitlement/gates.test.ts — so the two clients cannot drift",
+    "into disagreeing about what money buys. Same anti-drift pattern as",
+    "test/fixtures/health_cases.json.",
+    "",
+    "The principle: free is your whole present; Pro is depth, history,",
+    "automation and output. Nothing you have already entered is ever hidden",
+    "from you, and nothing that gets your data OUT is ever gated."
+  ],
+
+  "principle": "Free is your whole present. Pro is depth, history, automation and output.",
+
+  "alwaysFree": {
+    "$comment": [
+      "Features that must NEVER be gated, in any tier, forever. The test suites",
+      "assert this as a hard invariant rather than trusting a comment — see the",
+      "negative half of feature_gate_test.dart. If a future change tries to put",
+      "any of these behind a payment, the build fails."
+    ],
+    "features": [
+      "backupExport",
+      "backupRestore",
+      "csvDumpAll",
+      "eraseAllData",
+      "errorLogExport",
+      "pinLock",
+      "biometrics",
+      "autoLock",
+      "ghostMode",
+      "themes",
+      "accents",
+      "diagnostics",
+      "reminders",
+      "manualEntry",
+      "manualPriceEntry"
+    ],
+    "reasons": {
+      "backupExport": "Never hold a user's own data hostage.",
+      "backupRestore": "An export you cannot restore is not a backup. Gating restore would make the free tier a data trap.",
+      "csvDumpAll": "Leaving must always be possible, in a format that needs no Khazana to read.",
+      "eraseAllData": "Deleting your own data is not a feature to sell.",
+      "errorLogExport": "This is our only support channel; charging for it would mean charging to report our own bugs.",
+      "pinLock": "Security is never an upsell. Apple review dislikes it and it is wrong in a vault product.",
+      "biometrics": "Same.",
+      "autoLock": "Same.",
+      "ghostMode": "Same — hiding your balances is a safety feature, not a luxury.",
+      "themes": "Gating cosmetics for the price of Pro makes the app feel stingy and buys nothing.",
+      "accents": "Same.",
+      "diagnostics": "It reports data-integrity problems including records that will not decrypt. Hiding that behind a paywall is indefensible.",
+      "reminders": "Local notifications cost us nothing and a missed bill costs the user real money.",
+      "manualEntry": "The ledger itself. See noCaps below.",
+      "manualPriceEntry": "So a free portfolio is still CORRECT, just not auto-refreshed."
+    }
+  },
+
+  "noCaps": {
+    "$comment": [
+      "There are NO count limits on the ledger in any tier. A capped ledger is a",
+      "broken ledger: the totals stop being true, every derived number is wrong,",
+      "and the app earns one-star reviews for lying rather than for costing",
+      "money. This is the single most important product decision in the plan."
+    ],
+    "uncapped": ["transactions", "accounts", "budgets", "goals", "holdings", "recurringRules", "categories", "liabilities", "insurances"]
+  },
+
+  "countedAllowances": {
+    "$comment": [
+      "The only two counted limits, deliberately few so the rule is memorable.",
+      "The import allowance is the conversion moment: a free user proves the",
+      "parser works on THEIR bank's statement, with full preview and a working",
+      "undo, before paying."
+    ],
+    "profiles": { "free": 1, "pro": null },
+    "vaults": { "free": 1, "pro": null },
+    "committedImports": { "free": 1, "pro": null, "undoable": true }
+  },
+
+  "features": {
+    "$comment": "tier: 'free' | 'pro'. clients: where the feature exists today.",
+
+    "backupExport":       { "tier": "free", "clients": ["flutter", "web"] },
+    "backupRestore":      { "tier": "free", "clients": ["flutter", "web"] },
+    "csvDumpAll":         { "tier": "free", "clients": ["web"] },
+    "eraseAllData":       { "tier": "free", "clients": ["flutter", "web"] },
+    "errorLogExport":     { "tier": "free", "clients": ["flutter"] },
+    "pinLock":            { "tier": "free", "clients": ["flutter", "web"] },
+    "biometrics":         { "tier": "free", "clients": ["flutter"] },
+    "autoLock":           { "tier": "free", "clients": ["flutter", "web"] },
+    "ghostMode":          { "tier": "free", "clients": ["flutter", "web"] },
+    "themes":             { "tier": "free", "clients": ["flutter", "web"] },
+    "accents":            { "tier": "free", "clients": ["web"] },
+    "diagnostics":        { "tier": "free", "clients": ["web"] },
+    "reminders":          { "tier": "free", "clients": ["flutter", "web"] },
+    "manualEntry":        { "tier": "free", "clients": ["flutter", "web"] },
+    "manualPriceEntry":   { "tier": "free", "clients": ["flutter", "web"] },
+    "dashboard":          { "tier": "free", "clients": ["flutter", "web"] },
+    "healthScore":        { "tier": "free", "clients": ["flutter", "web"] },
+    "portfolioValue":     { "tier": "free", "clients": ["flutter", "web"] },
+    "allocationDonut":    { "tier": "free", "clients": ["flutter", "web"] },
+    "calendarLedger":     { "tier": "free", "clients": ["flutter", "web"] },
+    "safetyNet":          { "tier": "free", "clients": ["flutter", "web"] },
+    "liabilities":        { "tier": "free", "clients": ["flutter", "web"] },
+    "insurance":          { "tier": "free", "clients": ["flutter", "web"] },
+    "goals":              { "tier": "free", "clients": ["flutter", "web"] },
+    "budget":             { "tier": "free", "clients": ["flutter", "web"] },
+    "recurringRules":     { "tier": "free", "clients": ["flutter", "web"] },
+    "search":             { "tier": "free", "clients": ["flutter", "web"] },
+    "reportsShortWindow": { "tier": "free", "clients": ["flutter", "web"], "note": "7D / 1M / 3M" },
+
+    "sectorPnlBreakdown": { "tier": "pro", "clients": ["flutter", "web"], "why": "Analysis, not data. Portfolio value, cost and the allocation donut stay free." },
+    "portfolioAnalytics": { "tier": "pro", "clients": ["flutter", "web"], "why": "XIRR, benchmark comparison, movers — computed insight." },
+    "dividends":          { "tier": "pro", "clients": ["web"],            "why": "New capability; ships as Pro." },
+    "watchlist":          { "tier": "pro", "clients": ["web"],            "why": "Things you do not own — pure convenience." },
+    "taxCentre":          { "tier": "pro", "clients": ["web"],            "why": "The strongest single justification for the price: STCG/LTCG, realised gains, if-sold-today." },
+    "marketsAndNews":     { "tier": "pro", "clients": ["web"],            "why": "Network-fetched extras; gating also caps free-tier API cost." },
+    "priceRefresh":       { "tier": "pro", "clients": ["flutter"],        "why": "Convenience. Manual price entry stays free so a free portfolio is still correct." },
+    "bankStatementImport":{ "tier": "pro", "clients": ["flutter", "web"], "why": "Work we do for you. One full import free, with undo — see countedAllowances." },
+    "brokerLotImport":    { "tier": "pro", "clients": ["flutter", "web"], "why": "Same allowance, same counter." },
+    "autoCapture":        { "tier": "pro", "clients": ["flutter"],        "why": "Android notification-listener capture — the headline automation." },
+    "forecast":           { "tier": "pro", "clients": ["web"],            "why": "Projection is advisory depth." },
+    "reconcile":          { "tier": "pro", "clients": ["web"],            "why": "Power-user workflow." },
+    "multiProfile":       { "tier": "pro", "clients": ["web"],            "why": "Household. First profile free — see countedAllowances." },
+    "multiVault":         { "tier": "pro", "clients": ["flutter"],        "why": "Same, on the Flutter side." },
+    "reportsLongWindow":  { "tier": "pro", "clients": ["flutter", "web"], "why": "1Y / YTD / All / custom. The 7D-3M selector stays free." },
+    "scoreHistory":       { "tier": "pro", "clients": ["flutter", "web"], "why": "The current grade and its four pillars stay free — that is the hook." },
+    "formattedExports":   { "tier": "pro", "clients": ["web"],            "why": "Presentation-grade XLSX / tax-year PDF. The complete encrypted backup and the complete plain CSV are FREE — only filtered, styled output is Pro." }
+  },
+
+  "product": {
+    "$comment": [
+      "One product id across all three Apple platforms and Play. Universal",
+      "Purchase must be enabled in App Store Connect so one buy covers iPhone,",
+      "iPad and Mac; Family Sharing is on because it costs nothing and is a",
+      "genuine selling point for a household finance app.",
+      "",
+      "An app-store purchase and a direct licence key are SEPARATE, and the",
+      "paywall says so before payment. Linking the two ecosystems needs a",
+      "server we do not operate."
+    ],
+    "id": "khazana_pro",
+    "type": "non-consumable",
+    "priceInr": 999,
+    "priceUsd": 19.99,
+    "universalPurchase": true,
+    "familySharing": true
+  }
+}

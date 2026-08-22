@@ -9863,6 +9863,567 @@ class BenchmarkSeriesCompanion extends UpdateCompanion<BenchmarkPointRow> {
   }
 }
 
+class $NotificationDeliveriesTable extends NotificationDeliveries
+    with TableInfo<$NotificationDeliveriesTable, NotificationDeliveryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $NotificationDeliveriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<String> vaultId = GeneratedColumn<String>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _dedupeKeyMeta =
+      const VerificationMeta('dedupeKey');
+  @override
+  late final GeneratedColumn<String> dedupeKey = GeneratedColumn<String>(
+      'dedupe_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoryMeta =
+      const VerificationMeta('category');
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+      'category', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+      'title', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+      'body', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _deepLinkMeta =
+      const VerificationMeta('deepLink');
+  @override
+  late final GeneratedColumn<String> deepLink = GeneratedColumn<String>(
+      'deep_link', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _scheduledForMeta =
+      const VerificationMeta('scheduledFor');
+  @override
+  late final GeneratedColumn<int> scheduledFor = GeneratedColumn<int>(
+      'scheduled_for', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _firedAtMeta =
+      const VerificationMeta('firedAt');
+  @override
+  late final GeneratedColumn<int> firedAt = GeneratedColumn<int>(
+      'fired_at', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _readAtMeta = const VerificationMeta('readAt');
+  @override
+  late final GeneratedColumn<int> readAt = GeneratedColumn<int>(
+      'read_at', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        vaultId,
+        dedupeKey,
+        category,
+        title,
+        body,
+        deepLink,
+        scheduledFor,
+        firedAt,
+        readAt,
+        source
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'notification_deliveries';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<NotificationDeliveryRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('dedupe_key')) {
+      context.handle(_dedupeKeyMeta,
+          dedupeKey.isAcceptableOrUnknown(data['dedupe_key']!, _dedupeKeyMeta));
+    } else if (isInserting) {
+      context.missing(_dedupeKeyMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(_categoryMeta,
+          category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
+    } else if (isInserting) {
+      context.missing(_categoryMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+          _titleMeta, title.isAcceptableOrUnknown(data['title']!, _titleMeta));
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+          _bodyMeta, body.isAcceptableOrUnknown(data['body']!, _bodyMeta));
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('deep_link')) {
+      context.handle(_deepLinkMeta,
+          deepLink.isAcceptableOrUnknown(data['deep_link']!, _deepLinkMeta));
+    }
+    if (data.containsKey('scheduled_for')) {
+      context.handle(
+          _scheduledForMeta,
+          scheduledFor.isAcceptableOrUnknown(
+              data['scheduled_for']!, _scheduledForMeta));
+    }
+    if (data.containsKey('fired_at')) {
+      context.handle(_firedAtMeta,
+          firedAt.isAcceptableOrUnknown(data['fired_at']!, _firedAtMeta));
+    } else if (isInserting) {
+      context.missing(_firedAtMeta);
+    }
+    if (data.containsKey('read_at')) {
+      context.handle(_readAtMeta,
+          readAt.isAcceptableOrUnknown(data['read_at']!, _readAtMeta));
+    }
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  NotificationDeliveryRow map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return NotificationDeliveryRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vault_id'])!,
+      dedupeKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}dedupe_key'])!,
+      category: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category'])!,
+      title: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
+      body: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}body'])!,
+      deepLink: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}deep_link']),
+      scheduledFor: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}scheduled_for']),
+      firedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}fired_at'])!,
+      readAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}read_at']),
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+    );
+  }
+
+  @override
+  $NotificationDeliveriesTable createAlias(String alias) {
+    return $NotificationDeliveriesTable(attachedDatabase, alias);
+  }
+}
+
+class NotificationDeliveryRow extends DataClass
+    implements Insertable<NotificationDeliveryRow> {
+  final String id;
+  final String vaultId;
+
+  /// The planner's stable identity for this notification. Indexed by the
+  /// cooldown lookup, and the key `NotificationService` cancels alarms under.
+  final String dedupeKey;
+
+  /// A [NotifyCategory] wire name: budget | bills | renewals | goals | market | digest.
+  final String category;
+  final String title;
+  final String body;
+  final String? deepLink;
+
+  /// When it was meant to fire, for one handed to the OS ahead of time. Null for
+  /// anything shown immediately.
+  final int? scheduledFor;
+  final int firedAt;
+  final int? readAt;
+
+  /// scheduled | immediate | digest.
+  final String source;
+  const NotificationDeliveryRow(
+      {required this.id,
+      required this.vaultId,
+      required this.dedupeKey,
+      required this.category,
+      required this.title,
+      required this.body,
+      this.deepLink,
+      this.scheduledFor,
+      required this.firedAt,
+      this.readAt,
+      required this.source});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vault_id'] = Variable<String>(vaultId);
+    map['dedupe_key'] = Variable<String>(dedupeKey);
+    map['category'] = Variable<String>(category);
+    map['title'] = Variable<String>(title);
+    map['body'] = Variable<String>(body);
+    if (!nullToAbsent || deepLink != null) {
+      map['deep_link'] = Variable<String>(deepLink);
+    }
+    if (!nullToAbsent || scheduledFor != null) {
+      map['scheduled_for'] = Variable<int>(scheduledFor);
+    }
+    map['fired_at'] = Variable<int>(firedAt);
+    if (!nullToAbsent || readAt != null) {
+      map['read_at'] = Variable<int>(readAt);
+    }
+    map['source'] = Variable<String>(source);
+    return map;
+  }
+
+  NotificationDeliveriesCompanion toCompanion(bool nullToAbsent) {
+    return NotificationDeliveriesCompanion(
+      id: Value(id),
+      vaultId: Value(vaultId),
+      dedupeKey: Value(dedupeKey),
+      category: Value(category),
+      title: Value(title),
+      body: Value(body),
+      deepLink: deepLink == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deepLink),
+      scheduledFor: scheduledFor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scheduledFor),
+      firedAt: Value(firedAt),
+      readAt:
+          readAt == null && nullToAbsent ? const Value.absent() : Value(readAt),
+      source: Value(source),
+    );
+  }
+
+  factory NotificationDeliveryRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return NotificationDeliveryRow(
+      id: serializer.fromJson<String>(json['id']),
+      vaultId: serializer.fromJson<String>(json['vaultId']),
+      dedupeKey: serializer.fromJson<String>(json['dedupeKey']),
+      category: serializer.fromJson<String>(json['category']),
+      title: serializer.fromJson<String>(json['title']),
+      body: serializer.fromJson<String>(json['body']),
+      deepLink: serializer.fromJson<String?>(json['deepLink']),
+      scheduledFor: serializer.fromJson<int?>(json['scheduledFor']),
+      firedAt: serializer.fromJson<int>(json['firedAt']),
+      readAt: serializer.fromJson<int?>(json['readAt']),
+      source: serializer.fromJson<String>(json['source']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vaultId': serializer.toJson<String>(vaultId),
+      'dedupeKey': serializer.toJson<String>(dedupeKey),
+      'category': serializer.toJson<String>(category),
+      'title': serializer.toJson<String>(title),
+      'body': serializer.toJson<String>(body),
+      'deepLink': serializer.toJson<String?>(deepLink),
+      'scheduledFor': serializer.toJson<int?>(scheduledFor),
+      'firedAt': serializer.toJson<int>(firedAt),
+      'readAt': serializer.toJson<int?>(readAt),
+      'source': serializer.toJson<String>(source),
+    };
+  }
+
+  NotificationDeliveryRow copyWith(
+          {String? id,
+          String? vaultId,
+          String? dedupeKey,
+          String? category,
+          String? title,
+          String? body,
+          Value<String?> deepLink = const Value.absent(),
+          Value<int?> scheduledFor = const Value.absent(),
+          int? firedAt,
+          Value<int?> readAt = const Value.absent(),
+          String? source}) =>
+      NotificationDeliveryRow(
+        id: id ?? this.id,
+        vaultId: vaultId ?? this.vaultId,
+        dedupeKey: dedupeKey ?? this.dedupeKey,
+        category: category ?? this.category,
+        title: title ?? this.title,
+        body: body ?? this.body,
+        deepLink: deepLink.present ? deepLink.value : this.deepLink,
+        scheduledFor:
+            scheduledFor.present ? scheduledFor.value : this.scheduledFor,
+        firedAt: firedAt ?? this.firedAt,
+        readAt: readAt.present ? readAt.value : this.readAt,
+        source: source ?? this.source,
+      );
+  NotificationDeliveryRow copyWithCompanion(
+      NotificationDeliveriesCompanion data) {
+    return NotificationDeliveryRow(
+      id: data.id.present ? data.id.value : this.id,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      dedupeKey: data.dedupeKey.present ? data.dedupeKey.value : this.dedupeKey,
+      category: data.category.present ? data.category.value : this.category,
+      title: data.title.present ? data.title.value : this.title,
+      body: data.body.present ? data.body.value : this.body,
+      deepLink: data.deepLink.present ? data.deepLink.value : this.deepLink,
+      scheduledFor: data.scheduledFor.present
+          ? data.scheduledFor.value
+          : this.scheduledFor,
+      firedAt: data.firedAt.present ? data.firedAt.value : this.firedAt,
+      readAt: data.readAt.present ? data.readAt.value : this.readAt,
+      source: data.source.present ? data.source.value : this.source,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NotificationDeliveryRow(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('dedupeKey: $dedupeKey, ')
+          ..write('category: $category, ')
+          ..write('title: $title, ')
+          ..write('body: $body, ')
+          ..write('deepLink: $deepLink, ')
+          ..write('scheduledFor: $scheduledFor, ')
+          ..write('firedAt: $firedAt, ')
+          ..write('readAt: $readAt, ')
+          ..write('source: $source')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, vaultId, dedupeKey, category, title, body,
+      deepLink, scheduledFor, firedAt, readAt, source);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is NotificationDeliveryRow &&
+          other.id == this.id &&
+          other.vaultId == this.vaultId &&
+          other.dedupeKey == this.dedupeKey &&
+          other.category == this.category &&
+          other.title == this.title &&
+          other.body == this.body &&
+          other.deepLink == this.deepLink &&
+          other.scheduledFor == this.scheduledFor &&
+          other.firedAt == this.firedAt &&
+          other.readAt == this.readAt &&
+          other.source == this.source);
+}
+
+class NotificationDeliveriesCompanion
+    extends UpdateCompanion<NotificationDeliveryRow> {
+  final Value<String> id;
+  final Value<String> vaultId;
+  final Value<String> dedupeKey;
+  final Value<String> category;
+  final Value<String> title;
+  final Value<String> body;
+  final Value<String?> deepLink;
+  final Value<int?> scheduledFor;
+  final Value<int> firedAt;
+  final Value<int?> readAt;
+  final Value<String> source;
+  final Value<int> rowid;
+  const NotificationDeliveriesCompanion({
+    this.id = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.dedupeKey = const Value.absent(),
+    this.category = const Value.absent(),
+    this.title = const Value.absent(),
+    this.body = const Value.absent(),
+    this.deepLink = const Value.absent(),
+    this.scheduledFor = const Value.absent(),
+    this.firedAt = const Value.absent(),
+    this.readAt = const Value.absent(),
+    this.source = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  NotificationDeliveriesCompanion.insert({
+    required String id,
+    required String vaultId,
+    required String dedupeKey,
+    required String category,
+    required String title,
+    required String body,
+    this.deepLink = const Value.absent(),
+    this.scheduledFor = const Value.absent(),
+    required int firedAt,
+    this.readAt = const Value.absent(),
+    required String source,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        vaultId = Value(vaultId),
+        dedupeKey = Value(dedupeKey),
+        category = Value(category),
+        title = Value(title),
+        body = Value(body),
+        firedAt = Value(firedAt),
+        source = Value(source);
+  static Insertable<NotificationDeliveryRow> custom({
+    Expression<String>? id,
+    Expression<String>? vaultId,
+    Expression<String>? dedupeKey,
+    Expression<String>? category,
+    Expression<String>? title,
+    Expression<String>? body,
+    Expression<String>? deepLink,
+    Expression<int>? scheduledFor,
+    Expression<int>? firedAt,
+    Expression<int>? readAt,
+    Expression<String>? source,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (dedupeKey != null) 'dedupe_key': dedupeKey,
+      if (category != null) 'category': category,
+      if (title != null) 'title': title,
+      if (body != null) 'body': body,
+      if (deepLink != null) 'deep_link': deepLink,
+      if (scheduledFor != null) 'scheduled_for': scheduledFor,
+      if (firedAt != null) 'fired_at': firedAt,
+      if (readAt != null) 'read_at': readAt,
+      if (source != null) 'source': source,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  NotificationDeliveriesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? vaultId,
+      Value<String>? dedupeKey,
+      Value<String>? category,
+      Value<String>? title,
+      Value<String>? body,
+      Value<String?>? deepLink,
+      Value<int?>? scheduledFor,
+      Value<int>? firedAt,
+      Value<int?>? readAt,
+      Value<String>? source,
+      Value<int>? rowid}) {
+    return NotificationDeliveriesCompanion(
+      id: id ?? this.id,
+      vaultId: vaultId ?? this.vaultId,
+      dedupeKey: dedupeKey ?? this.dedupeKey,
+      category: category ?? this.category,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      deepLink: deepLink ?? this.deepLink,
+      scheduledFor: scheduledFor ?? this.scheduledFor,
+      firedAt: firedAt ?? this.firedAt,
+      readAt: readAt ?? this.readAt,
+      source: source ?? this.source,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<String>(vaultId.value);
+    }
+    if (dedupeKey.present) {
+      map['dedupe_key'] = Variable<String>(dedupeKey.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (deepLink.present) {
+      map['deep_link'] = Variable<String>(deepLink.value);
+    }
+    if (scheduledFor.present) {
+      map['scheduled_for'] = Variable<int>(scheduledFor.value);
+    }
+    if (firedAt.present) {
+      map['fired_at'] = Variable<int>(firedAt.value);
+    }
+    if (readAt.present) {
+      map['read_at'] = Variable<int>(readAt.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NotificationDeliveriesCompanion(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('dedupeKey: $dedupeKey, ')
+          ..write('category: $category, ')
+          ..write('title: $title, ')
+          ..write('body: $body, ')
+          ..write('deepLink: $deepLink, ')
+          ..write('scheduledFor: $scheduledFor, ')
+          ..write('firedAt: $firedAt, ')
+          ..write('readAt: $readAt, ')
+          ..write('source: $source, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -9895,6 +10456,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $FundHoldingsTable fundHoldings = $FundHoldingsTable(this);
   late final $BenchmarkSeriesTable benchmarkSeries =
       $BenchmarkSeriesTable(this);
+  late final $NotificationDeliveriesTable notificationDeliveries =
+      $NotificationDeliveriesTable(this);
   late final TransactionDao transactionDao =
       TransactionDao(this as AppDatabase);
   late final CategoryDao categoryDao = CategoryDao(this as AppDatabase);
@@ -9913,6 +10476,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final PostingDao postingDao = PostingDao(this as AppDatabase);
   late final PendingCaptureDao pendingCaptureDao =
       PendingCaptureDao(this as AppDatabase);
+  late final NotificationDeliveryDao notificationDeliveryDao =
+      NotificationDeliveryDao(this as AppDatabase);
   late final PortfolioDao portfolioDao = PortfolioDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -9940,7 +10505,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         instrumentPrices,
         dividends,
         fundHoldings,
-        benchmarkSeries
+        benchmarkSeries,
+        notificationDeliveries
       ];
 }
 
@@ -16917,6 +17483,277 @@ typedef $$BenchmarkSeriesTableProcessedTableManager = ProcessedTableManager<
     ),
     BenchmarkPointRow,
     PrefetchHooks Function()>;
+typedef $$NotificationDeliveriesTableCreateCompanionBuilder
+    = NotificationDeliveriesCompanion Function({
+  required String id,
+  required String vaultId,
+  required String dedupeKey,
+  required String category,
+  required String title,
+  required String body,
+  Value<String?> deepLink,
+  Value<int?> scheduledFor,
+  required int firedAt,
+  Value<int?> readAt,
+  required String source,
+  Value<int> rowid,
+});
+typedef $$NotificationDeliveriesTableUpdateCompanionBuilder
+    = NotificationDeliveriesCompanion Function({
+  Value<String> id,
+  Value<String> vaultId,
+  Value<String> dedupeKey,
+  Value<String> category,
+  Value<String> title,
+  Value<String> body,
+  Value<String?> deepLink,
+  Value<int?> scheduledFor,
+  Value<int> firedAt,
+  Value<int?> readAt,
+  Value<String> source,
+  Value<int> rowid,
+});
+
+class $$NotificationDeliveriesTableFilterComposer
+    extends Composer<_$AppDatabase, $NotificationDeliveriesTable> {
+  $$NotificationDeliveriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get dedupeKey => $composableBuilder(
+      column: $table.dedupeKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get body => $composableBuilder(
+      column: $table.body, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get deepLink => $composableBuilder(
+      column: $table.deepLink, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get scheduledFor => $composableBuilder(
+      column: $table.scheduledFor, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get firedAt => $composableBuilder(
+      column: $table.firedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get readAt => $composableBuilder(
+      column: $table.readAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+}
+
+class $$NotificationDeliveriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $NotificationDeliveriesTable> {
+  $$NotificationDeliveriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get dedupeKey => $composableBuilder(
+      column: $table.dedupeKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get body => $composableBuilder(
+      column: $table.body, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get deepLink => $composableBuilder(
+      column: $table.deepLink, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get scheduledFor => $composableBuilder(
+      column: $table.scheduledFor,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get firedAt => $composableBuilder(
+      column: $table.firedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get readAt => $composableBuilder(
+      column: $table.readAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+}
+
+class $$NotificationDeliveriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $NotificationDeliveriesTable> {
+  $$NotificationDeliveriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<String> get dedupeKey =>
+      $composableBuilder(column: $table.dedupeKey, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<String> get deepLink =>
+      $composableBuilder(column: $table.deepLink, builder: (column) => column);
+
+  GeneratedColumn<int> get scheduledFor => $composableBuilder(
+      column: $table.scheduledFor, builder: (column) => column);
+
+  GeneratedColumn<int> get firedAt =>
+      $composableBuilder(column: $table.firedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get readAt =>
+      $composableBuilder(column: $table.readAt, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+}
+
+class $$NotificationDeliveriesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $NotificationDeliveriesTable,
+    NotificationDeliveryRow,
+    $$NotificationDeliveriesTableFilterComposer,
+    $$NotificationDeliveriesTableOrderingComposer,
+    $$NotificationDeliveriesTableAnnotationComposer,
+    $$NotificationDeliveriesTableCreateCompanionBuilder,
+    $$NotificationDeliveriesTableUpdateCompanionBuilder,
+    (
+      NotificationDeliveryRow,
+      BaseReferences<_$AppDatabase, $NotificationDeliveriesTable,
+          NotificationDeliveryRow>
+    ),
+    NotificationDeliveryRow,
+    PrefetchHooks Function()> {
+  $$NotificationDeliveriesTableTableManager(
+      _$AppDatabase db, $NotificationDeliveriesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$NotificationDeliveriesTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$NotificationDeliveriesTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$NotificationDeliveriesTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> vaultId = const Value.absent(),
+            Value<String> dedupeKey = const Value.absent(),
+            Value<String> category = const Value.absent(),
+            Value<String> title = const Value.absent(),
+            Value<String> body = const Value.absent(),
+            Value<String?> deepLink = const Value.absent(),
+            Value<int?> scheduledFor = const Value.absent(),
+            Value<int> firedAt = const Value.absent(),
+            Value<int?> readAt = const Value.absent(),
+            Value<String> source = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              NotificationDeliveriesCompanion(
+            id: id,
+            vaultId: vaultId,
+            dedupeKey: dedupeKey,
+            category: category,
+            title: title,
+            body: body,
+            deepLink: deepLink,
+            scheduledFor: scheduledFor,
+            firedAt: firedAt,
+            readAt: readAt,
+            source: source,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String vaultId,
+            required String dedupeKey,
+            required String category,
+            required String title,
+            required String body,
+            Value<String?> deepLink = const Value.absent(),
+            Value<int?> scheduledFor = const Value.absent(),
+            required int firedAt,
+            Value<int?> readAt = const Value.absent(),
+            required String source,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              NotificationDeliveriesCompanion.insert(
+            id: id,
+            vaultId: vaultId,
+            dedupeKey: dedupeKey,
+            category: category,
+            title: title,
+            body: body,
+            deepLink: deepLink,
+            scheduledFor: scheduledFor,
+            firedAt: firedAt,
+            readAt: readAt,
+            source: source,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$NotificationDeliveriesTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $NotificationDeliveriesTable,
+        NotificationDeliveryRow,
+        $$NotificationDeliveriesTableFilterComposer,
+        $$NotificationDeliveriesTableOrderingComposer,
+        $$NotificationDeliveriesTableAnnotationComposer,
+        $$NotificationDeliveriesTableCreateCompanionBuilder,
+        $$NotificationDeliveriesTableUpdateCompanionBuilder,
+        (
+          NotificationDeliveryRow,
+          BaseReferences<_$AppDatabase, $NotificationDeliveriesTable,
+              NotificationDeliveryRow>
+        ),
+        NotificationDeliveryRow,
+        PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -16966,4 +17803,7 @@ class $AppDatabaseManager {
       $$FundHoldingsTableTableManager(_db, _db.fundHoldings);
   $$BenchmarkSeriesTableTableManager get benchmarkSeries =>
       $$BenchmarkSeriesTableTableManager(_db, _db.benchmarkSeries);
+  $$NotificationDeliveriesTableTableManager get notificationDeliveries =>
+      $$NotificationDeliveriesTableTableManager(
+          _db, _db.notificationDeliveries);
 }

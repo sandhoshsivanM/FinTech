@@ -13,6 +13,7 @@ import 'goal_dao.dart';
 import 'insurance_dao.dart';
 import 'liability_dao.dart';
 import 'merchant_alias_dao.dart';
+import 'notification_delivery_dao.dart';
 import 'pending_capture_dao.dart';
 import 'portfolio_dao.dart';
 import 'posting_dao.dart';
@@ -52,6 +53,7 @@ part 'app_database.g.dart';
     Dividends,
     FundHoldings,
     BenchmarkSeries,
+    NotificationDeliveries,
   ],
   daos: [
     TransactionDao,
@@ -68,6 +70,7 @@ part 'app_database.g.dart';
     AccountDao,
     PostingDao,
     PendingCaptureDao,
+    NotificationDeliveryDao,
     PortfolioDao,
   ],
 )
@@ -84,7 +87,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -113,6 +116,13 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(netWorthSnapshots, netWorthSnapshots.healthScore);
             await m.addColumn(
                 netWorthSnapshots, netWorthSnapshots.healthTrackedWeight);
+          }
+          // v6: the notification delivery log, so the cooldown survives a
+          // restart. Purely additive and empty on creation — nothing existing is
+          // read, rewritten or reinterpreted, which makes this the cheapest
+          // migration in the ladder.
+          if (from < 6) {
+            await m.createTable(notificationDeliveries);
           }
         },
       );

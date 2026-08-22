@@ -1,6 +1,8 @@
 'use client';
 import { useState, useMemo } from 'react';
 import { CreditCard, Landmark, Trash2, Plus, AlertTriangle, Pencil } from 'lucide-react';
+import { Hint } from '@/components/Hint';
+import type { TermKey } from '@/lib/glossary';
 import { useApp, uid } from '@/lib/store';
 import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
@@ -46,10 +48,15 @@ const STRATEGY_OPTIONS: { value: PayoffStrategy; label: string }[] = [
   { value: 'snowball', label: 'Snowball' },
 ];
 
-function SummaryTile({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
+function SummaryTile({ label, value, sub, accent, term }: {
+  label: string; value: string; sub?: string; accent?: string; term?: TermKey;
+}) {
   return (
     <div className="px-5 py-4">
-      <div className="eyebrow">{label}</div>
+      <div className="flex items-center gap-1">
+        <div className="eyebrow">{label}</div>
+        {term && <Hint term={term} className="shrink-0" />}
+      </div>
       <div className="mt-1.5 text-[22px] font-bold tracking-tight tnum" style={accent ? { color: accent } : undefined}>{value}</div>
       {sub && <div className="text-[11.5px] text-muted mt-0.5">{sub}</div>}
     </div>
@@ -176,8 +183,8 @@ export default function LiabilitiesPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-[var(--line)]">
             <SummaryTile label="Total outstanding" value={mask(fmt.money(m.totalDebt))} accent="var(--expense)" sub={`${m.loans} loan${m.loans !== 1 ? 's' : ''} · ${m.cards} card${m.cards !== 1 ? 's' : ''}`} />
             <SummaryTile label="Monthly obligation" value={mask(fmt.money(m.monthlyObligation))} sub="Loan EMIs per month" />
-            <SummaryTile label="Credit utilization" value={m.utilPct == null ? '—' : `${m.utilPct}%`} accent={m.utilPct != null && m.utilPct > 70 ? 'var(--expense)' : m.utilPct != null && m.utilPct >= 30 ? 'var(--warn)' : 'var(--income)'} sub="Across credit cards" />
-            <SummaryTile label="Avg interest rate" value={`${m.wAvgApr.toFixed(1)}%`} sub="Balance-weighted APR" />
+            <SummaryTile label="Credit utilization" term="utilisation" value={m.utilPct == null ? '—' : `${m.utilPct}%`} accent={m.utilPct != null && m.utilPct > 70 ? 'var(--expense)' : m.utilPct != null && m.utilPct >= 30 ? 'var(--warn)' : 'var(--income)'} sub="Across credit cards" />
+            <SummaryTile label="Avg interest rate" term="weightedApr" value={`${m.wAvgApr.toFixed(1)}%`} sub="Balance-weighted APR" />
           </div>
         </GlassCard>
       )}

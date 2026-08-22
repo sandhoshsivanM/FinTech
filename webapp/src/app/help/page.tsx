@@ -74,12 +74,20 @@ export default function HelpPage() {
                 <h3 className="text-[15px] font-semibold tracking-[-0.02em]">Privacy</h3>
               </div>
               <ul className="grid gap-2.5 text-[12.5px] text-ink-soft leading-relaxed">
-                <li className="flex gap-2"><Chip tone="success">No server</Chip> Nothing to upload to.</li>
+                <li className="flex gap-2"><Chip tone="success">No server</Chip> No account, and nowhere to upload your vault to.</li>
                 <li className="flex gap-2"><Chip tone="success">No analytics</Chip> No telemetry of any kind.</li>
-                <li className="flex gap-2"><Chip tone="violet"><FlaskConical size={11} />Demo</Chip> Market surfaces are generated locally.</li>
+                <li className="flex gap-2"><Chip tone="violet"><FlaskConical size={11} />Demo</Chip> Market surfaces are generated locally, and off by default.</li>
+                {/* Scoped honestly: this app fetches nothing, but the mobile
+                    app does call price and FX providers on request. Claiming
+                    "never touches the network" for the whole product would be
+                    false, and the privacy policy a reviewer reads says so. */}
+                <li className="flex gap-2"><Chip tone="success">This app</Chip> fetches nothing at all. The mobile app calls price and exchange-rate providers only when you refresh — never carrying anything about you.</li>
               </ul>
               <div className="mt-4 flex gap-2 flex-wrap">
                 <Button variant="soft"><Link href="/settings" className="flex items-center gap-2"><Download size={15} />Export a backup</Link></Button>
+                {/* The store listings point at /privacy too, so this is the same
+                    document a reviewer reads — not a second, looser summary. */}
+                <Button variant="ghost"><Link href="/privacy" className="flex items-center gap-2"><ShieldCheck size={15} />Privacy policy</Link></Button>
               </div>
             </GlassCard>
           </StaggerItem>

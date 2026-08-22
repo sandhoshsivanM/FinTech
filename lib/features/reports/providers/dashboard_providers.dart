@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../domain/entities/net_worth_snapshot.dart';
@@ -27,7 +28,53 @@ final selectedWindowProvider =
 
 /// Ghost mode — when true, all monetary values on the dashboard are masked
 /// as "••••••" (PRD §3B privacy feature).
-final ghostModeProvider = StateProvider<bool>((ref) => false);
+///
+/// Persisted, because the reason someone hides their balances — an open-plan
+/// desk, a commute, a shared screen — is still true the next time they open the
+/// app. Forgetting the choice on every launch unmasks the amounts at exactly
+/// the moment they were being hidden from.
+///
+/// A [Notifier] rather than a `FutureProvider`, deliberately: every read site is
+/// synchronous, and an [AsyncValue] would paint one frame of real figures
+/// before the preference resolved. A privacy control that leaks the thing it
+/// conceals, however briefly, is not one.
+class GhostModeNotifier extends Notifier<bool> {
+  static const _key = 'ghost_mode_v1';
+
+  @override
+  bool build() {
+    _load();
+    // Visible by default: masking is a choice, and an app that opens masked
+    // teaches nothing about the money it is meant to show.
+    return false;
+  }
+
+  Future<void> _load() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getBool(_key);
+      if (saved != null) state = saved;
+    } on Object {
+      // An unreadable preference must never stop the dashboard rendering.
+    }
+  }
+
+  Future<void> set(bool value) async {
+    state = value;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_key, value);
+    } on Object {
+      // The mask already applies to this session; failing to remember it is
+      // not worth undoing in front of the user.
+    }
+  }
+
+  Future<void> toggle() => set(!state);
+}
+
+final ghostModeProvider =
+    NotifierProvider<GhostModeNotifier, bool>(GhostModeNotifier.new);
 
 class DashboardData {
   const DashboardData({
@@ -42,6 +89,10 @@ class DashboardData {
 
 /// Net worth dashboard data derived from the live transaction list (PRD §3C
 /// `netWorthProvider`).
+///
+/// [DashboardData.total] here is lifetime cash flow — the ledger, and the thing
+/// [DashboardData.series] and [DashboardData.summary] are both drawn against.
+/// It is NOT net worth; see [trueNetWorthProvider] for that.
 final netWorthProvider = Provider<DashboardData?>((ref) {
   final txnState = ref.watch(transactionListProvider);
   if (txnState is! TransactionData) return null;
@@ -53,6 +104,34 @@ final netWorthProvider = Provider<DashboardData?>((ref) {
     summary: calc.summary(all, window),
     series: calc.series(all, window),
   );
+});
+
+/// Net worth: what you own minus what you owe.
+///
+/// The dashboard hero used to render [DashboardData.total] under the words "NET
+/// WORTH". That figure is cash flow alone — it counts neither holdings nor
+/// debt — so anyone with a portfolio or a loan was shown a number that was not
+/// their net worth, disagreed with the web client, and disagreed with the daily
+/// snapshot stored a few lines below (`cash + invest - liab`, which was right
+/// all along). The visible symptom was the hero jumping the moment the trend
+/// had two snapshots and switched away from the cash-flow series.
+///
+/// Null while the portfolio or liabilities are still loading, on the same
+/// reasoning as [financialHealthProvider]: defaulting them to empty would
+/// render a real net worth as cash-only for a frame and then correct itself,
+/// which reads as money appearing rather than as a screen finishing loading.
+final trueNetWorthProvider = Provider<Decimal?>((ref) {
+  final txnState = ref.watch(transactionListProvider);
+  if (txnState is! TransactionData) return null;
+  final investments = ref.watch(investmentTotalsProvider).valueOrNull;
+  if (investments == null) return null;
+  final liabs = ref.watch(liabilityListProvider).valueOrNull;
+  if (liabs == null) return null;
+
+  final calc = ref.watch(netWorthCalculatorProvider);
+  final cash = calc.total(txnState.transactions);
+  final liab = liabs.fold(Decimal.zero, (s, l) => s + l.principal);
+  return cash + investments.marketValue - liab;
 });
 
 /// Financial-health score (0–100) across cash, investments and liabilities.

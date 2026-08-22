@@ -12,6 +12,8 @@
  * zero" are different claims and must not look alike.
  */
 import type { LucideIcon } from 'lucide-react';
+import { Hint } from './Hint';
+import type { TermKey } from '@/lib/glossary';
 import clsx from 'clsx';
 import { AnimatedNumber } from './motion';
 
@@ -26,7 +28,7 @@ const TONE: Record<KpiTone, string> = {
 };
 
 export function Kpi({
-  label, value, numeric, format, icon: Icon, tone = 'accent', footer, className,
+  label, value, numeric, format, icon: Icon, tone = 'accent', footer, className, term,
 }: {
   label: string;
   /** Pre-formatted display value. Ignored when `numeric` is given. */
@@ -38,6 +40,14 @@ export function Kpi({
   tone?: KpiTone;
   footer?: React.ReactNode;
   className?: string;
+  /**
+   * Glossary entry explaining the label, shown behind an (i).
+   *
+   * Named `term`, not `hint`: `Field` and `EmptyState` already use `hint` for
+   * plain helper text, and two props with the same name and different meanings
+   * is how a call site ends up passing prose where a key belongs.
+   */
+  term?: TermKey;
 }) {
   const untracked = numeric == null && (value == null || value === '');
   return (
@@ -46,7 +56,11 @@ export function Kpi({
         <span className={clsx('w-7 h-7 shrink-0 rounded-[var(--radius-btn)] grid place-items-center', TONE[tone])}>
           <Icon size={15} strokeWidth={2} />
         </span>
+        {/* The Hint sits OUTSIDE the label span: that span is `truncate`, and a
+            popover trigger inside a truncating box gets clipped away exactly
+            when the label is long enough to need explaining. */}
         <span className="text-[11.5px] font-semibold text-ink-soft truncate">{label}</span>
+        {term && <Hint term={term} className="shrink-0" />}
       </div>
 
       <div className="text-[23px] font-bold tracking-[-0.035em] leading-[1.05] whitespace-nowrap tnum">

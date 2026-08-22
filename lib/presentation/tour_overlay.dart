@@ -1,8 +1,12 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/app_tokens.dart';
+import '../features/accounts/providers/account_providers.dart';
+import '../features/investments/providers/portfolio_providers.dart';
 import '../features/settings/providers/onboarding_providers.dart';
+import '../features/transactions/providers/transaction_providers.dart';
 
 /// One area of the app, explained once.
 class _Area {
@@ -53,7 +57,14 @@ Future<void> showTour(BuildContext context, WidgetRef ref) async {
   await ref.read(onboardingActionsProvider).markSeen();
 }
 
-/// Drop into the dashboard; shows the tour once on first run.
+/// Drop into the dashboard; shows the tour once, on the first run that has
+/// something to show.
+///
+/// Thirteen screens describing budgets, payoff planners and allocation, over a
+/// vault holding none of them, teaches nothing and is thirteen dismissals long.
+/// The welcome card is the right first screen; this waits until there is
+/// something for the tour to be about — which means loading the sample data
+/// from that card is itself what brings the tour up.
 class TourLauncher extends ConsumerStatefulWidget {
   const TourLauncher({super.key});
   @override
@@ -62,20 +73,36 @@ class TourLauncher extends ConsumerStatefulWidget {
 
 class _TourLauncherState extends ConsumerState<TourLauncher> {
   bool _shown = false;
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (_shown || !mounted) return;
-      final seen = await ref.read(tourSeenProvider.future);
-      if (seen || _shown || !mounted) return;
-      _shown = true;
-      await showTour(context, ref);
-    });
+
+  /// True once the vault holds anything the tour could point at.
+  bool _hasData() {
+    final txns = ref.read(transactionListProvider);
+    if (txns is TransactionData && txns.transactions.isNotEmpty) return true;
+    final accounts = ref.read(accountListProvider).valueOrNull;
+    if (accounts != null && accounts.isNotEmpty) return true;
+    final totals = ref.read(investmentTotalsProvider).valueOrNull;
+    return totals != null && totals.marketValue > Decimal.zero;
+  }
+
+  Future<void> _maybeShow() async {
+    if (_shown || !mounted || !_hasData()) return;
+    final seen = await ref.read(tourSeenProvider.future);
+    if (seen || _shown || !mounted) return;
+    _shown = true;
+    await showTour(context, ref);
   }
 
   @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
+  Widget build(BuildContext context) {
+    // Watched, not read once in initState: the vault's contents arrive over a
+    // few frames, and on a first run they arrive only when the user adds
+    // something. Either way this is the callback that notices.
+    ref.watch(transactionListProvider);
+    ref.watch(accountListProvider);
+    ref.watch(investmentTotalsProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShow());
+    return const SizedBox.shrink();
+  }
 }
 
 class _TourScreen extends StatefulWidget {

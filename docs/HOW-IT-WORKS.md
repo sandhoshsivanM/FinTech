@@ -157,7 +157,7 @@ framework, no I/O — living in `lib/domain/services/*.dart` and mirrored in
 | Service | What it computes |
 |---|---|
 | `net_worth_calculator` / `finance.ts` | income/expense windows, net worth from signed cash flow |
-| `financial_health` / `health.ts` | 0–100 score over 4 weighted pillars (savings, buffer, debt, investing) |
+| `financial_health` / `health.ts` | 0–100 score over 4 weighted areas — Wealth 30, Protection 25, Efficiency 25, Future 20. Untracked areas leave the denominator rather than scoring zero, and below 50 points tracked the score gets no letter grade |
 | `xirr_calculator` / `tax.ts` | money-weighted return via numerical root-finding; STCG/LTCG tax from a JSON ruleset |
 | `debt_calculator` | EMI amortization + avalanche/snowball payoff simulation |
 | `insurance_advisor` / `insurance.ts` | life (10× income) & health (₹5L floor) coverage gaps |

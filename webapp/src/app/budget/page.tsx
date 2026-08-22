@@ -12,7 +12,7 @@ import { currentMonth, type DateRange } from '@/domain/period';
 import { MonthNav } from '@/components/MonthNav';
 import { useNow } from '@/lib/useNow';
 import {
-  PageIntro, GlassCard, SectionHeader, EmptyState,
+  PageIntro, GlassCard, SectionHeader, EmptyState, Donut,
   Button, Field, Input, Select, ProgressBar, StatStrip,
 } from '@/components/ui';
 import { useConfirm } from '@/components/Confirm';
@@ -84,6 +84,24 @@ export default function BudgetPage() {
     [evaluated],
   );
   const totalRemaining = totalBudgeted.minus(totalSpent);
+
+  /**
+   * Envelope slices — actual spend per category, biggest first.
+   *
+   * Spend, not budget: a donut of the limits someone set would be a picture of
+   * their intentions. The point of the figure is where the money went.
+   */
+  const envelopeSegments = useMemo(
+    () => evaluated
+      .filter((e) => e.spent.gt(0))
+      .map((e, i) => ({
+        label: e.catName,
+        value: e.spent.toNumber(),
+        color: `var(--c${(i % 8) + 1})`,
+      }))
+      .sort((a, b) => b.value - a.value),
+    [evaluated],
+  );
   const overallFraction = totalBudgeted.isZero() ? 0 : totalSpent.div(totalBudgeted).toNumber();
   const overBudgetCount = useMemo(() => evaluated.filter((e) => e.status === 'over').length, [evaluated]);
 
@@ -200,6 +218,27 @@ export default function BudgetPage() {
             },
           ]}
         />
+      )}
+
+      {/* Envelope donut — spend by category against the total budgeted, so the
+          per-category reading and the overall one sit on one screen instead of
+          making the reader add up twenty bars to find out where they stand. */}
+      {budgets.length > 0 && (
+        <GlassCard>
+          <SectionHeader title="Envelopes" />
+          <p className="-mt-2 mb-3 text-xs text-muted">Spend by category against the total budgeted.</p>
+          <div className="grid place-items-center">
+            <Donut
+              segments={envelopeSegments}
+              size={220}
+              stroke={30}
+              maxSlices={7}
+              centerText={mask(fmt.money(totalSpent))}
+              centerSub={`of ${mask(fmt.money(totalBudgeted))}`}
+              formatValue={(n) => mask(fmt.money(n))}
+            />
+          </div>
+        </GlassCard>
       )}
 
       {/* 50/30/20 guidance card */}

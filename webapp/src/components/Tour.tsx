@@ -6,6 +6,7 @@
 // replayable via the TOUR_EVENT window event. Pure DOM — no deps.
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useApp } from '@/lib/store';
 import { Button } from './ui';
 
 interface Step { sel: string; title: string; body: string }
@@ -40,6 +41,9 @@ export function Tour() {
   const [running, setRunning] = useState(false);
   const [i, setI] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const hasData = useApp(
+    (s) => s.txns.length > 0 || s.holdings.length > 0 || s.accounts.length > 0,
+  );
 
   const start = useCallback(() => {
     // Go to the dashboard first so every step's control exists.
@@ -56,15 +60,22 @@ export function Tour() {
     // Honor the pre-rebrand key too, so an existing user isn't shown the
     // first-run tour again just because the key was renamed.
     const done = localStorage.getItem(DONE_KEY) ?? localStorage.getItem(LEGACY_DONE_KEY);
-    if (!done && onDash) t = setTimeout(start, 800);
+    // Fifteen steps describing trends, allocation and payoff planners, narrated
+    // over a vault with none of those in it, teaches nothing and is fifteen
+    // dismissals long. The dashboard's starter card is the right first screen;
+    // this waits until there is something for it to point at. Because the
+    // effect re-runs on `hasData`, loading the sample from that card is itself
+    // what triggers the tour.
+    if (!done && onDash && hasData) t = setTimeout(start, 800);
     const replay = () => {
       localStorage.removeItem(DONE_KEY);
       localStorage.removeItem(LEGACY_DONE_KEY);
       start();
     };
+    // A replay is asked for out loud, so it never waits on the data check.
     window.addEventListener(TOUR_EVENT, replay);
     return () => { if (t) clearTimeout(t); window.removeEventListener(TOUR_EVENT, replay); };
-  }, [start]);
+  }, [start, hasData]);
 
   // Track the current target's position (retry a few times so it works right
   // after navigation / scroll without ever dropping the step).

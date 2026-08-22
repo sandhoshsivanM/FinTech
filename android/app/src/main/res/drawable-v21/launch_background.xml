@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="?android:colorBackground" />
+<!-- The launch splash. minSdk is 24, so this is the file that is always used;
+     `drawable/launch_background.xml` is the pre-21 fallback and is never
+     reached. Both are kept in step anyway, because "the dead one drifted" is
+     how the white flash got in.
 
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
+     `launch_background` is theme-aware (values/ and values-night/), so this
+     matches the app's first painted frame instead of the platform default. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/launch_background" />
+    <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+            android:src="@mipmap/ic_launcher_foreground" />
+    </item>
 </layer-list>

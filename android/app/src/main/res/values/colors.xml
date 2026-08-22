@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window colour behind the launch splash, and behind the Flutter UI
+         while it initialises.
+
+         This used to resolve to `?android:colorBackground` inherited from
+         Theme.Light / Theme.Black, i.e. pure white or pure black — neither of
+         which the app ever paints. On a cold start that produced a white flash
+         on the way into a near-black app, which reads as a defect rather than
+         as a splash.
+
+         The value is the top stop of AppBackground's light gradient
+         (`lib/presentation/app_background.dart`). The dark counterpart lives in
+         values-night/colors.xml. If either gradient changes there, change it
+         here too — nothing enforces the pairing but the eye. -->
+    <color name="launch_background">#FBFCFE</color>
+</resources>

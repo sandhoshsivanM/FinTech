@@ -109,16 +109,31 @@ export const ledger = {
  * normal vision, below the 15 floor — so a reader cannot tell those two slices
  * apart. The amber slot was dropped rather than shipped as a duplicate.
  */
-export const series = [
-  '#189E6E', // emerald — primary series
-  '#BE8420', // gold
-  '#2E92C4', // blue
-  '#C9538A', // rose
-  '#4F7CFF', // indigo
-  '#CC6435', // orange
-  '#8E7CC3', // violet
-  '#2E9E63', // green
+export const seriesDark = [
+  '#4eb982', // equity
+  '#a4aaf6', // debt
+  '#c19c3a', // gold
+  '#63a1d5', // real estate
+  '#ea8760', // retirement
+  '#73c7cc', // crypto
+  '#ca7cb4', // cash
+  '#9caa65', // spare
 ] as const;
+
+/** The Ledger step. Same hues, dropped so each mark clears 3:1 on white. */
+export const seriesLight = [
+  '#008451', // equity
+  '#757ac2', // debt
+  '#a07c06', // gold
+  '#2f6d9e', // real estate
+  '#983e14', // retirement
+  '#3e9498', // crypto
+  '#8d447a', // cash
+  '#646f2b', // spare
+] as const;
+
+/** Back-compat: callers that predate per-theme values get the Vault step. */
+export const series = seriesDark;
 
 /**
  * Reserved neutral for "Other" / "Unclassified".

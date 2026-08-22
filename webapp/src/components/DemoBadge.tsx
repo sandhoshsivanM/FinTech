@@ -26,7 +26,7 @@ function subscribe(fn: () => void) {
   return () => { listeners.delete(fn); };
 }
 function read(): boolean {
-  try { return localStorage.getItem(KEY) !== '0'; } catch { return true; }
+  try { return localStorage.getItem(KEY) === '1'; } catch { return false; }
 }
 
 export function DemoBadge({ label = 'Demo data', title }: { label?: string; title?: string }) {
@@ -44,12 +44,24 @@ export function DemoBadge({ label = 'Demo data', title }: { label?: string; titl
 /**
  * Whether synthesised market surfaces should render at all.
  *
- * Defaults to on: the screens that depend on it are empty without it. Reading
- * happens after mount so the server and client agree on the first paint.
+ * **Defaults to OFF, and must stay that way.** It used to default to on, which
+ * meant a new user saw invented day-change percentages attached to instruments
+ * they actually own, and headlines written about their real tickers. The badge
+ * was always there and the numbers were always deterministic, but a badge is
+ * not consent: a paid finance app that shows a made-up figure next to a real
+ * holding is making a claim about that holding, and in India that is a
+ * consumer-protection problem regardless of the label next to it.
+ *
+ * The demo feed still exists, because it is genuinely useful for screenshots
+ * and for evaluating the app with an empty vault. It is now something a user
+ * turns on from Settings, knowing what it is.
+ *
+ * Reading happens after mount so the server and client agree on the first
+ * paint.
  */
 export function useDemoData(): [boolean, (v: boolean) => void] {
-  // Server snapshot is `true` — the default — so hydration agrees.
-  const on = useSyncExternalStore(subscribe, read, () => true);
+  // Server snapshot is `false` — the default — so hydration agrees.
+  const on = useSyncExternalStore(subscribe, read, () => false);
 
   const set = (v: boolean) => {
     try { localStorage.setItem(KEY, v ? '1' : '0'); } catch { /* private mode */ }

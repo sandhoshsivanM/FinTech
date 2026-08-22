@@ -9,6 +9,7 @@
  *
  * Where an input is missing the panel says so instead of producing a figure.
  */
+import { ProGate } from '@/components/ProGate';
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -38,7 +39,7 @@ import { Stagger, StaggerItem } from '@/components/motion';
 import { short } from '@/lib/format';
 import { formatDate } from '@/lib/dateFormat';
 
-export default function ForecastPage() {
+function ForecastPageInner() {
   const txns = useApp((s) => s.txns);
   const recurring = useApp((s) => s.recurring);
   const budgets = useApp((s) => s.budgets);
@@ -373,5 +374,25 @@ function Outcome({ label, value }: { label: string; value: string }) {
       <div className="text-xs text-muted">{label}</div>
       <div className="text-[17px] font-bold tnum mt-1">{value}</div>
     </div>
+  );
+}
+
+/**
+ * See where this is heading — gated.
+ *
+ * The gate renders the real screen blurred behind the paywall card rather than
+ * replacing it: a redirect would lose the user's context and break the back
+ * button, and someone who can faintly see their own figures converts where
+ * someone shown an empty room does not.
+ */
+export default function ForecastPage() {
+  return (
+    <ProGate
+      feature="forecast"
+      title={'See where this is heading'}
+      blurb={'Forecast projects your balances forward from what you actually record. Part of Khazana Pro.'}
+    >
+      <ForecastPageInner />
+    </ProGate>
   );
 }

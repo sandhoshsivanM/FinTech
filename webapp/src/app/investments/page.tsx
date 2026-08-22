@@ -231,7 +231,7 @@ export default function PortfolioPage() {
     { key: 'sector', header: 'Sector', optional: true, value: (r) => r.sector, cell: (r) => <span className="text-ink-soft">{r.sector}</span> },
     { key: 'qty', header: 'Quantity', align: 'right', value: (r) => r.qty, cell: (r) => r.qty.toLocaleString('en-IN') },
     { key: 'avg', header: 'Avg. price', align: 'right', value: (r) => r.avg, cell: (r) => <span className="text-ink-soft">{fmt.money(r.avg)}</span> },
-    { key: 'ltp', header: 'LTP', align: 'right', value: (r) => r.ltp, cell: (r) => fmt.money(r.ltp) },
+    { key: 'ltp', header: 'LTP', term: 'ltp', align: 'right', value: (r) => r.ltp, cell: (r) => fmt.money(r.ltp) },
     { key: 'current', header: 'Current value', align: 'right', value: (r) => r.current, cell: (r) => <span className="font-semibold">{mask(fmt.money(r.current))}</span> },
     { key: 'invested', header: 'Investment', align: 'right', value: (r) => r.invested, cell: (r) => <span className="text-ink-soft">{mask(fmt.money(r.invested))}</span> },
     {
@@ -248,7 +248,7 @@ export default function PortfolioPage() {
     },
     { key: 'dayPct', header: 'Day %', align: 'right', value: (r) => r.dayPct ?? 0, cell: (r) => <Delta value={r.dayPct} /> },
     {
-      key: 'weight', header: 'Weight', align: 'right', value: (r) => r.weight,
+      key: 'weight', header: 'Weight', term: 'weight', align: 'right', value: (r) => r.weight,
       cell: (r) => (
         <span className="inline-flex items-center gap-2 justify-end">
           <span className="text-[11.5px] text-ink-soft tnum">{r.weight.toFixed(2)}%</span>
@@ -401,18 +401,18 @@ export default function PortfolioPage() {
       {/* ---- Six KPI cards -------------------------------------------------- */}
       <StaggerItem>
         <KpiRow cols={6}>
-          <Kpi label="Portfolio Value" icon={Wallet} tone="accent"
+          <Kpi label="Portfolio Value" term="investments" icon={Wallet} tone="accent"
             value={ghost ? '••••' : undefined} numeric={ghost ? undefined : totalValue}
             format={(n) => short(n, fmt.symbol)}
             footer={<><span>Current value</span>{spark.length > 1 && <span className="ml-auto"><MiniSparkline values={spark} color="var(--accent)" /></span>}</>} />
-          <Kpi label="Total Investment" icon={Coins} tone="warning"
+          <Kpi label="Total Investment" term="invested" icon={Coins} tone="warning"
             value={ghost ? '••••' : undefined} numeric={ghost ? undefined : summary.invested.toNumber()}
             format={(n) => short(n, fmt.symbol)} footer="Invested amount" />
-          <Kpi label="Overall P&L" icon={Percent} tone={summary.pnl.gte(0) ? 'success' : 'danger'}
+          <Kpi label="Overall P&L" term="unrealisedPnl" icon={Percent} tone={summary.pnl.gte(0) ? 'success' : 'danger'}
             value={ghost ? '••••' : undefined} numeric={ghost ? undefined : summary.pnl.toNumber()}
             format={(n) => (n >= 0 ? '+' : '−') + short(Math.abs(n), fmt.symbol)}
             footer={<><Delta value={summary.pnlPct} />{spark.length > 1 && <span className="ml-auto"><MiniSparkline values={spark} color={summary.pnl.gte(0) ? 'var(--success)' : 'var(--danger)'} /></span>}</>} />
-          <Kpi label="Today's P&L" icon={TrendingUp} tone={(dayPnlTotal ?? 0) >= 0 ? 'success' : 'danger'}
+          <Kpi label="Today's P&L" term="dayChange" icon={TrendingUp} tone={(dayPnlTotal ?? 0) >= 0 ? 'success' : 'danger'}
             value={ghost ? '••••' : dayPnlTotal == null ? null : undefined}
             numeric={ghost || dayPnlTotal == null ? undefined : dayPnlTotal}
             format={(n) => (n >= 0 ? '+' : '−') + short(Math.abs(n), fmt.symbol)}

@@ -1,9 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:drift/drift.dart' show Value;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data/database/app_database.dart';
 import '../../domain/services/notification_scheduler.dart';
+import '../di/data_providers.dart';
 import 'notification_service.dart';
 
 /// The single delivery service. Lived in `features/budget/providers` until the
@@ -81,18 +86,75 @@ final notifyPrefsProvider =
 
 /// dedupeKey -> when it last fired.
 ///
-/// The cooldown reads this, and it is what stops the original bug where saving
-/// five expenses against an over-budget category produced five identical
-/// notifications. In memory for now; Phase 3 moves it into the encrypted vault
-/// so it survives a restart, which is the only thing keeping the cooldown from
-/// being honoured across sessions.
+/// The cooldown reads this, and it is what stops the bug where saving five
+/// expenses against an over-budget category produced five identical
+/// notifications.
+///
+/// Backed by the encrypted `notification_deliveries` table, not memory. While it
+/// was in memory the cooldown only held within one session, so quitting and
+/// reopening the app re-armed every alert and the bug came straight back — the
+/// state is kept in memory here for synchronous reads by the planner and written
+/// through to the vault on every record.
 class DeliveryLog extends Notifier<Map<String, int>> {
   @override
-  Map<String, int> build() => const {};
+  Map<String, int> build() {
+    unawaited(_hydrate());
+    return const {};
+  }
 
-  void record(Iterable<PlannedNotification> fired, int at) {
+  /// Loads the log once the database is available. Best-effort: a cooldown that
+  /// cannot be read should cost an extra notification, never a failed launch.
+  Future<void> _hydrate() async {
+    try {
+      final db = await ref.read(appDatabaseProvider.future);
+      final vaultId = ref.read(currentVaultIdProvider);
+      final rows = await db.notificationDeliveryDao.recentFor(vaultId);
+      if (rows.isEmpty) return;
+      state = {
+        for (final r in rows)
+          // Keep the most recent fire per key; the DAO returns newest first.
+          if (!state.containsKey(r.dedupeKey)) r.dedupeKey: r.firedAt,
+      };
+    } on Object catch (e) {
+      debugPrint('DeliveryLog: could not read the delivery log ($e)');
+    }
+  }
+
+  void record(Iterable<PlannedNotification> fired, int at,
+      {String source = 'immediate'}) {
     if (fired.isEmpty) return;
     state = {...state, for (final n in fired) n.dedupeKey: at};
+    unawaited(_persist(fired, at, source));
+  }
+
+  Future<void> _persist(
+      Iterable<PlannedNotification> fired, int at, String source) async {
+    try {
+      final db = await ref.read(appDatabaseProvider.future);
+      final vaultId = ref.read(currentVaultIdProvider);
+      await db.notificationDeliveryDao.recordAll([
+        for (final n in fired)
+          NotificationDeliveriesCompanion.insert(
+            // Keyed by dedupe key + fire time, so a re-record of the same
+            // notification replaces rather than accumulating a row per attempt.
+            id: '${n.dedupeKey}@$at',
+            vaultId: vaultId,
+            dedupeKey: n.dedupeKey,
+            category: n.category.key,
+            title: n.title,
+            body: n.body,
+            deepLink: Value(n.deepLink),
+            scheduledFor:
+                Value(source == 'scheduled' ? n.fireAt : null),
+            firedAt: at,
+            source: source,
+          ),
+      ]);
+    } on Object catch (e) {
+      // The notification already went out. Failing to remember it means one
+      // extra alert later, which is not worth surfacing an error for.
+      debugPrint('DeliveryLog: could not persist a delivery ($e)');
+    }
   }
 
   void clear() => state = const {};

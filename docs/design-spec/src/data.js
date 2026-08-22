@@ -82,13 +82,13 @@ const MASTER = {
 // ---- Asset groups (domain/portfolio.ts ASSET_GROUP_ORDER / _META) ---------
 /** Fixed render order. This order IS the colourblind-safety mechanism. */
 export const ASSET_GROUPS = [
-  ['equity', 'Equity', '#189e6e'],
-  ['debt', 'Debt', '#8e7cc3'],
-  ['gold', 'Gold', '#be8420'],
-  ['real_estate', 'Real Estate', '#2e92c4'],
-  ['retirement', 'Retirement', '#cc6435'],
-  ['crypto', 'Crypto', '#4f7cff'],
-  ['cash', 'Cash', '#c9538a'],
+  ['equity', 'Equity', '#4eb982'],
+  ['debt', 'Debt', '#a4aaf6'],
+  ['gold', 'Gold', '#c19c3a'],
+  ['real_estate', 'Real Estate', '#63a1d5'],
+  ['retirement', 'Retirement', '#ea8760'],
+  ['crypto', 'Crypto', '#73c7cc'],
+  ['cash', 'Cash', '#ca7cb4'],
 ];
 
 const TYPE_GROUP = {

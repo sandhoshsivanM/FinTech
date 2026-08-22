@@ -7,6 +7,7 @@
  * a mark for "the bank has processed this" and the arithmetic that turns the
  * two into a single difference figure.
  */
+import { ProGate } from '@/components/ProGate';
 import { useMemo, useState } from 'react';
 import { CheckCircle2, Scale } from 'lucide-react';
 import { useApp } from '@/lib/store';
@@ -22,7 +23,7 @@ import {
   GlassCard, PageIntro, SectionHeader, Field, Select, EmptyState, Chip,
 } from '@/components/ui';
 
-export default function ReconcilePage() {
+function ReconcilePageInner() {
   const txns = useApp((s) => s.txns);
   const transfers = useApp((s) => s.transfers);
   const postings = useApp((s) => s.postings);
@@ -191,5 +192,25 @@ function Tile({ label, value, hint, color }: { label: string; value: string; hin
       <span className="text-xl font-extrabold tnum" style={color ? { color } : undefined}>{value}</span>
       {hint && <span className="text-[11px] text-muted">{hint}</span>}
     </GlassCard>
+  );
+}
+
+/**
+ * Check the app against your bank — gated.
+ *
+ * The gate renders the real screen blurred behind the paywall card rather than
+ * replacing it: a redirect would lose the user's context and break the back
+ * button, and someone who can faintly see their own figures converts where
+ * someone shown an empty room does not.
+ */
+export default function ReconcilePage() {
+  return (
+    <ProGate
+      feature="reconcile"
+      title={'Check the app against your bank'}
+      blurb={'Match what you recorded against what actually happened. Part of Khazana Pro.'}
+    >
+      <ReconcilePageInner />
+    </ProGate>
   );
 }

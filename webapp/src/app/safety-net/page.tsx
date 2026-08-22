@@ -66,9 +66,9 @@ export default function SafetyNetPage() {
       </GlassCard>
 
       <StatStrip items={[
-        { label: 'Emergency fund', value: m(emergency.current), sub: `${sn.monthsCovered.toFixed(1)} mo of expenses` },
-        { label: 'Life cover', value: `${Math.min(999, life.coveredPct)}%`, sub: m(life.current), accent: coverColor(life.coveredPct) },
-        { label: 'Health cover', value: `${Math.min(999, health.coveredPct)}%`, sub: m(health.current), accent: coverColor(health.coveredPct) },
+        { label: 'Emergency fund', term: 'emergencyFund', value: m(emergency.current), sub: `${sn.monthsCovered.toFixed(1)} mo of expenses` },
+        { label: 'Life cover', term: 'sumAssured', value: `${Math.min(999, life.coveredPct)}%`, sub: m(life.current), accent: coverColor(life.coveredPct) },
+        { label: 'Health cover', term: 'sumAssured', value: `${Math.min(999, health.coveredPct)}%`, sub: m(health.current), accent: coverColor(health.coveredPct) },
         { label: 'Annual premiums', value: m(sn.premium), sub: `${insurances.length} polic${insurances.length === 1 ? 'y' : 'ies'}` },
       ]} />
 

@@ -1,6 +1,9 @@
 'use client';
 import { create } from 'zustand';
-import { db } from './db';
+import { db, persistenceState, requestPersistence, type PersistenceState } from './db';
+import { FREE, parseEntitlement, type Entitlement } from './entitlement/entitlement';
+import { verifyLicense } from './entitlement/license';
+import { LICENSE_PUBLIC_KEY, LICENSE_KEY_IS_PLACEHOLDER } from './entitlement/licensePublicKey';
 import { deriveKey, encryptJson, decryptJson, randomBytes, bufToB64, b64ToBuf, type Encrypted } from './crypto';
 import { BackupError } from './backupError';
 import { decodeBackup, encodeBackup } from './backupFormat';
@@ -418,6 +421,27 @@ interface AppState extends Data {
   accent: AccentName;
   profiles: Profile[];
   activeProfileId: string;
+  /**
+   * Whether the browser has promised not to evict this vault. Surfaced in
+   * Settings, because if it is `denied` the user's only copy of their data is
+   * something the browser may clear without warning.
+   */
+  /**
+   * Whether Khazana Pro is unlocked. Lives OUTSIDE `Data` on purpose, so
+   * `lock()` and `wipe()` — which spread `...emptyData` — cannot clear it by
+   * accident. Erasing your financial data must never revoke a purchase.
+   */
+  pro: Entitlement;
+  activateLicense: (key: string) => Promise<string>;
+  removeLicense: () => void;
+  persistence: PersistenceState;
+  /**
+   * Consecutive failed unlock attempts, and the epoch-ms until which further
+   * attempts are refused. Both live in localStorage so closing the tab is not a
+   * way around the delay.
+   */
+  pinFailures: number;
+  lockedOutUntil: number;
   init: () => Promise<void>;
   setTheme: (t: ThemeChoice) => void;
   setAccent: (a: AccentName) => void;
@@ -465,8 +489,62 @@ const CURRENCY_KEY = 'khazana-currency';
 const ACTIVE_PROFILE_KEY = 'khazana-active-profile';
 const THEME_KEY = 'khazana-theme';
 const ACCENT_KEY = 'khazana-accent';
+/**
+ * Ghost mode (amounts masked). Persisted because the reason someone hides their
+ * balances — an open-plan desk, a commute, a shared screen — is still true the
+ * next time they open the app. Not a vault secret: it records that the figures
+ * were hidden, never what they were.
+ */
+const GHOST_KEY = 'khazana-ghost';
+/**
+ * Khazana Pro. Kept in localStorage rather than in the vault for the same
+ * reasons as the Flutter side: it must survive `wipe()` (erasing your
+ * finances is not a reason to lose a purchase) and be readable before the
+ * vault is unlocked, since the paywall and the Settings row both need it.
+ *
+ * The raw key is stored alongside the cached entitlement so every launch
+ * re-verifies the SIGNATURE rather than trusting a cached boolean — the cache
+ * is a convenience for the first paint, not the trust anchor.
+ */
+const PRO_KEY = 'khazana-entitlement-v1';
+const LICENSE_KEY_STORAGE = 'khazana-license-v1';
 /** Account the add-transaction form defaults to. A convenience, not vault data. */
 export const LAST_ACCOUNT_KEY = 'khazana-last-account';
+
+/**
+ * Failed-unlock throttle. The Flutter client has had one since the beginning
+ * (`vault_unlock_notifier.dart`); this client — the one people can actually
+ * reach on the open web — had none, so a PIN could be guessed as fast as the
+ * key derivation would run.
+ *
+ * PBKDF2 at 600k iterations is a real cost per guess, but it is the *only*
+ * cost, and against a 6-digit keyspace of a million candidates that is not
+ * enough on its own. These two keys live in localStorage rather than in memory
+ * precisely so that closing the tab is not the reset button.
+ */
+const PIN_FAILURES_KEY = 'khazana-pin-failures';
+const LOCKOUT_UNTIL_KEY = 'khazana-lockout-until';
+
+/** Free attempts before any delay. Typos are normal; five of them are not. */
+const LOCKOUT_AFTER = 5;
+/** Never grow past this — a locked-out honest user is a support ticket. */
+const MAX_LOCKOUT_MS = 5 * 60_000;
+
+/**
+ * Doubles per failure past the threshold: 5s, 10s, 20s … capped at 5 minutes.
+ * Fast enough that someone who fat-fingered their PIN twice barely notices,
+ * steep enough that an automated walk through the keyspace is hopeless.
+ */
+function lockoutDelayMs(failures: number): number {
+  const step = Math.min(failures - LOCKOUT_AFTER, 10);
+  return Math.min(5_000 * 2 ** step, MAX_LOCKOUT_MS);
+}
+
+function lockoutMessage(remainingMs: number): string {
+  const secs = Math.max(1, Math.ceil(remainingMs / 1000));
+  if (secs < 60) return `Too many attempts. Try again in ${secs}s.`;
+  return `Too many attempts. Try again in ${Math.ceil(secs / 60)} min.`;
+}
 
 const LEGACY_KEY: Record<string, string> = {
   [CURRENCY_KEY]: 'ftos-currency',
@@ -561,6 +639,38 @@ export function applyAppearance() {
   applyAccent(accent, !!dark);
 }
 
+
+/**
+ * Re-verifies the stored licence key and returns the resulting entitlement.
+ *
+ * Runs on every `init()`. Verification is a local Ed25519 check taking well
+ * under a millisecond, so it happens synchronously before first paint and there
+ * is no window in which a paying user sees a paywall.
+ *
+ * The cached entitlement is only a fallback for the case where a real public
+ * key has not been compiled in yet: refusing a genuine key because the BUILD is
+ * unfinished would be our mistake charged to the customer.
+ */
+function resolvePro(): Entitlement {
+  const raw = lsGet(LICENSE_KEY_STORAGE);
+  if (!raw) return FREE;
+
+  if (LICENSE_KEY_IS_PLACEHOLDER) return parseEntitlement(lsGet(PRO_KEY));
+
+  const check = verifyLicense(raw, LICENSE_PUBLIC_KEY);
+  if (check.verdict !== 'valid') return FREE;
+
+  const entitlement: Entitlement = {
+    isPro: true,
+    source: 'licenseKey',
+    grantedAt: check.issuedAt?.toISOString(),
+    lastVerifiedAt: new Date().toISOString(),
+    orderRef: check.orderRef,
+  };
+  lsSet(PRO_KEY, JSON.stringify(entitlement));
+  return entitlement;
+}
+
 export const useApp = create<AppState>((set, get) => ({
   ...emptyData,
   status: 'loading',
@@ -573,14 +683,31 @@ export const useApp = create<AppState>((set, get) => ({
   accent: 'default',
   profiles: [],
   activeProfileId: '',
+  pro: FREE,
+  persistence: 'unsupported',
+  pinFailures: 0,
+  lockedOutUntil: 0,
 
   init: async () => {
     const meta = await db.vaults.get(VAULT_ID);
     const cur = lsGet(CURRENCY_KEY) ?? 'INR';
     const theme = (lsGet(THEME_KEY) as ThemeChoice) ?? 'system';
     const accent = (lsGet(ACCENT_KEY) as AccentName) ?? 'default';
-    set({ status: meta ? 'locked' : 'uninitialized', currencyCode: cur, theme, accent });
+    const ghost = lsGet(GHOST_KEY) === '1';
+    set({
+      status: meta ? 'locked' : 'uninitialized',
+      currencyCode: cur,
+      theme,
+      accent,
+      ghost,
+      pinFailures: Number(lsGet(PIN_FAILURES_KEY) ?? 0) || 0,
+      lockedOutUntil: Number(lsGet(LOCKOUT_UNTIL_KEY) ?? 0) || 0,
+      pro: resolvePro(),
+    });
     applyAppearance();
+    // Read-only: asking to upgrade here would prompt before the user has any
+    // data worth protecting. The request happens at vault creation.
+    void persistenceState().then((persistence) => set({ persistence }));
   },
 
   setTheme: (t) => {
@@ -605,12 +732,25 @@ export const useApp = create<AppState>((set, get) => ({
       set({ key });
       await get().reload();
       set({ status: 'unlocked' });
+      // The moment to ask: the user has just deliberately created a vault, so
+      // any browser prompt is expected and the answer is about data that is
+      // about to exist. Asking at first page load instead would be a prompt
+      // about nothing.
+      void requestPersistence().then((persistence) => set({ persistence }));
     } catch (e) {
       set({ status: 'uninitialized', error: `Could not create vault: ${e}` });
     }
   },
 
   unlock: async (pin) => {
+    // Throttle first — before the 600k-iteration derivation, which would
+    // otherwise make an attacker's rate limit our CPU rather than our policy.
+    const wait = get().lockedOutUntil - Date.now();
+    if (wait > 0) {
+      set({ status: 'locked', error: lockoutMessage(wait) });
+      return;
+    }
+
     set({ status: 'unlocking', error: null });
     try {
       const meta = await db.vaults.get(VAULT_ID);
@@ -624,16 +764,80 @@ export const useApp = create<AppState>((set, get) => ({
         await runMigrations(ver, key, VAULT_ID);
         await db.vaults.update(VAULT_ID, { schemaVersion: SCHEMA_VERSION });
       }
+      lsSet(PIN_FAILURES_KEY, '0');
+      lsSet(LOCKOUT_UNTIL_KEY, '0');
+      set({ pinFailures: 0, lockedOutUntil: 0 });
       await get().reload();
       set({ status: 'unlocked' });
       void get().captureSnapshot();
+      void persistenceState().then((persistence) => set({ persistence }));
     } catch {
-      set({ status: 'locked', error: 'Incorrect PIN.' });
+      const failures = get().pinFailures + 1;
+      const until = failures >= LOCKOUT_AFTER
+        ? Date.now() + lockoutDelayMs(failures)
+        : 0;
+      lsSet(PIN_FAILURES_KEY, String(failures));
+      lsSet(LOCKOUT_UNTIL_KEY, String(until));
+      set({
+        status: 'locked',
+        pinFailures: failures,
+        lockedOutUntil: until,
+        error: until > 0
+          ? lockoutMessage(until - Date.now())
+          : 'Incorrect PIN.',
+      });
     }
   },
 
   lock: () => set({ status: 'locked', key: null, ...emptyData, profiles: [] }),
-  toggleGhost: () => set((s) => ({ ghost: !s.ghost })),
+  toggleGhost: () => set((s) => {
+    const ghost = !s.ghost;
+    lsSet(GHOST_KEY, ghost ? '1' : '0');
+    return { ghost };
+  }),
+
+  /**
+   * Applies a licence key the user pasted. Returns a message to show them.
+   *
+   * Never contacts anything. A key is a signature over a payload, and the
+   * public half is compiled in — so this works offline, and no third party
+   * learns that this person is unlocking Khazana today.
+   */
+  activateLicense: async (key) => {
+    if (LICENSE_KEY_IS_PLACEHOLDER) {
+      return 'This build cannot check licence keys yet. Please contact support.';
+    }
+    const check = verifyLicense(key, LICENSE_PUBLIC_KEY);
+    if (check.verdict !== 'valid') {
+      return {
+        malformed: 'That does not look like a Khazana licence key. Copy the whole line, including the KHAZ1. prefix.',
+        badSignature: 'That key could not be verified. Check it was copied in full.',
+        wrongProduct: 'That is a valid key, but for a different product.',
+        unsupportedVersion: 'That key was issued for a newer version of Khazana. Please update the app.',
+        valid: '',
+      }[check.verdict];
+    }
+
+    const entitlement: Entitlement = {
+      isPro: true,
+      source: 'licenseKey',
+      grantedAt: check.issuedAt?.toISOString(),
+      lastVerifiedAt: new Date().toISOString(),
+      orderRef: check.orderRef,
+    };
+    lsSet(LICENSE_KEY_STORAGE, key.trim());
+    lsSet(PRO_KEY, JSON.stringify(entitlement));
+    set({ pro: entitlement });
+    return 'Licence accepted. Khazana Pro is unlocked.';
+  },
+
+  /** Removes a licence from this device — for handing a machine on. */
+  removeLicense: () => {
+    lsSet(LICENSE_KEY_STORAGE, '');
+    lsSet(PRO_KEY, '');
+    set({ pro: FREE });
+  },
+
   setCurrency: (code) => {
     if (typeof localStorage !== 'undefined') localStorage.setItem(CURRENCY_KEY, code);
     set({ currencyCode: code });

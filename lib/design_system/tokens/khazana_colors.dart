@@ -96,16 +96,31 @@ abstract final class KhazanaColors {
   /// Validated in both themes — worst adjacent pair ΔE 8.1 under protanopia
   /// (target 8), normal-vision floor 18.2. The ORDER is the colourblind-safety
   /// mechanism; do not re-order.
-  static const List<Color> series = [
-    Color(0xFF189E6E), // emerald
-    Color(0xFFBE8420), // gold
-    Color(0xFF2E92C4), // blue
-    Color(0xFFC9538A), // rose
-    Color(0xFF4F7CFF), // indigo
-    Color(0xFFCC6435), // orange
-    Color(0xFF8E7CC3), // violet
-    Color(0xFF2E9E63), // green
+  static const List<Color> seriesDark = [
+    Color(0xFF4EB982), // equity
+    Color(0xFFA4AAF6), // debt
+    Color(0xFFC19C3A), // gold
+    Color(0xFF63A1D5), // real estate
+    Color(0xFFEA8760), // retirement
+    Color(0xFF73C7CC), // crypto
+    Color(0xFFCA7CB4), // cash
+    Color(0xFF9CAA65), // spare
   ];
+
+  /// The Ledger step. Same hues, dropped so each mark clears 3:1 on white.
+  static const List<Color> seriesLight = [
+    Color(0xFF008451), // equity
+    Color(0xFF757AC2), // debt
+    Color(0xFFA07C06), // gold
+    Color(0xFF2F6D9E), // real estate
+    Color(0xFF983E14), // retirement
+    Color(0xFF3E9498), // crypto
+    Color(0xFF8D447A), // cash
+    Color(0xFF646F2B), // spare
+  ];
+
+  /// Back-compat: callers that predate per-theme values get the Vault step.
+  static const List<Color> series = seriesDark;
 
   /// Reserved neutral for "Other" / "Unclassified" — a coverage fact, not a
   /// category, so it must never compete with a real slice.

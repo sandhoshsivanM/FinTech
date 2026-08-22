@@ -8,6 +8,17 @@
 	<string>Khazana</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Khazana uses Face ID to unlock your encrypted vault.</string>
+	<!-- Export compliance. Khazana encrypts with SQLCipher (AES-256) and
+	     AES-256-GCM, but only to protect the user's own data on their own
+	     device — which is the ECCN 5D992.c "mass market" exemption, and means
+	     no CCATS filing and no annual self-classification report.
+
+	     Declared here rather than answered by hand: without the key, every
+	     single upload stops on the export-compliance questionnaire in App
+	     Store Connect and waits for a human. Re-confirm this if the app ever
+	     gains its own transport encryption or a proprietary cipher. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

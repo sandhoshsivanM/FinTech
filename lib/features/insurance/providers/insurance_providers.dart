@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
+import '../../../core/services/notification_sync_service.dart';
 import '../../../domain/entities/insurance.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/insurance_advisor.dart';
@@ -51,8 +52,8 @@ class InsuranceActions {
     required Decimal coverAmount,
     required Decimal premium,
     DateTime? renewalDate,
-  }) {
-    return _ref.read(insuranceRepositoryProvider).save(Insurance(
+  }) async {
+    await _ref.read(insuranceRepositoryProvider).save(Insurance(
           id: id ?? _uuid.v4(),
           vaultId: _ref.read(currentVaultIdProvider),
           name: name,
@@ -62,8 +63,14 @@ class InsuranceActions {
           premium: premium,
           renewalDate: renewalDate,
         ));
+    // A renewal date just moved; the OS is still holding the old one.
+    _ref.reconcileNotifications();
   }
 
-  Future<void> delete(String id) =>
-      _ref.read(insuranceRepositoryProvider).delete(id);
+  Future<void> delete(String id) async {
+    await _ref.read(insuranceRepositoryProvider).delete(id);
+    // Alarms outlive the records they describe, so a deleted policy that still
+    // has a pending reminder would announce itself weeks later.
+    _ref.reconcileNotifications();
+  }
 }

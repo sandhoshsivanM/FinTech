@@ -1,0 +1,150 @@
+name: Release (mobile + macOS)
+
+# Builds the Flutter app for the stores. Nothing here existed before: the only
+# release workflow built the Tauri desktop wrapper, so the client the plan calls
+# "primary" had no CI path to a store at all and every AAB was made by hand on a
+# laptop.
+#
+# Triggered by a `v*` tag, or by hand for a dry run. Signing material comes from
+# repository secrets and is written to disk only for the length of the job.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build only — do not upload to any store'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Cheap, and first: the version is stated in five places and the store
+  # artifacts are named from them. Catching a mismatch after a 20-minute
+  # Xcode build is a waste of everyone's afternoon.
+  versions:
+    name: Version consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: tool/check_versions.sh
+      - name: Tag must match pubspec
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pub=$(sed -n 's/^version: \([0-9.]*\)+.*$/\1/p' pubspec.yaml)
+          [ "$tag" = "$pub" ] || {
+            echo "Tag $GITHUB_REF_NAME does not match pubspec version $pub" >&2
+            exit 1
+          }
+
+  android:
+    name: Android App Bundle
+    needs: versions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+
+      - run: flutter pub get
+      - name: Codegen (build_runner)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # The keystore never lives in the repo. Without these secrets the Gradle
+      # config falls back to debug signing, which produces an AAB Play refuses —
+      # so the absence is checked rather than discovered at upload.
+      - name: Restore signing keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 is not set. A release build "\
+                 "without it is signed with debug keys and Play will reject it."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/khazana-release.jks
+          cat > android/key.properties <<EOF
+          storeFile=khazana-release.jks
+          storePassword=$STORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
+      - name: Build AAB
+        run: flutter build appbundle --release --dart-define=KHAZANA_CHANNEL=play
+
+      # Belt and braces. R8 + the manifest merge are exactly where a permission
+      # or a missing INTERNET quietly reappears, and neither fails the build.
+      - name: Assert the shipped manifest
+        run: |
+          python3 - <<'PY'
+          import re, zipfile, sys
+          z = zipfile.ZipFile('build/app/outputs/bundle/release/app-release.aab')
+          data = z.read('base/manifest/AndroidManifest.xml')
+          blob = b' '.join(re.findall(rb'[ -~]{6,}', data))
+          def need(s):   assert s.encode() in blob, f'MISSING: {s}'
+          def forbid(s): assert s.encode() not in blob, f'PRESENT (must not be): {s}'
+          need('android.permission.INTERNET')       # release builds lost this once
+          need('allowBackup')                       # must be declared false
+          forbid('android.permission.READ_SMS')     # Play restricted permission
+          forbid('android.permission.RECEIVE_SMS')
+          print('manifest OK')
+          PY
+
+      - name: Clean up signing material
+        if: always()
+        run: rm -f android/khazana-release.jks android/key.properties
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: khazana-android-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 14
+
+  apple:
+    name: iOS + macOS
+    needs: versions
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+
+      - run: flutter pub get
+      - name: Codegen (build_runner)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # Unsigned: signing and upload need an Apple Developer account, and the
+      # certificates are not in this repository. This job proves the project
+      # still COMPILES for both Apple targets, which is the part that silently
+      # rots. Archiving and uploading happen from Xcode until fastlane match is
+      # configured.
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign --dart-define=KHAZANA_CHANNEL=appStore
+
+      - name: Build macOS
+        run: flutter build macos --release --dart-define=KHAZANA_CHANNEL=appStore
+
+      # The icon must be opaque or App Store Connect rejects the upload with
+      # ITMS-90717 — after the upload, which is a slow way to learn it.
+      - name: Marketing icon must have no alpha
+        run: |
+          alpha=$(sips -g hasAlpha ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png | tail -1 | awk '{print $2}')
+          [ "$alpha" = "no" ] || { echo "::error::iOS 1024 icon has an alpha channel (ITMS-90717)"; exit 1; }
+
+      - name: Export compliance key must be declared
+        run: |
+          for plist in ios/Runner/Info.plist macos/Runner/Info.plist; do
+            /usr/libexec/PlistBuddy -c "Print :ITSAppUsesNonExemptEncryption" "$plist" >/dev/null \
+              || { echo "::error::$plist is missing ITSAppUsesNonExemptEncryption"; exit 1; }
+          done

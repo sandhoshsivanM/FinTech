@@ -96,6 +96,14 @@
     radial-gradient(90% 120% at 8% 110%, rgba(24, 201, 138, 0.16), transparent 60%),
     linear-gradient(168deg, #13291F 0%, var(--ink-surface) 62%);
 
+  /* --- Categorical chart series, Ledger step ---------------------------- */
+  /* Dropped in lightness so each mark clears 3:1 on a white card. Yellow is
+     intrinsically light, which is why Gold lands on bronze here rather than on
+     the brass it uses over on Vault — same hue, the step white can carry.
+     Generated from domain/palette.ts; asserted by domain/palette.test.ts. */
+  --c1: #008451; --c2: #757AC2; --c3: #A07C06; --c4: #2F6D9E;
+  --c5: #983E14; --c6: #3E9498; --c7: #8D447A; --c8: #646F2B;
+
   /* --- Back-compat aliases (older markup referenced these) --------------- */
   --glass-border: var(--line);
   --bg-top: var(--canvas);
@@ -170,6 +178,14 @@
     radial-gradient(90% 120% at 8% 110%, rgba(32, 201, 138, 0.10), transparent 60%),
     linear-gradient(168deg, #12241C 0%, var(--ink-surface) 62%);
 
+  /* --- Categorical chart series, Vault step ----------------------------- */
+  /* Lifted in lightness so each mark reads against a near-black card. Same
+     hues as the Ledger step above, one rung up — a series must not change
+     identity when the theme does, only its lightness.
+     Generated from domain/palette.ts; asserted by domain/palette.test.ts. */
+  --c1: #4EB982; --c2: #A4AAF6; --c3: #C19C3A; --c4: #63A1D5;
+  --c5: #EA8760; --c6: #73C7CC; --c7: #CA7CB4; --c8: #9CAA65;
+
   color-scheme: dark;
 }
 
@@ -233,21 +249,16 @@
   --nav-rail: 76px;
   --top-h: 64px;
 
-  /* Categorical series palette. Emerald leads, gold follows — the brand
-     hierarchy. These are CHART steps, not UI steps: --accent (#20C98A) sits
-     outside the lightness band a categorical mark needs, so the emerald here is
-     a darker step of the same hue.
+  /* NOTE: the categorical series palette --c1..--c8 is NOT here. It used to be,
+     on the reasoning that one step per hue could serve both grounds. It can,
+     but only by sitting in the middle of the lightness range — which is exactly
+     what made the charts look washed out on Vault and weak on Ledger at the
+     same time. Each theme now carries its own step of the same hue; see the
+     two theme blocks above.
 
-     Validated with the dataviz six-checks in BOTH themes: worst adjacent pair
-     ΔE 8.1 under protanopia (target 8), normal-vision floor 18.2, all ≥3:1.
-     The ORDER is the colourblind-safety mechanism — do not re-order.
-
-     The brief also listed an Amber slice beside Gold. They are ΔE 14.8 apart
-     under normal vision — below the 15 floor — so no reader could tell those
-     two slices apart. The amber was dropped rather than shipped as a duplicate.
-     See design-system/tokens/colors.ts. */
-  --c1: #189E6E; --c2: #BE8420; --c3: #2E92C4; --c4: #C9538A;
-  --c5: #4F7CFF; --c6: #CC6435; --c7: #8E7CC3; --c8: #2E9E63;
+     Source of truth is domain/palette.ts, which authors these in OKLCH, and
+     domain/palette.test.ts, which asserts the separation and contrast figures
+     rather than quoting them in a comment. */
 }
 
 /* ============================================================================

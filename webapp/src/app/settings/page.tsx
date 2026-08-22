@@ -4,10 +4,12 @@ import {
   ShieldCheck, CloudOff, KeyRound, Download, Upload,
   Globe, Lock, Trash2, Sparkles, CheckCircle2, AlertCircle,
   Users, Plus, Pencil, Check, Briefcase, User, Heart, FlaskConical,
+  HardDrive, ShieldAlert,
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
 import { TOUR_EVENT } from '@/components/Tour';
 import { useApp, ACCENTS, type AccentName, type ThemeChoice } from '@/lib/store';
+import { requestPersistence } from '@/lib/db';
 import { loadSampleData } from '@/lib/sampleData';
 import {
   CURRENCIES, findCurrency, isRateStale, rateAsOf, resolveRate,
@@ -425,6 +427,7 @@ export default function SettingsPage() {
             title="You hold the only key — your PIN"
             sub="Nobody, not even us, can read your vault without your PIN. There is no recovery option."
           />
+          <StorageDurabilityRow />
         </div>
 
         <DemoDataRow />
@@ -630,6 +633,60 @@ function DemoDataRow() {
           />
         </button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Tells the user whether the browser has promised to keep their vault.
+ *
+ * With no server, IndexedDB is not a cache — it is the only copy. Browsers
+ * evict ordinary origin storage under pressure, and Safari clears it for sites
+ * that have not been visited in about a week. That is a real way to lose a
+ * month of records, so it is stated plainly rather than hidden behind an
+ * assumption of durability, and the user is pointed at the export that fixes
+ * it. If the browser said no, retrying is worth offering: installing the app or
+ * bookmarking it often flips the answer.
+ */
+function StorageDurabilityRow() {
+  const persistence = useApp((s) => s.persistence);
+  const [busy, setBusy] = useState(false);
+  const setState = useApp.setState;
+
+  const retry = async () => {
+    setBusy(true);
+    try {
+      setState({ persistence: await requestPersistence() });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const persisted = persistence === 'persisted';
+  return (
+    <div className="flex items-center gap-3 py-2.5">
+      <span
+        className={`w-9 h-9 rounded-full grid place-items-center shrink-0 ${
+          persisted ? 'bg-accent-soft text-accent' : 'bg-warning-soft text-warning'
+        }`}
+      >
+        {persisted ? <HardDrive size={18} /> : <ShieldAlert size={18} />}
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="font-medium text-sm">
+          {persisted ? 'Storage marked permanent' : 'Storage is not guaranteed'}
+        </div>
+        <div className="text-xs text-muted mt-0.5 leading-relaxed">
+          {persisted
+            ? 'This browser has agreed not to clear your vault to reclaim space. Keep exporting backups anyway — a permanent mark is not a copy.'
+            : 'This browser may clear your vault to reclaim space, and Safari clears storage for sites left unvisited for about a week. Install Khazana or bookmark it to improve your odds, and export a backup you keep yourself.'}
+        </div>
+      </div>
+      {!persisted && persistence !== 'unsupported' && (
+        <Button variant="ghost" onClick={retry} disabled={busy}>
+          {busy ? 'Asking…' : 'Ask again'}
+        </Button>
+      )}
     </div>
   );
 }

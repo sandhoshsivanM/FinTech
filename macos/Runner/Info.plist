@@ -8,6 +8,21 @@
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIconFile</key>
 	<string></string>
+	<!-- Required for App Store submission: without a category the build is
+	     rejected at upload. -->
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.finance</string>
+	<!-- local_auth uses Face ID / Touch ID to unlock the vault. iOS already
+	     declared this; macOS did not, and an undeclared usage is a rejection.
+	     The string is shown verbatim in the system prompt. -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Khazana uses Face ID or Touch ID to unlock your vault so you do not have to type your PIN each time.</string>
+	<!-- Export compliance — see the matching note in ios/Runner/Info.plist.
+	     SQLCipher AES-256 protecting the user's own data on their own device
+	     falls under the ECCN 5D992.c mass-market exemption. Without this key
+	     every Mac App Store upload stalls on the questionnaire. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>

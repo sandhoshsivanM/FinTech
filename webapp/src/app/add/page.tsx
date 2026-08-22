@@ -436,7 +436,7 @@ export default function AddTransactionPage() {
         )}
 
         {/* Fields row */}
-        <div className="grid sm:grid-cols-2 min-[900px]:grid-cols-4 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {mode !== 'transfer' && (
             <Field label="Account" hint={money.length === 0 ? 'Add one on the Accounts page' : undefined}>
               <Select value={accountId} onChange={(e) => setAccountId(e.target.value)} disabled={money.length === 0}>

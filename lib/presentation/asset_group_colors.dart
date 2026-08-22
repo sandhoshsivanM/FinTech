@@ -3,46 +3,53 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_tokens.dart';
 import '../domain/entities/asset_group.dart';
 
-/// Validated categorical palette for the seven chart groups.
+/// The categorical palette for the seven chart groups.
 ///
-/// Hues and steps come from the data-viz reference palette and were checked with
-/// its validator against this app's chart surface: on the fixed
-/// [kAssetGroupOrder] adjacency the set clears every gate (worst adjacent CVD
-/// ΔE 9.1 protan, worst normal-vision ΔE 19.6).
+/// Mirrors `SERIES_BY_KEY` in `webapp/src/domain/palette.ts` exactly. That file
+/// is the source of truth: it authors the palette in OKLCH, and
+/// `webapp/src/domain/palette.test.ts` asserts the separation and contrast
+/// figures rather than quoting them. This file previously carried two stacked
+/// headers claiming DIFFERENT validator results for the same seven colours
+/// (ΔE 9.1 protan in one, 12.7 deuteranopia in the other) — numbers no check
+/// could ever have contradicted.
 ///
-/// Two rules come with it:
-///   1. Render groups in [kAssetGroupOrder]. Re-ordered freely — for instance by
-///      sorting slices largest-first — the worst pair collapses to ΔE 3.2 under
-///      protanopia and the palette no longer separates.
-///   2. Always ship the legend or direct labels. Three of these steps sit below
-///      3:1 contrast on the light surface, so the labels are what stop identity
-///      resting on colour alone.
-/// Asset-group colours. Mirrors `ASSET_GROUP_META` on web exactly.
+/// Two slots are pinned for MEANING, not position:
+///   * gold   -> the gold hue. A slice labelled "Gold" rendering blue — or, as
+///               an earlier palette had it, green — reads as a bug to anyone
+///               looking at the legend.
+///   * equity -> the emerald. The brand-leading colour, and almost always the
+///               largest slice.
 ///
-/// Two slots are pinned for MEANING, not for position:
-///   * gold   -> the gold hue. A slice labelled "Gold" that renders blue (or,
-///              as the web previously had it, green) reads as a bug to anyone
-///              looking at the legend.
-///   * equity -> the emerald. It is the brand-leading colour and almost always
-///              the largest slice.
+/// **A step per theme.** The previous set used one value for both grounds,
+/// which forced every hue into the middle of the lightness range: washed out on
+/// Vault and weak on Ledger at once. Same hue in both themes, different
+/// lightness — a series must not change identity when the theme does.
 ///
-/// The remaining five were then SEARCHED rather than chosen, over every
-/// assignment, scoring the pairs that actually sit next to each other in
-/// `AssetGroup.values` draw order. The winner clears all six dataviz checks in
-/// both themes: worst adjacent pair ΔE 12.7 under deuteranopia (target 8) and a
-/// normal-vision floor of 21.7.
-///
-/// Changing one entry re-orders the adjacencies and invalidates that result, so
-/// re-run the validator if you touch this.
-Color groupColor(AssetGroup g) => switch (g) {
-      AssetGroup.equity => const Color(0xFF189E6E),
-      AssetGroup.debt => const Color(0xFF8E7CC3),
-      AssetGroup.gold => const Color(0xFFBE8420),
-      AssetGroup.realEstate => const Color(0xFF2E92C4),
-      AssetGroup.retirement => const Color(0xFFCC6435),
-      AssetGroup.crypto => const Color(0xFF4F7CFF),
-      AssetGroup.cash => const Color(0xFFC9538A),
-    };
+/// **Every PAIR separates, not just neighbours.** The old set guaranteed only
+/// adjacent pairs in draw order, which is not what a reader sees: a book holding
+/// just equity and real-estate renders those two side by side though four slots
+/// separate them in the list. Under that realistic test the old palette fell to
+/// ΔE 3.0 (deuteranopia). This one holds every pair at ≥8, so slice order is a
+/// free choice rather than a hazard.
+Color groupColor(AssetGroup g, {bool dark = true}) => dark
+    ? switch (g) {
+        AssetGroup.equity => const Color(0xFF4EB982),
+        AssetGroup.debt => const Color(0xFFA4AAF6),
+        AssetGroup.gold => const Color(0xFFC19C3A),
+        AssetGroup.realEstate => const Color(0xFF63A1D5),
+        AssetGroup.retirement => const Color(0xFFEA8760),
+        AssetGroup.crypto => const Color(0xFF73C7CC),
+        AssetGroup.cash => const Color(0xFFCA7CB4),
+      }
+    : switch (g) {
+        AssetGroup.equity => const Color(0xFF008451),
+        AssetGroup.debt => const Color(0xFF757AC2),
+        AssetGroup.gold => const Color(0xFFA07C06),
+        AssetGroup.realEstate => const Color(0xFF2F6D9E),
+        AssetGroup.retirement => const Color(0xFF983E14),
+        AssetGroup.crypto => const Color(0xFF3E9498),
+        AssetGroup.cash => const Color(0xFF8D447A),
+      };
 
 /// Most steps a single hue family can carry before they stop separating.
 const kMaxGroupShades = 5;
@@ -71,7 +78,7 @@ const kMaxGroupShades = 5;
 /// price movement repaints the chart, and the user learns that the colours mean
 /// nothing.
 List<Color> groupShades(AssetGroup g, int count, {required bool dark}) {
-  final base = groupColor(g);
+  final base = groupColor(g, dark: dark);
   final toward = dark ? AppColors.darkSurface : AppColors.lightSurface;
   final n = count.clamp(1, kMaxGroupShades);
   return [

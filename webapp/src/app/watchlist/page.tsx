@@ -6,6 +6,7 @@
  * like everything else. Prices are entered by hand; the day change beside them
  * is synthesised and badged.
  */
+import { ProGate } from '@/components/ProGate';
 import { useMemo, useState } from 'react';
 import { Star, TrendingUp, TrendingDown, Target, Plus, Trash2 } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
@@ -22,7 +23,7 @@ import { demoDayChangePct } from '@/lib/demo/marketFeed';
 import { NumberInput } from '@/components/NumberInput';
 import { AssetMark } from '@/components/primitives';
 
-export default function WatchlistPage() {
+function WatchlistPageInner() {
   const watchlist = useApp((s) => s.watchlist);
   const put = useApp((s) => s.put);
   const del = useApp((s) => s.del);
@@ -164,5 +165,25 @@ export default function WatchlistPage() {
         </>
       )}
     </Stagger>
+  );
+}
+
+/**
+ * Track what you do not own yet — gated.
+ *
+ * The gate renders the real screen blurred behind the paywall card rather than
+ * replacing it: a redirect would lose the user's context and break the back
+ * button, and someone who can faintly see their own figures converts where
+ * someone shown an empty room does not.
+ */
+export default function WatchlistPage() {
+  return (
+    <ProGate
+      feature="watchlist"
+      title={'Track what you do not own yet'}
+      blurb={'Keep an eye on instruments before you buy. Part of Khazana Pro.'}
+    >
+      <WatchlistPageInner />
+    </ProGate>
   );
 }

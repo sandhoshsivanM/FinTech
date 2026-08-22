@@ -5,6 +5,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../data/database/app_database.dart';
 import '../../data/database/logs_database.dart';
+import '../branding.dart';
+import '../services/crash_guard.dart';
 import '../../data/repositories/drift_account_repository.dart';
 import '../../data/repositories/drift_budget_repository.dart';
 import '../../data/repositories/drift_category_repository.dart';
@@ -140,8 +142,31 @@ final logServiceProvider = Provider<LogService>((ref) {
   final db = ref.watch(logsDatabaseProvider).requireValue;
   return LogService(
     db,
-    appVersion: '1.0.0',
+    appVersion: kAppVersion,
     deviceModel: LogService.platformModel,
     osVersion: LogService.platformVersion,
   );
+});
+
+/// Connects [CrashGuard]'s in-memory buffer to the encrypted log once there is
+/// a vault to write into, and disconnects it when the vault locks.
+///
+/// Startup crashes happen before any key exists, so they are held in memory
+/// until this fires. If the user never unlocks, they are never written — which
+/// is the right outcome: an unencrypted crash log sitting next to an encrypted
+/// vault would be the weakest point in the product.
+final crashLogSinkProvider = Provider<void>((ref) {
+  final logs = ref.watch(logsDatabaseProvider);
+
+  logs.whenData((_) {
+    final service = ref.read(logServiceProvider);
+    CrashGuard.drainTo((rec) => service.log(
+          LogLevel.fatal,
+          rec.tag,
+          rec.message,
+          stackTrace: rec.stackTrace,
+        ));
+  });
+
+  ref.onDispose(CrashGuard.detach);
 });

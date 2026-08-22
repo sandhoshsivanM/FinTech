@@ -1,12 +1,16 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/branding.dart';
 import '../../../core/di/data_providers.dart';
 import '../../../core/di/providers.dart';
+import '../../../core/entitlement/entitlement_providers.dart';
+import '../../../core/errors/app_error.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/security/vault_registry.dart';
 import '../../../core/theme/app_tokens.dart';
@@ -30,6 +34,100 @@ class SettingsScreen extends ConsumerWidget {
 
 class _SettingsBody extends ConsumerWidget {
   const _SettingsBody();
+
+  /// Opens a legal page in the system browser.
+  ///
+  /// Failure is reported rather than swallowed: a privacy-policy link that
+  /// quietly does nothing is worse than no link, both for the user and for the
+  /// reviewer who is checking that it works.
+  Future<void> _openLegal(BuildContext context, String url) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!ok) {
+      messenger.showSnackBar(SnackBar(content: Text('Could not open $url')));
+    }
+  }
+
+  void _showAbout(BuildContext context) {
+    showAboutDialog(
+      context: context,
+      applicationName: kAppName,
+      applicationVersion: kAppVersion,
+      applicationLegalese: '© 2026 Sandhosh Sivan\n\n'
+          '$kAppName keeps your financial records on this device, encrypted '
+          'with a key derived from your PIN. We never receive them and cannot '
+          'read them.\n\n'
+          'Scores, projections and tax estimates are informational only and '
+          'are not investment, tax or insurance advice.\n\n'
+          'Support: $kSupportEmail',
+    );
+  }
+
+  /// Pick a `.ftos` file, verify it, confirm, then swap it in.
+  ///
+  /// The verify step runs before the confirmation dialog on purpose: it means
+  /// the user is never asked to approve overwriting their vault with a file
+  /// that was never going to work. A wrong PIN or a corrupt file is caught
+  /// while nothing is at stake.
+  Future<void> _restoreBackup(BuildContext context, WidgetRef ref) async {
+    final picked = await FilePicker.platform.pickFiles(
+      // `custom` + a extension filter is unreliable for uncommon extensions on
+      // iOS, which reports .ftos as an unknown type and shows nothing at all.
+      type: FileType.any,
+      withData: false,
+    );
+    final path = picked?.files.single.path;
+    if (path == null || !context.mounted) return;
+
+    final actions = ref.read(settingsActionsProvider);
+    final messenger = ScaffoldMessenger.of(context);
+
+    final problem = await actions.verifyBackup(path);
+    if (!context.mounted) return;
+    if (problem != null) {
+      messenger.showSnackBar(SnackBar(content: Text(problem)));
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Restore this backup?'),
+        content: const Text(
+          'The backup is valid and can be opened with your PIN.\n\n'
+          'Restoring replaces everything currently in this vault — '
+          'transactions, holdings, budgets, goals, all of it — with the '
+          'contents of the backup. The vault as it is right now is kept on '
+          'this device until the next restore, but there is no undo button.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await actions.restoreBackup(path);
+      messenger.showSnackBar(
+          const SnackBar(content: Text('Backup restored.')));
+      if (context.mounted) context.go(Routes.dashboard);
+    } on AppError catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Restore failed: $e')));
+    }
+  }
 
   Future<void> _run(
     BuildContext context,
@@ -213,6 +311,26 @@ class _SettingsBody extends ConsumerWidget {
           onTap: () => context.go(Routes.currency),
         ),
         const Divider(),
+        // Above Backup on purpose: someone who has already paid comes to
+        // Settings looking for "Restore", and it has to be findable without
+        // first walking into a paywall.
+        Consumer(builder: (context, ref, _) {
+          final entitlement = ref.watch(entitlementProvider);
+          return ListTile(
+            leading: const Icon(Icons.workspace_premium_outlined,
+                color: AppColors.accent),
+            title: const Text('Khazana Pro'),
+            subtitle: Text(entitlement.isPro
+                ? 'Unlocked${entitlement.orderRef == null ? '' : ' · Licence …${entitlement.orderRef!.substring(entitlement.orderRef!.length - 4)}'}'
+                : 'One payment. Yours forever.'),
+            trailing: entitlement.isPro
+                ? const Icon(Icons.verified_outlined,
+                    size: 18, color: AppColors.income)
+                : const Icon(Icons.chevron_right),
+            onTap: () => context.go(Routes.pro),
+          );
+        }),
+        const Divider(),
         const _SectionHeader('Backup'),
         ListTile(
           leading: const Icon(Icons.save_alt),
@@ -221,6 +339,12 @@ class _SettingsBody extends ConsumerWidget {
           onTap: () => _run(context, actions.exportBackup,
               shareText: '$kAppName encrypted backup'),
         ),
+        ListTile(
+          leading: const Icon(Icons.settings_backup_restore),
+          title: const Text('Restore from backup'),
+          subtitle: const Text('Replaces everything in this vault'),
+          onTap: () => _restoreBackup(context, ref),
+        ),
         const Divider(),
         const _SectionHeader('Data & Privacy'),
         ListTile(
@@ -228,6 +352,29 @@ class _SettingsBody extends ConsumerWidget {
           title: const Text('Export error log'),
           subtitle: const Text('Plaintext logs.json — no financial data'),
           onTap: () => _showLogDisclaimer(context, ref),
+        ),
+        // Google Play requires a privacy policy reachable from *inside* the app
+        // for anything handling financial data, not only from the store
+        // listing. Apple checks the same thing during review.
+        ListTile(
+          leading: const Icon(Icons.privacy_tip_outlined),
+          title: const Text('Privacy policy'),
+          subtitle: const Text('What stays on this device, and what does not'),
+          trailing: const Icon(Icons.open_in_new, size: 16),
+          onTap: () => _openLegal(context, kPrivacyPolicyUrl),
+        ),
+        ListTile(
+          leading: const Icon(Icons.gavel_outlined),
+          title: const Text('Terms of use'),
+          subtitle: const Text('Licence, refunds, and what $kAppName is not'),
+          trailing: const Icon(Icons.open_in_new, size: 16),
+          onTap: () => _openLegal(context, kTermsUrl),
+        ),
+        ListTile(
+          leading: const Icon(Icons.info_outline),
+          title: const Text('About $kAppName'),
+          subtitle: const Text('Version $kAppVersion'),
+          onTap: () => _showAbout(context),
         ),
         const Divider(),
         const _SectionHeader('Danger zone'),

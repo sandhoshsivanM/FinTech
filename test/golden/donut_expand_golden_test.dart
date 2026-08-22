@@ -2,6 +2,9 @@
 library;
 
 import 'package:flutter/material.dart';
+
+import 'package:khazana/domain/entities/asset_group.dart';
+import 'package:khazana/presentation/asset_group_colors.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khazana/core/theme/app_theme.dart';
 import 'package:khazana/presentation/charts/donut_chart.dart';
@@ -14,14 +17,12 @@ import 'package:khazana/presentation/glass_card.dart';
 /// not swamp the card. That is the part a behavioural assertion cannot see, and
 /// it is exactly what regressed on mobile before.
 void main() {
+  // Taken from the real palette rather than retyped. This fixture used to carry
+  // its own seven-colour list with two entries transposed, so the golden pinned
+  // an adjacency the product never rendered — a third source of truth that
+  // could disagree with the other two without anything failing.
   final palette = <Color>[
-    const Color(0xFF189E6E),
-    const Color(0xFFBE8420),
-    const Color(0xFF2E92C4),
-    const Color(0xFFC9538A),
-    const Color(0xFF4F7CFF),
-    const Color(0xFF8E7CC3),
-    const Color(0xFFCC6435),
+    for (final g in AssetGroup.values) groupColor(g),
   ];
 
   const names = [

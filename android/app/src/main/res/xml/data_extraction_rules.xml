@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ backup/transfer rules. Both sections exclude everything.
+
+  `cloud-backup` is Google Auto Backup; `device-transfer` is the cable/Wi-Fi
+  copy during new-phone setup. They are configured separately, and excluding
+  only the first is the common mistake — the vault would still ride across to
+  a new device outside the user's control.
+
+  Nothing here is a substitute for the app's own encrypted .ftos export. That
+  is the supported way to move a vault, and the user holds its key.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

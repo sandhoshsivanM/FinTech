@@ -1,0 +1,150 @@
+Khazana — End User License Agreement
+Copyright (c) 2026 Sandhosh Sivan. All rights reserved.
+
+Effective: 21 August 2026
+Contact: sandhoshsivan00@gmail.com
+
+This is proprietary software. It is NOT open source. Nothing in this repository
+grants a licence to copy, modify, or redistribute the source code. The terms
+below govern use of the compiled application distributed through the Apple App
+Store, the Mac App Store, Google Play, or as a direct download.
+
+Where a store's own terms conflict with these, the store's terms govern that
+copy, as required by Apple and Google.
+
+
+1. LICENCE GRANTED
+
+You are granted a personal, non-exclusive, non-transferable, revocable licence
+to install and use Khazana on devices you own or control, for your own personal
+or internal business use.
+
+Khazana Pro is a one-time purchase, not a subscription. Once bought it does not
+expire, is not billed again, and is not withdrawn if you stop using the app.
+Purchases made through an app store are tied to that store account and may be
+restored on any device signed into it. A licence key bought directly is tied to
+your order and may be used on your own devices.
+
+Because purchases in one ecosystem cannot be verified in another without a
+server we do not operate, an app store purchase and a direct licence key are
+separate. This is stated before purchase, on the purchase screen.
+
+
+2. WHAT YOU MAY NOT DO
+
+You may not redistribute, resell, sublicense, rent or lend the software; share
+a licence key publicly or with people outside your household; reverse engineer,
+decompile or disassemble it except where that restriction is unenforceable by
+law; remove or alter proprietary notices; or use it to build a competing
+product.
+
+
+3. YOUR DATA IS YOURS
+
+Khazana stores your financial data on your device, encrypted with a key derived
+from your PIN. We do not receive it, cannot read it, and do not want it.
+
+You may export your complete data at any time, in an encrypted backup and in
+plain CSV, and both remain available whether or not you have bought Khazana Pro.
+No feature that gets your own data out of the app is ever behind a payment.
+
+We cannot recover your PIN. There is no reset, no recovery code, and no back
+door. This is a deliberate design decision — a recovery path we controlled
+would mean we could read your vault. If you forget your PIN and have no backup,
+the data is permanently unreadable, by you and by us alike.
+
+Keep your own backups. Read section 5 before deciding not to.
+
+
+4. NOT FINANCIAL ADVICE
+
+Khazana is a record-keeping and calculation tool. Its scores, projections,
+tax estimates, insurance coverage suggestions and written insights are
+informational only. They are not investment, tax, insurance, accounting or
+legal advice, and are not a recommendation to buy or sell anything.
+
+We are not a registered investment adviser, broker, insurance intermediary or
+tax practitioner in any jurisdiction. Tax rules, market data and exchange rates
+change; figures may be out of date or wrong. Verify anything that matters with
+a qualified professional before acting on it.
+
+Market prices, NAVs and exchange rates, where shown, come from third-party
+providers and are supplied as-is. Demo market data, when you switch it on, is
+generated on your device, is clearly labelled, and represents nothing real.
+
+
+5. NO WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+In particular, and stated plainly rather than buried: we do not warrant that
+the software is free of defects, that calculations are correct, or that your
+data cannot be lost. Data lives on your device and can be lost through device
+failure, loss, theft, an operating-system or browser action that clears app
+storage, a forgotten PIN, or a defect in this software. In the web app, browser
+storage may be cleared by the browser itself.
+
+Exporting backups regularly, and keeping them somewhere other than the device
+running Khazana, is your responsibility. The app provides the tools; it cannot
+make the copies for you.
+
+
+6. LIMITATION OF LIABILITY
+
+To the maximum extent permitted by law, the author's total liability arising
+out of or relating to the software is limited to the amount you actually paid
+for it in the twelve months before the claim.
+
+The author is not liable for indirect, incidental, special, consequential or
+punitive damages, or for lost profits, lost data, or financial decisions taken
+on the basis of the software's output, even if advised of the possibility.
+
+Nothing here excludes liability that cannot lawfully be excluded, including for
+fraud, or for death or personal injury caused by negligence. Some jurisdictions
+do not allow certain exclusions, so parts of this section may not apply to you,
+and you may have statutory rights — including under Indian consumer protection
+law and, in the EEA and UK, mandatory consumer rights — that this agreement
+does not affect.
+
+
+7. REFUNDS
+
+Purchases made through the Apple App Store, the Mac App Store or Google Play
+are refunded according to that store's policy, by that store. We cannot issue
+those refunds ourselves.
+
+Direct purchases are handled by our merchant of record and may be refunded
+within 14 days of purchase.
+
+
+8. TERMINATION
+
+This licence ends if you materially breach it, in particular by redistributing
+the software or a licence key. Ending it does not affect your data, which is
+and remains yours, on your device, and which you can export at any time.
+
+
+9. GOVERNING LAW
+
+This agreement is governed by the laws of India, without regard to conflict of
+law rules, and the courts of Chennai, Tamil Nadu have exclusive jurisdiction —
+except where mandatory local consumer law entitles you to bring proceedings in
+your own country of residence, in which case that right is unaffected.
+
+
+10. THIRD-PARTY COMPONENTS
+
+Khazana includes open-source components under their own licences, including
+SQLCipher (BSD-style), Flutter and Dart (BSD-3-Clause), Drift (MIT), the Inter
+typeface (SIL Open Font License 1.1), React and Next.js (MIT), Dexie (Apache
+2.0) and Tauri (MIT/Apache 2.0). Those licences govern those components and are
+reproduced in the application's about screen and in THIRD-PARTY-NOTICES.md.
+
+
+11. CHANGES
+
+We may update these terms for future versions. The version you agreed to at
+install continues to govern that copy until you update. The current text is
+always at the Legal link inside the app.

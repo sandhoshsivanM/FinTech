@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
+import '../../../core/services/notification_sync_service.dart';
 import '../../../domain/entities/goal.dart';
 
 const _uuid = Uuid();
@@ -31,8 +32,8 @@ class GoalActions {
     required Decimal target,
     DateTime? targetDate,
     String? notes,
-  }) {
-    return _ref.read(goalRepositoryProvider).saveGoal(Goal(
+  }) async {
+    await _ref.read(goalRepositoryProvider).saveGoal(Goal(
           id: _uuid.v4(),
           vaultId: _ref.read(currentVaultIdProvider),
           name: name,
@@ -42,10 +43,15 @@ class GoalActions {
           targetDate: targetDate,
           notes: notes,
         ));
+    // A new target date the OS has not been told about yet.
+    _ref.reconcileNotifications();
   }
 
-  Future<void> delete(String id) =>
-      _ref.read(goalRepositoryProvider).deleteGoal(id);
+  Future<void> delete(String id) async {
+    await _ref.read(goalRepositoryProvider).deleteGoal(id);
+    // Alarms outlive the records they describe.
+    _ref.reconcileNotifications();
+  }
 
   Future<void> contribute(String goalId, Decimal amount, {String? note}) {
     return _ref.read(goalRepositoryProvider).contribute(

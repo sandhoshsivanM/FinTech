@@ -12,6 +12,7 @@
  *     type is unknown. Those are counted separately rather than defaulted to
  *     short term, which would overstate the bill.
  */
+import { ProGate } from '@/components/ProGate';
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { Landmark, Clock, TrendingUp, CircleHelp } from 'lucide-react';
@@ -37,7 +38,7 @@ interface TaxRow {
   heldDays: number | null;
 }
 
-export default function TaxPage() {
+function TaxPageInner() {
   const holdings = useApp((s) => s.holdings);
   const fmt = useFmt();
   const now = new Date();
@@ -99,7 +100,7 @@ export default function TaxPage() {
       cell: (r) => r.heldDays == null ? <span className="text-muted">—</span> : <span className="text-ink-soft">{Math.floor(r.heldDays / 30)} mo</span>,
     },
     {
-      key: 'type', header: 'Gain type', value: (r) => r.gainType ?? 'unknown',
+      key: 'type', header: 'Gain type', term: 'longTerm', value: (r) => r.gainType ?? 'unknown',
       cell: (r) => r.gainType == null
         ? <Chip tone="warning">Unknown</Chip>
         : <Chip tone={r.gainType === 'long_term' ? 'success' : 'accent'}>{r.gainType === 'long_term' ? 'Long term' : 'Short term'}</Chip>,
@@ -108,7 +109,7 @@ export default function TaxPage() {
       key: 'gain', header: 'Unrealised gain', align: 'right', value: (r) => r.gain,
       cell: (r) => <span className={r.gain >= 0 ? 'text-success font-semibold' : 'text-danger font-semibold'}>{r.gain >= 0 ? '+' : '−'}{fmt.money(Math.abs(r.gain))}</span>,
     },
-    { key: 'rate', header: 'Rate', align: 'right', optional: true, value: (r) => r.rateLabel, cell: (r) => <span className="text-ink-soft text-[12px]">{r.rateLabel}</span> },
+    { key: 'rate', header: 'Rate', term: 'slabRate', align: 'right', optional: true, value: (r) => r.rateLabel, cell: (r) => <span className="text-ink-soft text-[12px]">{r.rateLabel}</span> },
     {
       key: 'tax', header: 'Est. tax', align: 'right', value: (r) => r.tax,
       cell: (r) => r.gainType == null ? <span className="text-muted">—</span> : <span className="font-semibold">{fmt.money(r.tax)}</span>,
@@ -142,8 +143,8 @@ export default function TaxPage() {
             footer={estimate.exemptionUsed.gt(0)
               ? `After ${fmt.money(estimate.exemptionUsed)} exemption`
               : `Across ${priced.length} position${priced.length === 1 ? '' : 's'}`} />
-          <Kpi label="Long-term gain" numeric={sum(ltcg, 'gain')} format={short} icon={Clock} tone="success" footer={`${ltcg.length} holding${ltcg.length === 1 ? '' : 's'} · est. ${fmt.money(sum(ltcg, 'tax'))}`} />
-          <Kpi label="Short-term gain" numeric={sum(stcg, 'gain')} format={short} icon={TrendingUp} tone="warning" footer={`${stcg.length} holding${stcg.length === 1 ? '' : 's'} · est. ${fmt.money(sum(stcg, 'tax'))}`} />
+          <Kpi label="Long-term gain" term="longTerm" numeric={sum(ltcg, 'gain')} format={short} icon={Clock} tone="success" footer={`${ltcg.length} holding${ltcg.length === 1 ? '' : 's'} · est. ${fmt.money(sum(ltcg, 'tax'))}`} />
+          <Kpi label="Short-term gain" term="shortTerm" numeric={sum(stcg, 'gain')} format={short} icon={TrendingUp} tone="warning" footer={`${stcg.length} holding${stcg.length === 1 ? '' : 's'} · est. ${fmt.money(sum(stcg, 'tax'))}`} />
           <Kpi label="Unclassified" value={unknown.length ? String(unknown.length) : null} icon={CircleHelp} tone="violet" footer={unknown.length ? 'Missing a purchase date' : undefined} />
         </KpiRow>
       </StaggerItem>
@@ -192,5 +193,25 @@ export default function TaxPage() {
         </section>
       </StaggerItem>
     </Stagger>
+  );
+}
+
+/**
+ * See what your gains would cost you — gated.
+ *
+ * The gate renders the real screen blurred behind the paywall card rather than
+ * replacing it: a redirect would lose the user's context and break the back
+ * button, and someone who can faintly see their own figures converts where
+ * someone shown an empty room does not.
+ */
+export default function TaxPage() {
+  return (
+    <ProGate
+      feature="taxCentre"
+      title={'See what your gains would cost you'}
+      blurb={'Short- and long-term capital gains, realised gains for the year, and what a position would cost if you sold it today.'}
+    >
+      <TaxPageInner />
+    </ProGate>
   );
 }

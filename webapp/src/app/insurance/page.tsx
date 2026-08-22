@@ -287,7 +287,7 @@ export default function InsurancePage() {
           <StatStrip
             items={[
               {
-                label: 'Total cover',
+                label: 'Total cover', term: 'sumAssured',
                 value: mask(fmt.money(totalCover)),
                 sub: `${insurances.length} polic${insurances.length !== 1 ? 'ies' : 'y'}`,
               },
@@ -302,7 +302,7 @@ export default function InsurancePage() {
                 sub: 'tracked',
               },
               {
-                label: 'Life cover gap',
+                label: 'Life cover gap', term: 'coverageGap',
                 value: lifeGap
                   ? lifeGap.gap.gt(0)
                     ? mask(fmt.money(lifeGap.gap))

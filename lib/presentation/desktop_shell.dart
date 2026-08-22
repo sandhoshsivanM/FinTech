@@ -10,7 +10,12 @@ import '../core/router/app_router.dart';
 import '../core/theme/app_tokens.dart';
 
 /// A navigable destination in the desktop sidebar.
-typedef _Dest = ({String route, IconData icon, String label});
+///
+/// [hint] is one line under the label. Nineteen one-word labels tell a
+/// returning user where to click and a new one nothing at all — "Investments",
+/// "Breakdown" and "Analytics" are three different screens whose names do not
+/// distinguish them. Kept to a few words: a signpost, not documentation.
+typedef _Dest = ({String route, IconData icon, String label, String hint});
 
 /// A titled group of destinations.
 typedef _Section = ({String title, List<_Dest> items});
@@ -32,40 +37,137 @@ const _sections = <_Section>[
   (
     title: 'Overview',
     items: [
-      (route: Routes.dashboard, icon: Icons.dashboard_outlined, label: 'Dashboard'),
-      (route: Routes.score, icon: Icons.speed_outlined, label: 'Score'),
-      (route: Routes.reports, icon: Icons.bar_chart_outlined, label: 'Reports'),
-      (route: Routes.safetyNet, icon: Icons.health_and_safety_outlined, label: 'Safety Net'),
+      (
+        route: Routes.dashboard,
+        icon: Icons.dashboard_outlined,
+        label: 'Dashboard',
+        hint: 'Where you stand today',
+      ),
+      (
+        route: Routes.score,
+        icon: Icons.speed_outlined,
+        label: 'Score',
+        hint: 'Your health score, and why',
+      ),
+      (
+        route: Routes.reports,
+        icon: Icons.bar_chart_outlined,
+        label: 'Reports',
+        hint: 'Trends over time',
+      ),
+      (
+        route: Routes.safetyNet,
+        icon: Icons.health_and_safety_outlined,
+        label: 'Safety Net',
+        hint: 'How long you could hold out',
+      ),
     ],
   ),
   (
     title: 'Money',
     items: [
-      (route: Routes.transactions, icon: Icons.receipt_long_outlined, label: 'Cash Flow'),
-      (route: Routes.accounts, icon: Icons.account_balance_outlined, label: 'Accounts'),
-      (route: Routes.calendar, icon: Icons.calendar_month_outlined, label: 'Calendar'),
-      (route: Routes.budget, icon: Icons.pie_chart_outline, label: 'Budget'),
-      (route: Routes.recurring, icon: Icons.repeat, label: 'Recurring'),
-      (route: Routes.search, icon: Icons.search, label: 'Search'),
+      (
+        route: Routes.transactions,
+        icon: Icons.receipt_long_outlined,
+        label: 'Cash Flow',
+        hint: 'Everything in and out',
+      ),
+      (
+        route: Routes.accounts,
+        icon: Icons.account_balance_outlined,
+        label: 'Accounts',
+        hint: 'Where your money sits',
+      ),
+      (
+        route: Routes.calendar,
+        icon: Icons.calendar_month_outlined,
+        label: 'Calendar',
+        hint: 'The same money, by date',
+      ),
+      (
+        route: Routes.budget,
+        icon: Icons.pie_chart_outline,
+        label: 'Budget',
+        hint: 'Limits per category',
+      ),
+      (
+        route: Routes.recurring,
+        icon: Icons.repeat,
+        label: 'Recurring',
+        hint: 'Bills and income that repeat',
+      ),
+      (
+        route: Routes.search,
+        icon: Icons.search,
+        label: 'Search',
+        hint: 'Find any record',
+      ),
     ],
   ),
   (
     title: 'Wealth',
     items: [
-      (route: Routes.investments, icon: Icons.trending_up_outlined, label: 'Investments'),
-      (route: Routes.investmentsBreakdown, icon: Icons.donut_small_outlined, label: 'Breakdown'),
-      (route: Routes.analytics, icon: Icons.insights_outlined, label: 'Analytics'),
-      (route: Routes.liabilities, icon: Icons.credit_card_outlined, label: 'Liabilities'),
-      (route: Routes.insurance, icon: Icons.umbrella_outlined, label: 'Insurance'),
-      (route: Routes.goals, icon: Icons.flag_outlined, label: 'Goals'),
+      // These three are the set most often confused, and the labels alone do
+      // not separate them: the summary, the split, and the deeper cuts.
+      (
+        route: Routes.investments,
+        icon: Icons.trending_up_outlined,
+        label: 'Investments',
+        hint: 'Positions, returns, performance',
+      ),
+      (
+        route: Routes.investmentsBreakdown,
+        icon: Icons.donut_small_outlined,
+        label: 'Breakdown',
+        hint: 'How the portfolio splits up',
+      ),
+      (
+        route: Routes.analytics,
+        icon: Icons.insights_outlined,
+        label: 'Analytics',
+        hint: 'Deeper cuts of the same data',
+      ),
+      (
+        route: Routes.liabilities,
+        icon: Icons.credit_card_outlined,
+        label: 'Liabilities',
+        hint: 'Loans and card balances',
+      ),
+      (
+        route: Routes.insurance,
+        icon: Icons.umbrella_outlined,
+        label: 'Insurance',
+        hint: 'Policies and cover gaps',
+      ),
+      (
+        route: Routes.goals,
+        icon: Icons.flag_outlined,
+        label: 'Goals',
+        hint: 'What you are saving towards',
+      ),
     ],
   ),
   (
     title: 'Data',
     items: [
-      (route: Routes.captureInbox, icon: Icons.inbox_outlined, label: 'Capture Inbox'),
-      (route: Routes.bankImport, icon: Icons.upload_file_outlined, label: 'Import'),
-      (route: Routes.settings, icon: Icons.settings_outlined, label: 'Settings'),
+      (
+        route: Routes.captureInbox,
+        icon: Icons.inbox_outlined,
+        label: 'Capture Inbox',
+        hint: 'Caught, not yet filed',
+      ),
+      (
+        route: Routes.bankImport,
+        icon: Icons.upload_file_outlined,
+        label: 'Import',
+        hint: 'Bring in a statement or broker file',
+      ),
+      (
+        route: Routes.settings,
+        icon: Icons.settings_outlined,
+        label: 'Settings',
+        hint: 'Appearance, vaults, backup',
+      ),
     ],
   ),
 ];
@@ -75,8 +177,9 @@ const _sections = <_Section>[
 /// Exposed so `test/widget/navigation_test.dart` can assert that no screen is
 /// missing from it. Reading `_sections` from a test would mean making the whole
 /// private structure public; this is the one fact the test needs.
-List<String> get desktopSidebarRoutes =>
-    [for (final s in _sections) ...s.items.map((d) => d.route)];
+List<String> get desktopSidebarRoutes => [
+  for (final s in _sections) ...s.items.map((d) => d.route),
+];
 
 class DesktopShell extends ConsumerWidget {
   const DesktopShell({required this.child, super.key});
@@ -110,7 +213,9 @@ class DesktopShell extends ConsumerWidget {
         children: [
           _Sidebar(active: active),
           const VerticalDivider(width: 1, thickness: 1),
-          Expanded(child: _ContentColumn(route: active, child: child)),
+          Expanded(
+            child: _ContentColumn(route: active, child: child),
+          ),
         ],
       ),
     );
@@ -205,10 +310,10 @@ class _Sidebar extends ConsumerWidget {
                     child: Text(
                       section.title.toUpperCase(),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            letterSpacing: 1.1,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: scheme.onSurfaceVariant,
+                        letterSpacing: 1.1,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   for (final d in section.items)
@@ -232,7 +337,11 @@ class _BrandHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.lg, AppSpacing.md, AppSpacing.sm),
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
       child: Row(
         children: [
           const BrandMark(size: 30),
@@ -243,15 +352,15 @@ class _BrandHeader extends StatelessWidget {
               children: [
                 Text(
                   kAppName,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 Text(
                   kAppTagline,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -275,40 +384,65 @@ class _NavItem extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm, vertical: 1),
+        horizontal: AppSpacing.sm,
+        vertical: 1,
+      ),
       child: Material(
         color: selected
             ? AppColors.accent.withValues(alpha: 0.13)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () => context.go(dest.route),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm, vertical: 9),
-            child: Row(
-              children: [
-                Icon(
-                  dest.icon,
-                  size: 18,
-                  color: selected ? AppColors.accent : scheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    dest.label,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight:
-                          selected ? FontWeight.w700 : FontWeight.w500,
-                      color: selected ? AppColors.accent : scheme.onSurface,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+        // The hint on hover and on long-press, rather than inline: nineteen
+        // two-line rows would not fit the sidebar, and a Flutter tooltip —
+        // unlike the web's `title` attribute — does reach a touch screen. The
+        // Semantics label carries it unconditionally, so a screen reader hears
+        // "Breakdown, how the portfolio splits up" and never has to guess.
+        child: Tooltip(
+          message: dest.hint,
+          waitDuration: const Duration(milliseconds: 400),
+          child: Semantics(
+            button: true,
+            label: '${dest.label}. ${dest.hint}',
+            selected: selected,
+            child: ExcludeSemantics(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => context.go(dest.route),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 9,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        dest.icon,
+                        size: 18,
+                        color: selected
+                            ? AppColors.accent
+                            : scheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          dest.label,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: selected
+                                ? AppColors.accent
+                                : scheme.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),

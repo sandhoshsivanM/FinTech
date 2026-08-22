@@ -8,6 +8,17 @@ on:
   pull_request:
 
 jobs:
+  # Cheap and first: five files each state the product's version, and the
+  # release workflow reads one of them to name the GitHub release while the
+  # backup header stamps another into every file a user exports. They drifted
+  # once (1.0.0 / 0.1.0 / 0.1.0 / 1.0.0) and nothing noticed.
+  versions:
+    name: Version consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: tool/check_versions.sh
+
   webapp:
     name: Web app (Next.js)
     runs-on: ubuntu-latest

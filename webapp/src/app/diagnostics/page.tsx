@@ -12,7 +12,8 @@
  * destroy the evidence of how the vault got that way.
  */
 import { useMemo } from 'react';
-import { AlertTriangle, CheckCircle2, Stethoscope, XCircle } from 'lucide-react';
+import Link from 'next/link';
+import { AlertTriangle, ArrowRight, CheckCircle2, Stethoscope, XCircle } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { runDiagnostics, worstLevel, type Check } from '@/domain/diagnostics';
 import { GlassCard, PageIntro, SectionHeader, Chip } from '@/components/ui';
@@ -23,13 +24,48 @@ const ICON = {
   error: <XCircle size={17} style={{ color: 'var(--expense)' }} />,
 };
 
+/**
+ * Where each failing check is actually resolved.
+ *
+ * A screen that describes a problem and stops leaves the reader to work out
+ * which of twenty-eight routes fixes it. Keyed by the check's stable `id`, so a
+ * reworded `detail` cannot break the link — and deliberately partial: a check
+ * with no user-side fix (the ledger repairs itself on next open; a decryption
+ * failure needs a backup, not a screen) gets no button rather than a
+ * misleading one.
+ */
+const FIX: Record<string, { href: string; label: string }> = {
+  'lot-reconciliation': { href: '/import', label: 'Import real lots' },
+  'holding-prices': { href: '/holdings', label: 'Update prices' },
+  'holding-dates': { href: '/holdings', label: 'Set purchase dates' },
+  'fixed-income-rates': { href: '/holdings', label: 'Add rates' },
+  'txn-categories': { href: '/transactions', label: 'Recategorise' },
+  'posting-accounts': { href: '/accounts', label: 'Review accounts' },
+  'attachment-links': { href: '/transactions', label: 'Review entries' },
+  'fx-rates': { href: '/settings', label: 'Set FX rates' },
+  'fx-current': { href: '/settings', label: 'Refresh FX rates' },
+  'money-values': { href: '/transactions', label: 'Review amounts' },
+};
+
 function CheckRow({ check }: { check: Check }) {
+  // Only when something is actually wrong. Offering "Import real lots" beside a
+  // green tick would invite work that does not need doing.
+  const fix = check.level === 'ok' ? undefined : FIX[check.id];
   return (
     <div className="flex gap-3 py-3">
       <span className="shrink-0 mt-0.5">{ICON[check.level]}</span>
       <div className="min-w-0">
         <div className="font-semibold text-sm">{check.label}</div>
         <p className="text-[13px] text-muted leading-relaxed mt-0.5">{check.detail}</p>
+        {fix && (
+          <Link
+            href={fix.href}
+            className="focus-ring mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[var(--accent)] hover:underline"
+          >
+            {fix.label}
+            <ArrowRight size={13} aria-hidden="true" />
+          </Link>
+        )}
         {check.offenders?.length ? (
           <details className="mt-1.5">
             <summary className="text-xs text-[var(--accent)] cursor-pointer font-semibold">
@@ -93,7 +129,7 @@ export default function DiagnosticsPage() {
 
       <GlassCard>
         <SectionHeader title="Record counts" />
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 min-[1100px]:grid-cols-5 gap-3">
+        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {counts.map(([label, n]) => (
             <div key={label} className="rounded-[var(--radius-card)] border border-[var(--line)] p-3">
               <div className="text-xs text-muted">{label}</div>

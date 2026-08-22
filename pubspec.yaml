@@ -72,6 +72,19 @@ dependencies:
   # Network (opt-in live market data only — ticker symbols, zero user data)
   http: ^1.2.2
 
+  # Khazana Pro: a single non-consumable / one-time product, `khazana_pro`.
+  # StoreKit on iOS + macOS (one Universal Purchase covers iPhone, iPad and
+  # Mac), Play Billing on Android. Direct builds never touch this — they use
+  # Ed25519 licence keys, selected at compile time by KHAZANA_CHANNEL.
+  in_app_purchase: ^3.2.0
+
+  # Opens the privacy policy and terms in the system browser. Not an in-app
+  # webview on purpose: a finance app rendering its own legal pages inside a
+  # webview is both a bigger attack surface and less trustworthy to the reader,
+  # who cannot see the address bar. Play requires an in-app *link* to the
+  # policy, not that we render it ourselves.
+  url_launcher: ^6.3.1
+
   # Utilities
   meta: ^1.16.0 # @visibleForTesting and friends
   uuid: ^4.5.1
@@ -91,6 +104,14 @@ dev_dependencies:
 
   # Testing
   mocktail: ^1.0.4
+
+  # Used by test/unit/attachment_encryption_test.dart to point
+  # getApplicationDocumentsDirectory at a temp dir. Both are transitive
+  # dependencies of path_provider already; declared here so the analyzer's
+  # depend_on_referenced_packages rule is satisfied and the test does not break
+  # silently if path_provider ever drops one.
+  path_provider_platform_interface: ^2.1.2
+  plugin_platform_interface: ^2.1.8
 
 flutter:
   uses-material-design: true

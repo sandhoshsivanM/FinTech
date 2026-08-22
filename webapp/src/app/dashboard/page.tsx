@@ -41,6 +41,8 @@ import {
   PageHeader, Section, Metric, MetricRow, MoneyValue, LedgerLine, AssetMark } from '@/components/primitives';
 import { LineChart } from '@/components/charts/LineChart';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
+import { DashboardStarter } from '@/components/DashboardStarter';
+import { Hint } from '@/components/Hint';
 import { Stagger, StaggerItem } from '@/components/motion';
 
 /** Ranges the snapshot history can answer. */
@@ -247,6 +249,12 @@ export default function DashboardPage() {
   const bills = [...recurring].sort((a, b) => a.nextRun - b.nextRun).slice(0, 5);
   const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? 'Other';
 
+  // Nothing has been entered yet. Categories are seeded by `reload()` and so are
+  // present in every vault — counting them would mean this is never true.
+  const isEmptyVault =
+    txns.length === 0 && holdings.length === 0
+    && accounts.length === 0 && liabilities.length === 0;
+
   return (
     <Stagger className="grid gap-6">
       {/* ---- Position ------------------------------------------------------ */}
@@ -280,7 +288,8 @@ export default function DashboardPage() {
       </StaggerItem>
 
       <StaggerItem>
-        <Section title="Net worth" first>
+        {isEmptyVault ? <DashboardStarter /> : (
+        <Section title="Net worth" first description="What you own minus what you owe">
           <MoneyValue size="xl" hidden={ghost}>
             {fmt.money(cash.plus(summary.current).minus(liab))}
           </MoneyValue>
@@ -293,21 +302,39 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* These are the parts of the figure above, so they have to add up to
+              it. Liabilities were missing from this row while still being
+              subtracted from the headline, which left anyone carrying a loan to
+              work out the shortfall themselves — or to conclude the total was
+              simply wrong. */}
           <MetricRow className="mt-6">
-            <Metric label="Cash" value={fmt.money(cash)} hidden={ghost}
+            <Metric label="Cash" value={fmt.money(cash)} hidden={ghost} hint="cash"
               sub={`${moneyAccountCount} account${moneyAccountCount === 1 ? '' : 's'}`} />
+            {/* A vault with transactions but no holdings is a normal state, and
+                three ₹0.00 investment figures read as a loss of money rather
+                than an absence of it. */}
             <Metric label="Investments" value={fmt.money(summary.current)} hidden={ghost}
+              hint="investments"
+              untracked={holdings.length === 0} untrackedHint="No positions yet"
               sub={`${holdings.length} position${holdings.length === 1 ? '' : 's'}`} />
             <Metric label="Invested" value={fmt.money(summary.invested)} hidden={ghost}
+              hint="invested"
+              untracked={holdings.length === 0} untrackedHint="Cost basis"
               sub="Cost basis" />
             <Metric
               label="Unrealised P&L"
               value={`${totalPnl >= 0 ? '+' : '−'}${fmt.money(Math.abs(totalPnl))}`}
-              tone="delta" sign={totalPnl} hidden={ghost}
+              tone="delta" sign={totalPnl} hidden={ghost} hint="unrealisedPnl"
+              untracked={holdings.length === 0} untrackedHint="Needs a holding"
               sub={`${summary.pnlPct >= 0 ? '+' : ''}${summary.pnlPct.toFixed(2)}% all time`}
             />
+            <Metric label="Liabilities" value={`−${fmt.money(liab)}`} hidden={ghost}
+              hint="liabilities"
+              untracked={liabilities.length === 0} untrackedHint="Nothing owed"
+              sub={`${liabilities.length} account${liabilities.length === 1 ? '' : 's'}`} />
           </MetricRow>
         </Section>
+        )}
       </StaggerItem>
 
       {/* ---- This month ---------------------------------------------------- */}
@@ -320,16 +347,18 @@ export default function DashboardPage() {
               <LedgerLine label="Income" value={fmt.money(period.income)} hidden={ghost} />
               <LedgerLine label="Expenses" value={fmt.money(period.expense)} hidden={ghost} />
               {period.invested.gt(0) && (
-                <LedgerLine label="Invested" value={fmt.money(period.invested)} hidden={ghost} />
+                <LedgerLine label="Invested" value={fmt.money(period.invested)} hidden={ghost}
+                  hint="invested" />
               )}
               <LedgerLine
-                label="Net cash flow" value={fmt.money(period.net)}
+                label="Net cash flow" value={fmt.money(period.net)} hint="netCashFlow"
                 tone="delta" sign={period.net.toNumber()} emphasis hidden={ghost}
               />
             </div>
             <div className="mt-5 md:mt-0 flex flex-col justify-center gap-1">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">
+              <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">
                 Savings rate
+                <Hint term="savingsRate" />
               </div>
               <div className="flex items-baseline gap-2">
                 <MoneyValue size="lg" hidden={ghost}>

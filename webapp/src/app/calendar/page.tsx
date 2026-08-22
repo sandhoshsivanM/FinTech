@@ -10,6 +10,7 @@ import { forMonth } from '@/domain/period';
 import { PageIntro, GlassCard, ProgressBar } from '@/components/ui';
 import type { Txn } from '@/lib/types';
 import { formatLongDate } from '@/lib/dateFormat';
+import { short } from '@/lib/format';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const dayKey = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
@@ -86,10 +87,16 @@ export default function CalendarPage() {
           const led = ledgers.get(key);
           const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
           const isSelected = selected === key;
+          // Dimmed, not hidden: the shape of the month stays intact while
+          // nothing suggests data exists where it cannot.
+          const isFuture = new Date(year, month, day) > today && !isToday;
+          const income = led?.income ?? ZERO;
+          const expense = led?.expense ?? ZERO;
           return (
             <button
               key={key}
               onClick={() => setSelected(key)}
+              style={isFuture ? { opacity: 0.42 } : undefined}
               className={`aspect-square rounded-[var(--radius-btn)] border p-1 flex flex-col items-start text-left transition-colors ${
                 isSelected ? 'border-[var(--accent)] border-2'
                 : isToday ? 'border-[var(--accent)]/40 bg-[var(--accent)]/[0.06]'
@@ -100,9 +107,21 @@ export default function CalendarPage() {
                 <span className="text-[11px]">{day}</span>
                 {led?.hasAttachment && <Paperclip size={10} className="text-muted" />}
               </div>
-              <div className="mt-auto flex gap-1">
-                {led && led.income.gt(0) && <span className="w-1.5 h-1.5 rounded-full bg-income" />}
-                {led && led.expense.gt(0) && <span className="w-1.5 h-1.5 rounded-full bg-expense" />}
+              {/* Both figures, income above expense. A pair of coloured dots
+                  said only "something happened here", so a ₹200 coffee and a
+                  ₹2 L transfer looked identical — and a single net figure
+                  would hide a heavy day that happened to balance. */}
+              <div className="mt-auto w-full leading-[1.15]">
+                {income.gt(0) && (
+                  <div className="truncate text-[9.5px] font-semibold tnum text-income">
+                    {mask(short(income.toNumber(), fmt.symbol))}
+                  </div>
+                )}
+                {expense.gt(0) && (
+                  <div className="truncate text-[9.5px] font-semibold tnum text-expense">
+                    {mask(short(expense.toNumber(), fmt.symbol))}
+                  </div>
+                )}
               </div>
             </button>
           );

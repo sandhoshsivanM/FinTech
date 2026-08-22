@@ -14,6 +14,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import { Shell } from './Shell';
+import { NAV_ITEMS } from './navConfig';
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...rest }: { children: React.ReactNode; href: string }) => (
@@ -105,5 +106,52 @@ describe('sidebar', () => {
   test('includes /score', () => {
     const { container } = renderShell();
     expect(container.querySelector('nav[data-tour="nav"] a[href="/score"]')).toBeTruthy();
+  });
+
+  test('every destination says what it is, not just its name', () => {
+    // Twenty-five one-word labels tell a returning user where to click and a
+    // new one nothing. A row with no description is one someone has to open to
+    // find out what it was.
+    const undescribed = NAV_ITEMS.filter((n) => !n.description).map((n) => n.href);
+    expect(undescribed, `no description: ${undescribed.join(', ')}`).toEqual([]);
+  });
+
+  test('the pair most often confused is told apart by its descriptions', () => {
+    // "Portfolio" and "Holdings" are the summary and the table it summarises.
+    // The labels alone have never separated them.
+    const byHref = Object.fromEntries(NAV_ITEMS.map((n) => [n.href, n]));
+    expect(byHref['/investments'].description)
+      .not.toBe(byHref['/holdings'].description);
+    for (const href of ['/investments', '/holdings']) {
+      expect(byHref[href].description!.length).toBeGreaterThan(8);
+    }
+  });
+
+  test('a description reaches a screen reader without a hover', () => {
+    const { container } = renderShell();
+    const link = container.querySelector('nav[data-tour="nav"] a[href="/holdings"]');
+    expect(link?.textContent).toContain('Every position, one row each');
+  });
+});
+
+describe('market session', () => {
+  test('the topbar pill stands down where the sidebar card appears', () => {
+    // The pill and the sidebar card both rendered the same session and clock on
+    // an expanded desktop sidebar. Saying it twice is what made the market read
+    // as the app's headline concern rather than a status line.
+    //
+    // Asserted on the class contract rather than on visibility: jsdom applies
+    // no media queries, so both nodes exist here whatever the width. The
+    // sidebar starts at 900px and the card renders only when it is expanded
+    // (the default), so the pill must be suppressed from exactly that width.
+    const { container } = renderShell();
+    const card = container.querySelector('.eyebrow');
+    expect(card?.textContent).toBe('Market status');
+
+    const pill = [...container.querySelectorAll('header span')].find((el) =>
+      el.className.includes('min-[720px]:inline-flex'),
+    );
+    expect(pill, 'the topbar market pill should still exist').toBeTruthy();
+    expect(pill!.className).toContain('min-[900px]:hidden');
   });
 });

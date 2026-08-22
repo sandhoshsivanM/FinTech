@@ -3,6 +3,7 @@ import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
 import { accrue } from './fixedIncome';
 import { resolveRate } from './currency';
+import { SERIES_BY_KEY } from './palette';
 import type { AssetType, FxRate, Holding } from '@/lib/types';
 import {
   MARKET_CAP_LABEL,
@@ -82,29 +83,28 @@ export const ASSET_GROUP_ORDER: AssetGroup[] = [
 /**
  * Asset-group colours. Mirrored exactly by `groupColor` in the Flutter client.
  *
+ * Derived from [SERIES_BY_KEY] rather than retyped, so this table and the chart
+ * palette cannot drift. It used to be a fourth hand-maintained copy of the same
+ * hexes, and hand-maintained copies are how the two clients end up disagreeing
+ * about what colour Debt is.
+ *
  * Two slots are pinned for MEANING: `gold` takes the gold hue, and `equity`
- * takes the brand emerald. The previous palette had the Gold group rendering
- * GREEN (#1baf7a) while Debt rendered orange, which reads as a bug the moment
- * anyone looks at the legend.
+ * takes the brand emerald. An earlier palette had the Gold group rendering
+ * GREEN while Debt rendered orange, which reads as a bug the moment anyone
+ * looks at the legend.
  *
- * The other five were searched over every assignment, scored on the pairs that
- * actually sit next to each other in ASSET_GROUP_ORDER. The result clears all
- * six dataviz checks in both themes — worst adjacent pair ΔE 12.7 under
- * deuteranopia (target 8), normal-vision floor 21.7.
- *
- * One value per group now, not a light/dark pair: these steps sit in the
- * lightness band that works against both surfaces, which is what lets the two
- * clients share a single set.
+ * A value PER THEME, not one for both. The previous set used a single hex for
+ * both grounds, which forced every hue into the middle of the lightness range —
+ * washed out on dark and weak on light at the same time. The separation and
+ * contrast figures are asserted in `domain/palette.test.ts`, not claimed here.
  */
-export const ASSET_GROUP_META: Record<AssetGroup, { label: string; light: string; dark: string }> = {
-  equity: { label: 'Equity', light: '#189e6e', dark: '#189e6e' },
-  debt: { label: 'Debt', light: '#8e7cc3', dark: '#8e7cc3' },
-  gold: { label: 'Gold', light: '#be8420', dark: '#be8420' },
-  real_estate: { label: 'Real Estate', light: '#2e92c4', dark: '#2e92c4' },
-  retirement: { label: 'Retirement', light: '#cc6435', dark: '#cc6435' },
-  crypto: { label: 'Crypto', light: '#4f7cff', dark: '#4f7cff' },
-  cash: { label: 'Cash', light: '#c9538a', dark: '#c9538a' },
-};
+export const ASSET_GROUP_META: Record<AssetGroup, { label: string; light: string; dark: string }> =
+  Object.fromEntries(
+    ASSET_GROUP_ORDER.map((g) => {
+      const step = SERIES_BY_KEY[g];
+      return [g, { label: step.label, light: step.light, dark: step.dark }];
+    }),
+  ) as Record<AssetGroup, { label: string; light: string; dark: string }>;
 
 export interface HoldingView {
   holding: Holding;

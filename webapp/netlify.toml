@@ -37,3 +37,30 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
     X-Frame-Options = "DENY"
+
+    # This page derives an AES key in the browser and holds a decrypted vault in
+    # memory. CSP is the control that actually matters here: without it, any
+    # injected script runs with full access to the unlocked vault, and every
+    # other header above is decoration.
+    #
+    # `'unsafe-inline'` for script-src is regrettable and deliberate. The
+    # no-FOUC theme bootstrap in `app/layout.tsx` is an inline script — it must
+    # run before first paint, so it cannot be a separate request — and Netlify
+    # serves a static export, so there is no server to mint a per-response
+    # nonce. Removing it means either a theme flash on every load or a build
+    # step that hashes the script into the header. The hash route is the right
+    # follow-up; this is strictly better than no policy at all.
+    #
+    # `connect-src 'self'` is the load-bearing line: this client fetches
+    # nothing, so anything trying to exfiltrate a decrypted vault to another
+    # origin is blocked outright.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; manifest-src 'self'; worker-src 'self'"
+
+    # Two years, preloadable. The vault requires a secure context anyway —
+    # `crypto.subtle` is undefined over plain http — so a downgrade does not
+    # merely weaken the app, it stops it opening at all.
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+
+    # Nothing here uses a camera, a microphone or a location, and a finance app
+    # should be able to say so at the header level rather than only in a policy.
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"

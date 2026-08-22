@@ -1,0 +1,73 @@
+// Code signing for the macOS app.
+//
+// The defaults here are ad-hoc, on purpose: `flutter build macos` and
+// `flutter run -d macos` must work on any machine, including one with no Apple
+// Developer certificate at all. A hardcoded DEVELOPMENT_TEAM does the opposite
+// — it fails the build outright with "No signing certificate ... matching team
+// ID" for everyone whose keychain does not hold that exact team's cert, which
+// is what happened when the team id was copied across from the iOS project.
+//
+// Real signing is supplied at release time, not committed. Create
+// `Signing.local.xcconfig` next to this file (it is gitignored). For a build
+// you intend to notarize and hand to someone:
+//
+//     KHAZANA_CODE_SIGN_STYLE = Automatic
+//     KHAZANA_DEVELOPMENT_TEAM = YOURTEAMID
+//     KHAZANA_CODE_SIGN_IDENTITY = Developer ID Application
+//     KHAZANA_HARDENED_RUNTIME = YES
+//     KHAZANA_INJECT_BASE_ENTITLEMENTS = NO
+//
+// For a Mac App Store submission, the identity is instead:
+//
+//     KHAZANA_CODE_SIGN_IDENTITY = 3rd Party Mac Developer Application
+//
+// Set all of those together or none of them — see the note on
+// KHAZANA_HARDENED_RUNTIME below for why a half-configured build crashes at
+// launch rather than failing to build.
+//
+// In CI, write that file from a secret before building.
+
+// Ad-hoc. Runs locally; cannot be notarized or submitted, which is the correct
+// failure for a build made on a machine with no credentials.
+KHAZANA_CODE_SIGN_IDENTITY = -
+KHAZANA_CODE_SIGN_STYLE = Manual
+KHAZANA_DEVELOPMENT_TEAM =
+
+// Hardened runtime is required for notarization — and it is NOT free with
+// ad-hoc signing, which is why it defaults to NO here.
+//
+// Enabling it also enables **library validation**, which refuses to load any
+// library whose Team ID differs from the main binary's. An ad-hoc app has no
+// team, while the CocoaPods frameworks it embeds (SQLCipher, the plugin
+// frameworks) are signed with whatever development identity is in the
+// keychain. The result is an immediate dyld abort at launch:
+//
+//     Library not loaded: @rpath/SQLCipher.framework/.../SQLCipher
+//     Reason: ... mapping process and mapped file (non-platform)
+//             have different Team IDs
+//
+// A real Developer ID or App Store build signs the app and every embedded
+// framework with the same team, so validation passes and this must be YES.
+// Turn it on in Signing.local.xcconfig, together with the identity — the two
+// belong to the same decision.
+//
+// Do NOT "fix" the ad-hoc crash by adding
+// com.apple.security.cs.disable-library-validation to the entitlements. That
+// would let any code-injected library load into a process holding the vault
+// key, permanently, to work around a local build convenience.
+KHAZANA_HARDENED_RUNTIME = NO
+
+// `com.apple.security.get-task-allow` lets a debugger attach. Xcode injects it
+// automatically for non-distribution signing, and Apple REJECTS notarization
+// and App Store submissions for any binary that carries it.
+//
+// Xcode strips it during a proper archive-and-export, so the real pipeline is
+// safe either way — but a `flutter build macos --release` handed to someone as
+// a DMG is not an export, and would ship debuggable. Left YES here so local
+// debugging works; set it to NO in Signing.local.xcconfig alongside a real
+// identity, so a credentialed build is a distributable one.
+KHAZANA_INJECT_BASE_ENTITLEMENTS = YES
+
+// Optional local/CI override. The `?` means "include if it exists", so the
+// absence of the file is not an error.
+#include? "Signing.local.xcconfig"

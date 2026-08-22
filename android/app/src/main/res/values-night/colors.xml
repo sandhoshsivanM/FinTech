@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark-mode counterpart of values/colors.xml. This is
+         AppColors.bgTop (KhazanaColors.forest), the top stop of
+         AppBackground's dark gradient, so the splash and the app's first
+         painted frame are the same colour. -->
+    <color name="launch_background">#0D1713</color>
+</resources>

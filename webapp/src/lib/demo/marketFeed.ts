@@ -1,10 +1,21 @@
 /**
  * Demo market feed.
  *
- * This app makes no network calls — that is a product promise, not an
- * omission (see `domain/instrumentMaster.ts`). But several screens the design
- * calls for — Markets, News, day-change columns, index levels — are meaningless
- * without a feed. Rather than fetch, this module SYNTHESISES that data.
+ * THIS CLIENT — the web and desktop app — makes no network calls. That is a
+ * product promise here, not an omission (see `domain/instrumentMaster.ts`).
+ *
+ * Note the scope. The *mobile* client is not silent: it calls Yahoo Finance,
+ * AlphaVantage, TwelveData, AMFI and frankfurter.dev when the user asks it to
+ * refresh prices or exchange rates. Those requests carry ticker symbols and
+ * currency codes and nothing about the user, and every one of them is listed in
+ * `src/app/privacy/page.tsx`. Two clients under one brand making opposite
+ * claims about the network is a marketing problem and a legal one; the policy
+ * page is the version that is true of both, and this comment is scoped so it
+ * cannot be quoted as if it covered the whole product.
+ *
+ * Several screens the design calls for — Markets, News, day-change columns,
+ * index levels — are meaningless without a feed. Rather than fetch, this module
+ * SYNTHESISES that data.
  *
  * Three rules keep it honest:
  *

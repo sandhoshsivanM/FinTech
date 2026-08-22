@@ -1,9 +1,9 @@
 [package]
 name = "app"
-version = "0.1.0"
+version = "1.0.0"
 description = "Khazana — offline-first, private personal finance & wealth management."
-authors = ["you"]
-license = ""
+authors = ["Sandhosh Sivan"]
+license = "LicenseRef-Khazana-EULA"
 repository = ""
 edition = "2021"
 rust-version = "1.77.2"

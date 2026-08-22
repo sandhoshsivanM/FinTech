@@ -1,7 +1,8 @@
 import {
   LayoutDashboard, LineChart, BarChart3, TrendingUp, Table2, Star, CandlestickChart,
   Coins, Landmark, Wallet, Receipt, CalendarDays, CalendarClock, PieChart, Repeat, Flag, CreditCard,
-  Shield, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle, Upload, Stethoscope, Scale,
+  Shield, ShieldCheck, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle, Upload, Stethoscope, Scale,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -11,6 +12,27 @@ export interface NavItem {
   icon: LucideIcon;
   /** Rendered as a count pill on the right of the row. */
   badge?: number;
+  /**
+   * Part of Khazana Pro. Renders a small lock chip when not unlocked.
+   *
+   * The row still navigates: the screen itself renders `ProGate`, which
+   * shows the real content blurred behind the paywall card. Hiding gated
+   * rows entirely would make the sidebar change shape on purchase, and
+   * would stop anyone discovering what they are being sold.
+   *
+   * Source of truth is `docs/pro-gates.json`; this flag is only the visual
+   * hint, and `specParity.test.tsx` asserts the two agree.
+   */
+  pro?: boolean;
+  /**
+   * One line under the label, on the expanded sidebar only.
+   *
+   * Twenty-five one-word labels tell a returning user where to click and a new
+   * one nothing at all — "Portfolio", "Holdings", "Accounts" and "Transactions"
+   * are four different screens whose names do not distinguish them. Kept to a
+   * few words: this is a signpost, not documentation.
+   */
+  description?: string;
 }
 
 export interface NavGroup {
@@ -34,43 +56,45 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Overview',
     items: [
-      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, description: 'Where you stand today' },
       // "Score" named the mechanism, not the thing. A user does not come
       // looking for a score; they come asking whether they are doing all right.
-      { href: '/score', label: 'Financial Health', icon: Gauge },
-      { href: '/reports', label: 'Reports', icon: BarChart3 },
-      { href: '/forecast', label: 'Forecast', icon: CalendarClock },
-      { href: '/analytics', label: 'Analytics', icon: LineChart },
+      { href: '/score', label: 'Financial Health', icon: Gauge, description: 'Your score and the four areas behind it' },
+      { href: '/reports', label: 'Reports', icon: BarChart3, description: 'Trends over time' },
+      { href: '/forecast', label: 'Forecast', icon: CalendarClock, description: 'Where this is heading', pro: true },
+      { href: '/analytics', label: 'Analytics', icon: LineChart, description: 'Deeper cuts of the same data', pro: true },
     ],
   },
   {
     label: 'Invest',
     items: [
-      { href: '/investments', label: 'Portfolio', icon: TrendingUp },
-      { href: '/holdings', label: 'Holdings', icon: Table2 },
-      { href: '/watchlist', label: 'Watchlist', icon: Star },
-      { href: '/markets', label: 'Markets', icon: CandlestickChart },
-      { href: '/dividends', label: 'Dividends', icon: Coins },
-      { href: '/tax', label: 'Tax Centre', icon: Landmark },
+      // These two are the pair most often confused, and the labels alone do not
+      // separate them: one is the summary, the other is the table it summarises.
+      { href: '/investments', label: 'Portfolio', icon: TrendingUp, description: 'Allocation, returns, performance' },
+      { href: '/holdings', label: 'Holdings', icon: Table2, description: 'Every position, one row each' },
+      { href: '/watchlist', label: 'Watchlist', icon: Star, description: 'Things you do not own yet', pro: true },
+      { href: '/markets', label: 'Markets', icon: CandlestickChart, description: 'Index levels and sessions', pro: true },
+      { href: '/dividends', label: 'Dividends', icon: Coins, description: 'Income your holdings paid out', pro: true },
+      { href: '/tax', label: 'Tax Centre', icon: Landmark, description: 'Gains, and what they may cost', pro: true },
     ],
   },
   {
     label: 'Money',
     items: [
-      { href: '/accounts', label: 'Accounts', icon: Wallet },
-      { href: '/transactions', label: 'Transactions', icon: Receipt },
-      { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-      { href: '/budget', label: 'Budget', icon: PieChart },
-      { href: '/recurring', label: 'Recurring', icon: Repeat },
-      { href: '/goals', label: 'Goals', icon: Flag },
+      { href: '/accounts', label: 'Accounts', icon: Wallet, description: 'Where your money sits' },
+      { href: '/transactions', label: 'Transactions', icon: Receipt, description: 'Everything in and out' },
+      { href: '/calendar', label: 'Calendar', icon: CalendarDays, description: 'The same money, by date' },
+      { href: '/budget', label: 'Budget', icon: PieChart, description: 'Limits per category' },
+      { href: '/recurring', label: 'Recurring', icon: Repeat, description: 'Bills and income that repeat' },
+      { href: '/goals', label: 'Goals', icon: Flag, description: 'What you are saving towards' },
     ],
   },
   {
     label: 'Protect',
     items: [
-      { href: '/liabilities', label: 'Liabilities', icon: CreditCard },
-      { href: '/insurance', label: 'Insurance', icon: Shield },
-      { href: '/safety-net', label: 'Safety Net', icon: LifeBuoy },
+      { href: '/liabilities', label: 'Liabilities', icon: CreditCard, description: 'Loans and card balances' },
+      { href: '/insurance', label: 'Insurance', icon: Shield, description: 'Policies and cover gaps' },
+      { href: '/safety-net', label: 'Safety Net', icon: LifeBuoy, description: 'How long you could hold out' },
     ],
   },
   {
@@ -79,13 +103,15 @@ export const NAV_GROUPS: NavGroup[] = [
     // they read as another financial screen instead of as a tool.
     label: 'Tools',
     items: [
-      { href: '/import', label: 'Import', icon: Upload },
-      { href: '/reconcile', label: 'Reconcile', icon: Scale },
-      { href: '/alerts', label: 'Alerts', icon: Bell },
-      { href: '/diagnostics', label: 'Diagnostics', icon: Stethoscope },
-      { href: '/news', label: 'News', icon: Newspaper },
-      { href: '/settings', label: 'Settings', icon: Settings },
-      { href: '/help', label: 'Help', icon: HelpCircle },
+      { href: '/import', label: 'Import', icon: Upload, description: 'Bring in a statement or broker file' },
+      { href: '/reconcile', label: 'Reconcile', icon: Scale, description: 'Check the app against your bank', pro: true },
+      { href: '/alerts', label: 'Alerts', icon: Bell, description: 'What the app wants to tell you' },
+      { href: '/diagnostics', label: 'Diagnostics', icon: Stethoscope, description: 'Health of the vault itself' },
+      { href: '/news', label: 'News', icon: Newspaper, description: 'Headlines for what you hold', pro: true },
+      { href: '/pro', label: 'Khazana Pro', icon: Sparkles, description: 'One payment, yours forever' },
+      { href: '/settings', label: 'Settings', icon: Settings, description: 'Appearance, profiles, backup' },
+      { href: '/help', label: 'Help', icon: HelpCircle, description: 'How this works, and the tour' },
+      { href: '/privacy', label: 'Privacy', icon: ShieldCheck, description: 'What leaves your device, and what does not' },
     ],
   },
 ];

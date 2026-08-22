@@ -8,6 +8,7 @@ import { healthScore, type HealthCategory } from '@/domain/health';
 import { liquidBalance } from '@/domain/accountLedger';
 import { investmentTotals } from '@/domain/investmentTotals';
 import { PageIntro, GlassCard, SectionHeader, ProgressBar, Button, Gauge, AreaChart } from '@/components/ui';
+import { ScoreMethod } from '@/components/ScoreMethod';
 
 /** Where each category's data comes from, so an untracked card can point somewhere. */
 const CTA: Record<string, { href: string; label: string }> = {
@@ -78,6 +79,8 @@ export default function ScorePage() {
         </div>
       </GlassCard>
 
+      <ScoreMethod />
+
       <div className="space-y-3">
         {health.categories.map((c) => <CategoryCard key={c.key} category={c} />)}
       </div>
@@ -120,8 +123,16 @@ function CategoryCard({ category }: { category: HealthCategory }) {
       >
         <div className="flex items-center gap-2">
           <span className="flex-1 font-semibold text-[15px] tracking-tight">{category.label}</span>
+          {/* "23/30" alone never said what the 30 was. Naming the unit once
+              here is what makes the four areas legible as a weighting rather
+              than four unrelated fractions. */}
           <span className={clsx('text-[13px] tnum', tracked ? 'font-semibold text-ink' : 'text-muted')}>
-            {tracked ? `${Math.round(category.score as number)}/${category.weight}` : 'Not yet tracked'}
+            {tracked ? (
+              <>
+                {Math.round(category.score as number)}/{category.weight}
+                <span className="ml-1 font-normal text-muted">pts</span>
+              </>
+            ) : 'Not yet tracked'}
           </span>
           {tracked && (
             <ChevronDown size={16} className={clsx('text-muted transition-transform', open && 'rotate-180')} />

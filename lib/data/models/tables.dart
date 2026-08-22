@@ -462,3 +462,42 @@ class BenchmarkSeries extends Table {
   @override
   Set<Column> get primaryKey => {id};
 }
+
+/// Every notification this vault has actually delivered.
+///
+/// Exists for the cooldown. `planNotifications` suppresses a dedupe key that
+/// fired recently, and until this table the log lived in memory — so restarting
+/// the app re-armed every budget alert and brought back the bug the cooldown was
+/// written to kill: five saved expenses against an over-budget category
+/// producing five identical notifications.
+///
+/// In the encrypted database rather than shared_preferences because the rows
+/// carry the rendered body text — "Food spending is 94% of the August budget" is
+/// exactly the kind of sentence the vault exists to keep off disk in plaintext.
+@DataClassName('NotificationDeliveryRow')
+class NotificationDeliveries extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+
+  /// The planner's stable identity for this notification. Indexed by the
+  /// cooldown lookup, and the key `NotificationService` cancels alarms under.
+  TextColumn get dedupeKey => text()();
+
+  /// A [NotifyCategory] wire name: budget | bills | renewals | goals | market | digest.
+  TextColumn get category => text()();
+  TextColumn get title => text()();
+  TextColumn get body => text()();
+  TextColumn get deepLink => text().nullable()();
+
+  /// When it was meant to fire, for one handed to the OS ahead of time. Null for
+  /// anything shown immediately.
+  IntColumn get scheduledFor => integer().nullable()();
+  IntColumn get firedAt => integer()(); // Unix ms
+  IntColumn get readAt => integer().nullable()();
+
+  /// scheduled | immediate | digest.
+  TextColumn get source => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}

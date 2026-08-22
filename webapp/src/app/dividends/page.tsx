@@ -6,6 +6,7 @@
  * imported — so everything on this page is the user's own data. Yield is
  * computed against the actual holding value where the symbol matches.
  */
+import { ProGate } from '@/components/ProGate';
 import { useMemo, useState } from 'react';
 import { Coins, CalendarClock, Percent, Wallet, Plus, Check } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
@@ -26,7 +27,7 @@ import { NumberInput } from '@/components/NumberInput';
 
 const KIND_LABEL: Record<string, string> = { dividend: 'Dividend', interest: 'Interest', bonus: 'Bonus', buyback: 'Buyback' };
 
-export default function DividendsPage() {
+function DividendsPageInner() {
   const dividends = useApp((s) => s.dividends);
   const holdings = useApp((s) => s.holdings);
   const fxRates = useApp((s) => s.fxRates);
@@ -89,7 +90,18 @@ export default function DividendsPage() {
     { key: 'symbol', header: 'Symbol', locked: true, value: (d) => d.symbol, cell: (d) => <span className="font-semibold">{d.symbol}</span> },
     { key: 'kind', header: 'Type', value: (d) => KIND_LABEL[d.kind] ?? d.kind, cell: (d) => <Chip>{KIND_LABEL[d.kind] ?? d.kind}</Chip> },
     { key: 'perShare', header: 'Per share', align: 'right', optional: true, value: (d) => (d.perShare ? D(d.perShare).toNumber() : 0), cell: (d) => d.perShare ? fmt.money(d.perShare) : <span className="text-muted">—</span> },
-    { key: 'amount', header: 'Amount', align: 'right', value: (d) => D(d.amount).toNumber(), cell: (d) => <span className="font-semibold text-success">{fmt.money(d.amount)}</span> },
+    {
+      key: 'amount', header: 'Amount', align: 'right',
+      value: (d) => D(d.amount).toNumber(),
+      // A forecast never borrows the success colour. Money you have received
+      // and money you might receive are not the same fact, and painting both
+      // green is the quiet way a projection becomes a balance.
+      cell: (d) => (
+        <span className={d.received ? 'font-semibold text-success' : 'font-semibold text-ink-soft'}>
+          {fmt.money(d.amount)}
+        </span>
+      ),
+    },
     { key: 'payDate', header: 'Pay date', align: 'right', value: (d) => d.payDate, cell: (d) => formatDate(d.payDate) },
     {
       key: 'status', header: 'Status', align: 'right', value: (d) => (d.received ? 'Received' : 'Expected'),
@@ -148,7 +160,7 @@ export default function DividendsPage() {
             <KpiRow cols={4}>
               <Kpi label="Received" numeric={totalReceived.toNumber()} format={short} icon={Wallet} tone="success" footer={fmt.money(totalReceived)} />
               <Kpi label="Expected" numeric={totalUpcoming.toNumber()} format={short} icon={CalendarClock} tone="warning" footer={`${upcoming.length} scheduled`} />
-              <Kpi label="Yield on portfolio" value={yieldPct != null ? `${yieldPct.toFixed(2)}%` : null} icon={Percent} tone="accent" footer={yieldPct != null ? 'Received against current value' : undefined} />
+              <Kpi label="Yield on portfolio" term="yieldOnPortfolio" value={yieldPct != null ? `${yieldPct.toFixed(2)}%` : null} icon={Percent} tone="accent" footer={yieldPct != null ? 'Received against current value' : undefined} />
               <Kpi label="Paying instruments" value={String(new Set(dividends.map((d) => d.symbol)).size)} icon={Coins} tone="violet" footer="Distinct symbols" />
             </KpiRow>
           </StaggerItem>
@@ -186,5 +198,25 @@ export default function DividendsPage() {
         </>
       )}
     </Stagger>
+  );
+}
+
+/**
+ * Income your holdings paid out — gated.
+ *
+ * The gate renders the real screen blurred behind the paywall card rather than
+ * replacing it: a redirect would lose the user's context and break the back
+ * button, and someone who can faintly see their own figures converts where
+ * someone shown an empty room does not.
+ */
+export default function DividendsPage() {
+  return (
+    <ProGate
+      feature="dividends"
+      title={'Income your holdings paid out'}
+      blurb={'Track dividends against the positions that produced them. Part of Khazana Pro.'}
+    >
+      <DividendsPageInner />
+    </ProGate>
   );
 }

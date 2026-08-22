@@ -165,7 +165,7 @@ export default function HoldingsPage() {
     { key: 'exchange', header: 'Exchange', optional: true, value: (r) => r.exchange, cell: (r) => <Chip>{r.exchange}</Chip> },
     { key: 'sector', header: 'Sector', value: (r) => r.sector, cell: (r) => <span className="text-ink-soft">{r.sector}</span> },
     { key: 'asset', header: 'Asset type', optional: true, value: (r) => r.assetLabel, cell: (r) => <span className="text-ink-soft">{r.assetLabel}</span> },
-    { key: 'cap', header: 'Market cap', optional: true, value: (r) => r.cap, cell: (r) => <span className="text-ink-soft">{r.cap}</span> },
+    { key: 'cap', header: 'Market cap', term: 'marketCap', optional: true, value: (r) => r.cap, cell: (r) => <span className="text-ink-soft">{r.cap}</span> },
     { key: 'qty', header: 'Qty', align: 'right', value: (r) => r.qty, cell: (r) => r.qty.toLocaleString('en-IN') },
     { key: 'avg', header: 'Avg price', align: 'right', optional: true, value: (r) => r.avg, cell: (r) => <span className="text-ink-soft">{fmt.money(r.avg)}</span> },
     {
@@ -227,7 +227,7 @@ export default function HoldingsPage() {
       ),
     },
     {
-      key: 'weight', header: 'Weight', align: 'right',
+      key: 'weight', header: 'Weight', term: 'weight', align: 'right',
       value: (r) => r.weight,
       cell: (r) => (
         <span className="inline-flex items-center gap-2 justify-end">
@@ -278,10 +278,10 @@ export default function HoldingsPage() {
 
       <StaggerItem>
         <KpiRow cols={4}>
-          <Kpi label="Market value" numeric={summary.current.toNumber()} format={short} icon={Table2} tone="accent" footer={fmt.money(summary.current)} />
-          <Kpi label="Invested" numeric={summary.invested.toNumber()} format={short} icon={Coins} tone="warning" footer={`Cost basis · ${fmt.money(summary.invested)}`} />
+          <Kpi label="Market value" term="investments" numeric={summary.current.toNumber()} format={short} icon={Table2} tone="accent" footer={fmt.money(summary.current)} />
+          <Kpi label="Invested" term="invested" numeric={summary.invested.toNumber()} format={short} icon={Coins} tone="warning" footer={`Cost basis · ${fmt.money(summary.invested)}`} />
           <Kpi
-            label="Unrealised P&L" numeric={summary.pnl.toNumber()} format={(n) => (n >= 0 ? '+' : '−') + short(Math.abs(n))}
+            label="Unrealised P&L" term="unrealisedPnl" numeric={summary.pnl.toNumber()} format={(n) => (n >= 0 ? '+' : '−') + short(Math.abs(n))}
             icon={TrendingUp} tone={summary.pnl.gte(0) ? 'success' : 'danger'}
             footer={<><Delta value={summary.pnlPct} /> all time</>}
           />

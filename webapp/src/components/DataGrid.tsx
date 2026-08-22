@@ -12,6 +12,8 @@
  */
 import { useMemo, useState, type ReactNode } from 'react';
 import clsx from 'clsx';
+import { Hint } from './Hint';
+import type { TermKey } from '@/lib/glossary';
 import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Download, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui';
 
@@ -31,6 +33,13 @@ export interface Column<T> {
   width?: number;
   /** Extra Tailwind for the cell, e.g. responsive hiding. */
   className?: string;
+  /**
+   * Glossary entry explaining the header, shown behind an (i).
+   *
+   * A separate field rather than allowing a ReactNode `header`, because
+   * `header` is written verbatim into the CSV export — it has to stay a string.
+   */
+  term?: TermKey;
 }
 
 export interface DataGridProps<T> {
@@ -228,6 +237,18 @@ export function DataGrid<T>({
                             : <ArrowUpDown size={12} className="opacity-45" />}
                         </button>
                       ) : c.header}
+                      {/* Outside the sort button, always. A <button> inside a
+                          <button> is invalid HTML and the inner one stops
+                          receiving clicks in some browsers. Anchored to the end
+                          on right-aligned numeric columns so the popover opens
+                          inward rather than off the edge of the table. */}
+                      {c.term && (
+                        <Hint
+                          term={c.term}
+                          className={clsx('ml-1 align-middle', c.align === 'right' && 'mr-1 ml-0')}
+                          align={c.align === 'right' ? 'right' : 'left'}
+                        />
+                      )}
                     </th>
                   );
                 })}

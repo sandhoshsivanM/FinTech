@@ -36,7 +36,7 @@ const VAULT = [
   ['--expense', '#F06464', 'Loss'],
   ['--warn', '#E5B84D', 'Warning'],
   ['--info', '#63A8FF', 'Information'],
-  ['--violet', '#8E7CC3', 'Transfers'],
+  ['--violet', '#A4AAF6', 'Transfers'],
 ];
 
 const LEDGER = [
@@ -122,14 +122,14 @@ const colourPage = page({
 
 // ---------------------------------------------------------------- Charts
 const SERIES = [
-  ['--c1', '#189E6E'], ['--c2', '#BE8420'], ['--c3', '#2E92C4'], ['--c4', '#C9538A'],
-  ['--c5', '#4F7CFF'], ['--c6', '#CC6435'], ['--c7', '#8E7CC3'], ['--c8', '#2E9E63'],
+  ['--c1', '#4EB982'], ['--c2', '#A4AAF6'], ['--c3', '#C19C3A'], ['--c4', '#63A1D5'],
+  ['--c5', '#EA8760'], ['--c6', '#73C7CC'], ['--c7', '#CA7CB4'], ['--c8', '#9CAA65'],
 ];
 
 const GROUPS = [
-  ['equity', 'Equity', '#189e6e'], ['debt', 'Debt', '#8e7cc3'], ['gold', 'Gold', '#be8420'],
-  ['real_estate', 'Real Estate', '#2e92c4'], ['retirement', 'Retirement', '#cc6435'],
-  ['crypto', 'Crypto', '#4f7cff'], ['cash', 'Cash', '#c9538a'],
+  ['equity', 'Equity', '#4eb982'], ['debt', 'Debt', '#a4aaf6'], ['gold', 'Gold', '#c19c3a'],
+  ['real_estate', 'Real Estate', '#63a1d5'], ['retirement', 'Retirement', '#ea8760'],
+  ['crypto', 'Crypto', '#73c7cc'], ['cash', 'Cash', '#ca7cb4'],
 ];
 
 const chartsPage = page({
@@ -215,7 +215,7 @@ const chartsPage = page({
         apart — below the 15 floor — so no reader could separate those two slices. The amber was
         removed rather than shipped as a near-duplicate.</p>
       <div style="display:flex;gap:8px;margin-bottom:20px">
-        <div style="flex:1;height:44px;border-radius:8px;background:#BE8420"></div>
+        <div style="flex:1;height:44px;border-radius:8px;background:#C19C3A"></div>
         <div style="flex:1;height:44px;border-radius:8px;background:#D9A83E;position:relative">
           <span style="position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:700;color:rgba(0,0,0,.55)">DROPPED</span>
         </div>

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/constants/category_icons.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../presentation/data_gate.dart';
@@ -555,9 +556,8 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconData = iconCodepoint != null
-        ? IconData(iconCodepoint!, fontFamily: 'MaterialIcons')
-        : Icons.label_outline;
+    final iconData =
+        categoryIcon(iconCodepoint, fallback: Icons.label_outline);
 
     final bg = isSelected
         ? AppColors.accent.withValues(alpha: 0.18)

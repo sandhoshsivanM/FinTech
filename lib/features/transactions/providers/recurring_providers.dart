@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../core/services/notification_providers.dart';
+import '../../../core/services/notification_sync_service.dart';
 import '../../../data/database/app_database.dart';
 import '../../../domain/entities/recurring_rule.dart';
 import '../../../domain/entities/transaction.dart';
@@ -36,8 +37,8 @@ class RecurringActions {
     required Frequency frequency,
     required DateTime firstRun,
     String? merchant,
-  }) {
-    return _ref.read(recurringRepositoryProvider).save(RecurringRule(
+  }) async {
+    await _ref.read(recurringRepositoryProvider).save(RecurringRule(
           id: _uuid.v4(),
           vaultId: _ref.read(currentVaultIdProvider),
           amount: amount,
@@ -47,10 +48,16 @@ class RecurringActions {
           frequency: frequency,
           nextRun: firstRun,
         ));
+    // The whole point of the feature: a bill added now must be handed to the OS
+    // now, because the app may never be resumed again before it falls due.
+    _ref.reconcileNotifications();
   }
 
-  Future<void> delete(String id) =>
-      _ref.read(recurringRepositoryProvider).delete(id);
+  Future<void> delete(String id) async {
+    await _ref.read(recurringRepositoryProvider).delete(id);
+    // Alarms outlive the records they describe.
+    _ref.reconcileNotifications();
+  }
 
   /// Materializes all due recurring rules into transactions and advances their
   /// nextRun (PRD §14). Returns the number of transactions created.
@@ -100,6 +107,11 @@ class RecurringActions {
             body: '$created scheduled transaction(s) were recorded.',
             deepLink: '/app/transactions',
           ));
+    }
+    if (created > 0) {
+      // Materializing advances every rule's nextRun, so every bill reminder the
+      // OS is holding now points at a date that has already passed.
+      _ref.reconcileNotifications();
     }
     return created;
   }

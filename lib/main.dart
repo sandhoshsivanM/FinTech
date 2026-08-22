@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'presentation/app_shell.dart' show isDesktopPlatform;
 
 import 'core/branding.dart';
+import 'core/di/data_providers.dart';
 import 'core/router/app_router.dart';
 import 'core/router/layout_providers.dart';
+import 'core/services/crash_guard.dart';
 import 'core/services/notification_providers.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
@@ -13,7 +17,19 @@ import 'features/settings/providers/theme_providers.dart';
 import 'presentation/app_background.dart';
 
 Future<void> main() async {
+  // The zone wraps everything, including ensureInitialized, because an error
+  // thrown during plugin registration is exactly the kind that used to produce
+  // a grey screen and no record of why.
+  await runZonedGuarded(_bootstrap, (error, stack) {
+    CrashGuard.record(tag: 'zone', error: error, stack: stack);
+  });
+}
+
+Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Before anything else can throw.
+  CrashGuard.install();
 
   // Eager, and before runApp, for one reason: a notification tapped from a cold
   // start is waiting in getNotificationAppLaunchDetails(), and nothing reads it
@@ -23,8 +39,15 @@ Future<void> main() async {
   // Cheap and safe to do here: it loads the tz database and registers channels,
   // touches no vault data, and asks for no permission (that happens in Settings,
   // on a tap, once the user knows what they are agreeing to).
+  //
+  // Guarded because a notification plugin failing to initialise is a reason to
+  // lose reminders, not a reason to lose the app.
   final notifications = NotificationService();
-  await notifications.init();
+  try {
+    await notifications.init();
+  } catch (e, st) {
+    CrashGuard.record(tag: 'notifications.init', error: e, stack: st);
+  }
 
   runApp(ProviderScope(
     overrides: [
@@ -40,6 +63,9 @@ class KhazanaApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    // Keeps the crash sink alive for the life of the app: buffered startup
+    // errors are flushed to the encrypted log the moment a vault is unlocked.
+    ref.watch(crashLogSinkProvider);
     return MaterialApp.router(
       title: kAppName,
       debugShowCheckedModeBanner: false,

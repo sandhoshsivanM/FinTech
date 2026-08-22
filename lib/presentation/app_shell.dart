@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/di/providers.dart';
 import '../core/router/app_router.dart';
+import '../core/security/vault_state.dart';
 import '../core/services/notification_sync_service.dart';
 import '../features/capture/providers/capture_providers.dart';
 import 'desktop_shell.dart';
@@ -83,8 +84,9 @@ class _AppShellState extends ConsumerState<AppShell>
       // No reconcile here, deliberately. Reading due dates needs the vault key,
       // and this is the moment it is being purged — a reconcile started now
       // would race the lock and lose. The reminders were already written down on
-      // unlock, on resume, and after every write that changed a date, so the OS
-      // is holding a current set by the time we get here.
+      // unlock (see build), on resume (below), and after every write that
+      // changed a date (NotificationReconcileOnWrite), so the OS is holding a
+      // current set by the time we get here.
       ref.read(vaultUnlockProvider.notifier).lock();
     }
     if (state == AppLifecycleState.resumed) {
@@ -106,6 +108,22 @@ class _AppShellState extends ConsumerState<AppShell>
     // Start the on-device SMS / notification capture stream while unlocked
     // (Android only; a no-op elsewhere).
     ref.watch(captureListenerProvider);
+    // Write the coming weeks' reminders down the moment the vault opens.
+    //
+    // This is the only point at which the app can both read due dates and talk
+    // to the OS scheduler, and until it existed the common path produced no
+    // reminders at all: install, unlock, add a bill, close — nothing was ever
+    // handed to AlarmManager, because the only other trigger is a resume that
+    // never happened.
+    //
+    // On the transition, not on every state change: the vault emits Unlocking
+    // and failed-PIN states too, and reconciling on those would rebuild the plan
+    // against repositories that cannot be read yet.
+    ref.listen(vaultUnlockProvider, (previous, next) {
+      if (next is VaultUnlocked && previous is! VaultUnlocked) {
+        ref.read(notificationSyncProvider).scheduleReconcile();
+      }
+    });
     // Keyboard shortcuts (PRD Phase 4): N = new transaction, Cmd/Ctrl+L = lock.
     return Shortcuts(
       shortcuts: <ShortcutActivator, Intent>{

@@ -19,16 +19,21 @@ class CapturedMessage {
   final DateTime postedAt;
 }
 
-/// Dart client for the native SMS / notification capture services. Android-only
-/// by OS policy — every method is a no-op (or throws) elsewhere, so callers must
-/// gate on [supported].
+/// Dart client for the native notification capture service. Android-only by OS
+/// policy — every method is a no-op elsewhere, so callers must gate on
+/// [supported].
+///
+/// SMS capture was removed before the store launch: RECEIVE_SMS/READ_SMS are
+/// Play restricted permissions and reading bank texts is the case their policy
+/// explicitly disallows. [CaptureSource.sms] survives in the domain enum
+/// because rows captured by older builds still carry it.
 class CaptureChannel {
   const CaptureChannel();
 
   static const MethodChannel _method = MethodChannel('khazana/capture');
   static const EventChannel _events = EventChannel('khazana/capture/events');
 
-  /// Notification-listener + SMS capture only exist on Android.
+  /// The notification listener only exists on Android.
   static bool get supported =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
@@ -60,15 +65,5 @@ class CaptureChannel {
   Future<void> openNotificationAccessSettings() async {
     if (!supported) return;
     await _method.invokeMethod<void>('openNotificationAccessSettings');
-  }
-
-  Future<bool> hasSmsPermission() async {
-    if (!supported) return false;
-    return (await _method.invokeMethod<bool>('hasSmsPermission')) ?? false;
-  }
-
-  Future<bool> requestSmsPermission() async {
-    if (!supported) return false;
-    return (await _method.invokeMethod<bool>('requestSmsPermission')) ?? false;
   }
 }

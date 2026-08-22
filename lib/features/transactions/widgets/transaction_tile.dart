@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/category_icons.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../domain/entities/category.dart';
@@ -36,9 +37,7 @@ class TransactionTile extends StatelessWidget {
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.15),
           child: Icon(
-            category?.iconCodepoint != null
-                ? IconData(category!.iconCodepoint!, fontFamily: 'MaterialIcons')
-                : Icons.category,
+            categoryIcon(category?.iconCodepoint),
             color: color,
           ),
         ),

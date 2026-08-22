@@ -1,8 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- On-device transaction capture (Android-only). Raw text is parsed in
-         memory and discarded; nothing leaves the device (PRD §11 zero-telemetry). -->
-    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
-    <uses-permission android:name="android.permission.READ_SMS"/>
+    <!-- Opt-in live market data (ticker symbols and currency codes only — never
+         a holding, an amount or anything identifying). Declared here in `main`
+         and NOT only in the debug/profile variants: it used to live solely in
+         those, so every FX and price refresh died with a SecurityException the
+         moment the app was built in release. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Deliberately absent: RECEIVE_SMS and READ_SMS. Both are Play "restricted
+         permissions", and "parse bank transaction texts" is the exact use case
+         the SMS/Call Log policy names as not permitted — an app declaring them
+         without being the default SMS handler is rejected. Bank-alert capture
+         runs through the notification listener below instead, which covers the
+         same alerts on any phone that shows them. -->
 
     <!-- Outbound local notifications: bill/renewal/goal reminders and budget
          alerts. Entirely on-device — the OS holds the alarm, nothing is pushed.
@@ -24,7 +33,20 @@
         android:label="Khazana"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round">
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"><!--
+        allowBackup defaults to true on modern target SDKs, which would hand
+        Google Auto Backup a copy of the SQLCipher vault and shared_preferences
+        to store in the user's Drive. For an app whose entire promise is that
+        the data never leaves the device, that default is the promise broken by
+        omission. The user's backup path is the encrypted .ftos export, which
+        they hold the key to; the OS's is not.
+
+        dataExtractionRules covers the same ground for Android 12+ (cloud backup
+        AND device-to-device transfer), fullBackupContent for 11 and below.
+    -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -57,16 +79,6 @@
                 <action android:name="android.service.notification.NotificationListenerService"/>
             </intent-filter>
         </service>
-
-        <!-- Incoming bank SMS receiver. -->
-        <receiver
-            android:name=".SmsReceiver"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_SMS">
-            <intent-filter android:priority="999">
-                <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
-            </intent-filter>
-        </receiver>
 
         <!-- flutter_local_notifications' own receivers. These deliver scheduled
              reminders, and re-register them after a reboot or an app update —
@@ -105,6 +117,14 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- url_launcher, for the privacy policy and terms links in Settings.
+             Android 11 hid other packages by default, so without this the
+             browser is invisible to us and canLaunchUrl returns false — the
+             links would silently do nothing on a modern phone. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>

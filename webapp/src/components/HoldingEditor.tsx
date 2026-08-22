@@ -136,7 +136,7 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
         </button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 min-[1100px]:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="Symbol"><Input value={f.symbol} onChange={(e) => setF({ ...f, symbol: e.target.value })} placeholder="RELIANCE" /></Field>
         <Field label="Company name" hint="Optional"><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Reliance Industries" /></Field>
         <Field label="Exchange">

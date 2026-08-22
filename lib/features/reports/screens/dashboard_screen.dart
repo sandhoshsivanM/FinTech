@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/category_icons.dart';
 import '../../../design_system/components/khazana_cards.dart';
 import '../../../design_system/tokens/khazana_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -359,6 +360,9 @@ class _NetWorthHeroCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ghost = ref.watch(ghostModeProvider);
+    // What you own minus what you owe. `data.total` is cash flow alone and was
+    // being shown here under the words "NET WORTH" — see [trueNetWorthProvider].
+    final netWorth = ref.watch(trueNetWorthProvider);
 
     final changeLabel = _changeLabel(data);
     final netPositive = data.summary.net >= Decimal.zero;
@@ -366,7 +370,9 @@ class _NetWorthHeroCard extends ConsumerWidget {
     return Semantics(
       label: ghost
           ? 'Net worth hidden. Tap eye icon to reveal.'
-          : 'Total net worth ${Money.toWords(data.total)}',
+          : netWorth == null
+              ? 'Net worth still loading'
+              : 'Total net worth ${Money.toWords(netWorth)}',
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -427,9 +433,8 @@ class _NetWorthHeroCard extends ConsumerWidget {
                             size: 20,
                           ),
                           tooltip: ghost ? 'Show amounts' : 'Hide amounts',
-                          onPressed: () => ref
-                              .read(ghostModeProvider.notifier)
-                              .state = !ghost,
+                          onPressed: () =>
+                              ref.read(ghostModeProvider.notifier).toggle(),
                         ),
                       ),
                     ),
@@ -438,18 +443,30 @@ class _NetWorthHeroCard extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
 
-              // Big value.
+              // Big value. An em-dash while the portfolio and liabilities load:
+              // showing the cash figure first and correcting it a frame later
+              // reads as money appearing, not as a screen finishing loading.
               FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  ghost ? '••••••' : Money.format(data.total),
+                  ghost
+                      ? '••••••'
+                      : netWorth == null ? '—' : Money.format(netWorth),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 38,
                     fontWeight: FontWeight.w800,
                     height: 1.0,
                   ),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'What you own minus what you owe',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.55),
+                  fontSize: 11.5,
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -793,9 +810,10 @@ class _TransactionRow extends StatelessWidget {
     final amountColor = isIncome ? AppColors.income : AppColors.expense;
     final signedStr = Money.formatSigned(txn.amount, isIncome: isIncome);
 
-    final iconData = categoryIconCodepoint != null
-        ? IconData(categoryIconCodepoint!, fontFamily: 'MaterialIcons')
-        : (isIncome ? Icons.arrow_downward : Icons.arrow_upward);
+    final iconData = categoryIcon(
+      categoryIconCodepoint,
+      fallback: isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+    );
 
     final label = txn.merchant ?? categoryName ?? (isIncome ? 'Income' : 'Expense');
     final dateStr = _formatDate(txn.date);

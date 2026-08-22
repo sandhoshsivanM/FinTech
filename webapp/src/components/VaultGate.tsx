@@ -19,6 +19,18 @@ export function VaultGate() {
   const isSetup = status === 'uninitialized';
   const busy = status === 'unlocking' || status === 'loading';
 
+  /**
+   * Minimum digits for a *new* PIN.
+   *
+   * Four digits is 10,000 candidates. PBKDF2 at 600k iterations makes each
+   * guess cost real work, but an exported `.ftos` backup can be attacked
+   * offline on a GPU with no rate limit at all, and 10,000 candidates does not
+   * survive that however expensive each one is. Six raises it to a million,
+   * which combined with the unlock throttle in `store.ts` is a meaningful
+   * floor for a vault a user will actually type into every day.
+   */
+  const MIN_PIN_LENGTH = 6;
+
   // Browsers expose Web Crypto only in a secure context. Reaching this build
   // over plain http on a LAN address — the normal way to open it on a phone —
   // leaves `crypto.subtle` undefined, and the vault cannot be encrypted at all.
@@ -28,7 +40,13 @@ export function VaultGate() {
   const submit = () => {
     setLocalErr(null);
     if (!secure) return;
-    if (pin.length < 4) return setLocalErr('PIN must be at least 4 digits.');
+    // Only enforced when *setting* a PIN. An existing 4-digit vault must still
+    // open, or raising the floor would lock out the very users it was meant to
+    // protect.
+    if (isSetup && pin.length < MIN_PIN_LENGTH) {
+      return setLocalErr(`PIN must be at least ${MIN_PIN_LENGTH} digits.`);
+    }
+    if (!isSetup && pin.length === 0) return setLocalErr('Enter your PIN.');
     if (isSetup && pin !== confirm) return setLocalErr('PINs do not match.');
     if (isSetup) void setup(pin); else void unlock(pin);
   };

@@ -10,6 +10,8 @@
  */
 import { useState, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
+import { Hint } from './Hint';
+import type { TermKey } from '@/lib/glossary';
 
 /**
  * The standard card.
@@ -299,15 +301,35 @@ export function Bars({ groups, height = 200, formatY }: { groups: BarGroup[]; he
 }
 
 // ---- Summary metric strip -----------------------------------------------
-export interface StatItem { label: string; value: string; sub?: string; accent?: string }
+export interface StatItem {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: string;
+  /** Glossary entry explaining the label, shown behind an (i). */
+  term?: TermKey;
+}
 export function StatStrip({ items }: { items: StatItem[] }) {
-  const cols = { 2: 'md:grid-cols-2', 3: 'md:grid-cols-3', 4: 'md:grid-cols-4', 5: 'md:grid-cols-5' }[items.length] ?? 'md:grid-cols-4';
+  // 6 and 7 are real counts: the design spec's KPI strip carries five to seven
+  // cells across the well. Without them the map fell through to `md:grid-cols-4`
+  // and a seven-cell strip silently wrapped to two rows.
+  const cols = {
+    2: 'md:grid-cols-2', 3: 'md:grid-cols-3', 4: 'md:grid-cols-4',
+    5: 'md:grid-cols-5', 6: 'md:grid-cols-3 xl:grid-cols-6',
+    7: 'md:grid-cols-4 xl:grid-cols-7',
+  }[items.length] ?? 'md:grid-cols-4';
   return (
-    <div className="card overflow-hidden">
-      <div className={clsx('grid grid-cols-2', cols, 'divide-x divide-y md:divide-y-0 divide-line')}>
+    // NOT `overflow-hidden`. The rounded corners are what that was for, and
+    // `rounded-[inherit]` on the inner grid clips them just as well — while
+    // `overflow-hidden` also clipped every Hint popover opened inside a cell.
+    <div className="card">
+      <div className={clsx('grid grid-cols-2 rounded-[inherit]', cols, 'divide-x divide-y md:divide-y-0 divide-line')}>
         {items.map((it, i) => (
           <div key={i} className="px-5 py-4 min-w-0">
-            <div className="eyebrow truncate">{it.label}</div>
+            <div className="flex items-center gap-1">
+              <div className="eyebrow truncate">{it.label}</div>
+              {it.term && <Hint term={it.term} className="shrink-0" />}
+            </div>
             <div
               className="mt-2 text-[22px] font-bold tracking-[-0.035em] tnum truncate"
               style={it.accent ? { color: it.accent } : undefined}

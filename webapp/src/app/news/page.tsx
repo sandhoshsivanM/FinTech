@@ -6,6 +6,7 @@
  * headlines for your tickers would tell the provider what you own. Stories are
  * fixed, hand-written and observational, and the page is unmistakably badged.
  */
+import { ProGate } from '@/components/ProGate';
 import { useMemo } from 'react';
 import { Newspaper, ExternalLink } from 'lucide-react';
 import { useApp } from '@/lib/store';
@@ -19,7 +20,7 @@ import { pct } from '@/lib/format';
 import { useState } from 'react';
 import { formatDayMonth } from '@/lib/dateFormat';
 
-export default function NewsPage() {
+function NewsPageInner() {
   const holdings = useApp((s) => s.holdings);
   const watchlist = useApp((s) => s.watchlist);
   const [demo] = useDemoData();
@@ -145,5 +146,25 @@ export default function NewsPage() {
         </div>
       </div>
     </Stagger>
+  );
+}
+
+/**
+ * Headlines for what you hold — gated.
+ *
+ * The gate renders the real screen blurred behind the paywall card rather than
+ * replacing it: a redirect would lose the user's context and break the back
+ * button, and someone who can faintly see their own figures converts where
+ * someone shown an empty room does not.
+ */
+export default function NewsPage() {
+  return (
+    <ProGate
+      feature="marketsAndNews"
+      title={'Headlines for what you hold'}
+      blurb={'Part of Khazana Pro.'}
+    >
+      <NewsPageInner />
+    </ProGate>
   );
 }

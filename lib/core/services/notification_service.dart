@@ -180,13 +180,28 @@ class NotificationService {
 
   /// Whether notifications are currently permitted, or null where the platform
   /// will not say.
+  ///
+  /// Fans out the same way [requestPermission] does. It used to resolve only the
+  /// Android implementation and so returned null on iOS and macOS, which meant
+  /// the settings screen's "your device is blocking notifications" banner could
+  /// never appear on the two platforms where a silently-denied prompt is most
+  /// likely — iOS gives you one chance at the dialog and remembers a refusal.
   Future<bool?> hasPermission() async {
     if (!_initialized) await init();
     try {
-      return await _plugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.areNotificationsEnabled();
+      final android = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (android != null) return await android.areNotificationsEnabled();
+
+      final ios = _plugin.resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin>();
+      if (ios != null) return (await ios.checkPermissions())?.isEnabled;
+
+      final macos = _plugin.resolvePlatformSpecificImplementation<
+          MacOSFlutterLocalNotificationsPlugin>();
+      if (macos != null) return (await macos.checkPermissions())?.isEnabled;
+
+      return null;
     } on Object catch (e) {
       debugPrint('hasPermission failed: $e');
       return null;

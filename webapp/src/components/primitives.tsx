@@ -18,6 +18,8 @@
  */
 import type { ReactNode } from 'react';
 import type Decimal from 'decimal.js';
+import { Hint } from './Hint';
+import type { TermKey } from '@/lib/glossary';
 import clsx from 'clsx';
 
 /* -------------------------------------------------------------------------- */
@@ -141,6 +143,7 @@ export function Section({
  */
 export function Metric({
   label, value, sub, tone = 'plain', sign = 0, size = 'lg', hidden = false,
+  untracked = false, untrackedHint = 'Not yet tracked', hint,
 }: {
   label: string;
   value: ReactNode;
@@ -149,24 +152,68 @@ export function Metric({
   sign?: number;
   size?: MoneyValueProps['size'];
   hidden?: boolean;
+  /** Glossary entry explaining the label. See `lib/glossary.ts`. */
+  hint?: TermKey;
+  /**
+   * Nothing has been recorded for this figure. Renders an em-dash instead of a
+   * formatted zero, matching [Kpi].
+   *
+   * Zero is a real answer — it is what someone with a settled loan or an empty
+   * current account genuinely has. Printing it when the truth is "you have not
+   * told us yet" is the one dishonesty a money app cannot afford, because the
+   * two are indistinguishable on screen and only one of them needs acting on.
+   */
+  untracked?: boolean;
+  /** Replaces `sub` while untracked. */
+  untrackedHint?: ReactNode;
 }) {
   return (
     <div className="min-w-0">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">
-        {label}
+      <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">
+        <span className="truncate">{label}</span>
+        {hint && <Hint term={hint} />}
       </div>
       <div className="mt-1">
-        <MoneyValue tone={tone} sign={sign} size={size} hidden={hidden}>{value}</MoneyValue>
+        {untracked ? (
+          <MoneyValue size={size} hidden={false}>
+            <span className="text-muted">—</span>
+          </MoneyValue>
+        ) : (
+          <MoneyValue tone={tone} sign={sign} size={size} hidden={hidden}>{value}</MoneyValue>
+        )}
       </div>
-      {sub && <div className="text-[11.5px] text-muted mt-0.5 truncate">{sub}</div>}
+      {(untracked ? untrackedHint : sub) && (
+        <div className="text-[11.5px] text-muted mt-0.5 truncate">
+          {untracked ? untrackedHint : sub}
+        </div>
+      )}
     </div>
   );
 }
 
-/** A row of metrics, evenly spaced. Replaces the KPI card grid. */
-export function MetricRow({ children, className }: { children: ReactNode; className?: string }) {
+/**
+ * A row of metrics, evenly spaced. Replaces the KPI card grid.
+ *
+ * `cols` REPLACES the default track classes rather than adding to them. It has
+ * to: Tailwind v4 emits arbitrary `min-[…]:` variants *before* the named
+ * breakpoint scale, so a caller passing `min-[1180px]:grid-cols-6` in
+ * `className` loses to the `md:grid-cols-4` baked in here — and loses silently,
+ * as a layout that wraps instead of an error. Passing the whole track spec is
+ * the only way a caller can win.
+ */
+export function MetricRow({
+  children, className, cols, ...rest
+}: {
+  children: ReactNode;
+  className?: string;
+  /** Full column spec, e.g. `'grid-cols-2 sm:grid-cols-3 xl:grid-cols-6'`. */
+  cols?: string;
+} & React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={clsx('grid gap-x-8 gap-y-5 grid-cols-2 md:grid-cols-4', className)}>
+    <div
+      {...rest}
+      className={clsx('grid gap-x-8 gap-y-5', cols ?? 'grid-cols-2 md:grid-cols-4', className)}
+    >
       {children}
     </div>
   );
@@ -181,7 +228,7 @@ export function MetricRow({ children, className }: { children: ReactNode; classN
  * between. This is what a cash-flow summary should look like — not four cards.
  */
 export function LedgerLine({
-  label, value, tone = 'plain', sign = 0, emphasis = false, hidden = false,
+  label, value, tone = 'plain', sign = 0, emphasis = false, hidden = false, hint,
 }: {
   label: ReactNode;
   value: ReactNode;
@@ -190,6 +237,8 @@ export function LedgerLine({
   /** For the total line: heavier, and separated by a rule above. */
   emphasis?: boolean;
   hidden?: boolean;
+  /** Glossary entry explaining the label. See `lib/glossary.ts`. */
+  hint?: TermKey;
 }) {
   return (
     <div
@@ -198,8 +247,9 @@ export function LedgerLine({
         emphasis && 'border-t border-[var(--line)] mt-1.5 pt-2.5',
       )}
     >
-      <span className={clsx('min-w-0 truncate text-[13.5px]', emphasis ? 'font-semibold' : 'text-ink-soft')}>
-        {label}
+      <span className={clsx('flex min-w-0 items-center gap-1 text-[13.5px]', emphasis ? 'font-semibold' : 'text-ink-soft')}>
+        <span className="truncate">{label}</span>
+        {hint && <Hint term={hint} />}
       </span>
       <MoneyValue
         tone={tone}

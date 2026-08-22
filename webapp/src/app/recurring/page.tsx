@@ -101,7 +101,19 @@ export default function RecurringPage() {
       if (r.nextRun <= sevenDays) dueSoonCount++;
     }
 
-    return { monthlyOut, monthlyIn, dueSoonCount };
+    // The figure this screen exists to surface. A ₹649 subscription is
+    // invisible at monthly scale and ₹7,788 a year — the annual number is the
+    // one that changes what someone does about it.
+    const annualOut = monthlyOut.mul(12);
+
+    // The same money as a ratio: how much of what comes in is already spoken
+    // for before any decision is made. Null when nothing recurring arrives,
+    // because a share of zero income is not zero — it is undefined.
+    const committedShare = monthlyIn.gt(0)
+      ? monthlyOut.div(monthlyIn).times(100).toNumber()
+      : null;
+
+    return { monthlyOut, monthlyIn, dueSoonCount, annualOut, committedShare };
   }, [recurring]);
 
   async function handleRunDue() {
@@ -183,9 +195,12 @@ export default function RecurringPage() {
         <StatStrip
           items={[
             {
-              label: 'Monthly out',
-              value: mask(fmt.money(stats.monthlyOut)),
-              sub: 'recurring expenses / mo',
+              // Leads the strip, ahead of the monthly figure it is derived
+              // from: the annual number is the one nobody works out for
+              // themselves, and it is the point of the screen.
+              label: 'Committed a year',
+              value: mask(fmt.money(stats.annualOut)),
+              sub: `${mask(fmt.money(stats.monthlyOut))} / mo · every month`,
               accent: 'var(--expense)',
             },
             {
@@ -193,6 +208,15 @@ export default function RecurringPage() {
               value: mask(fmt.money(stats.monthlyIn)),
               sub: 'recurring income / mo',
               accent: stats.monthlyIn.gt(0) ? 'var(--income)' : undefined,
+            },
+            {
+              label: 'Committed share',
+              value: stats.committedShare == null ? '—' : `${stats.committedShare.toFixed(0)}%`,
+              sub: stats.committedShare == null
+                ? 'add recurring income to compare'
+                : 'of recurring income, before any choice',
+              accent: stats.committedShare != null && stats.committedShare > 70
+                ? 'var(--warn)' : undefined,
             },
             {
               label: 'Due in 7 days',

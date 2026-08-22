@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The Vault plate. Matches the dark theme's --bg and the plate the
-         generated PNG icons are composited on. -->
+    <!-- The Vault plate. Matches the dark theme's `bg` custom property and the
+         plate the generated PNG icons are composited on. (The CSS variable is
+         spelled with two leading dashes; it cannot be written that way here,
+         because a double dash is illegal inside an XML comment and aapt rejects
+         the whole resource file over it.) -->
     <color name="ic_launcher_background">#070D0A</color>
 </resources>

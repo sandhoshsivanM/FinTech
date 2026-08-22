@@ -51,3 +51,54 @@ class KhazanaDB extends Dexie {
 }
 
 export const db = new KhazanaDB();
+
+/** What the browser will tell us about the durability of this vault. */
+export type PersistenceState =
+  | 'persisted' // the browser has promised not to evict us
+  | 'denied' // it declined; data is evictable
+  | 'unsupported'; // no Storage API — assume evictable
+
+/**
+ * Asks the browser to mark this origin's storage as persistent.
+ *
+ * This matters more here than in almost any other app. There is no server, so
+ * IndexedDB is not a cache of the truth — it *is* the truth. Browsers treat
+ * ordinary origin storage as disposable and clear it under storage pressure;
+ * Safari is the sharp case, evicting script-writable storage for sites the user
+ * has not installed after roughly seven days of no visits. A user who tracked
+ * their finances for a month, went on holiday, and came back to an empty vault
+ * would be entirely right to call that data loss, and would have no way to know
+ * it was coming.
+ *
+ * Chrome and Firefox grant this silently based on engagement heuristics
+ * (bookmarked, installed, notification permission). Safari grants it on
+ * install. It can legitimately be refused, which is why the result is surfaced
+ * in Settings rather than swallowed: the honest thing is to tell the user their
+ * only copy is evictable and that they should keep an exported backup.
+ *
+ * Idempotent — `persist()` returns the existing answer once granted.
+ */
+export async function requestPersistence(): Promise<PersistenceState> {
+  try {
+    if (typeof navigator === 'undefined' || !navigator.storage?.persist) {
+      return 'unsupported';
+    }
+    if (await navigator.storage.persisted()) return 'persisted';
+    return (await navigator.storage.persist()) ? 'persisted' : 'denied';
+  } catch {
+    // Some privacy modes throw rather than returning false.
+    return 'unsupported';
+  }
+}
+
+/** Reads the current state without prompting for an upgrade. */
+export async function persistenceState(): Promise<PersistenceState> {
+  try {
+    if (typeof navigator === 'undefined' || !navigator.storage?.persisted) {
+      return 'unsupported';
+    }
+    return (await navigator.storage.persisted()) ? 'persisted' : 'denied';
+  } catch {
+    return 'unsupported';
+  }
+}
