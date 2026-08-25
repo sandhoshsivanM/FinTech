@@ -651,7 +651,36 @@ export function applyAppearance() {
  * key has not been compiled in yet: refusing a genuine key because the BUILD is
  * unfinished would be our mistake charged to the customer.
  */
+/**
+ * Development escape hatch — the web twin of Flutter's `kProOverride`
+ * (`lib/core/entitlement/distribution_channel.dart:63`).
+ *
+ * Set `NEXT_PUBLIC_KHAZANA_PRO=true` in `webapp/.env.local` and `npm run dev`
+ * runs as Pro. Without it, working on a gated screen means either minting a
+ * licence or staring at the paywall you just built.
+ *
+ * **It cannot reach a shipped build, and that is a property of the compiler
+ * rather than of care.** Next inlines both of these at build time — but only
+ * for literal `process.env.X` references, never a dynamic lookup, which is why
+ * they are spelled out in full here. In a production build the first term
+ * becomes the literal `false`, so the whole expression folds to `false` and
+ * minification deletes the branch. The env var could be set on the build
+ * machine and it would still be absent from the bundle.
+ *
+ * `devOverride` is reported as the source, never `licenseKey`. The entitlement
+ * should always be honest about where it came from — a dev build must not be
+ * indistinguishable from a purchase in a bug report or a screenshot.
+ */
+function devProOverride(): boolean {
+  return process.env.NODE_ENV !== 'production'
+    && process.env.NEXT_PUBLIC_KHAZANA_PRO === 'true';
+}
+
 function resolvePro(): Entitlement {
+  if (devProOverride()) {
+    return { isPro: true, source: 'devOverride', lastVerifiedAt: new Date().toISOString() };
+  }
+
   const raw = lsGet(LICENSE_KEY_STORAGE);
   if (!raw) return FREE;
 

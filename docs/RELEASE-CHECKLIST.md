@@ -24,7 +24,14 @@ is a day added to launch.
 - [ ] Support email on that domain. Both stores require a working support URL.
 - [ ] Merchant of record (LemonSqueezy or Paddle), **not** raw Stripe — an MoR
       owns Indian GST and EU VAT on your behalf.
-- [ ] **BLOCKER** Mint the Ed25519 licence pair:
+- [x] **DONE** Mint the Ed25519 licence pair. Generated 25 Aug 2026; private
+      seed written to `~/khazana-licence-signing-key.txt` (mode 600) and **not**
+      in this repo. ⚠️ Move it into a password manager and take a paper backup,
+      then delete that file — a key sitting in a home directory is one disk
+      failure from ending the product's ability to issue licences.
+      Public key wired into both clients and verified by a minted key.
+      Original instructions:
+- [ ] ~~**BLOCKER** Mint the Ed25519 licence pair:~~
       `dart run tool/mint_licenses.dart --generate-keypair`.
       Private key → password manager **and** a paper backup. Paste the public
       key into **both** `lib/core/entitlement/license_public_key.dart` and
@@ -94,6 +101,21 @@ The failures here are silent and permanent, so they are checked by hand:
 - [ ] Airplane mode on a Pro device: **still Pro**.
 - [ ] App Store build contains no licence-key field
       (`--dart-define=KHAZANA_CHANNEL=appStore`).
+- [ ] **No dev override in the artifact.** Both clients have a development
+      escape hatch so a gated screen can be worked on without minting a licence.
+      Neither can reach a release build, but confirm it per release:
+      - Flutter: `--dart-define=KHAZANA_PRO=true`. Compile-time
+        (`bool.fromEnvironment`), so a release build without the flag simply
+        does not contain it.
+      - Web: `NEXT_PUBLIC_KHAZANA_PRO=true` in a git-ignored `webapp/.env.local`.
+        Guarded by `NODE_ENV !== 'production'`, which Next inlines at build
+        time, so the branch is dead-code-eliminated. Asserted by
+        `webapp/src/lib/devOverride.test.ts`, which also greps the emitted
+        bundle. To check by hand:
+        `grep -r NEXT_PUBLIC_KHAZANA_PRO webapp/out/` must return nothing.
+      - Either way the entitlement records `ProSource.devOverride`, never
+        `licenseKey` — so a dev build is distinguishable from a purchase in any
+        screenshot or bug report.
 
 ### 5. Store artifacts
 

@@ -30,11 +30,10 @@
 /// which is the correct behaviour for a placeholder, and is asserted by
 /// [kLicensePublicKeyIsPlaceholder].
 const List<int> kLicensePublicKey = <int>[
-  // PLACEHOLDER — all zeroes. Replace before the first direct sale.
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0,
+  92, 78, 223, 75, 9, 32, 115, 138,
+  18, 3, 165, 203, 226, 17, 55, 42,
+  230, 124, 91, 3, 211, 72, 97, 136,
+  50, 197, 152, 60, 121, 234, 178, 144,
 ];
 
 /// True while [kLicensePublicKey] is still the all-zero placeholder.

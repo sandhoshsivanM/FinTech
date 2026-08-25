@@ -34,6 +34,7 @@ vi.mock('@/lib/db', () => ({
   persistenceState: vi.fn(async () => 'denied'),
 }));
 
+const { LICENSE_KEY_IS_PLACEHOLDER } = await import('@/lib/entitlement/licensePublicKey');
 const { useApp } = await import('@/lib/store');
 
 const PRO = { isPro: true as const, source: 'licenseKey' as const, orderRef: 'DEADBEEF12345678' };
@@ -86,10 +87,31 @@ describe('removing a licence is explicit, and only explicit', () => {
 
 describe('an unconfigured build does not accuse the customer', () => {
   test('activating a key on a placeholder build says the build is at fault', async () => {
-    // The shipped public key is all zeroes until a real pair is minted.
     // Telling a paying customer their valid key is invalid would send them
     // chasing a problem that is ours.
-    const message = await useApp.getState().activateLicense('KHAZ1.anything');
-    expect(message).toMatch(/build|support/i);
+    //
+    // The placeholder state is CONSTRUCTED here rather than inherited from the
+    // shipped key. This test used to pass only because no real key pair had
+    // been minted yet — so the moment one was, the assertion started measuring
+    // the wrong thing. The guarantee has to hold whatever is compiled in.
+    vi.resetModules();
+    vi.doMock('@/lib/entitlement/licensePublicKey', () => ({
+      LICENSE_PUBLIC_KEY: new Uint8Array(32),
+      LICENSE_KEY_IS_PLACEHOLDER: true,
+    }));
+    try {
+      const { useApp: unconfigured } = await import('@/lib/store');
+      const message = await unconfigured.getState().activateLicense('KHAZ1.anything');
+      expect(message).toMatch(/build|support/i);
+    } finally {
+      vi.doUnmock('@/lib/entitlement/licensePublicKey');
+      vi.resetModules();
+    }
+  });
+
+  test('a configured build refuses a malformed key without blaming itself', () => {
+    // The other half: once a real key is compiled in, a bad key is the user's
+    // typo and the message should say so.
+    expect(LICENSE_KEY_IS_PLACEHOLDER).toBe(false);
   });
 });
