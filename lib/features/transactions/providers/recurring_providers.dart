@@ -1,12 +1,11 @@
 import 'package:decimal/decimal.dart';
-import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../core/services/notification_providers.dart';
 import '../../../core/services/notification_sync_service.dart';
-import '../../../data/database/app_database.dart';
+import '../../accounts/providers/account_providers.dart';
 import '../../../domain/entities/recurring_rule.dart';
 import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/notification_scheduler.dart';
@@ -67,7 +66,20 @@ class RecurringActions {
     final repo = _ref.read(recurringRepositoryProvider);
     final calc = _ref.read(recurrenceCalculatorProvider);
     final database = _ref.read(databaseProvider);
+    final txns = _ref.read(transactionRepositoryProvider);
+    // Materialized rows are ordinary transactions and must reach the ledger the
+    // same way a hand-entered one does. Writing straight to the DAO skipped
+    // LedgerWriter, so a month of recurring bills left net worth untouched on
+    // the Accounts screen and read as a silent failure.
+    final ledger = _ref.read(ledgerWriterProvider);
     final rules = await repo.activeRules(vaultId);
+
+    // Fetched once rather than per occurrence: the name only decides the label
+    // of the category's expense account when LedgerWriter first creates it.
+    final categoryNames = {
+      for (final c in await _ref.read(categoryRepositoryProvider).getAll(vaultId))
+        c.id: c.name,
+    };
 
     var created = 0;
     for (final rule in rules) {
@@ -75,17 +87,21 @@ class RecurringActions {
       if (result.due.isEmpty) continue;
       await database.transaction(() async {
         for (final occ in result.due) {
-          await database.transactionDao.upsert(TransactionsCompanion(
-            id: Value(_uuid.v4()),
-            vaultId: Value(vaultId),
-            amount: Value(rule.amount),
-            type: Value(rule.type.name),
-            categoryId: Value(rule.categoryId),
-            merchant: Value(rule.merchant),
-            note: Value(rule.note ?? 'Recurring'),
-            date: Value(occ.date.millisecondsSinceEpoch),
-            createdAt: Value(today.millisecondsSinceEpoch),
-          ));
+          final txn = Txn(
+            id: _uuid.v4(),
+            vaultId: vaultId,
+            amount: rule.amount,
+            type: rule.type,
+            categoryId: rule.categoryId,
+            merchant: rule.merchant,
+            note: rule.note ?? 'Recurring',
+            date: occ.date,
+            createdAt: today,
+            accountId: ledger.defaultCashId,
+          );
+          await txns.save(txn);
+          await ledger.writeEntry(txn,
+              categoryName: categoryNames[rule.categoryId]);
           created++;
         }
       });

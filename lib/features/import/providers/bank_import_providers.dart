@@ -4,12 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
-import '../../../data/database/app_database.dart' as db;
 import '../../../domain/entities/transaction.dart';
 import '../../../domain/services/bank_fingerprint.dart';
 import '../../../domain/services/bank_statement.dart';
+import '../../accounts/providers/account_providers.dart';
 import '../bank_parsers.dart';
-import 'package:drift/drift.dart' show Value;
 
 const _uuid = Uuid();
 
@@ -62,24 +61,38 @@ class BankImporter {
   Future<int> commit(List<StagedBankTxn> fresh, String fallbackCategoryId) async {
     final database = _ref.read(databaseProvider);
     final vaultId = _ref.read(currentVaultIdProvider);
-    final now = DateTime.now().millisecondsSinceEpoch;
+    final txns = _ref.read(transactionRepositoryProvider);
+    // An imported row is an ordinary transaction. Writing it straight to the
+    // DAO skipped LedgerWriter, so importing a statement left the Accounts
+    // screen and net worth unchanged — indistinguishable from an import that
+    // silently did nothing.
+    final ledger = _ref.read(ledgerWriterProvider);
+    final now = DateTime.now();
+
+    final categoryNames = {
+      for (final c in await _ref.read(categoryRepositoryProvider).getAll(vaultId))
+        c.id: c.name,
+    };
 
     await database.transaction(() async {
       for (final t in fresh) {
-        final id = _uuid.v4();
-        await database.transactionDao.upsert(db.TransactionsCompanion(
-          id: Value(id),
-          vaultId: Value(vaultId),
-          amount: Value(t.amount),
-          type: Value(t.direction == BankTxnDirection.credit
-              ? TxnType.income.name
-              : TxnType.expense.name),
-          categoryId: Value(t.suggestedCategoryId ?? fallbackCategoryId),
-          merchant: Value(t.description),
-          note: const Value('Imported from bank statement'),
-          date: Value(t.date.millisecondsSinceEpoch),
-          createdAt: Value(now),
-        ));
+        final txn = Txn(
+          id: _uuid.v4(),
+          vaultId: vaultId,
+          amount: t.amount,
+          type: t.direction == BankTxnDirection.credit
+              ? TxnType.income
+              : TxnType.expense,
+          categoryId: t.suggestedCategoryId ?? fallbackCategoryId,
+          merchant: t.description,
+          note: 'Imported from bank statement',
+          date: t.date,
+          createdAt: now,
+          accountId: ledger.defaultCashId,
+        );
+        await txns.save(txn);
+        await ledger.writeEntry(txn,
+            categoryName: categoryNames[txn.categoryId]);
         await database.fingerprintDao.insert(vaultId, t.fingerprint!);
       }
     });

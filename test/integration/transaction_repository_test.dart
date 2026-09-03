@@ -85,6 +85,49 @@ void main() {
     expect(first.first.id, 't1');
   });
 
+  test('accountId and attachmentRef survive the round-trip', () async {
+    // Regression: both mappers omitted these two columns, so an attached
+    // receipt was encrypted to disk and its pointer silently discarded on
+    // save — the file stayed, the reference did not.
+    final withRefs = Txn(
+      id: 't1',
+      vaultId: vault,
+      amount: Decimal.parse('120.50'),
+      type: TxnType.expense,
+      categoryId: 'cat1',
+      date: DateTime(2026, 1, 1),
+      createdAt: DateTime(2026, 1, 1),
+      accountId: 'acct-cash-$vault',
+      attachmentRef: 'receipts/9f8e7d6c',
+    );
+    await repo.save(withRefs);
+
+    final got = await repo.getById('t1');
+    expect(got!.accountId, 'acct-cash-$vault');
+    expect(got.attachmentRef, 'receipts/9f8e7d6c');
+
+    // And they survive the list paths too, not just getById.
+    final all = await repo.getAll(vault);
+    expect(all.single.attachmentRef, 'receipts/9f8e7d6c');
+    expect(all.single.accountId, 'acct-cash-$vault');
+  });
+
+  test('clearing an attachment persists as null rather than being ignored',
+      () async {
+    await repo.save(Txn(
+      id: 't1',
+      vaultId: vault,
+      amount: Decimal.one,
+      type: TxnType.expense,
+      categoryId: 'cat1',
+      date: DateTime(2026, 1, 1),
+      createdAt: DateTime(2026, 1, 1),
+      attachmentRef: 'receipts/aaa',
+    ));
+    await repo.save(make('t1', '1', TxnType.expense, DateTime(2026, 1, 1)));
+    expect((await repo.getById('t1'))!.attachmentRef, isNull);
+  });
+
   test('signedAmount: income adds, expense subtracts (PRD §16)', () async {
     await repo.save(make('inc', '500', TxnType.income, DateTime(2026, 1, 1)));
     await repo.save(make('exp', '200', TxnType.expense, DateTime(2026, 1, 2)));

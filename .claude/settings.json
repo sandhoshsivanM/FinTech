@@ -168,7 +168,18 @@
       "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const a=JSON.parse\\(d\\);console.log\\(a.vulnerabilities?.xlsx?'STILL VULNERABLE':'xlsx: no advisories'\\);}\\)\")",
       "Bash(/usr/libexec/PlistBuddy -c \"Print :CFBundleIdentifier\" webapp/src-tauri/target/release/bundle/macos/Khazana.app/Contents/Info.plist)",
       "Bash(NEXT_PUBLIC_KHAZANA_PRO=true npm run build)",
-      "Bash(shasum -a 256 ~/Downloads/Khazana_1.0.0_aarch64.dmg)"
+      "Bash(shasum -a 256 ~/Downloads/Khazana_1.0.0_aarch64.dmg)",
+      "Bash(weasyprint --version)",
+      "Bash(fc-list)",
+      "Bash(chmod +x docs/case-study/build.sh)",
+      "Bash(weasyprint docs/case-study/index.html docs/Khazana_Technical_Case_Study.pdf)",
+      "Bash(pdfinfo docs/Khazana_Technical_Case_Study.pdf)",
+      "Bash(pdftoppm -png -r 62 docs/Khazana_Technical_Case_Study.pdf /private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/b88bfb20-c445-4aae-a310-2381bb7b0cf3/scratchpad/pg/p)",
+      "Bash(./docs/case-study/build.sh)",
+      "Bash(open docs/Khazana_Technical_Case_Study.pdf)",
+      "Bash(./tool/package_macos_dmg.sh)",
+      "WebFetch(domain:khazana-app.netlify.app)",
+      "Bash(node -e \"console.log\\('subtle:', !!globalThis.crypto?.subtle, '| indexedDB:', typeof indexedDB\\)\")"
     ],
     "additionalDirectories": [
       "/private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/shots",
