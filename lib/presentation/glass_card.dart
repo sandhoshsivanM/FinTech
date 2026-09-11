@@ -16,7 +16,7 @@ class GlassCard extends StatelessWidget {
     // point of padding is a point not spent on a figure, and at 24 a card
     // holding four numbers looked like a card holding one. The reference
     // dashboards this is measured against sit at 16 or below.
-    this.padding = const EdgeInsets.all(AppSpacing.md),
+    this.padding = const EdgeInsets.all(AppSpacing.lg),
     super.key,
   });
 

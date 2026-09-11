@@ -31,7 +31,6 @@ class AccountsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Accounts')),
       body: const DataGate(child: _Body()),
       floatingActionButton: const _AddAccountButton(),
     );
@@ -322,7 +321,7 @@ class _GroupCard extends StatelessWidget {
     }
 
     return GlassCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -436,7 +435,7 @@ class _LiabilityCard extends StatelessWidget {
       ..sort((a, b) => b.principal.compareTo(a.principal));
 
     return GlassCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

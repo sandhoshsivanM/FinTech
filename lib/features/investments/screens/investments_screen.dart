@@ -44,16 +44,9 @@ class InvestmentsScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         title: const Text('Investments'),
         actions: [
-          IconButton(
-            tooltip: 'Full breakdown',
-            icon: const Icon(Icons.donut_small_outlined),
-            onPressed: () => context.go(Routes.investmentsBreakdown),
-          ),
-          IconButton(
-            tooltip: 'Analytics',
-            icon: const Icon(Icons.insights_outlined),
-            onPressed: () => context.go(Routes.analytics),
-          ),
+          // 'Full breakdown' and 'Analytics' used to live here. Both are now
+          // segments in the section strip above, and an action that duplicates
+          // a visible tab is clutter that teaches nothing.
           const _RefreshPricesButton(),
           IconButton(
             tooltip: 'Import lots from a broker CSV',
@@ -177,7 +170,7 @@ class _ImportBar extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     return GlassCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
           Container(
@@ -233,7 +226,7 @@ class _Body extends ConsumerWidget {
         }
         final wide = MediaQuery.sizeOf(context).width >= 1000;
         return ListView(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
             _StatGrid(snap: snap),
             const SizedBox(height: AppSpacing.md),
@@ -839,7 +832,7 @@ class _HoldingsCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           if (positions.isEmpty)
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Text(
                 'Every position has been sold. Realised profit and loss is in '
                 'the totals above.',

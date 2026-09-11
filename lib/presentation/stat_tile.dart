@@ -145,7 +145,7 @@ class StatTile extends StatelessWidget {
       label: ghost ? '$label hidden' : '$label ${semanticValue ?? value}',
       button: onTap != null,
       child: GlassCard(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: ExcludeSemantics(
           child: onTap == null
               ? body

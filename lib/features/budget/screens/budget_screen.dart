@@ -15,7 +15,6 @@ class BudgetScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Budget')),
       body: const DataGate(child: _BudgetBody()),
     );
   }
@@ -36,7 +35,7 @@ class _BudgetBody extends ConsumerWidget {
           child: progress.isEmpty
               ? const _EmptyBudgets()
               : ListView(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   children: [
                     for (final p in progress)
                       BudgetTile(
@@ -51,7 +50,7 @@ class _BudgetBody extends ConsumerWidget {
                 ),
         ),
         Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Row(
             children: [
               Expanded(

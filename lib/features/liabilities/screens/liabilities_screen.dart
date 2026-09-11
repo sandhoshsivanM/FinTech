@@ -16,7 +16,6 @@ class LiabilitiesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Liabilities')),
       body: const DataGate(child: _Body()),
     );
   }
@@ -36,7 +35,7 @@ class _Body extends ConsumerWidget {
     return Column(
       children: [
         Card(
-          margin: const EdgeInsets.all(AppSpacing.md),
+          margin: const EdgeInsets.all(AppSpacing.lg),
           child: ListTile(
             title: const Text('Total outstanding'),
             trailing: Text(Money.format(totalDebt),
@@ -76,7 +75,7 @@ class _Body extends ConsumerWidget {
                 ),
         ),
         Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Row(
             children: [
               Expanded(

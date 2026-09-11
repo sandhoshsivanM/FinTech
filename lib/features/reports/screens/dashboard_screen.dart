@@ -163,9 +163,12 @@ class _DashboardBody extends ConsumerWidget {
           _UpcomingBillsSection(),
         ]),
 
-        // 5. Quick links to everything that is not a tab.
-        const _QuickLinks(),
-        const SizedBox(height: AppSpacing.md),
+        // 5. (Removed) A `Wrap` of ten ActionChips used to sit here, because
+        //    the five tab slots could not reach the rest of the app. It wrapped
+        //    3-3-3-1 with a ragged right edge and an orphaned last chip, gave
+        //    every destination identical visual weight, and cost half the first
+        //    screen. The More tab now carries all of it, grouped under the same
+        //    headings the web sidebar uses.
 
         // 6. Recent transactions — a list on purpose. These are individual
         //    events, not a distribution, and there is no chart of "the last
@@ -240,39 +243,6 @@ class _ColdOpenPlaceholder extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 // Quick links to features not on the bottom nav.
 // ---------------------------------------------------------------------------
-
-class _QuickLinks extends StatelessWidget {
-  const _QuickLinks();
-  @override
-  Widget build(BuildContext context) {
-    const links = [
-      // Reports is not a tab any more (Score took its slot), so this chip and
-      // the link on the Score screen are how it stays reachable on a phone.
-      (Routes.reports, Icons.bar_chart_outlined, 'Reports'),
-      (Routes.calendar, Icons.calendar_month_outlined, 'Calendar'),
-      (Routes.captureInbox, Icons.auto_awesome_motion_outlined, 'Auto-capture'),
-      (Routes.budget, Icons.pie_chart_outline, 'Budget'),
-      (Routes.goals, Icons.flag_outlined, 'Goals'),
-      (Routes.liabilities, Icons.credit_card_outlined, 'Liabilities'),
-      (Routes.insurance, Icons.shield_outlined, 'Insurance'),
-      (Routes.safetyNet, Icons.health_and_safety_outlined, 'Safety Net'),
-      (Routes.recurring, Icons.repeat, 'Recurring'),
-      (Routes.search, Icons.search, 'Search'),
-    ];
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
-      children: [
-        for (final l in links)
-          ActionChip(
-            avatar: Icon(l.$2, size: 17),
-            label: Text(l.$3),
-            onPressed: () => context.go(l.$1),
-          ),
-      ],
-    );
-  }
-}
 
 // ---------------------------------------------------------------------------
 // 1. Greeting header
@@ -713,7 +683,7 @@ class _TrendChart extends StatelessWidget {
     if (pts.isNotEmpty && pts.last != raw.last) pts.add(raw.last);
 
     return GlassCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: AreaChart(
         values: pts,
         height: 150,

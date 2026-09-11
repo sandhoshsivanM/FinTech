@@ -165,6 +165,12 @@ const _sections = <_Section>[
         hint: 'Bring in a statement or broker file',
       ),
       (
+        route: Routes.pro,
+        icon: Icons.auto_awesome,
+        label: 'Khazana Pro',
+        hint: 'One payment, yours forever',
+      ),
+      (
         route: Routes.settings,
         icon: Icons.settings_outlined,
         label: 'Settings',

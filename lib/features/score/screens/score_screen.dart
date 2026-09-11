@@ -31,12 +31,6 @@ class ScoreScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: const Text('Score'),
-      ),
       body: const SafeArea(child: DataGate(child: _Body())),
     );
   }
@@ -54,7 +48,7 @@ class _Body extends ConsumerWidget {
     final history = ref.watch(scoreHistoryProvider);
 
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
         _ScoreHero(health: health),
         const SizedBox(height: AppSpacing.md),

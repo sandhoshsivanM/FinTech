@@ -46,7 +46,7 @@ class BudgetTile extends StatelessWidget {
       child: ExcludeSemantics(
         child: Card(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

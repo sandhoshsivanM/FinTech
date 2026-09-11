@@ -93,19 +93,38 @@ abstract final class AppColors {
   static const List<Color> accentGradient = [KhazanaColors.vaultPrimary, KhazanaColors.emerald600];
 }
 
+/// The web's spacing scale, step for step.
+///
+/// These names used to be offset by one step against `globals.css`: Flutter's
+/// `md` was 16 where the web's is 12, and Flutter's `lg` was 24 where the web's
+/// is 16. Both clients therefore honoured "medium padding" and produced
+/// different padding — the kind of drift that is invisible in review and
+/// obvious side by side.
 abstract final class AppSpacing {
   static const double xs = 4;
   static const double sm = 8;
-  static const double md = 16;
-  static const double lg = 24;
-  static const double xl = 32;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 24;
+  static const double xxl = 32;
+  static const double xxxl = 48;
 
   /// Minimum touch target (PRD §10A): 44pt iOS / 48dp Android — use 48 everywhere.
   static const double minTouchTarget = 48;
 }
 
+/// Radii from the web's `@theme` block in `globals.css`.
+///
+/// Note those are the values that actually apply on the web: `globals.css`
+/// declares the radius tokens twice and the `@theme` block, emitted later,
+/// wins. The earlier block's 10px/8px are dead. Cards were 20 here against the
+/// web's 14 and buttons 14 against 9 — enough rounder that the two clients read
+/// as different design languages before any colour is considered.
 abstract final class AppRadii {
-  static const double card = 20;
-  static const double button = 14;
+  static const double card = 14;
+  static const double panel = 16;
+  static const double button = 9;
+  static const double input = 10;
+  static const double modal = 18;
   static const double pill = 999;
 }

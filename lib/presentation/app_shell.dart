@@ -6,10 +6,14 @@ import 'package:go_router/go_router.dart';
 
 import '../core/di/providers.dart';
 import '../core/router/app_router.dart';
+import '../core/router/nav_sections.dart';
 import '../core/security/vault_state.dart';
 import '../core/services/notification_sync_service.dart';
 import '../features/capture/providers/capture_providers.dart';
+import '../core/theme/app_tokens.dart';
+import '../core/theme/semantic_colors.dart';
 import 'desktop_shell.dart';
+import 'section_tabs.dart';
 
 /// Intent for the "new transaction" keyboard shortcut (PRD Phase 4, Web).
 class _NewTransactionIntent extends Intent {
@@ -52,16 +56,8 @@ class _AppShellState extends ConsumerState<AppShell>
   /// and at five destinations on a 360dp phone "Transactions" does not fit at
   /// the theme's 11px label size. The screen itself is titled "Transactions";
   /// only the tab is abbreviated.
-  ///
-  /// Reports is deliberately not here — it sits under Score, which is what
-  /// [Routes.ownerTab] encodes.
-  static const _tabs = [
-    (Routes.dashboard, Icons.dashboard_outlined, 'Dashboard'),
-    (Routes.transactions, Icons.receipt_long_outlined, 'Cash Flow'),
-    (Routes.investments, Icons.trending_up_outlined, 'Investments'),
-    (Routes.score, Icons.speed_outlined, 'Score'),
-    (Routes.settings, Icons.settings_outlined, 'Settings'),
-  ];
+  /// The bar is driven by [navSections] — four sections plus a centre action.
+  /// See `core/router/nav_sections.dart` for why it is four and not five.
 
   @override
   void initState() {
@@ -97,9 +93,19 @@ class _AppShellState extends ConsumerState<AppShell>
   }
 
   int _currentIndex(BuildContext context) {
-    final owner = Routes.ownerTab(GoRouterState.of(context).matchedLocation);
-    final idx = _tabs.indexWhere((t) => t.$1 == owner);
-    return idx < 0 ? 0 : idx;
+    final here = GoRouterState.of(context).matchedLocation;
+    // Longest-owning section wins, so a sub-page keeps its section lit.
+    var best = -1;
+    var bestLen = -1;
+    for (var i = 0; i < navSections.length; i++) {
+      for (final r in navSections[i].routes) {
+        if ((here == r || here.startsWith('$r/')) && r.length > bestLen) {
+          best = i;
+          bestLen = r.length;
+        }
+      }
+    }
+    return best < 0 ? 0 : best;
   }
 
   @override
@@ -160,19 +166,146 @@ class _AppShellState extends ConsumerState<AppShell>
     if (isDesktopPlatform) {
       return DesktopShell(child: widget.child);
     }
+    final section = navSections[index];
     return Scaffold(
+      // One header for the whole app, owned here rather than repeated in every
+      // screen. Screens used to each declare `AppBar(title: Text('Budget'))`,
+      // which is why the section strip had nowhere to live: a shell cannot put
+      // anything beneath a bar its child owns.
+      appBar: AppBar(
+        title: Text(section.label),
+        actions: const [AvatarMenu(), SizedBox(width: AppSpacing.xs)],
+        bottom: section.children.isEmpty
+            ? null
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(46),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: SectionTabs(section: section),
+                ),
+              ),
+      ),
       body: widget.child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: (i) => context.go(_tabs[i].$1),
-        destinations: [
-          for (final t in _tabs)
-            NavigationDestination(
-              icon: Icon(t.$2),
-              label: t.$3,
-              tooltip: t.$3,
-            ),
+      // The one action worth permanent chrome. Docked into the bar's notch so
+      // it reads as part of the navigation rather than as something floating
+      // over the content.
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.go(Routes.addTransaction),
+        tooltip: 'New transaction',
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: _SectionBar(index: index),
+    );
+  }
+}
+
+/// The bottom bar: four sections with a notch in the middle for the primary
+/// action.
+///
+/// A `BottomAppBar` rather than `NavigationBar` because Material's
+/// `NavigationBar` distributes its destinations evenly and has no notion of a
+/// gap — docking a FAB into it overlaps the middle destination rather than
+/// making room for it.
+class _SectionBar extends StatelessWidget {
+  const _SectionBar({required this.index});
+
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    // Two sections, the notch, then two more.
+    const leftCount = 2;
+    return BottomAppBar(
+      height: 64,
+      padding: EdgeInsets.zero,
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 7,
+      color: scheme.surface,
+      child: Row(
+        children: [
+          for (var i = 0; i < leftCount; i++)
+            Expanded(child: _BarItem(i: i, selected: index == i)),
+          // The notch. Sized to the FAB plus its margin so the two halves stay
+          // symmetrical regardless of how many sections there are.
+          const SizedBox(width: 64),
+          for (var i = leftCount; i < navSections.length; i++)
+            Expanded(child: _BarItem(i: i, selected: index == i)),
         ],
+      ),
+    );
+  }
+}
+
+class _BarItem extends StatelessWidget {
+  const _BarItem({required this.i, required this.selected});
+
+  final int i;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final section = navSections[i];
+    final scheme = Theme.of(context).colorScheme;
+    final color = selected ? context.colors.accent : scheme.onSurfaceVariant;
+    return InkWell(
+      onTap: () => context.go(section.route),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(selected ? section.activeIcon : section.icon, size: 22, color: color),
+          const SizedBox(height: 3),
+          Text(
+            section.label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Account-level destinations, behind the avatar.
+///
+/// Settings, Pro, Import and Search are things you do TO the vault rather than
+/// screens you read, so they hang off the app bar instead of competing for a
+/// slot in the navigation. Keeping them out of the bar is what let the bar
+/// shrink to four sections that each mean something.
+class AvatarMenu extends StatelessWidget {
+  const AvatarMenu({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return PopupMenuButton<String>(
+      tooltip: 'Account and tools',
+      position: PopupMenuPosition.under,
+      onSelected: (route) => context.go(route),
+      itemBuilder: (context) => [
+        for (final m in avatarMenu)
+          PopupMenuItem(
+            value: m.route,
+            child: Row(
+              children: [
+                Icon(m.icon, size: 19, color: scheme.onSurfaceVariant),
+                const SizedBox(width: AppSpacing.md),
+                Text(m.label),
+              ],
+            ),
+          ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        child: CircleAvatar(
+          radius: 15,
+          backgroundColor: scheme.primaryContainer,
+          child: Icon(Icons.person_outline, size: 18, color: context.colors.accent),
+        ),
       ),
     );
   }

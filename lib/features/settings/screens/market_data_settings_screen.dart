@@ -38,7 +38,7 @@ class _State extends ConsumerState<MarketDataSettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Market Data')),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
           const Text(
             'Live prices use Yahoo Finance first (no key). Add keys below to '

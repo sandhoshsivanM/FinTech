@@ -26,7 +26,6 @@ class PortfolioBreakdownScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Breakdown')),
       body: DataGate(child: _Body()),
     );
   }
@@ -45,7 +44,7 @@ class _Body extends ConsumerWidget {
           return const _Empty();
         }
         return ListView(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
             _TotalsCard(snap: snap),
             const SizedBox(height: AppSpacing.md),

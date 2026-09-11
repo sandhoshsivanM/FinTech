@@ -45,7 +45,7 @@ class _Body extends ConsumerWidget {
     final categories = ref.watch(categoryListProvider).valueOrNull ?? const [];
 
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
         if (supported) const _PermissionCard() else const _UnsupportedCard(),
         const SizedBox(height: AppSpacing.md),

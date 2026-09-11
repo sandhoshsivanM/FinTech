@@ -146,7 +146,7 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
         child: Form(
           key: _form,
           child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
               GlassCard(
                 child: Column(

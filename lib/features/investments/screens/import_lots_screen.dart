@@ -95,7 +95,7 @@ class _ImportLotsScreenState extends ConsumerState<ImportLotsScreen> {
       appBar: AppBar(title: const Text('Import lots')),
       body: DataGate(
         child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
             GlassCard(
               child: Column(

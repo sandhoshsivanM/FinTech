@@ -17,7 +17,6 @@ class GoalsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Goals')),
       body: const DataGate(child: _Body()),
     );
   }
@@ -33,7 +32,7 @@ class _Body extends ConsumerWidget {
       body: goals.isEmpty
           ? const Center(child: Text('No goals yet. Add one to start saving.'))
           : ListView(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               children: [for (final g in goals) _GoalCard(goal: g)],
             ),
       floatingActionButton: FloatingActionButton.extended(
@@ -111,7 +110,7 @@ class _GoalCard extends ConsumerWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

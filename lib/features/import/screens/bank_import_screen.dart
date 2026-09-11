@@ -165,7 +165,7 @@ class _BodyState extends ConsumerState<_Body> {
                   : const _Instructions(),
         ),
         Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Row(
             children: [
               Expanded(
@@ -275,7 +275,7 @@ class _Preview extends StatelessWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       children: [
         Row(
           children: [
@@ -401,7 +401,7 @@ class _Report extends StatelessWidget {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       children: [
         GlassCard(
           child: Column(

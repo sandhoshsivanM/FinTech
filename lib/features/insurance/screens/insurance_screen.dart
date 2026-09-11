@@ -34,7 +34,6 @@ class InsuranceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Insurance')),
       body: const DataGate(child: _Body()),
     );
   }
@@ -56,12 +55,12 @@ class _Body extends ConsumerWidget {
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
               // Summary
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Row(
                     children: [
                       _Metric('Total cover', Money.format(totalCover)),
@@ -76,7 +75,7 @@ class _Body extends ConsumerWidget {
               // Coverage gap analysis
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -141,7 +140,7 @@ class _Body extends ConsumerWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: SizedBox(
             width: double.infinity,
             child: FilledButton.icon(

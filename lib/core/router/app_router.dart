@@ -62,6 +62,8 @@ abstract final class Routes {
   static const currency = '/app/settings/currency';
   static const notifications = '/app/settings/notifications';
   static const settings = '/app/settings';
+
+
   /// The paywall, and where an existing purchase is restored.
   static const pro = '/app/pro';
 
@@ -86,12 +88,14 @@ abstract final class Routes {
 
   /// Longest paths first, so `/app/settings/currency` is not swallowed by
   /// `/app/settings`.
+  /// Kept for the desktop shell and for tests. On the phone the bar is driven
+  /// by `nav_sections.dart` directly — a second hand-maintained map of the same
+  /// relationships is how the two drifted apart in the first place.
   static final _tabOwners = <String, String>{
-    // Score owns the analysis screens.
     reports: score,
     safetyNet: score,
+    analytics: score,
     score: score,
-    // Transactions owns everything that puts money in or out of the ledger.
     addTransaction: transactions,
     budget: transactions,
     calendar: transactions,
@@ -101,16 +105,13 @@ abstract final class Routes {
     captureInbox: transactions,
     bankImport: transactions,
     transactions: transactions,
-    // Investments owns the whole balance sheet, assets and liabilities alike.
     investmentsBreakdown: investments,
-    analytics: investments,
     investmentsAddLot: investments,
     investmentsImportLots: investments,
     liabilities: investments,
     insurance: investments,
     goals: investments,
     investments: investments,
-    // Settings owns its own sub-pages.
     marketData: settings,
     currency: settings,
     notifications: settings,

@@ -17,7 +17,6 @@ class SafetyNetScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Safety Net')),
       body: const DataGate(child: _Body()),
     );
   }
@@ -42,12 +41,12 @@ class _Body extends ConsumerWidget {
             : context.colors.expense;
 
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
         // Readiness hero
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Row(
               children: [
                 SizedBox(
@@ -127,7 +126,7 @@ class _ComponentCard extends StatelessWidget {
     final color = _coverColor(context.colors, pct);
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

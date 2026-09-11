@@ -39,7 +39,7 @@ class _BodyState extends ConsumerState<_Body> {
 
     return Scaffold(
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
           ListTile(
             contentPadding: EdgeInsets.zero,
@@ -80,7 +80,7 @@ class _BodyState extends ConsumerState<_Body> {
           const SizedBox(height: AppSpacing.md),
           if (rates.isEmpty)
             const Padding(
-              padding: EdgeInsets.all(AppSpacing.md),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: Text('No exchange rates stored yet.'),
             )
           else

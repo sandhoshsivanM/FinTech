@@ -389,7 +389,7 @@ class _SettingsBody extends ConsumerWidget {
           onTap: () => _eraseAllData(context, ref),
         ),
         const Padding(
-          padding: EdgeInsets.all(AppSpacing.md),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Text(
             '$kAppName is fully offline. Nothing leaves this device without '
             'your explicit action.',
@@ -411,7 +411,7 @@ class _SettingsBody extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Padding(
-              padding: EdgeInsets.all(AppSpacing.md),
+              padding: EdgeInsets.all(AppSpacing.lg),
               child: Text('Vaults', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
             for (final v in vaults)

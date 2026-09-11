@@ -31,7 +31,7 @@ class _SearchBody extends ConsumerWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: TextField(
             autofocus: true,
             decoration: const InputDecoration(

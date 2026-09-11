@@ -46,12 +46,6 @@ class _CalendarLedgerScreenState extends ConsumerState<CalendarLedgerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: const Text('Calendar'),
-      ),
       body: SafeArea(
         child: DataGate(
           child: LayoutBuilder(
@@ -76,7 +70,7 @@ class _CompactLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
         const _MonthTotalsCard(),
         const SizedBox(height: AppSpacing.md),
@@ -315,7 +309,7 @@ class _CalendarCard extends ConsumerWidget {
     ];
 
     return GlassCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
           Row(
