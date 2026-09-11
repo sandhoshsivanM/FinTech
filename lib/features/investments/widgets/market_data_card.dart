@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/semantic_colors.dart';
+
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../domain/entities/portfolio.dart';
@@ -205,7 +207,7 @@ class _QualityChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = describeQuality(quality);
+    final (label, color) = describeQuality(context.colors, quality);
     return Container(
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
@@ -224,13 +226,13 @@ class _QualityChip extends StatelessWidget {
 
 /// One label and colour per confidence level, shared by the chips and the rows
 /// so a holding cannot be described one way in the summary and another below.
-(String, Color) describeQuality(PriceQuality? q) => switch (q) {
-      PriceQuality.live => ('live', AppColors.income),
-      PriceQuality.official => ('official NAV', AppColors.accent),
-      PriceQuality.stale => ('cached', AppColors.budgetWarn),
-      PriceQuality.indicative => ('manual', AppColors.budgetWarn),
-      PriceQuality.unknownDate => ('date unknown', AppColors.budgetWarn),
-      null => ('not priced', AppColors.expense),
+(String, Color) describeQuality(SemanticColors c, PriceQuality? q) => switch (q) {
+      PriceQuality.live => ('live', c.income),
+      PriceQuality.official => ('official NAV', c.accent),
+      PriceQuality.stale => ('cached', c.budgetWarn),
+      PriceQuality.indicative => ('manual', c.budgetWarn),
+      PriceQuality.unknownDate => ('date unknown', c.budgetWarn),
+      null => ('not priced', c.expense),
     };
 
 class _PriceRow extends StatelessWidget {
@@ -242,7 +244,7 @@ class _PriceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    var (label, color) = describeQuality(position.priceQuality);
+    var (label, color) = describeQuality(context.colors, position.priceQuality);
 
     // A price can be genuinely official and still be four years old: AMFI keeps
     // publishing discontinued schemes, so a wound-up fund's last NAV resolves
@@ -254,7 +256,7 @@ class _PriceRow extends StatelessWidget {
         DateTime.now().difference(at).inDays > 7;
     if (stale) {
       label = 'stale';
-      color = AppColors.budgetWarn;
+      color = context.colors.budgetWarn;
     }
 
     // The date is suppressed for unknownDate on purpose: that timestamp is the

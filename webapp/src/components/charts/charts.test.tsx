@@ -315,6 +315,36 @@ describe('hover readouts', () => {
     expect(screen.getByText('₹90')).toBeInTheDocument();
   });
 
+  // The readout used to be one node pinned to `left-0 right-0 text-center` on
+  // the chart wrapper, so it rendered over the middle of the WHOLE chart no
+  // matter which group was hovered — hovering the third of three months printed
+  // its figures above the second month's bars. It has to live inside the column
+  // it describes. jsdom does no layout, so the containment is what's assertable
+  // and it is also the thing that was actually wrong.
+  test('the Bars readout renders inside the hovered group, not the chart', async () => {
+    const { Bars } = await import('../ui');
+    const { container } = render(
+      <Bars
+        groups={[
+          { label: 'Jul 26', values: [{ value: 100, color: 'green' }] },
+          { label: 'Aug 26', values: [{ value: 300, color: 'green' }] },
+          { label: 'Sep 26', values: [{ value: 121, color: 'green' }] },
+        ]}
+        formatY={(n) => `₹${n}`}
+      />,
+    );
+    const groups = container.querySelectorAll('div.flex-1');
+
+    fireEvent.mouseEnter(groups[2]);
+    expect(groups[2]).toContainElement(screen.getByText('₹121'));
+    expect(groups[1]).not.toContainElement(screen.getByText('₹121'));
+
+    // And it follows the cursor to another group rather than accumulating.
+    fireEvent.mouseEnter(groups[0]);
+    expect(screen.queryByText('₹121')).toBeNull();
+    expect(groups[0]).toContainElement(screen.getByText('₹100'));
+  });
+
   test('AreaChart reports the nearest point as the pointer moves', async () => {
     const { AreaChart } = await import('./AreaChart');
     const { container } = render(

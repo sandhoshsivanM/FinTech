@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
@@ -204,8 +206,8 @@ class _MonthlyTotals extends StatelessWidget {
     return GlassCard(
       child: Row(
         children: [
-          cell('Committed each month', out, AppColors.expense),
-          if (inn > Decimal.zero) cell('Expected in', inn, AppColors.income),
+          cell('Committed each month', out, context.colors.expense),
+          if (inn > Decimal.zero) cell('Expected in', inn, context.colors.income),
           Expanded(
             child: Text(
               '${rules.length} rule${rules.length == 1 ? '' : 's'}',
@@ -244,7 +246,7 @@ class _RuleCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     final income = rule.type == TxnType.income;
-    final tint = income ? AppColors.income : AppColors.expense;
+    final tint = income ? context.colors.income : context.colors.expense;
 
     final days = rule.nextRun.difference(DateTime.now()).inDays;
     final due = days < 0

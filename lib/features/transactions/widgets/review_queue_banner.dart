@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -31,7 +33,7 @@ class ReviewQueueBanner extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Material(
-        color: AppColors.budgetWarn.withValues(alpha: 0.12),
+        color: context.colors.budgetWarn.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadii.button),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadii.button),
@@ -41,24 +43,24 @@ class ReviewQueueBanner extends ConsumerWidget {
                 horizontal: AppSpacing.md, vertical: AppSpacing.sm),
             child: Row(
               children: [
-                const Icon(Icons.auto_awesome_motion_outlined,
-                    size: 18, color: AppColors.budgetWarn),
+                Icon(Icons.auto_awesome_motion_outlined,
+                    size: 18, color: context.colors.budgetWarn),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     '$n captured transaction${n == 1 ? '' : 's'} to confirm',
                     style: text.labelLarge?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.budgetWarn,
+                      color: context.colors.budgetWarn,
                     ),
                   ),
                 ),
                 Text('Review',
                     style: text.labelMedium?.copyWith(
-                        color: AppColors.budgetWarn,
+                        color: context.colors.budgetWarn,
                         fontWeight: FontWeight.w700)),
-                const Icon(Icons.chevron_right_rounded,
-                    size: 18, color: AppColors.budgetWarn),
+                Icon(Icons.chevron_right_rounded,
+                    size: 18, color: context.colors.budgetWarn),
               ],
             ),
           ),

@@ -784,8 +784,8 @@ development certificate. Without this, vault creation failed with
 
 ## 7. Defects
 
-Ordered by how much they affect you. **7.1, 7.2, 7.3, 7.5 and 7.10 are fixed** — see
-the notes under each. The rest still stand.
+Ordered by how much they affect you. **7.1–7.8 and 7.10 are fixed** — see the
+notes under each. **7.9, 7.11 and 7.12 still stand.**
 
 ### 7.1 Two portfolio models disagree — FIXED
 
@@ -855,7 +855,7 @@ and `benchmarkSeries` are vault-independent reference data and are correctly
 kept.) The app promises in writing that this button removes your financial data;
 `test/integration/erase_all_data_test.dart` is that promise.
 
-### 7.4 Backup is write-only and mis-stamped
+### 7.4 Backup is write-only and mis-stamped — FIXED
 
 Two problems:
 - Every backup is stamped **schema version 1** while the database is at **4** —
@@ -864,8 +864,19 @@ Two problems:
 - **There is no restore path.** `verifyBackup` exists, never writes, and has
   zero callers. Settings offers export only.
 
-*Evidence:* `settings_providers.dart:27` vs `app_database.dart:89` ·
-`settings_providers.dart:67-80`
+**Fixed.** `restoreBackup` is implemented and reachable — Settings → Restore
+calls `verifyBackup` first and only then `restoreBackup`
+(`settings_screen.dart:88,121`), with PIN entry for a backup written under a
+different PIN. Round-tripped by
+`test/integration/backup_restore_roundtrip_test.dart`.
+
+The version mismatch turned out not to be a bug but an undocumented decision,
+and is now documented as one: the header version answers "was this backup
+written by an app newer than me", Drift's `schemaVersion` answers "how do I
+migrate this file". They are deliberately independent, because the restore path
+migrates the database it unpacks. Raising the header version would strand every
+backup written from now on for no gain. See the comment on
+`SettingsActions._schemaVersion`.
 
 ### 7.5 Currency conversion is promised but not wired — FIXED
 
@@ -883,27 +894,47 @@ live from ECB reference rates (free, no key, one request for all currencies) and
 are stamped with the source's publication date, not the fetch time. Base
 currency is a `shared_preferences` setting.
 
-### 7.6 Receipt attachments never persist
+### 7.6 Receipt attachments never persist — FIXED
 
 The repository omits `accountId` and `attachmentRef` when writing *and* when
 reading back, so an attached receipt is silently discarded. The calendar reads
 `attachmentRef`, which is always null.
 
-*Evidence:* `drift_transaction_repository.dart:50-72`
+**Fixed.** Both columns now round-trip in both directions —
+`drift_transaction_repository.dart:60-61` reading and `:74-75` writing — so the
+calendar's attachment indicator reflects a real file. Pinned by
+`test/integration/transaction_repository_test.dart`.
 
-### 7.7 Recurring and imported transactions skip the ledger
+### 7.7 Recurring and imported transactions skip the ledger — FIXED
 
 Both write via the DAO directly instead of `LedgerWriter`, so they get no
 double-entry postings. They appear in lists and search but are invisible to
 account-based net worth.
 
-*Evidence:* `recurring_providers.dart:70-80` · `bank_import_providers.dart:70-82`
+**Fixed.** Both paths go through `ledgerWriterProvider`
+(`recurring_providers.dart`, `bank_import_providers.dart:69`), so a recurring
+charge or an imported statement line now moves account balances and net worth
+like any hand-entered transaction. Pinned by
+`test/unit/ledger_write_path_test.dart`.
 
-### 7.8 Attachments are stored unencrypted
+### 7.8 Attachments are stored unencrypted — FIXED
 
 Receipt images are copied to a sandboxed directory in the clear, while every
 other artifact in the vault is encrypted. The web app's copy claims they are
 encrypted.
+
+**Fixed.** `AttachmentService` seals every file with AES-256-GCM under the vault
+key — the same key that opens the database — in the same layout as the backup
+format (12-byte random IV, ciphertext, 16-byte GCM tag), written to `.enc` files.
+The bytes go from the picker straight through the cipher, so the plaintext is
+never on disk even briefly. `purgeAll()` is wired into "Erase all data", which
+previously deleted the rows and left every image behind. A file that exists but
+fails authentication raises rather than rendering blank, because silent failure
+would hide tampering or a key mismatch. Pinned by
+`test/unit/attachment_encryption_test.dart`.
+
+This one mattered beyond the bug: it was the only place where the product's
+loudest claim — everything in the vault is encrypted on your device — was false.
 
 ### 7.9 No transaction edit screen
 

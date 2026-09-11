@@ -4,10 +4,11 @@ import {
   Utensils, Bus, Home, Zap, ShoppingBag, HeartPulse, Clapperboard,
   Landmark, Wallet, TrendingUp, Shapes, Trash2, RefreshCw, Plus, ChevronDown, ChevronUp,
 } from 'lucide-react';
+import clsx from 'clsx';
 import { useApp, uid } from '@/lib/store';
 import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
-import { STORE, type TxnType, type Frequency } from '@/lib/types';
+import { STORE, type TxnType, type Frequency, type RecurringRule } from '@/lib/types';
 import { FREQ_LABEL } from '@/domain/recurrence';
 import { moneyAccounts } from '@/domain/accountLedger';
 import {
@@ -15,7 +16,7 @@ import {
 } from '@/components/ui';
 import { useConfirm } from '@/components/Confirm';
 import { DateInput } from '@/components/DateInput';
-import { formatDate } from '@/lib/dateFormat';
+import { formatDate, toInputValue, fromInputValue } from '@/lib/dateFormat';
 import { NumberInput } from '@/components/NumberInput';
 
 // ---- Icon map ----
@@ -60,10 +61,17 @@ export default function RecurringPage() {
   const accounts = useApp((s) => s.accounts);
   const confirm = useConfirm();
   const processRecurring = useApp((s) => s.processRecurring);
+  const postRecurringOnce = useApp((s) => s.postRecurringOnce);
 
   // Run-due state
   const [runMsg, setRunMsg] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+
+  // Post-one state. The rule being posted, with the date and amount it will be
+  // posted at — both editable, because the schedule is a prediction and the
+  // posting is a record of what actually happened.
+  const [posting, setPosting] = useState<{ rule: RecurringRule; date: string; amount: string } | null>(null);
+  const [postBusy, setPostBusy] = useState(false);
 
   // Add-form state
   const [showForm, setShowForm] = useState(false);
@@ -115,6 +123,35 @@ export default function RecurringPage() {
 
     return { monthlyOut, monthlyIn, dueSoonCount, annualOut, committedShare };
   }, [recurring]);
+
+  function openPost(rule: RecurringRule) {
+    setRunMsg(null);
+    setPosting({
+      rule,
+      // Defaults to the scheduled occurrence, so confirming without editing
+      // gives exactly what the batch run would have produced for this rule.
+      date: toInputValue(rule.nextRun),
+      amount: rule.amount,
+    });
+  }
+
+  async function handlePostOne() {
+    if (!posting) return;
+    const amt = parseFloat(posting.amount.replace(/,/g, ''));
+    if (isNaN(amt) || amt <= 0) return;
+    // A half-typed date parses to null. Falling back to the scheduled date
+    // keeps the post correct rather than dating the entry to the epoch.
+    const when = fromInputValue(posting.date) ?? posting.rule.nextRun;
+    setPostBusy(true);
+    try {
+      const ok = await postRecurringOnce(posting.rule.id, { date: when, amount: String(amt) });
+      const name = posting.rule.merchant || 'Rule';
+      setRunMsg(ok ? `Posted ${name}. Nothing else was run.` : 'Could not post — the rule no longer exists.');
+      setPosting(null);
+    } finally {
+      setPostBusy(false);
+    }
+  }
 
   async function handleRunDue() {
     setRunning(true);
@@ -188,6 +225,48 @@ export default function RecurringPage() {
         >
           {runMsg}
         </div>
+      )}
+
+      {/* Post one rule. Date and amount default to the schedule and are
+          editable, because an obligation that landed late or for a different
+          figure did not happen the way the rule predicted. */}
+      {posting && (
+        <GlassCard>
+          <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
+            <h2 className="text-[15px] font-semibold tracking-[-0.02em]">
+              Post {posting.rule.merchant || 'this rule'}
+            </h2>
+            <span className="text-xs text-muted">
+              Scheduled for {formatDate(posting.rule.nextRun)} · nothing else will run
+            </span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+            <Field label="Date it actually happened">
+              <DateInput
+                value={posting.date}
+                onChange={(date) => setPosting((p) => (p ? { ...p, date } : p))}
+              />
+            </Field>
+            <Field label="Amount">
+              <NumberInput
+                value={posting.amount}
+                onChange={(amount) => setPosting((p) => (p ? { ...p, amount } : p))}
+              />
+            </Field>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => void handlePostOne()} disabled={postBusy}>
+                {postBusy ? 'Posting…' : 'Post'}
+              </Button>
+              <Button variant="soft" onClick={() => setPosting(null)} disabled={postBusy}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+          <p className="text-[12.5px] leading-snug text-[var(--ink-soft)] mt-3">
+            The next run stays on its schedule — {FREQ_LABEL[posting.rule.frequency].toLowerCase()} from{' '}
+            {formatDate(posting.rule.nextRun)} — so posting late once does not move every future occurrence.
+          </p>
+        </GlassCard>
       )}
 
       {/* StatStrip — 4-metric summary */}
@@ -392,6 +471,23 @@ export default function RecurringPage() {
                     {ghost ? '••••••' : `~${fmt.money(monthlyEq)}/mo`}
                   </div>
                 </div>
+
+                {/* Post this one, and only this one. */}
+                <button
+                  type="button"
+                  onClick={() => openPost(rule)}
+                  title={`Post ${rule.merchant || cat?.name || 'this'} on its own`}
+                  className={clsx(
+                    'ml-1 px-2 py-1.5 rounded-[var(--radius-btn)] text-[11.5px] font-semibold whitespace-nowrap transition shrink-0',
+                    'border border-line-strong hover:border-[var(--accent)] hover:text-accent',
+                    // Always reachable on an overdue rule: that is the one the
+                    // user came to the page for, and hiding its action behind a
+                    // hover is why the batch button looked like the only way.
+                    overdue || dueSoon ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus:opacity-100',
+                  )}
+                >
+                  Post now
+                </button>
 
                 {/* Delete */}
                 <button

@@ -2,6 +2,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../core/theme/semantic_colors.dart';
+
 import '../../core/theme/app_tokens.dart';
 import 'chart_tokens.dart';
 
@@ -73,7 +75,7 @@ class _AreaChartState extends State<AreaChart> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final c = widget.color ?? AppColors.accent;
+    final c = widget.color ?? context.colors.accent;
     final values = widget.values;
 
     if (values.length < ChartTokens.minSeriesPoints) {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/semantic_colors.dart';
+
 import '../core/theme/app_tokens.dart';
 
 /// Global gradient backdrop painted behind every screen (scaffolds are
@@ -38,7 +40,7 @@ class AppBackground extends StatelessWidget {
               // from looking dead; past this it starts tinting the cards that
               // sit on top of it, and a card whose colour depends on where it
               // is on the page cannot have its contrast checked.
-              color: AppColors.accent
+              color: context.colors.accent
                   .withValues(alpha: isDark ? 0.07 : 0.08),
               size: 320,
             ),
@@ -48,7 +50,7 @@ class AppBackground extends StatelessWidget {
             bottom: -140,
             left: -100,
             child: _Glow(
-              color: AppColors.accentGlow
+              color: context.colors.accentGlow
                   .withValues(alpha: isDark ? 0.06 : 0.06),
               size: 360,
             ),

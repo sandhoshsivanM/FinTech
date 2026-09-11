@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -185,7 +187,7 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
 
     // Expense segment: red-tinted when selected; Income: green.
     final typeColor =
-        _isExpense ? AppColors.expense : AppColors.income;
+        _isExpense ? context.colors.expense : context.colors.income;
 
     return Form(
       key: _formKey,
@@ -214,15 +216,15 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
                     ?.copyWith(
                         color:
                             Theme.of(context).colorScheme.onSurfaceVariant),
-                prefixIcon: const Icon(Icons.auto_awesome,
-                    size: 18, color: AppColors.accentGlow),
+                prefixIcon: Icon(Icons.auto_awesome,
+                    size: 18, color: context.colors.accentGlow),
                 suffixIcon: Semantics(
                   button: true,
                   label: 'Parse quick add',
                   child: ExcludeSemantics(
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_forward,
-                          size: 18, color: AppColors.accentGlow),
+                      icon: Icon(Icons.arrow_forward,
+                          size: 18, color: context.colors.accentGlow),
                       tooltip: 'Parse quick add',
                       onPressed: _applyQuickEntry,
                     ),
@@ -270,21 +272,21 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.md, vertical: AppSpacing.sm),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.10),
+                      color: context.colors.accent.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(AppRadii.pill),
                       border: Border.all(
-                          color: AppColors.accent.withValues(alpha: 0.20)),
+                          color: context.colors.accent.withValues(alpha: 0.20)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.calendar_today,
-                            size: 14, color: AppColors.accentGlow),
+                        Icon(Icons.calendar_today,
+                            size: 14, color: context.colors.accentGlow),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
                           _dateLabel,
-                          style: const TextStyle(
-                            color: AppColors.accentGlow,
+                          style: TextStyle(
+                            color: context.colors.accentGlow,
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
                           ),
@@ -356,7 +358,7 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
           else
             Row(
               children: [
-                const Icon(Icons.receipt_long, color: AppColors.accentGlow),
+                Icon(Icons.receipt_long, color: context.colors.accentGlow),
                 const SizedBox(width: AppSpacing.sm),
                 const Expanded(child: Text('Receipt attached')),
                 IconButton(
@@ -405,16 +407,16 @@ class _TypeSelector extends StatelessWidget {
           }
           // Expense selected → red tint; Income selected → green tint.
           return selected == TxnType.expense
-              ? AppColors.expense.withValues(alpha: 0.18)
-              : AppColors.income.withValues(alpha: 0.18);
+              ? context.colors.expense.withValues(alpha: 0.18)
+              : context.colors.income.withValues(alpha: 0.18);
         }),
         foregroundColor: WidgetStateProperty.resolveWith((states) {
           if (!states.contains(WidgetState.selected)) {
             return Theme.of(context).colorScheme.onSurfaceVariant;
           }
           return selected == TxnType.expense
-              ? AppColors.expense
-              : AppColors.income;
+              ? context.colors.expense
+              : context.colors.income;
         }),
       ),
       segments: const [
@@ -560,14 +562,14 @@ class _CategoryTile extends StatelessWidget {
         categoryIcon(iconCodepoint, fallback: Icons.label_outline);
 
     final bg = isSelected
-        ? AppColors.accent.withValues(alpha: 0.18)
+        ? context.colors.accent.withValues(alpha: 0.18)
         : AppColors.glassFillDark.withValues(alpha: 0.06);
     final borderColor = isSelected
-        ? AppColors.accent
+        ? context.colors.accent
         : AppColors.glassBorderDark;
-    final iconColor = isSelected ? AppColors.accentGlow : Colors.grey;
+    final iconColor = isSelected ? context.colors.accentGlow : Colors.grey;
     final textColor = isSelected
-        ? AppColors.accentGlow
+        ? context.colors.accentGlow
         : Theme.of(context).colorScheme.onSurfaceVariant;
 
     // Width: 4 tiles per row accounting for 3 gaps of 8dp each.
@@ -631,10 +633,10 @@ class _InlineError extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.error_outline, color: AppColors.expense, size: 16),
+        Icon(Icons.error_outline, color: context.colors.expense, size: 16),
         const SizedBox(width: AppSpacing.xs),
         Text(message,
-            style: const TextStyle(color: AppColors.expense, fontSize: 12)),
+            style: TextStyle(color: context.colors.expense, fontSize: 12)),
       ],
     );
   }

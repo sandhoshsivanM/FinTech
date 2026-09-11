@@ -1,3 +1,4 @@
+import { saveFile } from './saveFile';
 /**
  * Downloadable CSV templates.
  *
@@ -48,13 +49,18 @@ export function transactionsTemplate(now = Date.now()): string {
   ]);
 }
 
-/** Triggers a client-side download. No server round-trip; nothing leaves the device. */
+/**
+ * Saves a CSV. No server round-trip; nothing leaves the device.
+ *
+ * Goes through `saveFile` because the raw `<a download>` it used before does
+ * nothing at all in the desktop shell.
+ */
 export function downloadCsv(filename: string, content: string): void {
-  const blob = new Blob([`﻿${content}`], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  // The BOM keeps Excel from mis-reading UTF-8 in a CSV.
+  void saveFile({
+    filename,
+    data: `﻿${content}`,
+    mimeType: 'text/csv;charset=utf-8',
+    filter: { name: 'CSV', extensions: ['csv'] },
+  });
 }

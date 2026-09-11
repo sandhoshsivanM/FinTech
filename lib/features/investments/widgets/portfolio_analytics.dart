@@ -1,6 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/semantic_colors.dart';
+
 import '../../../design_system/tokens/khazana_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -160,9 +162,9 @@ class WinnersLosersCard extends StatelessWidget {
           '${snap.positions.length == 1 ? '' : 's'}',
       child: DonutChart(
         segments: [
-          if (up > 0) DonutSegment('In profit', up.toDouble(), AppColors.income),
+          if (up > 0) DonutSegment('In profit', up.toDouble(), context.colors.income),
           if (down > 0)
-            DonutSegment('At a loss', down.toDouble(), AppColors.expense),
+            DonutSegment('At a loss', down.toDouble(), context.colors.expense),
           if (flat > 0)
             DonutSegment('Flat', flat.toDouble(), scheme.outlineVariant),
         ],
@@ -287,8 +289,8 @@ class ReturnDistributionCard extends StatelessWidget {
                   // Coloured by which side of zero the band sits on, so the
                   // shape of the distribution is readable before the labels are.
                   color: _bands[i].upTo <= 0
-                      ? AppColors.expense
-                      : AppColors.income,
+                      ? context.colors.expense
+                      : context.colors.income,
                 ),
               ],
             ),
@@ -369,14 +371,14 @@ class PortfolioInsightsCard extends StatelessWidget {
               label: 'Best return',
               value: best.instrument.name,
               detail: _pct(_returnOf(best)!),
-              detailColor: AppColors.income,
+              detailColor: context.colors.income,
             ),
           if (worst != null && !identical(worst, best))
             _InsightRow(
               label: 'Worst return',
               value: worst.instrument.name,
               detail: _pct(_returnOf(worst)!),
-              detailColor: AppColors.expense,
+              detailColor: context.colors.expense,
             ),
           _InsightRow(
             label: 'Invested',
@@ -499,8 +501,8 @@ class DayChangeCard extends ConsumerWidget {
             style: text.headlineSmall?.copyWith(
               fontWeight: FontWeight.w800,
               color: total >= Decimal.zero
-                  ? AppColors.income
-                  : AppColors.expense,
+                  ? context.colors.income
+                  : context.colors.expense,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -645,7 +647,7 @@ class ValueDistributionCard extends StatelessWidget {
                   : '${((p.marketValue / total).toDouble() * 100).toStringAsFixed(1)}%',
             ),
         ],
-        positiveColor: AppColors.accent,
+        positiveColor: context.colors.accent,
         formatValue: (v) => Money.compact(v),
         semanticLabel: 'Holdings ranked by current value',
       ),
@@ -681,7 +683,7 @@ class GainersLosersCard extends StatelessWidget {
 
     final text = Theme.of(context).textTheme;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    final color = gainers ? AppColors.income : AppColors.expense;
+    final color = gainers ? context.colors.income : context.colors.expense;
     // Bars are scaled within THIS card, so the best gainer fills the row. The
     // two cards are not on a shared scale and do not claim to be — each answers
     // "who leads this group", not "are gains bigger than losses". That question

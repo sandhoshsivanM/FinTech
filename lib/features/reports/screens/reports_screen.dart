@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
@@ -60,7 +62,7 @@ class _ReportsBody extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: AppColors.expense),
+              Icon(Icons.error_outline, color: context.colors.expense),
               const SizedBox(height: AppSpacing.sm),
               Text('Could not load data: ${txnState.message}',
                   textAlign: TextAlign.center),
@@ -164,7 +166,7 @@ class _IncomeExpenseCard extends StatelessWidget {
             label: 'Income',
             amount: income,
             larger: larger,
-            color: AppColors.income,
+            color: context.colors.income,
             icon: Icons.arrow_downward_rounded,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -172,7 +174,7 @@ class _IncomeExpenseCard extends StatelessWidget {
             label: 'Expense',
             amount: expense,
             larger: larger,
-            color: AppColors.expense,
+            color: context.colors.expense,
             icon: Icons.arrow_upward_rounded,
           ),
         ],
@@ -267,14 +269,16 @@ class _BarRow extends StatelessWidget {
 // 2. Spending by category donut
 // ---------------------------------------------------------------------------
 
-const _kCategoryPalette = [
-  AppColors.accent,
-  AppColors.budgetWarn,
-  Color(0xFF8B5CF6),
-  AppColors.income,
-  AppColors.expense,
-  Color(0xFF64748B),
-];
+/// Built per theme rather than declared `const` — three of these six steps are
+/// semantic colours, and the Vault steps are unreadable on a Ledger card.
+List<Color> _categoryPalette(SemanticColors c) => [
+      c.accent,
+      c.budgetWarn,
+      const Color(0xFF8B5CF6),
+      c.income,
+      c.expense,
+      const Color(0xFF64748B),
+    ];
 
 class _SpendingByCategoryCard extends ConsumerWidget {
   const _SpendingByCategoryCard({required this.window});
@@ -346,7 +350,7 @@ class _SpendingByCategoryCard extends ConsumerWidget {
         DonutSegment(
           catMap[sorted[i].key] ?? 'Other',
           sorted[i].value.toDouble(),
-          _kCategoryPalette[i % _kCategoryPalette.length],
+          _categoryPalette(context.colors)[i % 6],
         ),
     ];
 
@@ -462,7 +466,7 @@ class _NetWorthTrendCard extends StatelessWidget {
                 Money.format(lastValue),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.accent,
+                      color: context.colors.accent,
                     ),
               ),
             ],
@@ -537,11 +541,11 @@ class _MonthlyFlowCard extends ConsumerWidget {
                     Bar(
                         label: 'In',
                         value: f.income.toDouble(),
-                        color: AppColors.income),
+                        color: context.colors.income),
                     Bar(
                         label: 'Out',
                         value: f.expense.toDouble(),
-                        color: AppColors.expense),
+                        color: context.colors.expense),
                   ],
                 ),
             ],

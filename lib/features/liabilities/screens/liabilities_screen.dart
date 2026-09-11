@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
@@ -38,8 +40,8 @@ class _Body extends ConsumerWidget {
           child: ListTile(
             title: const Text('Total outstanding'),
             trailing: Text(Money.format(totalDebt),
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: AppColors.expense)),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: context.colors.expense)),
           ),
         ),
         Expanded(
@@ -224,9 +226,9 @@ class _Body extends ConsumerWidget {
                           'Total interest: ${Money.format(result.totalInterest)}',
                           textAlign: TextAlign.center,
                         )
-                      : const Text(
+                      : Text(
                           'That payment is too low to cover interest. Increase it.',
-                          style: TextStyle(color: AppColors.expense)),
+                          style: TextStyle(color: context.colors.expense)),
               ],
             ),
             actions: [

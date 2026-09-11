@@ -20,6 +20,9 @@ import { demoIndices, demoSeries } from '@/lib/demo/marketFeed';
 import { MiniSparkline } from './charts/MiniSparkline';
 import { BrandMark, WordMark } from './BrandMark';
 import { useDemoData } from './DemoBadge';
+import { usePriceRefresh, refreshMessage } from '@/lib/quotes/usePriceRefresh';
+import { useLivePrices } from '@/lib/quotes/useLivePrices';
+import { quotesAvailable } from '@/lib/quotes/yahoo';
 import { NAV_GROUPS, BOTTOM_NAV, TITLES, isActive } from './navConfig';
 import { Tour } from './Tour';
 import { CommandPalette } from './CommandPalette';
@@ -567,16 +570,32 @@ function MarketStatusCard() {
   );
 }
 
-/** Re-reads the vault from IndexedDB and records today's net-worth snapshot. */
+/**
+ * Fetches live prices, re-reads the vault, and records today's net-worth
+ * snapshot.
+ *
+ * The fetch runs first and is allowed to fail: the reload and the snapshot are
+ * local and must happen whether or not Yahoo answered. The label states what
+ * this build will actually do, because the browser build cannot fetch at all
+ * (see `lib/quotes/yahoo.ts`) and promising otherwise is a claim the user only
+ * disproves by watching nothing change.
+ */
 function RefreshButton() {
   const reload = useApp((s) => s.reload);
   const captureSnapshot = useApp((s) => s.captureSnapshot);
+  const { refresh } = usePriceRefresh();
+  const [live] = useLivePrices();
   const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+
+  const canFetch = live && quotesAvailable();
 
   const run = async () => {
     if (busy) return;
     setBusy(true);
+    setNote(null);
     try {
+      setNote(refreshMessage(await refresh()));
       await reload();
       await captureSnapshot();
     } finally {
@@ -588,7 +607,9 @@ function RefreshButton() {
 
   return (
     <IconBtn
-      label={busy ? 'Refreshing…' : 'Refresh — reload the vault and record today\u2019s snapshot'}
+      label={busy ? 'Refreshing…' : note ?? (canFetch
+        ? 'Refresh — fetch live prices and record today’s snapshot'
+        : 'Refresh — reload the vault and record today\u2019s snapshot')}
       onClick={() => void run()}
       className="hidden min-[1180px]:grid"
     >

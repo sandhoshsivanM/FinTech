@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -192,13 +194,13 @@ class _MonthTotalsCard extends ConsumerWidget {
               icon: Icons.south_west,
               label: 'Income',
               value: income,
-              color: AppColors.income),
+              color: context.colors.income),
           const SizedBox(height: AppSpacing.sm),
           _StatRow(
               icon: Icons.north_east,
               label: 'Spending',
               value: expense,
-              color: AppColors.expense),
+              color: context.colors.expense),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: Divider(height: 1),
@@ -209,7 +211,7 @@ class _MonthTotalsCard extends ConsumerWidget {
                 : Icons.trending_down,
             label: 'Net',
             value: net,
-            color: net >= Decimal.zero ? AppColors.income : AppColors.expense,
+            color: net >= Decimal.zero ? context.colors.income : context.colors.expense,
             emphasize: true,
           ),
         ],
@@ -350,9 +352,9 @@ class _CalendarCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _LegendDot(color: AppColors.income, label: 'Income'),
+              _LegendDot(color: context.colors.income, label: 'Income'),
               const SizedBox(width: AppSpacing.md),
-              _LegendDot(color: AppColors.expense, label: 'Spending'),
+              _LegendDot(color: context.colors.expense, label: 'Spending'),
             ],
           ),
         ],
@@ -375,9 +377,9 @@ class _NavButton extends StatelessWidget {
       tooltip: tooltip,
       visualDensity: VisualDensity.compact,
       style: IconButton.styleFrom(
-        backgroundColor: AppColors.accent.withValues(alpha: 0.10),
+        backgroundColor: context.colors.accent.withValues(alpha: 0.10),
       ),
-      icon: Icon(icon, color: AppColors.accent),
+      icon: Icon(icon, color: context.colors.accent),
     );
   }
 }
@@ -430,11 +432,11 @@ class _DayCell extends StatelessWidget {
     final Color bg;
     final Color border;
     if (isSelected) {
-      bg = AppColors.accent.withValues(alpha: 0.16);
-      border = AppColors.accent;
+      bg = context.colors.accent.withValues(alpha: 0.16);
+      border = context.colors.accent;
     } else if (isToday) {
-      bg = AppColors.accent.withValues(alpha: 0.06);
-      border = AppColors.accent.withValues(alpha: 0.45);
+      bg = context.colors.accent.withValues(alpha: 0.06);
+      border = context.colors.accent.withValues(alpha: 0.45);
     } else if (hasActivity) {
       bg = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.035);
       border = AppColors.glassBorderLight;
@@ -464,7 +466,7 @@ class _DayCell extends StatelessWidget {
                       fontWeight:
                           isToday ? FontWeight.w800 : FontWeight.w500,
                       color: isToday || isSelected
-                          ? AppColors.accent
+                          ? context.colors.accent
                           : null,
                     )),
                 const Spacer(),
@@ -477,8 +479,8 @@ class _DayCell extends StatelessWidget {
             const Spacer(),
             Row(
               children: [
-                if (hasIncome) _dot(AppColors.income),
-                if (hasExpense) _dot(AppColors.expense),
+                if (hasIncome) _dot(context.colors.income),
+                if (hasExpense) _dot(context.colors.expense),
               ],
             ),
           ],
@@ -550,8 +552,8 @@ class _DayDetail extends ConsumerWidget {
                     height: 34,
                     decoration: BoxDecoration(
                       color: (t.type == TxnType.income
-                              ? AppColors.income
-                              : AppColors.expense)
+                              ? context.colors.income
+                              : context.colors.expense)
                           .withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -563,8 +565,8 @@ class _DayDetail extends ConsumerWidget {
                               : Icons.north_east),
                       size: 17,
                       color: t.type == TxnType.income
-                          ? AppColors.income
-                          : AppColors.expense,
+                          ? context.colors.income
+                          : context.colors.expense,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -590,8 +592,8 @@ class _DayDetail extends ConsumerWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: t.type == TxnType.income
-                          ? AppColors.income
-                          : AppColors.expense,
+                          ? context.colors.income
+                          : context.colors.expense,
                     ),
                   ),
                 ],
@@ -624,8 +626,8 @@ class _BudgetTracker extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.pie_chart_outline,
-                  size: 18, color: AppColors.accent),
+              Icon(Icons.pie_chart_outline,
+                  size: 18, color: context.colors.accent),
               const SizedBox(width: AppSpacing.sm),
               const Text('Budgets', style: TextStyle(fontWeight: FontWeight.w700)),
             ],
@@ -649,7 +651,7 @@ class _BudgetTracker extends ConsumerWidget {
                 value: p.fraction,
                 minHeight: 7,
                 backgroundColor: AppColors.glassFillLight,
-                color: _budgetColor(p.status),
+                color: _budgetColor(context.colors, p.status),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -660,10 +662,10 @@ class _BudgetTracker extends ConsumerWidget {
   }
 }
 
-Color _budgetColor(BudgetStatus status) => switch (status) {
-      BudgetStatus.ok => AppColors.budgetOk,
-      BudgetStatus.warning => AppColors.budgetWarn,
-      BudgetStatus.over => AppColors.budgetOver,
+Color _budgetColor(SemanticColors c, BudgetStatus status) => switch (status) {
+      BudgetStatus.ok => c.budgetOk,
+      BudgetStatus.warning => c.budgetWarn,
+      BudgetStatus.over => c.budgetOver,
     };
 
 class _EmptyHint extends StatelessWidget {

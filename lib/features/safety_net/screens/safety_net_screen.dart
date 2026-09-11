@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
@@ -21,11 +23,11 @@ class SafetyNetScreen extends StatelessWidget {
   }
 }
 
-Color _coverColor(double pct) => pct >= 100
-    ? AppColors.income
+Color _coverColor(SemanticColors c, double pct) => pct >= 100
+    ? c.income
     : pct >= 60
-        ? AppColors.budgetWarn
-        : AppColors.expense;
+        ? c.budgetWarn
+        : c.expense;
 
 class _Body extends ConsumerWidget {
   const _Body();
@@ -34,10 +36,10 @@ class _Body extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sn = ref.watch(safetyNetProvider);
     final scoreColor = sn.score >= 70
-        ? AppColors.income
+        ? context.colors.income
         : sn.score >= 40
-            ? AppColors.budgetWarn
-            : AppColors.expense;
+            ? context.colors.budgetWarn
+            : context.colors.expense;
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -122,7 +124,7 @@ class _ComponentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pct = component.coveredPct;
-    final color = _coverColor(pct);
+    final color = _coverColor(context.colors, pct);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),

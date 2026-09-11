@@ -1,6 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
@@ -290,7 +292,7 @@ class _Preview extends StatelessWidget {
               child: StatTile(
                 label: 'Money in',
                 value: Money.format(moneyIn),
-                valueColor: AppColors.income,
+                valueColor: context.colors.income,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -298,7 +300,7 @@ class _Preview extends StatelessWidget {
               child: StatTile(
                 label: 'Money out',
                 value: Money.format(moneyOut),
-                valueColor: AppColors.expense,
+                valueColor: context.colors.expense,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -340,7 +342,7 @@ class _StagedRow extends StatelessWidget {
     final credit = txn.direction == BankTxnDirection.credit;
     final tint = txn.isDuplicate
         ? muted
-        : (credit ? AppColors.income : AppColors.expense);
+        : (credit ? context.colors.income : context.colors.expense);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
@@ -407,8 +409,8 @@ class _Report extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.check_circle_outline,
-                      size: 20, color: AppColors.income),
+                  Icon(Icons.check_circle_outline,
+                      size: 20, color: context.colors.income),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
                     '${report.imported} transaction'
@@ -444,7 +446,7 @@ class _Report extends StatelessWidget {
                     child: StatTile(
                       label: 'Money in',
                       value: Money.format(report.moneyIn),
-                      valueColor: AppColors.income,
+                      valueColor: context.colors.income,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -452,7 +454,7 @@ class _Report extends StatelessWidget {
                     child: StatTile(
                       label: 'Money out',
                       value: Money.format(report.moneyOut),
-                      valueColor: AppColors.expense,
+                      valueColor: context.colors.expense,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -461,8 +463,8 @@ class _Report extends StatelessWidget {
                       label: 'Net',
                       value: Money.format(report.moneyIn - report.moneyOut),
                       valueColor: report.moneyIn >= report.moneyOut
-                          ? AppColors.income
-                          : AppColors.expense,
+                          ? context.colors.income
+                          : context.colors.expense,
                     ),
                   ),
                 ],

@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
@@ -110,7 +112,7 @@ class _Body extends ConsumerWidget {
                 for (final p in policies)
                   Card(
                     child: ListTile(
-                      leading: Icon(_typeIcon(p.type), color: AppColors.accent),
+                      leading: Icon(_typeIcon(p.type), color: context.colors.accent),
                       title: Text(p.name),
                       subtitle: Text([
                         _typeLabel(p.type),
@@ -260,10 +262,10 @@ class _GapRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final frac = (gap.coveredPct / 100).clamp(0.0, 1.0);
     final color = gap.coveredPct >= 100
-        ? AppColors.income
+        ? context.colors.income
         : gap.coveredPct >= 60
-            ? AppColors.budgetWarn
-            : AppColors.expense;
+            ? context.colors.budgetWarn
+            : context.colors.expense;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Column(

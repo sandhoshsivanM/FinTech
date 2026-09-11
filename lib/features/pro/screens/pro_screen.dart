@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/entitlement/distribution_channel.dart';
@@ -128,8 +130,8 @@ class _ProScreenState extends ConsumerState<ProScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lock_open_outlined,
-                      size: 18, color: AppColors.income),
+                  Icon(Icons.lock_open_outlined,
+                      size: 18, color: context.colors.income),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
@@ -258,7 +260,7 @@ class _UnlockedCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
-          const Icon(Icons.verified_outlined, color: AppColors.income),
+          Icon(Icons.verified_outlined, color: context.colors.income),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -298,10 +300,10 @@ class _BenefitsCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 2),
                   child: Icon(Icons.check_circle_outline,
-                      size: 17, color: AppColors.accent),
+                      size: 17, color: context.colors.accent),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(

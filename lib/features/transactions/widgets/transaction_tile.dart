@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/semantic_colors.dart';
+
 import '../../../core/constants/category_icons.dart';
-import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../domain/entities/category.dart';
 import '../../../domain/entities/transaction.dart';
@@ -24,7 +25,7 @@ class TransactionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final income = txn.type == TxnType.income;
-    final color = income ? AppColors.income : AppColors.expense;
+    final color = income ? context.colors.income : context.colors.expense;
     final words = Money.toWords(txn.amount);
     final label =
         '${income ? 'Income' : 'Expense'}, $words, ${categoryName(category)}, '

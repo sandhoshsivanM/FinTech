@@ -1,6 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/semantic_colors.dart';
+
 import '../../../core/constants/category_icons.dart';
 import '../../../design_system/components/khazana_cards.dart';
 import '../../../design_system/tokens/khazana_colors.dart';
@@ -78,7 +80,7 @@ class _DashboardBody extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: AppColors.expense),
+              Icon(Icons.error_outline, color: context.colors.expense),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'Could not load data: ${txnState.message}',
@@ -319,13 +321,13 @@ class _GreetingHeader extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.12),
+                    color: context.colors.accent.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: AppColors.accent.withValues(alpha: 0.25)),
+                        color: context.colors.accent.withValues(alpha: 0.25)),
                   ),
-                  child: const Icon(Icons.person_outline,
-                      color: AppColors.accent, size: 20),
+                  child: Icon(Icons.person_outline,
+                      color: context.colors.accent, size: 20),
                 ),
               ),
             ),
@@ -545,7 +547,7 @@ class _StatTilesGrid extends ConsumerWidget {
             100.0;
 
     final rate = savingsRate.clamp(-999.0, 999.0);
-    final rateColor = rate >= 0 ? AppColors.income : AppColors.expense;
+    final rateColor = rate >= 0 ? context.colors.income : context.colors.expense;
 
     return Column(
       children: [
@@ -559,7 +561,7 @@ class _StatTilesGrid extends ConsumerWidget {
                 value: Money.format(netCash),
                 semanticValue: Money.toWords(netCash),
                 icon: Icons.account_balance_wallet_outlined,
-                iconColor: AppColors.accent,
+                iconColor: context.colors.accent,
                 ghost: ghost,
               ),
             ),
@@ -569,7 +571,7 @@ class _StatTilesGrid extends ConsumerWidget {
                 label: 'Investments',
                 amount: investments,
                 icon: Icons.trending_up_rounded,
-                iconColor: AppColors.income,
+                iconColor: context.colors.income,
                 ghost: ghost,
                 // How current this number is. Mutual-fund NAVs lag a day and
                 // manually entered prices can be weeks old; a portfolio value
@@ -591,7 +593,7 @@ class _StatTilesGrid extends ConsumerWidget {
                 label: 'Liabilities',
                 amount: liabilities,
                 icon: Icons.credit_card_outlined,
-                iconColor: AppColors.expense,
+                iconColor: context.colors.expense,
                 ghost: ghost,
                 onTap: () => context.go(Routes.liabilities),
               ),
@@ -807,7 +809,7 @@ class _TransactionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIncome = txn.type == TxnType.income;
-    final amountColor = isIncome ? AppColors.income : AppColors.expense;
+    final amountColor = isIncome ? context.colors.income : context.colors.expense;
     final signedStr = Money.formatSigned(txn.amount, isIncome: isIncome);
 
     final iconData = categoryIcon(
@@ -960,7 +962,7 @@ class _BillRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIncome = rule.type == TxnType.income;
-    final color = isIncome ? AppColors.income : AppColors.expense;
+    final color = isIncome ? context.colors.income : context.colors.expense;
     final name = rule.merchant ?? (isIncome ? 'Income' : 'Bill');
     final dueStr = _formatDate(rule.nextRun);
 
@@ -1015,7 +1017,7 @@ class _BillRow extends StatelessWidget {
                       dueLabel,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: daysUntil <= 2
-                                ? AppColors.budgetWarn
+                                ? context.colors.budgetWarn
                                 : Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant,
@@ -1083,8 +1085,8 @@ class _SectionHeader extends StatelessWidget {
             ),
             child: Text(
               actionLabel,
-              style: const TextStyle(
-                  color: AppColors.accent, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: context.colors.accent, fontWeight: FontWeight.w600),
             ),
           ),
         ),
@@ -1100,11 +1102,11 @@ class _SectionHeader extends StatelessWidget {
 class _FinancialHealthCard extends ConsumerWidget {
   const _FinancialHealthCard();
 
-  static Color _band(double frac) => frac >= 0.7
-      ? AppColors.income
+  static Color _band(SemanticColors c, double frac) => frac >= 0.7
+      ? c.income
       : frac >= 0.4
-          ? AppColors.budgetWarn
-          : AppColors.expense;
+          ? c.budgetWarn
+          : c.expense;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1224,7 +1226,7 @@ class _CategoryBar extends StatelessWidget {
                 minHeight: 5,
                 valueColor: AlwaysStoppedAnimation(
                   tracked
-                      ? _FinancialHealthCard._band(fraction)
+                      ? _FinancialHealthCard._band(context.colors, fraction)
                       : Colors.transparent,
                 ),
                 backgroundColor: track,
@@ -1265,9 +1267,9 @@ class _InsightsCard extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
 
     final tint = switch (narrative.tone) {
-      NarrativeTone.positive => AppColors.income,
-      NarrativeTone.caution => AppColors.budgetWarn,
-      NarrativeTone.neutral => AppColors.accent,
+      NarrativeTone.positive => context.colors.income,
+      NarrativeTone.caution => context.colors.budgetWarn,
+      NarrativeTone.neutral => context.colors.accent,
     };
 
     return GlassCard(
@@ -1352,9 +1354,9 @@ class _CashFlowCard extends ConsumerWidget {
                     style:
                         text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
               ),
-              _LegendDot(color: AppColors.income, label: 'In'),
+              _LegendDot(color: context.colors.income, label: 'In'),
               const SizedBox(width: AppSpacing.sm),
-              _LegendDot(color: AppColors.expense, label: 'Out'),
+              _LegendDot(color: context.colors.expense, label: 'Out'),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -1376,11 +1378,11 @@ class _CashFlowCard extends ConsumerWidget {
                     Bar(
                         label: 'In',
                         value: f.income.toDouble(),
-                        color: AppColors.income),
+                        color: context.colors.income),
                     Bar(
                         label: 'Out',
                         value: f.expense.toDouble(),
-                        color: AppColors.expense),
+                        color: context.colors.expense),
                   ],
                 ),
             ],
@@ -1558,7 +1560,7 @@ class _BudgetPulseCard extends ConsumerWidget {
                           // dials with four different maxima cannot be
                           // compared at a glance, which is the whole point.
                           value: (p.fraction * 100).clamp(0, 100),
-                          bands: kBudgetBands,
+                          bands: budgetBands(context.colors),
                           size: 84,
                           strokeWidth: 9,
                           label: '${(p.fraction * 100).round()}%',
@@ -1578,7 +1580,7 @@ class _BudgetPulseCard extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                           style: text.labelSmall?.copyWith(
                             color: p.remaining < Decimal.zero
-                                ? AppColors.expense
+                                ? context.colors.expense
                                 : Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant,
@@ -1688,7 +1690,7 @@ class _GoalsCard extends ConsumerWidget {
                       children: [
                         DonutChart(
                           segments: [
-                            DonutSegment('Saved', pct(g), AppColors.income),
+                            DonutSegment('Saved', pct(g), context.colors.income),
                             DonutSegment(
                                 'To go',
                                 1 - pct(g),

@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -150,8 +152,8 @@ class _GoalCard extends ConsumerWidget {
                       value: progress.fraction,
                       minHeight: 10,
                       color: progress.onTrack
-                          ? AppColors.income
-                          : AppColors.budgetWarn,
+                          ? context.colors.income
+                          : context.colors.budgetWarn,
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
@@ -163,8 +165,8 @@ class _GoalCard extends ConsumerWidget {
                             : '${progress.monthsBehind} months behind pace',
                         style: TextStyle(
                           color: progress.onTrack
-                              ? AppColors.income
-                              : AppColors.budgetWarn,
+                              ? context.colors.income
+                              : context.colors.budgetWarn,
                           fontSize: 12,
                         ),
                       ),

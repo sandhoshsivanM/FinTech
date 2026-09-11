@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/semantic_colors.dart';
+
 import '../core/theme/app_tokens.dart';
 import 'glass_card.dart';
 
@@ -65,7 +67,7 @@ class StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final hasIcon = icon != null;
-    final tint = iconColor ?? AppColors.accent;
+    final tint = iconColor ?? context.colors.accent;
 
     // Composition mirrors the web `Kpi` exactly: the icon chip and the label
     // share ONE row, the figure sits under them, and the footer closes the

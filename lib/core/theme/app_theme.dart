@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../design_system/tokens/khazana_colors.dart';
 import 'app_tokens.dart';
+import 'semantic_colors.dart';
 
 /// Premium dark-first "glassmorphism" theme (PRD §10A dark canvas + §3B design
 /// system). Scaffolds are transparent — the gradient background is painted
@@ -139,6 +140,11 @@ abstract final class AppTheme {
     );
 
     return base.copyWith(
+      // Income, expense, accent and the budget steps. They live in an extension
+      // because `ColorScheme` has no slot for them, and they must come from the
+      // theme rather than a `const` — the Vault steps are unreadable on a
+      // Ledger card. See `semantic_colors.dart`.
+      extensions: <ThemeExtension<dynamic>>[SemanticColors.of(brightness)],
       textTheme: _numericTextTheme(base.textTheme.apply(
         bodyColor: scheme.onSurface,
         displayColor: scheme.onSurface,

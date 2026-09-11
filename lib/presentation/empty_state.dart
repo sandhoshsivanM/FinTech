@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/semantic_colors.dart';
+
 import '../core/theme/app_tokens.dart';
 
 /// The app's one empty state: tinted icon, what this is, and what to do next.
@@ -44,10 +46,10 @@ class EmptyState extends StatelessWidget {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.10),
+                  color: context.colors.accent.withValues(alpha: 0.10),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 34, color: AppColors.accent),
+                child: Icon(icon, size: 34, color: context.colors.accent),
               ),
               const SizedBox(height: AppSpacing.md),
               Text(

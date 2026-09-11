@@ -131,8 +131,17 @@ export type AssetType =
    */
   | 'foreign_equity';
 
-/** Provenance of a recorded price. See `Holding.priceSource`. */
-export type PriceSource = 'manual' | 'import';
+/**
+ * Provenance of a recorded price. See `Holding.priceSource`.
+ *
+ * `yahoo` is a quote fetched from Yahoo Finance by the desktop shell. It is
+ * kept distinct from `import` because the two age differently: an imported
+ * price is as old as the broker file it came from, a fetched one is as old as
+ * the last refresh, and only the fetched kind can be brought up to date without
+ * the user finding a file. The browser build never writes this value — it has
+ * no way to make the request (see `lib/quotes/yahoo.ts`).
+ */
+export type PriceSource = 'manual' | 'import' | 'yahoo';
 
 /**
  * An exchange rate the user has recorded, as a dated observation.

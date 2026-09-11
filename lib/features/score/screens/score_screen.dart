@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -294,7 +296,7 @@ class _WeeklyReportCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_awesome, size: 18, color: AppColors.accent),
+              Icon(Icons.auto_awesome, size: 18, color: context.colors.accent),
               const SizedBox(width: AppSpacing.xs),
               Text('This period',
                   style:
@@ -318,11 +320,11 @@ class _CategoryCard extends StatelessWidget {
   const _CategoryCard({required this.category});
   final HealthCategory category;
 
-  static Color _band(double f) => f >= 0.7
-      ? AppColors.income
+  static Color _band(SemanticColors c, double f) => f >= 0.7
+      ? c.income
       : f >= 0.4
-          ? AppColors.budgetWarn
-          : AppColors.expense;
+          ? c.budgetWarn
+          : c.expense;
 
   @override
   Widget build(BuildContext context) {
@@ -377,7 +379,7 @@ class _CategoryCard extends StatelessWidget {
                     value: fraction ?? 0,
                     minHeight: 6,
                     valueColor: AlwaysStoppedAnimation(
-                      tracked ? _band(fraction) : Colors.transparent,
+                      tracked ? _band(context.colors, fraction) : Colors.transparent,
                     ),
                     backgroundColor:
                         scheme.onSurfaceVariant.withValues(alpha: 0.15),
@@ -437,7 +439,7 @@ class _MetricRow extends StatelessWidget {
           decoration: BoxDecoration(
             color: value == null
                 ? scheme.onSurfaceVariant.withValues(alpha: 0.4)
-                : _CategoryCard._band(value),
+                : _CategoryCard._band(context.colors, value),
             shape: BoxShape.circle,
           ),
         ),

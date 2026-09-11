@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/semantic_colors.dart';
+
 import '../../core/theme/app_tokens.dart';
 import 'chart_tokens.dart';
 
@@ -30,8 +32,8 @@ class DivergingBarChart extends StatefulWidget {
   const DivergingBarChart({
     required this.bars,
     this.formatValue,
-    this.positiveColor = AppColors.income,
-    this.negativeColor = AppColors.expense,
+    this.positiveColor,
+    this.negativeColor,
     this.emptyLabel = 'Nothing to compare yet',
     this.semanticLabel,
     super.key,
@@ -39,8 +41,9 @@ class DivergingBarChart extends StatefulWidget {
 
   final List<DivergingBar> bars;
   final String Function(double value)? formatValue;
-  final Color positiveColor;
-  final Color negativeColor;
+  /// Null means "use the theme's income/expense", resolved in `build`.
+  final Color? positiveColor;
+  final Color? negativeColor;
   final String emptyLabel;
   final String? semanticLabel;
 
@@ -53,6 +56,8 @@ class _DivergingBarChartState extends State<DivergingBarChart> {
 
   @override
   Widget build(BuildContext context) {
+    final posColor = widget.positiveColor ?? context.colors.income;
+    final negColor = widget.negativeColor ?? context.colors.expense;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final bars = widget.bars;
@@ -118,8 +123,8 @@ class _DivergingBarChartState extends State<DivergingBarChart> {
                               extent: extent,
                               centred: centred,
                               progress: t,
-                              positive: widget.positiveColor,
-                              negative: widget.negativeColor,
+                              positive: posColor,
+                              negative: negColor,
                               axis: scheme.outlineVariant,
                             ),
                           ),
@@ -140,8 +145,8 @@ class _DivergingBarChartState extends State<DivergingBarChart> {
                           style: text.bodySmall?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: bars[i].value < 0
-                                ? widget.negativeColor
-                                : widget.positiveColor,
+                                ? negColor
+                                : posColor,
                           ),
                         ),
                       ),
@@ -155,8 +160,8 @@ class _DivergingBarChartState extends State<DivergingBarChart> {
                                 maxLines: 1,
                                 style: text.bodySmall?.copyWith(
                                   color: bars[i].value < 0
-                                      ? widget.negativeColor
-                                      : widget.positiveColor,
+                                      ? negColor
+                                      : posColor,
                                 ),
                               ),
                             ),

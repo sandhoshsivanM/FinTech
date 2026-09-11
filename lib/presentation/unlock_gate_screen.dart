@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../core/theme/semantic_colors.dart';
+
 import '../design_system/components/brand_mark.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -122,7 +124,7 @@ class _SetupFormState extends ConsumerState<_SetupForm> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(Icons.lock_outline, size: 56, color: AppColors.accent),
+        Icon(Icons.lock_outline, size: 56, color: context.colors.accent),
         const SizedBox(height: AppSpacing.md),
         Text('Set up your vault',
             style: Theme.of(context).textTheme.headlineSmall,
@@ -180,7 +182,7 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(Icons.shield_outlined, size: 56, color: AppColors.accent),
+        Icon(Icons.shield_outlined, size: 56, color: context.colors.accent),
         const SizedBox(height: AppSpacing.md),
         Text('Unlock',
             style: Theme.of(context).textTheme.headlineSmall,
@@ -274,7 +276,7 @@ class _CooldownViewState extends State<_CooldownView> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.timer_outlined, size: 56, color: AppColors.expense),
+          Icon(Icons.timer_outlined, size: 56, color: context.colors.expense),
           const SizedBox(height: AppSpacing.md),
           Text('Too many attempts',
               style: Theme.of(context).textTheme.headlineSmall),
@@ -324,11 +326,11 @@ class _ErrorText extends StatelessWidget {
       liveRegion: true,
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.expense, size: 20),
+          Icon(Icons.error_outline, color: context.colors.expense, size: 20),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(message,
-                style: const TextStyle(color: AppColors.expense)),
+                style: TextStyle(color: context.colors.expense)),
           ),
         ],
       ),

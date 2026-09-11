@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -256,7 +258,7 @@ class _Body extends ConsumerWidget {
                 label: 'Owed on cards & loans',
                 value: Money.format(owed),
                 icon: Icons.credit_card_outlined,
-                valueColor: owed > Decimal.zero ? AppColors.expense : null,
+                valueColor: owed > Decimal.zero ? context.colors.expense : null,
               ),
             ),
           ],
@@ -398,7 +400,7 @@ class _AccountRow extends StatelessWidget {
               minHeight: 3,
               backgroundColor:
                   Theme.of(context).colorScheme.surfaceContainerHighest,
-              valueColor: const AlwaysStoppedAnimation(AppColors.accent),
+              valueColor: AlwaysStoppedAnimation(context.colors.accent),
             ),
           ),
           if (account.currency != 'INR')
@@ -450,7 +452,7 @@ class _LiabilityCard extends StatelessWidget {
               Text(
                 Money.format(total),
                 style: text.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800, color: AppColors.expense),
+                    fontWeight: FontWeight.w800, color: context.colors.expense),
               ),
             ],
           ),
@@ -477,7 +479,7 @@ class _LiabilityCard extends StatelessWidget {
                     Money.format(l.principal),
                     style: text.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.expense),
+                        color: context.colors.expense),
                   ),
                 ],
               ),

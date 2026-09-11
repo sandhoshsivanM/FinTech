@@ -20,7 +20,7 @@ import {
   type Account, type Posting, type Transfer, type PendingCapture,
   type WatchItem, type Dividend, type Alert, type FxRate,
 } from './types';
-import { materialize } from '@/domain/recurrence';
+import { materialize, advance } from '@/domain/recurrence';
 import { postingsForEntry, postingsForTransfer, accountBalances, liquidBalance } from '@/domain/accountLedger';
 import Decimal from 'decimal.js';
 import { healthScore } from '@/domain/health';
@@ -29,8 +29,15 @@ import { runDiagnostics, restoreBlockers } from '@/domain/diagnostics';
 
 const VAULT_ID = 'default';
 
-/** Stamped into every backup header so a file can name the build that wrote it. */
-const APP_VERSION = '1.0.0';
+/**
+ * Stamped into every backup header so a file can name the build that wrote it,
+ * and onto every exported report so a figure can be traced to a build.
+ *
+ * Exported rather than copied: `tool/check_versions.sh` asserts five files state
+ * the same version, and a sixth literal elsewhere in the app would sit outside
+ * that check and drift silently.
+ */
+export const APP_VERSION = '1.0.0';
 const VERIFIER = 'FTOS-OK';
 
 // Bump when the persisted data shape changes; add a step in runMigrations().
@@ -464,6 +471,23 @@ interface AppState extends Data {
   putAttachment: (file: File) => Promise<string>;
   getAttachmentUrl: (id: string) => Promise<string | null>;
   processRecurring: () => Promise<number>;
+  /**
+   * Posts ONE occurrence of ONE rule, and advances only that rule.
+   *
+   * `processRecurring` is all-or-nothing: it posts every rule that is due. That
+   * is wrong whenever one obligation has landed and the others have not — a
+   * salary credited late is the common case, and running the batch to capture
+   * it also posts the broadband bill that has not actually gone out yet.
+   *
+   * `date` and `amount` override the schedule because the schedule is a
+   * prediction, not a record. A salary due on the 7th that arrives on the 10th
+   * happened on the 10th, and pay that varies with a bonus or arrears is not
+   * the figure written on the rule.
+   */
+  postRecurringOnce: (
+    ruleId: string,
+    opts?: { date?: number; amount?: string },
+  ) => Promise<boolean>;
   exportBackup: (pin?: string) => Promise<string>;
   /**
    * @param mode `replace` (default) makes the vault match the backup, which is
@@ -1180,6 +1204,41 @@ export const useApp = create<AppState>((set, get) => ({
     }
     if (created > 0) await get().reload();
     return created;
+  },
+
+  postRecurringOnce: async (ruleId, opts) => {
+    const { key, vaultId, activeProfileId, recurring, categories, accounts } = get();
+    if (!key) return false;
+    const rule = recurring.find((r) => r.id === ruleId);
+    if (!rule) return false;
+
+    const names = new Map(categories.map((c) => [c.id, c.name]));
+    const existing = new Set(accounts.map((a) => a.id));
+
+    // Defaults to the occurrence the rule is actually waiting on, so posting
+    // without overrides matches what the batch run would have produced.
+    const when = opts?.date ?? rule.nextRun;
+    const amount = opts?.amount ?? rule.amount;
+
+    const t: Txn = {
+      id: uid(), vaultId, profileId: activeProfileId, amount, type: rule.type,
+      categoryId: rule.categoryId, merchant: rule.merchant ?? null,
+      note: 'Recurring', date: when, createdAt: Date.now(),
+      accountId: rule.accountId ?? cashAcctId(activeProfileId),
+    };
+    await putRecord(key, STORE.txn, vaultId, t.id, t);
+    await writeEntryPostings(key, vaultId, activeProfileId, t, names, existing);
+
+    // Advances from the SCHEDULED date, never from the date it was posted on.
+    // Stepping from an actual late payment would drag every future occurrence
+    // along with it — a salary paid three days late would permanently become a
+    // rule dated the 10th rather than one that was simply late once.
+    await putRecord(key, STORE.recurring, vaultId, rule.id, {
+      ...rule, nextRun: advance(rule.nextRun, rule.frequency),
+    });
+
+    await get().reload();
+    return true;
   },
 
   /**

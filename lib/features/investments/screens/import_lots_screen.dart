@@ -1,5 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -166,7 +168,7 @@ class _DateWarning extends StatelessWidget {
     return GlassCard(
       child: Row(
         children: [
-          const Icon(Icons.schedule, size: 18, color: AppColors.budgetWarn),
+          Icon(Icons.schedule, size: 18, color: context.colors.budgetWarn),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
@@ -195,8 +197,8 @@ class _RejectedCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.error_outline,
-                  size: 18, color: AppColors.expense),
+              Icon(Icons.error_outline,
+                  size: 18, color: context.colors.expense),
               const SizedBox(width: AppSpacing.sm),
               Text('${rejected.length} row'
                   '${rejected.length == 1 ? '' : 's'} skipped',
@@ -249,8 +251,8 @@ class _PreviewCard extends StatelessWidget {
                         horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: (lot.side == TradeSide.buy
-                              ? AppColors.income
-                              : AppColors.expense)
+                              ? context.colors.income
+                              : context.colors.expense)
                           .withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -260,8 +262,8 @@ class _PreviewCard extends StatelessWidget {
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: lot.side == TradeSide.buy
-                            ? AppColors.income
-                            : AppColors.expense,
+                            ? context.colors.income
+                            : context.colors.expense,
                       ),
                     ),
                   ),

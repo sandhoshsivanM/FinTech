@@ -1,0 +1,36 @@
+# Marketing site — the landing page and the public case study.
+#
+# Deliberately a SEPARATE Netlify site from the app in webapp/. The app's deploy
+# directory is its own static export and its root is the app itself; putting a
+# marketing page there would mean choosing between them. Two free sites now, and
+# when a domain arrives this one takes the apex and the app takes a subdomain.
+#
+#   netlify deploy --prod --dir=site
+#
+# Run docs/case-study/build.sh first — it generates site/case-study/, which is
+# gitignored and will be missing on a fresh clone.
+
+[build]
+  publish = "."
+
+# No build command on purpose. This site is hand-written HTML with no
+# dependencies and no pipeline, so there is nothing to install and nothing that
+# can break between writing a sentence and publishing it.
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # This site is static and self-contained: no scripts, no external assets, no
+    # fonts, no analytics. The policy says exactly that, so anything added later
+    # fails loudly here rather than quietly shipping a tracker on the page whose
+    # entire argument is that the product does not track anyone.
+    Content-Security-Policy = "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'none'; frame-ancestors 'none'; base-uri 'none'"
+
+[[headers]]
+  for = "/case-study/*"
+  [headers.values]
+    # The case study loads print.css as a real stylesheet file.
+    Content-Security-Policy = "default-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; form-action 'none'; frame-ancestors 'none'; base-uri 'none'"

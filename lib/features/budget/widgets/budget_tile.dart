@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/semantic_colors.dart';
+
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../domain/services/budget_calculator.dart';
@@ -17,10 +19,12 @@ class BudgetTile extends StatelessWidget {
   final String categoryName;
   final VoidCallback? onDelete;
 
-  Color get _color => switch (progress.status) {
-        BudgetStatus.ok => AppColors.budgetOk,
-        BudgetStatus.warning => AppColors.budgetWarn,
-        BudgetStatus.over => AppColors.budgetOver,
+  /// Takes the colours rather than reading a `const`: the budget steps differ
+  /// between Vault and Ledger, and a getter has no `BuildContext`.
+  Color _colorOf(SemanticColors c) => switch (progress.status) {
+        BudgetStatus.ok => c.budgetOk,
+        BudgetStatus.warning => c.budgetWarn,
+        BudgetStatus.over => c.budgetOver,
       };
 
   String get _statusWord => switch (progress.status) {
@@ -31,6 +35,7 @@ class BudgetTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = _colorOf(context.colors);
     final pct = (progress.fraction * 100).round();
     final label = '$categoryName budget, $_statusWord. '
         'Spent ${Money.toWords(progress.spent)} of '
@@ -57,7 +62,7 @@ class BudgetTile extends StatelessWidget {
                           ? Icons.warning_amber
                           : Icons.check_circle_outline,
                       size: 18,
-                      color: _color,
+                      color: color,
                     ),
                     if (onDelete != null)
                       IconButton(
@@ -73,8 +78,8 @@ class BudgetTile extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progress.fraction,
                     minHeight: 10,
-                    backgroundColor: _color.withValues(alpha: 0.15),
-                    valueColor: AlwaysStoppedAnimation(_color),
+                    backgroundColor: color.withValues(alpha: 0.15),
+                    valueColor: AlwaysStoppedAnimation(color),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),

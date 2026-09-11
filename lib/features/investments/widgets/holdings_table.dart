@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_tokens.dart';
@@ -251,8 +253,8 @@ class _HoldingsTableState extends State<HoldingsTable> {
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: p.unrealisedPnl >= Decimal.zero
-                              ? AppColors.income
-                              : AppColors.expense,
+                              ? context.colors.income
+                              : context.colors.expense,
                         ),
                       )),
                       DataCell(Builder(builder: (context) {
@@ -266,8 +268,8 @@ class _HoldingsTableState extends State<HoldingsTable> {
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: r >= 0
-                                ? AppColors.income
-                                : AppColors.expense,
+                                ? context.colors.income
+                                : context.colors.expense,
                           ),
                         );
                       })),

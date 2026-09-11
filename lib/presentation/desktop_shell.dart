@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/semantic_colors.dart';
+
 import '../design_system/components/brand_mark.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -389,7 +391,7 @@ class _NavItem extends StatelessWidget {
       ),
       child: Material(
         color: selected
-            ? AppColors.accent.withValues(alpha: 0.13)
+            ? context.colors.accent.withValues(alpha: 0.13)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         // The hint on hover and on long-press, rather than inline: nineteen
@@ -419,7 +421,7 @@ class _NavItem extends StatelessWidget {
                         dest.icon,
                         size: 18,
                         color: selected
-                            ? AppColors.accent
+                            ? context.colors.accent
                             : scheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: AppSpacing.sm),
@@ -432,7 +434,7 @@ class _NavItem extends StatelessWidget {
                                 ? FontWeight.w700
                                 : FontWeight.w500,
                             color: selected
-                                ? AppColors.accent
+                                ? context.colors.accent
                                 : scheme.onSurface,
                           ),
                           maxLines: 1,

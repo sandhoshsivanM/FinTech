@@ -15,12 +15,15 @@ import {
   SectionHeader,
   EmptyState,
   Segmented,
+  StatTile,
   Donut,
   Bars,
   Sparkline,
 } from '@/components/ui';
 import { formatMonthShort, formatDate, toInputValue, todayInputValue, fromInputValue } from '@/lib/dateFormat';
 import { balanceSheet } from '@/domain/statements';
+import { ProGate } from '@/components/ProGate';
+import { ExportReport } from '@/components/ExportReport';
 import type Decimal from 'decimal.js';
 
 // ── Time window ───────────────────────────────────────────────────────────────
@@ -55,29 +58,6 @@ const CAT_COLORS = [
   '#06b6d4',
   '#ec4899',
 ];
-
-// ── Stat tile ─────────────────────────────────────────────────────────────────
-
-function StatTile({
-  label,
-  value,
-  color,
-  ghost,
-}: {
-  label: string;
-  value: string;
-  color: string;
-  ghost: boolean;
-}) {
-  return (
-    <GlassCard className="flex flex-col gap-1">
-      <span className="text-xs font-semibold text-muted tracking-wide">{label}</span>
-      <span className="text-xl font-extrabold tnum" style={{ color }}>
-        {ghost ? '••••••' : value}
-      </span>
-    </GlassCard>
-  );
-}
 
 /**
  * What you own and what you owe, straight from the chart of accounts.
@@ -300,6 +280,22 @@ export default function ReportsPage() {
         </div>
       )}
 
+      {/* Export sits directly under the period control on purpose: the range
+          chosen above is exactly the range the file covers, and putting them
+          apart is how someone exports a period they did not mean to. */}
+      {hasTxns && (
+        <GlassCard>
+          <SectionHeader title="Export this period" />
+          <ProGate
+            feature="formattedExports"
+            title="Take this report with you"
+            blurb="A formatted Excel workbook and a printable PDF covering the period on screen — transactions, expenses by category, cash flow, balance sheet and holdings. Your free CSV export on the Transactions page is unaffected."
+          >
+            <ExportReport range={range} />
+          </ProGate>
+        </GlassCard>
+      )}
+
       {!hasTxns ? (
         <GlassCard>
           <EmptyState
@@ -312,28 +308,38 @@ export default function ReportsPage() {
         <>
           {/* Summary stat tiles */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* The range goes in the footer, not the label. As part of the
+                label it wrapped `Expenses · Jul 1 – Sep 30, 2026` onto a second
+                line while `Income · …` stayed on one, which dropped the Expenses
+                figure a line below the Income figure beside it. Carried by all
+                four tiles, it also fills the space Net and Savings Rate used to
+                leave empty at the bottom of a stretched grid cell. */}
             <StatTile
-              label={`Income · ${range.label}`}
+              label="Income"
               value={fmt.money(windowStats.income)}
-              color="var(--income)"
+              footer={range.label}
+              valueColor="var(--income)"
               ghost={ghost}
             />
             <StatTile
-              label={`Expenses · ${range.label}`}
+              label="Expenses"
               value={fmt.money(windowStats.expense)}
-              color="var(--expense)"
+              footer={range.label}
+              valueColor="var(--expense)"
               ghost={ghost}
             />
             <StatTile
               label="Net"
               value={fmt.money(windowStats.net)}
-              color={windowStats.net.gte(0) ? 'var(--income)' : 'var(--expense)'}
+              footer={range.label}
+              valueColor={windowStats.net.gte(0) ? 'var(--income)' : 'var(--expense)'}
               ghost={ghost}
             />
             <StatTile
               label="Savings Rate"
               value={`${windowStats.savingsRate.toFixed(1)}%`}
-              color={windowStats.savingsRate >= 0 ? 'var(--accent)' : 'var(--expense)'}
+              footer={range.label}
+              valueColor={windowStats.savingsRate >= 0 ? 'var(--accent)' : 'var(--expense)'}
               ghost={ghost}
             />
           </div>

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -72,9 +74,9 @@ class OnboardingBanner extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.accent.withValues(alpha: 0.06),
+        color: context.colors.accent.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.accent.withValues(alpha: 0.25)),
+        border: Border.all(color: context.colors.accent.withValues(alpha: 0.25)),
       ),
       padding: const EdgeInsets.fromLTRB(
           AppSpacing.md, AppSpacing.md, AppSpacing.sm, AppSpacing.md),
@@ -83,7 +85,7 @@ class OnboardingBanner extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.waving_hand, color: AppColors.accent, size: 20),
+              Icon(Icons.waving_hand, color: context.colors.accent, size: 20),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text('Welcome to $kAppName',
@@ -125,7 +127,7 @@ class OnboardingBanner extends ConsumerWidget {
                           vertical: AppSpacing.sm, horizontal: AppSpacing.xs),
                       child: Row(
                         children: [
-                          Icon(icon, size: 18, color: AppColors.accent),
+                          Icon(icon, size: 18, color: context.colors.accent),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Column(

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -72,11 +74,11 @@ class _EmptyState extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.10),
+              color: context.colors.accent.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome_motion_outlined,
-                size: 34, color: AppColors.accent),
+            child: Icon(Icons.auto_awesome_motion_outlined,
+                size: 34, color: context.colors.accent),
           ),
           const SizedBox(height: AppSpacing.md),
           const Text('Nothing to review',
@@ -106,8 +108,8 @@ class _PermissionCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.verified_user_outlined,
-                  size: 18, color: AppColors.accent),
+              Icon(Icons.verified_user_outlined,
+                  size: 18, color: context.colors.accent),
               const SizedBox(width: AppSpacing.sm),
               const Text('Capture access',
                   style: TextStyle(fontWeight: FontWeight.w700)),
@@ -141,7 +143,7 @@ class _UnsupportedCard extends StatelessWidget {
     return GlassCard(
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: AppColors.accent),
+          Icon(Icons.info_outline, color: context.colors.accent),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
@@ -189,7 +191,7 @@ class _CaptureCardState extends ConsumerState<_CaptureCard> {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.12),
+                  color: context.colors.accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -197,7 +199,7 @@ class _CaptureCardState extends ConsumerState<_CaptureCard> {
                       ? Icons.sms_outlined
                       : Icons.notifications_outlined,
                   size: 17,
-                  color: AppColors.accent,
+                  color: context.colors.accent,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -217,7 +219,7 @@ class _CaptureCardState extends ConsumerState<_CaptureCard> {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
-                  color: isIncome ? AppColors.income : AppColors.expense,
+                  color: isIncome ? context.colors.income : context.colors.expense,
                 ),
               ),
             ],

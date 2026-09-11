@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Khazana — Your money, on your device, encrypted, and nowhere else</title>
+<meta name="description" content="An offline-first personal finance and wealth app with no backend, no account and no telemetry. Double-entry accounting, lot-level portfolio analytics and a real tax engine — behind a PIN that never leaves your device.">
+
+<meta property="og:title" content="Khazana — Private Money Vault">
+<meta property="og:description" content="Encrypted, offline personal finance. No account, no server, no ads, no tracking.">
+<meta property="og:type" content="website">
+
+<!--
+  The marketing site. Deliberately separate from the app in webapp/ — this page
+  sells to a buyer, and docs/case-study/ explains the build to an engineer. One
+  page cannot do both: a buyer must never land on a defect log.
+
+  Hand-written, single file, no build step and no dependencies, so it can be
+  dropped on any static host for free. Colours are copied from the app's design
+  tokens (webapp/src/app/globals.css) rather than imported, because this page
+  must not gain a build pipeline to stay in sync with six hex values.
+-->
+<style>
+  :root {
+    --canvas: #F6F7F5;
+    --surface: #FFFFFF;
+    --ink-surface: #0D1713;
+    --line: #E2E6E1;
+    --ink: #151815;
+    --ink-soft: #69716B;
+    --muted: #929A94;
+    --accent: #176B4D;
+    --accent-deep: #0D3B2E;
+    --accent-glow: #2A9970;
+    --accent-soft: #E7F0EB;
+    --gold: #C99A3D;
+    --gold-soft: #F7F0E2;
+    --radius-card: 14px;
+    --radius-btn: 9px;
+    --shadow-1: 0 1px 2px rgba(16, 22, 19, 0.05);
+    --shadow-2: 0 6px 24px rgba(16, 22, 19, 0.08);
+    --wrap: 1080px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Inter, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 24px; }
+
+  a { color: var(--accent); }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(246, 247, 245, 0.86);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar { display: flex; align-items: center; gap: 16px; height: 62px; }
+  .wordmark {
+    font-weight: 700; font-size: 19px; letter-spacing: -0.01em;
+    color: var(--ink); text-decoration: none; margin-right: auto;
+    display: flex; align-items: center; gap: 9px;
+  }
+  .seal {
+    width: 25px; height: 25px; border-radius: 7px;
+    background: linear-gradient(150deg, var(--accent-glow), var(--accent-deep));
+    display: grid; place-items: center;
+    color: #fff; font-size: 13px; font-weight: 800;
+  }
+  .navlink {
+    color: var(--ink-soft); text-decoration: none; font-size: 15px; font-weight: 500;
+  }
+  .navlink:hover { color: var(--ink); }
+  @media (max-width: 640px) { .navlink.opt { display: none; } }
+
+  /* ── Buttons ────────────────────────────────────────────── */
+  .btn {
+    display: inline-block; border-radius: var(--radius-btn);
+    padding: 12px 20px; font-size: 16px; font-weight: 600;
+    text-decoration: none; border: 1px solid transparent; cursor: pointer;
+    transition: transform .06s ease, background .15s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent); color: #fff; box-shadow: var(--shadow-1); }
+  .btn-primary:hover { background: var(--accent-deep); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover { background: var(--surface); }
+  .btn-sm { padding: 8px 15px; font-size: 15px; }
+  .btn-onDark { background: #fff; color: var(--accent-deep); }
+  .btn-onDark:hover { background: var(--accent-soft); }
+  .btn-outlineDark {
+    background: transparent; color: #fff; border-color: rgba(255,255,255,0.32);
+  }
+  .btn-outlineDark:hover { border-color: #fff; }
+
+  /* ── Hero ───────────────────────────────────────────────── */
+  .hero {
+    background: var(--ink-surface);
+    color: #fff;
+    padding: 92px 0 84px;
+    background-image:
+      radial-gradient(760px 400px at 78% -8%, rgba(42,153,112,0.20), transparent 62%),
+      radial-gradient(560px 320px at 4% 108%, rgba(201,154,61,0.10), transparent 60%);
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+    color: #9FE3C4; border: 1px solid rgba(159,227,196,0.28);
+    border-radius: 999px; padding: 5px 13px; margin-bottom: 22px;
+  }
+  .hero h1 {
+    font-size: clamp(34px, 5.6vw, 58px);
+    line-height: 1.08; letter-spacing: -0.025em;
+    margin: 0 0 20px; max-width: 17ch; font-weight: 700;
+  }
+  .hero .sub {
+    font-size: clamp(17px, 2vw, 20px);
+    color: #C6D2CC; max-width: 60ch; margin: 0 0 32px;
+  }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .cta-note { font-size: 14.5px; color: #93A69D; margin-top: 18px; }
+
+  /* ── Trust strip ────────────────────────────────────────── */
+  .trust {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .trust-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1px; background: var(--line);
+  }
+  .trust-cell { background: var(--surface); padding: 22px 24px; }
+  .trust-cell .t { font-weight: 650; font-size: 15.5px; }
+  .trust-cell .d { color: var(--ink-soft); font-size: 14.5px; }
+  @media (max-width: 720px) { .trust-grid { grid-template-columns: 1fr; } }
+
+  /* ── Sections ───────────────────────────────────────────── */
+  section.band { padding: 78px 0; }
+  .kicker {
+    font-size: 13px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
+  }
+  h2 {
+    font-size: clamp(26px, 3.4vw, 36px); line-height: 1.18;
+    letter-spacing: -0.02em; margin: 0 0 14px; font-weight: 700;
+  }
+  .lede { font-size: 18px; color: var(--ink-soft); max-width: 62ch; margin: 0 0 40px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius-card); padding: 24px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 17.5px; font-weight: 650; letter-spacing: -0.01em; }
+  .card p { margin: 0; color: var(--ink-soft); font-size: 15.5px; line-height: 1.55; }
+  .card .ico {
+    width: 34px; height: 34px; border-radius: 9px; background: var(--accent-soft);
+    display: grid; place-items: center; margin-bottom: 14px;
+  }
+  .card .ico svg { width: 18px; height: 18px; stroke: var(--accent); fill: none; stroke-width: 1.9; }
+
+  /* ── Pricing ────────────────────────────────────────────── */
+  .price-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 820px) { .price-wrap { grid-template-columns: 1fr; } }
+
+  .plan {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius-card); padding: 30px;
+  }
+  .plan.pro {
+    border-color: var(--accent); box-shadow: var(--shadow-2);
+    position: relative;
+  }
+  .plan .pname { font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+  .plan.pro .pname { color: var(--accent); }
+  .plan .amount { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; margin: 10px 0 2px; }
+  .plan .amount small { font-size: 16px; font-weight: 500; color: var(--ink-soft); letter-spacing: 0; }
+  .plan .terms { color: var(--ink-soft); font-size: 15px; margin-bottom: 22px; }
+  .plan ul { list-style: none; margin: 0 0 26px; padding: 0; }
+  .plan li {
+    padding: 7px 0 7px 27px; position: relative; font-size: 15.5px; color: var(--ink);
+    border-bottom: 1px solid transparent;
+  }
+  .plan li::before {
+    content: ""; position: absolute; left: 4px; top: 14px;
+    width: 11px; height: 6px; border-left: 2px solid var(--accent);
+    border-bottom: 2px solid var(--accent); transform: rotate(-45deg);
+  }
+  .badge-once {
+    display: inline-block; background: var(--gold-soft); color: #8E641B;
+    border-radius: 999px; padding: 4px 11px; font-size: 13px; font-weight: 650;
+    margin-left: 8px; vertical-align: 3px;
+  }
+
+  .promise {
+    margin-top: 26px; background: var(--accent-soft);
+    border: 1px solid rgba(23,107,77,0.18); border-radius: var(--radius-card);
+    padding: 22px 24px;
+  }
+  .promise h3 { margin: 0 0 8px; font-size: 17px; font-weight: 650; }
+  .promise p { margin: 0; font-size: 15.5px; color: #2C4A3D; }
+
+  /* ── Engineering band ───────────────────────────────────── */
+  .dark {
+    background: var(--ink-surface); color: #fff;
+  }
+  .dark h2 { color: #fff; }
+  .dark .lede { color: #B7C6BE; }
+  .dark .kicker { color: #9FE3C4; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(255,255,255,0.10); border-radius: var(--radius-card); overflow: hidden; }
+  .stat { background: var(--ink-surface); padding: 24px 20px; }
+  .stat .v { font-size: 27px; font-weight: 700; letter-spacing: -0.02em; }
+  .stat .l { font-size: 14px; color: #93A69D; margin-top: 2px; }
+  @media (max-width: 780px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+  /* ── Download ───────────────────────────────────────────── */
+  /* The sticky header is 62px tall and would otherwise sit on top of whatever
+     an in-page anchor jumps to, hiding the heading it just navigated to. */
+  section[id] { scroll-margin-top: 76px; }
+
+  .dl {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 18px;
+    border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    border-radius: var(--radius-card); background: var(--surface);
+    padding: 22px 24px; margin-bottom: 12px;
+  }
+  .dl-main { flex: 1; min-width: 240px; }
+  .dl-os { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+  .dl-chip {
+    display: inline-block; vertical-align: 3px; margin-left: 8px;
+    background: var(--accent-soft); color: var(--accent);
+    border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 650;
+    letter-spacing: 0;
+  }
+  .dl-meta { color: var(--ink-soft); font-size: 14.5px; margin-top: 3px; }
+
+  .dl-note {
+    border: 1px solid var(--line); border-radius: var(--radius-card);
+    background: var(--surface); padding: 16px 20px; margin-bottom: 14px;
+  }
+  .dl-note summary {
+    cursor: pointer; font-weight: 620; font-size: 15.5px; list-style: none;
+    color: var(--ink);
+  }
+  .dl-note summary::-webkit-details-marker { display: none; }
+  .dl-note summary::before { content: "⚠  "; color: var(--gold); }
+  .dl-note p { color: var(--ink-soft); font-size: 15px; margin: 12px 0 0; }
+  .dl-hash { font-size: 13px !important; word-break: break-all; }
+  .dl-hash code {
+    background: var(--canvas); border: 1px solid var(--line);
+    border-radius: 4px; padding: 1px 5px; font-size: 12.5px;
+  }
+  .dl-alt { color: var(--ink-soft); font-size: 15px; margin: 0; }
+
+  /* ── FAQ ────────────────────────────────────────────────── */
+  details {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius-card); padding: 18px 22px; margin-bottom: 10px;
+  }
+  details summary {
+    cursor: pointer; font-weight: 620; font-size: 16.5px; list-style: none;
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after {
+    content: "+"; color: var(--muted); font-size: 21px; font-weight: 400; line-height: 1;
+  }
+  details[open] summary::after { content: "−"; }
+  details p { color: var(--ink-soft); font-size: 15.5px; margin: 12px 0 2px; }
+
+  /* ── Footer ─────────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--line); background: var(--surface);
+    padding: 40px 0; margin-top: 0;
+  }
+  .foot { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: center; }
+  .foot a { color: var(--ink-soft); text-decoration: none; font-size: 15px; }
+  .foot a:hover { color: var(--ink); text-decoration: underline; }
+  .foot .sp { margin-left: auto; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="wordmark" href="/">
+      <span class="seal">K</span> Khazana
+    </a>
+    <a class="navlink opt" href="#features">Features</a>
+    <a class="navlink opt" href="#download">Download</a>
+    <a class="navlink opt" href="#pricing">Pricing</a>
+    <a class="navlink opt" href="/case-study/">Case study</a>
+    <a class="btn btn-primary btn-sm" href="https://khazana-app.netlify.app">Open the app</a>
+  </div>
+</header>
+
+<!-- ── Hero ─────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="wrap">
+    <span class="eyebrow">No account · No server · No tracking</span>
+    <h1>Your money, on your device, encrypted, and nowhere else.</h1>
+    <p class="sub">
+      An offline-first personal finance and wealth app with no backend, no account
+      and no telemetry. Double-entry accounting, lot-level portfolio analytics and
+      a real tax engine — behind a PIN that never leaves the device.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-onDark" href="https://khazana-app.netlify.app">Try it in your browser</a>
+      <a class="btn btn-outlineDark" href="#download">Download for Mac</a>
+      <a class="btn btn-outlineDark" href="#pricing">See what Pro unlocks</a>
+    </div>
+    <p class="cta-note">
+      Nothing to install and nothing to sign up for. The link is the whole app —
+      it runs in the browser and your data stays in it.
+    </p>
+  </div>
+</div>
+
+<div class="trust">
+  <div class="wrap">
+    <div class="trust-grid">
+      <div class="trust-cell">
+        <div class="t">100% private</div>
+        <div class="d">No server. No tracking.</div>
+      </div>
+      <div class="trust-cell">
+        <div class="t">Encrypted</div>
+        <div class="d">AES-256 at rest. PIN never leaves the device.</div>
+      </div>
+      <div class="trust-cell">
+        <div class="t">Offline first</div>
+        <div class="d">Works everywhere. No internet required.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Why it is different ──────────────────────────────────── -->
+<section class="band">
+  <div class="wrap">
+    <div class="kicker">Why this is different</div>
+    <h2>Most finance apps want your bank login. Not your transactions — your&nbsp;login.</h2>
+    <p class="lede">
+      Because the business isn't the app. The business is the aggregated data behind
+      it, and you are the raw material. Khazana takes the opposite approach: your
+      records live in an encrypted database on your own device, unlocked by a PIN
+      only you know. We cannot read them. There is no password reset either, because
+      a recovery path we controlled would mean we could open your vault.
+    </p>
+  </div>
+</section>
+
+<!-- ── Features ─────────────────────────────────────────────── -->
+<section class="band" id="features" style="padding-top:0">
+  <div class="wrap">
+    <div class="grid">
+
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+        <h3>Encrypted at rest</h3>
+        <p>AES-256 on every platform, keyed by PBKDF2-HMAC-SHA256 at 600,000 iterations. The key is derived from your PIN and never stored.</p>
+      </div>
+
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><path d="M2 2l20 20"/></svg></div>
+        <h3>No server, by design</h3>
+        <p>No account to create, no data to breach, nothing that stops working when someone stops paying a hosting bill.</p>
+      </div>
+
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M7 8l-3 6h6zM17 8l-3 6h6z"/></svg></div>
+        <h3>Real accounting</h3>
+        <p>Double-entry postings where every journal entry sums to zero — so net worth is derived, not guessed.</p>
+      </div>
+
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7 15l4-5 3 3 5-7"/></svg></div>
+        <h3>A portfolio that computes</h3>
+        <p>Lot-level FIFO matching, XIRR, sector-wise profit and loss, and capital-gains estimation under rules versioned by disposal date.</p>
+      </div>
+
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M16 7H10a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6H7"/></svg></div>
+        <h3>Money that is exact</h3>
+        <p>Arbitrary-precision decimal end to end, stored as text. Totals never drift by a rounding cent.</p>
+      </div>
+
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="16" rx="1.6"/><rect x="13" y="4" width="8" height="16" rx="1.6"/></svg></div>
+        <h3>Two apps, one engine</h3>
+        <p>Mobile and web compute identical numbers — enforced by tests that fail if the two implementations ever disagree.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Download ─────────────────────────────────────────────────
+     The DMG is staged into site/downloads/ by the release build; it is
+     gitignored, so a fresh clone must run the build before deploying or this
+     link 404s. See site/README.md. -->
+<section class="band" id="download" style="padding-top:0">
+  <div class="wrap">
+    <div class="kicker">Download</div>
+    <h2>Run it as a desktop app.</h2>
+    <p class="lede">
+      The same app, in its own window, working entirely offline. Nothing is sent
+      anywhere — the desktop build has no network code at all.
+    </p>
+
+    <div class="dl">
+      <div class="dl-main">
+        <div class="dl-os">macOS <span class="dl-chip">Apple Silicon</span></div>
+        <div class="dl-meta">Version 1.0.0 · 7.2&nbsp;MB · Requires macOS 11 or later</div>
+        <div class="dl-meta">Includes the new Excel and PDF reports.</div>
+      </div>
+      <a class="btn btn-primary" href="/downloads/Khazana-1.0.0-arm64.dmg" download>Download .dmg</a>
+    </div>
+
+    <details class="dl-note">
+      <summary>macOS will warn you the first time you open it — here's why, and what to do</summary>
+      <p>
+        This build is <strong>not signed with an Apple Developer certificate</strong>,
+        so Gatekeeper will say Khazana “cannot be opened because the developer cannot
+        be verified”. That is macOS reporting a fact about the certificate, not a
+        problem it has found with the app.
+      </p>
+      <p>
+        <strong>To open it:</strong> drag Khazana to Applications, then right-click
+        (or Control-click) the app and choose <strong>Open</strong>, and confirm.
+        You only need to do this once.
+      </p>
+      <p>
+        We would rather tell you this in advance than have it surprise you. A signed
+        and notarised build needs a paid Apple Developer account, and that is on the
+        list before Khazana is sold as a desktop download.
+      </p>
+      <p class="dl-hash">
+        SHA-256 · <code>3cb9a5a9fc42557b37164b7b1b6df24270de1e03f0def04a6b8b087efbfc90b3</code><br>
+        Verify with <code>shasum -a 256 Khazana-1.0.0-arm64.dmg</code>
+      </p>
+    </details>
+
+    <p class="dl-alt">
+      On an Intel Mac, Windows, Linux, or a phone? <a href="https://khazana-app.netlify.app">Use the web app</a> —
+      it needs no install, works offline once loaded, and is the identical application.
+    </p>
+  </div>
+</section>
+
+<!-- ── Built for India ──────────────────────────────────────── -->
+<section class="band dark">
+  <div class="wrap">
+    <div class="kicker">Built for India</div>
+    <h2>Rupees, lakh and crore — and a tax engine that knows the rules.</h2>
+    <p class="lede">
+      Capital-gains rules for Indian equity and mutual funds, versioned by disposal
+      date. AMFI NAV lookup. Statement import for HDFC, ICICI, SBI and Axis.
+      Multi-currency for anything held abroad.
+    </p>
+    <div class="stats">
+      <div class="stat"><div class="v">≈85,000</div><div class="l">Lines hand-written</div></div>
+      <div class="stat"><div class="v">1,392</div><div class="l">Automated tests</div></div>
+      <div class="stat"><div class="v">5</div><div class="l">Platforms</div></div>
+      <div class="stat"><div class="v">0</div><div class="l">Servers</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Pricing ──────────────────────────────────────────────── -->
+<section class="band" id="pricing">
+  <div class="wrap">
+    <div class="kicker">Pricing</div>
+    <h2>Free forever, with no catch. Pro is one payment.</h2>
+    <p class="lede">
+      No subscription, no trial that expires, and no limits on your ledger —
+      unlimited transactions, accounts, budgets, goals and holdings, in the free app.
+    </p>
+
+    <div class="price-wrap">
+
+      <div class="plan">
+        <div class="pname">Khazana</div>
+        <div class="amount">Free<small> — forever</small></div>
+        <div class="terms">Everything you need to run your money today.</div>
+        <ul>
+          <li>Unlimited transactions, accounts, budgets, goals and holdings</li>
+          <li>Double-entry ledger and net worth</li>
+          <li>Investments with cost basis and returns</li>
+          <li>Liabilities, EMIs and payoff plans</li>
+          <li>Financial health score and safety net</li>
+          <li>Encrypted backup, restore and full CSV export</li>
+          <li>PIN lock, biometrics and auto-lock</li>
+        </ul>
+        <a class="btn btn-ghost" href="https://khazana-app.netlify.app">Open the app</a>
+      </div>
+
+      <div class="plan pro">
+        <div class="pname">Khazana Pro</div>
+        <div class="amount">₹999 <small>/ $19.99</small><span class="badge-once">one time</span></div>
+        <div class="terms">Buy once, keep it. Not a subscription.</div>
+        <ul>
+          <li>Tax Centre — capital gains, versioned by disposal date</li>
+          <li>XIRR and benchmark analysis</li>
+          <li>Sector-level profit and loss</li>
+          <li>Bank and broker statement import</li>
+          <li>Automatic capture from bank notifications</li>
+          <li>Household profiles</li>
+          <li><strong>Excel and PDF reports</strong> for any date period</li>
+          <li>Full report history and formatted exports</li>
+        </ul>
+        <!--
+          TODO(launch): replace with the merchant-of-record hosted checkout URL,
+          and keep it in step with PRO_COPY.checkoutUrl in
+          webapp/src/lib/entitlement/proCopy.ts and lib/features/pro/pro_copy.dart.
+          Until the merchant account clears, this points at the in-app paywall,
+          which explains Pro and accepts a licence key.
+        -->
+        <a class="btn btn-primary" href="https://khazana-app.netlify.app/pro">Get Khazana Pro</a>
+      </div>
+
+    </div>
+
+    <div class="promise">
+      <h3>Two things we will never do</h3>
+      <p>
+        <strong>We will never cap your ledger.</strong> A capped ledger is a broken
+        ledger, so there are no limits on what you can record, in any tier, ever.
+        <strong>And we will never hold your data hostage.</strong> Encrypted backup,
+        restore, a full CSV dump and "erase all data" are free forever — nothing that
+        gets your own data out of Khazana will ever sit behind a payment. Both of
+        these are enforced by our test suite, not just promised on a web page.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ──────────────────────────────────────────────────── -->
+<section class="band" style="padding-top:0">
+  <div class="wrap">
+    <h2 style="margin-bottom:28px">Questions people actually ask</h2>
+
+    <details>
+      <summary>If there's no server, what happens if I lose my phone?</summary>
+      <p>
+        You restore from your own encrypted backup. Khazana can export an encrypted
+        backup file that only your PIN opens — keep it wherever you keep important
+        files. Backup and restore are free forever, on both apps.
+      </p>
+    </details>
+
+    <details>
+      <summary>What if I forget my PIN?</summary>
+      <p>
+        Your data is gone, and we cannot recover it. That is not a gap — it is the
+        design. Your PIN derives the encryption key, the key is never stored, and any
+        recovery path we controlled would mean we could open your vault. The guarantee
+        is only real if it is inconvenient for us too.
+      </p>
+    </details>
+
+    <details>
+      <summary>Do you see any of my financial data?</summary>
+      <p>
+        No, and not as a policy we could quietly change — there is nowhere for it to
+        go. The web app makes zero requests. The mobile app calls price and currency
+        providers only when you ask it to refresh, carrying ticker symbols and currency
+        codes, never anything about you. There is no telemetry and no analytics.
+      </p>
+    </details>
+
+    <details>
+      <summary>Is Pro really a one-time payment?</summary>
+      <p>
+        Yes. One payment unlocks Pro and you keep it. There is no subscription, no
+        renewal and no tier that expires. On the App Store it is a Universal Purchase
+        with Family Sharing, so one buy covers your iPhone, iPad and Mac.
+      </p>
+    </details>
+
+    <details>
+      <summary>Does my purchase carry across the app stores and the website?</summary>
+      <p>
+        Not automatically, and we would rather say so before you pay than after. An
+        app-store purchase and a direct licence key are separate, because linking them
+        would require an account server — and we do not have one. Buy on the platform
+        you use most.
+      </p>
+    </details>
+
+    <details>
+      <summary>Can I move my data out?</summary>
+      <p>
+        Any time, in a format that needs no Khazana to read. Full CSV export is free
+        and always will be. Leaving must always be possible.
+      </p>
+    </details>
+  </div>
+</section>
+
+<!-- ── Closing ──────────────────────────────────────────────── -->
+<section class="band dark" style="text-align:center">
+  <div class="wrap">
+    <h2 style="max-width:22ch;margin:0 auto 14px">Try it before you install anything.</h2>
+    <p class="lede" style="margin:0 auto 30px">
+      The link is the whole app. Open it, enter a PIN, and everything you type stays
+      in your browser.
+    </p>
+    <a class="btn btn-onDark" href="https://khazana-app.netlify.app">Open Khazana</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://khazana-app.netlify.app">Open the app</a>
+    <a href="/case-study/">Technical case study</a>
+    <a href="https://khazana-app.netlify.app/privacy">Privacy</a>
+    <a href="https://khazana-app.netlify.app/terms">Terms</a>
+    <a href="mailto:sandhoshsivan00@gmail.com">Support</a>
+    <span class="sp">© 2026 Sandhosh Sivan</span>
+  </div>
+</footer>
+
+</body>
+</html>

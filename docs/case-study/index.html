@@ -56,10 +56,10 @@
     <li><span class="n">11</span>From project to product <span class="d">Monetisation without introducing a server</span></li>
     <li><span class="n">12</span>Metrics, limitations and roadmap <span class="d">Including what does not work yet</span></li>
 
-    <li class="part">Appendices — ready to use</li>
-    <li><span class="n">A</span>LinkedIn copy <span class="d">Short post, long post, headline and About paragraph</span></li>
-    <li><span class="n">B</span>Website and portfolio copy <span class="d">Hero, feature grid, tech list and a 150-word blurb</span></li>
-    <li><span class="n">C</span>Interview question bank <span class="d">Sixteen likely questions with prepared answers, plus three STAR stories</span></li>
+    <li class="part" data-audience="private">Appendices — ready to use</li>
+    <li data-audience="private"><span class="n">A</span>LinkedIn copy <span class="d">Short post, long post, headline and About paragraph</span></li>
+    <li data-audience="private"><span class="n">B</span>Website and portfolio copy <span class="d">Hero, feature grid, tech list and a 150-word blurb</span></li>
+    <li data-audience="private"><span class="n">C</span>Interview question bank <span class="d">Sixteen likely questions with prepared answers, plus three STAR stories</span></li>
   </ol>
 </div>
 
@@ -663,8 +663,6 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
   <table class="compact">
     <thead><tr><th style="width:30%">Item</th><th>Status</th></tr></thead>
     <tbody>
-      <tr><td class="k">Receipt attachments <span class="tag gap">open</span></td><td>Attachments do not persist correctly on one client and are stored unencrypted on the other — the single clearest violation of the project's own encryption contract, and the next thing to fix.</td></tr>
-      <tr><td class="k">Recurring and imported transactions <span class="tag gap">open</span></td><td>These paths skip the double-entry ledger, so entries created that way are not represented as balanced postings.</td></tr>
       <tr><td class="k">Transaction editing <span class="tag gap">open</span></td><td>Editing exists on the web client but not yet as a dedicated Flutter screen.</td></tr>
       <tr><td class="k">Desktop content policy <span class="tag gap">open</span></td><td>The Tauri wrapper does not carry the content-security policy the hosted web build enforces.</td></tr>
       <tr><td class="k">Web lot-level parity <span class="tag gap">open</span></td><td>The web client stores aggregated positions and therefore shows unrealised profit and loss only.</td></tr>
@@ -678,10 +676,10 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
     </tbody>
   </table>
 
+  <p class="small muted">Closed since the previous revision of this document, each with a test that would catch its return: receipt attachments are now AES-256-GCM sealed under the vault key and purged with it, and they round-trip through the repository; recurring and imported transactions now write through the ledger writer, pinned by a test asserting that nothing outside the dependency wiring reaches the transaction DAO directly; and the backup restore path is implemented, reachable and round-tripped, including refusing a wrong key, a corrupted file and a backup from a newer build. The first of those was the item this section previously called the clearest violation of the project's own encryption contract.</p>
+
   <h3>What comes next, in order</h3>
   <ol class="tight">
-    <li>Encrypt attachments and fix persistence — the open item that contradicts the product's central claim.</li>
-    <li>Route recurring and imported transactions through the ledger writer so every entry is double-entry.</li>
     <li>Upgrade off the beta secure-storage dependency and verify the Android capture path on hardware.</li>
     <li>Start the twelve-tester closed track, since fourteen continuous days is the longest lead time in the plan.</li>
     <li>Code signing for desktop; content-security policy for the Tauri wrapper.</li>
@@ -690,7 +688,10 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
 </section>
 
 <!-- ══════════════════════════ A ══════════════════════════ -->
-<section>
+<!-- data-audience="private": stripped from the public web build by build.sh.
+     These are working notes. A reader who finds the script for the conversation
+     they are having with you is reading the wrong document. Kept in the PDF. -->
+<section data-audience="private">
   <h2><span class="num">Appendix A</span><span class="t">LinkedIn copy</span></h2>
   <p class="lead">Written to be posted as-is. Adjust the closing line to match whether you are hiring, looking, or simply shipping.</p>
 
@@ -743,7 +744,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
 </section>
 
 <!-- ══════════════════════════ B ══════════════════════════ -->
-<section>
+<section data-audience="private">
   <h2><span class="num">Appendix B</span><span class="t">Website and portfolio copy</span></h2>
 
   <div class="copy">
@@ -805,7 +806,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
 </section>
 
 <!-- ══════════════════════════ C ══════════════════════════ -->
-<section>
+<section data-audience="private">
   <h2><span class="num">Appendix C</span><span class="t">Interview question bank</span></h2>
   <p class="lead">Sixteen questions this project invites, with answers already thought through. Answer in your own words — the point is that the reasoning is ready, not the phrasing.</p>
 
@@ -889,7 +890,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
 
   <div class="qa">
     <div class="q">What's the weakest part of the codebase?</div>
-    <p>Attachments. They are the one place the encryption contract is currently not honoured — unencrypted on one client, not persisting correctly on the other — and it is the next thing I am fixing precisely because it contradicts the product's central claim. Structurally, the second weakness is that there is no pagination anywhere; it is defensible at local-first data volumes but it is the clearest remaining performance gap.</p>
+    <p>Until recently it was attachments — the one place the encryption contract was not honoured, and I treated it as the priority precisely because it contradicted the product's central claim rather than because anyone had complained. Receipts are now sealed with AES-256-GCM under the same key as the database, the plaintext never touches disk even briefly, and a file that fails authentication raises instead of quietly rendering blank, because silent failure would hide tampering. What I would point at now is that there is no pagination anywhere: defensible at local-first data volumes, but it is the clearest remaining performance gap, and it is the kind of thing that is cheap to fix early and expensive once someone has a decade of transactions.</p>
   </div>
 
   <div class="qa">
@@ -923,6 +924,11 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
     <p><strong>Result.</strong> Cross-device restore works, and is now covered by tests including one that restores into a genuinely second vault. The wider lesson: "the write succeeded" and "the user can see it" are different claims, and only the second one is the feature.</p>
   </div>
 
+</section>
+
+<!-- Outside every appendix on purpose: the colophon has to survive the public
+     build, which strips the private ones. -->
+<section class="colophon">
   <hr class="soft">
   <p class="small muted">Prepared from the Khazana repository on 30 August 2026. Figures counted from the source tree; performance numbers reproduced from committed benchmark scripts. Sandhosh Sivan · sandhoshsivan00@gmail.com</p>
 </section>

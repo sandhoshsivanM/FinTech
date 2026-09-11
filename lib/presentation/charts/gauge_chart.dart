@@ -2,7 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_tokens.dart';
+import '../../core/theme/semantic_colors.dart';
+
 import 'chart_tokens.dart';
 
 /// One band of a graded gauge, up to and including [upTo].
@@ -16,13 +17,15 @@ class GaugeBand {
 }
 
 /// The health-score bands, matching `FinancialHealth.gradeOf`.
-const kHealthBands = <GaugeBand>[
-  GaugeBand(40, AppColors.expense, 'At risk'),
-  GaugeBand(55, AppColors.budgetWarn, 'Needs work'),
-  GaugeBand(70, AppColors.budgetWarn, 'Fair'),
-  GaugeBand(85, AppColors.income, 'Strong'),
-  GaugeBand(100, AppColors.income, 'Excellent'),
-];
+/// Built from the active theme rather than declared `const`: the Vault steps
+/// are unreadable on a Ledger card. See `core/theme/semantic_colors.dart`.
+List<GaugeBand> healthBands(SemanticColors c) => [
+      GaugeBand(40, c.expense, 'At risk'),
+      GaugeBand(55, c.budgetWarn, 'Needs work'),
+      GaugeBand(70, c.budgetWarn, 'Fair'),
+      GaugeBand(85, c.income, 'Strong'),
+      GaugeBand(100, c.income, 'Excellent'),
+    ];
 
 /// Budget consumption bands, matching the thresholds the Budget screen paints
 /// its progress bars with.
@@ -30,11 +33,11 @@ const kHealthBands = <GaugeBand>[
 /// Inverted relative to [kHealthBands] because the scales run opposite ways: a
 /// high health score is good and a high budget fraction is not. Reusing the
 /// health bands here would have painted a nearly-spent budget green.
-const kBudgetBands = <GaugeBand>[
-  GaugeBand(70, AppColors.budgetOk, 'On track'),
-  GaugeBand(90, AppColors.budgetWarn, 'Close to limit'),
-  GaugeBand(100, AppColors.budgetOver, 'At or over'),
-];
+List<GaugeBand> budgetBands(SemanticColors c) => [
+      GaugeBand(70, c.budgetOk, 'On track'),
+      GaugeBand(90, c.budgetWarn, 'Close to limit'),
+      GaugeBand(100, c.budgetOver, 'At or over'),
+    ];
 
 /// A banded arc gauge for a single graded number.
 ///
@@ -57,7 +60,7 @@ class GaugeChart extends StatelessWidget {
     required this.value,
     this.min = 0,
     this.max = 100,
-    this.bands = kHealthBands,
+    this.bands,
     this.size = 180,
     this.strokeWidth = 14,
     this.sweepDegrees = 240,
@@ -72,7 +75,8 @@ class GaugeChart extends StatelessWidget {
 
   final double min;
   final double max;
-  final List<GaugeBand> bands;
+  /// Defaults to [healthBands] for the active theme when null.
+  final List<GaugeBand>? bands;
   final double size;
   final double strokeWidth;
 
@@ -88,7 +92,7 @@ class GaugeChart extends StatelessWidget {
 
   final String untrackedLabel;
 
-  Color _bandColor(double v, Color fallback) {
+  Color _bandColor(List<GaugeBand> bands, double v, Color fallback) {
     for (final b in bands) {
       if (v <= b.upTo) return b.color;
     }
@@ -99,11 +103,12 @@ class GaugeChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final resolvedBands = bands ?? healthBands(context.colors);
     final tracked = value != null;
     final clamped =
         tracked ? value!.clamp(min, max).toDouble() : min;
     final active = tracked
-        ? _bandColor(clamped, scheme.primary)
+        ? _bandColor(resolvedBands, clamped, scheme.primary)
         : scheme.onSurfaceVariant;
     final track = tracked
         ? Color.lerp(active, scheme.surface, 0.85)!
@@ -137,7 +142,7 @@ class GaugeChart extends StatelessWidget {
                 active: active,
                 track: track,
                 tickColor: scheme.surface,
-                bands: tracked ? bands : const [],
+                bands: tracked ? resolvedBands : const [],
                 min: min,
                 max: max,
               ),

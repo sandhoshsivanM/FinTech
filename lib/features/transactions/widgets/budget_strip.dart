@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -72,7 +74,7 @@ class BudgetStrip extends ConsumerWidget {
                           : 'Budgets this month',
                       style: text.labelLarge?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: overCount > 0 ? AppColors.budgetOver : null,
+                        color: overCount > 0 ? context.colors.budgetOver : null,
                       ),
                     ),
                   ),
@@ -106,10 +108,10 @@ class BudgetStrip extends ConsumerWidget {
                           ? 'All ${ranked.length} budgets'
                           : 'Manage budgets',
                       style: text.labelMedium
-                          ?.copyWith(color: AppColors.accent),
+                          ?.copyWith(color: context.colors.accent),
                     ),
-                    const Icon(Icons.chevron_right_rounded,
-                        size: 16, color: AppColors.accent),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 16, color: context.colors.accent),
                   ],
                 ),
               ),
@@ -139,9 +141,9 @@ class _BudgetRow extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final color = switch (progress.status) {
-      BudgetStatus.over => AppColors.budgetOver,
-      BudgetStatus.warning => AppColors.budgetWarn,
-      BudgetStatus.ok => AppColors.budgetOk,
+      BudgetStatus.over => context.colors.budgetOver,
+      BudgetStatus.warning => context.colors.budgetWarn,
+      BudgetStatus.ok => context.colors.budgetOk,
     };
     final over = progress.status == BudgetStatus.over;
 

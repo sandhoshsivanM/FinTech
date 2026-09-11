@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -70,8 +72,8 @@ class ProGate extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.workspace_premium_outlined,
-                        size: 30, color: AppColors.accent),
+                    Icon(Icons.workspace_premium_outlined,
+                        size: 30, color: context.colors.accent),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       title ?? 'Part of Khazana Pro',
@@ -127,16 +129,16 @@ class ProBadge extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.accent.withValues(alpha: 0.16),
+        color: context.colors.accent.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: const Text(
+      child: Text(
         'PRO',
         style: TextStyle(
           fontSize: 9.5,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.8,
-          color: AppColors.accent,
+          color: context.colors.accent,
         ),
       ),
     );

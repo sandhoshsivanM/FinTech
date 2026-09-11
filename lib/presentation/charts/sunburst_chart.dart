@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../core/theme/semantic_colors.dart';
+
 import '../../core/theme/app_tokens.dart';
 import 'chart_tokens.dart';
 
@@ -505,7 +507,7 @@ class _Breadcrumb extends StatelessWidget {
                   style: text.labelMedium?.copyWith(
                     color: i == path.length - 1
                         ? scheme.onSurface
-                        : AppColors.accent,
+                        : context.colors.accent,
                     fontWeight:
                         i == path.length - 1 ? FontWeight.w700 : FontWeight.w500,
                   ),

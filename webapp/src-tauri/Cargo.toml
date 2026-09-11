@@ -23,3 +23,16 @@ serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 tauri = { version = "2.11.3", features = [] }
 tauri-plugin-log = "2"
+# Needed so the desktop build can actually write a file. Without these the
+# webview has no filesystem access at all, and the `<a download>` pattern the
+# web build uses is inert in WKWebView — it fails silently, which is how
+# backup export came to report success while saving nothing.
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+# The one network capability in the desktop client: live quotes from Yahoo
+# Finance. The request is made here, in Rust, rather than in the webview —
+# Yahoo's chart endpoint sends no CORS headers, so a `fetch` from the page
+# itself never leaves it. Which hosts this may reach is not decided here but in
+# `capabilities/default.json`, which scopes it to query1.finance.yahoo.com and
+# nothing else.
+tauri-plugin-http = "2"

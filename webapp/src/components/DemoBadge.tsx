@@ -32,7 +32,7 @@ function read(): boolean {
 export function DemoBadge({ label = 'Demo data', title }: { label?: string; title?: string }) {
   return (
     <span
-      title={title ?? 'Illustrative figures generated on this device. Khazana never contacts a market data provider.'}
+      title={title ?? 'Illustrative figures generated on this device, not fetched from a market data provider.'}
       className="inline-flex items-center gap-1.5 px-2 py-[3px] rounded-full border border-[color-mix(in_srgb,var(--violet)_30%,transparent)] bg-violet-soft text-violet text-[9.5px] font-bold uppercase tracking-[0.08em] whitespace-nowrap"
     >
       <FlaskConical size={11} strokeWidth={2.4} />

@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/app_tokens.dart';
@@ -157,11 +159,11 @@ class _TourScreenState extends State<_TourScreen> {
                           width: 96,
                           height: 96,
                           decoration: BoxDecoration(
-                            color: AppColors.accent.withValues(alpha: 0.12),
+                            color: context.colors.accent.withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(a.icon,
-                              size: 44, color: AppColors.accent),
+                              size: 44, color: context.colors.accent),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         Text(a.title,
@@ -197,7 +199,7 @@ class _TourScreenState extends State<_TourScreen> {
                     height: 6,
                     decoration: BoxDecoration(
                       color: d == _i
-                          ? AppColors.accent
+                          ? context.colors.accent
                           : scheme.onSurfaceVariant.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(3),
                     ),

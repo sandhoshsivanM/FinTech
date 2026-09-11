@@ -11,6 +11,7 @@
 import { useState, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { Hint } from './Hint';
+import { CHART } from './charts/tokens';
 import type { TermKey } from '@/lib/glossary';
 
 /**
@@ -243,58 +244,93 @@ export function Bars({ groups, height = 200, formatY }: { groups: BarGroup[]; he
   // platform, and never appears on a touch screen at all. Hovering a bar has
   // to state its figure in the chart itself.
   const [hover, setHover] = useState<number | null>(null);
-  const active = hover != null ? groups[hover] : null;
+
+  // The same budget ColumnChart reserves: an 11px label on the body's 1.5
+  // line-height is a 16.5px line box, plus the 6px gap above it. The old 22 was
+  // half a pixel short, so the chart rendered taller than the caller asked for.
+  const plotH = height - 26;
+  // The readout gets a reserved strip rather than floating over the plot. It
+  // used to sit at `-top-1`, which overlaps the top 12px of the chart — and
+  // since nothing pads `max`, the tallest bar reaches exactly y=0 and wore it.
+  const readoutH = 18;
+  const barsH = plotH - readoutH;
 
   return (
-    // The readout is absolutely positioned: as a flow element it added height
-    // the caller never budgeted for, so cards holding this chart grew the
-    // moment it was hovered.
-    <div className="relative">
-      <div className="absolute -top-1 left-0 right-0 text-center pointer-events-none z-10">
-        {active && (
-          <span className="text-[12px] font-semibold tnum">
-            <span className="text-muted font-normal">{active.label}</span>
-            {active.values.map((v, j) => (
-              <span key={j} className="ml-2.5" style={{ color: v.color }}>{fmt(v.value)}</span>
-            ))}
-          </span>
-        )}
-      </div>
-      <div className="flex items-end gap-2" style={{ height }}>
-        {groups.map((g, i) => (
-          <div
-            key={i}
-            className="flex-1 flex flex-col items-center gap-1.5 min-w-0 cursor-default"
-            onMouseEnter={() => setHover(i)}
-            onMouseLeave={() => setHover(null)}
-          >
-            <div className="flex items-end justify-center gap-[2px] w-full" style={{ height: height - 22 }}>
-              {g.values.map((v, j) => (
-                <div
-                  key={j}
-                  // 4px data-end radius, anchored to the baseline; the 2px gap
-                  // between adjacent fills is the surface showing through.
-                  className="rounded-t-[4px] w-3 max-w-full transition-[height,opacity] duration-500 ease-standard"
-                  title={fmt(v.value)}
-                  style={{
-                    height: `${(v.value / max) * 100}%`,
-                    background: v.color,
-                    minHeight: v.value > 0 ? 3 : 0,
-                    opacity: hover == null || hover === i ? 1 : 0.35,
-                  }}
-                />
-              ))}
-            </div>
-            <span
-              className={clsx(
-                'text-[10.5px] truncate w-full text-center transition-colors',
-                hover === i ? 'font-bold text-ink' : 'font-medium text-muted',
-              )}
+    <div
+      role="img"
+      aria-label={
+        `${groups.length} periods: ` +
+        groups.map((g) => `${g.label}, ${g.values.map((v) => fmt(v.value)).join(' and ')}`).join('; ')
+      }
+      className="relative"
+      onMouseLeave={() => setHover(null)}
+    >
+      {/* The rule the bars are read against. Implied is not good enough: next to
+          a ₹6,655 bar, a ₹121 one is a 3px mark, and with nothing beneath it
+          that mark reads as floating rather than as a small value sitting on
+          zero. */}
+      <span aria-hidden className="absolute left-0 right-0 h-px bg-line-strong" style={{ top: plotH }} />
+      <div className="flex items-stretch gap-2">
+        {groups.map((g, i) => {
+          // The readout is centred on its own column, then slid by a fraction of
+          // ITS OWN width interpolated from the group's position in the row: the
+          // first group's readout starts at its centre, the last one's ends
+          // there, everything between is proportional. That keeps it inside the
+          // card at both edges and at twelve groups, and it measures nothing.
+          const t = groups.length > 1 ? i / (groups.length - 1) : 0.5;
+          return (
+            <div
+              key={i}
+              className="flex-1 flex flex-col items-center gap-1.5 min-w-0 cursor-default"
+              onMouseEnter={() => setHover(i)}
+              style={{ opacity: hover == null || hover === i ? 1 : 0.4, transition: 'opacity 120ms ease' }}
             >
-              {g.label}
-            </span>
-          </div>
-        ))}
+              <div className="w-full flex flex-col items-center" style={{ height: plotH }}>
+                <div
+                  className="w-full flex items-center justify-center pointer-events-none"
+                  style={{ height: readoutH }}
+                >
+                  {hover === i && (
+                    <span
+                      className="whitespace-nowrap text-[12px] font-semibold tnum"
+                      style={{ transform: `translateX(${(0.5 - t) * 100}%)` }}
+                    >
+                      <span className="text-muted font-normal">{g.label}</span>
+                      {g.values.map((v, j) => (
+                        <span key={j} className="ml-2.5" style={{ color: v.color }}>{fmt(v.value)}</span>
+                      ))}
+                    </span>
+                  )}
+                </div>
+                <div className="w-full flex items-end justify-center gap-[2px]" style={{ height: barsH }}>
+                  {g.values.map((v, j) => (
+                    <div
+                      key={j}
+                      // 4px data-end radius, anchored to the baseline; the 2px
+                      // gap between adjacent fills is the surface showing
+                      // through. The 3px floor keeps a small but real value
+                      // visible; zero still draws nothing at all.
+                      className="w-full min-w-[5px] rounded-t-[4px] transition-[height] duration-500 ease-standard"
+                      style={{
+                        height: v.value > 0 ? Math.max((v.value / max) * barsH, 3) : 0,
+                        maxWidth: CHART.maxBarThickness,
+                        background: v.color,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <span
+                className={clsx(
+                  'text-[11px] truncate max-w-full transition-colors',
+                  hover === i ? 'font-bold text-ink' : 'font-semibold text-muted',
+                )}
+              >
+                {g.label}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

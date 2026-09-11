@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -128,13 +130,13 @@ class _TotalsCard extends ConsumerWidget {
               _Stat(
                 label: 'Unrealised',
                 value: _signed(snap.unrealisedPnl),
-                valueColor: _pnlColor(snap.unrealisedPnl),
+                valueColor: _pnlColor(context.colors, snap.unrealisedPnl),
                 sub: pct == null ? null : '${_pctText(pct)}%',
               ),
               _Stat(
                 label: 'Realised',
                 value: _signed(snap.realisedPnl),
-                valueColor: _pnlColor(snap.realisedPnl),
+                valueColor: _pnlColor(context.colors, snap.realisedPnl),
               ),
               if (snap.dividendIncome > Decimal.zero)
                 _Stat(
@@ -150,7 +152,7 @@ class _TotalsCard extends ConsumerWidget {
                     : '${(xirr * 100).toStringAsFixed(1)}%',
                 valueColor: xirr == null
                     ? null
-                    : (xirr >= 0 ? AppColors.income : AppColors.expense),
+                    : (xirr >= 0 ? context.colors.income : context.colors.expense),
               ),
             ],
           ),
@@ -198,7 +200,7 @@ class _UnpricedNotice extends StatelessWidget {
     return GlassCard(
       child: Row(
         children: [
-          const Icon(Icons.info_outline, size: 18, color: AppColors.budgetWarn),
+          Icon(Icons.info_outline, size: 18, color: context.colors.budgetWarn),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
@@ -346,7 +348,7 @@ class _RollupTable extends ConsumerWidget {
                     textAlign: TextAlign.right,
                     style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        color: _pnlColor(snap.unrealisedPnl)),
+                        color: _pnlColor(context.colors, snap.unrealisedPnl)),
                   ),
                 ),
               ],
@@ -431,7 +433,7 @@ class _RollupRowTile extends StatelessWidget {
                           textAlign: TextAlign.right,
                           style: TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: _pnlColor(row.pnl)),
+                              color: _pnlColor(context.colors, row.pnl)),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -442,7 +444,7 @@ class _RollupRowTile extends StatelessWidget {
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
-                              ?.copyWith(color: _pnlColor(row.pnl)),
+                              ?.copyWith(color: _pnlColor(context.colors, row.pnl)),
                         ),
                       ],
                     ),
@@ -519,7 +521,7 @@ String _pctText(Decimal pct) {
   return '$sign${pct.abs().toDouble().toStringAsFixed(2)}';
 }
 
-Color? _pnlColor(Decimal v) {
+Color? _pnlColor(SemanticColors c, Decimal v) {
   if (v == Decimal.zero) return null;
-  return v > Decimal.zero ? AppColors.income : AppColors.expense;
+  return v > Decimal.zero ? c.income : c.expense;
 }

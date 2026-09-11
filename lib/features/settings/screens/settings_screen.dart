@@ -1,5 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
@@ -204,7 +206,7 @@ class _SettingsBody extends ConsumerWidget {
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel')),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.expense),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.expense),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Erase everything'),
           ),
@@ -317,15 +319,15 @@ class _SettingsBody extends ConsumerWidget {
         Consumer(builder: (context, ref, _) {
           final entitlement = ref.watch(entitlementProvider);
           return ListTile(
-            leading: const Icon(Icons.workspace_premium_outlined,
-                color: AppColors.accent),
+            leading: Icon(Icons.workspace_premium_outlined,
+                color: context.colors.accent),
             title: const Text('Khazana Pro'),
             subtitle: Text(entitlement.isPro
                 ? 'Unlocked${entitlement.orderRef == null ? '' : ' · Licence …${entitlement.orderRef!.substring(entitlement.orderRef!.length - 4)}'}'
                 : 'One payment. Yours forever.'),
             trailing: entitlement.isPro
-                ? const Icon(Icons.verified_outlined,
-                    size: 18, color: AppColors.income)
+                ? Icon(Icons.verified_outlined,
+                    size: 18, color: context.colors.income)
                 : const Icon(Icons.chevron_right),
             onTap: () => context.go(Routes.pro),
           );
@@ -379,8 +381,8 @@ class _SettingsBody extends ConsumerWidget {
         const Divider(),
         const _SectionHeader('Danger zone'),
         ListTile(
-          leading: const Icon(Icons.delete_forever_outlined,
-              color: AppColors.expense),
+          leading: Icon(Icons.delete_forever_outlined,
+              color: context.colors.expense),
           title: const Text('Erase all data'),
           subtitle: const Text(
               'Permanently delete all financial data in this vault'),
@@ -603,7 +605,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.accent,
+              color: context.colors.accent,
               fontWeight: FontWeight.bold,
             ),
       ),

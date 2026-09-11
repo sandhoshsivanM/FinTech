@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -277,7 +279,7 @@ class _NetWorthMovement extends StatelessWidget {
         bars: [
           Bar(
             value: delta.abs(),
-            color: delta >= 0 ? AppColors.income : AppColors.expense,
+            color: delta >= 0 ? context.colors.income : context.colors.expense,
             label: delta >= 0 ? 'Up' : 'Down',
           ),
         ],
@@ -330,12 +332,12 @@ class _ReturnDistribution extends StatelessWidget {
     final losers = pcts.where((v) => v < 0).length;
 
     final bands = <(String, int, Color)>[
-      ('Above +20%', pcts.where((v) => v > 20).length, AppColors.income),
+      ('Above +20%', pcts.where((v) => v > 20).length, context.colors.income),
       ('+5% to +20%', pcts.where((v) => v > 5 && v <= 20).length,
           const Color(0xFFBE8420)),
       ('0% to +5%', pcts.where((v) => v >= 0 && v <= 5).length,
           const Color(0xFF2E92C4)),
-      ('Below 0%', losers, AppColors.expense),
+      ('Below 0%', losers, context.colors.expense),
     ];
 
     String signed(double? v) => v == null
@@ -429,7 +431,7 @@ class _Concentration extends StatelessWidget {
               fraction: v / 100,
               // Above half the book in one thing is the point at which this
               // stops being an observation and starts being a risk.
-              color: v > 50 ? AppColors.budgetWarn : cs.primary,
+              color: v > 50 ? context.colors.budgetWarn : cs.primary,
             ),
             const SizedBox(height: AppSpacing.md),
           ],

@@ -30,6 +30,8 @@ import type { AssetType } from '@/lib/types';
 import { accrue } from '@/domain/fixedIncome';
 import { classifyHolding, loadInstrumentMaster, EMPTY_MASTER, MARKET_CAP_LABEL, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { hasRealClose, rowDayPct } from '@/domain/dayChange';
+import { priceAgeLabel } from '@/lib/quotes/freshness';
+import { useNow } from '@/lib/useNow';
 import { short } from '@/lib/format';
 
 interface Row {
@@ -62,6 +64,7 @@ export default function HoldingsPage() {
   const fxRates = useApp((s) => s.fxRates);
   const fmt = useFmt();
   const [demo] = useDemoData();
+  const now = useNow();
   const [master, setMaster] = useState<InstrumentMaster>(EMPTY_MASTER);
   const [panel, setPanel] = useState<'none' | 'add' | 'import'>('none');
   const [editing, setEditing] = useState<Holding | null>(null);
@@ -288,7 +291,14 @@ export default function HoldingsPage() {
           <Kpi
             label="Priced positions" value={`${holdings.length - unpriced} of ${holdings.length}`}
             icon={Landmark} tone={unpriced ? 'warning' : 'success'}
-            footer={unpriced ? `${unpriced} valued at cost` : 'All marked to a price'}
+            // The age, not just the count. "All marked to a price" said nothing
+            // about *when*, so a book last repriced by a CSV import a week ago
+            // read as one whose figures were simply wrong.
+            footer={unpriced
+              ? `${unpriced} valued at cost`
+              // `useNow` is 0 until after mount, and a 0 "now" would date every
+              // price to the future and read as "just now".
+              : (now ? priceAgeLabel(holdings, now) : null) ?? 'All marked to a price'}
           />
         </KpiRow>
       </StaggerItem>
@@ -300,7 +310,7 @@ export default function HoldingsPage() {
               <h2 className="text-[18px] font-semibold tracking-[-0.02em]">All positions</h2>
               <p className="text-xs text-muted mt-0.5">Sort, filter and export the full book</p>
             </div>
-            {demo && !anyRealClose && <span className="ml-auto"><DemoBadge label="Day change" title="Day change is synthesised on this device — Khazana has no price feed." /></span>}
+            {demo && !anyRealClose && <span className="ml-auto"><DemoBadge label="Day change" title="Day change is synthesised on this device. Turn on live prices in Settings to measure it against a real previous close." /></span>}
           </div>
           <DataGrid
             rows={visibleRows}

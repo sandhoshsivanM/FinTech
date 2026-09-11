@@ -1,5 +1,11 @@
 # Khazana — Offline-First, Encrypted Personal Finance Engine
 
+**[Try it in your browser →](https://khazana-app.netlify.app)** · no signup, no
+install, no data leaves your device — the link *is* the whole app.
+&nbsp;·&nbsp; **[Technical case study →](docs/Khazana_Technical_Case_Study.pdf)**
+&nbsp;·&nbsp; [Architecture](docs/ARCHITECTURE.md)
+&nbsp;·&nbsp; [Threat model](docs/THREAT-MODEL.md)
+
 Khazana is a **privacy-total, serverless** personal-finance app. All data lives
 **encrypted at rest on the user's device** — there is no backend, no cloud
 database, and no account server by design. It ships as **two parallel client
@@ -73,8 +79,24 @@ See the results table in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#measured-pe
 
 ## Status & scope
 
-Solo portfolio project. **No backend, no CI-deployed environment, no production
-users.** The security story is applied client-side cryptography (see the threat
-model), not web-auth/infrastructure security. The web app's lint currently
-carries pre-existing `react-hooks/purity` debt under Next 16's ruleset; CI runs
-lint as an advisory step while tests and the static build are hard gates.
+Built solo. The web app is **live and usable today** (link at the top); the
+mobile builds are in release preparation, where the critical path is Google
+Play's twelve-tester, fourteen-day closed test for individual publishers rather
+than anything in the code. **No production users yet, and no backend — the
+second one permanently.**
+
+Khazana is free with no limits on the ledger; **Khazana Pro** is a one-time
+purchase, never a subscription. Backup, restore, CSV export and "erase all data"
+are free forever and are asserted as an invariant by the test suites on both
+clients — see [`docs/pro-gates.json`](docs/pro-gates.json), which is the single
+source of truth both clients load so they cannot drift about what money buys.
+
+The security story is applied client-side cryptography (see the
+[threat model](docs/THREAT-MODEL.md)), not web-auth or infrastructure security.
+
+**Known limitations**, kept in the open rather than discovered by a user:
+[`docs/APP-INVENTORY.md` §7](docs/APP-INVENTORY.md#7-defects) is a numbered
+defect log that names what is broken and what has been fixed. Currently open:
+no dedicated transaction-edit screen on Flutter, no pagination anywhere, and
+`react-hooks/purity` lint debt under Next 16's ruleset — CI runs lint as an
+advisory step while tests and the static build are hard gates.

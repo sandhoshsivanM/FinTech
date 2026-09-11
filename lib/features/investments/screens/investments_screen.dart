@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -182,11 +184,11 @@ class _ImportBar extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.12),
+              color: context.colors.accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(11),
             ),
-            child: const Icon(Icons.description_outlined,
-                color: AppColors.accent, size: 19),
+            child: Icon(Icons.description_outlined,
+                color: context.colors.accent, size: 19),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -409,13 +411,13 @@ class _StatGrid extends ConsumerWidget {
       StatTile(
         label: 'Unrealised P&L',
         value: _signed(snap.unrealisedPnl),
-        valueColor: _pnlColor(snap.unrealisedPnl),
+        valueColor: _pnlColor(context.colors, snap.unrealisedPnl),
         footer: pct == null ? null : '${_pctText(pct)}%',
       ),
       StatTile(
         label: 'Realised P&L',
         value: _signed(snap.realisedPnl),
-        valueColor: _pnlColor(snap.realisedPnl),
+        valueColor: _pnlColor(context.colors, snap.realisedPnl),
         footer: snap.disposals.isEmpty
             ? 'No sales yet'
             : '${snap.disposals.length} disposal'
@@ -427,7 +429,7 @@ class _StatGrid extends ConsumerWidget {
         value: xirr == null ? '—' : '${(xirr * 100).toStringAsFixed(1)}%',
         valueColor: xirr == null
             ? null
-            : (xirr >= 0 ? AppColors.income : AppColors.expense),
+            : (xirr >= 0 ? context.colors.income : context.colors.expense),
         footer: xirr == null ? 'Needs dated lots' : 'Annualised',
       ),
       StatTile(
@@ -520,7 +522,7 @@ class _Notice extends StatelessWidget {
     return GlassCard(
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.budgetWarn),
+          Icon(icon, size: 18, color: context.colors.budgetWarn),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(text, style: Theme.of(context).textTheme.bodySmall),
@@ -710,7 +712,7 @@ class _RollupRowTile extends StatelessWidget {
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
-                      color: _pnlColor(row.pnl)),
+                      color: _pnlColor(context.colors, row.pnl)),
                 ),
               ),
             ],
@@ -788,7 +790,7 @@ class _MoverRow extends StatelessWidget {
       child: Row(
         children: [
           Icon(up ? Icons.arrow_upward : Icons.arrow_downward,
-              size: 14, color: up ? AppColors.income : AppColors.expense),
+              size: 14, color: up ? context.colors.income : context.colors.expense),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
@@ -804,7 +806,7 @@ class _MoverRow extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 13,
-              color: up ? AppColors.income : AppColors.expense,
+              color: up ? context.colors.income : context.colors.expense,
             ),
           ),
         ],
@@ -893,10 +895,10 @@ class _PositionTile extends ConsumerWidget {
                     ),
                     if (p.hasUnreviewedLots) ...[
                       const SizedBox(width: 6),
-                      const Tooltip(
+                      Tooltip(
                         message: 'Contains lots awaiting review',
                         child: Icon(Icons.fact_check_outlined,
-                            size: 13, color: AppColors.budgetWarn),
+                            size: 13, color: context.colors.budgetWarn),
                       ),
                     ],
                   ],
@@ -936,7 +938,7 @@ class _PositionTile extends ConsumerWidget {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: p.isUnpriced
                             ? scheme.onSurfaceVariant
-                            : _pnlColor(p.unrealisedPnl),
+                            : _pnlColor(context.colors, p.unrealisedPnl),
                         fontWeight: FontWeight.w600,
                       ),
                 ),
@@ -980,7 +982,7 @@ class _PositionTile extends ConsumerWidget {
                 if (!lot.isReviewed)
                   Text('unreviewed',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.budgetWarn,
+                          color: context.colors.budgetWarn,
                           fontWeight: FontWeight.w700)),
               ],
             ),
@@ -1133,7 +1135,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 44, color: AppColors.expense),
+            Icon(Icons.error_outline, size: 44, color: context.colors.expense),
             const SizedBox(height: AppSpacing.md),
             Text('Could not load the portfolio',
                 style: Theme.of(context).textTheme.titleMedium),
@@ -1169,9 +1171,9 @@ String _signed(Decimal v) =>
 String _pctText(Decimal pct) =>
     '${pct >= Decimal.zero ? '+' : '-'}${pct.abs().toDouble().toStringAsFixed(2)}';
 
-Color? _pnlColor(Decimal v) {
+Color? _pnlColor(SemanticColors c, Decimal v) {
   if (v == Decimal.zero) return null;
-  return v > Decimal.zero ? AppColors.income : AppColors.expense;
+  return v > Decimal.zero ? c.income : c.expense;
 }
 
 /// "as of" text for a price observation. Never omitted where a value is shown:

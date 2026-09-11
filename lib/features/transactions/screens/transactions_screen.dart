@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -192,7 +194,7 @@ class _DayHeaderTile extends StatelessWidget {
           Text(
             '${positive ? '+' : ''}${Money.format(header.net)}',
             style: text.labelMedium?.copyWith(
-              color: positive ? AppColors.income : scheme.onSurfaceVariant,
+              color: positive ? context.colors.income : scheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
           ),

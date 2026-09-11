@@ -3,7 +3,7 @@ import { useRef, useState, useSyncExternalStore } from 'react';
 import {
   ShieldCheck, CloudOff, KeyRound, Download, Upload,
   Globe, Lock, Trash2, Sparkles, CheckCircle2, AlertCircle,
-  Users, Plus, Pencil, Check, Briefcase, User, Heart, FlaskConical,
+  Users, Plus, Pencil, Check, Briefcase, User, Heart, FlaskConical, TrendingUp,
   HardDrive, ShieldAlert,
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
@@ -11,11 +11,14 @@ import { TOUR_EVENT } from '@/components/Tour';
 import { useApp, ACCENTS, type AccentName, type ThemeChoice } from '@/lib/store';
 import { requestPersistence } from '@/lib/db';
 import { loadSampleData } from '@/lib/sampleData';
+import { saveFile } from '@/lib/saveFile';
 import {
   CURRENCIES, findCurrency, isRateStale, rateAsOf, resolveRate,
 } from '@/domain/currency';
 import { GlassCard, SectionHeader, Button, Field, Select, PageIntro, Input, Segmented } from '@/components/ui';
 import { useDemoData } from '@/components/DemoBadge';
+import { useLivePrices } from '@/lib/quotes/useLivePrices';
+import { quotesAvailable } from '@/lib/quotes/yahoo';
 import { useConfirm } from '@/components/Confirm';
 import { STORE, type FxRate, type ProfileKind } from '@/lib/types';
 import { NumberInput } from '@/components/NumberInput';
@@ -142,15 +145,24 @@ export default function SettingsPage() {
     setExportNote(null);
     try {
       const b64 = await exportBackup(backupPin.trim() || undefined);
-      const blob = new Blob([b64], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `khazana-backup-${new Date().toISOString().slice(0, 10)}.ftos`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      // Through saveFile, and the OUTCOME decides the message. The old code
+      // used a bare `<a download>` and then reported success unconditionally —
+      // in the desktop shell that anchor does nothing, so it announced a backup
+      // that was never written.
+      const outcome = await saveFile({
+        filename: `khazana-backup-${new Date().toISOString().slice(0, 10)}.ftos`,
+        data: b64,
+        mimeType: 'application/octet-stream',
+        filter: { name: 'Khazana backup', extensions: ['ftos'] },
+      });
+      if (outcome.status === 'cancelled') {
+        setExportNote({ kind: 'error', text: 'Export cancelled — nothing was written.' });
+        return;
+      }
+      if (outcome.status === 'failed') {
+        setExportNote({ kind: 'error', text: `Could not write the backup: ${outcome.message}` });
+        return;
+      }
       setExportNote({
         kind: 'success',
         text: backupPin.trim()
@@ -430,6 +442,7 @@ export default function SettingsPage() {
           <StorageDurabilityRow />
         </div>
 
+        <LivePricesRow />
         <DemoDataRow />
 
         {/* Export */}
@@ -597,12 +610,68 @@ export default function SettingsPage() {
 }
 
 /**
+ * The live-price switch.
+ *
+ * Defaults ON and is opt-out — see `lib/quotes/useLivePrices.ts` for why this
+ * differs from the demo switch below. Available in the desktop app only: Yahoo
+ * sends no CORS headers, so the browser build cannot make the request at all,
+ * and the row says so rather than offering a control that does nothing.
+ */
+function LivePricesRow() {
+  const [on, setOn] = useLivePrices();
+  const available = quotesAvailable();
+
+  return (
+    <div className="pt-4 border-t border-[var(--line)]">
+      <div className="flex items-start gap-3">
+        <span className="w-9 h-9 rounded-full grid place-items-center bg-accent-soft text-accent shrink-0">
+          <TrendingUp size={18} />
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-sm">Live prices</div>
+          <div className="text-xs text-muted mt-0.5 leading-relaxed">
+            {available ? (
+              <>
+                Fetches share and ETF prices from <b className="text-ink font-semibold">Yahoo Finance</b> when you tap
+                refresh. The request carries the ticker symbol and nothing else — not your holdings, not their value,
+                not anything that identifies you. It is the only network request Khazana makes, and the desktop app is
+                permitted to reach that one address and no other. Turn it off and prices come only from a broker import
+                or what you type in.
+              </>
+            ) : (
+              <>
+                Available in the Khazana desktop app. A browser cannot fetch from Yahoo Finance directly, so on the web
+                prices come from a broker import or what you type in.
+              </>
+            )}
+          </div>
+        </div>
+        <button
+          role="switch"
+          aria-checked={on && available}
+          aria-label="Live prices"
+          disabled={!available}
+          onClick={() => setOn(!on)}
+          className={`focus-ring relative w-11 h-6 rounded-full shrink-0 transition-colors duration-[250ms] ${
+            !available ? 'bg-fill-strong opacity-40 cursor-not-allowed' : on ? 'bg-accent' : 'bg-fill-strong'
+          }`}
+        >
+          <span
+            className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full transition-transform duration-[250ms] ${on && available ? 'translate-x-5 bg-white' : 'bg-muted'}`}
+          />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * The demo-market-data switch.
  *
- * Khazana never fetches quotes, index levels or headlines, so the screens that
- * would need them (Markets, News, day-change columns) are filled with figures
- * generated on this device. This is the control that turns those surfaces off
- * — it is the reason the DemoBadge can be trusted.
+ * Distinct from live prices above, and the distinction is the whole point: a
+ * Yahoo quote is the real figure, while this fills Markets, News and — where no
+ * real previous close exists — the day-change columns with numbers generated on
+ * this device. It is the reason the DemoBadge can be trusted.
  */
 function DemoDataRow() {
   const [on, setOn] = useDemoData();
@@ -615,10 +684,10 @@ function DemoDataRow() {
         <div className="flex-1 min-w-0">
           <div className="font-medium text-sm">Demo market data</div>
           <div className="text-xs text-muted mt-0.5 leading-relaxed">
-            Markets, News and the day-change columns need a price feed, and Khazana never contacts one — asking a
-            provider for a quote would tell it exactly what you own. With this on, those surfaces show figures
-            generated on this device and labelled <b className="text-violet font-semibold">DEMO</b>. Turn it off and
-            they show nothing rather than something misleading.
+            Index levels and headlines need a feed Khazana does not carry, and live prices cover shares and ETFs only.
+            With this on, those remaining surfaces show figures generated on this device and labelled{' '}
+            <b className="text-violet font-semibold">DEMO</b>. Turn it off and they show nothing rather than something
+            misleading.
           </div>
         </div>
         <button
