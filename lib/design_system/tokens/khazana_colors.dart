@@ -10,9 +10,20 @@ import 'package:flutter/material.dart';
 /// the mark, the wordmark and wealth-flavoured brand moments — it is never the
 /// ordinary button colour.
 ///
-/// This is the Dart mirror of `webapp/src/design-system/tokens/colors.ts`. The
-/// two files are a contract: the domain layer already keeps Dart and TypeScript
-/// in parity, and the UI now does the same. Change one, change the other.
+/// The Ledger (light) values mirror `webapp/src/app/globals.css`, which is the
+/// web app's real source of truth.
+///
+/// This file used to name `webapp/src/design-system/tokens/colors.ts` as its
+/// contract. That file is DEAD — nothing in the live web app imports it, and
+/// `globals.css` drifted away from it — so the contract was faithfully
+/// maintained against a document nobody was reading. That is how the two
+/// clients came to ship different greens.
+///
+/// Vault (dark) deliberately does NOT mirror the web. The web's dark accent
+/// (#3A8B68) measures 4.39:1 on its own card and 4.12:1 on ours, both under the
+/// 4.5:1 text bar; `vaultPrimary` below is 7.94:1. Parity is not worth shipping
+/// a colour that fails on the two figures a finance app exists to show. The
+/// web's dark accent is a defect there, not a target here.
 abstract final class KhazanaColors {
   // --- Brand ramp, shared by both themes ------------------------------------
   static const Color emerald500 = Color(0xFF18C98A);
@@ -57,12 +68,14 @@ abstract final class KhazanaColors {
   static const Color vaultInfo = Color(0xFF63A8FF);
 
   // --- Ledger (light) -------------------------------------------------------
-  // The page is #F5F7F5 and cards are white, so a card is the brightest
+  // The page is #F6F7F5 and cards are white, so a card is the brightest
   // surface. That one step gives the light theme depth without a shadow.
-  static const Color ledgerBackground = Color(0xFFF5F7F5);
+  //
+  // These are `--canvas`, `--card` and `--line` from globals.css verbatim.
+  static const Color ledgerBackground = Color(0xFFF6F7F5);
   static const Color ledgerSurface = Color(0xFFFFFFFF);
   static const Color ledgerSurfaceSecondary = Color(0xFFEDF2EF);
-  static const Color ledgerBorder = Color(0xFFDCE4DF);
+  static const Color ledgerBorder = Color(0xFFE2E6E1);
   static const Color ledgerBorderStrong = Color(0xFFC7D2CC);
 
   static const Color ledgerTextPrimary = Color(0xFF101613);
@@ -70,8 +83,10 @@ abstract final class KhazanaColors {
   static const Color ledgerTextMuted = Color(0xFF718079);
   static const Color ledgerTextDisabled = Color(0xFFA7B1AC);
 
-  static const Color ledgerPrimary = Color(0xFF087A56);
-  static const Color ledgerPrimaryHover = Color(0xFF066A4A);
+  /// `--accent` from globals.css. 6.47:1 on a white card, up from the 5.35:1
+  /// of the #087A56 this replaced.
+  static const Color ledgerPrimary = Color(0xFF176B4D);
+  static const Color ledgerPrimaryHover = Color(0xFF0D3B2E);
   static const Color ledgerPrimarySoft = Color(0xFFE1F3EB);
   static const Color ledgerPrimaryOn = Color(0xFFFFFFFF);
 
@@ -82,9 +97,15 @@ abstract final class KhazanaColors {
   /// (3:1) but under the 4.5:1 body-text bar, so words use this darker step.
   static const Color ledgerGoldInk = Color(0xFF8E641B);
 
-  static const Color ledgerSuccess = Color(0xFF087A56);
+  /// `--income` / `--expense` from globals.css: 5.83:1 and 5.42:1 on a card.
+  ///
+  /// `ledgerSuccess` is deliberately NOT the same value as `ledgerPrimary` any
+  /// more. They were both #087A56, which made a primary button pixel-identical
+  /// to a profit figure — the one confusion this palette's own header says must
+  /// never happen.
+  static const Color ledgerSuccess = Color(0xFF19734D);
   static const Color ledgerWarning = Color(0xFFA97922);
-  static const Color ledgerDanger = Color(0xFFC73D46);
+  static const Color ledgerDanger = Color(0xFFB54444);
   static const Color ledgerInfo = Color(0xFF2672C8);
 
   /// Categorical chart series. Emerald leads, gold follows.

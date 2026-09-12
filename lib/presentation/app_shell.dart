@@ -167,6 +167,8 @@ class _AppShellState extends ConsumerState<AppShell>
       return DesktopShell(child: widget.child);
     }
     final section = navSections[index];
+    final here = GoRouterState.of(context).matchedLocation;
+    final ownsAction = routesWithOwnPrimaryAction.contains(here);
     return Scaffold(
       // One header for the whole app, owned here rather than repeated in every
       // screen. Screens used to each declare `AppBar(title: Text('Budget'))`,
@@ -187,15 +189,42 @@ class _AppShellState extends ConsumerState<AppShell>
       ),
       body: widget.child,
       // The one action worth permanent chrome. Docked into the bar's notch so
-      // it reads as part of the navigation rather than as something floating
-      // over the content.
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go(Routes.addTransaction),
-        tooltip: 'New transaction',
-        child: const Icon(Icons.add),
-      ),
+      // it reads as part of the navigation rather than as floating over the
+      // content — and suppressed where the screen already owns a primary
+      // action, so the two do not sit a thumb-width apart offering to add
+      // different things.
+      floatingActionButton: ownsAction
+          ? null
+          : Builder(
+              builder: (context) {
+                final scheme = Theme.of(context).colorScheme;
+                return SizedBox(
+                  // 58, not Material's 56. The notch is cut to the button plus
+                  // its margin, and at the default size the two halves of the
+                  // bar sat a hair closer to the centre than the outer items
+                  // did to the edges.
+                  height: 58,
+                  width: 58,
+                  child: FloatingActionButton(
+                    onPressed: () => context.go(Routes.addTransaction),
+                    tooltip: 'New transaction',
+                    backgroundColor: context.colors.accent,
+                    foregroundColor: scheme.onPrimary,
+                    // Flat. The bar it is docked into is flat, and a shadow
+                    // under a button cut into a surface reads as a mistake
+                    // rather than as elevation.
+                    elevation: 0,
+                    focusElevation: 0,
+                    hoverElevation: 0,
+                    highlightElevation: 0,
+                    shape: const CircleBorder(),
+                    child: const Icon(Icons.add_rounded, size: 28),
+                  ),
+                );
+              },
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _SectionBar(index: index),
+      bottomNavigationBar: _SectionBar(index: index, notched: !ownsAction),
     );
   }
 }
@@ -208,9 +237,13 @@ class _AppShellState extends ConsumerState<AppShell>
 /// gap — docking a FAB into it overlaps the middle destination rather than
 /// making room for it.
 class _SectionBar extends StatelessWidget {
-  const _SectionBar({required this.index});
+  const _SectionBar({required this.index, required this.notched});
 
   final int index;
+
+  /// Whether to leave the centre gap. False on screens that own their primary
+  /// action — a notch with no button in it is just a hole in the bar.
+  final bool notched;
 
   @override
   Widget build(BuildContext context) {
@@ -220,16 +253,17 @@ class _SectionBar extends StatelessWidget {
     return BottomAppBar(
       height: 64,
       padding: EdgeInsets.zero,
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 7,
+      shape: notched ? const CircularNotchedRectangle() : null,
+      notchMargin: notched ? 8 : 0,
       color: scheme.surface,
       child: Row(
         children: [
           for (var i = 0; i < leftCount; i++)
             Expanded(child: _BarItem(i: i, selected: index == i)),
           // The notch. Sized to the FAB plus its margin so the two halves stay
-          // symmetrical regardless of how many sections there are.
-          const SizedBox(width: 64),
+          // symmetrical. Collapses when there is no centre button, so the four
+          // sections spread evenly instead of straddling an empty gap.
+          SizedBox(width: notched ? 74 : 0),
           for (var i = leftCount; i < navSections.length; i++)
             Expanded(child: _BarItem(i: i, selected: index == i)),
         ],

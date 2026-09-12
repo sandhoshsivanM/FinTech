@@ -137,6 +137,23 @@ const avatarMenu = <({String route, IconData icon, String label})>[
   (route: Routes.settings, icon: Icons.settings_outlined, label: 'Settings'),
 ];
 
+/// Routes whose screen provides its own primary "add" action.
+///
+/// The bar's centre button means "add the thing this screen is about". On these
+/// screens the screen itself already says that better than the shell can — it
+/// knows what a new account or a new goal needs — so the shell stands down
+/// rather than docking a second, vaguer plus beside it.
+///
+/// Without this the centre action and the screen's own FAB both rendered, which
+/// is two buttons offering to add two different things a thumb-width apart.
+const routesWithOwnPrimaryAction = <String>{
+  Routes.accounts,
+  Routes.goals,
+  Routes.recurring,
+  Routes.transactions,
+  Routes.investments,
+};
+
 /// The section that owns a route, or null when nothing does.
 NavSection? sectionFor(String route) {
   for (final s in navSections) {

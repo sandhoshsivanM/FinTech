@@ -216,7 +216,8 @@
       "Bash(sed -i '' \"/^import '..\\\\/..\\\\/core\\\\/theme\\\\/app_tokens.dart';$/d\" lib/presentation/charts/gauge_chart.dart)",
       "Bash(flutter emulators *)",
       "Bash(flutter run *)",
-      "Bash(xargs -0 du -h)"
+      "Bash(xargs -0 du -h)",
+      "Bash(awk -F: '{s+=$2} END {print s}')"
     ],
     "additionalDirectories": [
       "/private/tmp/claude-501/-Users-sandhoshsivan-Downloads-FinTech/1243f1ee-5064-4efe-b0e7-bba4f1a2d6d2/scratchpad/shots",

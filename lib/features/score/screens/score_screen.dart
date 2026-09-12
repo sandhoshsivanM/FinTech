@@ -165,12 +165,16 @@ class _MethodCard extends StatelessWidget {
         color: scheme.onSurfaceVariant, height: 1.4);
     final total = _areas.fold<double>(0, (s, a) => s + a.$2);
 
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+    // Not a card. This is a disclosure row: one line of text and a chevron,
+    // which in a bordered card cost the same vertical space as the narrative
+    // card beside it and carried the same visual weight as a screen's worth of
+    // figures. A card should mean "here is a discrete object"; asking a
+    // question is not one.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: Theme(
-        // Same reason as the category cards: the default expansion divider
-        // fights the card's own hairline border.
+        // The default expansion divider fights the rules this screen already
+        // has; the row is separated by space instead.
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: EdgeInsets.zero,

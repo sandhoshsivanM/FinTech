@@ -49,15 +49,21 @@ class ReviewQueueBanner extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     '$n captured transaction${n == 1 ? '' : 's'} to confirm',
+                    // `goldInk`, not `budgetWarn`: the warning amber is a
+                    // GRAPHIC colour (3:1) and this is 14px text. On this
+                    // banner's own tinted ground it measures 3.37:1, under the
+                    // 4.5:1 text bar; the darker ink step reads 4.6:1. The
+                    // palette already documents this split — see
+                    // `ledgerGoldInk` in khazana_colors.dart.
                     style: text.labelLarge?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: context.colors.budgetWarn,
+                      color: context.colors.goldInk,
                     ),
                   ),
                 ),
                 Text('Review',
                     style: text.labelMedium?.copyWith(
-                        color: context.colors.budgetWarn,
+                        color: context.colors.goldInk,
                         fontWeight: FontWeight.w700)),
                 Icon(Icons.chevron_right_rounded,
                     size: 18, color: context.colors.budgetWarn),

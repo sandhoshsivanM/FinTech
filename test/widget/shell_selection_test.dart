@@ -12,6 +12,11 @@ import 'package:khazana/presentation/desktop_shell.dart';
 /// Which shell each platform gets.
 ///
 /// The rule is that macOS, Windows and Linux get the sidebar and everything
+/// The bar is a `BottomAppBar`, not a `NavigationBar`: Material's
+/// `NavigationBar` spaces its destinations evenly with no notion of a gap, so a
+/// docked centre action overlaps the middle destination instead of being given
+/// room. The assertion is about which SHELL renders, not which widget class.
+///
 /// else gets the bottom bar — and it is keyed on the PLATFORM, not the window
 /// width, so a narrow window on a Mac is still a Mac app.
 ///
@@ -95,7 +100,7 @@ void main() {
         expect(find.byType(DesktopShell), findsOneWidget,
             reason: 'a Mac build showing the phone shell is a stretched phone '
                 'app, which is the complaint this guards');
-        expect(find.byType(NavigationBar), findsNothing);
+        expect(find.byType(BottomAppBar), findsNothing);
       });
     });
 
@@ -119,7 +124,7 @@ void main() {
 
       await asPlatform(TargetPlatform.android, () async {
         await pumpShell(tester);
-        expect(find.byType(NavigationBar), findsOneWidget);
+        expect(find.byType(BottomAppBar), findsOneWidget);
         expect(find.byType(DesktopShell), findsNothing);
       });
     });
@@ -132,7 +137,7 @@ void main() {
 
       await asPlatform(TargetPlatform.android, () async {
         await pumpShell(tester);
-        expect(find.byType(NavigationBar), findsOneWidget,
+        expect(find.byType(BottomAppBar), findsOneWidget,
             reason: 'a tablet still wants touch targets');
       });
     });
