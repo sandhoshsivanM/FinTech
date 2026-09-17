@@ -387,6 +387,76 @@ figcaption {
 }
 .qa p { margin-bottom: 3pt; }
 
+/* ─── Screen cards (Section 04) ─────────────────────────────────── */
+
+/* Each deep-dive answers the same four questions in the same order, so the
+   card is a <dl> rather than prose: the shape is the argument. Reading down
+   the "Trade-off" rows alone is a legitimate way to read the section. */
+.screen {
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 3.5mm 4mm;
+  margin: 0 0 4mm;
+  background: #FDFCF9;
+  break-inside: avoid;
+}
+.screen .hd {
+  font-family: var(--sans);
+  font-size: 9.6pt;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 1mm;
+}
+.screen .hd .path {
+  font-family: var(--mono);
+  font-size: 7.6pt;
+  font-weight: 400;
+  color: var(--ink-3);
+  margin-left: 2mm;
+}
+.screen dl { margin: 2mm 0 0; font-family: var(--sans); font-size: 8.2pt; line-height: 1.45; }
+.screen dt {
+  float: left;
+  clear: left;
+  width: 19mm;
+  font-size: 6.9pt;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-top: .5mm;
+}
+.screen dd { margin: 0 0 1.8mm 19mm; }
+.screen dd:last-child { margin-bottom: 0; }
+/* The trade-off is the row an interviewer stops on, so it is the row that
+   looks different. */
+.screen dd.to { color: var(--ink-2); border-left: 1.5px solid var(--signal); padding-left: 2.5mm; margin-left: 19mm; }
+
+/* ─── Route table (Section 04) ──────────────────────────────────── */
+
+table.routes { font-size: 7.5pt; }
+table.routes td { padding: 1.3mm 2.5mm 1.3mm 0; }
+table.routes td.r { font-family: var(--mono); font-size: 7pt; color: var(--ink); white-space: nowrap; }
+table.routes td.f { font-family: var(--mono); font-size: 6.6pt; color: var(--ink-3); }
+
+/* ─── Design levels (Sections 05–07) ────────────────────────────── */
+
+/* A level's number needs to read as a label, not as body text, because the
+   sections cross-reference each other by level rather than by page. */
+.lvl {
+  font-family: var(--sans);
+  font-size: 6.9pt;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--signal);
+  background: #2E2A1E;
+  padding: .7mm 1.8mm;
+  border-radius: 2px;
+  margin-right: 2mm;
+  vertical-align: 1.5px;
+}
+
 /* ─── Copy blocks (appendices) ──────────────────────────────────── */
 
 .copy {

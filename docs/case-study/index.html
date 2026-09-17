@@ -25,7 +25,7 @@
   </div>
   <div class="foot">
     <div class="right">
-      Solo build · 22 Jun – 25 Aug 2026<br>
+      Solo build · 22 Jun – 12 Sep 2026<br>
       sandhoshsivan00@gmail.com
     </div>
     <div class="name">Sandhosh Sivan</div>
@@ -42,24 +42,30 @@
     <li><span class="n">01</span>Executive summary <span class="d">The thirty-second and the two-minute answer to “what did you build?”</span></li>
     <li><span class="n">02</span>Problem and motivation <span class="d">Why an offline finance app had to exist, and what the alternatives cost the user</span></li>
     <li><span class="n">03</span>What it does <span class="d">The complete feature inventory across both clients</span></li>
+    <li><span class="n">04</span>Every screen, and why it exists <span class="d">All 59 routes, then twelve taken apart — purpose, means, reasoning and the cost accepted</span></li>
 
     <li class="part">Part II — How it is built</li>
-    <li><span class="n">04</span>System architecture <span class="d">Two clients, four rings, one framework-free core</span></li>
-    <li><span class="n">05</span>Data and persistence <span class="d">23 encrypted tables, FTS5 search, six schema migrations, decimal money</span></li>
-    <li><span class="n">06</span>Security and privacy engineering <span class="d">Key lifecycle, threat model, and the decisions behind them</span></li>
-    <li><span class="n">07</span>The financial engine <span class="d">FIFO lots, XIRR, double-entry, capital-gains tax, scoring</span></li>
-    <li><span class="n">08</span>Cross-platform parity <span class="d">How two codebases are prevented from disagreeing about money</span></li>
+    <li><span class="n">05</span>System architecture <span class="d">Two clients, four rings, one framework-free core</span></li>
+    <li><span class="n">06</span>Architecture at four levels <span class="d">Context, container, component and code — the C4 view of a system with almost no context</span></li>
+    <li><span class="n">07</span>High-level and low-level design <span class="d">The decomposition, then the four contracts precise enough to implement against</span></li>
+    <li><span class="n">08</span>The model in UML <span class="d">Entity relationships, class structure, the unlock sequence and the vault state machine</span></li>
+    <li><span class="n">09</span>Data and persistence <span class="d">23 encrypted tables, FTS5 search, six schema migrations, decimal money</span></li>
+    <li><span class="n">10</span>Security and privacy engineering <span class="d">Key lifecycle, threat model, and the decisions behind them</span></li>
+    <li><span class="n">11</span>The financial engine <span class="d">FIFO lots, XIRR, double-entry, capital-gains tax, scoring</span></li>
+    <li><span class="n">12</span>Cross-platform parity <span class="d">How two codebases are prevented from disagreeing about money</span></li>
 
     <li class="part">Part III — Engineering practice</li>
-    <li><span class="n">09</span>Decisions and trade-offs <span class="d">The choices worth defending, and what was rejected</span></li>
-    <li><span class="n">10</span>Testing, CI and measured performance <span class="d">1,392 tests, three pipelines, benchmarks that are measured rather than claimed</span></li>
-    <li><span class="n">11</span>From project to product <span class="d">Monetisation without introducing a server</span></li>
-    <li><span class="n">12</span>Metrics, limitations and roadmap <span class="d">Including what does not work yet</span></li>
+    <li><span class="n">13</span>Decisions and trade-offs <span class="d">The choices worth defending, and what was rejected</span></li>
+    <li><span class="n">14</span>Testing, CI and measured performance <span class="d">1,504 tests, three pipelines, benchmarks that are measured rather than claimed</span></li>
+    <li><span class="n">15</span>From project to product <span class="d">Monetisation without introducing a server</span></li>
+    <li><span class="n">16</span>Metrics, limitations and roadmap <span class="d">Including what does not work yet</span></li>
 
     <li class="part" data-audience="private">Appendices — ready to use</li>
     <li data-audience="private"><span class="n">A</span>LinkedIn copy <span class="d">Short post, long post, headline and About paragraph</span></li>
     <li data-audience="private"><span class="n">B</span>Website and portfolio copy <span class="d">Hero, feature grid, tech list and a 150-word blurb</span></li>
-    <li data-audience="private"><span class="n">C</span>Interview question bank <span class="d">Sixteen likely questions with prepared answers, plus three STAR stories</span></li>
+    <li data-audience="private"><span class="n">C</span>Interview question bank <span class="d">Forty-six likely questions with prepared answers, plus four STAR stories</span></li>
+    <li data-audience="private"><span class="n">D</span>How this would be built again <span class="d">The build order the repository actually followed, and what each phase had to prove</span></li>
+    <li data-audience="private"><span class="n">E</span>Résumé kit <span class="d">The link line, the stack line, bullets at three lengths, and the STAR stories cut to résumé scale</span></li>
   </ol>
 </div>
 
@@ -68,8 +74,8 @@
   <h2><span class="num">Section 01</span><span class="t">Executive summary</span></h2>
 
   <div class="strip">
-    <div class="m"><div class="v">~85,000</div><div class="l">Lines hand-written</div></div>
-    <div class="m"><div class="v">1,392</div><div class="l">Automated tests</div></div>
+    <div class="m"><div class="v">~88,500</div><div class="l">Lines hand-written</div></div>
+    <div class="m"><div class="v">1,504</div><div class="l">Automated tests</div></div>
     <div class="m"><div class="v">23</div><div class="l">Encrypted tables</div></div>
     <div class="m"><div class="v">5</div><div class="l">Platforms shipped</div></div>
     <div class="m"><div class="v">0</div><div class="l">Servers</div></div>
@@ -87,7 +93,7 @@
 
   <div class="note">
     <span class="h">Status, stated plainly</span>
-    <p>Khazana is complete enough to use daily and is being prepared for the App Store, Play Store and direct desktop sale. It has <strong>no production users yet</strong> — the critical path is Google Play's twelve-tester, fourteen-day closed test for individual publishers, not code. The repository carries a candid twelve-item defect log, and this document reproduces the open entries rather than hiding them.</p>
+    <p>Khazana is complete enough to use daily and is being prepared for the App Store, Play Store and direct desktop sale. It is in <strong>private beta with ten users</strong> and has not been publicly released — the critical path is Google Play's twelve-tester, fourteen-day closed test for individual publishers, not code. The repository carries a candid twelve-item defect log, and this document reproduces the open entries rather than hiding them.</p>
   </div>
 </section>
 
@@ -202,7 +208,222 @@
 
 <!-- ══════════════════════════ 04 ══════════════════════════ -->
 <section>
-  <h2><span class="num">Section 04</span><span class="t">System architecture</span></h2>
+  <h2><span class="num">Section 04</span><span class="t">Every screen, and why it exists</span></h2>
+  <p class="lead">Fifty-nine routes across two clients. This section lists all of them, then takes twelve apart — because a screen list proves surface area, and only the reasoning proves engineering.</p>
+
+  <div class="strip">
+    <div class="m"><div class="v">59</div><div class="l">Routes in total</div></div>
+    <div class="m"><div class="v">32</div><div class="l">Next.js</div></div>
+    <div class="m"><div class="v">27</div><div class="l">Flutter</div></div>
+    <div class="m"><div class="v">8</div><div class="l">Behind the paywall</div></div>
+  </div>
+
+  <h3>How the navigation is organised</h3>
+  <p>The web client groups its routes into five sections — Overview, Invest, Money, Protect and Tools — declared once in <code>navConfig.ts</code> and consumed by the sidebar, the mobile drawer and the command palette alike. The Flutter client carries two shells chosen by width: a five-tab bottom bar with a notched centre action on phones, and a nineteen-destination sidebar on desktop.</p>
+  <p>The two clients are not allowed to drift apart on this. A parity test asserts the web navigation's Pro flags against <code>docs/pro-gates.json</code>, and a second asserts that the web bottom navigation lists the same five destinations as the Flutter tab bar. Navigation is the part of a product users build muscle memory for, and two clients that disagree about where Budget lives are two different products wearing one name.</p>
+  <p>One detail in the Flutter router is worth pulling out, because it began as a bug. The app has five tabs and twenty-seven screens, so most locations are not a tab. The shell originally resolved "which tab is selected" with a <code>startsWith</code> scan that fell back to index zero — which meant Budget, Goals, Liabilities and eight other screens all highlighted Dashboard as the current tab. The fix was an explicit map, because the relationship it encodes ("Reports lives under Score") is a product decision and not something a string prefix can be asked to infer.</p>
+
+  <h3>The web client — 32 routes</h3>
+  <table class="routes">
+    <thead><tr><th style="width:17%">Route</th><th style="width:25%">File</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td class="r">/</td><td class="f">page.tsx</td><td>Client-side replace to <code>/dashboard</code>. Deliberately not a server <code>redirect()</code>, which compiles to a marker that breaks the Tauri window under static export.</td></tr>
+      <tr><td class="r">/dashboard</td><td class="f">dashboard/page.tsx</td><td>Net worth, monthly flow, portfolio performance, allocation, movers, health score, insights, upcoming bills.</td></tr>
+      <tr><td class="r">/score</td><td class="f">score/page.tsx</td><td>Financial-health gauge, method explainer, four category cards, score history.</td></tr>
+      <tr><td class="r">/reports</td><td class="f">reports/page.tsx</td><td>Income vs expense, balance sheet, category mix, month-by-month savings rate. Formatted export is Pro <span class="tag pro">pro</span>; raw CSV stays free.</td></tr>
+      <tr><td class="r">/forecast</td><td class="f">forecast/page.tsx</td><td>Safe-to-spend with its workings shown, six-month cash flow, five-year net worth, debt what-if. <span class="tag pro">pro</span></td></tr>
+      <tr><td class="r">/analytics</td><td class="f">analytics/page.tsx</td><td>Risk, diversification, return distribution, concentration, sunburst allocation. <span class="tag pro">pro</span></td></tr>
+      <tr><td class="r">/investments</td><td class="f">investments/page.tsx</td><td>Portfolio overview: one asset-group filter driving six KPIs, four allocation donuts, gainers and losers.</td></tr>
+      <tr><td class="r">/holdings</td><td class="f">holdings/page.tsx</td><td>The full position grid with inline editor and import panel.</td></tr>
+      <tr><td class="r">/watchlist</td><td class="f">watchlist/page.tsx</td><td>Instruments tracked but not owned, with target gaps. <span class="tag pro">pro</span></td></tr>
+      <tr><td class="r">/markets</td><td class="f">markets/page.tsx</td><td>Index levels and session state. Levels are synthesised; the market clock is real. <span class="tag pro">pro</span></td></tr>
+      <tr><td class="r">/dividends</td><td class="f">dividends/page.tsx</td><td>Received vs expected income, yield on actual portfolio value, twelve-month history. <span class="tag pro">pro</span></td></tr>
+      <tr><td class="r">/tax</td><td class="f">tax/page.tsx</td><td>Indian capital-gains estimate under rules versioned by disposal date. <span class="tag pro">pro</span></td></tr>
+      <tr><td class="r">/accounts</td><td class="f">accounts/page.tsx</td><td>Bank and cash accounts with balances derived from postings; archive rather than delete.</td></tr>
+      <tr><td class="r">/transactions</td><td class="f">transactions/page.tsx</td><td>One timeline over two entities, with search, four filters and free CSV export of the filtered set.</td></tr>
+      <tr><td class="r">/add</td><td class="f">add/page.tsx</td><td>Add or edit expense, income, investment or transfer, with a natural-language quick-add bar.</td></tr>
+      <tr><td class="r">/calendar</td><td class="f">calendar/page.tsx</td><td>Monday-first month grid showing income and expense per day, never a net figure.</td></tr>
+      <tr><td class="r">/budget</td><td class="f">budget/page.tsx</td><td>Envelope budgets with opt-in rollover, 50/30/20 card, per-category alert thresholds.</td></tr>
+      <tr><td class="r">/recurring</td><td class="f">recurring/page.tsx</td><td>Scheduled rules led by annual committed cost, with batch run and single post-now.</td></tr>
+      <tr><td class="r">/goals</td><td class="f">goals/page.tsx</td><td>Savings goals with progress rings and on-track hints.</td></tr>
+      <tr><td class="r">/liabilities</td><td class="f">liabilities/page.tsx</td><td>Cards and loans, EMI, utilisation, avalanche-versus-snowball payoff simulator.</td></tr>
+      <tr><td class="r">/insurance</td><td class="f">insurance/page.tsx</td><td>Policies with coverage-gap analysis against income-multiple guidelines.</td></tr>
+      <tr><td class="r">/safety-net</td><td class="f">safety-net/page.tsx</td><td>One readiness ring over emergency fund, life cover, health cover and safe assets.</td></tr>
+      <tr><td class="r">/import</td><td class="f">import/page.tsx</td><td>Assets and transactions, each parse → preview → confirm, with per-run undo.</td></tr>
+      <tr><td class="r">/reconcile</td><td class="f">reconcile/page.tsx</td><td>Tick entries against a statement; suggests entries matching the difference exactly. <span class="tag pro">pro</span></td></tr>
+      <tr><td class="r">/alerts</td><td class="f">alerts/page.tsx</td><td>User rules on price, weight, budget and renewal, sharing one evaluator with the bell.</td></tr>
+      <tr><td class="r">/diagnostics</td><td class="f">diagnostics/page.tsx</td><td>Eleven integrity checks over the vault. Read-only by design.</td></tr>
+      <tr><td class="r">/news</td><td class="f">news/page.tsx</td><td>Synthesised headlines filtered to held and watched symbols, badged as such. <span class="tag pro">pro</span></td></tr>
+      <tr><td class="r">/pro</td><td class="f">pro/page.tsx</td><td>Paywall and offline Ed25519 licence activation.</td></tr>
+      <tr><td class="r">/help</td><td class="f">help/page.tsx</td><td>FAQ, keyboard shortcuts, privacy chips, tour replay.</td></tr>
+      <tr><td class="r">/privacy</td><td class="f">privacy/page.tsx</td><td>The store-listing privacy policy, written to be true of the mobile app too.</td></tr>
+      <tr><td class="r">/terms</td><td class="f">terms/page.tsx</td><td>Terms, including an explicit not-financial-advice clause.</td></tr>
+      <tr><td class="r">/settings</td><td class="f">settings/page.tsx</td><td>Appearance, profiles, notifications, storage durability, backup and restore, currency, wipe.</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Not routes, but screens all the same: the vault gate, the command palette, the fifteen-step tour and the confirmation dialog are rendered as overlays above the router, because none of them is a place a user should be able to link to or reload into.</p>
+
+  <h3>The Flutter client — 27 routes</h3>
+  <table class="routes">
+    <thead><tr><th style="width:23%">Route</th><th style="width:22%">Screen</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td class="r">/unlock</td><td class="f">UnlockGateScreen</td><td>Setup, unlock, biometrics and the failure cooldown. The only route reachable while locked.</td></tr>
+      <tr><td class="r">/app/dashboard</td><td class="f">DashboardScreen</td><td>Net-worth hero, stat tiles, trend, recent activity, health, insights, goals, allocation.</td></tr>
+      <tr><td class="r">/app/transactions</td><td class="f">TransactionsScreen</td><td>The ledger, flattened to one list so scrolling stays constant-cost.</td></tr>
+      <tr><td class="r">/app/transactions/add</td><td class="f">AddTransactionScreen</td><td>Validated entry form with natural-language quick add.</td></tr>
+      <tr><td class="r">/app/search</td><td class="f">SearchScreen</td><td>Autofocused field over the FTS5 index.</td></tr>
+      <tr><td class="r">/app/budget</td><td class="f">BudgetScreen</td><td>Envelope progress per category.</td></tr>
+      <tr><td class="r">/app/calendar</td><td class="f">CalendarLedgerScreen</td><td>Adaptive month ledger: one column on phones, three panels above 600px.</td></tr>
+      <tr><td class="r">/app/accounts</td><td class="f">AccountsScreen</td><td>Grouped balances from postings, plus liability cards.</td></tr>
+      <tr><td class="r">/app/recurring</td><td class="f">RecurringScreen</td><td>Scheduled rules and their next run.</td></tr>
+      <tr><td class="r">/app/capture</td><td class="f">CaptureInboxScreen</td><td>Review queue for transactions parsed from SMS and notifications. Nothing auto-commits.</td></tr>
+      <tr><td class="r">/app/investments</td><td class="f">InvestmentsScreen</td><td>Portfolio stats, sunburst allocation, sector P&amp;L, movers, per-position detail.</td></tr>
+      <tr><td class="r">/app/investments/breakdown</td><td class="f">PortfolioBreakdownScreen</td><td>Roll-up along a chosen dimension: sector, industry, market cap or asset class.</td></tr>
+      <tr><td class="r">/app/investments/analytics</td><td class="f">AnalyticsScreen</td><td>Risk gauges, return distribution and concentration — same formulas as the web twin.</td></tr>
+      <tr><td class="r">/app/investments/add-lot</td><td class="f">AddLotScreen</td><td>Buy or sell lot entry, with charges folded into cost basis.</td></tr>
+      <tr><td class="r">/app/investments/import-lots</td><td class="f">ImportLotsScreen</td><td>CSV lot import; rejected rows listed with reason and line number.</td></tr>
+      <tr><td class="r">/app/liabilities</td><td class="f">LiabilitiesScreen</td><td>Debt totals and payoff calculation.</td></tr>
+      <tr><td class="r">/app/insurance</td><td class="f">InsuranceScreen</td><td>Cover, premium and coverage-gap advice.</td></tr>
+      <tr><td class="r">/app/safety-net</td><td class="f">SafetyNetScreen</td><td>Readiness hero, in parity with the web route of the same name.</td></tr>
+      <tr><td class="r">/app/goals</td><td class="f">GoalsScreen</td><td>Goal cards and contributions.</td></tr>
+      <tr><td class="r">/app/reports</td><td class="f">ReportsScreen</td><td>Window selector, income and expense bars, category donut, net-worth trend.</td></tr>
+      <tr><td class="r">/app/score</td><td class="f">ScoreScreen</td><td>Health gauge, method card, weekly report, category detail disclosed in place.</td></tr>
+      <tr><td class="r">/app/import/bank</td><td class="f">BankImportScreen</td><td>Bank picker, staged preview, commit, and a persistent import report.</td></tr>
+      <tr><td class="r">/app/settings</td><td class="f">SettingsScreen</td><td>Vault, lock, tour, capture, currency, backup, restore, erase.</td></tr>
+      <tr><td class="r">/app/settings/market-data</td><td class="f">MarketDataSettingsScreen</td><td>Fallback price-provider keys, stored in the OS keychain.</td></tr>
+      <tr><td class="r">/app/settings/currency</td><td class="f">CurrencySettingsScreen</td><td>Manual exchange rates and their history.</td></tr>
+      <tr><td class="r">/app/settings/notifications</td><td class="f">NotificationSettingsScreen</td><td>Per-category toggles and the pending count read back from the OS scheduler.</td></tr>
+      <tr><td class="r">/app/pro</td><td class="f">ProScreen</td><td>Store purchase, licence-key entry and restore.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Twelve screens worth defending</h3>
+  <p>These twelve were not chosen for visual weight. Each one carries a decision that could reasonably have gone the other way, and the interesting part of each is the cost that was accepted rather than the feature that was delivered.</p>
+
+  <div class="screen">
+    <div class="hd">Unlock gate <span class="path">/unlock · webapp VaultGate.tsx</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>The only screen reachable while the vault is locked. Creates a vault, unlocks one, or refuses.</dd>
+      <dt>Built with</dt><dd>PBKDF2-HMAC-SHA256 at 600,000 iterations over a 32-byte salt, via Web Crypto on the web and an off-isolate derivation on native. A router redirect guard holds every other route until the vault state machine says unlocked.</dd>
+      <dt>Why</dt><dd>The encryption key is never stored. Correctness is checked by decrypting a domain-separated verifier, so a wrong PIN fails on the authentication tag rather than against a stored secret. Biometric key storage exists but is opt-in, and the option is worded as its cost rather than its convenience.</dd>
+      <dd class="to"><strong>Trade-off:</strong> every unlock pays roughly 49 ms of key stretching, and there is no recovery path whatsoever — a forgotten PIN is a destroyed vault. Both are accepted deliberately: the first buys brute-force resistance, and the second is the honest consequence of having nobody who could perform a recovery.</dd>
+    </dl>
+  </div>
+
+  <div class="screen">
+    <div class="hd">Dashboard <span class="path">/dashboard · dashboard/page.tsx</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>The one screen that has to answer "how am I doing?" before the user scrolls.</dd>
+      <dt>Built with</dt><dd>Thirteen store slices, memoised roll-ups, a month-pinning control, and a narrative engine that composes sentences from a template table.</dd>
+      <dt>Why</dt><dd>Net worth over time prefers recorded snapshots, but a new vault has none. Rather than show an empty chart, it falls back to a series derived by walking the transaction history — and labels that series <em>estimated</em>, because a derived line and a recorded line are different claims about the past.</dd>
+      <dd class="to"><strong>Trade-off:</strong> two code paths for one chart, and a label most users will not read. The alternative — silently presenting derived history as recorded history — is the kind of small dishonesty that makes every other number on the screen suspect once discovered.</dd>
+    </dl>
+  </div>
+
+  <div class="screen">
+    <div class="hd">Transactions <span class="path">/transactions · TransactionsScreen</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>One chronological timeline over two different entities — transactions and transfers.</dd>
+      <dt>Built with</dt><dd>On Flutter, a <code>sealed class _Row</code> that flattens day headers and entries into a single list so the whole ledger stays one <code>ListView.builder</code>. On the web, fifty-row paging with search across merchant, note, category, account, formatted date and amount in any separator form.</dd>
+      <dt>Why</dt><dd>The obvious structure — a list of days, each containing a list of entries — builds every entry of every day eagerly. Flattening keeps scrolling constant-cost regardless of history length.</dd>
+      <dd class="to"><strong>Trade-off:</strong> the flattened model makes day-level operations harder to express, and the web client pages rather than virtualises. Pagination is recorded as the clearest remaining performance gap rather than presented as a design choice.</dd>
+    </dl>
+  </div>
+
+  <div class="screen">
+    <div class="hd">Add / edit entry <span class="path">/add · add/page.tsx</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>Every way money enters the ledger: expense, income, investment and transfer.</dd>
+      <dt>Built with</dt><dd>A natural-language quick-add bar, an icon category grid, receipt attachment with type and size validation, and a confirmation step that names the amount, date and account deltas before saving an edit.</dd>
+      <dt>Why</dt><dd>A transfer is written as a <em>separate entity</em>, not as a pair of transactions. Moving money between your own accounts is not spending, and modelling it as spending would inflate every budget, expense total and savings rate that reads the transaction table.</dd>
+      <dd class="to"><strong>Trade-off:</strong> every screen that shows a timeline now has to merge two entity types instead of querying one. That cost is paid once, in the query layer, rather than repeatedly and invisibly in every aggregate.</dd>
+    </dl>
+  </div>
+
+  <div class="screen">
+    <div class="hd">Holdings <span class="path">/holdings · holdings/page.tsx</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>The position grid — every instrument owned, with cost, value and weight.</dd>
+      <dt>Built with</dt><dd>A fourteen-column data grid with a locked first column, optional columns, weight micro-bars and CSV or XLSX export; inline editors that scroll themselves into view, honouring reduced-motion preferences.</dd>
+      <dt>Why</dt><dd>Fixed-income rows show rate, accrued interest and maturity instead of a price. A fixed deposit has no market price, and rendering one would be an invention; the accrual is computable and true.</dd>
+      <dd class="to"><strong>Trade-off:</strong> the grid now has two row shapes and cannot sort meaningfully on a single "current price" column across both. Sorting was the thing given up, and the alternative was fabricating a number in a financial application.</dd>
+    </dl>
+  </div>
+
+  <div class="screen">
+    <div class="hd">Portfolio overview <span class="path">/investments · investments/page.tsx</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>The portfolio answered at roll-up level rather than position level.</dd>
+      <dt>Built with</dt><dd>One asset-group filter that drives every panel on the page, an "as on" date bounded by snapshot history, six KPIs, four allocation donuts and a diversification gauge computed from group count, sector spread, concentration and maximum weight.</dd>
+      <dt>Why</dt><dd>Three honesty banners sit above the numbers: unpriced positions counted at cost, exchange rates still at their built-in defaults, and a filtered or past-dated view. Each one exists because the total below it is understated or conditional, and the screen says so rather than letting the figure speak with unearned confidence.</dd>
+      <dd class="to"><strong>Trade-off:</strong> a screen that qualifies itself three times reads as less authoritative than one that does not. It is also the only one of the two that is correct.</dd>
+    </dl>
+  </div>
+
+  <div class="screen">
+    <div class="hd">Tax centre <span class="path">/tax · tax/page.tsx</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>An estimate of Indian capital-gains liability across the portfolio.</dd>
+      <dt>Built with</dt><dd>A rule set versioned by effective date, FIFO lot matching, and a full methodology footer stating what was assumed.</dd>
+      <dt>Why</dt><dd>Gains are priced as <em>one portfolio</em> rather than per position, because the long-term exemption is an annual allowance applied once across all disposals — computing it per holding would multiply the exemption by the number of positions. Holdings with no recorded purchase date are excluded rather than defaulted to short-term, and slab-rate instruments return null with a banner instead of a guess.</dd>
+      <dd class="to"><strong>Trade-off:</strong> the screen shows fewer rows than the user owns and refuses to total some of them. A tax figure that is confidently wrong is worse than one that is visibly incomplete, because only the second can be corrected before it is filed.</dd>
+    </dl>
+  </div>
+
+  <div class="screen">
+    <div class="hd">Forecast <span class="path">/forecast · forecast/page.tsx</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>Safe-to-spend, six-month cash flow, five-year net worth and a debt what-if.</dd>
+      <dt>Built with</dt><dd>Recurring rules for committed outflow, median rather than mean discretionary spend, and loop bounds on every projection so a corrupt rule cannot hang the page.</dd>
+      <dt>Why</dt><dd>Safe-to-spend is the minimum of two independent ceilings — cash after committed outgoings, and remaining budget headroom. A figure that ignored either would tell someone to spend money already owed, or money they do not have. When there is no income history or no spending history, it returns null with a typed reason rather than a number.</dd>
+      <dd class="to"><strong>Trade-off:</strong> new users see an explanation where they expected a figure. The screen shows its arithmetic line by line for exactly this reason: a forecast nobody can audit is a horoscope.</dd>
+    </dl>
+  </div>
+
+  <div class="screen">
+    <div class="hd">Import <span class="path">/import · import/page.tsx</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>Bank statements and broker exports into the ledger.</dd>
+      <dt>Built with</dt><dd>One auto-detecting parser rather than a parser per bank: the delimiter is sniffed by column-count consistency, dates are day-first detected, and Excel serials are converted. Institution tiles select <em>guidance</em>, not code paths.</dd>
+      <dt>Why</dt><dd>Every run is parse → preview → confirm, written as a single batch, and recorded as an import batch that can be undone as a unit. Skipped rows are counted and shown; an import that silently drops rows is worse than one that fails.</dd>
+      <dd class="to"><strong>Trade-off:</strong> the undo restores what the import added but cannot restore prior values it never captured, and the interface says so rather than implying a general-purpose time machine.</dd>
+    </dl>
+  </div>
+
+  <div class="screen">
+    <div class="hd">Reconcile <span class="path">/reconcile · reconcile/page.tsx</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>Agree the ledger against a real bank statement.</dd>
+      <dt>Built with</dt><dd>The classic arithmetic, stated rather than hidden: cleared balance is the opening balance plus every cleared entry up to the statement date, and the difference is the statement's closing balance minus that.</dd>
+      <dt>Why</dt><dd>When a difference exists, the screen searches for entries whose amounts match the gap exactly and offers them. That turns the hardest part of reconciliation — finding which entry is wrong — from a manual scan into a suggestion.</dd>
+      <dd class="to"><strong>Trade-off:</strong> the suggestion can be a coincidence, so it is offered rather than applied. An empty cleared-date field means "no upper bound", never "today", which is less convenient and avoids silently clearing future-dated entries.</dd>
+    </dl>
+  </div>
+
+  <div class="screen">
+    <div class="hd">Diagnostics <span class="path">/diagnostics · diagnostics/page.tsx</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>Eleven integrity checks over the vault: decryptability, ledger balance, posting coverage, orphaned accounts, balance-sheet balance, money-value cleanliness, attachment links, purchase dates, lot reconciliation and exchange-rate presence and staleness.</dd>
+      <dt>Built with</dt><dd>Pure functions returning ok, warn or error with the offending record identifiers, and a stable check id that maps each failure to the screen that fixes it.</dd>
+      <dt>Why</dt><dd><strong>Nothing on this screen writes.</strong> A diagnostic that repairs silently destroys the evidence of how the corruption happened, and the second occurrence is then unexplainable. Restore is gated on an explicit allowlist of four structural checks rather than on severity, because a restore blocked by an exchange rate nobody had entered yet is a file the user cannot get back into.</dd>
+      <dd class="to"><strong>Trade-off:</strong> the user has to act on what they are told instead of pressing one button. The alternative trades a debuggable system for a convenient one.</dd>
+    </dl>
+  </div>
+
+  <div class="screen">
+    <div class="hd">Settings <span class="path">/settings · settings/page.tsx</span></div>
+    <dl>
+      <dt>Purpose</dt><dd>The largest screen in the product: appearance, profiles, notifications, privacy, storage, backup and restore, currency, sample data, lock and wipe.</dd>
+      <dt>Built with</dt><dd>Two external-store subscriptions for notification preferences and browser permission state, so the toggle reflects the platform rather than the app's belief about it.</dd>
+      <dt>Why</dt><dd>Three details earn their place. Permission is requested on a click and "on" is never recorded if the browser says no. Storage durability is surfaced as a row with a retry, because Safari evicts script-writable storage after roughly seven days of no visits and a finance app silently losing its database is unacceptable. And export and restore take <em>separate</em> passphrases, so a backup can be handed over without handing over the vault PIN.</dd>
+      <dd class="to"><strong>Trade-off:</strong> two passphrases to remember instead of one, and a settings screen long enough to need its own navigation. Both are the cost of a local-first app having to expose the platform realities a server would otherwise absorb.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ══════════════════════════ 05 ══════════════════════════ -->
+<section>
+  <h2><span class="num">Section 05</span><span class="t">System architecture</span></h2>
   <p class="lead">One product, two independently implemented clients, four rings each, and a domain core that imports no framework at all.</p>
 
   <figure>
@@ -285,9 +506,479 @@
   </div>
 </section>
 
-<!-- ══════════════════════════ 05 ══════════════════════════ -->
+<!-- ══════════════════════════ 06 ══════════════════════════ -->
 <section>
-  <h2><span class="num">Section 05</span><span class="t">Data and persistence</span></h2>
+  <h2><span class="num">Section 06</span><span class="t">Architecture at four levels</span></h2>
+  <p class="lead">The same system drawn at four magnifications — context, container, component and code. Each level answers a question the level above it raises and the level below it cannot see.</p>
+
+  <h3><span class="lvl">L1</span>System context</h3>
+  <p>The context diagram of a normal finance application is busy: an API gateway, an identity provider, a database cluster, an aggregator such as Plaid, an analytics pipeline, a payment processor. Khazana's is almost empty, and that emptiness is the product.</p>
+
+  <figure>
+    <svg viewBox="0 0 660 290" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+      <!-- user -->
+      <circle cx="90" cy="60" r="16" fill="#FFFFFF" stroke="#1B2340" stroke-width="1.3"/>
+      <path d="M90 76 L90 104 M74 88 L106 88 M90 104 L78 124 M90 104 L102 124" stroke="#1B2340" stroke-width="1.3" fill="none"/>
+      <text x="90" y="142" font-size="9.5" font-weight="700" fill="#1B2340" text-anchor="middle">Person</text>
+      <text x="90" y="154" font-size="7.6" fill="#6C7285" text-anchor="middle">Owns the device</text>
+      <text x="90" y="165" font-size="7.6" fill="#6C7285" text-anchor="middle">and the only key</text>
+
+      <!-- system -->
+      <rect x="216" y="30" width="228" height="150" rx="4" fill="#1B2340"/>
+      <text x="330" y="66" font-size="13" font-weight="700" fill="#FFFDF8" text-anchor="middle">Khazana</text>
+      <text x="330" y="84" font-size="8.2" fill="#BFC3D2" text-anchor="middle">Personal finance and wealth</text>
+      <text x="330" y="97" font-size="8.2" fill="#BFC3D2" text-anchor="middle">Runs entirely on the device</text>
+      <rect x="240" y="112" width="180" height="1" fill="#454C6B"/>
+      <text x="330" y="132" font-size="8" fill="#E8A33D" text-anchor="middle">No account · No backend</text>
+      <text x="330" y="146" font-size="8" fill="#E8A33D" text-anchor="middle">No telemetry · No recovery</text>
+      <text x="330" y="164" font-size="7.6" fill="#8A90A8" text-anchor="middle">Data at rest: AES-256, key from the PIN</text>
+
+      <!-- user arrow -->
+      <path d="M126 84 L212 84" stroke="#1B2340" stroke-width="1.3" fill="none"/>
+      <path d="M206 80 L214 84 L206 88 Z" fill="#1B2340"/>
+      <text x="169" y="78" font-size="7.2" fill="#6C7285" text-anchor="middle">PIN, entries</text>
+
+      <!-- keychain -->
+      <rect x="480" y="30" width="172" height="52" rx="3" fill="#F4F1EA" stroke="#DFDACF"/>
+      <text x="566" y="50" font-size="9" font-weight="700" fill="#1B2340" text-anchor="middle">OS keychain / keystore</text>
+      <text x="566" y="64" font-size="7.4" fill="#6C7285" text-anchor="middle">Stores the salt and a verifier —</text>
+      <text x="566" y="74" font-size="7.4" fill="#6C7285" text-anchor="middle">by default, never the key</text>
+      <path d="M446 56 L476 56" stroke="#3D4A8C" stroke-width="1.2" fill="none"/>
+      <path d="M470 52 L478 56 L470 60 Z" fill="#3D4A8C"/>
+
+      <!-- yahoo -->
+      <rect x="480" y="96" width="172" height="52" rx="3" fill="#FDF6E8" stroke="#E8C98A" stroke-dasharray="3 2"/>
+      <text x="566" y="116" font-size="9" font-weight="700" fill="#1B2340" text-anchor="middle">Yahoo Finance</text>
+      <text x="566" y="130" font-size="7.4" fill="#8A6A22" text-anchor="middle">Opt-in quotes · desktop only</text>
+      <text x="566" y="140" font-size="7.4" fill="#8A6A22" text-anchor="middle">Allowlisted to one host in Rust</text>
+      <path d="M446 122 L476 122" stroke="#E8A33D" stroke-width="1.2" fill="none" stroke-dasharray="3 2"/>
+      <path d="M470 118 L478 122 L470 126 Z" fill="#E8A33D"/>
+
+      <!-- stores -->
+      <rect x="480" y="162" width="172" height="40" rx="3" fill="#F4F1EA" stroke="#DFDACF"/>
+      <text x="566" y="180" font-size="9" font-weight="700" fill="#1B2340" text-anchor="middle">App Store · Play · Netlify</text>
+      <text x="566" y="193" font-size="7.4" fill="#6C7285" text-anchor="middle">Distribution only. Never data.</text>
+      <path d="M446 176 L476 180" stroke="#9AA0B0" stroke-width="1.2" fill="none"/>
+      <path d="M470 175 L478 180 L469 183 Z" fill="#9AA0B0"/>
+
+      <rect x="8" y="222" width="644" height="52" rx="3" fill="#F4F1EA" stroke="#DFDACF"/>
+      <text x="24" y="242" font-size="8.6" font-weight="700" fill="#1B2340">What crosses the boundary</text>
+      <text x="24" y="257" font-size="7.8" fill="#3A415C">Outbound: a list of ticker symbols, only if the user turns live prices on, only on desktop, only to one allowlisted host.</text>
+      <text x="24" y="268" font-size="7.8" fill="#3A415C">Inbound: quoted prices. Nothing else leaves, and there is no endpoint that could receive it — the web build's policy sets connect-src to 'self'.</text>
+    </svg>
+    <figcaption>L1 — system context. Three external actors, of which one is optional, one is the operating system and one is a distribution channel. The single dashed edge is the entire network surface of the product.</figcaption>
+  </figure>
+
+  <h3><span class="lvl">L2</span>Containers</h3>
+  <p>Five deployable things, and — the point of the diagram — <em>no arrow between the two clients</em>. They share source-level design and a file format, not a connection. Two devices reconcile by one exporting an encrypted backup and the other importing it, which is why the merge had to be a deterministic function rather than a protocol.</p>
+
+  <figure>
+    <svg viewBox="0 0 660 340" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+      <!-- flutter column -->
+      <rect x="8" y="8" width="204" height="196" rx="3" fill="#F4F1EA" stroke="#DFDACF"/>
+      <text x="110" y="30" font-size="10.5" font-weight="700" fill="#1B2340" text-anchor="middle">Flutter application</text>
+      <text x="110" y="43" font-size="7.6" fill="#6C7285" text-anchor="middle">Dart · iOS, Android, macOS</text>
+      <rect x="24" y="56" width="172" height="44" rx="2" fill="#FFFFFF" stroke="#C9C3B6"/>
+      <text x="110" y="74" font-size="8.4" font-weight="700" fill="#1B2340" text-anchor="middle">Riverpod · go_router</text>
+      <text x="110" y="88" font-size="7.4" fill="#6C7285" text-anchor="middle">27 screens, 6 CustomPainters</text>
+      <rect x="24" y="108" width="172" height="52" rx="2" fill="#1B2340"/>
+      <text x="110" y="126" font-size="8.4" font-weight="700" fill="#FFFDF8" text-anchor="middle">SQLCipher SQLite</text>
+      <text x="110" y="139" font-size="7.4" fill="#BFC3D2" text-anchor="middle">Whole file encrypted</text>
+      <text x="110" y="151" font-size="7.4" fill="#BFC3D2" text-anchor="middle">23 tables · FTS5 · Drift DAOs</text>
+      <text x="110" y="178" font-size="7.4" fill="#6C7285" text-anchor="middle">Keychain / Keystore holds</text>
+      <text x="110" y="189" font-size="7.4" fill="#6C7285" text-anchor="middle">the salt and the verifier</text>
+
+      <!-- web column -->
+      <rect x="448" y="8" width="204" height="196" rx="3" fill="#F4F1EA" stroke="#DFDACF"/>
+      <text x="550" y="30" font-size="10.5" font-weight="700" fill="#1B2340" text-anchor="middle">Next.js application</text>
+      <text x="550" y="43" font-size="7.6" fill="#6C7285" text-anchor="middle">TypeScript · web, PWA, desktop</text>
+      <rect x="464" y="56" width="172" height="44" rx="2" fill="#FFFFFF" stroke="#C9C3B6"/>
+      <text x="550" y="74" font-size="8.4" font-weight="700" fill="#1B2340" text-anchor="middle">Zustand · App Router</text>
+      <text x="550" y="88" font-size="7.4" fill="#6C7285" text-anchor="middle">32 routes, 9 SVG charts</text>
+      <rect x="464" y="108" width="172" height="52" rx="2" fill="#1B2340"/>
+      <text x="550" y="126" font-size="8.4" font-weight="700" fill="#FFFDF8" text-anchor="middle">Dexie / IndexedDB</text>
+      <text x="550" y="139" font-size="7.4" fill="#BFC3D2" text-anchor="middle">Per-record AES-256-GCM</text>
+      <text x="550" y="151" font-size="7.4" fill="#BFC3D2" text-anchor="middle">Only id, type and vault in clear</text>
+      <text x="550" y="178" font-size="7.4" fill="#6C7285" text-anchor="middle">Salt in IndexedDB;</text>
+      <text x="550" y="189" font-size="7.4" fill="#6C7285" text-anchor="middle">the key is never persisted</text>
+
+      <!-- tauri -->
+      <rect x="448" y="216" width="204" height="48" rx="3" fill="#FFFFFF" stroke="#C9C3B6"/>
+      <text x="550" y="234" font-size="8.8" font-weight="700" fill="#1B2340" text-anchor="middle">Tauri 2 shell — Rust</text>
+      <text x="550" y="248" font-size="7.4" fill="#6C7285" text-anchor="middle">Windows, macOS, Linux. Holds the</text>
+      <text x="550" y="258" font-size="7.4" fill="#6C7285" text-anchor="middle">file, dialog and HTTP capability grants.</text>
+      <path d="M550 204 L550 212" stroke="#3D4A8C" stroke-width="1.2" fill="none"/>
+      <path d="M546 207 L550 214 L554 207 Z" fill="#3D4A8C"/>
+
+      <!-- shared core -->
+      <rect x="228" y="56" width="204" height="104" rx="3" fill="#2E2A1E" stroke="#E8A33D"/>
+      <text x="330" y="80" font-size="10" font-weight="700" fill="#E8A33D" text-anchor="middle">One domain design,</text>
+      <text x="330" y="94" font-size="10" font-weight="700" fill="#E8A33D" text-anchor="middle">written twice</text>
+      <text x="330" y="114" font-size="7.6" fill="#D8CEB4" text-anchor="middle">27 Dart services · 30 TS modules</text>
+      <text x="330" y="127" font-size="7.6" fill="#D8CEB4" text-anchor="middle">Not shared code. Not FFI. Not WASM.</text>
+      <text x="330" y="144" font-size="7.6" fill="#FFFFFF" text-anchor="middle">Held together by mirrored tests</text>
+      <path d="M216 100 L224 100" stroke="#E8A33D" stroke-width="1.2"/>
+      <path d="M436 100 L444 100" stroke="#E8A33D" stroke-width="1.2"/>
+
+      <!-- backup file -->
+      <rect x="196" y="216" width="236" height="48" rx="3" fill="#FDF6E8" stroke="#E8C98A"/>
+      <text x="314" y="234" font-size="8.8" font-weight="700" fill="#1B2340" text-anchor="middle">Encrypted backup file (.ftos)</text>
+      <text x="314" y="248" font-size="7.4" fill="#8A6A22" text-anchor="middle">The only channel between the two clients.</text>
+      <text x="314" y="258" font-size="7.4" fill="#8A6A22" text-anchor="middle">Own passphrase, own envelope, own digest.</text>
+      <path d="M110 204 L110 240 L192 240" stroke="#E8A33D" stroke-width="1.2" fill="none"/>
+      <path d="M186 236 L194 240 L186 244 Z" fill="#E8A33D"/>
+      <path d="M550 268 L550 288 L314 288 L314 268" stroke="#E8A33D" stroke-width="1.2" fill="none"/>
+      <path d="M310 274 L314 266 L318 274 Z" fill="#E8A33D"/>
+
+      <text x="330" y="312" font-size="7.8" fill="#6C7285" text-anchor="middle">There is deliberately no arrow from one client to the other. They never connect; they exchange a file the user carries.</text>
+      <text x="330" y="328" font-size="7.8" fill="#6C7285" text-anchor="middle">That constraint is what forced the merge to be a pure, symmetric function rather than a synchronisation protocol.</text>
+    </svg>
+    <figcaption>L2 — containers. Five deployables, one file format, zero network links between them.</figcaption>
+  </figure>
+
+  <h3><span class="lvl">L3</span>Components</h3>
+  <p>Inside each client, four rings with dependencies pointing strictly inward — the model already drawn in Section 05. What that section does not show is the <em>enforcement</em>: the domain ring imports no framework, performs no input and output, and takes no clock. Time is passed in, which is why a forecast can be tested at an arbitrary date without mocking a system call.</p>
+  <table class="compact">
+    <thead><tr><th style="width:20%">Ring</th><th style="width:38%">Flutter</th><th>Next.js</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Presentation</td><td><code>lib/presentation</code>, <code>lib/features/*/screens</code></td><td><code>src/app</code>, <code>src/components</code></td></tr>
+      <tr><td class="k">State</td><td><code>lib/features/*/providers</code> — Riverpod</td><td><code>src/lib/store.ts</code> — one Zustand store</td></tr>
+      <tr><td class="k">Data</td><td><code>lib/data</code> — 16 DAOs, 13 repositories</td><td><code>src/lib/repo.ts</code>, <code>db.ts</code></td></tr>
+      <tr><td class="k">Domain</td><td><code>lib/domain</code> — 27 services, repository interfaces</td><td><code>src/domain</code> — 30 modules</td></tr>
+    </tbody>
+  </table>
+  <p>The dependency inversion is real rather than decorative: the domain ring declares repository <em>interfaces</em>, and the data ring implements them. A health score depends on the shape of an account, never on Drift.</p>
+
+  <h3><span class="lvl">L4</span>Code</h3>
+  <p>At the innermost level the diagram stops being useful and the type signatures take over. Four of them carry most of the system's guarantees, and they are set out in Section 07.</p>
+</section>
+
+<!-- ══════════════════════════ 07 ══════════════════════════ -->
+<section>
+  <h2><span class="num">Section 07</span><span class="t">High-level and low-level design</span></h2>
+  <p class="lead">The design as it would be handed to another engineer: first the decomposition and the reasoning, then the contracts precise enough to implement against.</p>
+
+  <h3>High-level design</h3>
+  <p>The whole system falls out of one constraint that was fixed before any code was written: <strong>no server, ever</strong>. Not a light one, not one "just for sync", not one "just to validate licences". Everything below is downstream of that refusal.</p>
+
+  <table>
+    <thead><tr><th style="width:26%">Problem a server usually solves</th><th style="width:34%">How it is solved instead</th><th>What that cost</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Authentication</td><td>A PIN stretched into the encryption key. There is no account, so there is no session, token, refresh or revocation.</td><td>No recovery. A forgotten PIN is a destroyed vault, stated plainly rather than hedged.</td></tr>
+      <tr><td class="k">Multi-device sync</td><td>Deterministic last-write-wins merge over exported backups, with 90-day tombstones so a delete is not undone by a stale copy.</td><td>Not real time. The user carries the file, and the merge must be symmetric — same result whichever side runs it.</td></tr>
+      <tr><td class="k">Licence validation</td><td>Ed25519 signature verified offline. The key encodes a payload and a signature; no server learns who runs the app.</td><td>A leaked key cannot be revoked. Accepted: the alternative is an activation server, which is the thing being refused.</td></tr>
+      <tr><td class="k">Schema migration</td><td>Idempotent migrations with deterministic identifiers, running on a database that can never be inspected or rolled back centrally.</td><td>Every migration must be correct the first time, on data nobody has ever seen.</td></tr>
+      <tr><td class="k">Crash reporting</td><td>An encrypted local ring buffer, drained into a log database once the vault opens. User-initiated, never transmitted.</td><td>No aggregate view of failures across users. The trade is deliberate: an error message here can quote a merchant and an amount.</td></tr>
+      <tr><td class="k">Price data</td><td>One allowlisted host, opt-in, desktop only, routed through Rust because the endpoint sends no permissive headers.</td><td>Mobile and browser users enter prices by hand or import them.</td></tr>
+    </tbody>
+  </table>
+
+  <p>Module decomposition follows the same logic. The domain ring is split by financial concern rather than by screen — <code>health</code>, <code>forecast</code>, <code>tax</code>, <code>lots</code>, <code>reconcile</code>, <code>statements</code>, <code>safetyNet</code>, <code>recurrence</code>, <code>analytics</code> — because a screen is a presentation decision and a concern is not. Several screens read <code>health</code>; none of them own it.</p>
+
+  <h3>Low-level design</h3>
+  <p>Four contracts carry a disproportionate share of the system's correctness.</p>
+
+  <h4>1 · Money is text, and aggregation happens in the language</h4>
+  <pre><code><span class="c">// lib/data/database/converters.dart</span>
+class DecimalConverter extends TypeConverter&lt;Decimal, String&gt; {
+  Decimal fromSql(String fromDb) =&gt; Decimal.parse(fromDb);
+  String   toSql(Decimal value)  =&gt; value.toString();
+}</code></pre>
+  <p>Money columns are <code>TEXT</code>, never <code>REAL</code>. The consequence is followed through rather than forgotten: because the column is text, <code>SUM()</code> would sort and add lexicographically, so no query in the codebase uses it. Every DAO returns rows, and totals are computed in Dart over <code>Decimal</code> — or in TypeScript over <code>decimal.js</code> at thirty digits of precision. The web-side parser is deliberately tolerant, stripping currency symbols, group separators, non-breaking spaces and accounting parentheses, and returning zero with a warning rather than throwing: it is called during render, so one malformed record used to take a whole screen down on every paint. The record that needed rescuing is then reported by the diagnostics check rather than quietly forgiven.</p>
+
+  <h4>2 · A journal entry and its legs commit together or not at all</h4>
+  <pre><code><span class="c">// webapp/src/lib/repo.ts</span>
+export async function applyMutations(key, vaultId, mutations: Mutation[]) {
+  <span class="c">// Encryption happens up front, deliberately outside the transaction:</span>
+  <span class="c">// awaiting a non-Dexie promise inside a Dexie transaction drops out of</span>
+  <span class="c">// its zone and the transaction commits early, defeating the point.</span>
+  await db.transaction('rw', db.records, async () =&gt; {
+    if (deletes.length) await db.records.bulkDelete(deletes);
+    if (puts.length)    await db.records.bulkPut(puts);
+  });
+}</code></pre>
+  <p>A transaction and its two ledger legs are one financial event. They were once three sequential writes, and a failure between them left an entry with a single leg — an unbalanced ledger, which is the one state the whole double-entry model exists to make impossible. The comment about zones is the load-bearing part: the naive fix, awaiting the encryption inside the transaction, would have looked correct and silently committed early.</p>
+
+  <h4>3 · Migrations are idempotent because they can never be inspected</h4>
+  <pre><code><span class="c">// lib/data/database/app_database.dart — schemaVersion = 6</span>
+onUpgrade: (m, from, to) async {
+  if (from &lt; 2) { await m.createTable(insurances); await m.createTable(netWorthSnapshots); }
+  if (from &lt; 3) { await _migrateToDoubleEntry(m); }        <span class="c">// single entry → two legs</span>
+  if (from &lt; 4) { await _migrateToLotLevelPortfolio(m); }  <span class="c">// aggregate rows → lots</span>
+  if (from &lt; 5) { await m.addColumn(netWorthSnapshots, netWorthSnapshots.healthScore); }
+  if (from &lt; 6) { await m.createTable(notificationDeliveries); }
+}</code></pre>
+  <p>Version 3 is the interesting one: it converts every single-entry transaction into a balanced pair and seeds a chart of accounts using <em>deterministic</em> identifiers — <code>acct-cash-$vault</code>, <code>acct-exp-$category</code> — so re-running it cannot create a second cash account. New columns are nullable by default, and the health-score columns specifically refuse to back-date invented history: a vault that has no score for last March shows nothing there, not zero.</p>
+
+  <h4>4 · The backup envelope is a format, not a serialisation</h4>
+  <table class="compact">
+    <thead><tr><th style="width:24%">Offset</th><th>Field</th></tr></thead>
+    <tbody>
+      <tr><td class="k">0x0000</td><td>Magic <code>FTOS</code> — so a wrong file is rejected as a wrong file</td></tr>
+      <tr><td class="k">0x0004</td><td>Envelope version (currently 3; versions 1 and 2 still restore)</td></tr>
+      <tr><td class="k">…</td><td>Schema version, app version, 64-bit timestamp, plaintext size</td></tr>
+      <tr><td class="k">…</td><td>32-byte SHA-256 of the plaintext, compared in constant time</td></tr>
+      <tr><td class="k">…</td><td>12-byte GCM nonce, then ciphertext, with the 16-byte tag at end of file</td></tr>
+    </tbody>
+  </table>
+  <p>A wrong passphrase and a tampered file return the <em>same</em> error, deliberately. Distinguishing them would turn the restore screen into an oracle for guessing passphrases against a stolen backup. Restore validates the file's contents before writing anything, applies the whole thing in one transaction, and remaps incoming profile identifiers onto the receiving device's own — the omission that once wrote 367 intact records where no screen could see them.</p>
+
+  <h4>Algorithms worth naming</h4>
+  <table class="compact">
+    <thead><tr><th style="width:24%">Algorithm</th><th>Choice and the reason for it</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Key derivation</td><td>PBKDF2-HMAC-SHA256, 600,000 iterations, 32-byte salt. Off the UI isolate on native; native Web Crypto on the web.</td></tr>
+      <tr><td class="k">FIFO lot matching</td><td>Not configurable. Choosing an accounting method you are not entitled to produces a return you cannot file.</td></tr>
+      <tr><td class="k">XIRR</td><td>Bisection over −99.99% to 1000%, 200 iterations, tolerance 1e-7. Newton–Raphson is faster but diverges on the sign-changing series real portfolios produce.</td></tr>
+      <tr><td class="k">Recurrence</td><td><code>advance()</code> clamps month ends. Naive date arithmetic overflows — 31 January plus one month becomes 31 February — so a rule dated the 31st skipped February and posted twice in March.</td></tr>
+      <tr><td class="k">Merge</td><td>Last-write-wins per record with 90-day tombstones, symmetric by construction so both devices reach the same state.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════ 08 ══════════════════════════ -->
+<section>
+  <h2><span class="num">Section 08</span><span class="t">The model in UML</span></h2>
+  <p class="lead">Four diagrams, each included because it states something the prose around it cannot: a shape, an ordering, or a set of states and the transitions between them.</p>
+
+  <h3>Entity relationships — the ledger core</h3>
+  <p>Twenty-three tables is too many to draw legibly and mostly uninteresting. What matters is the spine: a journal entry owns postings that must sum to zero, and a lot-level portfolio hangs off instruments rather than off aggregated positions.</p>
+
+  <figure>
+    <svg viewBox="0 0 660 330" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+      <!-- Transactions -->
+      <rect x="20" y="18" width="150" height="76" rx="2" fill="#FFFFFF" stroke="#1B2340" stroke-width="1.2"/>
+      <rect x="20" y="18" width="150" height="18" fill="#1B2340"/>
+      <text x="95" y="31" font-size="8.4" font-weight="700" fill="#FFFDF8" text-anchor="middle">Transactions</text>
+      <text x="28" y="50" font-size="7.2" fill="#1B2340">PK  id</text>
+      <text x="28" y="61" font-size="7.2" fill="#3A415C">    vaultId, date, type</text>
+      <text x="28" y="72" font-size="7.2" fill="#3A415C">    amount : Decimal → TEXT</text>
+      <text x="28" y="83" font-size="7.2" fill="#3A415C">    categoryId, merchant</text>
+
+      <!-- Postings -->
+      <rect x="250" y="18" width="160" height="76" rx="2" fill="#FFFFFF" stroke="#1B2340" stroke-width="1.2"/>
+      <rect x="250" y="18" width="160" height="18" fill="#1B2340"/>
+      <text x="330" y="31" font-size="8.4" font-weight="700" fill="#FFFDF8" text-anchor="middle">Postings</text>
+      <text x="258" y="50" font-size="7.2" fill="#1B2340">PK  id</text>
+      <text x="258" y="61" font-size="7.2" fill="#3A415C">FK  entryId → Transactions</text>
+      <text x="258" y="72" font-size="7.2" fill="#3A415C">FK  accountId → Accounts</text>
+      <text x="258" y="83" font-size="7.2" fill="#A8402F">    amount, debit-signed</text>
+
+      <!-- Accounts -->
+      <rect x="490" y="18" width="150" height="76" rx="2" fill="#FFFFFF" stroke="#1B2340" stroke-width="1.2"/>
+      <rect x="490" y="18" width="150" height="18" fill="#1B2340"/>
+      <text x="565" y="31" font-size="8.4" font-weight="700" fill="#FFFDF8" text-anchor="middle">Accounts</text>
+      <text x="498" y="50" font-size="7.2" fill="#1B2340">PK  id</text>
+      <text x="498" y="61" font-size="7.2" fill="#3A415C">    kind, name</text>
+      <text x="498" y="72" font-size="7.2" fill="#3A415C">    openingBalance</text>
+      <text x="498" y="83" font-size="7.2" fill="#3A415C">    archived</text>
+
+      <path d="M170 56 L246 56" stroke="#1B2340" stroke-width="1.1" fill="none"/>
+      <text x="208" y="51" font-size="7" fill="#6C7285" text-anchor="middle">1 ── 2..n</text>
+      <path d="M410 56 L486 56" stroke="#1B2340" stroke-width="1.1" fill="none"/>
+      <text x="448" y="51" font-size="7" fill="#6C7285" text-anchor="middle">n ── 1</text>
+
+      <!-- invariant band -->
+      <rect x="20" y="106" width="620" height="26" rx="2" fill="#2E2A1E"/>
+      <text x="330" y="123" font-size="8.6" font-weight="700" fill="#E8A33D" text-anchor="middle">INVARIANT · postings sharing an entryId sum to exactly zero — asserted by the integrity suite, checked again at runtime by /diagnostics</text>
+
+      <!-- lot model -->
+      <rect x="20" y="152" width="150" height="66" rx="2" fill="#FFFFFF" stroke="#1B2340" stroke-width="1.2"/>
+      <rect x="20" y="152" width="150" height="18" fill="#3D4A8C"/>
+      <text x="95" y="165" font-size="8.4" font-weight="700" fill="#FFFDF8" text-anchor="middle">Instruments</text>
+      <text x="28" y="184" font-size="7.2" fill="#1B2340">PK  id</text>
+      <text x="28" y="195" font-size="7.2" fill="#3A415C">    symbol, isin, exchange</text>
+      <text x="28" y="206" font-size="7.2" fill="#3A415C">    sector, sectorOverride</text>
+
+      <rect x="250" y="152" width="160" height="66" rx="2" fill="#FFFFFF" stroke="#1B2340" stroke-width="1.2"/>
+      <rect x="250" y="152" width="160" height="18" fill="#3D4A8C"/>
+      <text x="330" y="165" font-size="8.4" font-weight="700" fill="#FFFDF8" text-anchor="middle">Trades</text>
+      <text x="258" y="184" font-size="7.2" fill="#3A415C">FK  instrumentId</text>
+      <text x="258" y="195" font-size="7.2" fill="#3A415C">    side, qty, price, date</text>
+      <text x="258" y="206" font-size="7.2" fill="#A8402F">    brokerage, stt, stampDuty, gst</text>
+
+      <rect x="490" y="152" width="150" height="66" rx="2" fill="#FFFFFF" stroke="#1B2340" stroke-width="1.2"/>
+      <rect x="490" y="152" width="150" height="18" fill="#3D4A8C"/>
+      <text x="565" y="165" font-size="8.4" font-weight="700" fill="#FFFDF8" text-anchor="middle">InstrumentPrices</text>
+      <text x="498" y="184" font-size="7.2" fill="#3A415C">FK  instrumentId</text>
+      <text x="498" y="195" font-size="7.2" fill="#3A415C">    asOf : date</text>
+      <text x="498" y="206" font-size="7.2" fill="#3A415C">    price, source</text>
+
+      <path d="M170 185 L246 185" stroke="#1B2340" stroke-width="1.1" fill="none"/>
+      <text x="208" y="180" font-size="7" fill="#6C7285" text-anchor="middle">1 ── n</text>
+      <path d="M170 176 L200 176 L200 140 L560 140 L560 148" stroke="#1B2340" stroke-width="1.1" fill="none" stroke-dasharray="2 2"/>
+      <text x="380" y="136" font-size="7" fill="#6C7285" text-anchor="middle">1 ── n (a dated series, not a column)</text>
+
+      <rect x="20" y="234" width="300" height="48" rx="2" fill="#F4F1EA" stroke="#DFDACF"/>
+      <text x="32" y="251" font-size="8" font-weight="700" fill="#1B2340">Why charges are columns on Trades</text>
+      <text x="32" y="265" font-size="7.3" fill="#3A415C">Brokerage, STT, stamp duty and GST belong to the</text>
+      <text x="32" y="275" font-size="7.3" fill="#3A415C">acquisition. Cost basis is wrong without them.</text>
+
+      <rect x="340" y="234" width="300" height="48" rx="2" fill="#F4F1EA" stroke="#DFDACF"/>
+      <text x="352" y="251" font-size="8" font-weight="700" fill="#1B2340">Why prices are a table, not a column</text>
+      <text x="352" y="265" font-size="7.3" fill="#3A415C">"As on" valuation, day change and staleness all need</text>
+      <text x="352" y="275" font-size="7.3" fill="#3A415C">history. A single column can answer none of them.</text>
+
+      <text x="330" y="306" font-size="7.6" fill="#6C7285" text-anchor="middle">The remaining seventeen tables — budgets, goals, liabilities, insurance, snapshots, recurring rules, dividends, fund holdings,</text>
+      <text x="330" y="318" font-size="7.6" fill="#6C7285" text-anchor="middle">benchmarks, captures, fingerprints, aliases, FX rates, notification deliveries — hang off this spine without complicating it.</text>
+    </svg>
+    <figcaption>Entity relationships. The amber band is the invariant the double-entry design exists to protect; everything above it is structure, and everything below it is the portfolio model that replaced aggregated positions in schema version 4.</figcaption>
+  </figure>
+
+  <h3>Class structure — dependency inversion across the rings</h3>
+  <figure>
+    <svg viewBox="0 0 660 250" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+      <text x="20" y="16" font-size="7.4" font-weight="700" fill="#6C7285" letter-spacing="1">DOMAIN RING — lib/domain</text>
+      <rect x="20" y="24" width="200" height="62" rx="2" fill="#2E2A1E" stroke="#E8A33D"/>
+      <text x="120" y="42" font-size="8.6" font-weight="700" fill="#E8A33D" text-anchor="middle">«interface»</text>
+      <text x="120" y="55" font-size="8.6" font-weight="700" fill="#FFFDF8" text-anchor="middle">TransactionRepository</text>
+      <text x="30" y="70" font-size="7.2" fill="#D8CEB4">+ watchForVault(id) : Stream</text>
+      <text x="30" y="81" font-size="7.2" fill="#D8CEB4">+ save(Transaction) : Future</text>
+
+      <rect x="244" y="24" width="180" height="62" rx="2" fill="#2E2A1E" stroke="#E8A33D"/>
+      <text x="334" y="42" font-size="8.6" font-weight="700" fill="#FFFDF8" text-anchor="middle">FinancialHealth</text>
+      <text x="254" y="58" font-size="7.2" fill="#D8CEB4">+ score(Snapshot) : Score?</text>
+      <text x="254" y="69" font-size="7.2" fill="#D8CEB4">pure · no I/O · no clock</text>
+      <text x="254" y="80" font-size="7.2" fill="#E8A33D">returns null, never a fake 0</text>
+
+      <rect x="448" y="24" width="192" height="62" rx="2" fill="#2E2A1E" stroke="#E8A33D"/>
+      <text x="544" y="42" font-size="8.6" font-weight="700" fill="#FFFDF8" text-anchor="middle">Money — Decimal</text>
+      <text x="458" y="58" font-size="7.2" fill="#D8CEB4">arbitrary precision, both sides</text>
+      <text x="458" y="69" font-size="7.2" fill="#D8CEB4">+ toWords() — Indian numbering,</text>
+      <text x="458" y="80" font-size="7.2" fill="#D8CEB4">for screen readers</text>
+
+      <text x="20" y="116" font-size="7.4" font-weight="700" fill="#6C7285" letter-spacing="1">DATA RING — lib/data</text>
+      <rect x="20" y="124" width="200" height="56" rx="2" fill="#FFFFFF" stroke="#1B2340" stroke-width="1.2"/>
+      <text x="120" y="142" font-size="8.6" font-weight="700" fill="#1B2340" text-anchor="middle">DriftTransactionRepository</text>
+      <text x="30" y="157" font-size="7.2" fill="#3A415C">– TransactionDao dao</text>
+      <text x="30" y="168" font-size="7.2" fill="#3A415C">maps rows ⇄ domain entities</text>
+
+      <rect x="244" y="124" width="180" height="56" rx="2" fill="#FFFFFF" stroke="#1B2340" stroke-width="1.2"/>
+      <text x="334" y="142" font-size="8.6" font-weight="700" fill="#1B2340" text-anchor="middle">AppDatabase</text>
+      <text x="254" y="157" font-size="7.2" fill="#3A415C">23 tables · 16 DAOs</text>
+      <text x="254" y="168" font-size="7.2" fill="#3A415C">schemaVersion = 6 · FTS5</text>
+
+      <rect x="448" y="124" width="192" height="56" rx="2" fill="#FFFFFF" stroke="#1B2340" stroke-width="1.2"/>
+      <text x="544" y="142" font-size="8.6" font-weight="700" fill="#1B2340" text-anchor="middle">EncryptedExecutor</text>
+      <text x="458" y="157" font-size="7.2" fill="#3A415C">PRAGMA key over SQLCipher</text>
+      <text x="458" y="168" font-size="7.2" fill="#A8402F">overrides system SQLite</text>
+
+      <!-- realization arrow: hollow triangle, dashed -->
+      <path d="M120 122 L120 92" stroke="#1B2340" stroke-width="1.1" fill="none" stroke-dasharray="4 3"/>
+      <path d="M114 94 L120 84 L126 94 Z" fill="#FAF8F4" stroke="#1B2340" stroke-width="1.1"/>
+      <text x="128" y="108" font-size="7" fill="#6C7285">implements</text>
+
+      <path d="M240 152 L228 152" stroke="#1B2340" stroke-width="1.1" fill="none"/>
+      <path d="M234 148 L226 152 L234 156 Z" fill="#1B2340"/>
+      <path d="M444 152 L432 152" stroke="#1B2340" stroke-width="1.1" fill="none"/>
+      <path d="M438 148 L430 152 L438 156 Z" fill="#1B2340"/>
+
+      <rect x="20" y="200" width="620" height="38" rx="2" fill="#F4F1EA" stroke="#DFDACF"/>
+      <text x="32" y="216" font-size="7.8" fill="#3A415C">The one arrow that matters points <tspan font-weight="700">up</tspan>, from the data ring to the domain ring. Nothing in the domain ring names Drift, SQLite, Riverpod or React.</text>
+      <text x="32" y="229" font-size="7.8" fill="#3A415C">That is the property that made the layer portable from Dart to TypeScript by hand, and testable in microseconds without a database.</text>
+    </svg>
+    <figcaption>Class structure, abbreviated to the relationship that carries the design. The dashed hollow-triangle edge is a realisation: the implementation depends on the interface, never the reverse.</figcaption>
+  </figure>
+
+  <h3>Sequence — unlocking a vault</h3>
+  <figure>
+    <svg viewBox="0 0 660 286" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+      <g font-size="7.8" font-weight="700" fill="#1B2340" text-anchor="middle">
+        <rect x="18" y="12" width="94" height="22" rx="2" fill="#F4F1EA" stroke="#DFDACF"/><text x="65" y="27">User</text>
+        <rect x="140" y="12" width="94" height="22" rx="2" fill="#F4F1EA" stroke="#DFDACF"/><text x="187" y="27">Unlock gate</text>
+        <rect x="262" y="12" width="110" height="22" rx="2" fill="#F4F1EA" stroke="#DFDACF"/><text x="317" y="27">Key derivation</text>
+        <rect x="400" y="12" width="110" height="22" rx="2" fill="#F4F1EA" stroke="#DFDACF"/><text x="455" y="27">Vault store</text>
+        <rect x="538" y="12" width="104" height="22" rx="2" fill="#F4F1EA" stroke="#DFDACF"/><text x="590" y="27">Router guard</text>
+      </g>
+      <g stroke="#C9C3B6" stroke-width=".8" stroke-dasharray="3 3">
+        <path d="M65 34 L65 260"/><path d="M187 34 L187 260"/><path d="M317 34 L317 260"/><path d="M455 34 L455 260"/><path d="M590 34 L590 260"/>
+      </g>
+      <g font-size="7.2" fill="#3A415C">
+        <path d="M65 54 L183 54" stroke="#1B2340" stroke-width="1.1"/><path d="M177 50 L185 54 L177 58 Z" fill="#1B2340"/>
+        <text x="72" y="49">enters PIN</text>
+
+        <path d="M187 78 L313 78" stroke="#1B2340" stroke-width="1.1"/><path d="M307 74 L315 78 L307 82 Z" fill="#1B2340"/>
+        <text x="194" y="73">deriveKey(pin, salt)</text>
+
+        <rect x="309" y="86" width="16" height="30" fill="#E8A33D" opacity=".28"/>
+        <text x="332" y="98" font-size="7" fill="#8A6A22">PBKDF2-HMAC-SHA256</text>
+        <text x="332" y="108" font-size="7" fill="#8A6A22">600,000 iterations · ≈49 ms · off the UI thread</text>
+
+        <path d="M313 128 L191 128" stroke="#1B2340" stroke-width="1.1" stroke-dasharray="3 2"/><path d="M197 124 L189 128 L197 132 Z" fill="#1B2340"/>
+        <text x="200" y="123">256-bit key, non-extractable</text>
+
+        <path d="M187 152 L451 152" stroke="#1B2340" stroke-width="1.1"/><path d="M445 148 L453 152 L445 156 Z" fill="#1B2340"/>
+        <text x="194" y="147">decrypt the verifier record</text>
+
+        <path d="M451 176 L191 176" stroke="#A8402F" stroke-width="1.1" stroke-dasharray="3 2"/><path d="M197 172 L189 176 L197 180 Z" fill="#A8402F"/>
+        <text x="200" y="171" fill="#A8402F">GCM tag fails → wrong PIN. Counter++ in durable storage, escalating lockout.</text>
+
+        <path d="M451 204 L191 204" stroke="#2E7D5B" stroke-width="1.1" stroke-dasharray="3 2"/><path d="M197 200 L189 204 L197 208 Z" fill="#2E7D5B"/>
+        <text x="200" y="199" fill="#2E7D5B">tag verifies → state becomes Unlocked, key held in memory only</text>
+
+        <path d="M187 228 L586 228" stroke="#1B2340" stroke-width="1.1"/><path d="M580 224 L588 228 L580 232 Z" fill="#1B2340"/>
+        <text x="194" y="223">notify</text>
+
+        <path d="M590 252 L69 252" stroke="#1B2340" stroke-width="1.1"/><path d="M75 248 L67 252 L75 256 Z" fill="#1B2340"/>
+        <text x="200" y="247">redirect releases — to the parked deep link if there was one, otherwise the dashboard</text>
+      </g>
+    </svg>
+    <figcaption>Unlock. The PIN is never stored and never compared; it is used to derive a key, and the key's correctness is established by whether an authenticated-encryption tag verifies. A failure is indistinguishable from a corrupted record by design.</figcaption>
+  </figure>
+
+  <h3>State — the vault lifecycle</h3>
+  <figure>
+    <svg viewBox="0 0 660 200" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+      <circle cx="40" cy="70" r="7" fill="#1B2340"/>
+      <path d="M47 70 L76 70" stroke="#1B2340" stroke-width="1.2"/><path d="M70 66 L78 70 L70 74 Z" fill="#1B2340"/>
+
+      <rect x="80" y="48" width="112" height="44" rx="3" fill="#FFFFFF" stroke="#1B2340" stroke-width="1.3"/>
+      <text x="136" y="68" font-size="9" font-weight="700" fill="#1B2340" text-anchor="middle">Locked</text>
+      <text x="136" y="82" font-size="7.2" fill="#6C7285" text-anchor="middle">no key in memory</text>
+
+      <path d="M192 70 L242 70" stroke="#1B2340" stroke-width="1.2"/><path d="M236 66 L244 70 L236 74 Z" fill="#1B2340"/>
+      <text x="217" y="64" font-size="7" fill="#6C7285" text-anchor="middle">PIN</text>
+
+      <rect x="246" y="48" width="112" height="44" rx="3" fill="#FDF6E8" stroke="#E8A33D" stroke-width="1.3"/>
+      <text x="302" y="68" font-size="9" font-weight="700" fill="#1B2340" text-anchor="middle">Deriving</text>
+      <text x="302" y="82" font-size="7.2" fill="#8A6A22" text-anchor="middle">≈49 ms, off the UI thread</text>
+
+      <path d="M358 70 L408 70" stroke="#2E7D5B" stroke-width="1.2"/><path d="M402 66 L410 70 L402 74 Z" fill="#2E7D5B"/>
+      <text x="383" y="64" font-size="7" fill="#2E7D5B" text-anchor="middle">tag ok</text>
+
+      <rect x="412" y="48" width="118" height="44" rx="3" fill="#1B2340"/>
+      <text x="471" y="68" font-size="9" font-weight="700" fill="#FFFDF8" text-anchor="middle">Unlocked</text>
+      <text x="471" y="82" font-size="7.2" fill="#BFC3D2" text-anchor="middle">key in memory only</text>
+
+      <!-- failure path -->
+      <path d="M302 92 L302 130 L192 130" stroke="#A8402F" stroke-width="1.2" fill="none"/><path d="M198 126 L190 130 L198 134 Z" fill="#A8402F"/>
+      <text x="252" y="126" font-size="7" fill="#A8402F" text-anchor="middle">tag fails</text>
+
+      <rect x="80" y="112" width="112" height="40" rx="3" fill="#F3E2DE" stroke="#A8402F" stroke-width="1.2"/>
+      <text x="136" y="130" font-size="8.4" font-weight="700" fill="#A8402F" text-anchor="middle">Cooling down</text>
+      <text x="136" y="143" font-size="7" fill="#A8402F" text-anchor="middle">escalating delay</text>
+      <path d="M136 112 L136 96" stroke="#A8402F" stroke-width="1.2" fill="none"/><path d="M132 100 L136 92 L140 100 Z" fill="#A8402F"/>
+
+      <!-- Relock path, routed over the top rather than under: the direct route
+           back to Locked runs straight through the Cooling-down box. -->
+      <path d="M471 48 L471 22 L136 22 L136 44" stroke="#1B2340" stroke-width="1.2" fill="none"/><path d="M132 38 L136 46 L140 38 Z" fill="#1B2340"/>
+      <text x="304" y="17" font-size="7.2" fill="#3A415C" text-anchor="middle">5 min idle · 2 min hidden · app backgrounded · lock pressed (⌘L) — key purged</text>
+
+      <rect x="548" y="40" width="104" height="60" rx="3" fill="#F4F1EA" stroke="#DFDACF"/>
+      <text x="600" y="58" font-size="7.6" font-weight="700" fill="#1B2340" text-anchor="middle">Note</text>
+      <text x="600" y="72" font-size="7" fill="#3A415C" text-anchor="middle">The failure counter</text>
+      <text x="600" y="82" font-size="7" fill="#3A415C" text-anchor="middle">is durable. Closing</text>
+      <text x="600" y="92" font-size="7" fill="#3A415C" text-anchor="middle">the tab is not a reset.</text>
+
+      <text x="330" y="190" font-size="7.6" fill="#6C7285" text-anchor="middle">There is no "logged in" state that survives a restart, because there is no session — only a key that exists in memory or does not.</text>
+    </svg>
+    <figcaption>Vault states. Every path out of Unlocked purges the key, and the only path back in re-derives it from the PIN.</figcaption>
+  </figure>
+</section>
+
+<!-- ══════════════════════════ 09 ══════════════════════════ -->
+<section>
+  <h2><span class="num">Section 09</span><span class="t">Data and persistence</span></h2>
 
   <div class="strip">
     <div class="m"><div class="v">23</div><div class="l">Drift tables</div></div>
@@ -337,9 +1028,9 @@
   <p>Two devices reconcile their encrypted backups with no server involved. The merge is last-write-wins keyed on each record's <code>updatedAt</code>, with tombstones retained for ninety days so a deletion propagates instead of being resurrected by the other device's stale copy. The function is symmetric — it runs identically on both peers and produces the same result regardless of which side runs it — and on an exact timestamp tie, delete wins.</p>
 </section>
 
-<!-- ══════════════════════════ 06 ══════════════════════════ -->
+<!-- ══════════════════════════ 10 ══════════════════════════ -->
 <section>
-  <h2><span class="num">Section 06</span><span class="t">Security and privacy engineering</span></h2>
+  <h2><span class="num">Section 10</span><span class="t">Security and privacy engineering</span></h2>
   <p class="lead">The security story here is applied client-side cryptography, not infrastructure hardening. There is no server, no account and no network trust to reason about. The whole model reduces to one sentence: on-device data must be unreadable without the user's PIN.</p>
 
   <h3>The key lifecycle</h3>
@@ -390,9 +1081,9 @@
   <p>What stands in its place is a local crash guard that installs handlers for framework errors, uncaught platform errors and async gaps, and buffers up to fifty scrubbed records in memory — because a crash loop can throw thousands of times a second, and the first few explain the last few. Once the vault opens, the buffer drains into an encrypted log database with a thirty-day retention. Records are scrubbed <em>before</em> entering the buffer, so nothing sensitive sits in memory either. The replacement error screen tells the user the one thing they actually need to know: their data is safe and unchanged.</p>
 </section>
 
-<!-- ══════════════════════════ 07 ══════════════════════════ -->
+<!-- ══════════════════════════ 11 ══════════════════════════ -->
 <section>
-  <h2><span class="num">Section 07</span><span class="t">The financial engine</span></h2>
+  <h2><span class="num">Section 11</span><span class="t">The financial engine</span></h2>
   <p class="lead">Twenty-seven pure Dart services and thirty TypeScript modules, none of which perform I/O. This is the part of the project I would most want to be asked about.</p>
 
   <h3>Lot-level portfolio and FIFO matching</h3>
@@ -445,9 +1136,9 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
   <p>Bank statement import is one auto-detecting engine rather than a parser per bank, because a parser per bank is a maintenance obligation that grows without bound. Column aliases plus a header-row scan cover the major Indian banks; the delimiter is sniffed by <em>column-count consistency</em> rather than raw character frequency, because a narration full of commas will otherwise beat a real tab. Both separate debit/credit columns and single signed amounts with a direction indicator are handled, and a default direction is applied only when the file states none at all. XLSX support loads its parser lazily, since it is a 400 KB dependency most users never trigger.</p>
 </section>
 
-<!-- ══════════════════════════ 08 ══════════════════════════ -->
+<!-- ══════════════════════════ 12 ══════════════════════════ -->
 <section>
-  <h2><span class="num">Section 08</span><span class="t">Cross-platform parity</span></h2>
+  <h2><span class="num">Section 12</span><span class="t">Cross-platform parity</span></h2>
   <p class="lead">The hardest problem in this project was not any single algorithm. It was shipping the same product twice, in two languages, without the two copies quietly drifting apart.</p>
 
   <p>The naive answers both fail. A shared package means one language, which means Flutter-on-web and the compromises that come with it. A code generator means maintaining a code generator. What worked instead was to make disagreement <em>fail a test</em>, using three mechanisms.</p>
@@ -467,9 +1158,9 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
   <p>The Flutter client is the lot-level ledger; the web client still stores aggregated positions and therefore shows unrealised profit and loss only. That is a known and stated gap rather than a hidden one. Deciding <em>where</em> parity stops is as much a part of the strategy as enforcing it where it holds — chasing full parity on a feature only one platform's users need would have cost the release.</p>
 </section>
 
-<!-- ══════════════════════════ 09 ══════════════════════════ -->
+<!-- ══════════════════════════ 13 ══════════════════════════ -->
 <section>
-  <h2><span class="num">Section 09</span><span class="t">Decisions and trade-offs</span></h2>
+  <h2><span class="num">Section 13</span><span class="t">Decisions and trade-offs</span></h2>
   <p class="lead">The decisions worth defending, each with the alternative that was rejected. These are the questions an interviewer should be asking.</p>
 
   <table>
@@ -543,13 +1234,13 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
   <p>The value is that these comments survive me. Six months later the reason a line looks strange is written next to it, and nobody "cleans it up".</p>
 </section>
 
-<!-- ══════════════════════════ 10 ══════════════════════════ -->
+<!-- ══════════════════════════ 14 ══════════════════════════ -->
 <section>
-  <h2><span class="num">Section 10</span><span class="t">Testing, CI and measured performance</span></h2>
+  <h2><span class="num">Section 14</span><span class="t">Testing, CI and measured performance</span></h2>
 
   <div class="strip">
-    <div class="m"><div class="v">1,392</div><div class="l">Test cases</div></div>
-    <div class="m"><div class="v">128</div><div class="l">Test files</div></div>
+    <div class="m"><div class="v">1,504</div><div class="l">Test cases</div></div>
+    <div class="m"><div class="v">136</div><div class="l">Test files</div></div>
     <div class="m"><div class="v">3</div><div class="l">CI pipelines</div></div>
     <div class="m"><div class="v">2</div><div class="l">Committed benchmarks</div></div>
   </div>
@@ -557,13 +1248,13 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
   <table>
     <thead><tr><th style="width:30%">Suite</th><th class="num" style="width:16%">Files</th><th class="num" style="width:16%">Cases</th><th>Notes</th></tr></thead>
     <tbody>
-      <tr><td class="k">Dart — unit</td><td class="num">46</td><td class="num" rowspan="6" style="vertical-align:middle">561</td><td>Domain services, pure and fast</td></tr>
+      <tr><td class="k">Dart — unit</td><td class="num">47</td><td class="num" rowspan="6" style="vertical-align:middle">570</td><td>Domain services, pure and fast</td></tr>
       <tr><td class="k">Dart — integration</td><td class="num">9</td><td>Repository and database paths</td></tr>
-      <tr><td class="k">Dart — widget</td><td class="num">6</td><td>Screen behaviour</td></tr>
+      <tr><td class="k">Dart — widget</td><td class="num">7</td><td>Screen behaviour</td></tr>
       <tr><td class="k">Dart — golden</td><td class="num">3</td><td>Pixel baselines; excluded from CI as host-font dependent</td></tr>
       <tr><td class="k">Dart — on-device</td><td class="num">3</td><td>Encryption round-trip, macOS keychain, notification delivery</td></tr>
       <tr><td class="k">Dart — benchmark</td><td class="num">1</td><td>Prints real numbers, asserts only loose bounds</td></tr>
-      <tr><td class="k">TypeScript — Vitest</td><td class="num">60</td><td class="num">831</td><td>Domain, library, component and route-level tests</td></tr>
+      <tr><td class="k">TypeScript — Vitest</td><td class="num">66</td><td class="num">934</td><td>Domain, library, component and route-level tests</td></tr>
     </tbody>
   </table>
 
@@ -588,19 +1279,19 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
   <table>
     <thead><tr><th style="width:44%">Primitive</th><th style="width:26%">Path</th><th class="num">Measured</th></tr></thead>
     <tbody>
-      <tr><td class="k">PBKDF2-HMAC-SHA256, 600k → 256-bit key</td><td>Web Crypto</td><td class="num">≈ 45 ms</td></tr>
+      <tr><td class="k">PBKDF2-HMAC-SHA256, 600k → 256-bit key</td><td>Web Crypto</td><td class="num">≈ 49 ms</td></tr>
       <tr><td class="k">PBKDF2-HMAC-SHA256, 600k → 256-bit key</td><td>Pure Dart, JIT</td><td class="num">≈ 1.2 s</td></tr>
-      <tr><td class="k">AES-256-GCM encrypt, transaction-sized record</td><td>Web Crypto</td><td class="num">≈ 0.018 ms</td></tr>
-      <tr><td class="k">AES-256-GCM decrypt</td><td>Web Crypto</td><td class="num">≈ 0.022 ms</td></tr>
+      <tr><td class="k">AES-256-GCM encrypt, transaction-sized record</td><td>Web Crypto</td><td class="num">≈ 0.025 ms</td></tr>
+      <tr><td class="k">AES-256-GCM decrypt</td><td>Web Crypto</td><td class="num">≈ 0.030 ms</td></tr>
       <tr><td class="k">FTS5 search across 10,000 transactions</td><td>SQLite via Drift</td><td class="num">≈ 0.13 ms</td></tr>
     </tbody>
   </table>
-  <p class="small muted">The 600,000-iteration cost is intentional; ~45 ms is the unlock latency budget, spent for brute-force resistance. The pure-Dart figure is the just-in-time test-VM path — release builds are ahead-of-time compiled and faster, and Flutter on web uses Web Crypto directly.</p>
+  <p class="small muted">The 600,000-iteration cost is intentional; ~49 ms is the unlock latency budget, spent for brute-force resistance. The pure-Dart figure is the just-in-time test-VM path — release builds are ahead-of-time compiled and faster, and Flutter on web uses Web Crypto directly.</p>
 </section>
 
-<!-- ══════════════════════════ 11 ══════════════════════════ -->
+<!-- ══════════════════════════ 15 ══════════════════════════ -->
 <section>
-  <h2><span class="num">Section 11</span><span class="t">From project to product</span></h2>
+  <h2><span class="num">Section 15</span><span class="t">From project to product</span></h2>
   <p class="lead">In August 2026 Khazana stopped being a portfolio project and became something I intend to sell. The interesting constraint was monetising it without breaking the one rule the whole architecture rests on.</p>
 
   <h3>The commercial shape</h3>
@@ -633,30 +1324,30 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
   <p>One limitation is stated on the paywall before purchase rather than discovered afterwards: an app-store purchase and a direct licence key are separate entitlements. Linking them across ecosystems needs an account server, and there is not going to be one.</p>
 </section>
 
-<!-- ══════════════════════════ 12 ══════════════════════════ -->
+<!-- ══════════════════════════ 16 ══════════════════════════ -->
 <section>
-  <h2><span class="num">Section 12</span><span class="t">Metrics, limitations and roadmap</span></h2>
+  <h2><span class="num">Section 16</span><span class="t">Metrics, limitations and roadmap</span></h2>
 
   <h3>By the numbers</h3>
   <table>
     <thead><tr><th style="width:46%">Measure</th><th class="num">Value</th></tr></thead>
     <tbody>
-      <tr><td class="k">Hand-written source and tests</td><td class="num">≈ 85,000 lines</td></tr>
-      <tr><td class="k">Dart — application code (excluding generated)</td><td class="num">35,703 lines across 224 files</td></tr>
-      <tr><td class="k">TypeScript and TSX — web client</td><td class="num">39,109 lines</td></tr>
-      <tr><td class="k">Dart tests</td><td class="num">9,632 lines</td></tr>
+      <tr><td class="k">Hand-written source and tests</td><td class="num">≈ 88,500 lines</td></tr>
+      <tr><td class="k">Dart — application code (excluding generated)</td><td class="num">36,555 lines across 228 files</td></tr>
+      <tr><td class="k">TypeScript and TSX — web client</td><td class="num">42,187 lines across 219 files</td></tr>
+      <tr><td class="k">Dart tests</td><td class="num">9,769 lines</td></tr>
       <tr><td class="k">Generated Drift code (not counted above)</td><td class="num">≈ 18,700 lines</td></tr>
-      <tr><td class="k">Tracked files in the repository</td><td class="num">761</td></tr>
+      <tr><td class="k">Tracked files in the repository</td><td class="num">789</td></tr>
       <tr><td class="k">Domain services / modules</td><td class="num">27 Dart · 30 TypeScript</td></tr>
       <tr><td class="k">Encrypted database tables</td><td class="num">23 + FTS5 index</td></tr>
-      <tr><td class="k">Screens and routes</td><td class="num">27 Flutter · 31 web</td></tr>
-      <tr><td class="k">Automated tests</td><td class="num">1,392 across 128 files</td></tr>
+      <tr><td class="k">Screens and routes</td><td class="num">27 Flutter · 32 web</td></tr>
+      <tr><td class="k">Automated tests</td><td class="num">1,504 across 136 files</td></tr>
       <tr><td class="k">Platforms targeted</td><td class="num">iOS, Android, macOS, Web, Windows/Linux desktop</td></tr>
-      <tr><td class="k">Commits · active days · elapsed</td><td class="num">83 · 17 · 9 weeks</td></tr>
+      <tr><td class="k">Commits · active days · elapsed</td><td class="num">88 · 20 · 12 weeks</td></tr>
       <tr><td class="k">Servers, accounts, telemetry endpoints</td><td class="num">0</td></tr>
     </tbody>
   </table>
-  <p class="small muted">Built between 22 June and 25 August 2026, single-handed, alongside full-time work — which is why the commit history is seventeen dense days rather than a steady drip. The largest single stretch was fifteen commits on 1 August.</p>
+  <p class="small muted">Built between 22 June and 12 September 2026, single-handed, alongside full-time work — which is why the commit history is twenty dense days rather than a steady drip. The largest single stretch was fifteen commits on 1 August.</p>
 
   <h3>What does not work yet</h3>
   <p>The repository maintains a numbered defect log with status markers, and several entries have been fixed on the current hardening branch. These are the open ones, reproduced rather than laundered:</p>
@@ -700,7 +1391,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
     <p>I spent two months building the personal finance app I actually wanted to use.</p>
     <p>Khazana keeps every rupee of your financial data encrypted on your own device. No backend. No account. No telemetry. Your PIN derives the encryption key, the key is never stored, and there is no recovery — because there is nobody who could recover it.</p>
     <p>Under that vault: double-entry accounting, lot-level portfolio tracking with FIFO matching, XIRR, an Indian capital-gains engine versioned by disposal date, EMI payoff simulation, and a financial-health score.</p>
-    <p>It ships as two independent clients — Flutter for iOS, Android and macOS, and Next.js for web and desktop — sharing one framework-free financial engine written twice and kept honest by mirrored tests. ~85,000 lines, 1,392 tests, 23 encrypted tables, zero servers.</p>
+    <p>It ships as two independent clients — Flutter for iOS, Android and macOS, and Next.js for web and desktop — sharing one framework-free financial engine written twice and kept honest by mirrored tests. ~88,500 lines, 1,504 tests, 23 encrypted tables, zero servers.</p>
     <p>Writing up the architecture in detail. Happy to talk about any of it.</p>
     <p>#Flutter #NextJS #Cryptography #FinTech #SoftwareArchitecture</p>
   </div>
@@ -717,7 +1408,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
     <p>The hardest problem wasn't cryptography. It was shipping the same product twice — Flutter and Next.js — without the two copies drifting apart on what a number means. The answer was to make disagreement fail a test: byte-identical JSON fixtures loaded by both the Dart and the TypeScript suites, and cross-language assertions pinning the same inputs to the same outputs on both sides.</p>
     <p>My favourite decision came out of a bug. I had been storing the derived key in the OS keychain for biometric unlock. On macOS that broke on every rebuild, because keychain items are bound to the code signature that created them. I could have tweaked the configuration. Instead I changed the model: store only the salt and a verifier, re-derive from the PIN each time, make biometrics opt-in. The result is that in the default flow there is now no key at rest at all.</p>
     <p>A security improvement that arrived through a usability failure. Most of them do.</p>
-    <p>~85,000 lines, 1,392 tests, 23 encrypted tables, 5 platforms, 0 servers. Full technical write-up in the comments.</p>
+    <p>~88,500 lines, 1,504 tests, 23 encrypted tables, 5 platforms, 0 servers. Full technical write-up in the comments.</p>
   </div>
 
   <div class="cols">
@@ -738,7 +1429,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
   <div class="copy">
     <div class="cap">About section</div>
     <p>I build products where the architecture reflects a position, not just a requirement. Most recently that is Khazana — an offline-first personal finance app with no backend, no account and no telemetry, where every rupee of data is encrypted on the user's own device behind a PIN that is never stored.</p>
-    <p>It ships as two independent clients, a Flutter app and a Next.js web and desktop app, over one framework-free financial engine covering double-entry accounting, lot-level portfolio analytics with FIFO matching, XIRR, Indian capital-gains estimation and weighted financial-health scoring. About 85,000 lines and 1,392 automated tests, including cross-language tests that make the two clients provably agree.</p>
+    <p>It ships as two independent clients, a Flutter app and a Next.js web and desktop app, over one framework-free financial engine covering double-entry accounting, lot-level portfolio analytics with FIFO matching, XIRR, Indian capital-gains estimation and weighted financial-health scoring. About 88,500 lines and 1,504 automated tests, including cross-language tests that make the two clients provably agree.</p>
     <p>I care most about the decisions that are hard to reverse: how money is represented, where the trust boundary sits, and what a system promises when it has no server to fall back on.</p>
   </div>
 </section>
@@ -779,13 +1470,13 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
     <div>
       <div class="copy">
         <div class="cap">At a glance</div>
-        <p>≈85,000 lines hand-written<br>
-        1,392 automated tests<br>
+        <p>≈88,500 lines hand-written<br>
+        1,504 automated tests<br>
         23 encrypted tables, 6 schema migrations<br>
         27 + 30 pure domain modules<br>
         5 platforms<br>
         0 servers<br>
-        Solo build, 9 weeks</p>
+        Solo build, 12 weeks</p>
       </div>
     </div>
   </div>
@@ -794,7 +1485,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
     <div class="cap">Project blurb — 150 words</div>
     <p>Khazana is an offline-first personal finance and wealth application built on a single constraint: no server, ever. Every rupee of data is encrypted at rest on the user's own device — SQLCipher on mobile, per-record AES-256-GCM on web — behind a key derived from a PIN that is never stored and has no recovery path.</p>
     <p>It ships as two independently implemented clients, a Flutter app for iOS, Android and macOS and a Next.js app for web and desktop, sharing one framework-free financial engine: double-entry accounting, lot-level portfolio tracking with FIFO matching, XIRR, an Indian capital-gains engine versioned by disposal date, EMI payoff simulation and weighted financial-health scoring.</p>
-    <p>Keeping two implementations honest was the central engineering problem. The answer was to make disagreement fail a test — byte-identical fixtures and cross-language assertions across roughly 85,000 lines and 1,392 tests.</p>
+    <p>Keeping two implementations honest was the central engineering problem. The answer was to make disagreement fail a test — byte-identical fixtures and cross-language assertions across roughly 88,500 lines and 1,504 tests.</p>
   </div>
 
   <div class="copy">
@@ -808,7 +1499,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
 <!-- ══════════════════════════ C ══════════════════════════ -->
 <section data-audience="private">
   <h2><span class="num">Appendix C</span><span class="t">Interview question bank</span></h2>
-  <p class="lead">Sixteen questions this project invites, with answers already thought through. Answer in your own words — the point is that the reasoning is ready, not the phrasing.</p>
+  <p class="lead">Forty-six questions this project invites, with answers already thought through. Answer in your own words — the point is that the reasoning is ready, not the phrasing.</p>
 
   <h3>Architecture</h3>
 
@@ -858,7 +1549,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
 
   <div class="qa">
     <div class="q">Why 600,000 iterations? Users hate slow unlocks.</div>
-    <p>The cost is the product, not a side effect. It sets the per-guess price for an attacker running offline against an exported backup file. About 45 ms on web is a latency I am willing to spend for that, and it is measured rather than assumed — there is a committed benchmark. I also enforce a minimum PIN length at setup and an exponential lockout, and the lockout is checked <em>before</em> the derivation runs so an attacker cannot use the rate limiter to burn our CPU.</p>
+    <p>The cost is the product, not a side effect. It sets the per-guess price for an attacker running offline against an exported backup file. About 49 ms on web is a latency I am willing to spend for that, and it is measured rather than assumed — there is a committed benchmark. I also enforce a minimum PIN length at setup and an exponential lockout, and the lockout is checked <em>before</em> the derivation runs so an attacker cannot use the rate limiter to burn our CPU.</p>
   </div>
 
   <div class="qa">
@@ -898,7 +1589,167 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
     <p>Mostly by refusing to fake data. Three data files in the repository are deliberately empty: mutual-fund overlap analysis needs real asset-management-company disclosures, and index comparison needs real historical closes. I could have populated both with plausible values and shipped features that look complete. For a finance tool, confident wrong numbers are the worst possible output — worse than a missing feature, because the user cannot tell. Same reasoning for statement parsing of password-protected consolidated account statements, and for broker API sync, which would send the user's portfolio to a third party.</p>
   </div>
 
-  <h3>Three STAR stories</h3>
+  <h3>Design levels and UML</h3>
+
+  <div class="qa">
+    <div class="q">Draw me the architecture on a whiteboard.</div>
+    <p>I would draw it at three magnifications and say which one I am on, because the interesting thing changes at each. Context: a person, the app, and three externals — the OS keychain, one allowlisted quote host that is opt-in and desktop-only, and the app stores. That is the whole boundary. Container: five deployables — the Flutter app, the Next.js app, the Tauri shell, and the two databases — and the thing to notice is that there is no arrow <em>between</em> the two clients. They exchange an encrypted file the user carries, which is exactly why the merge had to be a pure symmetric function instead of a protocol. Component: four rings per client with dependencies pointing strictly inward, and the domain ring importing no framework, doing no I/O and taking no clock.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">What is the difference between your high-level and low-level design?</div>
+    <p>The high-level design is the decomposition and the reasoning: one constraint — no server, ever — and then, for each thing a server normally does, what replaced it and what that cost. Authentication became a PIN-derived key and the cost is no recovery. Sync became last-write-wins over exported backups with 90-day tombstones and the cost is that it is not real time. Licensing became offline Ed25519 and the cost is that a leaked key cannot be revoked. The low-level design is four contracts precise enough to implement against: the decimal-to-text converter, the all-or-nothing mutation batch, the idempotent migration ladder, and the backup envelope's byte layout.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Why does your context diagram have almost nothing in it?</div>
+    <p>Because the emptiness is the product rather than an omission. A typical finance app's context diagram has an aggregator, an identity provider, a database cluster and an analytics pipeline, and every one of those is a place the user's financial history exists outside their control. Mine has the operating system's keychain, a distribution channel, and one optional price feed that receives ticker symbols and nothing else. The web build's content-security policy sets <code>connect-src</code> to <code>'self'</code>, so there is not merely no exfiltration — there is no origin the page is permitted to reach.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Which UML diagram tells you the most about this system?</div>
+    <p>The entity-relationship one, because of a single band across the middle of it: postings sharing an entry identifier sum to exactly zero. Everything above that line is structure and everything below it is the portfolio model, but that invariant is the thing the design exists to protect. It is asserted in the integrity test suite and checked again at runtime by the diagnostics screen — the same claim enforced twice, at build time and on real data, because a schema cannot express it.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Where is the dependency inversion, concretely?</div>
+    <p>The domain ring declares repository interfaces — <code>TransactionRepository</code> and twelve others — and the data ring implements them with Drift-backed classes. So the arrow points from infrastructure up to policy. The practical payoff is not architectural purity: it is that the financial-health scorer depends on the shape of an account rather than on Drift, which is precisely why I could port that layer to TypeScript by hand and why it tests in microseconds without a database.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Your state machine has no "logged in" state. Why not?</div>
+    <p>Because there is no session to be in. There is a key in memory or there is not. Every path out of Unlocked purges it — five minutes idle, two minutes hidden, the app backgrounding, or the lock shortcut — and the only path back in re-derives it from the PIN. A session would be a token that outlives the secret that created it, and that is the thing I did not want to exist.</p>
+  </div>
+
+  <h3>Screens and product decisions</h3>
+
+  <div class="qa">
+    <div class="q">Why does the diagnostics screen not fix anything?</div>
+    <p>Because a diagnostic that repairs silently destroys the evidence of how the corruption happened, and then the second occurrence is unexplainable. It reports eleven checks with the offending record identifiers and links each failure to the screen that fixes it. The related decision is that restore is gated on an explicit allowlist of four structural checks rather than on severity — a restore blocked because an exchange rate had not been entered yet is an intact file the user cannot get back into, which is a worse outcome than the warning it was protecting them from.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">You have 59 routes. Isn't that too many?</div>
+    <p>It is a lot of surface, and the honest answer is that the navigation needed two rounds of work because of it. The web client groups routes into five named sections declared once and consumed by the sidebar, the drawer and the command palette. The Flutter client had a real bug here: with five tabs and twenty-seven screens, most locations are not a tab, and a <code>startsWith</code> scan that fell back to index zero meant eleven screens all highlighted Dashboard. The fix was an explicit map, because "Reports lives under Score" is a product decision that no string prefix can infer.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">How do you stop the two clients drifting apart on navigation?</div>
+    <p>Tests. One asserts the web navigation's Pro flags against <code>docs/pro-gates.json</code>, which both clients load, so neither is the source of truth about what money buys — the specification is. A second asserts that the web bottom navigation lists the same five destinations as the Flutter tab bar. Navigation is what users build muscle memory for, and two clients disagreeing about where Budget lives are two products wearing one name.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Why is a transfer a separate entity rather than two transactions?</div>
+    <p>Because moving money between your own accounts is not spending, and the type system should say so rather than every consumer remembering to filter it out. When it was modelled as a transaction it inflated every budget, every expense total and the savings rate. The cost of the fix is that every timeline now merges two entity types instead of querying one — paid once in the query layer, rather than repeatedly and invisibly in every aggregate.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Your tax screen refuses to show some holdings. Why is that good?</div>
+    <p>Two refusals, both deliberate. Holdings with no recorded purchase date are excluded rather than defaulted to short-term, because defaulting invents the fact that determines the rate. Slab-rate instruments return null with a banner rather than a guess. And the gains are priced as one portfolio rather than per position, because the long-term exemption is an annual allowance applied once across all disposals — computing it per holding would multiply the allowance by the number of positions the user happens to hold. A tax figure that is confidently wrong is worse than one visibly incomplete, because only the second gets corrected before it is filed.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Give me an example of choosing honesty over polish.</div>
+    <p>The dashboard's net-worth chart prefers recorded snapshots, but a new vault has none, so it falls back to a series derived by walking the transaction history — and labels that line <em>estimated</em>. Two code paths for one chart, and a label most users will never read. The alternative is presenting derived history as recorded history, which is the kind of small dishonesty that makes every other number on the screen suspect the moment it is discovered. The portfolio overview does the same thing three times over: banners for unpriced positions, for exchange rates still at their defaults, and for a filtered or past-dated view.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Why does the holdings grid show different columns for different rows?</div>
+    <p>A fixed deposit has no market price. Rendering one would be an invention, so those rows show rate, accrued interest and maturity instead. The cost is real: the grid has two row shapes and cannot sort meaningfully on a single current-price column across both. Sorting is what I gave up, and the alternative was fabricating a number in a financial application.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">What does the forecast do when it does not know?</div>
+    <p>It returns null with a typed reason — no income history, or no spending history — and the screen explains rather than prints a figure. Safe-to-spend is the minimum of two independent ceilings: cash after committed outgoings, and remaining budget headroom. A number ignoring either would tell someone to spend money already owed, or money they do not have. The screen shows its arithmetic line by line for the same reason: a forecast nobody can audit is a horoscope.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Why is the import flow three steps instead of one?</div>
+    <p>Parse, preview, confirm — and then the whole run is recorded as a batch that can be undone as a unit. Import is the highest-risk write in the product: it is the one operation that can put hundreds of wrong rows into a ledger in a single click. Skipped rows are counted and shown rather than dropped silently. The undo is honest about its limits too: it removes what the import added, and it says it cannot restore prior values it never captured, rather than implying a general-purpose time machine.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Why does settings ask for two different passphrases?</div>
+    <p>Export and restore take a passphrase separate from the vault PIN, so a backup can be handed to someone — or stored somewhere less trusted — without handing over the key to the running app. It is one more thing to remember, which is a genuine cost. The related detail on that screen is storage durability: it is surfaced as a row with a retry button rather than swallowed, because Safari evicts script-writable storage after roughly seven days of no visits, and a finance app silently losing its database is not a failure the user should discover on their own.</p>
+  </div>
+
+  <h3>Data model and migrations</h3>
+
+  <div class="qa">
+    <div class="q">You are on schema version 6. Talk me through the hard migration.</div>
+    <p>Version 3, which converts every single-entry transaction into a balanced pair of postings and seeds a chart of accounts. Two things made it safe. It uses deterministic identifiers — <code>acct-cash-$vault</code>, <code>acct-exp-$category</code> — so re-running it cannot create a second cash account, which matters enormously when the database is on a device I can never inspect and cannot roll back. And it preserves net worth exactly, which is the property I asserted rather than the row counts.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">How do you migrate safely with no way to inspect production data?</div>
+    <p>Idempotent by construction, additive where possible, and nullable by default. The health-score columns added at version 5 specifically refuse to back-date invented history — a vault with no score for last March shows nothing there, not zero. And where a migration has to match on something fuzzy, I choose the direction of the safe failure: <code>reclassifyInvestments</code> matches on category name, because a false negative leaves the old behaviour in place while a false positive would silently reclassify genuine spending.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Why are prices a table rather than a column on the holding?</div>
+    <p>Because three features need history and a column can serve none of them: valuation "as on" a past date, day-change calculation, and staleness disclosure. The same reasoning put brokerage, securities transaction tax, stamp duty and GST as columns on the trade rather than folding them into the price — they belong to the acquisition, and cost basis is simply wrong without them, which means the realised gain and therefore the tax are wrong too.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Why can't you use SUM() in SQL?</div>
+    <p>Because money columns are <code>TEXT</code>, so <code>SUM()</code> would aggregate lexicographically. That is the consequence of choosing decimal over float, and I followed it through rather than forgetting it: no query in the codebase uses <code>SUM()</code> on a money column, the DAOs return rows, and totals are computed in Dart over <code>Decimal</code> or in TypeScript over <code>decimal.js</code>. It is a real cost in query efficiency, accepted for exactness at the scale a personal ledger actually reaches.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">How do you guarantee a transaction and its ledger legs stay consistent?</div>
+    <p>They are applied as one batch — all the mutations or none. They were once three sequential writes, and a failure between them left an entry with a single leg, which is an unbalanced ledger and the exact state double-entry exists to prevent. The subtle part is that encryption happens deliberately <em>outside</em> the database transaction: awaiting a non-Dexie promise inside a Dexie transaction drops out of its zone and commits early, so the obvious fix would have looked correct and silently defeated itself.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">What happens when a record fails to decrypt?</div>
+    <p>It is collected and reported rather than skipped. It used to be skipped without a word, which meant the record vanished from every screen <em>and</em> from the next backup export — turning a recoverable problem into permanent loss. Export now refuses outright if any record fails to decrypt, because exporting a partially readable vault is how you make the loss final.</p>
+  </div>
+
+  <h3>Testing and parity</h3>
+
+  <div class="qa">
+    <div class="q">How do two separate implementations stay in agreement?</div>
+    <p>Three mechanisms, in increasing order of strength. Byte-identical fixture files loaded by both suites. Cross-language assertions on shared inputs — the same vault produces the same health score in Dart and TypeScript. And a specification file, <code>docs/pro-gates.json</code>, that both clients load at runtime and both test suites assert against, so neither client is the source of truth. Where parity is deliberately not attempted, I say so: the web client does not yet have the lot-level model, and that is in the defect log rather than glossed over.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">What is an invariant test and why do you need them?</div>
+    <p>It checks that functions agree with <em>each other</em> rather than that each is individually correct — every screen can be right on its own and still contradict the one beside it. A roll-up along any dimension must sum exactly to the portfolio total; assets minus liabilities minus equity must be identically zero. The detail that makes them worth anything is that the fixtures are built by the application's own posting functions, not written by hand: a hand-written fixture can be made to balance by construction and would prove nothing.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">Your CI runs lint as advisory. Isn't that a cop-out?</div>
+    <p>It is debt, and it is recorded as debt with the reason attached rather than hidden by deleting the rule. Tests and the static build are hard gates; lint is advisory because of pre-existing violations under Next 16's newer ruleset. What I would not accept is a green pipeline that is green because the check was removed. The version-consistency job in the same pipeline is the opposite case — it exists because five files each declare the product version, they drifted once, and nothing noticed.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">What is not covered by tests?</div>
+    <p>The encryption-at-rest tests need a real device, so they sit in a manual release checklist rather than the pipeline — which means the tests guarding the product's central promise do not run automatically, and I would rather say that than leave it to be discovered. Golden tests are excluded from CI because font rendering differs between hosts. There is no browser-level end-to-end suite; a critical-path integration test that walks CSV import through valuation, reconciliation, backup and restore into a second vault covers that ground instead.</p>
+  </div>
+
+  <h3>Product and delivery</h3>
+
+  <div class="qa">
+    <div class="q">Does anyone actually use it?</div>
+    <p>Ten people are using it now — friends I handed it to — and the Play Store closed-testing track is next, which needs twelve testers for fourteen continuous days. So: real users, not yet a public release, and I would not describe it as more than that. What the small number does buy is the kind of feedback that unit tests cannot produce. The critical-path test exists because a single day of real use produced a run of integration bugs while every unit test stayed green.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">How do you monetise without a server?</div>
+    <p>A one-time purchase, never a subscription, verified by an Ed25519 signature checked offline. The key carries a payload and a signature; no server ever learns who is running the app. Two rules constrain every gate: the ledger is never limited, and backup, restore, CSV export and erase-all-data are free forever — asserted as an invariant by both test suites, so a future me cannot quietly paywall the exit. A leaked key cannot be revoked, which I accept, because the alternative is an activation server and that is the thing being refused.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">You used an AI coding assistant. What did you actually do?</div>
+    <p>I owned the architecture, the security model, the data model and the domain logic, and I reviewed every change before it shipped. The decisions in this document are the evidence: choosing decimal over integer minor units and then following the consequence through to banning <code>SUM()</code>; discovering that sector profit and loss was uncomputable under the aggregated model and designing the lot-level replacement; deciding that the default path should keep no encryption key at rest anywhere. An assistant types faster than I do. It does not notice that a feature request is impossible given the schema, and it does not decide what the product refuses to do.</p>
+  </div>
+
+  <div class="qa">
+    <div class="q">What would you build next, and why that?</div>
+    <p>In order: get off the beta secure-storage dependency and verify the Android capture path on real hardware, because a beta is not a shipping dependency for a paid security product. Then start the closed-test track, since fourteen continuous days is the longest lead time in the plan and nothing else is blocked by it. Then code signing and a content-security policy for the desktop wrapper. Peer-to-peer sync between a user's own devices is last despite being the most interesting, because the merge function it needs already exists and is already tested — it is the smallest remaining risk, so it goes after the things that are not.</p>
+  </div>
+
+  <h3>Four STAR stories</h3>
 
   <div class="qa">
     <div class="q">1 · A security improvement that came from a usability bug</div>
@@ -924,13 +1775,115 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
     <p><strong>Result.</strong> Cross-device restore works, and is now covered by tests including one that restores into a genuinely second vault. The wider lesson: "the write succeeded" and "the user can see it" are different claims, and only the second one is the feature.</p>
   </div>
 
+  <div class="qa">
+    <div class="q">4 · Every budget in the product was wrong, and nothing was broken</div>
+    <p><strong>Situation.</strong> Buying a mutual fund was recorded as an expense. Nothing crashed, no test failed, and every screen was internally consistent — but a user who invested ₹20,000 in a month saw it deducted from their spending budget, counted in their expense total, and subtracted from their savings rate. The product was telling people that saving money was spending money.</p>
+    <p><strong>Task.</strong> Correct the classification without corrupting vaults that already held months of mis-typed history.</p>
+    <p><strong>Action.</strong> The root cause was a missing distinction in the type system rather than a bug in any function. An expense and an investment are both cash leaving the account, and the model had collapsed those two facts into one. I introduced a third transaction type and — the part that actually fixed it — a separate <code>CASH_OUT_TYPES</code> set, so that "money left the account" and "this was spending" became two different questions that consumers answer explicitly. Budgets, expense totals and the savings rate read the second; cash-flow and account balances read the first. Existing vaults were repaired by a migration that matches on category <em>name</em>, chosen deliberately for the direction of its failure: a false negative leaves the old behaviour in place and is visible, whereas a false positive would silently reclassify genuine spending as investment and inflate the user's savings rate in the other direction.</p>
+    <p><strong>Result.</strong> Budgets, expense totals and savings rate became correct, and transfers were separated out on the same principle shortly afterwards. The lesson I took is the one I now look for first: the most expensive defects are not the ones that throw. This one produced plausible numbers on every screen, passed every test, and would have been discovered by a user trusting a savings rate that was wrong by the exact amount they had been most responsible about.</p>
+  </div>
+
+</section>
+
+<!-- ══════════════════════════ D ══════════════════════════ -->
+<section data-audience="private">
+  <h2><span class="num">Appendix D</span><span class="t">How this would be built again</span></h2>
+  <p class="lead">The order the repository actually followed, and what each phase had to prove before the next one started. Useful for the question "how would you approach building this?" — and for building the next one faster.</p>
+
+  <div class="note">
+    <span class="h">The principle underneath the order</span>
+    <p>Each phase establishes a guarantee that later phases are allowed to assume. Encryption comes before features because a feature written against a plaintext store encodes the assumption that data is cheap to read. The ledger comes before the screens because screens written against a single-entry model have to be rewritten when it becomes double-entry — which is exactly what happened here, and is the main thing this ordering is designed to avoid repeating.</p>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:6%">#</th><th style="width:28%">Phase</th><th>What it must prove before moving on</th></tr></thead>
+    <tbody>
+      <tr><td class="k">1</td><td class="k">Encrypted storage</td><td>A vault can be created, locked and unlocked; the key is derived from the PIN and never written down; a wrong PIN fails on an authentication tag. <em>This was the repository's second commit, and it is the right place for it.</em></td></tr>
+      <tr><td class="k">2</td><td class="k">Backup and restore</td><td>The vault round-trips to a file and back, into a <em>second</em> vault. Building this early means every later schema change has a working escape hatch, and it makes the format a first-class design artefact instead of an export bolted on at the end.</td></tr>
+      <tr><td class="k">3</td><td class="k">Encrypted logging</td><td>Failures leave a trace that is itself encrypted and sanitised. Without this, every bug in phases 4–8 is diagnosed by guessing.</td></tr>
+      <tr><td class="k">4</td><td class="k">The ledger — double-entry from day one</td><td>Every journal entry balances to zero, asserted by a test whose fixtures are built by the application's own posting functions. <strong>This is the phase I would move earliest if I did it again.</strong> Building single-entry first cost a schema-version-3 migration that converted every existing transaction, and the migration was avoidable work created entirely by the shortcut.</td></tr>
+      <tr><td class="k">5</td><td class="k">The domain layer, framework-free</td><td>Health score, net worth, budgets and recurrence compute as pure functions over plain entities, with time passed in rather than read. Provable by tests that need no database, no widget tree and no browser.</td></tr>
+      <tr><td class="k">6</td><td class="k">The lot-level portfolio</td><td>Instruments, trades with their charges, and prices as a dated series. Same lesson as phase 4: the aggregated-position model made realised profit and loss literally uncomputable, and finding that out during a feature request is worse than designing for it up front.</td></tr>
+      <tr><td class="k">7</td><td class="k">The second client</td><td>Both implementations produce identical numbers for identical inputs. <strong>Write the shared fixtures before the second implementation, not after.</strong> Doing it in that order turns parity from an audit into a guard rail.</td></tr>
+      <tr><td class="k">8</td><td class="k">Screens</td><td>Only now, because every screen is a view over guarantees that already hold. Screens built before the ledger balanced had to be revisited when it did.</td></tr>
+      <tr><td class="k">9</td><td class="k">Hardening</td><td>Error boundaries, integrity diagnostics, crash capture, storage-durability disclosure, unlock throttling, undo on the riskiest write. This is where the honest-nulls discipline gets applied consistently rather than per-screen.</td></tr>
+      <tr><td class="k">10</td><td class="k">Release engineering</td><td>Signed builds, permission assertions against the compiled manifest, version consistency enforced across every file that declares it. <em>Set the pipeline up before feature work, not on the same branch as it.</em></td></tr>
+    </tbody>
+  </table>
+
+  <h3>The four decisions to make before writing any code</h3>
+  <ol>
+    <li><strong>How money is represented.</strong> Decimal or integer minor units — but decide, write it down, and follow the consequences through the query layer. Retrofitting this touches every file.</li>
+    <li><strong>Whether the ledger is double-entry.</strong> Balances, net worth and every statement derive from this. Changing it later is a migration over all historical data.</li>
+    <li><strong>Where the trust boundary sits.</strong> Server, no server, or optional server. It determines the authentication model, the sync model, the licensing model and the threat model simultaneously.</li>
+    <li><strong>What the product refuses to do.</strong> Mine refused to guess: no fabricated prices, no defaulted purchase dates, no invented history. That rule shaped more screens than any feature decision did.</li>
+  </ol>
+
+  <h3>What I would do differently</h3>
+  <ul>
+    <li>Double-entry and lot-level models from day one — phases 4 and 6 above, both of which arrived as migrations because of an earlier shortcut.</li>
+    <li>Cross-language fixtures before the second implementation rather than after it.</li>
+    <li>CI configured before feature work, on its own branch.</li>
+    <li>Pagination designed in at the list level from the start; it is cheap early and expensive once someone has a decade of transactions.</li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════ E ══════════════════════════ -->
+<section data-audience="private">
+  <h2><span class="num">Appendix E</span><span class="t">Résumé kit</span></h2>
+  <p class="lead">The same project cut to four different lengths, plus the STAR stories reduced to the two or three lines a résumé can actually carry. Every figure here is counted from the source tree.</p>
+
+  <div class="copy">
+    <div class="cap">Link line — always include both</div>
+    <p>Live app: <strong>khazana-app.netlify.app</strong> &nbsp;·&nbsp; Source: <strong>github.com/sandhoshsivanM/FinTech</strong></p>
+    <p class="small muted">The live link matters more than the repository for this project, because the whole app is the link — no signup, no install, no backend to spin up. A reviewer can be looking at working software in about four seconds, which is a materially different experience from cloning a repository.</p>
+  </div>
+
+  <div class="copy">
+    <div class="cap">Stack line — one line, ordered by what a reader is scanning for</div>
+    <p>Flutter · Dart · Riverpod · Drift · SQLCipher · Next.js 16 · React 19 · TypeScript · Zustand · Dexie · Tauri 2 · Rust · Web Crypto (AES-256-GCM, PBKDF2, Ed25519) · SQLite FTS5 · Vitest · GitHub Actions</p>
+  </div>
+
+  <div class="copy">
+    <div class="cap">Two lines — when the résumé is already full</div>
+    <p>Offline-first encrypted personal finance app for iOS, Android, macOS, web and desktop, built solo. Double-entry ledger, lot-level portfolio with FIFO matching and XIRR, and an Indian capital-gains engine — with no backend, no account and no telemetry by design.</p>
+    <p>Financial engine implemented twice, in Dart and TypeScript, and held to identical results by cross-language tests. 1,504 automated tests; AES-256 at rest on every platform, keyed by PBKDF2-HMAC-SHA256 at 600,000 iterations.</p>
+  </div>
+
+  <div class="copy">
+    <div class="cap">Four bullets — the default</div>
+    <p>· Built an offline-first personal finance app for five platforms with <strong>no backend, no account and no telemetry</strong> — every record AES-256 encrypted on the device, keyed by a PIN stretched through PBKDF2-HMAC-SHA256 at 600,000 iterations and never stored.</p>
+    <p>· Designed a <strong>double-entry ledger</strong> over 23 encrypted tables with six schema migrations, and a lot-level portfolio model with FIFO matching, XIRR and a capital-gains engine versioned by disposal date. Money is arbitrary-precision decimal throughout; floating point is banned.</p>
+    <p>· Shipped <strong>two independent clients</strong> — Flutter and Next.js — over one framework-free financial engine written in both languages and proven to agree by cross-language tests on shared fixtures. <strong>1,504 automated tests</strong> across both suites, gated in CI.</p>
+    <p>· Owned architecture, security model, data model and domain logic end to end, using an AI assistant for implementation and reviewing every change before it shipped. Live at khazana-app.netlify.app; in private beta with ten users, Play Store closed testing next.</p>
+  </div>
+
+  <div class="copy">
+    <div class="cap">Six bullets — for a résumé with room, or a portfolio page</div>
+    <p>· The four bullets above, plus:</p>
+    <p>· Implemented a <strong>serverless multi-device merge</strong> — deterministic last-write-wins over encrypted backup files with 90-day tombstones, symmetric by construction so both devices reach the same state — and offline <strong>Ed25519 licence verification</strong>, so purchases work with no activation server.</p>
+    <p>· Hardened the product against its own failure modes: per-route error boundaries, an eleven-check integrity diagnostic that deliberately never writes, encrypted crash logging with PII sanitisation, durable unlock throttling, and per-run undo on imports. Benchmarks are committed and re-runnable rather than asserted.</p>
+  </div>
+
+  <div class="copy">
+    <div class="cap">STAR stories at résumé scale — say the long version out loud, write the short one</div>
+    <p><strong>Security from a usability bug.</strong> Biometric unlock stored the encryption key in the macOS keychain and failed on every rebuild with <code>errSecMissingEntitlement</code>. Rather than tune the keychain, questioned whether the key needed to be there — changed the default to store only a salt and a verifier, re-deriving the key per unlock in ~49 ms. <em>Result: the default flow now keeps no encryption key at rest anywhere.</em></p>
+    <p><strong>A feature that was impossible, not hard.</strong> Sector-wise P&amp;L was requested against a schema holding one aggregated row per symbol. Realised gains need to know which lots a sale consumed, and average cost destroys that irreversibly. Designed a lot-level model, wrote the reconciliation invariant first, and migrated. <em>Result: roll-ups along four dimensions that reconcile exactly, plus XIRR and tax estimation that the old model could not express.</em></p>
+    <p><strong>A restore that wrote 367 invisible records.</strong> Cross-device restore appeared to succeed and produced an empty app: records were written with their original profile identifiers, which the active-profile filter did not match. Rewrote restore to reconcile profiles, remap identifiers and apply as one transaction. <em>Result: working cross-device restore, covered by a test that restores into a genuinely second vault.</em></p>
+    <p><strong>Every budget wrong, nothing broken.</strong> Investments were classified as expenses, so investing deflated the user's own savings rate. No test failed — the defect produced plausible numbers everywhere. Separated "cash left the account" from "this was spending" in the type system and migrated existing vaults, choosing a match rule whose failure direction was visible rather than silent. <em>Result: correct budgets and savings rate; the habit of looking for defects that do not throw.</em></p>
+  </div>
+
+  <div class="note">
+    <span class="h">Two things to keep straight in interviews</span>
+    <p>The user numbers are small and stating them plainly is stronger than implying scale: ten people are using it, the Play Store closed track needs twelve testers for fourteen days, and it is not publicly released. Every other figure in this document is countable from the repository, which is the reason to lead with those instead. Second, the AI-assistance bullet stays in. Volunteering it, alongside a clear account of which decisions were yours, is far better than having it inferred — and the architectural decisions in Appendix C are the evidence that the ownership claim is real.</p>
+  </div>
 </section>
 
 <!-- Outside every appendix on purpose: the colophon has to survive the public
      build, which strips the private ones. -->
 <section class="colophon">
   <hr class="soft">
-  <p class="small muted">Prepared from the Khazana repository on 30 August 2026. Figures counted from the source tree; performance numbers reproduced from committed benchmark scripts. Sandhosh Sivan · sandhoshsivan00@gmail.com</p>
+  <p class="small muted">Prepared from the Khazana repository on 16 September 2026. Figures counted from the source tree; performance numbers reproduced from committed benchmark scripts. Sandhosh Sivan · sandhoshsivan00@gmail.com</p>
 </section>
 
 </body>

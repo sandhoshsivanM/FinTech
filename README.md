@@ -79,11 +79,11 @@ See the results table in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#measured-pe
 
 ## Status & scope
 
-Built solo. The web app is **live and usable today** (link at the top); the
-mobile builds are in release preparation, where the critical path is Google
-Play's twelve-tester, fourteen-day closed test for individual publishers rather
-than anything in the code. **No production users yet, and no backend — the
-second one permanently.**
+Built solo. The web app is **live and usable today** (link at the top) and is
+currently in **private beta with ten users**; the mobile builds are in release
+preparation, where the critical path is Google Play's twelve-tester, fourteen-day
+closed test for individual publishers rather than anything in the code. **No
+public release yet, and no backend — the second one permanently.**
 
 Khazana is free with no limits on the ledger; **Khazana Pro** is a one-time
 purchase, never a subscription. Backup, restore, CSV export and "erase all data"

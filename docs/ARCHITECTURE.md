@@ -56,8 +56,16 @@ Details and trust boundaries: [THREAT-MODEL.md](THREAT-MODEL.md).
 
 ## Data layer
 
-- **13 Drift tables**, DAO-per-table, repository wrappers; `schemaVersion = 2`
-  with an `onUpgrade` migration (insurance + net-worth snapshots).
+- **23 Drift tables**, 16 DAOs, repository wrappers; `schemaVersion = 6`, with an
+  `onUpgrade` ladder that is additive and idempotent so it is safe to re-run on a
+  database that can never be inspected:
+  | To | What it does |
+  |---|---|
+  | v2 | Adds insurance and net-worth snapshots. |
+  | v3 | Converts every single-entry transaction into balanced double-entry postings, seeding a chart of accounts with **deterministic ids** (`acct-cash-$vault`, `acct-exp-$category`) so a re-run cannot duplicate it. Net worth is preserved exactly. |
+  | v4 | Replaces aggregated holdings with the lot-level model — `Instruments`, `Trades` (with per-leg charges), `InstrumentPrices` as a dated series, `Dividends`, `FundHoldings`. |
+  | v5 | Adds health-score columns to snapshots, nullable — a vault with no score for a past month shows nothing there, never `0`. |
+  | v6 | Adds `NotificationDeliveries`. |
 - **FTS5** virtual table + sync triggers + porter tokenizer for transaction
   search; `vaultId` indexed on every table for multi-profile isolation.
 - Money columns are **TEXT/Decimal** via a custom converter — no float drift.
