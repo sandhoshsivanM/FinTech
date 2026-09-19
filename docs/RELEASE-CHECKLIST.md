@@ -37,7 +37,18 @@ is a day added to launch.
       key into **both** `lib/core/entitlement/license_public_key.dart` and
       `webapp/src/lib/entitlement/licensePublicKey.ts` — they must match byte
       for byte. Until then every licence key is refused, by design.
-- [ ] Mint a key pool and upload it to the merchant as a code list:
+- [x] **DONE** Mint a key pool and upload it to the merchant as a code list.
+      100 keys minted 19 Sep 2026 to `~/khazana-keys-pool.txt` (mode 600), with
+      `~/khazana-keys-pool.csv` as the key→recipient tracker. All 100 verified
+      against the shipped `LICENSE_PUBLIC_KEY`, 100 distinct order refs. The
+      first 20 are the early-access giveaway; the rest are the launch pool.
+      ⚠️ **Do not redirect stdout straight to the file.** `dart run` prints
+      `Running build...` to *stdout* with no trailing newline, so it glues onto
+      the first key and silently corrupts it. Extract by pattern instead:
+      `dart run tool/mint_licenses.dart --private-key <b64> --count 1000 \
+        2>/dev/null | grep -oE 'KHAZ1\.[A-Za-z0-9_-]{102}' > keys.txt`
+      Original instructions:
+- [ ] ~~Mint a key pool and upload it to the merchant as a code list:~~
       `dart run tool/mint_licenses.dart --private-key <b64> --count 1000 > keys.txt`
 - [ ] **BLOCKER** Create the Android release keystore. Back it up off-machine —
       **losing it means you can never update the app on Play, ever.**
