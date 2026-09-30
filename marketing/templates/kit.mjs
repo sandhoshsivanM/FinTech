@@ -81,7 +81,6 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
 .frame .url{margin:0 auto;padding:4px 14px;border-radius:7px;font-size:11.5px;font-weight:500;min-width:40%;text-align:center}
 .frame .shot{position:relative;overflow:hidden}
 .frame .shot img{display:block;width:100%;position:absolute;top:0;left:0}
-.frame .seam{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 ${css}
 </style></head><body><div class="bg"></div>${body}<div class="grain"></div></body></html>`;
 }
@@ -89,7 +88,7 @@ ${css}
 /**
  * macOS-style browser window around a real screen.
  * `theme` picks the screenshot + chrome; `split` overlays the dark screen on
- * the right of a diagonal with a gold seam — the light/dark signature.
+ * the right of a clean diagonal cut — the light/dark signature.
  */
 export function frame({ name, theme = 'light', split = false, x, y, w, h, route = '/dashboard',
   z = 1, transform = '', tall = false, offsetY = 0, offsetX = 0, zoom = 1, extra = '' }) {
@@ -107,10 +106,7 @@ export function frame({ name, theme = 'light', split = false, x, y, w, h, route 
         <div class="url" style="background:rgba(255,255,255,.06);color:${darkChrome.chromeInk}">🔒 ${SITE}${route}</div>
       </div>
       <div class="shot" style="height:${shotH}px">${img('dark')}</div>
-    </div>
-    <svg class="seam" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <line x1="58" y1="0" x2="42" y2="100" stroke="${TOKENS.dark.gold}" stroke-width="0.35" vector-effect="non-scaling-stroke" style="stroke-width:2.5px"/>
-    </svg>` : '';
+    </div>` : '';
   return `<div class="frame" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;z-index:${z};
       box-shadow:${TOKENS[theme].shadow};transform:${transform};transform-origin:center;${extra}">
     <div class="bar" style="background:${t.chrome}">
