@@ -37,8 +37,9 @@ class UnlockGateScreen extends ConsumerWidget {
                     GlassCard(
                       child: switch (state) {
                         VaultUnlocking() => const _Busy(),
-                        VaultUninitialized(:final error) =>
-                          _SetupForm(initialError: error),
+                        VaultUninitialized(:final error) => _SetupForm(
+                          initialError: error,
+                        ),
                         VaultLocked() => _UnlockForm(state: state),
                         VaultCooldown() => _CooldownView(until: state.until),
                         VaultUnlocked() => const _Busy(),
@@ -66,9 +67,12 @@ class _BrandMark extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         const WordMark(fontSize: 20),
         const SizedBox(height: 2),
-        Text(kAppTagline,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        Text(
+          kAppTagline,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
@@ -77,11 +81,8 @@ class _BrandMark extends StatelessWidget {
 class _Busy extends StatelessWidget {
   const _Busy();
   @override
-  Widget build(BuildContext context) => const Center(
-        child: CircularProgressIndicator(
-          semanticsLabel: 'Working',
-        ),
-      );
+  Widget build(BuildContext context) =>
+      const Center(child: CircularProgressIndicator(semanticsLabel: 'Working'));
 }
 
 /// First-run: create a PIN. PRD requires a PIN before the vault exists.
@@ -126,13 +127,17 @@ class _SetupFormState extends ConsumerState<_SetupForm> {
       children: [
         Icon(Icons.lock_outline, size: 56, color: context.colors.accent),
         const SizedBox(height: AppSpacing.md),
-        Text('Set up your vault',
-            style: Theme.of(context).textTheme.headlineSmall,
-            textAlign: TextAlign.center),
+        Text(
+          'Set up your vault',
+          style: Theme.of(context).textTheme.headlineSmall,
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: AppSpacing.sm),
-        Text('Your PIN encrypts everything on this device. It is never stored.',
-            style: Theme.of(context).textTheme.bodyMedium,
-            textAlign: TextAlign.center),
+        Text(
+          'Your PIN encrypts everything on this device. It is never stored.',
+          style: Theme.of(context).textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: AppSpacing.lg),
         _PinField(controller: _pin, label: 'Create PIN'),
         const SizedBox(height: AppSpacing.md),
@@ -142,10 +147,7 @@ class _SetupFormState extends ConsumerState<_SetupForm> {
           _ErrorText(_error!),
         ],
         const SizedBox(height: AppSpacing.lg),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Create vault'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('Create vault')),
       ],
     );
   }
@@ -184,9 +186,11 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
       children: [
         Icon(Icons.shield_outlined, size: 56, color: context.colors.accent),
         const SizedBox(height: AppSpacing.md),
-        Text('Unlock',
-            style: Theme.of(context).textTheme.headlineSmall,
-            textAlign: TextAlign.center),
+        Text(
+          'Unlock',
+          style: Theme.of(context).textTheme.headlineSmall,
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: AppSpacing.lg),
         _PinField(
           controller: _pin,
@@ -203,25 +207,29 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
         // unlocked" would describe the benefit and hide the trade; the key has
         // to be written to this device for it to work, and anyone with the
         // device then has the vault.
-        CheckboxListTile(
-          value: _remember,
-          onChanged: (v) => setState(() => _remember = v ?? false),
-          controlAffinity: ListTileControlAffinity.leading,
-          contentPadding: EdgeInsets.zero,
-          dense: true,
-          title: const Text("Don't ask on this device again"),
-          subtitle: Text(
-            'Stores the key that decrypts your vault on this device. Anyone '
-            'who can use it can then open Khazana.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant),
+        // Its own transparent Material: the GlassCard above paints a coloured
+        // DecoratedBox, which would hide the tile's ink splash (and trips
+        // ListTile's debug assertion in tests).
+        Material(
+          type: MaterialType.transparency,
+          child: CheckboxListTile(
+            value: _remember,
+            onChanged: (v) => setState(() => _remember = v ?? false),
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            title: const Text("Don't ask on this device again"),
+            subtitle: Text(
+              'Stores the key that decrypts your vault on this device. Anyone '
+              'who can use it can then open Khazana.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        FilledButton(
-          onPressed: _submitPin,
-          child: const Text('Unlock'),
-        ),
+        FilledButton(onPressed: _submitPin, child: const Text('Unlock')),
         if (showBiometric) ...[
           const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(
@@ -257,7 +265,10 @@ class _CooldownViewState extends State<_CooldownView> {
   @override
   void initState() {
     super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+    _ticker = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => setState(() {}),
+    );
   }
 
   @override
@@ -278,11 +289,15 @@ class _CooldownViewState extends State<_CooldownView> {
         children: [
           Icon(Icons.timer_outlined, size: 56, color: context.colors.expense),
           const SizedBox(height: AppSpacing.md),
-          Text('Too many attempts',
-              style: Theme.of(context).textTheme.headlineSmall),
+          Text(
+            'Too many attempts',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
           const SizedBox(height: AppSpacing.sm),
-          Text('Try again in $secs s',
-              style: Theme.of(context).textTheme.bodyLarge),
+          Text(
+            'Try again in $secs s',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
         ],
       ),
     );
@@ -329,8 +344,10 @@ class _ErrorText extends StatelessWidget {
           Icon(Icons.error_outline, color: context.colors.expense, size: 20),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: Text(message,
-                style: TextStyle(color: context.colors.expense)),
+            child: Text(
+              message,
+              style: TextStyle(color: context.colors.expense),
+            ),
           ),
         ],
       ),
