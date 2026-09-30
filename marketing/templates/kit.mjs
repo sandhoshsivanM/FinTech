@@ -69,7 +69,8 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
 .eyebrow{font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .h{font-weight:700;letter-spacing:-.035em;line-height:1.02}
 .h em{font-style:normal;color:var(--accent)}
-.sub{color:var(--muted);line-height:1.45;font-weight:500}
+.sub{color:var(--muted);line-height:1.45;font-weight:500;text-wrap:pretty}
+.h{text-wrap:balance}
 .pills{display:flex;flex-wrap:wrap;gap:.5em}
 .pill{display:inline-flex;align-items:center;gap:.45em;padding:.5em .9em;border-radius:999px;
   border:1px solid var(--line);background:var(--pill);font-weight:600;backdrop-filter:blur(8px);white-space:nowrap}
@@ -80,7 +81,7 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
 .frame .url{margin:0 auto;padding:4px 14px;border-radius:7px;font-size:11.5px;font-weight:500;min-width:40%;text-align:center}
 .frame .shot{position:relative;overflow:hidden}
 .frame .shot img{display:block;width:100%;position:absolute;top:0;left:0}
-.frame .seam{position:absolute;inset:0;pointer-events:none}
+.frame .seam{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 ${css}
 </style></head><body><div class="bg"></div>${body}<div class="grain"></div></body></html>`;
 }

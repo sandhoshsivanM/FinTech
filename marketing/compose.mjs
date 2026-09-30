@@ -26,7 +26,7 @@ const noRail = (w) => ({ zoom: 1.21, offsetX: Math.round(w * 1.21 * 0.172) });
 /** Dashboard: start below the page header so the net-worth chart is in view. */
 const dash = (w) => ({ tall: true, offsetY: Math.round(270 * w / 1440) });
 
-const SUB = 'Net worth, portfolio, budgets and forecasts — encrypted on your device. No server. No tracking.';
+const SUB = 'Net worth, portfolio, budgets and forecasts&nbsp;— encrypted on your device. No server. No tracking.';
 const TILT_R = 'perspective(2400px) rotateY(-13deg) rotateX(5deg) rotateZ(1.5deg)';
 const TILT_L = 'perspective(2400px) rotateY(11deg) rotateX(5deg) rotateZ(-1.5deg)';
 
