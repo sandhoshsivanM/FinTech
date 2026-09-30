@@ -16,6 +16,8 @@
 import { putRecord, clearVault } from './repo';
 import { STORE, type Category } from './types';
 import { useApp, uid, repairPostings } from './store';
+import { liquidBalance } from '@/domain/accountLedger';
+import { investmentTotals } from '@/domain/investmentTotals';
 
 const now = Date.now();
 const DAY = 86400000;
@@ -233,35 +235,49 @@ export async function loadSampleData() {
   tasks.push(bill('58000', 'Rent', 'Landlord', 11));
   tasks.push(put(STORE.recurring, { id: uid(), vaultId, amount: '285000', type: 'income', categoryId: cat('Salary'), merchant: 'Aurelius Systems', frequency: 'monthly', nextRun: now + 24 * DAY }));
 
-  // ---- Net-worth history --------------------------------------------------
-  // Real snapshots are written once a day when the app is opened, so a fresh
-  // demo vault has none and every trend chart is empty. Backfill ninety days of
-  // plausible history, ending near where today's figures actually land.
-  const endNet = 52_400_000;
-  const startNet = endNet * 0.82;
-  for (let i = 90; i >= 0; i--) {
-    const t = (90 - i) / 90;
-    const wobble = (rnd(`snap${i}`) - 0.5) * 0.03 + Math.sin(t * Math.PI * 3.4) * 0.018;
-    const net = startNet + (endNet - startNet) * Math.pow(t, 0.95) + endNet * wobble * (1 - Math.abs(t - 0.5));
-    const day = new Date(daysAgo(i));
-    day.setHours(0, 0, 0, 0);
-    tasks.push(put(STORE.snapshot, {
-      id: `snap-sample-${day.toISOString().slice(0, 10)}`,
-      vaultId,
-      date: day.getTime(),
-      netWorth: net.toFixed(2),
-      cash: (net * 0.11).toFixed(2),
-      investments: (net * 0.98).toFixed(2),
-      liabilities: (net * 0.09).toFixed(2),
-      healthScore: Math.round(58 + t * 16 + wobble * 90),
-      healthTrackedWeight: 92,
-    }));
-  }
-
   await Promise.all(tasks);
   // These records were written straight to storage for speed, which skips the
   // ledger. Build the postings now, or every account balance would read as its
   // opening balance and the sample vault would look broken.
   await repairPostings(key, vaultId);
+  await useApp.getState().reload();
+
+  // ---- Net-worth history --------------------------------------------------
+  // Real snapshots are written once a day when the app is opened, so a fresh
+  // demo vault has none and every trend chart is empty. Backfill ninety days of
+  // plausible history, ending where today's figures actually land.
+  //
+  // The end point is computed from the vault just loaded, the same way
+  // `captureSnapshot` does, rather than hardcoded: a fixed figure drifted out
+  // of step with the seeded holdings, and every trend chart ended in a cliff
+  // down to the live snapshot.
+  const { accounts, postings, holdings, liabilities } = useApp.getState();
+  const endCash = liquidBalance(accounts, postings).toNumber();
+  const endInvest = investmentTotals(holdings).marketValue.toNumber();
+  const endLiab = liabilities.reduce((sum, l) => sum + Number(l.principal), 0);
+  const endNet = endCash + endInvest - endLiab;
+  const startNet = endNet * 0.82;
+  const history: Promise<unknown>[] = [];
+  for (let i = 90; i >= 1; i--) {
+    const t = (90 - i) / 90;
+    const wobble = (rnd(`snap${i}`) - 0.5) * 0.03 + Math.sin(t * Math.PI * 3.4) * 0.018;
+    const net = startNet + (endNet - startNet) * Math.pow(t, 0.95) + endNet * wobble * (1 - Math.abs(t - 0.5));
+    // Scale today's mix, so cash + investments - liabilities still equals net.
+    const f = net / endNet;
+    const day = new Date(daysAgo(i));
+    day.setHours(0, 0, 0, 0);
+    history.push(put(STORE.snapshot, {
+      id: `snap-sample-${day.toISOString().slice(0, 10)}`,
+      vaultId,
+      date: day.getTime(),
+      netWorth: net.toFixed(2),
+      cash: (endCash * f).toFixed(2),
+      investments: (endInvest * f).toFixed(2),
+      liabilities: (endLiab * f).toFixed(2),
+      healthScore: Math.round(58 + t * 16 + wobble * 90),
+      healthTrackedWeight: 92,
+    }));
+  }
+  await Promise.all(history);
   await useApp.getState().reload();
 }
