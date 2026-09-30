@@ -23,6 +23,8 @@ const ROUTES = [
   ['holdings', '/holdings'],
   ['transactions', '/transactions'],
   ['budget', '/budget'],
+  ['import', '/import'],
+  ['add', '/add'],
 ];
 const VIEW = { width: 1440, height: 900 };
 const TALL = 1800;
@@ -104,7 +106,23 @@ async function go(path) {
 
 // ── First run: create vault and load the deterministic sample ─────────────
 await page.goto(BASE + '/dashboard');
+// The vault-setup screen exists only before the first vault, so shoot it in
+// both themes now (PIN typed, not submitted) for the "How it works" steps.
+for (const theme of THEMES) {
+  await setPrefs(theme);
+  await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+  await page.reload();
+  const pin = page.getByPlaceholder('Create PIN');
+  await pin.waitFor({ timeout: 20000 });
+  await pin.fill(PIN);
+  await page.getByPlaceholder('Confirm PIN').fill(PIN);
+  await settle();
+  await mkdir(`screens/${theme}`, { recursive: true });
+  await page.screenshot({ path: `screens/${theme}/vault.png` });
+  console.log(`  ${theme} vault`);
+}
 await setPrefs('light');
+await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
 await page.reload();
 await unlock();
 // Settings → Data → Load sample data (the dashboard starter card is not shown

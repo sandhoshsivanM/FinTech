@@ -26,6 +26,19 @@ Dart and TypeScript so both apps compute the same numbers. See
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and
 [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
 
+## How it works
+
+<table>
+  <tr>
+    <td width="50%" valign="top"><b>1 · Create your vault</b><br><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/vault-dark.jpg"><img src="docs/showcase/vault-light.jpg" alt="1 · Create your vault"></picture><br><sub>Pick a PIN of 6+ digits. It derives the AES-256 key through PBKDF2 (600,000 iterations) and is never stored. No account, no email, no server.</sub></td>
+    <td width="50%" valign="top"><b>2 · Bring your data</b><br><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/import-dark.jpg"><img src="docs/showcase/import-light.jpg" alt="2 · Bring your data"></picture><br><sub>Import holdings from 18 brokers and platforms (Zerodha, Groww, Upstox, ICICI Direct, CDSL, MFCentral CAS…) and income &amp; expenses from CSV. You can also start with <b>Settings → Load sample data</b> to explore.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><b>3 · Record as you go</b><br><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/add-dark.jpg"><img src="docs/showcase/add-light.jpg" alt="3 · Record as you go"></picture><br><sub>Add expenses, income, investments and transfers. Quick add understands plain text like <i>"spent 450 on groceries at bigbasket"</i>. Every entry posts to a double-entry ledger.</sub></td>
+    <td width="50%" valign="top"><b>4 · See where you stand</b><br><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/dashboard-dark.jpg"><img src="docs/showcase/dashboard-light.jpg" alt="4 · See where you stand"></picture><br><sub>Net worth, cash flow, allocation and a financial-health score update instantly, all computed on your device. The screens below show the rest.</sub></td>
+  </tr>
+</table>
+
 ## Screenshots
 
 Every screen follows your system theme. These shots use the built-in sample
