@@ -1,5 +1,9 @@
 # Khazana — Offline-First, Encrypted Personal Finance Engine
 
+<p align="center">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/hero-dark.jpg"><img src="docs/showcase/hero-light.jpg" alt="Khazana — your wealth, your vault. Dashboard, portfolio and analytics screens."></picture>
+</p>
+
 **[Try it in your browser →](https://khazana-app.netlify.app)** · no signup, no
 install, no data leaves your device — the link *is* the whole app.
 &nbsp;·&nbsp; **[Technical case study →](docs/Khazana_Technical_Case_Study.pdf)**
@@ -21,6 +25,30 @@ The financial **domain layer is framework-free** and deliberately ported between
 Dart and TypeScript so both apps compute the same numbers. See
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and
 [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
+
+## Screenshots
+
+Every screen follows your system theme. These shots use the built-in sample
+vault (**Settings → Load sample data**). They are not real finances. GitHub
+shows the light or dark set to match your own GitHub theme.
+
+<table>
+  <tr>
+    <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/dashboard-dark.jpg"><img src="docs/showcase/dashboard-light.jpg" alt="Dashboard"></picture><br><sub><b>Dashboard</b> — Net worth, cash flow and the 90-day trend</sub></td>
+    <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/portfolio-dark.jpg"><img src="docs/showcase/portfolio-light.jpg" alt="Portfolio"></picture><br><sub><b>Portfolio</b> — Holdings, allocation and P&amp;L</sub></td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/score-dark.jpg"><img src="docs/showcase/score-light.jpg" alt="Financial health"></picture><br><sub><b>Financial health</b> — One score, four areas behind it</sub></td>
+    <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/safety-net-dark.jpg"><img src="docs/showcase/safety-net-light.jpg" alt="Safety net"></picture><br><sub><b>Safety net</b> — Emergency fund, insurance and safe assets</sub></td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/analytics-dark.jpg"><img src="docs/showcase/analytics-light.jpg" alt="Analytics"></picture><br><sub><b>Analytics</b> — Diversification, concentration, return quality</sub></td>
+    <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/forecast-dark.jpg"><img src="docs/showcase/forecast-light.jpg" alt="Forecast"></picture><br><sub><b>Forecast</b> — Safe-to-spend and cash-flow projections</sub></td>
+  </tr>
+</table>
+
+Brand images for social posts (LinkedIn, X, Instagram, Open Graph) are generated
+by [`marketing/`](marketing/README.md).
 
 ## Highlights
 

@@ -1,0 +1,5 @@
+node_modules/
+# Regenerable: run ./run.sh. The curated README set lives in docs/showcase/.
+screens/
+output/
+*.log

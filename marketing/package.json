@@ -1,0 +1,14 @@
+{
+  "name": "khazana-marketing",
+  "private": true,
+  "type": "module",
+  "description": "Branded light/dark screenshot kit for Khazana (LinkedIn, GitHub, social).",
+  "scripts": {
+    "capture": "node capture.mjs",
+    "compose": "node compose.mjs",
+    "all": "node capture.mjs && node compose.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.55.0"
+  }
+}
