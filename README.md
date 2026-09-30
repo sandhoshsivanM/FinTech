@@ -1,7 +1,7 @@
 # Khazana — Offline-First, Encrypted Personal Finance Engine
 
 <p align="center">
-  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/hero-dark.jpg"><img src="docs/showcase/hero-light.jpg" alt="Khazana — your wealth, your vault. Dashboard, portfolio and analytics screens."></picture>
+  <img src="docs/showcase/hero-split.jpg" alt="Khazana — your wealth, your vault. The dashboard in light and dark themes, side by side.">
 </p>
 
 **[Try it in your browser →](https://khazana-app.netlify.app)** · no signup, no
