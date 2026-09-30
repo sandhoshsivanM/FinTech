@@ -30,7 +30,9 @@ tauri=$(node -p "require('./webapp/src-tauri/tauri.conf.json').version")
 # First `version = "..."` in the file, i.e. the [package] one — later sections
 # carry dependency versions that must not be picked up.
 cargo=$(grep -m1 '^version = ' webapp/src-tauri/Cargo.toml | sed 's/^version = "\(.*\)"$/\1/')
-store=$(sed -n "s/^const APP_VERSION = '\(.*\)';$/\1/p" webapp/src/lib/store.ts)
+# `export` is optional: the constant is exported so the UI can import it
+# rather than keep a sixth copy of the version.
+store=$(sed -n "s/^\(export \)\{0,1\}const APP_VERSION = '\(.*\)';$/\2/p" webapp/src/lib/store.ts)
 
 echo "Expected version (pubspec.yaml): $pubspec"
 for pair in \
