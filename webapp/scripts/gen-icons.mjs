@@ -79,21 +79,21 @@ const TARGETS = [
   ['android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png', 192, 'plate'],
 
   // iOS — sizes and filenames are fixed by AppIcon.appiconset/Contents.json.
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png', 20, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png', 40, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png', 60, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png', 29, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png', 58, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png', 87, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png', 40, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png', 80, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png', 120, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png', 120, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png', 180, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png', 76, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png', 152, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png', 167, 'plate'],
-  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png', 1024, 'plate'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png', 20, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png', 40, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png', 60, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png', 29, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png', 58, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png', 87, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png', 40, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png', 80, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png', 120, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png', 120, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png', 180, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png', 76, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png', 152, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png', 167, 'opaque'],
+  ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png', 1024, 'opaque'],
 
   // macOS — this set was a different mark entirely.
   ['macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_16.png', 16, 'plate'],
@@ -142,11 +142,19 @@ async function plated(size, purpose = 'any') {
     .composite([{ input: mark, gravity: 'centre' }])
     .png()
     .toBuffer();
-  // Plated icons are fully opaque, so drop the alpha channel outright: App
-  // Store Connect rejects a marketing icon that merely *has* one (ITMS-90717),
-  // and release-mobile.yml checks for exactly that. A second pass, because in a
-  // single pipeline sharp would strip alpha before compositing.
-  return sharp(composed).removeAlpha().png({ compressionLevel: 9 }).toBuffer();
+  return sharp(composed).png({ compressionLevel: 9 }).toBuffer();
+}
+
+/**
+ * A plated icon with the alpha channel removed, for iOS only.
+ *
+ * App Store Connect rejects a marketing icon that merely *has* an alpha channel
+ * (ITMS-90717), and release-mobile.yml checks for exactly that. Everything else
+ * must keep RGBA: Tauri refuses non-RGBA icons at compile time and Next's ICO
+ * decoder rejects them, so stripping alpha everywhere broke both builds.
+ */
+async function opaque(size) {
+  return sharp(await plated(size, 'any')).removeAlpha().png({ compressionLevel: 9 }).toBuffer();
 }
 
 /** The mark alone, transparent. For the in-app BrandMark and the brand sheet. */
@@ -202,7 +210,7 @@ async function write(relativePath, buffer) {
 }
 
 async function main() {
-  const make = { plate: (n) => plated(n, 'any'), maskable: (n) => plated(n, 'maskable'), bare };
+  const make = { plate: (n) => plated(n, 'any'), opaque, maskable: (n) => plated(n, 'maskable'), bare };
 
   // Cached per (treatment, size) so a size used by six platforms is rendered
   // once rather than six times.
