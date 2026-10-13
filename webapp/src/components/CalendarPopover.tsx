@@ -125,7 +125,7 @@ export function CalendarPopover({
                 'h-8 rounded-[var(--radius-btn)] text-[12.5px] tnum transition-colors',
                 disabled ? 'opacity-25 cursor-not-allowed' : 'hover:bg-[var(--surface-2)]',
                 c.outside ? 'text-muted' : '',
-                isSelected ? 'bg-[var(--accent)] text-white font-bold hover:bg-[var(--accent)]' : '',
+                isSelected ? 'bg-[var(--accent)] text-[var(--accent-on)] font-bold hover:bg-[var(--accent)]' : '',
                 !isSelected && isToday ? 'font-bold text-[var(--accent)]' : '',
               ].join(' ')}
             >

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/di/data_providers.dart';
+import '../core/di/providers.dart';
 import '../core/theme/app_tokens.dart';
 import '../data/database/encrypted_executor.dart' show VaultKeyMismatchException;
 
@@ -24,12 +25,12 @@ class DataGate extends ConsumerWidget {
   }
 }
 
-class _OpenFailure extends StatelessWidget {
+class _OpenFailure extends ConsumerWidget {
   const _OpenFailure({required this.error});
   final Object error;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
 
@@ -62,12 +63,21 @@ class _OpenFailure extends StatelessWidget {
                     ? 'An encrypted database is already stored on this device, '
                         'but the current PIN does not decrypt it. Nothing has '
                         'been changed or deleted.\n\n'
-                        'Unlock with the original PIN to reach it, or restore '
-                        'from a backup in Settings.'
+                        'If you set up a new PIN after an update, your data '
+                        'can usually still be opened with the PIN you used '
+                        'before.'
                     : '$error',
                 textAlign: TextAlign.center,
                 style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
               ),
+              if (mismatch) ...[
+                const SizedBox(height: AppSpacing.lg),
+                FilledButton(
+                  onPressed: () =>
+                      ref.read(vaultUnlockProvider.notifier).startRecovery(),
+                  child: const Text('Use my previous PIN'),
+                ),
+              ],
             ],
           ),
         ),

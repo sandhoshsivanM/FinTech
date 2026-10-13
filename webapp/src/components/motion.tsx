@@ -27,6 +27,23 @@ export const EASE = [0.4, 0, 0.2, 1] as const;
 export const DUR = 0.25;
 export const DUR_SLOW = 0.4;
 
+/**
+ * The tactile spring: presses, sliding indicators, cards settling into a
+ * stack. Quick and lightly damped so it reads as physical, not bouncy.
+ */
+export const SPRING = { type: 'spring', stiffness: 520, damping: 38, mass: 0.8 } as const;
+/** A softer spring for larger travel (wallet cards, page content). */
+export const SPRING_SOFT = { type: 'spring', stiffness: 260, damping: 30 } as const;
+
+/** Press feedback for anything tappable. Spread onto a `motion.*` element. */
+export const tap = { whileTap: { scale: 0.96 }, transition: SPRING } as const;
+
+/** Pop in from small with a slight overshoot — quick actions, badges, the + button. */
+export const popIn: Variants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  show: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 420, damping: 22 } },
+};
+
 /** Rise and fade. The default entrance for a card or section. */
 export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 10 },
@@ -165,4 +182,34 @@ export function AnimatedNumber({
   );
 }
 
-export { motion, useReducedMotion };
+/**
+ * Route-change entrance. Keyed on the pathname by the caller so each page
+ * rises in once; no exit animation, because a static export swaps the tree
+ * immediately and an exit would only delay the next page.
+ */
+export function PageTransition({ children, routeKey }: { children: ReactNode; routeKey: string }) {
+  return (
+    <motion.div
+      key={routeKey}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: DUR_SLOW, ease: EASE }}
+      className="min-w-0"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** A tappable surface with press feedback. Renders a `motion.button`. */
+export function Pressable({
+  children, className, ...rest
+}: { children: ReactNode; className?: string } & HTMLMotionProps<'button'>) {
+  return (
+    <motion.button type="button" {...tap} className={clsx('focus-ring', className)} {...rest}>
+      {children}
+    </motion.button>
+  );
+}
+
+export { motion, useReducedMotion, AnimatePresence } from 'framer-motion';

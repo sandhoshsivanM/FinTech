@@ -76,6 +76,14 @@ class VaultCredentialStore {
     return salt;
   }
 
+  /// Writes a KNOWN salt — the one recovered from the legacy keychain, after
+  /// it has been proven to open the database. Never a fresh one: that is
+  /// [createSalt], which is exactly what must not run over an existing vault.
+  Future<void> storeSalt(String vaultId, Uint8List salt) async {
+    final p = await _prefs;
+    await p.setString(_saltKey(vaultId), KeyDerivationService.toHex(salt));
+  }
+
   Future<Uint8List?> readSalt(String vaultId) async {
     final p = await _prefs;
     final hex = p.getString(_saltKey(vaultId));

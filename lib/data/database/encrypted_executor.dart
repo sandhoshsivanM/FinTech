@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart';
 import 'package:sqlite3/open.dart';
+import 'package:sqlite3/sqlite3.dart' as raw;
 
 import '../../core/security/key_derivation_service.dart';
 
@@ -66,4 +67,25 @@ LazyDatabase openEncrypted(Uint8List key, String path) {
       },
     );
   });
+}
+
+/// Whether [key] decrypts the SQLCipher database at [path].
+///
+/// Opened READ-ONLY and closed before returning, so asking the question can
+/// never alter the file — this runs during recovery, against a database that
+/// may be someone's only copy of their finances.
+Future<bool> keyOpensDatabase(Uint8List key, String path) async {
+  _configureSqlCipher();
+  await applyWorkaroundToOpenSqlCipherOnOldAndroidVersions();
+  final keyHex = KeyDerivationService.toHex(key);
+  final db = raw.sqlite3.open(path, mode: raw.OpenMode.readOnly);
+  try {
+    db.execute('PRAGMA key = "x\'$keyHex\'";');
+    db.select('SELECT count(*) FROM sqlite_master;');
+    return true;
+  } on raw.SqliteException {
+    return false;
+  } finally {
+    db.dispose();
+  }
 }

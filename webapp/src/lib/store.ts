@@ -443,6 +443,12 @@ interface AppState extends Data {
   removeLicense: () => void;
   persistence: PersistenceState;
   /**
+   * Encrypted records found with no vault row to open them (no salt). Setup
+   * is refused while this is > 0: a new vault would write a new salt over the
+   * same store and bury them for good. See `setAsideStranded`.
+   */
+  strandedRecords: number;
+  /**
    * Consecutive failed unlock attempts, and the epoch-ms until which further
    * attempts are refused. Both live in localStorage so closing the tab is not a
    * way around the delay.
@@ -500,6 +506,8 @@ interface AppState extends Data {
   /** Deletes everything a run created. Returns how many records were removed. */
   undoImportBatch: (batchId: string) => Promise<number>;
   wipe: () => Promise<void>;
+  /** Moves stranded records out of the way (kept, not deleted) so setup can run. */
+  setAsideStranded: () => Promise<void>;
 }
 
 export const uid = () => crypto.randomUUID();
@@ -603,7 +611,7 @@ export function lsSet(key: string, value: string): void {
 }
 
 export type ThemeChoice = 'light' | 'dark' | 'system';
-export type AccentName = 'default' | 'emerald' | 'blue' | 'violet' | 'amber' | 'rose';
+export type AccentName = 'default' | 'emerald' | 'blue' | 'violet' | 'amber' | 'rose' | 'lime';
 
 // Each accent is tuned separately for light and dark so it always reads well.
 // [accent, accent-deep, accent-glow]. 'default' is Khazana Gold and sets no
@@ -625,6 +633,8 @@ export type AccentName = 'default' | 'emerald' | 'blue' | 'violet' | 'amber' | '
 // which carries a copy of this table so the accent lands before first paint.
 export const ACCENTS: Record<Exclude<AccentName, 'default'>, {
   label: string; swatch: string; light: [string, string, string]; dark: [string, string, string];
+  /** Text colour on a solid accent fill, per theme, when white would fail. */
+  on?: { light: string; dark: string };
 }> = {
   // Jade sits deliberately close to the brand plate; it is the one alternate
   // that keeps the emerald identity while moving the accent off gold.
@@ -633,6 +643,14 @@ export const ACCENTS: Record<Exclude<AccentName, 'default'>, {
   violet: { label: 'Amethyst', swatch: '#6E5BB8', light: ['#584796', '#443873', '#8E7CC3'], dark: ['#A492DC', '#7E6CB8', '#C9BDEE'] },
   amber: { label: 'Copper', swatch: '#B4642A', light: ['#8E4E20', '#703D19', '#C2610F'], dark: ['#D98A4E', '#B4642A', '#F0B183'] },
   rose: { label: 'Garnet', swatch: '#A83A45', light: ['#8C2F38', '#6E252C', '#C0392F'], dark: ['#E0707C', '#B84B58', '#F2A6AE'] },
+  // Neon lime on Vault; on Ledger a lime that light would be unreadable as
+  // text, so it deepens to olive (6:1 on white). Dark ink on the neon fill —
+  // white on #C5F23A is 1.3:1.
+  lime: {
+    label: 'Lime', swatch: '#A8D61F',
+    light: ['#4D6B00', '#3A5200', '#8DB31F'], dark: ['#C5F23A', '#8DB31F', '#DDFF7A'],
+    on: { light: '#FFFFFF', dark: '#0B0F0D' },
+  },
 };
 
 function applyAccent(name: string, dark: boolean) {
@@ -643,13 +661,19 @@ function applyAccent(name: string, dark: boolean) {
     root.style.removeProperty('--accent');
     root.style.removeProperty('--accent-deep');
     root.style.removeProperty('--accent-glow');
+    root.style.removeProperty('--accent-on');
     return;
   }
   const [c, d, g] = dark ? a.dark : a.light;
   root.style.setProperty('--accent', c);
   root.style.setProperty('--accent-deep', d);
   root.style.setProperty('--accent-glow', g);
+  if (a.on) root.style.setProperty('--accent-on', dark ? a.on.dark : a.on.light);
+  else root.style.removeProperty('--accent-on');
 }
+
+/** Records belonging to THE vault — set-aside ones live under another id. */
+const vaultRecordCount = () => db.records.where('vaultId').equals(VAULT_ID).count();
 
 // Resolve theme + accent from storage and apply to <html>. Honors OS preference
 // for 'system'. Safe on the server (guards on document).
@@ -738,17 +762,21 @@ export const useApp = create<AppState>((set, get) => ({
   activeProfileId: '',
   pro: FREE,
   persistence: 'unsupported',
+  strandedRecords: 0,
   pinFailures: 0,
   lockedOutUntil: 0,
 
   init: async () => {
     const meta = await db.vaults.get(VAULT_ID);
+    // No vault row is not proof of no data — check the records themselves.
+    const strandedRecords = meta ? 0 : await vaultRecordCount();
     const cur = lsGet(CURRENCY_KEY) ?? 'INR';
     const theme = (lsGet(THEME_KEY) as ThemeChoice) ?? 'system';
     const accent = (lsGet(ACCENT_KEY) as AccentName) ?? 'default';
     const ghost = lsGet(GHOST_KEY) === '1';
     set({
       status: meta ? 'locked' : 'uninitialized',
+      strandedRecords,
       currencyCode: cur,
       theme,
       accent,
@@ -778,6 +806,21 @@ export const useApp = create<AppState>((set, get) => ({
   setup: async (pin) => {
     set({ status: 'unlocking', error: null });
     try {
+      // Never over existing data. A vault row means a vault already exists;
+      // records without one are stranded data. Either way a fresh salt here
+      // would make what is already stored permanently unreadable.
+      const existing = await db.vaults.get(VAULT_ID);
+      const records = await vaultRecordCount();
+      if (existing || records > 0) {
+        set({
+          status: existing ? 'locked' : 'uninitialized',
+          strandedRecords: existing ? 0 : records,
+          error: existing
+            ? 'A vault already exists in this browser. Unlock it with your PIN.'
+            : 'Data from an earlier vault is still in this browser. Nothing was changed.',
+        });
+        return;
+      }
       const salt = randomBytes(32);
       const key = await deriveKey(pin, salt);
       const verifier = await encryptJson(key, VERIFIER);
@@ -807,7 +850,10 @@ export const useApp = create<AppState>((set, get) => ({
     set({ status: 'unlocking', error: null });
     try {
       const meta = await db.vaults.get(VAULT_ID);
-      if (!meta) { set({ status: 'uninitialized' }); return; }
+      if (!meta) {
+        set({ status: 'uninitialized', strandedRecords: await vaultRecordCount() });
+        return;
+      }
       const key = await deriveKey(pin, b64ToBuf(meta.saltB64));
       const token = await decryptJson<string>(key, meta.verifier); // throws on wrong PIN
       if (token !== VERIFIER) throw new Error('bad');
@@ -823,7 +869,10 @@ export const useApp = create<AppState>((set, get) => ({
       await get().reload();
       set({ status: 'unlocked' });
       void get().captureSnapshot();
-      void persistenceState().then((persistence) => set({ persistence }));
+      // Asked on every unlock, not only at setup: vaults created before the
+      // request existed were never asked, and an unpersisted vault is one the
+      // browser may evict under storage pressure — with it, every record.
+      void requestPersistence().then((persistence) => set({ persistence }));
     } catch {
       const failures = get().pinFailures + 1;
       const until = failures >= LOCKOUT_AFTER
@@ -1498,6 +1547,17 @@ export const useApp = create<AppState>((set, get) => ({
 
     await get().reload();
     return count;
+  },
+
+  setAsideStranded: async () => {
+    // Re-tagged, not deleted: the records stay in this browser under a vault id
+    // nothing opens, so they can still be recovered if their salt turns up.
+    const aside = `set-aside-${Date.now()}`;
+    await db.transaction('rw', db.records, db.tombstones, async () => {
+      await db.records.where('vaultId').equals(VAULT_ID).modify({ vaultId: aside });
+      await db.tombstones.where('vaultId').equals(VAULT_ID).modify({ vaultId: aside });
+    });
+    set({ strandedRecords: 0, error: null, status: 'uninitialized' });
   },
 
   wipe: async () => {

@@ -1,3 +1,4 @@
+import 'package:khazana/core/security/vault_file_probe.dart';
 import 'package:khazana/core/di/providers.dart';
 import 'package:khazana/core/security/biometric_gate.dart';
 import 'package:khazana/core/security/secure_key_store.dart';
@@ -30,6 +31,8 @@ void main() {
         overrides: [
           secureKeyStoreProvider.overrideWithValue(keyStore),
           vaultCredentialStoreProvider.overrideWithValue(credentials),
+          // No vault file on disk: the first-run path.
+          vaultFileProbeProvider.overrideWithValue(const NoVaultFileProbe()),
           biometricGateProvider.overrideWithValue(bio),
         ],
         child: const MaterialApp(home: UnlockGateScreen()),
@@ -62,6 +65,8 @@ void main() {
         overrides: [
           secureKeyStoreProvider.overrideWithValue(keyStore),
           vaultCredentialStoreProvider.overrideWithValue(credentials),
+          // No vault file on disk: the first-run path.
+          vaultFileProbeProvider.overrideWithValue(const NoVaultFileProbe()),
           biometricGateProvider.overrideWithValue(bio),
         ],
         child: const MaterialApp(home: UnlockGateScreen()),
@@ -91,6 +96,8 @@ void main() {
         overrides: [
           secureKeyStoreProvider.overrideWithValue(keyStore),
           vaultCredentialStoreProvider.overrideWithValue(credentials),
+          // No vault file on disk: the first-run path.
+          vaultFileProbeProvider.overrideWithValue(const NoVaultFileProbe()),
           biometricGateProvider.overrideWithValue(bio),
         ],
         child: const MaterialApp(home: UnlockGateScreen()),
@@ -118,6 +125,8 @@ void main() {
         overrides: [
           secureKeyStoreProvider.overrideWithValue(keyStore),
           vaultCredentialStoreProvider.overrideWithValue(credentials),
+          // No vault file on disk: the first-run path.
+          vaultFileProbeProvider.overrideWithValue(const NoVaultFileProbe()),
           biometricGateProvider.overrideWithValue(bio),
         ],
         child: const MaterialApp(home: UnlockGateScreen()),

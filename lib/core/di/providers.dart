@@ -7,6 +7,8 @@ import '../security/vault_credential_store.dart';
 import '../security/vault_registry.dart';
 import '../security/vault_state.dart';
 import '../security/vault_unlock_notifier.dart';
+import '../security/vault_file_probe.dart';
+import '../../data/database/vault_file_probe.dart';
 
 /// Composition root (PRD §3B `lib/core/` DI setup). Concrete implementations
 /// are bound here; UI and feature providers depend only on these.
@@ -36,6 +38,11 @@ final vaultListProvider = FutureProvider<List<VaultInfo>>((ref) {
 
 /// Salt and PIN verifier, in preferences rather than the keychain — so opening
 /// the app never triggers an OS keychain prompt.
+/// Inspects the vault's database file, so a missing preference can never be
+/// mistaken for a missing vault.
+final vaultFileProbeProvider =
+    Provider<VaultFileProbe>((ref) => createVaultFileProbe());
+
 final vaultCredentialStoreProvider =
     Provider<VaultCredentialStore>((ref) => VaultCredentialStore());
 
@@ -55,6 +62,7 @@ final vaultUnlockProvider =
     kdf: ref.watch(keyDerivationServiceProvider),
     biometric: ref.watch(biometricGateProvider),
     registry: ref.watch(vaultRegistryProvider),
+    probe: ref.watch(vaultFileProbeProvider),
     vaultId: selected.id,
     vaultName: selected.name,
   );

@@ -11,6 +11,9 @@ export function VaultGate() {
   const error = useApp((s) => s.error);
   const setup = useApp((s) => s.setup);
   const unlock = useApp((s) => s.unlock);
+  const stranded = useApp((s) => s.strandedRecords);
+  const setAsideStranded = useApp((s) => s.setAsideStranded);
+  const [confirmAside, setConfirmAside] = useState(false);
 
   const [pin, setPin] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -81,6 +84,50 @@ export function VaultGate() {
               </div>
             </div>
           )}
+          {isSetup && stranded > 0 ? (
+            /* Data is here but the vault row that opens it is gone. Offering
+               setup would write a new salt over it, so explain instead, and
+               make "start again" an explicit, non-destructive choice. */
+            <div>
+              <h2 className="text-lg font-bold mb-1">Your earlier data is still here</h2>
+              <p className="text-sm text-ink-soft leading-relaxed">
+                This browser holds {stranded} encrypted record{stranded === 1 ? '' : 's'} from
+                an earlier vault, but the information needed to open them is missing.
+                Nothing has been changed or deleted.
+              </p>
+              <p className="text-sm text-muted leading-relaxed mt-2">
+                If you have a backup file, start a new vault and restore it from
+                Settings → Privacy &amp; Backup.
+              </p>
+              {error && (
+                <div className="mt-3 flex items-center gap-2 text-expense text-sm"><span>⚠</span>{error}</div>
+              )}
+              {confirmAside ? (
+                <div className="mt-5 grid gap-2">
+                  <p className="text-[12.5px] text-ink-soft">
+                    The old records will be kept in this browser, set aside where
+                    Khazana will not open them. Do not clear this site&rsquo;s data.
+                  </p>
+                  <button
+                    onClick={() => void setAsideStranded()}
+                    className="focus-ring w-full rounded-btn bg-primary text-[var(--primary-fg)] font-semibold py-3"
+                  >
+                    Set them aside and start a new vault
+                  </button>
+                  <button onClick={() => setConfirmAside(false)} className="focus-ring w-full rounded-btn py-2.5 text-sm font-semibold text-ink-soft hover:bg-fill">
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmAside(true)}
+                  className="focus-ring mt-5 w-full rounded-btn border border-line-strong py-3 text-sm font-semibold text-ink hover:border-accent"
+                >
+                  Start a new vault…
+                </button>
+              )}
+            </div>
+          ) : (<>
           <h2 className="text-lg font-bold mb-1">{isSetup ? 'Set up your vault' : 'Unlock'}</h2>
           {isSetup && (
             <p className="text-sm text-muted mb-4">Your PIN encrypts everything in this browser. It is never stored.</p>
@@ -117,6 +164,7 @@ export function VaultGate() {
               <Fingerprint size={16} /> PIN secured with PBKDF2 + AES-256
             </div>
           )}
+          </>)}
         </div>
         <ul className="mt-6 grid gap-2.5">
           {TRUST_POINTS.map((t) => (

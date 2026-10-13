@@ -184,17 +184,18 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Icon(Icons.shield_outlined, size: 56, color: context.colors.accent),
+        Icon(s.recovery ? Icons.restore : Icons.shield_outlined,
+            size: 56, color: context.colors.accent),
         const SizedBox(height: AppSpacing.md),
         Text(
-          'Unlock',
+          s.recovery ? 'Welcome back' : 'Unlock',
           style: Theme.of(context).textTheme.headlineSmall,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.lg),
         _PinField(
           controller: _pin,
-          label: 'Enter PIN',
+          label: s.recovery ? 'Your previous PIN' : 'Enter PIN',
           onSubmitted: (_) => _submitPin(),
         ),
         if (s.lastError != null) ...[
@@ -210,6 +211,8 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
         // Its own transparent Material: the GlassCard above paints a coloured
         // DecoratedBox, which would hide the tile's ink splash (and trips
         // ListTile's debug assertion in tests).
+        // Hidden during recovery: the first job is getting the data back.
+        if (!s.recovery)
         Material(
           type: MaterialType.transparency,
           child: CheckboxListTile(
@@ -229,8 +232,18 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        FilledButton(onPressed: _submitPin, child: const Text('Unlock')),
-        if (showBiometric) ...[
+        FilledButton(
+          onPressed: _submitPin,
+          child: Text(s.recovery ? 'Open my data' : 'Unlock'),
+        ),
+        if (s.recovery) ...[
+          const SizedBox(height: AppSpacing.sm),
+          TextButton(
+            onPressed: _confirmStartFresh,
+            child: const Text('I no longer know that PIN'),
+          ),
+        ],
+        if (showBiometric && !s.recovery) ...[
           const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(
             onPressed: () =>
@@ -243,13 +256,44 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
     );
   }
 
+  /// The only way past recovery without the old PIN. Says plainly what it
+  /// does, and keeps the old data on the device rather than deleting it.
+  Future<void> _confirmStartFresh() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Start a new vault?'),
+        content: const Text(
+          'Your existing data will be kept on this device, set aside where '
+          'Khazana will not open it, and you will start with an empty vault.\n\n'
+          'Only do this if you are sure the old PIN is lost. If you have a '
+          'backup file, you can restore it after setting up.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep trying'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Start new vault'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(vaultUnlockProvider.notifier).startFreshKeepingOldData();
+    }
+  }
+
   Future<void> _submitPin() async {
     final notifier = ref.read(vaultUnlockProvider.notifier);
+    final recovering = widget.state.recovery;
     await notifier.unlockWithPin(_pin.text);
     _pin.clear();
     // Only after the PIN is verified: disableLock reads the live session key,
     // so a wrong PIN cannot turn the lock off.
-    if (_remember) await notifier.disableLock();
+    if (_remember && !recovering) await notifier.disableLock();
   }
 }
 

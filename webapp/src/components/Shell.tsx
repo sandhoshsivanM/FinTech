@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
@@ -7,7 +7,7 @@ import {
   Eye, EyeOff, Lock, Menu, X, Plus, ChevronDown, Check, Search,
   Sun, Moon, Monitor, PanelLeft, Bell, RefreshCw, Download,
   CreditCard, ShieldAlert, BellRing, Inbox, History,
-  User, Users, Briefcase,
+  User, Users, Briefcase, Settings,
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
 import { useApp, type ThemeChoice } from '@/lib/store';
@@ -26,6 +26,7 @@ import { quotesAvailable } from '@/lib/quotes/yahoo';
 import { NAV_GROUPS, BOTTOM_NAV, TITLES, isActive } from './navConfig';
 import { Tour } from './Tour';
 import { CommandPalette } from './CommandPalette';
+import { motion, PageTransition, SPRING, tap } from './motion';
 
 const KIND_LABEL: Record<string, string> = { self: 'Personal', spouse: 'Spouse', business: 'Business' };
 const RAIL_KEY = 'khazana-nav-collapsed';
@@ -101,10 +102,12 @@ export function Shell({ children }: { children: ReactNode }) {
 
       {/* Main column */}
       <div className="flex-1 min-w-0 flex flex-col">
-        <TopBar title={title} onMenu={() => setDrawer(true)} onRail={toggleRail} />
-        {/* Bottom padding clears the fixed bar below 900px. */}
-        <main className="flex-1 px-4 min-[900px]:px-8 py-6 pb-24 min-[900px]:pb-10">
-          <div className="mx-auto max-w-[1560px]">{children}</div>
+        <TopBar title={title} home={path.startsWith('/dashboard')} onMenu={() => setDrawer(true)} onRail={toggleRail} />
+        {/* Bottom padding clears the floating bar (and its raised +) below 900px. */}
+        <main className="flex-1 px-4 min-[900px]:px-8 py-6 pb-32 min-[900px]:pb-10">
+          <div className="mx-auto max-w-[1560px]">
+            <PageTransition routeKey={path}>{children}</PageTransition>
+          </div>
         </main>
       </div>
 
@@ -117,7 +120,40 @@ export function Shell({ children }: { children: ReactNode }) {
 
 /* -------------------------------------------------------------------------- */
 
-function TopBar({ title, onMenu, onRail }: { title: string; onMenu: () => void; onRail: () => void }) {
+/** Time-of-day greeting for the phone home screen. */
+function greeting(hour: number): string {
+  if (hour < 5) return 'Good evening';
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+/**
+ * The phone home header: who this book belongs to, said warmly. Replaces the
+ * bare page title on the dashboard only; every other screen keeps its title.
+ */
+function Greeting() {
+  const profiles = useApp((s) => s.profiles);
+  const activeId = useApp((s) => s.activeProfileId);
+  const name = profiles.find((p) => p.id === activeId)?.name;
+  // Read once on mount: a greeting that flips mid-session is noise. Computed in
+  // an effect so the static-export HTML never bakes in the build machine's hour.
+  const [hello, setHello] = useState('Hello');
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setHello(greeting(new Date().getHours())));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return (
+    <span className="min-[900px]:hidden min-w-0 leading-tight">
+      <span className="block text-[11.5px] text-muted">{hello},</span>
+      <span className="block font-semibold tracking-tight truncate">
+        {name ?? 'there'} <span aria-hidden>👋</span>
+      </span>
+    </span>
+  );
+}
+
+function TopBar({ title, home, onMenu, onRail }: { title: string; home: boolean; onMenu: () => void; onRail: () => void }) {
   const ghost = useApp((s) => s.ghost);
   const toggleGhost = useApp((s) => s.toggleGhost);
   const lock = useApp((s) => s.lock);
@@ -140,7 +176,7 @@ function TopBar({ title, onMenu, onRail }: { title: string; onMenu: () => void; 
         <PanelLeft size={18} />
       </button>
 
-      <span className="min-[900px]:hidden font-semibold tracking-tight truncate">{title}</span>
+      {home ? <Greeting /> : <span className="min-[900px]:hidden font-semibold tracking-tight truncate">{title}</span>}
 
       <PortfolioSelector />
       <SearchButton />
@@ -302,6 +338,8 @@ function Nav({
   path, rail, className, onNavigate,
 }: { path: string; rail: boolean; className?: string; onNavigate?: () => void }) {
   const isPro = useApp((s) => s.pro.isPro);
+  // Per-instance, so the sidebar and the drawer never animate a pill between them.
+  const pillId = useId();
   return (
     <nav data-tour="nav" className={className}>
       {NAV_GROUPS.map((group, gi) => (
@@ -331,12 +369,21 @@ function Nav({
                   // Vault: #12352A on #20C98A. Ledger: #E1F3EB on #087A56.
                   // Both come straight from --accent-soft / --accent.
                   active
-                    ? 'bg-accent-soft text-accent font-semibold'
+                    ? 'text-accent font-semibold'
                     : 'text-ink-soft font-medium hover:bg-fill hover:text-ink',
                 )}
               >
-                <Icon size={17.5} strokeWidth={active ? 2.2 : 1.9} className="shrink-0" />
-                {!rail && <span className="truncate">{n.label}</span>}
+                {/* The active pill slides from the old row to the new one. */}
+                {active && (
+                  <motion.span
+                    layoutId={pillId}
+                    transition={SPRING}
+                    aria-hidden
+                    className="absolute inset-0 rounded-[var(--radius-card)] bg-accent-soft"
+                  />
+                )}
+                <Icon size={17.5} strokeWidth={active ? 2.2 : 1.9} className="relative shrink-0" />
+                {!rail && <span className="relative truncate">{n.label}</span>}
                 {!rail && n.badge != null && (
                   <span className="ml-auto text-[10px] font-bold px-1.5 rounded-full bg-danger text-white">{n.badge}</span>
                 )}
@@ -403,7 +450,12 @@ function SidebarFooter({ rail }: { rail: boolean }) {
 }
 
 /**
- * Phone bottom bar. Five destinations, matching the Flutter app.
+ * Phone bottom bar: a floating, rounded dock of the four Flutter tabs with a
+ * raised + in the middle.
+ *
+ * The + is deliberately OUTSIDE the `<nav>`: the four links inside it are the
+ * Flutter tab bar and `Shell.test.tsx` holds them to exactly that list. A
+ * spacer at the bar's centre leaves room for the button, which sits over it.
  *
  * Carries no `data-tour` attributes on purpose: `Tour.tsx` finds its targets
  * with `querySelector`, which returns the first match in DOM order — the
@@ -411,38 +463,68 @@ function SidebarFooter({ rail }: { rail: boolean }) {
  * would leave the tour spotlighting an invisible element.
  */
 function BottomNav({ path }: { path: string }) {
+  const pillId = useId();
+  // Two equal halves around a centre slot, so the + sits dead centre:
+  // 2 | + | 2 with four tabs.
+  const split = Math.floor(BOTTOM_NAV.length / 2);
+  const tab = (n: (typeof BOTTOM_NAV)[number]) => {
+    const active = isActive(n.href, path);
+    const Icon = n.icon;
+    return (
+      <Link
+        key={n.href}
+        href={n.href}
+        aria-current={active ? 'page' : undefined}
+        className="focus-ring relative flex-1 min-w-0 flex flex-col items-center justify-center gap-1 text-[10.5px] font-medium rounded-[22px]"
+      >
+        <span className="relative grid place-items-center w-11 h-7">
+          {active && (
+            <motion.span
+              layoutId={pillId}
+              transition={SPRING}
+              aria-hidden
+              className="absolute inset-0 rounded-full bg-accent-soft"
+            />
+          )}
+          <Icon
+            size={19}
+            strokeWidth={active ? 2.2 : 1.9}
+            className={clsx('relative transition-colors duration-150', active ? 'text-accent' : 'text-muted')}
+          />
+        </span>
+        <span className={clsx('truncate max-w-full', active ? 'text-accent font-semibold' : 'text-muted')}>
+          {n.short ? <><span aria-hidden>{n.short}</span><span className="sr-only">{n.label}</span></> : n.label}
+        </span>
+      </Link>
+    );
+  };
   return (
-    <nav
-      aria-label="Primary"
-      className="min-[900px]:hidden fixed bottom-0 inset-x-0 z-30 flex border-t border-line glass-panel pb-[env(safe-area-inset-bottom)]"
-    >
-      {BOTTOM_NAV.map((n) => {
-        const active = isActive(n.href, path);
-        const Icon = n.icon;
-        return (
+    <div className="min-[900px]:hidden fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pointer-events-none">
+      <div className="relative mx-auto max-w-[480px] pointer-events-auto">
+        <nav
+          aria-label="Primary"
+          className="flex items-stretch h-[64px] px-1 rounded-[28px] border border-line bg-card shadow-[var(--shadow-float)]"
+        >
+          <div className="flex flex-1 min-w-0">{BOTTOM_NAV.slice(0, split).map(tab)}</div>
+          <span aria-hidden className="w-[72px] shrink-0" />
+          <div className="flex flex-1 min-w-0">{BOTTOM_NAV.slice(split).map(tab)}</div>
+        </nav>
+        <motion.div
+          {...tap}
+          initial={{ scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="absolute left-1/2 -top-5 -translate-x-1/2"
+        >
           <Link
-            key={n.href}
-            href={n.href}
-            aria-current={active ? 'page' : undefined}
-            className="focus-ring flex-1 min-w-0 flex flex-col items-center gap-1 pt-2 pb-2.5 text-[10.5px] font-medium"
+            href="/add"
+            aria-label="New transaction"
+            className="focus-ring grid place-items-center w-[60px] h-[60px] rounded-full bg-primary text-primary-fg shadow-[var(--shadow-glow)] ring-4 ring-[var(--canvas)]"
           >
-            {/* Material's pill indicator: the shape carries the active state, so
-                it survives being read at a glance in bright light. */}
-            <span
-              className={clsx(
-                'px-4 py-0.5 rounded-full transition-colors duration-150',
-                active ? 'bg-accent-soft text-accent' : 'text-muted',
-              )}
-            >
-              <Icon size={19} strokeWidth={active ? 2.2 : 1.9} />
-            </span>
-            <span className={clsx('truncate max-w-full', active ? 'text-accent font-semibold' : 'text-muted')}>
-              {n.label}
-            </span>
+            <Plus size={26} strokeWidth={2.4} />
           </Link>
-        );
-      })}
-    </nav>
+        </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -490,6 +572,15 @@ function ProfileMenu() {
               className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] text-[13px] font-medium text-ink-soft hover:bg-fill transition-colors"
             >
               <Plus size={15} /> Manage profiles
+            </Link>
+            {/* Settings lives here and in the menu, not in the bottom bar —
+                the same place the Flutter app keeps it, behind the avatar. */}
+            <Link
+              href="/settings"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] text-[13px] font-medium text-ink-soft hover:bg-fill transition-colors"
+            >
+              <Settings size={15} /> Settings
             </Link>
           </div>
         </>

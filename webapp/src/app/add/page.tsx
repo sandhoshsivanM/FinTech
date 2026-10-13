@@ -1,11 +1,12 @@
 'use client';
-import { useEffect, useMemo, useState, type ElementType } from 'react';
+import { motion, tap } from '@/components/motion';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Utensils, Bus, Home, Zap, ShoppingBag, HeartPulse, Clapperboard,
-  Landmark, Wallet, TrendingUp, Shapes, Sparkles, X,
+  Sparkles, X,
 } from 'lucide-react';
+import { CatIcon } from '@/components/CategoryIcon';
 import { useApp, uid, cashAcctId, lsGet, lsSet, LAST_ACCOUNT_KEY } from '@/lib/store';
 import { D } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
@@ -28,17 +29,6 @@ import { NumberInput } from '@/components/NumberInput';
  */
 const MAX_RECEIPT_MB = 4;
 const MAX_RECEIPT_BYTES = MAX_RECEIPT_MB * 1024 * 1024;
-
-// ---- Icon map: category.icon string → lucide component ----
-const ICON_MAP: Record<string, ElementType> = {
-  Utensils, Bus, Home, Zap, ShoppingBag, HeartPulse,
-  Clapperboard, Landmark, Wallet, TrendingUp, Shapes,
-};
-
-function CatIcon({ name, size = 18 }: { name?: string | null; size?: number }) {
-  const Icon = (name && ICON_MAP[name]) ? ICON_MAP[name] : Shapes;
-  return <Icon size={size} />;
-}
 
 /**
  * Expense, income, or a move between your own accounts.
@@ -107,8 +97,14 @@ export default function AddTransactionPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [createdAt, setCreatedAt] = useState(() => Date.now());
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get('id');
-    if (!id) return;
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (!id) {
+      // `?mode=transfer` etc. — the home screen's quick actions deep-link here.
+      const m = params.get('mode');
+      if (m && MODE_OPTIONS.some((o) => o.value === m)) setMode(m as Mode);
+      return;
+    }
     const state = useApp.getState();
     const t = state.txns.find((x) => x.id === id);
     if (t) {
@@ -405,30 +401,32 @@ export default function AddTransactionPage() {
             {categories.map((cat) => {
               const selected = categoryId === cat.id;
               return (
-                <button
+                <motion.button
                   key={cat.id}
                   type="button"
+                  {...tap}
+                  animate={{ scale: selected ? 1.04 : 1 }}
                   onClick={() => setCategoryId(cat.id)}
-                  className="flex flex-col items-center gap-1 p-2 rounded-[var(--radius-panel)] border transition text-xs font-medium"
+                  className="flex flex-col items-center gap-1 p-2 rounded-[var(--radius-panel)] border transition-colors text-xs font-medium"
                   style={{
                     background: selected ? 'var(--accent)' : 'var(--surface-2)',
                     borderColor: selected ? 'var(--accent)' : 'var(--line)',
-                    color: selected ? '#fff' : 'var(--ink)',
+                    color: selected ? 'var(--accent-on)' : 'var(--ink)',
                     boxShadow: selected ? '0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent)' : undefined,
                   }}
                   aria-pressed={selected}
                 >
                   <span
-                    className="w-8 h-8 rounded-[var(--radius-card)] grid place-items-center"
+                    className="w-8 h-8 rounded-full grid place-items-center"
                     style={{
-                      background: selected ? 'rgba(255,255,255,0.25)' : 'color-mix(in srgb, var(--accent) 14%, transparent)',
-                      color: selected ? '#fff' : 'var(--accent)',
+                      background: selected ? 'color-mix(in srgb, var(--accent-on) 22%, transparent)' : 'color-mix(in srgb, var(--accent) 14%, transparent)',
+                      color: selected ? 'var(--accent-on)' : 'var(--accent)',
                     }}
                   >
                     <CatIcon name={cat.icon} size={16} />
                   </span>
                   <span className="truncate w-full text-center leading-tight">{cat.name}</span>
-                </button>
+                </motion.button>
               );
             })}
           </div>

@@ -268,7 +268,7 @@ export default function SettingsPage() {
           <div>
             <div className="eyebrow mb-2">Accent color</div>
             <div className="flex items-center gap-2.5 flex-wrap">
-              <AccentSwatch swatch="#34406b" label="Indigo" active={accent === 'default'} onClick={() => setAccent('default')} />
+              <AccentSwatch swatch="#176B4D" label="Vault" active={accent === 'default'} onClick={() => setAccent('default')} />
               {(Object.keys(ACCENTS) as Exclude<AccentName, 'default'>[]).map((k) => (
                 <AccentSwatch key={k} swatch={ACCENTS[k].swatch} label={ACCENTS[k].label} active={accent === k} onClick={() => setAccent(k)} />
               ))}
@@ -564,7 +564,7 @@ export default function SettingsPage() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="font-semibold text-sm">Load sample data</div>
-            <div className="text-xs text-muted mt-0.5">Populate this vault with realistic demo transactions, holdings, and liabilities.</div>
+            <div className="text-xs text-muted mt-0.5">Fill an empty vault with realistic demo transactions, holdings, and liabilities. Never replaces your own records.</div>
           </div>
           <Button variant="soft" onClick={handleSample} disabled={sampleBusy}>
             <Sparkles size={15} />

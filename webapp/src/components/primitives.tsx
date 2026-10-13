@@ -79,7 +79,11 @@ export function MoneyValue({
       className={clsx('tnum whitespace-nowrap', SIZES[size], className)}
       style={{ color: hidden ? 'var(--muted)' : toneColor(tone, sign) }}
     >
-      {hidden ? '••••••' : children}
+      {/* Keyed on the mask so toggling the eye re-runs the pop, which makes the
+          reveal read as a deliberate action rather than a flicker. */}
+      <span key={hidden ? 'h' : 'v'} className="inline-block animate-[kz-pop_.35s_var(--ease)]">
+        {hidden ? '••••••' : children}
+      </span>
     </span>
   );
 }
@@ -117,7 +121,7 @@ export function Section({
       {(title || action) && (
         <div className="flex items-baseline gap-3 flex-wrap mb-3">
           {title && (
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+            <h2 className="text-[15px] font-semibold tracking-[-0.02em] text-ink">
               {title}
             </h2>
           )}
@@ -228,9 +232,11 @@ export function MetricRow({
  * between. This is what a cash-flow summary should look like — not four cards.
  */
 export function LedgerLine({
-  label, value, tone = 'plain', sign = 0, emphasis = false, hidden = false, hint,
+  label, value, tone = 'plain', sign = 0, emphasis = false, hidden = false, hint, icon,
 }: {
   label: ReactNode;
+  /** Leading avatar, e.g. a `CategoryIcon`. */
+  icon?: ReactNode;
   value: ReactNode;
   tone?: MoneyTone;
   sign?: number;
@@ -243,11 +249,13 @@ export function LedgerLine({
   return (
     <div
       className={clsx(
-        'flex items-baseline justify-between gap-4 py-1.5',
+        'flex justify-between gap-4',
+        icon ? 'items-center py-2' : 'items-baseline py-1.5',
         emphasis && 'border-t border-[var(--line)] mt-1.5 pt-2.5',
       )}
     >
-      <span className={clsx('flex min-w-0 items-center gap-1 text-[13.5px]', emphasis ? 'font-semibold' : 'text-ink-soft')}>
+      <span className={clsx('flex min-w-0 items-center text-[13.5px]', icon ? 'gap-3' : 'gap-1', emphasis ? 'font-semibold' : 'text-ink-soft')}>
+        {icon}
         <span className="truncate">{label}</span>
         {hint && <Hint term={hint} />}
       </span>

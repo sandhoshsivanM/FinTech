@@ -53,7 +53,7 @@ export function Kpi({
   return (
     <div className={clsx('card lift p-4 grid gap-2.5 content-start min-w-0', className)}>
       <div className="flex items-center gap-2 min-w-0">
-        <span className={clsx('w-7 h-7 shrink-0 rounded-[var(--radius-btn)] grid place-items-center', TONE[tone])}>
+        <span className={clsx('w-8 h-8 shrink-0 rounded-full grid place-items-center', TONE[tone])}>
           <Icon size={15} strokeWidth={2} />
         </span>
         {/* The Hint sits OUTSIDE the label span: that span is `truncate`, and a

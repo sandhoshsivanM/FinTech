@@ -1,4 +1,6 @@
 'use client';
+import clsx from 'clsx';
+import { CategoryIcon } from '@/components/CategoryIcon';
 import { useState, useMemo } from 'react';
 import { PiggyBank, Pencil, Trash2, Plus, Check, X } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
@@ -68,6 +70,7 @@ export default function BudgetPage() {
       return {
         ...evaluateBudget(b, spent, rollover),
         catName: categories.find((c) => c.id === b.categoryId)?.name ?? 'Unknown',
+        catIcon: categories.find((c) => c.id === b.categoryId)?.icon,
       };
     }),
     [budgets, txns, categories, month],
@@ -277,10 +280,14 @@ export default function BudgetPage() {
         </GlassCard>
       ) : (
         <div className="grid lg:grid-cols-2 gap-4">
-          {evaluated.map(({ budget, spent, remaining, fraction, status, catName }) => {
+          {evaluated.map(({ budget, spent, remaining, fraction, status, catName, catIcon }) => {
             const isEditing = editId === budget.id;
             return (
-              <GlassCard key={budget.id} className="p-0 overflow-hidden">
+              <GlassCard
+                key={budget.id}
+                // A one-off nudge when a budget is over: noticed, not nagging.
+                className={clsx('p-0 overflow-hidden', status === 'over' && 'animate-[kz-shake_.5s_var(--ease)_.4s_1]')}
+              >
                 <div className="px-5 py-4">
                   {isEditing ? (
                     <div className="space-y-3">
@@ -319,7 +326,8 @@ export default function BudgetPage() {
                     <div>
                       {/* Header row: category name + pill + actions */}
                       <div className="flex items-center justify-between mb-2.5">
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <CategoryIcon name={catIcon} size={34} />
                           <span className="font-semibold text-sm truncate">{catName}</span>
                           <StatusPill status={status} />
                         </div>

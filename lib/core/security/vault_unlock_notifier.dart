@@ -7,6 +7,7 @@ import 'biometric_gate.dart';
 import 'key_derivation_service.dart';
 import 'secure_key_store.dart';
 import 'vault_credential_store.dart';
+import 'vault_file_probe.dart';
 import 'vault_registry.dart';
 import 'vault_session.dart';
 import 'vault_state.dart';
@@ -23,6 +24,7 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     required KeyDerivationService kdf,
     required BiometricGate biometric,
     VaultRegistry? registry,
+    VaultFileProbe probe = const NoVaultFileProbe(),
     this.vaultId = 'default',
     this.vaultName = 'My Vault',
   })  : _keyStore = keyStore,
@@ -30,6 +32,7 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
         _kdf = kdf,
         _biometric = biometric,
         _registry = registry,
+        _probe = probe,
         super(const VaultUnlocking());
 
   /// Only touched when the user has opted into biometric unlock. The PIN path
@@ -41,6 +44,7 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
   final KeyDerivationService _kdf;
   final BiometricGate _biometric;
   final VaultRegistry? _registry;
+  final VaultFileProbe _probe;
   final String vaultId;
   final String vaultName;
 
@@ -74,7 +78,7 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     }
 
     if (!exists) {
-      state = const VaultUninitialized();
+      state = await _setupOrRecovery();
       return;
     }
 
@@ -115,6 +119,14 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
   /// First-run vault creation. Derives and stores the key, then unlocks.
   Future<void> createVault(String pin) async {
     state = const VaultUnlocking();
+    // The guard that would have prevented the 2e10543 data loss: creating a
+    // vault writes a NEW salt, and over an existing database that makes every
+    // record in it permanently unreadable. Whatever the preferences say, a
+    // database on disk means this is a returning user, not a first run.
+    if (await _dataMayExist()) {
+      state = const VaultLocked(recovery: true, lastError: recoveryPrompt);
+      return;
+    }
     try {
       final salt = await _credentials.createSalt(vaultId);
       final key = await _kdf.deriveKeyAsync(pin: pin, salt: salt);
@@ -139,10 +151,15 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     final locked = current is VaultLocked ? current : const VaultLocked();
     state = const VaultUnlocking();
 
+    if (locked.recovery) {
+      await _recoverWithPin(pin, locked);
+      return;
+    }
+
     try {
       final salt = await _credentials.readSalt(vaultId);
       if (salt == null) {
-        state = const VaultUninitialized();
+        state = await _setupOrRecovery();
         return;
       }
 
@@ -244,7 +261,9 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
   Future<void> disableBiometricUnlock() async {
     await _credentials.setBiometricEnabled(vaultId, false);
     try {
-      await _keyStore.deleteVault(vaultId);
+      // The key only — see SecureKeyStore.deleteDerivedKey for why the legacy
+      // salt must survive.
+      await _keyStore.deleteDerivedKey(vaultId);
     } on Object {
       // The flag is already off, so the key is unreachable either way.
     }
@@ -298,14 +317,118 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
     state = VaultLocked(biometricAvailable: await _biometricOffered());
   }
 
-  void _startCooldown() {
+  // -- Recovery --------------------------------------------------------------
+
+  /// Shown wherever the app finds data it has no working credentials for.
+  static const recoveryPrompt =
+      'Your data is still on this device. Enter the PIN you used before '
+      'this update to open it. Nothing has been changed or deleted.';
+
+  /// Where to go when preferences hold no credentials: setup only when there
+  /// is genuinely nothing on disk.
+  Future<VaultState> _setupOrRecovery() async {
+    if (await _dataMayExist()) {
+      return const VaultLocked(recovery: true, lastError: recoveryPrompt);
+    }
+    return const VaultUninitialized();
+  }
+
+  /// True when a database exists — or when the probe cannot tell. Unknown is
+  /// treated as "yes", because the cost of being wrong the other way is the
+  /// user's data.
+  Future<bool> _dataMayExist() async {
+    try {
+      return await _probe.hasData(vaultId);
+    } on Object {
+      return true;
+    }
+  }
+
+  /// Puts the gate into recovery, e.g. from the "different PIN" screen shown
+  /// when the stored credentials no longer match the database.
+  void startRecovery() {
+    _cooldownTimer?.cancel();
+    state = const VaultLocked(recovery: true, lastError: recoveryPrompt);
+  }
+
+  /// Tries [pin] against the database with every salt the device still has:
+  /// the legacy keychain salt (pre-2e10543 installs) first, then the one in
+  /// preferences. The FILE decides — not the verifier, which may have been
+  /// written for a vault that never held this data.
+  Future<void> _recoverWithPin(String pin, VaultLocked locked) async {
+    try {
+      final salts = <Uint8List>[];
+      try {
+        final legacy = await _keyStore.readSalt(vaultId);
+        if (legacy != null) salts.add(legacy);
+      } on Object {
+        // An unreadable keychain only removes one candidate.
+      }
+      final current = await _credentials.readSalt(vaultId);
+      if (current != null) salts.add(current);
+
+      for (final salt in salts) {
+        final key = await _kdf.deriveKeyAsync(pin: pin, salt: salt);
+        if (await _probe.opensWith(vaultId, key)) {
+          // Proven against the file: make these THE credentials, so the next
+          // launch is an ordinary unlock.
+          await _credentials.storeSalt(vaultId, salt);
+          await _credentials.storeVerifier(vaultId, key);
+          await _registry?.register(VaultInfo(id: vaultId, name: vaultName));
+          state = VaultUnlocked(VaultSession(vaultId: vaultId, key: key));
+          return;
+        }
+      }
+
+      final failures = locked.pinFailures + 1;
+      if (failures >= maxPinFailures) {
+        _startCooldown(recovery: true);
+        return;
+      }
+      state = locked.copyWith(
+        pinFailures: failures,
+        lastError: salts.isEmpty
+            ? 'This device no longer has the information needed to open the '
+                'data with a PIN. The data file is safe: do not uninstall '
+                'Khazana. Restore a backup, or contact support.'
+            : 'That PIN does not open the data on this device. Try the PIN '
+                'you used before the update. '
+                '${maxPinFailures - failures} attempts left.',
+      );
+    } on Object catch (e) {
+      state = locked.copyWith(lastError: 'Recovery failed: $e');
+    }
+  }
+
+  /// The way out when the old PIN is truly lost: the old database is RENAMED
+  /// (kept on the device, recoverable later), never deleted, and only then is
+  /// setup offered.
+  Future<String?> startFreshKeepingOldData() async {
+    try {
+      final moved = await _probe.setAside(vaultId);
+      await _credentials.deleteVault(vaultId);
+      state = const VaultUninitialized();
+      return moved;
+    } on Object catch (e) {
+      state = VaultLocked(
+        recovery: true,
+        lastError: 'Could not move the old data aside, so nothing was '
+            'changed. ($e)',
+      );
+      return null;
+    }
+  }
+
+  void _startCooldown({bool recovery = false}) {
     final until = DateTime.now().add(cooldown);
     state = VaultCooldown(until: until);
     _cooldownTimer?.cancel();
     _cooldownTimer = Timer(cooldown, () async {
       final bioAvailable = await _biometric.isAvailable();
       // Reset PIN failures after cooldown (PRD §4B: input re-enabled).
-      state = VaultLocked(biometricAvailable: bioAvailable);
+      state = recovery
+          ? const VaultLocked(recovery: true, lastError: recoveryPrompt)
+          : VaultLocked(biometricAvailable: bioAvailable);
     });
   }
 

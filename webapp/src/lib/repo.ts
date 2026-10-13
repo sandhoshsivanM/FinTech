@@ -118,6 +118,22 @@ export async function applyMutations(
   });
 }
 
+/**
+ * How many records in a vault are the user's own, counted without decrypting.
+ *
+ * Excludes what every vault has from the moment it exists — categories, the
+ * profile, the structural `acct-…` accounts (Cash, Opening Balances, …) and
+ * the net-worth snapshots taken on unlock — so a brand-new vault reads 0 and
+ * anything typed, imported or restored reads > 0.
+ */
+export async function userRecordCount(vaultId: string): Promise<number> {
+  const NOT_USER_DATA = new Set(['category', 'profile', 'snapshot']);
+  return db.records
+    .where('vaultId').equals(vaultId)
+    .filter((r) => !NOT_USER_DATA.has(r.type) && !r.id.startsWith('account:acct-'))
+    .count();
+}
+
 export async function clearVault(vaultId: string): Promise<void> {
   await db.records.where('vaultId').equals(vaultId).delete();
 }

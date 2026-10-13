@@ -44,6 +44,7 @@ import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { DashboardStarter } from '@/components/DashboardStarter';
 import { Hint } from '@/components/Hint';
 import { Stagger, StaggerItem } from '@/components/motion';
+import { PhoneHome } from '@/components/home/PhoneHome';
 
 /** Ranges the snapshot history can answer. */
 const RANGES = [
@@ -257,6 +258,9 @@ export default function DashboardPage() {
 
   return (
     <Stagger className="grid gap-6">
+      {/* Phone only: the everyday-money home (balance, wallet, budget, latest
+          activity) leads, and the full statement below follows it. */}
+      {!isEmptyVault && <PhoneHome />}
       {/* ---- Position ------------------------------------------------------ */}
       {/* A statement, not a card grid. The old shape was seven bordered KPI
           cards in a row — the classic generated-dashboard composition, where

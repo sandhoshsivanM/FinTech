@@ -19,7 +19,7 @@ import { join, resolve } from 'node:path';
 // to complete.
 const table = () => ({
   where: vi.fn(() => ({
-    equals: vi.fn(() => ({ delete: vi.fn(async () => 0), toArray: async () => [] })),
+    equals: vi.fn(() => ({ delete: vi.fn(async () => 0), toArray: async () => [], count: async () => 0 })),
     toArray: async () => [],
   })),
   toArray: async () => [],

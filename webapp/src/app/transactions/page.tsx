@@ -1,10 +1,11 @@
 'use client';
-import { useState, useMemo, type ElementType } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
-  Utensils, Bus, Home, Zap, ShoppingBag, HeartPulse, Clapperboard,
-  Landmark, Wallet, TrendingUp, Shapes, Trash2, Plus, Pencil, Download, ArrowRightLeft,
+  Shapes, Trash2, Plus, Pencil, Download, ArrowRightLeft,
 } from 'lucide-react';
+import { CategoryIcon } from '@/components/CategoryIcon';
+import { motion } from '@/components/motion';
 import { useApp, cashAcctId } from '@/lib/store';
 import { D } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
@@ -16,17 +17,6 @@ import { BudgetStrip } from '@/components/BudgetStrip';
 import { formatDate, formatDayMonth, fromInputValue, toInputValue } from '@/lib/dateFormat';
 import { PRESETS, PRESET_LABELS, type PresetKey } from '@/domain/period';
 import { DateInput } from '@/components/DateInput';
-
-// ---- Icon map ----
-const ICON_MAP: Record<string, ElementType> = {
-  Utensils, Bus, Home, Zap, ShoppingBag, HeartPulse,
-  Clapperboard, Landmark, Wallet, TrendingUp, Shapes,
-};
-
-function CatIcon({ name, size = 16 }: { name?: string | null; size?: number }) {
-  const Icon = (name && ICON_MAP[name]) ? ICON_MAP[name] : Shapes;
-  return <Icon size={size} />;
-}
 
 type Filter = 'all' | TxnType | 'transfer';
 
@@ -349,7 +339,9 @@ export default function TransactionsPage() {
           />
         </GlassCard>
       ) : (
-        <GlassCard className="p-0 overflow-hidden">
+        // `overflow-clip`, not `hidden`: clips the corners without becoming a
+        // scroll container, so the day headers can still stick.
+        <GlassCard className="p-0 overflow-clip">
           <div className="divide-y divide-[var(--glass-border)]">
             {pageRows.map((e) => {
               const isTransfer = e.kind === 'transfer';
@@ -366,19 +358,33 @@ export default function TransactionsPage() {
               return (
                 <div key={e.id}>
                   {showHeader && (
-                    <div className="px-5 py-2 bg-[var(--fill)] border-b border-[var(--glass-border)]">
+                    <div className="sticky top-16 z-[1] px-5 py-2 bg-surface-2 border-b border-[var(--glass-border)]">
                       <span className="text-xs font-semibold text-ink-soft tracking-wide">
                         {formatDate(e.date)}
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--fill)] transition group">
-                    <span
-                      className="w-9 h-9 rounded-full grid place-items-center shrink-0"
-                      style={{ background: tone + '1a', color: tone }}
-                    >
-                      {isTransfer ? <ArrowRightLeft size={16} /> : <CatIcon name={cat?.icon} size={16} />}
-                    </span>
+                  {/* Swipe left to delete (it still asks to confirm). The red
+                      layer sits behind the row and shows as it slides away. */}
+                  <div className="relative overflow-hidden">
+                  <div aria-hidden className="absolute inset-0 flex items-center justify-end pr-6 bg-danger text-white">
+                    <Trash2 size={18} />
+                  </div>
+                  <motion.div
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={{ left: 0.5, right: 0 }}
+                    dragSnapToOrigin
+                    onDragEnd={(_, info) => { if (info.offset.x < -90) handleDelete(e); }}
+                    className="relative bg-card flex items-center gap-3 px-5 py-3 hover:bg-[var(--fill)] transition-colors group"
+                  >
+                    {isTransfer ? (
+                      <span className="w-10 h-10 rounded-full grid place-items-center shrink-0" style={{ background: 'var(--fill-strong)', color: tone }}>
+                        <ArrowRightLeft size={17} />
+                      </span>
+                    ) : (
+                      <CategoryIcon name={cat?.icon} size={40} />
+                    )}
 
                     {/* Details */}
                     <div className="flex-1 min-w-0">
@@ -409,7 +415,8 @@ export default function TransactionsPage() {
                     </span>
 
                     {/* Edit + Delete */}
-                    <div className="flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition ml-1">
+                    {/* Hover-revealed on desktop; always shown on touch, where there is no hover. */}
+                    <div className="flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition ml-1">
                       <Link
                         href={`/add?id=${e.id}`}
                         className="p-1.5 rounded-[var(--radius-card)] text-ink-soft hover:text-ink hover:bg-[var(--fill)] transition"
@@ -426,6 +433,7 @@ export default function TransactionsPage() {
                         <Trash2 size={15} />
                       </button>
                     </div>
+                  </motion.div>
                   </div>
                 </div>
               );
