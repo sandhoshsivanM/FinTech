@@ -108,9 +108,15 @@ void main() {
 
     final dot = find.bySemanticsLabel('Acct small');
     expect(dot, findsOneWidget);
+    // `containsSemantics` is deprecated from Flutter 3.40 in favour of
+    // `isSemantics`, which 3.38 (local) lacks; keep it until both move on.
+    // ignore: deprecated_member_use
     expect(tester.getSemantics(dot), containsSemantics(isSelected: false));
     await tester.tap(dot);
     await tester.pumpAndSettle();
+    // `containsSemantics` is deprecated from Flutter 3.40 in favour of
+    // `isSemantics`, which 3.38 (local) lacks; keep it until both move on.
+    // ignore: deprecated_member_use
     expect(tester.getSemantics(dot), containsSemantics(isSelected: true));
   });
 
@@ -123,9 +129,15 @@ void main() {
     final first = find.bySemanticsLabel('Acct big');
     final next = find.bySemanticsLabel('Acct small');
     // The front card carries its own label as well as its dot.
+    // `containsSemantics` is deprecated from Flutter 3.40 in favour of
+    // `isSemantics`, which 3.38 (local) lacks; keep it until both move on.
+    // ignore: deprecated_member_use
     expect(tester.getSemantics(next), containsSemantics(isSelected: false));
     await tester.fling(find.byType(AspectRatio), const Offset(-200, 0), 1500);
     await tester.pumpAndSettle();
+    // `containsSemantics` is deprecated from Flutter 3.40 in favour of
+    // `isSemantics`, which 3.38 (local) lacks; keep it until both move on.
+    // ignore: deprecated_member_use
     expect(tester.getSemantics(next), containsSemantics(isSelected: true));
     expect(first, findsWidgets);
   });

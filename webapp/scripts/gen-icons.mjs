@@ -138,10 +138,15 @@ async function plated(size, purpose = 'any') {
     .png()
     .toBuffer();
 
-  return sharp({ create: { width: size, height: size, channels: 4, background: PLATE } })
+  const composed = await sharp({ create: { width: size, height: size, channels: 4, background: PLATE } })
     .composite([{ input: mark, gravity: 'centre' }])
-    .png({ compressionLevel: 9 })
+    .png()
     .toBuffer();
+  // Plated icons are fully opaque, so drop the alpha channel outright: App
+  // Store Connect rejects a marketing icon that merely *has* one (ITMS-90717),
+  // and release-mobile.yml checks for exactly that. A second pass, because in a
+  // single pipeline sharp would strip alpha before compositing.
+  return sharp(composed).removeAlpha().png({ compressionLevel: 9 }).toBuffer();
 }
 
 /** The mark alone, transparent. For the in-app BrandMark and the brand sheet. */
