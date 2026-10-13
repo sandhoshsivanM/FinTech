@@ -24,6 +24,7 @@ import { formatMonthShort, formatDate, toInputValue, todayInputValue, fromInputV
 import { balanceSheet } from '@/domain/statements';
 import { ProGate } from '@/components/ProGate';
 import { ExportReport } from '@/components/ExportReport';
+import { CardTitle } from '@/components/Hint';
 import type Decimal from 'decimal.js';
 
 // ── Time window ───────────────────────────────────────────────────────────────
@@ -50,7 +51,7 @@ const WINDOW_OPTIONS: { value: ReportWindow; label: string }[] = [
 // ── Color palette for category donut ─────────────────────────────────────────
 
 const CAT_COLORS = [
-  'var(--accent)',
+  'var(--data-blue)',
   'var(--violet)',
   'var(--warn)',
   'var(--income)',
@@ -80,6 +81,7 @@ function BalanceSheetCard() {
     <GlassCard>
       <SectionHeader
         title="Balance Sheet"
+        info="reports.balanceSheet"
         action={<span className="text-xs text-muted">As of {formatDate(bs.asOf)}</span>}
       />
       <div className="mt-4 grid md:grid-cols-3 gap-6">
@@ -89,8 +91,8 @@ function BalanceSheetCard() {
       </div>
 
       <div className="mt-5 pt-4 border-t border-[var(--line)] flex items-baseline justify-between">
-        <span className="text-sm font-bold">Net worth</span>
-        <span className="text-xl font-extrabold tnum"
+        <span className="text-sm font-semibold">Net worth</span>
+        <span className="text-xl font-light tnum"
           style={{ color: bs.netWorth.gte(0) ? 'var(--income)' : 'var(--expense)' }}>
           {money(bs.netWorth)}
         </span>
@@ -116,7 +118,7 @@ function Side({ title, lines, total, color, money }: {
 }) {
   return (
     <div>
-      <h4 className="text-xs font-bold text-muted tracking-wide uppercase">{title}</h4>
+      <h4 className="text-xs font-medium text-muted">{title}</h4>
       {lines.length === 0 ? (
         <p className="mt-2 text-sm text-muted">None recorded.</p>
       ) : (
@@ -131,7 +133,7 @@ function Side({ title, lines, total, color, money }: {
       )}
       <div className="mt-2 pt-2 border-t border-[var(--line)] flex items-baseline justify-between text-sm">
         <span className="font-semibold">Total</span>
-        <span className="font-bold tnum" style={{ color }}>{money(total)}</span>
+        <span className="font-semibold tnum" style={{ color }}>{money(total)}</span>
       </div>
     </div>
   );
@@ -285,7 +287,7 @@ export default function ReportsPage() {
           apart is how someone exports a period they did not mean to. */}
       {hasTxns && (
         <GlassCard>
-          <SectionHeader title="Export this period" />
+          <SectionHeader title="Export this period" info="reports.export" />
           <ProGate
             feature="formattedExports"
             title="Take this report with you"
@@ -339,7 +341,7 @@ export default function ReportsPage() {
               label="Savings Rate"
               value={`${windowStats.savingsRate.toFixed(1)}%`}
               footer={range.label}
-              valueColor={windowStats.savingsRate >= 0 ? 'var(--accent)' : 'var(--expense)'}
+              valueColor={windowStats.savingsRate >= 0 ? 'var(--data-blue)' : 'var(--expense)'}
               ghost={ghost}
             />
           </div>
@@ -348,6 +350,7 @@ export default function ReportsPage() {
           <GlassCard>
             <SectionHeader
               title="Income vs Expenses"
+              info="reports.incomeVsExpenses"
               action={
                 <div className="flex items-center gap-3 text-xs font-semibold">
                   <span className="flex items-center gap-1.5">
@@ -377,7 +380,7 @@ export default function ReportsPage() {
           <div className="grid lg:grid-cols-2 gap-4">
             {/* Spending by category */}
             <GlassCard>
-              <SectionHeader title="Spending by Category" action={<span className="text-xs text-muted">{range.label}</span>} />
+              <SectionHeader title="Spending by Category" info="reports.spendingByCategory" action={<span className="text-xs text-muted">{range.label}</span>} />
               {catSpend.length === 0 ? (
                 <div className="py-8 text-center text-sm text-muted">
                   No expense transactions between {range.label}.
@@ -403,13 +406,13 @@ export default function ReportsPage() {
           {monthlyRows.length > 1 && (
             <GlassCard padded={false}>
               <div className="px-5 py-4 border-b border-[var(--line)]">
-                <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Month by month</h2>
+                <CardTitle className="text-[16px] font-medium tracking-[-0.01em]" info="reports.monthByMonth">Month by month</CardTitle>
                 <p className="text-xs text-muted mt-0.5">{range.label}</p>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-[11px] uppercase tracking-wide text-muted">
+                    <tr className="text-[11px] text-muted">
                       <th className="text-left font-semibold px-5 py-2">Month</th>
                       <th className="text-right font-semibold px-3 py-2">Income</th>
                       <th className="text-right font-semibold px-3 py-2">Expense</th>
@@ -456,19 +459,19 @@ export default function ReportsPage() {
 
           {/* Net worth trend */}
             <GlassCard>
-              <SectionHeader title="Net Worth Trend" action={<span className="text-xs text-muted">{range.label}</span>} />
+              <SectionHeader title="Net Worth Trend" info="reports.netWorthTrend" action={<span className="text-xs text-muted">{range.label}</span>} />
               <div className="mt-2">
                 <Sparkline
                   values={sparkValues}
                   height={160}
-                  color="var(--accent)"
+                  color="var(--data-blue)"
                   format={(n) => fmt.money(n)}
                 />
               </div>
               {sparkValues.length >= 2 && (
                 <div className="mt-3 flex items-center justify-between text-sm">
                   <span className="text-muted">{formatDate(range.start)}</span>
-                  <span className="font-bold tnum" style={{
+                  <span className="font-semibold tnum" style={{
                     color: sparkValues[sparkValues.length - 1] >= sparkValues[0]
                       ? 'var(--income)'
                       : 'var(--expense)',

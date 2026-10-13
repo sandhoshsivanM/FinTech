@@ -95,7 +95,7 @@ function WatchlistPageInner() {
     {
       key: 'actions', header: '', align: 'right',
       cell: (r) => (
-        <button onClick={() => void remove(r)} aria-label={`Remove ${r.symbol}`} className="focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-danger hover:bg-danger-soft transition-colors">
+        <button onClick={() => void remove(r)} aria-label={`Remove ${r.symbol}`} className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] text-muted hover:text-danger transition-colors">
           <Trash2 size={15} />
         </button>
       ),
@@ -107,6 +107,7 @@ function WatchlistPageInner() {
       <StaggerItem>
         <PageIntro
           title="Watchlist"
+          info="watchlist.page"
           subtitle={watchlist.length ? `${watchlist.length} instrument${watchlist.length === 1 ? '' : 's'} you are tracking but do not own` : 'Track instruments before you buy them'}
           action={<>{demo && <DemoBadge label="Day change" />}<Button onClick={() => setForm((f) => !f)}><Plus size={16} />Add symbol</Button></>}
         />

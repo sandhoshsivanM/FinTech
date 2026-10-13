@@ -36,27 +36,32 @@ import 'semantic_colors.dart';
 TextTheme _numericTextTheme(TextTheme t) {
   const figures = [FontFeature.tabularFigures()];
 
-  TextStyle? spec(TextStyle? s, double size, double height, FontWeight w, double tracking) =>
-      s?.copyWith(
-        fontSize: size,
-        height: height / size,
-        fontWeight: w,
-        letterSpacing: tracking,
-        fontFeatures: figures,
-      );
+  TextStyle? spec(
+    TextStyle? s,
+    double size,
+    double height,
+    FontWeight w,
+    double tracking,
+  ) => s?.copyWith(
+    fontSize: size,
+    height: height / size,
+    fontWeight: w,
+    letterSpacing: tracking,
+    fontFeatures: figures,
+  );
 
   return t.copyWith(
     // Display / headings
-    displayLarge: spec(t.displayLarge, 48, 56, FontWeight.w700, -1.4),
-    displayMedium: spec(t.displayMedium, 40, 48, FontWeight.w700, -1.1),
-    displaySmall: spec(t.displaySmall, 32, 40, FontWeight.w700, -0.9),
-    headlineLarge: spec(t.headlineLarge, 32, 40, FontWeight.w700, -0.9),
-    headlineMedium: spec(t.headlineMedium, 24, 32, FontWeight.w700, -0.6),
-    headlineSmall: spec(t.headlineSmall, 20, 28, FontWeight.w600, -0.4),
+    displayLarge: spec(t.displayLarge, 48, 56, FontWeight.w300, -1.4),
+    displayMedium: spec(t.displayMedium, 40, 48, FontWeight.w300, -1.1),
+    displaySmall: spec(t.displaySmall, 32, 40, FontWeight.w300, -0.9),
+    headlineLarge: spec(t.headlineLarge, 34, 40, FontWeight.w400, -1.0),
+    headlineMedium: spec(t.headlineMedium, 26, 32, FontWeight.w300, -0.7),
+    headlineSmall: spec(t.headlineSmall, 22, 28, FontWeight.w400, -0.5),
     // Titles
-    titleLarge: spec(t.titleLarge, 20, 28, FontWeight.w600, -0.3),
-    titleMedium: spec(t.titleMedium, 16, 24, FontWeight.w600, -0.15),
-    titleSmall: spec(t.titleSmall, 14, 22, FontWeight.w600, -0.1),
+    titleLarge: spec(t.titleLarge, 20, 28, FontWeight.w500, -0.3),
+    titleMedium: spec(t.titleMedium, 16, 24, FontWeight.w500, -0.15),
+    titleSmall: spec(t.titleSmall, 14, 22, FontWeight.w500, -0.1),
     // Body
     bodyLarge: spec(t.bodyLarge, 16, 24, FontWeight.w400, 0),
     bodyMedium: spec(t.bodyMedium, 14, 22, FontWeight.w400, 0),
@@ -78,55 +83,66 @@ abstract final class AppTheme {
     // Vault and Ledger are a PAIR OF CHOICES, not one choice inverted. The
     // accent in particular differs: Vault's #20C98A reads 3.0:1 on a white
     // card, which fails text contrast, so Ledger steps down to #087A56.
-    final primary =
-        isDark ? KhazanaColors.vaultPrimary : KhazanaColors.ledgerPrimary;
-    final onPrimary =
-        isDark ? KhazanaColors.vaultPrimaryOn : KhazanaColors.ledgerPrimaryOn;
+    final primary = isDark
+        ? KhazanaColors.vaultPrimary
+        : KhazanaColors.ledgerPrimary;
+    final onPrimary = isDark
+        ? KhazanaColors.vaultPrimaryOn
+        : KhazanaColors.ledgerPrimaryOn;
 
-    final scheme = ColorScheme.fromSeed(
-      seedColor: primary,
-      brightness: brightness,
-    ).copyWith(
-      primary: primary,
-      onPrimary: onPrimary,
-      primaryContainer: isDark
-          ? KhazanaColors.vaultPrimarySoft
-          : KhazanaColors.ledgerPrimarySoft,
-      onPrimaryContainer: primary,
-      secondary: isDark ? KhazanaColors.vaultGold : KhazanaColors.ledgerGold,
-      surface: isDark
-          ? KhazanaColors.vaultSurfaceElevated
-          : KhazanaColors.ledgerSurface,
-      surfaceContainerHighest: isDark
-          ? KhazanaColors.vaultSurfaceStrong
-          : KhazanaColors.ledgerSurfaceSecondary,
-      onSurface: isDark
-          ? KhazanaColors.vaultTextPrimary
-          : KhazanaColors.ledgerTextPrimary,
-      onSurfaceVariant: isDark
-          ? KhazanaColors.vaultTextSecondary
-          : KhazanaColors.ledgerTextSecondary,
-      outline: isDark ? KhazanaColors.vaultBorder : KhazanaColors.ledgerBorder,
-      outlineVariant: isDark
-          ? KhazanaColors.vaultBorderStrong
-          : KhazanaColors.ledgerBorderStrong,
-      error: isDark ? KhazanaColors.vaultDanger : KhazanaColors.ledgerDanger,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: primary,
+          brightness: brightness,
+        ).copyWith(
+          primary: primary,
+          onPrimary: onPrimary,
+          primaryContainer: isDark
+              ? KhazanaColors.vaultPrimarySoft
+              : KhazanaColors.ledgerPrimarySoft,
+          onPrimaryContainer: primary,
+          secondary: isDark
+              ? KhazanaColors.vaultGold
+              : KhazanaColors.ledgerGold,
+          surface: isDark
+              ? KhazanaColors.vaultSurfaceElevated
+              : KhazanaColors.ledgerSurface,
+          surfaceContainerHighest: isDark
+              ? KhazanaColors.vaultSurfaceStrong
+              : KhazanaColors.ledgerSurfaceSecondary,
+          onSurface: isDark
+              ? KhazanaColors.vaultTextPrimary
+              : KhazanaColors.ledgerTextPrimary,
+          onSurfaceVariant: isDark
+              ? KhazanaColors.vaultTextSecondary
+              : KhazanaColors.ledgerTextSecondary,
+          outline: isDark
+              ? KhazanaColors.vaultBorder
+              : KhazanaColors.ledgerBorder,
+          outlineVariant: isDark
+              ? KhazanaColors.vaultBorderStrong
+              : KhazanaColors.ledgerBorderStrong,
+          error: isDark
+              ? KhazanaColors.vaultDanger
+              : KhazanaColors.ledgerDanger,
+        );
 
-    final glassFill =
-        isDark ? AppColors.glassFillDark : AppColors.glassFillLight;
-    final glassBorder =
-        isDark ? AppColors.glassBorderDark : AppColors.glassBorderLight;
+    final glassFill = isDark
+        ? AppColors.glassFillDark
+        : AppColors.glassFillLight;
+    final glassBorder = isDark
+        ? AppColors.glassBorderDark
+        : AppColors.glassBorderLight;
 
     final base = ThemeData(
       useMaterial3: true,
       brightness: brightness,
       colorScheme: scheme,
-      // Inter, bundled in assets/fonts. Without this the app fell back to the
+      // Anek Latin, bundled in assets/fonts. Without this the app fell back to the
       // platform default — SF Pro on iOS, Roboto on Android — so the two mobile
       // builds and the web app were all set in different faces.
-      fontFamily: 'Inter',
-      // Inter carries no emoji, and naming a family removes the platform's
+      fontFamily: 'AnekLatin',
+      // Anek Latin carries no emoji, and naming a family removes the platform's
       // automatic fallback — which turned the greeting's wave into a tofu box.
       // The emoji fonts must be listed explicitly.
       fontFamilyFallback: const [
@@ -145,10 +161,12 @@ abstract final class AppTheme {
       // theme rather than a `const` — the Vault steps are unreadable on a
       // Ledger card. See `semantic_colors.dart`.
       extensions: <ThemeExtension<dynamic>>[SemanticColors.of(brightness)],
-      textTheme: _numericTextTheme(base.textTheme.apply(
-        bodyColor: scheme.onSurface,
-        displayColor: scheme.onSurface,
-      )),
+      textTheme: _numericTextTheme(
+        base.textTheme.apply(
+          bodyColor: scheme.onSurface,
+          displayColor: scheme.onSurface,
+        ),
+      ),
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
@@ -157,16 +175,17 @@ abstract final class AppTheme {
         surfaceTintColor: Colors.transparent,
         foregroundColor: scheme.onSurface,
         titleTextStyle: base.textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w500,
           color: scheme.onSurface,
-          letterSpacing: 0.2,
         ),
-        systemOverlayStyle:
-            isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        systemOverlayStyle: isDark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: scheme.surface, // opaque charcoal/white — hairline carries definition
+        color: scheme
+            .surface, // opaque charcoal/white — hairline carries definition
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.card),
@@ -182,9 +201,11 @@ abstract final class AppTheme {
           minimumSize: const Size(0, AppSpacing.minTouchTarget),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.button),
+            borderRadius: BorderRadius.circular(AppRadii.pill),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
+          // The near-black pill: flat, with a soft drop.
+          elevation: 0,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -192,38 +213,64 @@ abstract final class AppTheme {
           foregroundColor: scheme.onSurface,
           minimumSize: const Size(0, AppSpacing.minTouchTarget),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.button),
+            borderRadius: BorderRadius.circular(AppRadii.pill),
           ),
-          side: BorderSide(color: glassBorder),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          side: BorderSide.none,
+          textStyle: const TextStyle(fontWeight: FontWeight.w500),
+          // A raised white pill rather than a hollow outline.
+          backgroundColor: isDark ? const Color(0xFF222226) : Colors.white,
+          elevation: 1.5,
+          shadowColor: Colors.black.withValues(alpha: isDark ? 0.6 : 0.18),
         ),
+      ),
+      // The reference's toggle: green when on, a white knob that sits on it.
+      switchTheme: SwitchThemeData(
+        thumbColor: const WidgetStatePropertyAll(Colors.white),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? (isDark ? KhazanaColors.vaultSuccess : const Color(0xFF29B340))
+              : (isDark
+                    ? KhazanaColors.vaultSurfaceStrong
+                    : const Color(0xFFDCDCE0)),
+        ),
+        trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
+        elevation: 4,
+        shape: const StadiumBorder(),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(foregroundColor: scheme.primary),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: WidgetStateProperty.resolveWith((s) =>
-              s.contains(WidgetState.selected)
-                  ? scheme.primaryContainer
-                  : Colors.transparent),
-          foregroundColor: WidgetStateProperty.resolveWith((s) =>
-              s.contains(WidgetState.selected)
-                  ? scheme.primary
-                  : scheme.onSurfaceVariant),
-          side: WidgetStatePropertyAll(BorderSide(color: glassBorder)),
-          shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.button),
-          )),
+          // Recessed track, white raised selected pill.
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected)
+                ? (isDark ? const Color(0xFF222226) : Colors.white)
+                : (isDark ? const Color(0xFF17171A) : const Color(0xFFECECEE)),
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected)
+                ? scheme.onSurface
+                : scheme.onSurfaceVariant,
+          ),
+          side: const WidgetStatePropertyAll(BorderSide.none),
+          shape: const WidgetStatePropertyAll(StadiumBorder()),
+          visualDensity: VisualDensity.compact,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: glassFill,
+        fillColor: isDark ? const Color(0xFF222226) : Colors.white,
         hintStyle: TextStyle(color: scheme.onSurfaceVariant),
         labelStyle: TextStyle(color: scheme.onSurfaceVariant),
         contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md, vertical: AppSpacing.md),
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.button),
           borderSide: BorderSide(color: glassBorder),
@@ -245,17 +292,19 @@ abstract final class AppTheme {
             : Colors.white.withValues(alpha: 0.92),
         surfaceTintColor: Colors.transparent,
         indicatorColor: scheme.primaryContainer,
-        iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(
-              color: s.contains(WidgetState.selected)
-                  ? scheme.primary
-                  : scheme.onSurfaceVariant,
-            )),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (s) => IconThemeData(
+            color: s.contains(WidgetState.selected)
+                ? scheme.primary
+                : scheme.onSurfaceVariant,
+          ),
+        ),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
             fontSize: 11,
             fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w700
-                : FontWeight.w500,
+                ? FontWeight.w600
+                : FontWeight.w400,
             color: states.contains(WidgetState.selected)
                 ? scheme.primary
                 : scheme.onSurfaceVariant,
@@ -263,12 +312,18 @@ abstract final class AppTheme {
         ),
       ),
       listTileTheme: ListTileThemeData(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 4,
+        ),
         iconColor: scheme.onSurfaceVariant,
         textColor: scheme.onSurface,
       ),
-      dividerTheme: DividerThemeData(color: glassBorder, thickness: 1, space: 1),
+      dividerTheme: DividerThemeData(
+        color: glassBorder,
+        thickness: 1,
+        space: 1,
+      ),
       chipTheme: base.chipTheme.copyWith(
         backgroundColor: glassFill,
         side: BorderSide(color: glassBorder),
@@ -294,14 +349,14 @@ abstract final class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: isDark ? AppColors.darkSurface : null,
-        contentTextStyle:
-            TextStyle(color: isDark ? AppColors.darkOnSurface : null),
+        contentTextStyle: TextStyle(
+          color: isDark ? AppColors.darkOnSurface : null,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.button),
         ),
       ),
-      progressIndicatorTheme:
-          ProgressIndicatorThemeData(color: scheme.primary),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.primary),
     );
   }
 }

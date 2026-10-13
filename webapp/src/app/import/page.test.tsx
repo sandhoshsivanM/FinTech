@@ -99,7 +99,7 @@ describe('Import — structure', () => {
 
   test('assets tab lists brokers and explains how to export', () => {
     render(<ConfirmProvider><ImportPage /></ConfirmProvider>);
-    expect(screen.getByText('Select Broker')).toBeInTheDocument();
+    expect(screen.getByText('Select broker')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Zerodha/ })).toBeInTheDocument();
     expect(screen.getByText(/How to export from Zerodha/i)).toBeInTheDocument();
   });

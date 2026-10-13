@@ -250,7 +250,7 @@ export default function SettingsPage() {
 
       {/* Appearance */}
       <GlassCard>
-        <SectionHeader title="Appearance" />
+        <SectionHeader title="Appearance" info="settings.appearance" />
         <div className="grid sm:grid-cols-2 gap-6">
           <div>
             <div className="eyebrow mb-2">Theme</div>
@@ -268,7 +268,7 @@ export default function SettingsPage() {
           <div>
             <div className="eyebrow mb-2">Accent color</div>
             <div className="flex items-center gap-2.5 flex-wrap">
-              <AccentSwatch swatch="#176B4D" label="Vault" active={accent === 'default'} onClick={() => setAccent('default')} />
+              <AccentSwatch swatch="#111214" label="Ink" active={accent === 'default'} onClick={() => setAccent('default')} />
               {(Object.keys(ACCENTS) as Exclude<AccentName, 'default'>[]).map((k) => (
                 <AccentSwatch key={k} swatch={ACCENTS[k].swatch} label={ACCENTS[k].label} active={accent === k} onClick={() => setAccent(k)} />
               ))}
@@ -280,7 +280,7 @@ export default function SettingsPage() {
 
       {/* Profiles */}
       <GlassCard>
-        <SectionHeader title="Profiles" />
+        <SectionHeader title="Profiles" info="settings.profiles" />
         <p className="text-xs text-muted mb-4">
           Each profile keeps fully separate data — transactions, investments, liabilities, and more — inside the same encrypted vault. Use profiles to track yourself, a spouse, or a business independently.
         </p>
@@ -416,13 +416,13 @@ export default function SettingsPage() {
 
       {/* Notifications */}
       <GlassCard>
-        <SectionHeader title="Notifications" />
+        <SectionHeader title="Notifications" info="settings.notifications" />
         <NotificationsSection />
       </GlassCard>
 
       {/* Privacy & Backup */}
       <GlassCard>
-        <SectionHeader title="Privacy & Backup" />
+        <SectionHeader title="Privacy & Backup" info="settings.privacyBackup" />
         <div className="space-y-1 mb-5">
           <PrivacyRow
             icon={<ShieldCheck size={18} />}
@@ -533,7 +533,7 @@ export default function SettingsPage() {
 
       {/* Display currency */}
       <GlassCard>
-        <SectionHeader title="Display Currency" />
+        <SectionHeader title="Display Currency" info="settings.displayCurrency" />
         <p className="text-xs text-muted mb-3">
           All amounts are stored in INR and converted for display. Rates are yours to set, below.
         </p>
@@ -560,7 +560,7 @@ export default function SettingsPage() {
 
       {/* Data */}
       <GlassCard>
-        <SectionHeader title="Data" />
+        <SectionHeader title="Data" info="settings.data" />
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="font-semibold text-sm">Load sample data</div>
@@ -576,7 +576,7 @@ export default function SettingsPage() {
 
       {/* Danger zone */}
       <GlassCard>
-        <SectionHeader title="Danger Zone" />
+        <SectionHeader title="Danger Zone" info="settings.dangerZone" />
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
@@ -652,12 +652,12 @@ function LivePricesRow() {
           aria-label="Live prices"
           disabled={!available}
           onClick={() => setOn(!on)}
-          className={`focus-ring relative w-11 h-6 rounded-full shrink-0 transition-colors duration-[250ms] ${
-            !available ? 'bg-fill-strong opacity-40 cursor-not-allowed' : on ? 'bg-accent' : 'bg-fill-strong'
+          className={`focus-ring relative w-[46px] h-7 rounded-full shrink-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-colors duration-[250ms] ${
+            !available ? 'bg-fill-strong opacity-40 cursor-not-allowed' : on ? 'bg-[var(--data-green)]' : 'bg-[color-mix(in_srgb,var(--ink)_14%,transparent)]'
           }`}
         >
           <span
-            className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full transition-transform duration-[250ms] ${on && available ? 'translate-x-5 bg-white' : 'bg-muted'}`}
+            className={`absolute top-[3px] left-[3px] w-[22px] h-[22px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-transform duration-[250ms] ${on && available ? 'translate-x-[18px]' : ''}`}
           />
         </button>
       </div>
@@ -695,10 +695,10 @@ function DemoDataRow() {
           aria-checked={on}
           aria-label="Demo market data"
           onClick={() => setOn(!on)}
-          className={`focus-ring relative w-11 h-6 rounded-full shrink-0 transition-colors duration-[250ms] ${on ? 'bg-accent' : 'bg-fill-strong'}`}
+          className={`focus-ring relative w-[46px] h-7 rounded-full shrink-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-colors duration-[250ms] ${on ? 'bg-[var(--data-green)]' : 'bg-[color-mix(in_srgb,var(--ink)_14%,transparent)]'}`}
         >
           <span
-            className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full transition-transform duration-[250ms] ${on ? 'translate-x-5 bg-white' : 'bg-muted'}`}
+            className={`absolute top-[3px] left-[3px] w-[22px] h-[22px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-transform duration-[250ms] ${on ? 'translate-x-[18px]' : ''}`}
           />
         </button>
       </div>
@@ -813,7 +813,7 @@ function ExchangeRates() {
 
   return (
     <GlassCard>
-      <SectionHeader title="Exchange rates" />
+      <SectionHeader title="Exchange rates" info="settings.exchangeRates" />
       <p className="text-xs text-muted mb-4">
         Khazana has no price feed, so a rate is only as good as the last time you set it.
         Each one shows the day it was recorded.
@@ -980,10 +980,10 @@ function NotifyToggle({ title, sub, on, onChange, disabled = false }: {
         aria-label={title}
         disabled={disabled}
         onClick={() => onChange(!on)}
-        className={`focus-ring relative w-11 h-6 rounded-full shrink-0 transition-colors duration-[250ms] ${on ? 'bg-accent' : 'bg-fill-strong'} ${disabled ? 'cursor-not-allowed' : ''}`}
+        className={`focus-ring relative w-[46px] h-7 rounded-full shrink-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-colors duration-[250ms] ${on ? 'bg-[var(--data-green)]' : 'bg-[color-mix(in_srgb,var(--ink)_14%,transparent)]'} ${disabled ? 'cursor-not-allowed' : ''}`}
       >
         <span
-          className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full transition-transform duration-[250ms] ${on ? 'translate-x-5 bg-white' : 'bg-muted'}`}
+          className={`absolute top-[3px] left-[3px] w-[22px] h-[22px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-transform duration-[250ms] ${on ? 'translate-x-[18px]' : ''}`}
         />
       </button>
     </div>

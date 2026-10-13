@@ -386,6 +386,36 @@ export function groupShades(g: AssetGroup, count: number, dark: boolean): string
   return Array.from({ length: n }, (_, i) => (i === 0 ? base : mix(base, toward, 0.14 * i)));
 }
 
+/**
+ * Asset-group hues in the Zentra palette — the same values as Flutter's
+ * `asset_group_colors.dart`, so both clients colour Equity, Debt and Gold
+ * alike. Used by the redesigned charts; ASSET_GROUP_META keeps the older
+ * contrast-tested ramp for everything still on it.
+ */
+export const ZENTRA_GROUP: Record<AssetGroup, { light: string; dark: string }> = {
+  equity: { light: '#1C6FFB', dark: '#3D86FF' },
+  debt: { light: '#29B340', dark: '#34C759' },
+  gold: { light: '#E39A16', dark: '#F0B03A' },
+  real_estate: { light: '#F33688', dark: '#FF4F9A' },
+  retirement: { light: '#8E8E93', dark: '#8E8E93' },
+  crypto: { light: '#7FB0FD', dark: '#86B4FF' },
+  cash: { light: '#FC9CC4', dark: '#FD9CC6' },
+};
+
+/** [groupShades] for [ZENTRA_GROUP], stepping toward the Zentra card surface. */
+export function zentraGroupShades(g: AssetGroup, count: number, dark: boolean): string[] {
+  const base = ZENTRA_GROUP[g][dark ? 'dark' : 'light'];
+  const n = Math.max(1, Math.min(count, MAX_GROUP_SHADES));
+  // Alternate lighter and darker steps around the base (as Flutter's
+  // groupShades does), so neighbouring sector slices never look alike.
+  return Array.from({ length: n }, (_, i) => {
+    if (i === 0) return base;
+    return i % 2 === 1
+      ? mix(base, '#FFFFFF', 0.30 * Math.floor((i + 1) / 2))
+      : mix(base, '#0B1530', 0.28 * Math.floor(i / 2));
+  });
+}
+
 /** One node of a two-level roll-up. */
 export interface RollupNode {
   row: RollupRow;

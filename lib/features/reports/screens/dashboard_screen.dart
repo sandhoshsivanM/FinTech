@@ -1,9 +1,11 @@
+import '../../../core/help/info_hint.dart';
+import '../../../presentation/striped_bar.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import '../../../presentation/zentra_kit.dart';
 
 import '../../../core/theme/semantic_colors.dart';
 
-import '../../../core/constants/category_icons.dart';
 import '../../../design_system/components/khazana_cards.dart';
 import '../../../design_system/tokens/khazana_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +42,8 @@ import '../../transactions/providers/category_providers.dart';
 import '../../transactions/providers/recurring_providers.dart';
 import '../../transactions/providers/transaction_providers.dart';
 import '../providers/dashboard_providers.dart';
+import '../../home/home_section.dart';
+import '../../../presentation/app_shell.dart' show isDesktopPlatform;
 
 // ---------------------------------------------------------------------------
 // Screen root
@@ -62,11 +66,16 @@ class DashboardScreen extends StatelessWidget {
 // Body — error / loading guards then the full scrollable layout
 // ---------------------------------------------------------------------------
 
-class _DashboardBody extends ConsumerWidget {
+class _DashboardBody extends ConsumerStatefulWidget {
   const _DashboardBody();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DashboardBody> createState() => _DashboardBodyState();
+}
+
+class _DashboardBodyState extends ConsumerState<_DashboardBody> {
+  @override
+  Widget build(BuildContext context) {
     // Materialize any due recurring transactions once the DB is ready (PRD §14).
     ref.watch(recurringProcessorProvider);
     // Capture today's net-worth snapshot for real trend history.
@@ -106,75 +115,104 @@ class _DashboardBody extends ConsumerWidget {
       return _ColdOpenPlaceholder(snapshot: cached);
     }
 
-    return ListView(
-      // Bottom pad clears the navigation bar. With a symmetric vertical pad the
-      // final card ran underneath it and looked clipped.
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.sm, AppSpacing.md, 96),
-      children: [
-        // 0. First-run guided tour launcher (shows once) + welcome banner.
-        const TourLauncher(),
-        const OnboardingBanner(),
-        const SizedBox(height: AppSpacing.sm),
+    final rest = <Widget>[
+      // 2. Net-worth hero card.
+      _NetWorthHeroCard(data: data),
+      const SizedBox(height: AppSpacing.md),
 
-        // 1. Greeting header row.
-        const _GreetingHeader(),
-        const SizedBox(height: AppSpacing.md),
+      // 3. 2x2 stat tiles.
+      _StatTilesGrid(summary: data.summary),
+      const SizedBox(height: AppSpacing.md),
 
-        // 2. Net-worth hero card.
-        _NetWorthHeroCard(data: data),
-        const SizedBox(height: AppSpacing.md),
+      // 4. Health score, then the single insight. Both sit above the trend
+      //    chart: they answer "how am I doing" in one glance, which is what
+      //    the first screenful is for. The trend is the second look.
+      const _FinancialHealthCard(),
+      const SizedBox(height: AppSpacing.md),
 
-        // 3. 2x2 stat tiles.
-        _StatTilesGrid(summary: data.summary),
-        const SizedBox(height: AppSpacing.md),
+      const _InsightsCard(),
+      const SizedBox(height: AppSpacing.md),
 
-        // 4. Health score, then the single insight. Both sit above the trend
-        //    chart: they answer "how am I doing" in one glance, which is what
-        //    the first screenful is for. The trend is the second look.
-        const _FinancialHealthCard(),
-        const SizedBox(height: AppSpacing.md),
+      // 4b. Window selector + net-worth trend, full width. The trend is the
+      //     one series whose shape needs the whole width to be readable.
+      _WindowSelector(
+        selected: window,
+        onChanged: (w) => ref.read(selectedWindowProvider.notifier).state = w,
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      _TrendChart(series: ref.watch(dashboardTrendProvider)),
+      const SizedBox(height: AppSpacing.md),
 
-        const _InsightsCard(),
-        const SizedBox(height: AppSpacing.md),
-
-        // 4b. Window selector + net-worth trend, full width. The trend is the
-        //     one series whose shape needs the whole width to be readable.
-        _WindowSelector(
-          selected: window,
-          onChanged: (w) =>
-              ref.read(selectedWindowProvider.notifier).state = w,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        _TrendChart(series: ref.watch(dashboardTrendProvider)),
-        const SizedBox(height: AppSpacing.md),
-
-        // 4c. The grid. Every widget here is a CHART — a donut, a dial, a ring,
-        //     a bar series — because a dashboard's job is to be read at a
-        //     glance, and a ranked list of amounts has to be read line by line.
-        //     Two columns on a wide window so several are visible at once,
-        //     which is the difference between a dashboard and a long scroll.
-        const _Masonry(children: [
+      // 4c. The grid. Every widget here is a CHART — a donut, a dial, a ring,
+      //     a bar series — because a dashboard's job is to be read at a
+      //     glance, and a ranked list of amounts has to be read line by line.
+      //     Two columns on a wide window so several are visible at once,
+      //     which is the difference between a dashboard and a long scroll.
+      const _Masonry(
+        children: [
           _CashFlowCard(),
           _TopSpendCard(),
           _BudgetPulseCard(),
           _AllocationMiniCard(),
           _GoalsCard(),
           _UpcomingBillsSection(),
-        ]),
+        ],
+      ),
 
-        // 5. (Removed) A `Wrap` of ten ActionChips used to sit here, because
-        //    the five tab slots could not reach the rest of the app. It wrapped
-        //    3-3-3-1 with a ragged right edge and an orphaned last chip, gave
-        //    every destination identical visual weight, and cost half the first
-        //    screen. The More tab now carries all of it, grouped under the same
-        //    headings the web sidebar uses.
+      // 5. (Removed) A `Wrap` of ten ActionChips used to sit here, because
+      //    the five tab slots could not reach the rest of the app. It wrapped
+      //    3-3-3-1 with a ragged right edge and an orphaned last chip, gave
+      //    every destination identical visual weight, and cost half the first
+      //    screen. The More tab now carries all of it, grouped under the same
+      //    headings the web sidebar uses.
 
-        // 6. Recent transactions — a list on purpose. These are individual
-        //    events, not a distribution, and there is no chart of "the last
-        //    five things that happened".
-        const _RecentTransactionsSection(),
-        const SizedBox(height: AppSpacing.lg),
+      // 6. (Moved) Recent transactions now lead the page, inside
+      //    HomeSheetContent as "Latest transactions".
+    ];
+
+    // One scrolling column on every platform: the Zentra home is a flat page
+    // of cards on the canvas, not a header with a sheet over it.
+    final canvas = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.darkCanvas
+        : AppColors.lightCanvas;
+    final list = ListView(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        isDesktopPlatform ? 96 : 120,
+      ),
+      children: [
+        const TourLauncher(),
+        const OnboardingBanner(),
+        const SizedBox(height: AppSpacing.sm),
+        const HomeHeader(),
+        const HomeSheetContent(),
+        ...rest,
+      ],
+    );
+    // The pinned header is opaque; a short fade under it stops content being
+    // sliced mid-glyph as it scrolls beneath.
+    return Stack(
+      children: [
+        Positioned.fill(child: list),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 18,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [canvas, canvas.withValues(alpha: 0)],
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -196,7 +234,11 @@ class _ColdOpenPlaceholder extends ConsumerWidget {
       // Bottom pad clears the navigation bar. With a symmetric vertical pad the
       // final card ran underneath it and looked clipped.
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.sm, AppSpacing.md, 96),
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        96,
+      ),
       children: [
         const _GreetingHeader(),
         const SizedBox(height: AppSpacing.md),
@@ -204,14 +246,18 @@ class _ColdOpenPlaceholder extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Net worth',
-                  style: text.labelMedium
-                      ?.copyWith(color: scheme.onSurfaceVariant)),
+              Text(
+                'Net worth',
+                style: text.labelMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 ghost ? '••••••' : Money.format(snapshot.netWorth),
-                style: text.headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.w800),
+                style: text.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: AppSpacing.xs),
               Row(
@@ -220,15 +266,18 @@ class _ColdOpenPlaceholder extends ConsumerWidget {
                     width: 12,
                     height: 12,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: scheme.onSurfaceVariant),
+                      strokeWidth: 2,
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
                     days <= 0
                         ? 'As of earlier today · updating'
                         : 'As of ${days == 1 ? 'yesterday' : '$days days ago'} · updating',
-                    style: text.labelSmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
+                    style: text.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -269,7 +318,7 @@ class _GreetingHeader extends StatelessWidget {
               Text(
                 _greeting(),
                 style: textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.lightOnSurface,
                 ),
               ),
@@ -294,10 +343,14 @@ class _GreetingHeader extends StatelessWidget {
                     color: context.colors.accent.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: context.colors.accent.withValues(alpha: 0.25)),
+                      color: context.colors.accent.withValues(alpha: 0.25),
+                    ),
                   ),
-                  child: Icon(Icons.person_outline,
-                      color: context.colors.accent, size: 20),
+                  child: Icon(
+                    Icons.person_outline,
+                    color: context.colors.accent,
+                    size: 20,
+                  ),
                 ),
               ),
             ),
@@ -343,135 +396,124 @@ class _NetWorthHeroCard extends ConsumerWidget {
       label: ghost
           ? 'Net worth hidden. Tap eye icon to reveal.'
           : netWorth == null
-              ? 'Net worth still loading'
-              : 'Total net worth ${Money.toWords(netWorth)}',
-      child: Container(
+          ? 'Net worth still loading'
+          : 'Total net worth ${Money.toWords(netWorth)}',
+      child: SizedBox(
         width: double.infinity,
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadii.card),
-          // The single dark focal surface. A full-bleed emerald slab reads as
-          // loud rather than premium, and it spends the interaction colour on
-          // something that is not interactive.
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF14372A), KhazanaColors.forest],
-          ),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 28,
-              offset: const Offset(0, 14),
-            ),
-          ],
-        ),
-        child: ExcludeSemantics(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Label row + ghost-mode toggle.
-              Row(
-                children: [
-                  const Icon(Icons.account_balance_wallet,
-                      color: KhazanaColors.vaultGold, size: 16),
-                  const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    'NET WORTH',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: KhazanaColors.vaultGold,
-                          letterSpacing: 1.4,
+        child: GlassCard(
+          child: ExcludeSemantics(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Label row + ghost-mode toggle.
+                Row(
+                  children: [
+                    Icon(
+                      Icons.account_balance_wallet_outlined,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      size: 16,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      'Net worth',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const InfoHint('dashboard.netWorth'),
+                    const Spacer(),
+                    // Eye toggle — ghost mode.
+                    SizedBox(
+                      width: AppSpacing.minTouchTarget,
+                      height: AppSpacing.minTouchTarget,
+                      child: Semantics(
+                        button: true,
+                        label: ghost ? 'Show amounts' : 'Hide amounts',
+                        child: ExcludeSemantics(
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                            icon: Icon(
+                              ghost
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                              size: 20,
+                            ),
+                            tooltip: ghost ? 'Show amounts' : 'Hide amounts',
+                            onPressed: () =>
+                                ref.read(ghostModeProvider.notifier).toggle(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+
+                // Big value. An em-dash while the portfolio and liabilities load:
+                // showing the cash figure first and correcting it a frame later
+                // reads as money appearing, not as a screen finishing loading.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    ghost
+                        ? '••••••'
+                        : netWorth == null
+                        ? '—'
+                        : Money.format(netWorth),
+                    style: const TextStyle(
+                      fontSize: 38,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: -1,
+                      height: 1.0,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'What you own minus what you owe',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 11.5,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+
+                // Change line.
+                Row(
+                  children: [
+                    Icon(
+                      netPositive
+                          ? Icons.arrow_upward_rounded
+                          : Icons.arrow_downward_rounded,
+                      color: netPositive
+                          ? context.colors.income
+                          : context.colors.expense,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        ghost ? '••••••' : changeLabel,
+                        style: TextStyle(
+                          color: netPositive
+                              ? context.colors.income
+                              : context.colors.expense,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
-                  ),
-                  const Spacer(),
-                  // Eye toggle — ghost mode.
-                  SizedBox(
-                    width: AppSpacing.minTouchTarget,
-                    height: AppSpacing.minTouchTarget,
-                    child: Semantics(
-                      button: true,
-                      label: ghost ? 'Show amounts' : 'Hide amounts',
-                      child: ExcludeSemantics(
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                          icon: Icon(
-                            ghost
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: Colors.white70,
-                            size: 20,
-                          ),
-                          tooltip: ghost ? 'Show amounts' : 'Hide amounts',
-                          onPressed: () =>
-                              ref.read(ghostModeProvider.notifier).toggle(),
-                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-
-              // Big value. An em-dash while the portfolio and liabilities load:
-              // showing the cash figure first and correcting it a frame later
-              // reads as money appearing, not as a screen finishing loading.
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  ghost
-                      ? '••••••'
-                      : netWorth == null ? '—' : Money.format(netWorth),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 38,
-                    fontWeight: FontWeight.w800,
-                    height: 1.0,
-                  ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'What you own minus what you owe',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.55),
-                  fontSize: 11.5,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-
-              // Change line.
-              Row(
-                children: [
-                  Icon(
-                    netPositive
-                        ? Icons.arrow_upward_rounded
-                        : Icons.arrow_downward_rounded,
-                    color: netPositive
-                        ? const Color(0xFF6EE7B7)
-                        : const Color(0xFFFCA5A5),
-                    size: 14,
-                  ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      ghost ? '••••••' : changeLabel,
-                      style: TextStyle(
-                        color: netPositive
-                            ? const Color(0xFF6EE7B7)
-                            : const Color(0xFFFCA5A5),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -499,8 +541,7 @@ class _StatTilesGrid extends ConsumerWidget {
     // Liabilities — sum of principals.
     final liabilitiesAsync = ref.watch(liabilityListProvider);
     final liabilities = liabilitiesAsync.whenData(
-      (list) =>
-          list.fold<Decimal>(Decimal.zero, (s, l) => s + l.principal),
+      (list) => list.fold<Decimal>(Decimal.zero, (s, l) => s + l.principal),
     );
 
     // Net cash = lifetime cash flow (income − expense across all txns).
@@ -513,11 +554,13 @@ class _StatTilesGrid extends ConsumerWidget {
     final savingsRate = summary.income == Decimal.zero
         ? 0.0
         : (summary.income - summary.expense).toDouble() /
-            summary.income.toDouble() *
-            100.0;
+              summary.income.toDouble() *
+              100.0;
 
     final rate = savingsRate.clamp(-999.0, 999.0);
-    final rateColor = rate >= 0 ? context.colors.income : context.colors.expense;
+    final rateColor = rate >= 0
+        ? context.colors.income
+        : context.colors.expense;
 
     return Column(
       children: [
@@ -525,31 +568,33 @@ class _StatTilesGrid extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            Expanded(
-              child: StatTile(
-                label: 'Net Cash',
-                value: Money.format(netCash),
-                semanticValue: Money.toWords(netCash),
-                icon: Icons.account_balance_wallet_outlined,
-                iconColor: context.colors.accent,
-                ghost: ghost,
+              Expanded(
+                child: StatTile(
+                  label: 'Net Cash',
+                  term: 'cash',
+                  value: Money.format(netCash),
+                  semanticValue: Money.toWords(netCash),
+                  icon: Icons.account_balance_wallet_outlined,
+                  iconColor: context.colors.info,
+                  ghost: ghost,
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: _AsyncMoneyTile(
-                label: 'Investments',
-                amount: investments,
-                icon: Icons.trending_up_rounded,
-                iconColor: context.colors.income,
-                ghost: ghost,
-                // How current this number is. Mutual-fund NAVs lag a day and
-                // manually entered prices can be weeks old; a portfolio value
-                // with no date implies a precision it does not have.
-                footer: _pricingFooter(totals.valueOrNull),
-                onTap: () => context.go(Routes.investments),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _AsyncMoneyTile(
+                  label: 'Investments',
+                  term: 'investments',
+                  amount: investments,
+                  icon: Icons.trending_up_rounded,
+                  iconColor: context.colors.income,
+                  ghost: ghost,
+                  // How current this number is. Mutual-fund NAVs lag a day and
+                  // manually entered prices can be weeks old; a portfolio value
+                  // with no date implies a precision it does not have.
+                  footer: _pricingFooter(totals.valueOrNull),
+                  onTap: () => context.go(Routes.investments),
+                ),
               ),
-            ),
             ],
           ),
         ),
@@ -558,28 +603,30 @@ class _StatTilesGrid extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            Expanded(
-              child: _AsyncMoneyTile(
-                label: 'Liabilities',
-                amount: liabilities,
-                icon: Icons.credit_card_outlined,
-                iconColor: context.colors.expense,
-                ghost: ghost,
-                onTap: () => context.go(Routes.liabilities),
+              Expanded(
+                child: _AsyncMoneyTile(
+                  label: 'Liabilities',
+                  term: 'liabilities',
+                  amount: liabilities,
+                  icon: Icons.credit_card_outlined,
+                  iconColor: context.colors.expense,
+                  ghost: ghost,
+                  onTap: () => context.go(Routes.liabilities),
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: StatTile(
-                label: 'Savings Rate',
-                value: '${rate.toStringAsFixed(1)}%',
-                semanticValue: '${rate.toStringAsFixed(1)} percent',
-                icon: Icons.savings_outlined,
-                iconColor: rateColor,
-                valueColor: rateColor,
-                ghost: ghost,
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: StatTile(
+                  label: 'Savings Rate',
+                  term: 'savingsRate',
+                  value: '${rate.toStringAsFixed(1)}%',
+                  semanticValue: '${rate.toStringAsFixed(1)} percent',
+                  icon: Icons.savings_outlined,
+                  iconColor: rateColor,
+                  valueColor: rateColor,
+                  ghost: ghost,
+                ),
               ),
-            ),
             ],
           ),
         ),
@@ -610,11 +657,13 @@ class _AsyncMoneyTile extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.ghost,
+    this.term,
     this.footer,
     this.onTap,
   });
 
   final String label;
+  final String? term;
   final AsyncValue<Decimal> amount;
   final IconData icon;
   final Color iconColor;
@@ -630,6 +679,7 @@ class _AsyncMoneyTile extends StatelessWidget {
     final value = amount.valueOrNull ?? Decimal.zero;
     return StatTile(
       label: label,
+      term: term,
       value: Money.format(value),
       semanticValue: Money.toWords(value),
       icon: icon,
@@ -653,6 +703,7 @@ class _WindowSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SegmentedButton<TimeWindow>(
+      showSelectedIcon: false,
       segments: [
         for (final w in TimeWindow.values)
           ButtonSegment(value: w, label: Text(w.label)),
@@ -676,10 +727,10 @@ class _TrendChart extends StatelessWidget {
     // Downsample to ~60 points. Beyond that the extra vertices are sub-pixel
     // and cost paint time for nothing.
     final raw = series.map((p) => p.value.toDouble()).toList();
-    final step = raw.isEmpty ? 1 : (raw.length / 60).ceil().clamp(1, raw.length);
-    final pts = <double>[
-      for (var i = 0; i < raw.length; i += step) raw[i],
-    ];
+    final step = raw.isEmpty
+        ? 1
+        : (raw.length / 60).ceil().clamp(1, raw.length);
+    final pts = <double>[for (var i = 0; i < raw.length; i += step) raw[i]];
     if (pts.isNotEmpty && pts.last != raw.last) pts.add(raw.last);
 
     return GlassCard(
@@ -692,173 +743,9 @@ class _TrendChart extends StatelessWidget {
         semanticLabel: series.isEmpty
             ? null
             : 'Net worth trend over the selected period, '
-                'ending at ${Money.toWords(series.last.value)}',
+                  'ending at ${Money.toWords(series.last.value)}',
       ),
     );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 5. Recent transactions section
-// ---------------------------------------------------------------------------
-
-class _RecentTransactionsSection extends ConsumerWidget {
-  const _RecentTransactionsSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ghost = ref.watch(ghostModeProvider);
-    final txnState = ref.watch(transactionListProvider);
-    final categoriesAsync = ref.watch(categoryListProvider);
-
-    final txns = txnState is TransactionData ? txnState.transactions : <Txn>[];
-    // Sort by date descending, take latest 4.
-    final recent = [...txns]
-      ..sort((a, b) => b.date.compareTo(a.date));
-    final slice = recent.take(4).toList();
-
-    final categories = categoriesAsync.valueOrNull ?? [];
-    final catMap = {for (final c in categories) c.id: c};
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionHeader(
-          title: 'Recent Transactions',
-          actionLabel: 'See all',
-          onAction: () => context.go(Routes.transactions),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        GlassCard(
-          padding: EdgeInsets.zero,
-          child: slice.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.all(AppSpacing.lg),
-                  child: Center(
-                    child: Text(
-                      'No transactions yet',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                )
-              : Column(
-                  children: [
-                    for (var i = 0; i < slice.length; i++) ...[
-                      _TransactionRow(
-                        txn: slice[i],
-                        categoryName:
-                            catMap[slice[i].categoryId]?.name,
-                        categoryIconCodepoint:
-                            catMap[slice[i].categoryId]?.iconCodepoint,
-                        ghost: ghost,
-                      ),
-                      if (i < slice.length - 1)
-                        const Divider(height: 1, indent: 60, endIndent: 16),
-                    ],
-                  ],
-                ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TransactionRow extends StatelessWidget {
-  const _TransactionRow({
-    required this.txn,
-    required this.ghost,
-    this.categoryName,
-    this.categoryIconCodepoint,
-  });
-
-  final Txn txn;
-  final String? categoryName;
-  final int? categoryIconCodepoint;
-  final bool ghost;
-
-  @override
-  Widget build(BuildContext context) {
-    final isIncome = txn.type == TxnType.income;
-    final amountColor = isIncome ? context.colors.income : context.colors.expense;
-    final signedStr = Money.formatSigned(txn.amount, isIncome: isIncome);
-
-    final iconData = categoryIcon(
-      categoryIconCodepoint,
-      fallback: isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-    );
-
-    final label = txn.merchant ?? categoryName ?? (isIncome ? 'Income' : 'Expense');
-    final dateStr = _formatDate(txn.date);
-
-    return Semantics(
-      label: ghost
-          ? '$label on $dateStr, amount hidden'
-          : '$label on $dateStr, ${Money.formatSigned(txn.amount, isIncome: isIncome)}',
-      child: ExcludeSemantics(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: 10),
-          child: Row(
-            children: [
-              // Category icon badge.
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: amountColor.withValues(alpha: 0.10),
-                  shape: BoxShape.circle,
-                ),
-                child:
-                    Icon(iconData, color: amountColor, size: 18),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              // Name + date.
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      dateStr,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              // Signed amount.
-              Text(
-                ghost ? '••••••' : signedStr,
-                style: TextStyle(
-                  color: amountColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  static String _formatDate(DateTime d) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${d.day} ${months[d.month - 1]}';
   }
 }
 
@@ -876,8 +763,7 @@ class _UpcomingBillsSection extends ConsumerWidget {
 
     final rules = recurringAsync.valueOrNull ?? <RecurringRule>[];
     // Sort by nextRun ascending, take soonest 4.
-    final sorted = [...rules]
-      ..sort((a, b) => a.nextRun.compareTo(b.nextRun));
+    final sorted = [...rules]..sort((a, b) => a.nextRun.compareTo(b.nextRun));
     final slice = sorted.take(4).toList();
 
     return Column(
@@ -885,6 +771,7 @@ class _UpcomingBillsSection extends ConsumerWidget {
       children: [
         _SectionHeader(
           title: 'Upcoming Bills',
+          help: 'dashboard.upcomingBills',
           actionLabel: 'See all',
           onAction: () => context.go(Routes.recurring),
         ),
@@ -923,8 +810,18 @@ class _BillRow extends StatelessWidget {
 
   static String _formatDate(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${d.day} ${months[d.month - 1]}';
   }
@@ -941,8 +838,8 @@ class _BillRow extends StatelessWidget {
     final dueLabel = daysUntil == 0
         ? 'Today'
         : daysUntil == 1
-            ? 'Tomorrow'
-            : 'Due $dueStr';
+        ? 'Tomorrow'
+        : 'Due $dueStr';
 
     return Semantics(
       label: ghost
@@ -951,7 +848,9 @@ class _BillRow extends StatelessWidget {
       child: ExcludeSemantics(
         child: Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: 10),
+            horizontal: AppSpacing.md,
+            vertical: 10,
+          ),
           child: Row(
             children: [
               // Icon badge.
@@ -963,7 +862,9 @@ class _BillRow extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  isIncome ? Icons.payments_outlined : Icons.receipt_long_outlined,
+                  isIncome
+                      ? Icons.payments_outlined
+                      : Icons.receipt_long_outlined,
                   color: color,
                   size: 18,
                 ),
@@ -976,22 +877,19 @@ class _BillRow extends StatelessWidget {
                   children: [
                     Text(
                       name,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       dueLabel,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: daysUntil <= 2
-                                ? context.colors.budgetWarn
-                                : Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                          ),
+                        color: daysUntil <= 2
+                            ? context.colors.budgetWarn
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -1001,7 +899,7 @@ class _BillRow extends StatelessWidget {
                 ghost ? '••••••' : Money.format(rule.amount),
                 style: TextStyle(
                   color: color,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                   fontSize: 13,
                 ),
               ),
@@ -1022,8 +920,10 @@ class _SectionHeader extends StatelessWidget {
     required this.title,
     required this.actionLabel,
     required this.onAction,
+    this.help,
   });
 
+  final String? help;
   final String title;
   final String actionLabel;
   final VoidCallback onAction;
@@ -1033,13 +933,22 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            title,
-            style: Theme.of(context)
-                .textTheme
-                .titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
+          child: help == null
+              ? Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+                )
+              : InfoHint.titled(
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  help!,
+                ),
         ),
         // 48dp minimum touch target.
         SizedBox(
@@ -1047,16 +956,16 @@ class _SectionHeader extends StatelessWidget {
           child: TextButton(
             onPressed: onAction,
             style: TextButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              minimumSize:
-                  const Size(0, AppSpacing.minTouchTarget),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+              minimumSize: const Size(0, AppSpacing.minTouchTarget),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text(
               actionLabel,
               style: TextStyle(
-                  color: context.colors.accent, fontWeight: FontWeight.w600),
+                color: context.colors.info,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -1075,8 +984,8 @@ class _FinancialHealthCard extends ConsumerWidget {
   static Color _band(SemanticColors c, double frac) => frac >= 0.7
       ? c.income
       : frac >= 0.4
-          ? c.budgetWarn
-          : c.expense;
+      ? c.budgetWarn
+      : c.expense;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1096,12 +1005,21 @@ class _FinancialHealthCard extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text('Financial Health',
-                      style: text.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  child: InfoHint.titled(
+                    Text(
+                      'Financial Health',
+                      style: text.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    'dashboard.financialHealth',
+                  ),
                 ),
-                Icon(Icons.chevron_right_rounded,
-                    size: 18, color: Theme.of(context).colorScheme.outline),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -1110,11 +1028,11 @@ class _FinancialHealthCard extends ConsumerWidget {
               children: [
                 // Smaller than the Score screen's: net worth is this screen's
                 // hero, and two competing hero figures read as neither.
-                GaugeChart(
+                ScoreRing(
                   value: score?.toDouble(),
                   size: 120,
-                  sublabel: h.grade,
-                  untrackedLabel: 'Not yet scored',
+                  label: h.grade ?? 'Not yet scored',
+                  weakBelow: 40,
                 ),
                 const SizedBox(width: AppSpacing.lg),
                 Expanded(
@@ -1139,9 +1057,13 @@ class _FinancialHealthCard extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: AppSpacing.sm),
-            Text(h.summary,
-                style: text.bodySmall
-                    ?.copyWith(color: muted, fontStyle: FontStyle.italic)),
+            Text(
+              h.summary,
+              style: text.bodySmall?.copyWith(
+                color: muted,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
           ],
         ),
       ),
@@ -1164,14 +1086,13 @@ class _CategoryBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final track = (muted ?? Colors.grey).withValues(alpha: 0.15);
     final fraction = category.fraction;
     final tracked = fraction != null;
 
     return Semantics(
       label: tracked
           ? '${category.label} '
-              '${category.score!.round()} of ${category.weight.toInt()}'
+                '${category.score!.round()} of ${category.weight.toInt()}'
           : '${category.label} not yet tracked',
       child: ExcludeSemantics(
         child: Column(
@@ -1191,20 +1112,19 @@ class _CategoryBar extends StatelessWidget {
             const SizedBox(height: 4),
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadii.pill),
-              child: LinearProgressIndicator(
+              child: StripedBar(
                 value: fraction ?? 0,
-                minHeight: 5,
-                valueColor: AlwaysStoppedAnimation(
-                  tracked
-                      ? _FinancialHealthCard._band(context.colors, fraction)
-                      : Colors.transparent,
-                ),
-                backgroundColor: track,
+                height: 5,
+                color: tracked
+                    ? _FinancialHealthCard._band(context.colors, fraction)
+                    : Colors.transparent,
               ),
             ),
             const SizedBox(height: 2),
-            Text(category.detail,
-                style: text.labelSmall?.copyWith(color: muted)),
+            Text(
+              category.detail,
+              style: text.labelSmall?.copyWith(color: muted),
+            ),
           ],
         ),
       ),
@@ -1239,7 +1159,7 @@ class _InsightsCard extends ConsumerWidget {
     final tint = switch (narrative.tone) {
       NarrativeTone.positive => context.colors.income,
       NarrativeTone.caution => context.colors.budgetWarn,
-      NarrativeTone.neutral => context.colors.accent,
+      NarrativeTone.neutral => context.colors.info,
     };
 
     return GlassCard(
@@ -1254,12 +1174,21 @@ class _InsightsCard extends ConsumerWidget {
                 Icon(Icons.auto_awesome, size: 18, color: tint),
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
-                  child: Text('Insight',
-                      style: text.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  child: InfoHint.titled(
+                    Text(
+                      'Insight',
+                      style: text.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    'dashboard.insights',
+                  ),
                 ),
-                Icon(Icons.chevron_right_rounded,
-                    size: 18, color: scheme.outline),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: scheme.outline,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -1308,7 +1237,9 @@ class _CashFlowCard extends ConsumerWidget {
 
     final flows = MonthlyCashFlow.lastMonths(txns, months: _months);
     final withYear = MonthlyCashFlow.spansYears(flows);
-    final hasAny = flows.any((f) => f.income > Decimal.zero || f.expense > Decimal.zero);
+    final hasAny = flows.any(
+      (f) => f.income > Decimal.zero || f.expense > Decimal.zero,
+    );
 
     final saved = flows.fold(Decimal.zero, (s, f) => s + f.net);
     final months = flows.where((f) => f.income > Decimal.zero).length;
@@ -1320,9 +1251,15 @@ class _CashFlowCard extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Text('Cash flow',
-                    style:
-                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                child: InfoHint.titled(
+                  Text(
+                    'Cash flow',
+                    style: text.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  'dashboard.cashFlow',
+                ),
               ),
               _LegendDot(color: context.colors.income, label: 'In'),
               const SizedBox(width: AppSpacing.sm),
@@ -1333,8 +1270,8 @@ class _CashFlowCard extends ConsumerWidget {
           Text(
             hasAny
                 ? months == 0
-                    ? 'The last $_months months.'
-                    : 'Kept ${Money.format(saved)} over the last $_months months.'
+                      ? 'The last $_months months.'
+                      : 'Kept ${Money.format(saved)} over the last $_months months.'
                 : 'Record a few transactions and your months will appear here.',
             style: text.bodySmall?.copyWith(color: muted),
           ),
@@ -1346,13 +1283,15 @@ class _CashFlowCard extends ConsumerWidget {
                   label: f.label(withYear: withYear),
                   bars: [
                     Bar(
-                        label: 'In',
-                        value: f.income.toDouble(),
-                        color: context.colors.income),
+                      label: 'In',
+                      value: f.income.toDouble(),
+                      color: context.colors.income,
+                    ),
                     Bar(
-                        label: 'Out',
-                        value: f.expense.toDouble(),
-                        color: context.colors.expense),
+                      label: 'Out',
+                      value: f.expense.toDouble(),
+                      color: context.colors.expense,
+                    ),
                   ],
                 ),
             ],
@@ -1360,7 +1299,8 @@ class _CashFlowCard extends ConsumerWidget {
             formatValue: (v) =>
                 Money.format(Decimal.parse(v.toStringAsFixed(2))),
             formatAxis: Money.compact,
-            semanticLabel: 'Monthly income and spending for the last '
+            semanticLabel:
+                'Monthly income and spending for the last '
                 '$_months months',
           ),
         ],
@@ -1385,9 +1325,12 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
-        Text(label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
@@ -1430,14 +1373,18 @@ class _TopSpendCard extends ConsumerWidget {
     if (rows.isEmpty) {
       return _DashCard(
         title: 'Where it went',
+        help: 'dashboard.whereItWent',
         subtitle: 'This month.',
         onTap: () => context.go(Routes.reports),
         child: SizedBox(
           height: 120,
           child: Center(
-            child: Text('Nothing spent yet this month.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            child: Text(
+              'Nothing spent yet this month.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         ),
       );
@@ -1448,12 +1395,16 @@ class _TopSpendCard extends ConsumerWidget {
     // into a dead end.
     final segments = <DonutSegment>[
       for (var i = 0; i < rows.length; i++)
-        DonutSegment(names[rows[i].key] ?? 'Uncategorised',
-            rows[i].value.toDouble(), _sliceColors[i % _sliceColors.length]),
+        DonutSegment(
+          names[rows[i].key] ?? 'Uncategorised',
+          rows[i].value.toDouble(),
+          _sliceColors[i % _sliceColors.length],
+        ),
     ];
 
     return _DashCard(
       title: 'Where it went',
+      help: 'dashboard.whereItWent',
       subtitle: 'This month · ${Money.format(total)}',
       onTap: () => context.go(Routes.reports),
       child: DonutChart(
@@ -1507,11 +1458,12 @@ class _BudgetPulseCard extends ConsumerWidget {
 
     return _DashCard(
       title: 'Budgets',
+      help: 'dashboard.budgets',
       subtitle: progress.isEmpty
           ? 'Set a budget and its dial shows here.'
           : over > 0
-              ? '$over over the limit.'
-              : 'All within limit.',
+          ? '$over over the limit.'
+          : 'All within limit.',
       onTap: () => context.go(Routes.budget),
       child: progress.isEmpty
           ? const SizedBox(height: 40)
@@ -1551,9 +1503,9 @@ class _BudgetPulseCard extends ConsumerWidget {
                           style: text.labelSmall?.copyWith(
                             color: p.remaining < Decimal.zero
                                 ? context.colors.expense
-                                : Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -1603,10 +1555,12 @@ class _Masonry extends StatelessWidget {
         final left = <Widget>[];
         final right = <Widget>[];
         for (var i = 0; i < children.length; i++) {
-          (i.isEven ? left : right).add(Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: children[i],
-          ));
+          (i.isEven ? left : right).add(
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: children[i],
+            ),
+          );
         }
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1643,6 +1597,7 @@ class _GoalsCard extends ConsumerWidget {
 
     return _DashCard(
       title: 'Goals',
+      help: 'goals.page',
       subtitle: open.isEmpty
           ? 'Set a goal and its ring shows here.'
           : '${open.length} in progress.',
@@ -1660,13 +1615,18 @@ class _GoalsCard extends ConsumerWidget {
                       children: [
                         DonutChart(
                           segments: [
-                            DonutSegment('Saved', pct(g), context.colors.income),
                             DonutSegment(
-                                'To go',
-                                1 - pct(g),
-                                Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest),
+                              'Saved',
+                              pct(g),
+                              context.colors.income,
+                            ),
+                            DonutSegment(
+                              'To go',
+                              1 - pct(g),
+                              Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                            ),
                           ],
                           size: 84,
                           strokeWidth: 9,
@@ -1683,9 +1643,10 @@ class _GoalsCard extends ConsumerWidget {
                         Text(
                           Money.compact(g.currentAmount.toDouble()),
                           style: text.labelSmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -1714,12 +1675,17 @@ class _AllocationMiniCard extends ConsumerWidget {
       for (final g in AssetGroup.values)
         if ((totals.valueByGroup[g] ?? Decimal.zero) > Decimal.zero)
           DonutSegment(
-              g.label, totals.valueByGroup[g]!.toDouble(), groupColor(g)),
+            g.label,
+            totals.valueByGroup[g]!.toDouble(),
+            groupColor(g),
+          ),
     ];
 
     return _DashCard(
       title: 'Allocation',
-      subtitle: '${totals.positionCount} holding'
+      help: 'dashboard.allocation',
+      subtitle:
+          '${totals.positionCount} holding'
           '${totals.positionCount == 1 ? '' : 's'}',
       onTap: () => context.go(Routes.investments),
       child: DonutChart(
@@ -1743,10 +1709,12 @@ class _DashCard extends StatelessWidget {
   const _DashCard({
     required this.title,
     required this.child,
+    this.help,
     this.subtitle,
     this.onTap,
   });
 
+  final String? help;
   final String title;
   final Widget child;
   final String? subtitle;
@@ -1761,10 +1729,10 @@ class _DashCard extends StatelessWidget {
     // 1px rule there, and that rule is what makes a dense dashboard scannable.
     return KSectionCard(
       title: title,
+      help: help,
       subtitle: subtitle,
       onTap: onTap,
       child: child,
     );
   }
 }
-

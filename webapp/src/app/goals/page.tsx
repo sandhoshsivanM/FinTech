@@ -35,12 +35,12 @@ const GOAL_ICON_MAP: Record<GoalType, React.ReactNode> = {
 };
 
 const GOAL_COLOR_MAP: Record<GoalType, string> = {
-  emergency_fund: 'var(--income)',
-  house: 'var(--accent)',
-  vehicle: 'var(--violet)',
-  vacation: 'var(--warn)',
-  education: 'var(--accent-deep)',
-  custom: 'var(--muted)',
+  emergency_fund: 'var(--data-green)',
+  house: 'var(--data-blue)',
+  vehicle: 'var(--data-blue)',
+  vacation: 'var(--data-amber)',
+  education: 'var(--data-rose)',
+  custom: 'var(--ink-soft)',
 };
 
 function goalLabel(type: GoalType): string {
@@ -179,6 +179,7 @@ export default function GoalsPage() {
     <div className="space-y-6">
       <PageIntro
         title="Goals"
+        info="goals.page"
         subtitle={`${goals.length} goal${goals.length !== 1 ? 's' : ''} tracked`}
         action={
           <Button variant="primary" onClick={() => { setEditingId(null); setShowAdd(true); }}>
@@ -206,7 +207,7 @@ export default function GoalsPage() {
               label: 'Overall progress',
               value: `${overallPct}%`,
               sub: totalTarget.isZero() ? 'no target set' : `${mask(fmt.money(totalTarget.minus(totalCurrent)))} to go`,
-              accent: overallPct >= 100 ? 'var(--income)' : overallPct >= 50 ? 'var(--accent)' : undefined,
+              accent: overallPct >= 100 ? 'var(--income)' : overallPct >= 50 ? 'var(--data-blue)' : undefined,
             },
             {
               label: 'Completed',
@@ -269,20 +270,20 @@ export default function GoalsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 min-w-0">
                     <span
-                      className="w-8 h-8 rounded-[var(--radius-card)] grid place-items-center shrink-0"
-                      style={{ background: color + '22', color }}
+                      className="w-9 h-9 rounded-full grid place-items-center shrink-0"
+                      style={{ background: `color-mix(in srgb, ${color} 14%, transparent)`, color }}
                     >
                       {GOAL_ICON_MAP[goal.goalType]}
                     </span>
                     <div className="min-w-0">
-                      <div className="font-bold text-sm leading-tight truncate">{goal.name}</div>
+                      <div className="font-medium text-[15px] leading-tight truncate">{goal.name}</div>
                       <div className="text-[11px] text-muted">{goalLabel(goal.goalType)}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0 ml-2">
                     <button
                       type="button"
-                      className="p-1.5 rounded-[var(--radius-card)] text-ink-soft hover:bg-black/5 transition"
+                      className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] text-ink-soft shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] hover:text-ink transition"
                       aria-label="Edit goal"
                       onClick={() => startEdit(goal.id)}
                     >
@@ -290,7 +291,7 @@ export default function GoalsPage() {
                     </button>
                     <button
                       type="button"
-                      className="p-1.5 rounded-[var(--radius-card)] text-expense hover:bg-expense/10 transition"
+                      className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] text-muted shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] hover:text-expense transition"
                       aria-label="Delete goal"
                       onClick={() => deleteGoal(goal.id)}
                     >
@@ -301,14 +302,14 @@ export default function GoalsPage() {
 
                 {/* Ring + amounts */}
                 <div className="flex items-center gap-4">
-                  <Ring fraction={fraction} size={80} stroke={8} color={color}>
-                    <span className="text-sm font-extrabold" style={{ color }}>{pct}%</span>
+                  <Ring fraction={fraction} size={84} stroke={8}>
+                    <span className="text-[18px] font-light tracking-[-0.02em]">{pct}%</span>
                   </Ring>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-muted">Saved</div>
-                    <div className="font-extrabold text-base tnum leading-tight">{mask(fmt.money(current))}</div>
+                    <div className="text-[22px] font-light tracking-[-0.02em] tnum leading-tight">{mask(fmt.money(current))}</div>
                     <div className="text-xs text-muted mt-1">Target</div>
-                    <div className="font-semibold text-sm tnum text-ink-soft">{mask(fmt.money(target))}</div>
+                    <div className="text-[14px] tnum text-ink-soft">{mask(fmt.money(target))}</div>
                   </div>
                 </div>
 
@@ -324,8 +325,7 @@ export default function GoalsPage() {
 
                 {/* Track hint pill */}
                 <div
-                  className="text-xs font-semibold px-2.5 py-1.5 rounded-[var(--radius-card)] truncate"
-                  style={{ background: color + '18', color }}
+                  className="inset text-[12.5px] px-3 py-2 truncate text-ink-soft"
                 >
                   {trackHint}
                 </div>
@@ -352,7 +352,6 @@ export default function GoalsPage() {
                       }
                     />
                     <Button
-                      variant="soft"
                       disabled={!contribVal || parseFloat(contribVal) <= 0}
                       onClick={() => handleContribute(goal.id)}
                     >
@@ -369,7 +368,7 @@ export default function GoalsPage() {
       {/* Add / Edit goal form */}
       {showAdd && (
         <GlassCard>
-          <SectionHeader title={editingId ? 'Edit Goal' : 'New Goal'} />
+          <SectionHeader title={editingId ? 'Edit Goal' : 'New Goal'} info="goals.form" />
           <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Goal Name">

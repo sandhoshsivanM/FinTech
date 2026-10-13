@@ -72,10 +72,8 @@ function daysUntil(ms: number): number {
 function TypeBadge({ type }: { type: InsuranceType }) {
   const meta = TYPE_META[type];
   return (
-    <span
-      className="inline-block whitespace-nowrap px-2 py-0.5 rounded-full text-[11px] font-semibold"
-      style={{ background: meta.color + '1a', color: meta.color }}
-    >
+    // A quiet chip: the type is a label, not a colour.
+    <span className="chip whitespace-nowrap">
       {meta.label}
     </span>
   );
@@ -210,7 +208,7 @@ export default function InsurancePage() {
       {/* Add / Edit form */}
       {showForm && (
         <GlassCard>
-          <SectionHeader title={editingId ? 'Edit Policy' : 'Add Policy'} />
+          <SectionHeader title={editingId ? 'Edit Policy' : 'Add Policy'} info="insurance.form" />
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 mt-1">
             <Field label="Policy Name">
               <Input
@@ -324,7 +322,7 @@ export default function InsurancePage() {
 
           {/* Coverage gap analysis */}
           <GlassCard>
-            <SectionHeader title="Coverage gap analysis" />
+            <SectionHeader title="Coverage gap analysis" info="insurance.coverageGap" />
             <p className="text-[12px] text-muted mb-4 leading-relaxed">
               Guidelines only — not financial advice. Life cover guideline: {LIFE_COVER_MULTIPLE}× annual income.
               Health cover guideline: ₹5L or 50% of annual income, whichever is higher.
@@ -339,10 +337,12 @@ export default function InsurancePage() {
               {gaps.map((g) => {
                 const barColor =
                   g.coveredPct >= 100
-                    ? 'var(--income)'
+                    ? 'var(--data-blue)'
                     : g.coveredPct >= 60
-                    ? 'var(--warn)'
-                    : 'var(--expense)';
+                    ? 'var(--data-amber)'
+                    : 'var(--data-rose)';
+                const textColor =
+                  g.coveredPct >= 100 ? 'var(--income)' : g.coveredPct >= 60 ? 'var(--warn)' : 'var(--expense)';
                 const verdict =
                   g.coveredPct >= 100
                     ? 'Well covered'
@@ -355,10 +355,10 @@ export default function InsurancePage() {
                 return (
                   <div key={g.kind}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[13.5px] font-semibold text-ink">{g.label}</span>
+                      <span className="text-[13.5px] text-ink">{g.label}</span>
                       <span
                         className="text-[11.5px] font-semibold"
-                        style={{ color: barColor }}
+                        style={{ color: textColor }}
                       >
                         {g.coveredPct}%
                       </span>
@@ -370,7 +370,7 @@ export default function InsurancePage() {
                       </span>
                       <span
                         className="font-medium"
-                        style={{ color: barColor }}
+                        style={{ color: textColor }}
                       >
                         {verdict}
                       </span>
@@ -399,7 +399,7 @@ export default function InsurancePage() {
                     <div className="flex items-center gap-0.5 shrink-0">
                       <button
                         type="button"
-                        className="p-1.5 rounded-[var(--radius-btn)] text-ink-soft hover:bg-black/5 transition-colors"
+                        className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] text-ink-soft shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] hover:text-ink transition-colors"
                         aria-label="Edit policy"
                         onClick={() => startEdit(p)}
                       >
@@ -407,7 +407,7 @@ export default function InsurancePage() {
                       </button>
                       <button
                         type="button"
-                        className="p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-expense hover:bg-[rgba(192,73,47,0.08)] transition-colors"
+                        className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] text-muted shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] hover:text-expense transition-colors"
                         aria-label="Delete policy"
                         onClick={() => deletePolicy(p.id, p.name)}
                       >
@@ -418,7 +418,7 @@ export default function InsurancePage() {
 
                   {/* Name + provider */}
                   <div className="min-w-0">
-                    <div className="font-semibold text-[14px] text-ink leading-tight truncate">
+                    <div className="font-medium text-[17px] text-ink leading-tight truncate">
                       {p.name}
                     </div>
                     {p.provider && (
@@ -429,13 +429,13 @@ export default function InsurancePage() {
                   {/* Cover amount */}
                   <div>
                     <div className="eyebrow">Sum assured</div>
-                    <div className="text-[22px] font-bold tracking-tight tnum mt-0.5">
+                    <div className="text-[22px] font-light tracking-tight tnum mt-0.5">
                       {mask(fmt.money(D(p.coverAmount)))}
                     </div>
                   </div>
 
                   {/* Premium + renewal in a tight row */}
-                  <div className="flex items-end justify-between gap-2 pt-1 border-t border-[var(--line)]">
+                  <div className="inset flex items-end justify-between gap-2 px-3 py-2.5">
                     <div>
                       <div className="eyebrow">Annual premium</div>
                       <div className="text-[14px] font-semibold tnum mt-0.5">

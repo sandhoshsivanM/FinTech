@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/help/info_hint.dart';
+
 import '../tokens/khazana_colors.dart';
 import '../tokens/khazana_metrics.dart';
 
@@ -34,7 +36,13 @@ class KCard extends StatelessWidget {
         border: Border.all(color: cs.outline),
         boxShadow: isDark
             ? null
-            : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: onTap == null
           ? body
@@ -59,8 +67,11 @@ class KSectionCard extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.onTap,
+    this.help,
   });
 
+  /// Help key (see SectionHelp) for an inline info hint after the title.
+  final String? help;
   final String title;
   final String? subtitle;
   final Widget child;
@@ -78,38 +89,55 @@ class KSectionCard extends StatelessWidget {
         children: [
           InkWell(
             onTap: onTap,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(KhazanaRadius.card)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(KhazanaRadius.card),
+            ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  KhazanaSpace.x5, KhazanaSpace.x4, KhazanaSpace.x4, KhazanaSpace.x4),
+              padding: EdgeInsets.fromLTRB(
+                KhazanaSpace.x5,
+                help == null ? KhazanaSpace.x4 : 6,
+                KhazanaSpace.x4,
+                help == null ? KhazanaSpace.x4 : 6,
+              ),
               child: Row(
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: t.titleMedium),
+                        if (help == null)
+                          Text(title, style: t.titleMedium)
+                        else
+                          InfoHint.titled(
+                            Text(title, style: t.titleMedium),
+                            help!,
+                          ),
                         if (subtitle != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 2),
-                            child: Text(subtitle!,
-                                style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                            child: Text(
+                              subtitle!,
+                              style: t.bodySmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                              ),
+                            ),
                           ),
                       ],
                     ),
                   ),
                   ?trailing,
                   if (trailing == null && onTap != null)
-                    Icon(Icons.chevron_right, size: 20, color: cs.onSurfaceVariant),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 20,
+                      color: cs.onSurfaceVariant,
+                    ),
                 ],
               ),
             ),
           ),
           Divider(height: 1, thickness: 1, color: cs.outline),
-          Padding(
-            padding: const EdgeInsets.all(KhazanaSpace.x5),
-            child: child,
-          ),
+          Padding(padding: const EdgeInsets.all(KhazanaSpace.x5), child: child),
         ],
       ),
     );
@@ -168,11 +196,15 @@ class KMetricCard extends StatelessWidget {
               ),
               const SizedBox(width: KhazanaSpace.x2),
               Expanded(
-                child: Text(label,
-                    style: t.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant, fontWeight: FontWeight.w600),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
+                child: Text(
+                  label,
+                  style: t.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               if (onTap != null)
                 Icon(Icons.chevron_right, size: 18, color: cs.onSurfaceVariant),
@@ -182,8 +214,10 @@ class KMetricCard extends StatelessWidget {
           Text(
             untracked ? '—' : value!,
             style: t.headlineSmall?.copyWith(
-              color: untracked ? cs.onSurfaceVariant : (valueColor ?? cs.onSurface),
-              fontWeight: FontWeight.w700,
+              color: untracked
+                  ? cs.onSurfaceVariant
+                  : (valueColor ?? cs.onSurface),
+              fontWeight: FontWeight.w500,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -191,7 +225,9 @@ class KMetricCard extends StatelessWidget {
           const SizedBox(height: 4),
           DefaultTextStyle.merge(
             style: t.bodySmall!.copyWith(color: cs.onSurfaceVariant),
-            child: untracked ? const Text('Not yet tracked') : (footer ?? const SizedBox.shrink()),
+            child: untracked
+                ? const Text('Not yet tracked')
+                : (footer ?? const SizedBox.shrink()),
           ),
         ],
       ),
@@ -204,7 +240,12 @@ class KMetricCard extends StatelessWidget {
 /// The arrow is not decoration: colour alone fails for a colourblind reader, so
 /// the glyph carries the same information.
 class KDelta extends StatelessWidget {
-  const KDelta({super.key, required this.value, this.suffix = '%', this.digits = 2});
+  const KDelta({
+    super.key,
+    required this.value,
+    this.suffix = '%',
+    this.digits = 2,
+  });
 
   final double? value;
   final String suffix;
@@ -215,14 +256,23 @@ class KDelta extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
     if (value == null) {
-      return Text('—', style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant));
+      return Text(
+        '—',
+        style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+      );
     }
     final v = value!;
     final up = v > 0, down = v < 0;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final good = isDark ? KhazanaColors.vaultSuccess : KhazanaColors.ledgerSuccess;
+    final good = isDark
+        ? KhazanaColors.vaultSuccess
+        : KhazanaColors.ledgerSuccess;
     final bad = isDark ? KhazanaColors.vaultDanger : KhazanaColors.ledgerDanger;
-    final c = up ? good : down ? bad : cs.onSurfaceVariant;
+    final c = up
+        ? good
+        : down
+        ? bad
+        : cs.onSurfaceVariant;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -233,11 +283,23 @@ class KDelta extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(up ? Icons.arrow_upward : down ? Icons.arrow_downward : Icons.remove,
-              size: 11, color: c),
+          Icon(
+            up
+                ? Icons.arrow_upward
+                : down
+                ? Icons.arrow_downward
+                : Icons.remove,
+            size: 11,
+            color: c,
+          ),
           const SizedBox(width: 3),
-          Text('${v.abs().toStringAsFixed(digits)}$suffix',
-              style: t.labelSmall?.copyWith(color: c, fontWeight: FontWeight.w600)),
+          Text(
+            '${v.abs().toStringAsFixed(digits)}$suffix',
+            style: t.labelSmall?.copyWith(
+              color: c,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

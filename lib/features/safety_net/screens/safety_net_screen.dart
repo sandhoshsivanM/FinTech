@@ -1,13 +1,17 @@
+import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../domain/services/safety_net.dart';
 import '../../../presentation/data_gate.dart';
+import '../../../presentation/glass_card.dart';
+import '../../../presentation/zentra_kit.dart';
+import '../../home/home_palette.dart';
+import '../../home/widgets/depth.dart';
 import '../providers/safety_net_providers.dart';
 
 /// Read-only "Safety Net" readiness dashboard — parity with the web app's
@@ -16,17 +20,9 @@ class SafetyNetScreen extends StatelessWidget {
   const SafetyNetScreen({super.key});
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: const DataGate(child: _Body()),
-    );
+    return Scaffold(body: const DataGate(child: _Body()));
   }
 }
-
-Color _coverColor(SemanticColors c, double pct) => pct >= 100
-    ? c.income
-    : pct >= 60
-        ? c.budgetWarn
-        : c.expense;
 
 class _Body extends ConsumerWidget {
   const _Body();
@@ -34,87 +30,63 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sn = ref.watch(safetyNetProvider);
-    final scoreColor = sn.score >= 70
-        ? context.colors.income
-        : sn.score >= 40
-            ? context.colors.budgetWarn
-            : context.colors.expense;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
-        // Readiness hero
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 84,
-                  height: 84,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 84,
-                        height: 84,
-                        child: CircularProgressIndicator(
-                          value: sn.score / 100,
-                          strokeWidth: 8,
-                          backgroundColor: AppColors.darkOnSurfaceMuted
-                              .withValues(alpha: 0.18),
-                          valueColor: AlwaysStoppedAnimation(scoreColor),
-                        ),
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('${sn.score}',
-                              style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: scoreColor)),
-                          Text(sn.grade,
-                              style: Theme.of(context).textTheme.labelSmall),
-                        ],
-                      ),
-                    ],
+        // Readiness hero: the score ring, then the sentence.
+        GlassCard(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.xl,
+          ),
+          child: Column(
+            children: [
+              ScoreRing(value: sn.score.toDouble(), label: sn.grade),
+              const SizedBox(height: AppSpacing.lg),
+              InfoHint.titled(
+                Text(
+                  'Safety-net readiness',
+                  style: text.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Safety-net readiness',
-                          style: Theme.of(context).textTheme.labelMedium),
-                      const SizedBox(height: 4),
-                      Text(sn.summary,
-                          style: Theme.of(context).textTheme.bodyMedium),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                'safety-net.readiness',
+              ),
+              const SizedBox(height: 4),
+              Text(
+                sn.summary,
+                textAlign: TextAlign.center,
+                style: text.bodyLarge,
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.md),
 
-        for (final c in sn.components) _ComponentCard(component: c),
+        for (final c in sn.components) ...[
+          _ComponentCard(component: c),
+          const SizedBox(height: AppSpacing.md),
+        ],
 
-        const SizedBox(height: AppSpacing.sm),
         Text(
           'Guideline only, not advice — life ≈ 10× annual income; health ≥ ₹5L. '
           'Annual premiums: ${Money.format(sn.premium)}.',
-          style: Theme.of(context)
-              .textTheme
-              .labelSmall
-              ?.copyWith(color: AppColors.darkOnSurfaceMuted),
+          style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
       ],
     );
   }
 }
+
+String? _helpFor(String label) => switch (label) {
+  'Emergency fund' => 'safety-net.emergencyFund',
+  'Life cover' || 'Health cover' => 'safety-net.insuranceCover',
+  'Safe & retirement assets' => 'safety-net.safeAssets',
+  _ => null,
+};
 
 class _ComponentCard extends StatelessWidget {
   const _ComponentCard({required this.component});
@@ -123,47 +95,43 @@ class _ComponentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pct = component.coveredPct;
-    final color = _coverColor(context.colors, pct);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+    final text = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return SizedBox(
+      width: double.infinity,
+      child: GlassCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(component.label,
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
-                ),
-                Text('${pct.clamp(0, 999).round()}%',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: color)),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: (pct / 100).clamp(0.0, 1.0),
-                minHeight: 7,
-                backgroundColor:
-                    AppColors.darkOnSurfaceMuted.withValues(alpha: 0.18),
-                valueColor: AlwaysStoppedAnimation(color),
+            if (_helpFor(component.label) == null)
+              Text(component.label, style: text.titleMedium)
+            else
+              InfoHint.titled(
+                Text(component.label, style: text.titleMedium),
+                _helpFor(component.label)!,
+              ),
+            const SizedBox(height: AppSpacing.md),
+            HomeTray(
+              child: GaugeRow(
+                label: component.gap > Decimal.zero
+                    ? 'Covered'
+                    : 'Well covered',
+                fraction: (pct / 100).clamp(0.0, 1.0),
+                hue: Hue.forCoverage(pct),
+                value: Money.format(component.current),
+                limit: Money.format(component.recommended),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.sm),
+            if (component.gap > Decimal.zero)
+              Text(
+                '${Money.format(component.gap)} short',
+                style: text.bodySmall?.copyWith(color: muted),
+              ),
             Text(
-              '${Money.format(component.current)} of '
-              '${Money.format(component.recommended)} recommended'
-              '${component.gap > Decimal.zero ? ' · ${Money.format(component.gap)} short' : ' · covered'}',
-              style: Theme.of(context).textTheme.bodySmall,
+              component.detail,
+              style: text.bodySmall?.copyWith(color: muted),
             ),
-            const SizedBox(height: 2),
-            Text(component.detail,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(color: AppColors.darkOnSurfaceMuted)),
           ],
         ),
       ),

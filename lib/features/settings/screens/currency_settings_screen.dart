@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +14,12 @@ class CurrencySettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Currency')),
+      appBar: AppBar(
+        title: InfoHint.titled(
+          const Text('Currency'),
+          'settings.exchangeRates',
+        ),
+      ),
       body: const DataGate(child: _Body()),
     );
   }
@@ -44,7 +50,10 @@ class _BodyState extends ConsumerState<_Body> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.public),
-            title: const Text('Base currency'),
+            title: InfoHint.titled(
+              const Text('Base currency'),
+              'settings.displayCurrency',
+            ),
             subtitle: Text('Totals are reported in $base'),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: _pickBase,
@@ -65,7 +74,8 @@ class _BodyState extends ConsumerState<_Body> {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.cloud_download_outlined, size: 18),
                 label: const Text('Fetch rates'),
               ),
@@ -87,10 +97,13 @@ class _BodyState extends ConsumerState<_Body> {
             for (final r in rates)
               ListTile(
                 leading: const Icon(Icons.currency_exchange),
-                title: Text('1 ${r.baseCurrency} = ${r.rate} ${r.quoteCurrency}'),
+                title: Text(
+                  '1 ${r.baseCurrency} = ${r.rate} ${r.quoteCurrency}',
+                ),
                 subtitle: Text(
-                    '${_sourceLabel(r.source)} · '
-                    '${DateFormat('d MMM yyyy').format(r.fetchedAt)}'),
+                  '${_sourceLabel(r.source)} · '
+                  '${DateFormat('d MMM yyyy').format(r.fetchedAt)}',
+                ),
               ),
         ],
       ),
@@ -103,8 +116,9 @@ class _BodyState extends ConsumerState<_Body> {
       source == 'ecb' ? 'ECB reference rate' : 'Manual entry';
 
   Future<void> _pickBase() async {
-    final controller =
-        TextEditingController(text: ref.read(baseCurrencyProvider));
+    final controller = TextEditingController(
+      text: ref.read(baseCurrencyProvider),
+    );
     final picked = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -120,8 +134,9 @@ class _BodyState extends ConsumerState<_Body> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(context, controller.text),
             child: const Text('Save'),
@@ -139,15 +154,18 @@ class _BodyState extends ConsumerState<_Body> {
     try {
       final result = await ref.read(fxActionsProvider).refreshLive();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('${result.updated} rates · '
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${result.updated} rates · '
             '${result.source} as of '
-            '${DateFormat('d MMM yyyy').format(result.asOf)}'),
-      ));
+            '${DateFormat('d MMM yyyy').format(result.asOf)}',
+          ),
+        ),
+      );
     } on Object catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -167,30 +185,36 @@ class _BodyState extends ConsumerState<_Body> {
             Row(
               children: [
                 Expanded(
-                    child: TextField(
-                        controller: base,
-                        decoration:
-                            const InputDecoration(labelText: 'Base (ISO)'))),
+                  child: TextField(
+                    controller: base,
+                    decoration: const InputDecoration(labelText: 'Base (ISO)'),
+                  ),
+                ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
-                    child: TextField(
-                        controller: quote,
-                        decoration:
-                            const InputDecoration(labelText: 'Quote (ISO)'))),
+                  child: TextField(
+                    controller: quote,
+                    decoration: const InputDecoration(labelText: 'Quote (ISO)'),
+                  ),
+                ),
               ],
             ),
             TextField(
               controller: rate,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(
-                  labelText: 'Rate (quote per 1 base)'),
+                labelText: 'Rate (quote per 1 base)',
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () {
               final r = Decimal.tryParse(rate.text.trim());
@@ -200,7 +224,9 @@ class _BodyState extends ConsumerState<_Body> {
                   quote.text.trim().isEmpty) {
                 return;
               }
-              ref.read(fxActionsProvider).addManual(
+              ref
+                  .read(fxActionsProvider)
+                  .addManual(
                     base.text,
                     quote.text,
                     r,

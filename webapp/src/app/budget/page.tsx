@@ -228,7 +228,7 @@ export default function BudgetPage() {
           making the reader add up twenty bars to find out where they stand. */}
       {budgets.length > 0 && (
         <GlassCard>
-          <SectionHeader title="Envelopes" />
+          <SectionHeader title="Envelopes" info="budget.envelopes" />
           <p className="-mt-2 mb-3 text-xs text-muted">Spend by category against the total budgeted.</p>
           <div className="grid place-items-center">
             <Donut
@@ -247,16 +247,16 @@ export default function BudgetPage() {
       {/* 50/30/20 guidance card */}
       {budgets.length > 0 && (
         <GlassCard>
-          <SectionHeader title="50/30/20 Guidance" />
+          <SectionHeader title="50/30/20 Guidance" info="budget.guidance" />
           <p className="text-xs text-muted mb-3">A simple framework: 50% Needs, 30% Wants, 20% Savings.</p>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Needs', pct: 50, color: 'var(--accent)' },
+              { label: 'Needs', pct: 50, color: 'var(--data-blue)' },
               { label: 'Wants', pct: 30, color: 'var(--violet)' },
               { label: 'Savings', pct: 20, color: 'var(--income)' },
             ].map((item) => (
               <div key={item.label} className="text-center p-3 rounded-[var(--radius-panel)] bg-[var(--fill)]">
-                <div className="text-lg font-extrabold" style={{ color: item.color }}>{item.pct}%</div>
+                <div className="text-lg font-light" style={{ color: item.color }}>{item.pct}%</div>
                 <div className="text-xs text-ink-soft mt-0.5">{item.label}</div>
               </div>
             ))}
@@ -334,7 +334,7 @@ export default function BudgetPage() {
                         <div className="flex items-center gap-1 shrink-0 ml-2">
                           <button
                             type="button"
-                            className="p-1.5 rounded-[var(--radius-card)] text-ink-soft hover:bg-black/5 transition"
+                            className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] transition text-ink-soft hover:text-ink"
                             aria-label="Edit budget"
                             onClick={() => startEdit(budget.id, budget.amountLimit, budget.alertThresholdPct)}
                           >
@@ -342,7 +342,7 @@ export default function BudgetPage() {
                           </button>
                           <button
                             type="button"
-                            className="p-1.5 rounded-[var(--radius-card)] text-expense hover:bg-expense/10 transition"
+                            className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] transition text-muted hover:text-expense"
                             aria-label="Delete budget"
                             onClick={() => deleteBudget(budget.id)}
                           >
@@ -382,7 +382,7 @@ export default function BudgetPage() {
       {/* Add budget form */}
       {showAdd && (
         <GlassCard>
-          <SectionHeader title="New Budget" />
+          <SectionHeader title="New Budget" info="budget.newBudget" />
           {availableCategories.length === 0 ? (
             <p className="text-sm text-muted py-2">All categories already have a budget.</p>
           ) : (

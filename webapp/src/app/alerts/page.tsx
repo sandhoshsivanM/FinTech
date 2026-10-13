@@ -13,7 +13,7 @@ import { useApp, uid } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { D } from '@/lib/money';
 import { ALERT_TYPE_OF, STORE, type Alert, type AlertKind } from '@/lib/types';
-import { PageIntro, Button, Chip, Field, Input, Select, EmptyState, GlassCard } from '@/components/ui';
+import { PageIntro, Button, Chip, Field, Input, Select, EmptyState, GlassCard, Toggle } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { useConfirm } from '@/components/Confirm';
@@ -22,6 +22,7 @@ import { evaluateAlerts, stateOf } from '@/domain/alerts';
 import { useNow } from '@/lib/useNow';
 import { formatDate } from '@/lib/dateFormat';
 import { NumberInput } from '@/components/NumberInput';
+import { CardTitle } from '@/components/Hint';
 
 const KIND_LABEL: Record<AlertKind, string> = {
   price_above: 'Price rises above',
@@ -30,6 +31,8 @@ const KIND_LABEL: Record<AlertKind, string> = {
   budget_over: 'Budget exceeded',
   renewal_due: 'Renewal due within',
 };
+
+const sentence = (w: string) => (w ? w.charAt(0) + w.slice(1).toLowerCase() : w);
 
 export default function AlertsPage() {
   const alerts = useApp((s) => s.alerts);
@@ -130,7 +133,7 @@ export default function AlertsPage() {
 
       <StaggerItem>
         <div className="card p-4 flex items-start gap-3">
-          <span className="w-8 h-8 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-accent-soft text-accent"><Bell size={16} /></span>
+          <span className="w-8 h-8 shrink-0 rounded-full grid place-items-center bg-[color-mix(in_srgb,var(--data-blue)_14%,transparent)] text-[var(--data-blue)]"><Bell size={16} /></span>
           <p className="text-[13px] text-ink-soft leading-relaxed">
             Alerts are evaluated when you open Khazana and while this screen is on, using data already
             in your vault. There is no server and no push notification, so <b className="text-ink font-semibold">nothing
@@ -191,18 +194,18 @@ export default function AlertsPage() {
           <StaggerItem>
             <section className="card overflow-hidden">
               <div className="px-5 py-4 border-b border-line">
-                <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Your alerts</h2>
+                <CardTitle className="text-[16px] font-medium tracking-[-0.01em]" info="alerts.yourAlerts">Your alerts</CardTitle>
               </div>
               {alerts.map((a) => {
                 const on = firing.has(a.id);
                 const evaluation = byId.get(a.id);
                 return (
-                  <div key={a.id} className="flex items-center gap-3 px-5 py-3.5 border-b border-line last:border-0 hover:bg-fill transition-colors">
-                    <span className={`w-9 h-9 shrink-0 rounded-[var(--radius-card)] grid place-items-center ${on ? 'bg-danger-soft text-danger' : a.active ? 'bg-accent-soft text-accent' : 'bg-fill text-muted'}`}>
+                  <div key={a.id} className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-line last:border-0 hover:bg-fill transition-colors">
+                    <span className={`w-10 h-10 shrink-0 rounded-full grid place-items-center ${on ? 'bg-danger-soft text-danger' : a.active ? 'bg-[color-mix(in_srgb,var(--data-blue)_14%,transparent)] text-[var(--data-blue)]' : 'bg-fill text-muted'}`}>
                       {on ? <BellRing size={16} /> : <Bell size={16} />}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[13.5px] font-semibold truncate">{a.label}</div>
+                      <div className="text-[14px] font-medium truncate">{a.label}</div>
                       {/* The rendered condition, not the raw threshold: §5.4
                           asks for "Food spending is 90% of the August budget",
                           not "Budget exceeded 300". */}
@@ -210,8 +213,9 @@ export default function AlertsPage() {
                         {evaluation?.message ?? `${KIND_LABEL[a.kind]} ${a.kind === 'weight_above' ? `${a.threshold}%` : fmt.money(a.threshold)}`}
                       </div>
                       <div className="text-[11px] text-muted mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-                        <span>{ALERT_TYPE_OF[a.kind]}</span>
-                        <span>{stateOf(a)}</span>
+                        {/* The stored words are enum-style caps; shown in sentence case. */}
+                        <span>{sentence(ALERT_TYPE_OF[a.kind])}</span>
+                        <span>{sentence(stateOf(a))}</span>
                         {/* When it was last actually looked at. The honesty the
                             whole section exists for. */}
                         <span>
@@ -227,11 +231,9 @@ export default function AlertsPage() {
                     </div>
                     {evaluation?.unevaluable && <Chip tone="warning">Cannot check</Chip>}
                     {on && <Chip tone="danger">Condition met</Chip>}
-                    <button onClick={() => void toggle(a)} className="focus-ring">
-                      <Chip tone={a.active ? 'success' : 'neutral'}>{a.active ? 'Active' : 'Paused'}</Chip>
-                    </button>
+                    <Toggle on={a.active} onChange={() => void toggle(a)} label={`${a.active ? 'Pause' : 'Resume'} ${a.label}`} />
                     <button onClick={() => void remove(a)} aria-label="Delete alert"
-                      className="focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-danger hover:bg-danger-soft transition-colors">
+                      className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] text-muted hover:text-danger transition-colors">
                       <Trash2 size={15} />
                     </button>
                   </div>

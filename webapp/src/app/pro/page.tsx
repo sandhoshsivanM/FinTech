@@ -15,6 +15,7 @@ import { shortRef } from '@/lib/entitlement/entitlement';
 import { PageIntro, GlassCard, Button, Input } from '@/components/ui';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { PRO_COPY } from '@/lib/entitlement/proCopy';
+import { CardTitle, SectionInfo } from '@/components/Hint';
 
 export default function ProPage() {
   const pro = useApp((s) => s.pro);
@@ -49,7 +50,10 @@ export default function ProPage() {
                 <ShieldCheck size={18} />
               </span>
               <div className="flex-1">
-                <div className="text-sm font-semibold">Khazana Pro is unlocked</div>
+                <div className="flex items-center gap-1.5">
+                  <div className="text-sm font-semibold">Khazana Pro is unlocked</div>
+                  <SectionInfo k="pro.unlocked" />
+                </div>
                 <div className="text-xs text-muted">
                   {/* A hashed order reference, never an email or a name — the
                       client deliberately holds no personal data about a buyer. */}
@@ -65,8 +69,11 @@ export default function ProPage() {
       ) : (
         <StaggerItem>
           <GlassCard>
-            <div className="text-2xl font-bold tracking-[-0.02em]">
-              {PRO_COPY.priceFallback}
+            <div className="flex items-center gap-1.5">
+              <div className="text-2xl font-light tracking-[-0.02em]">
+                {PRO_COPY.priceFallback}
+              </div>
+              <SectionInfo k="pro.pricing" />
             </div>
             <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">
               One payment, not a subscription. Buy on the website and you are
@@ -85,9 +92,9 @@ export default function ProPage() {
         <GlassCard>
           <div className="mb-3 flex items-center gap-2.5">
             <span className="text-accent"><Check size={17} /></span>
-            <h2 className="text-[15px] font-semibold tracking-[-0.02em]">
+            <CardTitle className="text-[16px] font-medium tracking-[-0.01em]" info="pro.includes">
               What Pro includes
-            </h2>
+            </CardTitle>
           </div>
           <div className="grid gap-3">
             {PRO_COPY.benefits.map((b) => (
@@ -123,9 +130,9 @@ export default function ProPage() {
           <GlassCard>
             <div className="mb-3 flex items-center gap-2.5">
               <span className="text-accent"><KeyRound size={17} /></span>
-              <h2 className="text-[15px] font-semibold tracking-[-0.02em]">
+              <CardTitle className="text-[16px] font-medium tracking-[-0.01em]" info="pro.licence">
                 {PRO_COPY.licenceTitle}
-              </h2>
+              </CardTitle>
             </div>
             <div className="grid max-w-md gap-2">
               <Input

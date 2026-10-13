@@ -36,8 +36,8 @@ import { LineChart } from '@/components/charts/LineChart';
 import { Histogram } from '@/components/charts/Histogram';
 import { Section, Metric, MetricRow, LedgerLine } from '@/components/primitives';
 import {
-  portfolioSummary, rollup, allocationByGroup, sunburst, groupShades,
-  ASSET_GROUP_META, UNCLASSIFIED_KEY, type AssetGroup,
+  portfolioSummary, rollup, allocationByGroup, sunburst, zentraGroupShades,
+  ZENTRA_GROUP, UNCLASSIFIED_KEY, type AssetGroup,
 } from '@/domain/portfolio';
 import {
   loadInstrumentMaster, classifyHolding, EMPTY_MASTER, SECTOR_SUGGESTIONS,
@@ -48,6 +48,7 @@ import {
   diversificationBand, returnQualityScore, extremes, POSITION_ALERT_WEIGHT,
 } from '@/domain/analytics';
 import { short } from '@/lib/format';
+import { CardTitle } from '@/components/Hint';
 import { formatMonthShort } from '@/lib/dateFormat';
 
 /** Trailing windows the snapshot history can answer. */
@@ -132,12 +133,12 @@ function AnalyticsPageInner() {
         // Outer ring steps the group's own hue toward the surface by rank —
         // never a new hue, which is what would break the palette's
         // colourblind guarantee (spec, annotation 4).
-        const shades = groupShades(g, children.length, dark);
+        const shades = zentraGroupShades(g, children.length, dark);
         return {
           key: row.key,
           label: row.label,
           value: row.current.toNumber(),
-          color: ASSET_GROUP_META[g]?.[dark ? 'dark' : 'light'] ?? 'var(--c1)',
+          color: ZENTRA_GROUP[g]?.[dark ? 'dark' : 'light'] ?? 'var(--series-1)',
           children: children.map((c, i) => ({
             key: `${row.key}/${c.key}`,
             label: c.label,
@@ -276,7 +277,7 @@ function AnalyticsPageInner() {
       <div className="grid gap-6 min-[1100px]:grid-cols-3">
         <StaggerItem>
           <section className="card h-full p-5">
-            <h2 className="text-[15px] font-semibold tracking-[-0.02em]">Risk &amp; diversification</h2>
+            <CardTitle info="analytics.riskDiversification" className="text-[16px] font-medium tracking-[-0.01em]">Risk &amp; diversification</CardTitle>
             {/* Always stacked. This card is one third of the row, so splitting
                 it on a VIEWPORT breakpoint sized the stat column against the
                 window rather than against the card — at 1440px that left ~150px
@@ -311,13 +312,13 @@ function AnalyticsPageInner() {
         <StaggerItem>
           <section className="card h-full p-5">
             <div className="flex items-baseline gap-3">
-              <h2 className="text-[15px] font-semibold tracking-[-0.02em]">Return distribution</h2>
+              <CardTitle info="analytics.returnDistribution" className="text-[16px] font-medium tracking-[-0.01em]">Return distribution</CardTitle>
               <span className="ml-auto text-[11.5px] text-muted">positions by unrealised return</span>
             </div>
             <div className="mt-5">
               <Histogram bins={buckets.map((b) => ({
                 label: b.label, title: b.title, count: b.count,
-                color: b.negative ? 'var(--danger)' : 'var(--accent)',
+                color: b.negative ? 'var(--danger)' : 'var(--data-blue)',
               }))} height={200} />
             </div>
             <p className="mt-3 text-[12px] leading-relaxed text-muted">
@@ -330,7 +331,7 @@ function AnalyticsPageInner() {
 
         <StaggerItem>
           <section className="card h-full p-5">
-            <h2 className="text-[15px] font-semibold tracking-[-0.02em]">Concentration</h2>
+            <CardTitle info="analytics.concentration" className="text-[16px] font-medium tracking-[-0.01em]">Concentration</CardTitle>
             {/* Per NAME, not per asset group. "Largest asset group is 100%" is
                 true of any all-equity book and tells its owner nothing they can
                 act on; which single holding is too large is actionable. */}
@@ -343,7 +344,7 @@ function AnalyticsPageInner() {
                   </div>
                   <ProgressBar
                     fraction={w.weight / Math.max(weights[0].weight, 0.0001)}
-                    color={w.flagged ? 'var(--warning)' : 'var(--accent)'}
+                    color={w.flagged ? 'var(--warning)' : 'var(--data-blue)'}
                   />
                 </div>
               ))}
@@ -380,7 +381,7 @@ function AnalyticsPageInner() {
       <div className="grid gap-6 min-[1100px]:grid-cols-3">
         <StaggerItem>
           <section className="card h-full p-5">
-            <h2 className="text-[15px] font-semibold tracking-[-0.02em]">Net worth trend</h2>
+            <CardTitle info="analytics.netWorthTrend" className="text-[16px] font-medium tracking-[-0.01em]">Net worth trend</CardTitle>
             <div className="mt-4">
               {netWorthSeries.length > 1
                 ? <LineChart values={netWorthSeries} height={190}
@@ -395,7 +396,7 @@ function AnalyticsPageInner() {
 
         <StaggerItem>
           <section className="card h-full p-5">
-            <h2 className="text-[15px] font-semibold tracking-[-0.02em]">Net worth movement</h2>
+            <CardTitle info="analytics.netWorthMovement" className="text-[16px] font-medium tracking-[-0.01em]">Net worth movement</CardTitle>
             <div className="mt-4">
               {monthly.length > 0
                 ? <ColumnChart columns={monthly} height={190} format={(n) => fmt.money(n)}
@@ -409,7 +410,7 @@ function AnalyticsPageInner() {
 
         <StaggerItem>
           <section className="card h-full p-5">
-            <h2 className="text-[15px] font-semibold tracking-[-0.02em]">Where value sits</h2>
+            <CardTitle info="analytics.whereValueSits" className="text-[16px] font-medium tracking-[-0.01em]">Where value sits</CardTitle>
             {/* Asset group on the inner ring, what it is made of on the outer.
                 The component, its colour ramp and the `sunburst` roll-up were
                 all built and shipped; nothing in the app had ever rendered

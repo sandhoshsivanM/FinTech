@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
@@ -22,7 +23,10 @@ import '../providers/transaction_providers.dart';
 // ---------------------------------------------------------------------------
 
 class AddTransactionScreen extends StatelessWidget {
-  const AddTransactionScreen({super.key});
+  const AddTransactionScreen({this.initialType = TxnType.expense, super.key});
+
+  /// Which side the form opens on.
+  final TxnType initialType;
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +36,11 @@ class AddTransactionScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text('Add Transaction'),
+        title: InfoHint.titled(const Text('Add Transaction'), 'add.page'),
       ),
-      body: const SafeArea(child: DataGate(child: _AddTransactionForm())),
+      body: SafeArea(
+        child: DataGate(child: _AddTransactionForm(initialType: initialType)),
+      ),
     );
   }
 }
@@ -44,7 +50,8 @@ class AddTransactionScreen extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _AddTransactionForm extends ConsumerStatefulWidget {
-  const _AddTransactionForm();
+  const _AddTransactionForm({required this.initialType});
+  final TxnType initialType;
 
   @override
   ConsumerState<_AddTransactionForm> createState() => _FormState();
@@ -57,7 +64,7 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
   final _merchant = TextEditingController();
   final _note = TextEditingController();
 
-  TxnType _type = TxnType.expense;
+  late TxnType _type = widget.initialType;
   String? _categoryId;
   DateTime _date = DateTime.now();
   bool _showCategoryError = false;
@@ -80,8 +87,7 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
   Future<void> _applyQuickEntry() async {
     final text = _quick.text.trim();
     if (text.isEmpty) return;
-    final categories =
-        ref.read(categoryListProvider).valueOrNull ?? const [];
+    final categories = ref.read(categoryListProvider).valueOrNull ?? const [];
     final resolved = await ref
         .read(quickEntryResolverProvider)
         .resolve(text, categories: categories);
@@ -116,8 +122,7 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
     if (!_formKey.currentState!.validate() || _categoryId == null) return;
 
     final amount = _parseAmount(_amount.text)!;
-    final categories =
-        ref.read(categoryListProvider).valueOrNull ?? const [];
+    final categories = ref.read(categoryListProvider).valueOrNull ?? const [];
     String? categoryName;
     for (final c in categories) {
       if (c.id == _categoryId) {
@@ -125,13 +130,16 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
         break;
       }
     }
-    await ref.read(transactionListProvider.notifier).add(
+    await ref
+        .read(transactionListProvider.notifier)
+        .add(
           amount: amount,
           type: _type,
           categoryId: _categoryId!,
           date: _date,
-          merchant:
-              _merchant.text.trim().isEmpty ? null : _merchant.text.trim(),
+          merchant: _merchant.text.trim().isEmpty
+              ? null
+              : _merchant.text.trim(),
           note: _note.text.trim().isEmpty ? null : _note.text.trim(),
           categoryName: categoryName,
           attachmentRef: _attachmentRef,
@@ -140,9 +148,7 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
     // Learn merchant → category association for future quick entries.
     final merchant = _merchant.text.trim();
     if (merchant.isNotEmpty && _categoryId != null) {
-      await ref
-          .read(quickEntryResolverProvider)
-          .learn(merchant, _categoryId!);
+      await ref.read(quickEntryResolverProvider).learn(merchant, _categoryId!);
     }
 
     // Fire overspend alert if this expense pushed a category over threshold.
@@ -182,56 +188,73 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
 
   @override
   Widget build(BuildContext context) {
-    final categories =
-        ref.watch(categoryListProvider).valueOrNull ?? const [];
+    final categories = ref.watch(categoryListProvider).valueOrNull ?? const [];
 
     // Expense segment: red-tinted when selected; Income: green.
-    final typeColor =
-        _isExpense ? context.colors.expense : context.colors.income;
+    final typeColor = _isExpense
+        ? context.colors.expense
+        : context.colors.income;
 
     return Form(
       key: _formKey,
       child: ListView(
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         children: [
           // ── Quick add NLP field ────────────────────────────────────
-          GlassCard(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-            child: TextField(
-              controller: _quick,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _applyQuickEntry(),
-              style: Theme.of(context).textTheme.bodyMedium,
-              decoration: InputDecoration(
-                filled: false,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                hintText: 'Try: spent 450 on groceries at bigbasket',
-                hintStyle: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onSurfaceVariant),
-                prefixIcon: Icon(Icons.auto_awesome,
-                    size: 18, color: context.colors.accentGlow),
-                suffixIcon: Semantics(
-                  button: true,
-                  label: 'Parse quick add',
-                  child: ExcludeSemantics(
-                    child: IconButton(
-                      icon: Icon(Icons.arrow_forward,
-                          size: 18, color: context.colors.accentGlow),
-                      tooltip: 'Parse quick add',
-                      onPressed: _applyQuickEntry,
+          Row(
+            children: [
+              Expanded(
+                child: GlassCard(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  child: TextField(
+                    controller: _quick,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _applyQuickEntry(),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    decoration: InputDecoration(
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      hintText: 'Try: spent 450 on groceries at bigbasket',
+                      hintStyle: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                      prefixIcon: Icon(
+                        Icons.auto_awesome,
+                        size: 18,
+                        color: context.colors.accentGlow,
+                      ),
+                      suffixIcon: Semantics(
+                        button: true,
+                        label: 'Parse quick add',
+                        child: ExcludeSemantics(
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.arrow_forward,
+                              size: 18,
+                              color: context.colors.accentGlow,
+                            ),
+                            tooltip: 'Parse quick add',
+                            onPressed: _applyQuickEntry,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+              const InfoHint('add.quickAdd'),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
 
@@ -270,18 +293,24 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
                 child: ExcludeSemantics(
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
                     decoration: BoxDecoration(
                       color: context.colors.accent.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(AppRadii.pill),
                       border: Border.all(
-                          color: context.colors.accent.withValues(alpha: 0.20)),
+                        color: context.colors.accent.withValues(alpha: 0.20),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.calendar_today,
-                            size: 14, color: context.colors.accentGlow),
+                        Icon(
+                          Icons.calendar_today,
+                          size: 14,
+                          color: context.colors.accentGlow,
+                        ),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
                           _dateLabel,
@@ -307,10 +336,9 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
               children: [
                 Text(
                   'Select Category',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 if (categories.isEmpty)
@@ -351,7 +379,8 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.attach_file),
               label: const Text('Attach receipt'),
             )
@@ -400,16 +429,8 @@ class _TypeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SegmentedButton<TxnType>(
+      showSelectedIcon: false,
       style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.resolveWith((states) {
-          if (!states.contains(WidgetState.selected)) {
-            return Colors.transparent;
-          }
-          // Expense selected → red tint; Income selected → green tint.
-          return selected == TxnType.expense
-              ? context.colors.expense.withValues(alpha: 0.18)
-              : context.colors.income.withValues(alpha: 0.18);
-        }),
         foregroundColor: WidgetStateProperty.resolveWith((states) {
           if (!states.contains(WidgetState.selected)) {
             return Theme.of(context).colorScheme.onSurfaceVariant;
@@ -463,12 +484,11 @@ class _AmountDisplay extends StatelessWidget {
           width: 260,
           child: TextFormField(
             controller: controller,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.w800,
+              fontSize: 48,
+              fontWeight: FontWeight.w300,
               color: typeColor,
               height: 1.1,
             ),
@@ -481,22 +501,21 @@ class _AmountDisplay extends StatelessWidget {
               focusedErrorBorder: InputBorder.none,
               hintText: '₹0',
               hintStyle: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.w800,
+                fontSize: 48,
+                fontWeight: FontWeight.w300,
                 color: typeColor.withValues(alpha: 0.30),
                 height: 1.1,
               ),
               prefixText: '₹',
               prefixStyle: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.w800,
+                fontSize: 48,
+                fontWeight: FontWeight.w300,
                 color: typeColor,
                 height: 1.1,
               ),
               errorStyle: const TextStyle(fontSize: 0, height: 0),
             ),
-            validator: (v) =>
-                parseAmount(v ?? '') == null ? '' : null,
+            validator: (v) => parseAmount(v ?? '') == null ? '' : null,
             onChanged: (_) {
               // Trigger rebuild for live mirror (form validates on save only).
             },
@@ -558,65 +577,77 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconData =
-        categoryIcon(iconCodepoint, fallback: Icons.label_outline);
+    final iconData = categoryIcon(iconCodepoint, fallback: Icons.label_outline);
 
+    final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    // Raised white tile; the selected one is the black pill.
     final bg = isSelected
-        ? context.colors.accent.withValues(alpha: 0.18)
-        : AppColors.glassFillDark.withValues(alpha: 0.06);
-    final borderColor = isSelected
-        ? context.colors.accent
-        : AppColors.glassBorderDark;
-    final iconColor = isSelected ? context.colors.accentGlow : Colors.grey;
-    final textColor = isSelected
-        ? context.colors.accentGlow
-        : Theme.of(context).colorScheme.onSurfaceVariant;
+        ? scheme.primary
+        : (dark ? const Color(0xFF222226) : Colors.white);
+    final iconColor = isSelected ? scheme.onPrimary : scheme.onSurfaceVariant;
+    final textColor = isSelected ? scheme.onPrimary : scheme.onSurfaceVariant;
 
     // Width: 4 tiles per row accounting for 3 gaps of 8dp each.
-    return LayoutBuilder(builder: (context, _) {
-      const tileWidth = 72.0;
-      return Semantics(
-        button: true,
-        selected: isSelected,
-        label: name,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadii.button),
-          child: ExcludeSemantics(
-            child: Container(
-              width: tileWidth,
-              padding: const EdgeInsets.symmetric(
-                  vertical: AppSpacing.sm, horizontal: AppSpacing.xs),
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(AppRadii.button),
-                border: Border.all(color: borderColor),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(iconData, color: iconColor, size: 22),
-                  const SizedBox(height: 4),
-                  Text(
-                    name,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: textColor,
+    return LayoutBuilder(
+      builder: (context, _) {
+        const tileWidth = 72.0;
+        return Semantics(
+          button: true,
+          selected: isSelected,
+          label: name,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: ExcludeSemantics(
+              child: Container(
+                width: tileWidth,
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.sm,
+                  horizontal: AppSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: isSelected
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: dark ? 0.35 : 0.1,
+                            ),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                            spreadRadius: -3,
+                          ),
+                        ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(iconData, color: iconColor, size: 22),
+                    const SizedBox(height: 4),
+                    Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isSelected
+                            ? FontWeight.w500
+                            : FontWeight.w500,
+                        color: textColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
@@ -635,8 +666,10 @@ class _InlineError extends StatelessWidget {
       children: [
         Icon(Icons.error_outline, color: context.colors.expense, size: 16),
         const SizedBox(width: AppSpacing.xs),
-        Text(message,
-            style: TextStyle(color: context.colors.expense, fontSize: 12)),
+        Text(
+          message,
+          style: TextStyle(color: context.colors.expense, fontSize: 12),
+        ),
       ],
     );
   }

@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,7 +14,9 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Search')),
+      appBar: AppBar(
+        title: InfoHint.titled(const Text('Search'), 'search.page'),
+      ),
       body: const DataGate(child: _SearchBody()),
     );
   }
@@ -39,8 +42,7 @@ class _SearchBody extends ConsumerWidget {
               prefixIcon: Icon(Icons.search),
               border: OutlineInputBorder(),
             ),
-            onChanged: (v) =>
-                ref.read(searchQueryProvider.notifier).state = v,
+            onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
           ),
         ),
         Expanded(

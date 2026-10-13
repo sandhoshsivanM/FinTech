@@ -177,7 +177,7 @@ export function DataGrid<T>({
                       className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[var(--radius-btn)] hover:bg-fill text-left text-[13px] disabled:opacity-40"
                     >
                       <span className={clsx(
-                        'w-4 h-4 rounded-[var(--radius-sm)] grid place-items-center text-[10px] font-bold shrink-0',
+                        'w-4 h-4 rounded-[var(--radius-sm)] grid place-items-center text-[10px] font-semibold shrink-0',
                         on ? 'bg-accent text-accent-on' : 'border border-line-strong',
                       )}>
                         {on ? '✓' : ''}
@@ -217,7 +217,7 @@ export function DataGrid<T>({
                       style={c.width ? { minWidth: c.width } : undefined}
                       className={clsx(
                         'sticky top-0 z-[2] bg-card-2 border-b border-line whitespace-nowrap',
-                        'px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.05em] text-muted',
+                        'px-3 py-2.5 text-[12px] font-normal text-muted',
                         c.align === 'right' ? 'text-right' : 'text-left',
                         c.className,
                       )}

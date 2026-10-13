@@ -40,7 +40,7 @@ export function LineChart({
   values,
   labels = [],
   height = 260,
-  color = 'var(--accent)',
+  color = 'var(--data-blue)',
   format = (n) => n.toLocaleString('en-IN', { maximumFractionDigits: 0 }),
   captionFor,
   emptyLabel = 'Not enough history yet',
@@ -125,10 +125,15 @@ export function LineChart({
         >
           <defs>
             <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity="0.24" />
-              <stop offset="48%" stopColor={color} stopOpacity="0.06" />
-              <stop offset="100%" stopColor={color} stopOpacity="0" />
+              <stop offset="0%" stopColor={color} stopOpacity="0.42" />
+              <stop offset="55%" stopColor={color} stopOpacity="0.14" />
+              <stop offset="100%" stopColor={color} stopOpacity="0.02" />
             </linearGradient>
+            {/* A dot screen over the fill: texture, so the area reads as a
+                material rather than a tint. */}
+            <pattern id={`${gradId}-dots`} width="9" height="9" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="1" fill={color} fillOpacity="0.35" />
+            </pattern>
           </defs>
 
           {GRID_BANDS.map((f) => {
@@ -142,6 +147,7 @@ export function LineChart({
           })}
 
           <path d={area} fill={`url(#${gradId})`} style={{ opacity: progress, transition: `opacity ${transition}` }} />
+          <path d={area} fill={`url(#${gradId}-dots)`} style={{ opacity: progress * 0.6, transition: `opacity ${transition}` }} />
           <path
             d={d}
             fill="none"
@@ -156,18 +162,46 @@ export function LineChart({
             style={{ transition: `stroke-dashoffset ${transition}` }}
           />
 
-          {hover != null && (
-            <line
-              x1={activePt[0]} y1={6} x2={activePt[0]} y2={height}
-              stroke="var(--ink-soft)" strokeWidth={1} strokeDasharray="3 3" vectorEffect="non-scaling-stroke"
-            />
-          )}
         </svg>
+
+        {/* The point in focus (hovered, else the latest) stands in a glass
+            capsule that drops to the axis, with its value on a pill above. */}
+        {(() => {
+          const pt = hover != null ? activePt : last;
+          const idx = hover != null ? active : n - 1;
+          const top = (pt[1] / height) * 100;
+          return (
+            <>
+              <span
+                aria-hidden
+                className="absolute bottom-0 w-[26px] -translate-x-1/2 rounded-full pointer-events-none"
+                style={{
+                  left: `${(pt[0] / VB_W) * 100}%`,
+                  top: `calc(${top}% - 13px)`,
+                  background: `linear-gradient(180deg, color-mix(in srgb, ${color} 55%, transparent), color-mix(in srgb, ${color} 12%, transparent))`,
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
+                }}
+              />
+              {hover == null && <span
+                aria-hidden
+                className="absolute -translate-x-1/2 -translate-y-full rounded-full px-2.5 py-1 text-[11px] font-semibold text-white tnum pointer-events-none whitespace-nowrap"
+                style={{
+                  left: `clamp(36px, ${(pt[0] / VB_W) * 100}%, calc(100% - 36px))`,
+                  top: `calc(${top}% - 18px)`,
+                  background: color,
+                  boxShadow: `0 6px 14px -6px ${color}`,
+                }}
+              >
+                {format(values[idx])}
+              </span>}
+            </>
+          );
+        })()}
 
         {/* Round marks are HTML: the viewBox is stretched, which would turn a
             <circle> into an ellipse at anything but a 1:1 aspect. */}
         <span
-          className="absolute w-[9px] h-[9px] rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none shadow-[0_0_0_2.5px_var(--card)]"
+          className="absolute w-[11px] h-[11px] rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none shadow-[0_0_0_3px_var(--card-2),0_4px_10px_rgba(0,0,0,0.25)]"
           style={{ left: `${(last[0] / VB_W) * 100}%`, top: `${(last[1] / height) * 100}%`, background: color }}
         />
         {hover != null && (
@@ -184,8 +218,8 @@ export function LineChart({
                 top: `calc(${(activePt[1] / height) * 100}% - 14px)`,
               }}
             >
-              <div className="text-[10.5px] font-semibold uppercase tracking-[0.05em] text-muted">{caption}</div>
-              <div className="text-[15px] font-bold tracking-[-0.025em] tnum mt-0.5">{format(values[active])}</div>
+              <div className="text-[11.5px] text-muted">{caption}</div>
+              <div className="text-[16px] font-normal tracking-[-0.02em] tnum mt-0.5">{format(values[active])}</div>
               <div className={`text-[11.5px] mt-0.5 tnum ${changePct >= 0 ? 'text-success' : 'text-danger'}`}>
                 {changePct >= 0 ? '+' : '−'}{Math.abs(changePct).toFixed(2)}% from previous
               </div>
@@ -197,7 +231,7 @@ export function LineChart({
         {GRID_BANDS.map((f) => (
           <span
             key={f}
-            className="absolute left-0 text-[11px] font-semibold text-muted bg-card pr-1.5 pointer-events-none"
+            className="absolute left-0 text-[11px] text-muted pr-1.5 pointer-events-none"
             style={{ top: 12 + (height - 12) * f - 16 }}
           >
             {format(hi - (hi - lo) * f)}
@@ -206,7 +240,7 @@ export function LineChart({
       </div>
 
       {labels.length > 0 && (
-        <div className="flex justify-between mt-2 text-[11px] font-semibold text-muted">
+        <div className="flex justify-between mt-2 text-[11px] text-muted">
           {labels.map((l, i) => <span key={`${l}-${i}`}>{l}</span>)}
         </div>
       )}

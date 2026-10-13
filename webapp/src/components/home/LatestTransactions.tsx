@@ -5,6 +5,7 @@ import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { formatDayMonth } from '@/lib/dateFormat';
 import { GlassCard } from '../ui';
+import { CardTitle } from '../Hint';
 import { CategoryIcon } from '../CategoryIcon';
 import { motion, fadeUp, stagger } from '../motion';
 
@@ -27,14 +28,14 @@ export function LatestTransactions() {
   return (
     <GlassCard padded={false} className="p-4">
       <div className="flex items-baseline justify-between px-1 mb-2">
-        <h2 className="text-[15px] font-semibold tracking-[-0.02em]">Latest transactions</h2>
-        <Link href="/transactions" className="text-[12.5px] font-semibold text-accent">See all</Link>
+        <CardTitle info="dashboard.latestTransactions" className="text-[16px] font-medium tracking-[-0.01em]">Latest transactions</CardTitle>
+        <Link href="/transactions" className="text-[12.5px] font-semibold text-ink-soft">See all</Link>
       </div>
       <motion.ul variants={stagger} initial="hidden" animate="show">
         {latest.map((t) => {
           const c = byId.get(t.categoryId);
           const time = new Date(t.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-          const color = t.type === 'income' ? 'var(--income)' : t.type === 'expense' ? 'var(--expense)' : 'var(--ink)';
+          const color = t.type === 'income' ? 'var(--data-green-ink)' : t.type === 'expense' ? 'var(--data-rose)' : 'var(--ink)';
           const sign = t.type === 'income' ? '+' : t.type === 'expense' ? '−' : '';
           return (
             <motion.li key={t.id} variants={fadeUp}>

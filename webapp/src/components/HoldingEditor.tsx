@@ -130,7 +130,7 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
   return (
     <GlassCard>
       <div className="flex items-center gap-3 mb-5">
-        <h3 className="text-[15px] font-semibold tracking-[-0.02em]">{editing ? `Edit ${editing.symbol}` : 'Add a holding'}</h3>
+        <h3 className="text-[16px] font-medium tracking-[-0.01em]">{editing ? `Edit ${editing.symbol}` : 'Add a holding'}</h3>
         <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-ink hover:bg-fill transition-colors">
           <X size={16} />
         </button>
@@ -289,7 +289,7 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
   return (
     <GlassCard>
       <div className="flex items-center gap-3 mb-2">
-        <h3 className="text-[15px] font-semibold tracking-[-0.02em]">Import holdings from CSV</h3>
+        <h3 className="text-[16px] font-medium tracking-[-0.01em]">Import holdings from CSV</h3>
         <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-ink hover:bg-fill transition-colors">
           <X size={16} />
         </button>
@@ -364,7 +364,7 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
                   <thead>
                     <tr>
                       {['Symbol', 'Exch', 'Qty', 'Avg cost', 'Last price', 'Prev close'].map((h, i) => (
-                        <th key={h} className={`sticky top-0 bg-card-2 border-b border-line px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.05em] text-muted ${i > 1 ? 'text-right' : 'text-left'}`}>{h}</th>
+                        <th key={h} className={`sticky top-0 bg-card-2 border-b border-line px-3 py-2 text-[11px] font-normal text-muted ${i > 1 ? 'text-right' : 'text-left'}`}>{h}</th>
                       ))}
                     </tr>
                   </thead>

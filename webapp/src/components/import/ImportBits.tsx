@@ -12,6 +12,7 @@ import {
   CandlestickChart, Globe, Vault, Layers, Landmark,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui';
+import { CardTitle } from '@/components/Hint';
 import { ACCEPTED_EXTENSIONS } from '@/lib/sheet';
 import type { Institution } from '@/lib/institutions';
 
@@ -83,10 +84,10 @@ export function InstitutionGrid({
             type="button"
             onClick={() => onSelect(inst.id)}
             aria-pressed={active}
-            className={`flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-card)] border text-sm font-semibold transition-colors ${
+            className={`focus-ring flex items-center gap-2 px-3 py-2 rounded-full text-[13px] font-medium transition-colors ${
               active
-                ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]'
-                : 'border-[var(--line)] hover:border-[var(--accent)]/50'
+                ? 'bg-primary text-[var(--primary-fg)] shadow-[0_6px_14px_-8px_rgba(0,0,0,0.5)]'
+                : 'bg-[var(--card-2)] text-ink shadow-[0_2px_6px_-3px_rgba(0,0,0,0.18)] hover:text-ink'
             }`}
           >
             <InstitutionBadge inst={inst} />
@@ -102,7 +103,7 @@ export function InstitutionGrid({
 export function ExportGuide({ inst }: { inst: Institution }) {
   return (
     <GlassCard>
-      <h3 className="font-bold">How to export from {inst.name}</h3>
+      <CardTitle as="h3" info="import.exportGuide" className="font-medium">How to export from {inst.name}</CardTitle>
       <ol className="mt-3 space-y-1.5 text-sm list-decimal list-inside">
         {inst.steps.map((s, i) => (
           <li key={i} className="text-muted">
@@ -160,8 +161,9 @@ export function DropZone({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') ref.current?.click(); }}
-      className={`rounded-[var(--radius-card)] border-2 border-dashed p-10 text-center cursor-pointer transition-colors ${
-        over ? 'border-[var(--accent)] bg-[var(--accent)]/5' : 'border-[var(--line)] hover:border-[var(--accent)]/50'
+      // The drop zone is a recessed tray.
+      className={`tray focus-ring p-10 text-center cursor-pointer transition-[box-shadow,background-color] ${
+        over ? 'shadow-[inset_0_0_0_2px_var(--data-blue)]' : 'shadow-[inset_0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[inset_0_0_0_1px_var(--line-strong)]'
       }`}
     >
       <input
@@ -176,8 +178,10 @@ export function DropZone({
           e.target.value = '';
         }}
       />
-      <UploadCloud size={26} className="mx-auto text-muted" />
-      <p className="mt-3 font-semibold">
+      <span className="mx-auto grid place-items-center w-12 h-12 rounded-full bg-[var(--card-2)] shadow-[0_3px_10px_-4px_rgba(0,0,0,0.2)] text-ink-soft">
+        <UploadCloud size={22} />
+      </span>
+      <p className="mt-3 font-medium">
         {busy ? 'Reading file…' : filename ? filename : 'Drag & drop your file here'}
       </p>
       <p className="mt-1 text-xs text-muted">
@@ -191,7 +195,7 @@ export function DropZone({
 
 export function ErrorNote({ children }: { children: ReactNode }) {
   return (
-    <div className="flex gap-2.5 rounded-[var(--radius-card)] border border-[var(--expense)]/40 bg-[var(--expense)]/10 p-3.5 text-sm">
+    <div className="flex gap-2.5 rounded-[16px] bg-danger-soft p-3.5 text-sm">
       <FileWarning size={17} className="shrink-0 mt-0.5" style={{ color: 'var(--expense)' }} />
       <div className="leading-relaxed">{children}</div>
     </div>
@@ -202,8 +206,8 @@ export function InfoNote({ children, tone = 'warn' }: { children: ReactNode; ton
   const color = tone === 'ok' ? 'var(--income)' : 'var(--warn)';
   return (
     <div
-      className="flex gap-2.5 rounded-[var(--radius-card)] border p-3.5 text-sm"
-      style={{ borderColor: `color-mix(in srgb, ${color} 40%, transparent)`, background: `color-mix(in srgb, ${color} 10%, transparent)` }}
+      className="flex gap-2.5 rounded-[16px] p-3.5 text-sm"
+      style={{ background: `color-mix(in srgb, ${color} 10%, transparent)` }}
     >
       <CheckCircle2 size={17} className="shrink-0 mt-0.5" style={{ color }} />
       <div className="leading-relaxed">{children}</div>
@@ -226,7 +230,7 @@ export function PreviewTable({
 }) {
   return (
     <div>
-      <div className="overflow-x-auto rounded-[var(--radius-card)] border border-[var(--line)]">
+      <div className="overflow-x-auto rounded-[16px] bg-[var(--card-2)]">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--line)] bg-[var(--surface-2)]">

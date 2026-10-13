@@ -134,8 +134,7 @@ class _SunburstChartState extends State<SunburstChart> {
     _setPath(_path.sublist(0, _path.length - 1));
   }
 
-  String _fmt(double v) =>
-      widget.formatValue?.call(v) ?? v.toStringAsFixed(0);
+  String _fmt(double v) => widget.formatValue?.call(v) ?? v.toStringAsFixed(0);
 
   @override
   Widget build(BuildContext context) {
@@ -150,8 +149,10 @@ class _SunburstChartState extends State<SunburstChart> {
       return SizedBox(
         height: widget.size,
         child: Center(
-          child: Text('Nothing to show yet',
-              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+          child: Text(
+            'Nothing to show yet',
+            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
         ),
       );
     }
@@ -187,10 +188,13 @@ class _SunburstChartState extends State<SunburstChart> {
                   },
                 ),
                 IgnorePointer(
-                  child: widget.centerBuilder?.call(context, focus) ??
+                  child:
+                      widget.centerBuilder?.call(context, focus) ??
                       _DefaultCenter(
                         title: _fmt(focus.value),
-                        subtitle: _path.isEmpty ? focus.label : 'Tap to zoom out',
+                        subtitle: _path.isEmpty
+                            ? focus.label
+                            : 'Tap to zoom out',
                       ),
                 ),
               ],
@@ -253,32 +257,41 @@ class _HitTestArea extends StatelessWidget {
                 onHover(geometry.hitTest(event.localPosition)?.node),
             onExit: (_) => onHover(null),
             child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapUp: (details) {
-              final hit = geometry.hitTest(details.localPosition);
-              if (hit == null) {
-                if (geometry.isInCentre(details.localPosition)) onCenterTap?.call();
-                return;
-              }
-              if (hit.depth == 0) {
-                onSegmentTap(hit.index);
-              } else {
-                onSegmentSelect(hit.node);
-              }
-            },
-            child: TweenAnimationBuilder<double>(
-              // Re-keyed on the focused node, so drilling in sweeps the new
-              // ring rather than swapping it in instantly.
-              key: ValueKey(node.key),
-              tween: Tween(begin: 0, end: 1),
-              duration: ChartTokens.entranceFor(context),
-              curve: ChartTokens.entranceCurve,
-              builder: (context, t, _) => CustomPaint(
-                size: Size.square(size),
-                painter: _SunburstPainter(geometry,
-                    progress: t, hovered: hovered),
+              behavior: HitTestBehavior.opaque,
+              onTapUp: (details) {
+                final hit = geometry.hitTest(details.localPosition);
+                if (hit == null) {
+                  if (geometry.isInCentre(details.localPosition)) {
+                    onCenterTap?.call();
+                  }
+                  return;
+                }
+                if (hit.depth == 0) {
+                  onSegmentTap(hit.index);
+                } else {
+                  onSegmentSelect(hit.node);
+                }
+              },
+              child: TweenAnimationBuilder<double>(
+                // Re-keyed on the focused node, so drilling in sweeps the new
+                // ring rather than swapping it in instantly.
+                key: ValueKey(node.key),
+                tween: Tween(begin: 0, end: 1),
+                duration: ChartTokens.entranceFor(context),
+                curve: ChartTokens.entranceCurve,
+                builder: (context, t, _) => CustomPaint(
+                  size: Size.square(size),
+                  painter: _SunburstPainter(
+                    geometry,
+                    progress: t,
+                    hovered: hovered,
+                    disc: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF26262B)
+                        : Colors.white,
+                    dark: Theme.of(context).brightness == Brightness.dark,
+                  ),
+                ),
               ),
-            ),
             ),
           ),
           // One invisible semantics node per visible arc, so the allocation is
@@ -286,7 +299,8 @@ class _HitTestArea extends StatelessWidget {
           ...geometry.segments.map(
             (s) => Positioned.fill(
               child: Semantics(
-                label: '${s.node.label}, '
+                label:
+                    '${s.node.label}, '
                     '${(s.node.value / (node.value <= 0 ? 1 : node.value) * 100).round()}%',
                 button: s.depth == 0 && s.node.hasChildren,
                 child: const SizedBox.shrink(),
@@ -333,7 +347,9 @@ class SunburstGeometry {
     required this.ringWidth,
   }) {
     final total = node.children.fold<double>(
-        0, (s, c) => s + (c.value < 0 ? 0 : c.value));
+      0,
+      (s, c) => s + (c.value < 0 ? 0 : c.value),
+    );
     if (total <= 0) {
       segments = const [];
       return;
@@ -346,29 +362,35 @@ class SunburstGeometry {
       final child = node.children[i];
       if (child.value <= 0) continue;
       final sweep = (child.value / total) * 2 * math.pi;
-      out.add(SunburstSegment(
-        node: child,
-        depth: 0,
-        index: i,
-        startAngle: angle + gap / 2,
-        sweepAngle: math.max(0, sweep - gap),
-      ));
+      out.add(
+        SunburstSegment(
+          node: child,
+          depth: 0,
+          index: i,
+          startAngle: angle + gap / 2,
+          sweepAngle: math.max(0, sweep - gap),
+        ),
+      );
 
       // Outer ring: this child's own children, laid out inside its arc.
-      final childTotal = child.children
-          .fold<double>(0, (s, c) => s + (c.value < 0 ? 0 : c.value));
+      final childTotal = child.children.fold<double>(
+        0,
+        (s, c) => s + (c.value < 0 ? 0 : c.value),
+      );
       if (childTotal > 0) {
         var inner = angle;
         for (final grand in child.children) {
           if (grand.value <= 0) continue;
           final grandSweep = (grand.value / childTotal) * sweep;
-          out.add(SunburstSegment(
-            node: grand,
-            depth: 1,
-            index: -1,
-            startAngle: inner + gap / 2,
-            sweepAngle: math.max(0, grandSweep - gap),
-          ));
+          out.add(
+            SunburstSegment(
+              node: grand,
+              depth: 1,
+              index: -1,
+              startAngle: inner + gap / 2,
+              sweepAngle: math.max(0, grandSweep - gap),
+            ),
+          );
           inner += grandSweep;
         }
       }
@@ -425,7 +447,17 @@ class SunburstGeometry {
 }
 
 class _SunburstPainter extends CustomPainter {
-  _SunburstPainter(this.geometry, {this.progress = 1, this.hovered});
+  _SunburstPainter(
+    this.geometry, {
+    this.progress = 1,
+    this.hovered,
+    this.disc = Colors.white,
+    this.dark = false,
+  });
+
+  /// The raised centre disc's fill — the card's raised surface.
+  final Color disc;
+  final bool dark;
 
   final SunburstGeometry geometry;
 
@@ -445,6 +477,34 @@ class _SunburstPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (progress <= 0) return;
+    final c = geometry.centre;
+    final w = geometry.ringWidth;
+    final band = (geometry.outerRadius + geometry.innerRadius) / 2;
+
+    // The 2D/3D blend shared with DonutChart: the rings float on a soft drop
+    // shadow, and the centre is a raised disc. Data colours are untouched.
+    canvas.drawCircle(
+      c.translate(0, 7),
+      band,
+      Paint()
+        ..color = Color(dark ? 0x66000000 : 0x24000000)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = w * 2
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+    );
+    final discR = geometry.centreRadius - 6;
+    if (discR > 0) {
+      canvas
+        ..drawCircle(
+          c.translate(0, 4),
+          discR,
+          Paint()
+            ..color = Color(dark ? 0x80000000 : 0x29000000)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+        )
+        ..drawCircle(c, discR, Paint()..color = disc);
+    }
+
     for (final s in geometry.segments) {
       if (s.sweepAngle <= 0) continue;
       final radius = s.depth == 0 ? geometry.innerRadius : geometry.outerRadius;
@@ -462,9 +522,34 @@ class _SunburstPainter extends CustomPainter {
         Paint()
           ..color = s.node.color
           ..style = PaintingStyle.stroke
-          ..strokeWidth =
-              isHovered ? geometry.ringWidth + 6 : geometry.ringWidth,
+          ..strokeWidth = isHovered
+              ? geometry.ringWidth + 6
+              : geometry.ringWidth,
       );
+    }
+
+    // Gloss on each ring's inner edge, shade on its outer: the flat bands
+    // read as lit tubes, as on DonutChart.
+    if (progress >= 1) {
+      for (final r in [geometry.innerRadius, geometry.outerRadius]) {
+        canvas
+          ..drawCircle(
+            c,
+            r - w * 0.28,
+            Paint()
+              ..color = const Color(0x33FFFFFF)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = w * 0.14,
+          )
+          ..drawCircle(
+            c,
+            r + w * 0.36,
+            Paint()
+              ..color = const Color(0x17000000)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = w * 0.12,
+          );
+      }
     }
   }
 
@@ -472,6 +557,8 @@ class _SunburstPainter extends CustomPainter {
   bool shouldRepaint(_SunburstPainter old) =>
       old.geometry != geometry ||
       old.progress != progress ||
+      old.disc != disc ||
+      old.dark != dark ||
       !identical(old.hovered, hovered);
 }
 
@@ -493,23 +580,26 @@ class _Breadcrumb extends StatelessWidget {
             if (i > 0)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Icon(Icons.chevron_right_rounded,
-                    size: 14, color: scheme.outline),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 14,
+                  color: scheme.outline,
+                ),
               ),
             InkWell(
               onTap: i == path.length - 1 ? null : () => onTap(i),
               borderRadius: BorderRadius.circular(AppRadii.pill),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 child: Text(
                   path[i].label,
                   style: text.labelMedium?.copyWith(
                     color: i == path.length - 1
                         ? scheme.onSurface
-                        : context.colors.accent,
-                    fontWeight:
-                        i == path.length - 1 ? FontWeight.w700 : FontWeight.w500,
+                        : context.colors.info,
+                    fontWeight: i == path.length - 1
+                        ? FontWeight.w500
+                        : FontWeight.w500,
                   ),
                 ),
               ),
@@ -532,12 +622,17 @@ class _DefaultCenter extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(title,
-            style: text.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
-        Text(subtitle,
-            textAlign: TextAlign.center,
-            style: text.labelSmall
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        Text(
+          title,
+          style: text.titleMedium?.copyWith(fontWeight: FontWeight.w500),
+        ),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: text.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
@@ -599,12 +694,16 @@ class _Legend extends StatelessWidget {
                 Container(
                   width: 8,
                   height: 8,
-                  decoration:
-                      BoxDecoration(color: n.color, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: n.color,
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: 5),
-                Text('${n.label} ${(n.value / total * 100).round()}%',
-                    style: text.labelSmall),
+                Text(
+                  '${n.label} ${(n.value / total * 100).round()}%',
+                  style: text.labelSmall,
+                ),
               ],
             ),
       ],

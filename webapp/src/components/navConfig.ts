@@ -77,7 +77,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/watchlist', label: 'Watchlist', icon: Star, description: 'Things you do not own yet', pro: true },
       { href: '/markets', label: 'Markets', icon: CandlestickChart, description: 'Index levels and sessions', pro: true },
       { href: '/dividends', label: 'Dividends', icon: Coins, description: 'Income your holdings paid out', pro: true },
-      { href: '/tax', label: 'Tax Centre', icon: Landmark, description: 'Gains, and what they may cost', pro: true },
+      { href: '/tax', label: 'Tax centre', icon: Landmark, description: 'Gains, and what they may cost', pro: true },
     ],
   },
   {

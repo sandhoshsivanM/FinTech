@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/help/info_hint.dart';
 import '../core/theme/semantic_colors.dart';
 
 import '../core/theme/app_tokens.dart';
@@ -32,8 +33,12 @@ class StatTile extends StatelessWidget {
     this.emphasise = false,
     this.ghost = false,
     this.onTap,
+    this.term,
     super.key,
   });
+
+  /// Help key (glossary term or section) for an inline info hint by the label.
+  final String? term;
 
   /// The tile's caption, e.g. "Current value".
   final String label;
@@ -67,7 +72,7 @@ class StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final hasIcon = icon != null;
-    final tint = iconColor ?? context.colors.accent;
+    final tint = iconColor ?? context.colors.info;
 
     // Composition mirrors the web `Kpi` exactly: the icon chip and the label
     // share ONE row, the figure sits under them, and the footer closes the
@@ -76,8 +81,9 @@ class StatTile extends StatelessWidget {
     // read as a different component from its web twin.
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment:
-          hasIcon ? MainAxisAlignment.start : MainAxisAlignment.center,
+      mainAxisAlignment: hasIcon
+          ? MainAxisAlignment.start
+          : MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
@@ -88,26 +94,33 @@ class StatTile extends StatelessWidget {
                 height: 28,
                 decoration: BoxDecoration(
                   color: tint.withValues(alpha: 0.13),
-                  borderRadius: BorderRadius.circular(9),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, color: tint, size: 15),
               ),
               const SizedBox(width: AppSpacing.sm),
             ],
-            Expanded(
+            Flexible(
               child: Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w400,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            // Room for the hint, which is laid over the tile's top-right corner
+            // (see below) so its 44px tap target does not stretch the row.
+            if (term != null) SizedBox(width: onTap != null ? 18 : 16),
+            if (onTap != null) const Spacer(),
             if (onTap != null)
-              Icon(Icons.chevron_right_rounded,
-                  size: 18, color: scheme.onSurfaceVariant),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: scheme.onSurfaceVariant,
+              ),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -117,8 +130,10 @@ class StatTile extends StatelessWidget {
           child: Text(
             ghost ? '••••••' : value,
             style: TextStyle(
-              fontSize: emphasise ? 26 : 23,
-              fontWeight: FontWeight.w700,
+              // Large and light: emphasis from size and the ink/grey value
+              // gap, not from weight.
+              fontSize: emphasise ? 30 : 26,
+              fontWeight: FontWeight.w300,
               // Large figures need less air between glyphs, not more.
               letterSpacing: -0.7,
               height: 1.05,
@@ -130,10 +145,9 @@ class StatTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             footer!,
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(color: scheme.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -141,7 +155,7 @@ class StatTile extends StatelessWidget {
       ],
     );
 
-    return Semantics(
+    final tile = Semantics(
       label: ghost ? '$label hidden' : '$label ${semanticValue ?? value}',
       button: onTap != null,
       child: GlassCard(
@@ -156,6 +170,19 @@ class StatTile extends StatelessWidget {
                 ),
         ),
       ),
+    );
+
+    if (term == null) return tile;
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        tile,
+        Positioned(
+          top: 8,
+          right: onTap != null ? 22 : 0,
+          child: InfoHint(term!),
+        ),
+      ],
     );
   }
 }

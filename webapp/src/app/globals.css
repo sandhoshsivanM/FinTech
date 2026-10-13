@@ -13,102 +13,111 @@
    ========================================================================= */
 
 :root {
-  /* ======================= LEDGER — the light theme ======================= */
-  /* Not pure white everywhere: the page is #F5F7F5 and cards are #FFFFFF, so a
-     card is the brightest surface. That single step is what gives the light
-     theme depth without a shadow. */
-  --canvas: #F6F7F5;
+  /* ======================= ZENTRA — the light theme ======================= */
+  /* Neutral greys carry the surfaces; colour lives only in data. The card is
+     barely lighter than the page (#F8F8F8 on #F2F2F2) and is lifted by a soft
+     shadow and a white top edge, not by a border. Raised/inset tiles inside a
+     card are pure white; recessed trays are a step darker. */
+  --canvas: #F2F2F2;
   --surface: #FFFFFF;
-  --surface-2: #FBFCFA;
-  --card: #FFFFFF;
-  --card-2: #FBFCFA;
-  --ink-surface: #0D1713;   /* the single dark focal surface (hero) */
+  --surface-2: #F8F8F8;
+  --card: #F8F8F8;
+  --card-2: #FFFFFF;
+  --tray: #ECECEE;
+  --ink-surface: #111214;   /* the single dark focal surface (hero) */
 
-  --line: #E2E6E1;
-  --line-strong: #CFD6D0;
+  --line: #E6E6E8;
+  --line-strong: #D4D4D8;
 
-  --ink: #151815;
-  --ink-soft: #69716B;
-  --muted: #929A94;
-  --disabled: #B3BAB5;
+  --ink: #111214;
+  --ink-soft: #5C5C61;
+  --muted: #8E8E93;
+  --disabled: #B5B5BB;
 
-  /* --- Deep green = INTERACTION ------------------------------------------ */
-  /* Primary buttons, active nav, links, focus. Deliberately a DARKER green
-     than `--income`: when the button colour and the profit colour were the
-     same token, green meant "act", "gain", "selected", "progress", "on track"
-     and "brand" simultaneously, and a colour that means six things means none.
-     Interaction is the deep vault green; a gain is the lighter one. */
-  --accent: #176B4D;
-  --accent-deep: #0D3B2E;
-  --accent-glow: #2A9970;
-  --accent-soft: #E7F0EB;
-  --accent-line: rgba(23, 107, 77, 0.24);
+  /* --- Ink = INTERACTION ------------------------------------------------- */
+  /* Primary buttons, the active tab and the active nav item are a near-black
+     pill (white in dark mode). Blue is a DATA colour, never a button. */
+  --accent: #111214;
+  --accent-deep: #000000;
+  --accent-glow: #1C6FFB;
+  --accent-soft: #E9E9EC;
+  --accent-line: rgba(17, 18, 20, 0.22);
   --accent-on: #FFFFFF;
 
-  /* --- Gold = IDENTITY ---------------------------------------------------- */
-  /* The mark, the wordmark, wealth-flavoured brand moments. Deliberately NOT a
-     button colour: making gold the interaction colour is what turns a premium
-     product into a gold-painted generic one. */
+  /* --- Gold = IDENTITY (the mark only; never a bar) ---------------------- */
   --gold: #C99A3D;
   --gold-soft: #F7F0E2;
-  /* Gold as SMALL TEXT needs a darker step. #A97922 reads 3.9:1 on a card —
-     enough for a graphic (3:1) but under the 4.5:1 body-text bar. The mark and
-     fills keep --gold; anything that is words uses this. */
   --gold-ink: #8E641B;
   --brand-plate: #0D3D2B;
 
-  /* `income`/`expense`/`warn` are the historical names used across the app;
-     `success`/`danger`/`warning` are the semantic ones. Same colour, both
-     published, so no call site had to be rewritten.
-
-     Success and Primary are now DIFFERENT greens. They used to be one token,
-     which is the root of the "green does everything" problem: the eye stopped
-     being able to tell an action from a gain. A gain is `--income`; an action
-     is `--accent`, which is darker and reads as chrome rather than as data. */
-  --income: #19734D;
-  --expense: #B54444;
-  --warn: #A97824;
-  --info: #5966A8;
+  /* Meaning colours. Green = money in / gain, pink = money out / loss,
+     amber = near a limit. Text steps are the deeper shade. */
+  --income: #0BA722;
+  --expense: #E5197A;
+  --warn: #B86E00;
+  --info: #1C6FFB;
   --success: var(--income);
   --danger: var(--expense);
   --warning: var(--warn);
-  --success-soft: #E8F1EC;
-  --danger-soft: rgba(181, 68, 68, 0.09);
-  --warning-soft: #F7F0E2;
-  --violet: #6E5BB8;
-  --violet-soft: rgba(110, 91, 184, 0.10);
+  --success-soft: rgba(41, 179, 64, 0.12);
+  --danger-soft: rgba(243, 54, 136, 0.10);
+  --warning-soft: rgba(227, 154, 22, 0.14);
+  --violet: #4691FE;
+  --violet-soft: rgba(28, 111, 251, 0.10);
 
-  /* Primary follows the accent, so a recoloured accent recolours the buttons
-     too; `--accent-on` is overridden by accents (lime) that need dark ink. */
   --primary: var(--accent);
   --primary-fg: var(--accent-on);
 
-  --fill: rgba(16, 22, 19, 0.04);
-  --fill-strong: rgba(16, 22, 19, 0.075);
-  --grid-line: rgba(16, 22, 19, 0.07);
+  --fill: rgba(17, 18, 20, 0.04);
+  --fill-strong: rgba(17, 18, 20, 0.07);
+  --grid-line: rgba(17, 18, 20, 0.06);
 
-  /* Ledger lifts with one very subtle shadow. Precise, not floating. */
-  --shadow-1: 0 1px 2px rgba(16, 22, 19, 0.05);
-  --shadow-2: 0 2px 8px rgba(16, 22, 19, 0.08);
-  --shadow-3: 0 18px 44px -18px rgba(16, 22, 19, 0.22);
+  --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 26px -18px rgba(17, 18, 20, 0.28);
+  --shadow-2: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 14px 32px -16px rgba(17, 18, 20, 0.30);
+  --shadow-3: 0 18px 44px -18px rgba(17, 18, 20, 0.24);
   --glow: 0 0 0 3px var(--accent-soft);
-  /* Coloured lift for the one primary action on screen (the raised + button,
-     the active quick action). Derived from the accent so every accent glows. */
-  --shadow-glow: 0 10px 24px -10px color-mix(in srgb, var(--accent) 70%, transparent);
-  --shadow-float: 0 12px 32px -12px rgba(16, 22, 19, 0.28);
+  --shadow-glow: 0 10px 22px -10px rgba(0, 0, 0, 0.55);
+  --shadow-float: 0 12px 32px -12px rgba(17, 18, 20, 0.28);
 
-  --hero-bg:
-    radial-gradient(120% 150% at 88% -10%, rgba(217, 173, 82, 0.20), transparent 58%),
-    radial-gradient(90% 120% at 8% 110%, rgba(24, 201, 138, 0.16), transparent 60%),
-    linear-gradient(168deg, #13291F 0%, var(--ink-surface) 62%);
+  --hero-bg: radial-gradient(110% 120% at 100% 0%, rgba(28, 111, 251, 0.35), transparent 55%), radial-gradient(90% 120% at 0% 110%, rgba(237, 152, 97, 0.28), transparent 60%), linear-gradient(165deg, #1A1B1F 0%, var(--ink-surface) 65%);
 
-  /* --- Categorical chart series, Ledger step ---------------------------- */
-  /* Dropped in lightness so each mark clears 3:1 on a white card. Yellow is
-     intrinsically light, which is why Gold lands on bronze here rather than on
-     the brass it uses over on Vault — same hue, the step white can carry.
-     Generated from domain/palette.ts; asserted by domain/palette.test.ts. */
+  /* --- Categorical chart series (category avatars, legacy series) ------- */
+  /* Generated from domain/palette.ts; asserted by domain/palette.test.ts. */
   --c1: #008451; --c2: #757AC2; --c3: #A07C06; --c4: #2F6D9E;
   --c5: #983E14; --c6: #3E9498; --c7: #8D447A; --c8: #646F2B;
+
+  /* --- Zentra donut / allocation series --------------------------------- */
+  /* Blue, green, pink, grey, then tints of those. No indigo, no periwinkle. */
+  --series-1: #1C6FFB; --series-2: #29B340; --series-3: #F33688; --series-4: #B5B5BB;
+  --series-5: #7FAEFD; --series-6: #86D492; --series-7: #FD8FBE; --series-8: #5C5C61;
+
+  /* --- Home ---------------------------------------------------------------- */
+  --home-header: #F2F2F2;
+  --home-header-ink: #111214;
+  --home-header-muted: #8E8E93;
+  --home-header-fill: rgba(17, 18, 20, 0.05);
+  --home-header-line: rgba(17, 18, 20, 0.08);
+  --home-sheet: #F2F2F2;
+  --home-group: #F8F8F8;
+  --home-group-edge: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 26px -18px rgba(17, 18, 20, 0.28);
+  --home-sheet-shadow: none;
+  /* The one solid control: active tab, primary action, the + button. */
+  --home-pill: #111214;
+  --home-pill-ink: #FFFFFF;
+
+  /* Data colours: vivid, and only ever on data. */
+  --data-blue: #1C6FFB;
+  --data-blue-a: #4691FE;
+  --data-blue-b: #224DE0;
+  --data-blue-2: #4691FE;
+  --data-hatch: #B0CBFD;
+  --data-green: #29B340;
+  --data-green-ink: #0BA722;
+  --data-green-2: #9AF2C0;
+  --data-rose: #F33688;
+  --data-rose-2: #FD6FAB;
+  --data-amber: #E39A16;
+  --insight-bg: radial-gradient(110% 90% at 100% 0%, rgba(237, 152, 97, 0.95), transparent 55%), radial-gradient(120% 120% at 0% 100%, #15265B, transparent 62%), linear-gradient(160deg, #367DC0 0%, #24459A 50%, #ED9861 100%);
 
   /* --- Back-compat aliases (older markup referenced these) --------------- */
   --glass-border: var(--line);
@@ -116,83 +125,95 @@
   --bg-bottom: var(--canvas);
 }
 
-/* ======================== VAULT — the dark theme ========================= */
-/* Four surface levels, deliberately. Jumping straight from near-black to a
-   bright card is what makes dark UI look flat; each step up the ladder is a
-   small, even lift:
-       #080D0B -> #101714 -> #151E1A -> #1A2520                              */
+/* ======================= ZENTRA — the dark theme ========================= */
+/* Graphite, same rules after dark: #0E0E10 page, #1C1C20 cards, a white pill,
+   lifted data colours. */
 :root[data-theme="dark"] {
-  --canvas: #0B0F0D;
-  --surface: #111713;
-  --surface-2: #161D18;
-  --card: #111713;
-  --card-2: #161D18;
-  --ink-surface: #0D1713;
+  --canvas: #0E0E10;
+  --surface: #222226;
+  --surface-2: #1C1C20;
+  --card: #1C1C20;
+  --card-2: #222226;
+  --tray: #17171A;
+  --ink-surface: #0A0A0B;
 
-  --line: #263029;
-  --line-strong: #35423A;
+  --line: #26262B;
+  --line-strong: #34343A;
 
-  --ink: #F1F4F1;
-  --ink-soft: #A5AEA8;
-  --muted: #68736C;
-  --disabled: #4C554F;
+  --ink: #F5F5F7;
+  --ink-soft: #A1A1A8;
+  --muted: #8E8E93;
+  --disabled: #48484E;
 
-  /* Dark is a separate palette, not an inversion. The interaction green is
-     again a step deeper than the gain green, so the two keep their distinct
-     jobs on this ground too. */
-  --accent: #3A8B68;
-  --accent-deep: #1B5A43;
-  --accent-glow: #4FA57E;
-  --accent-soft: #16281F;
-  --accent-line: rgba(58, 139, 104, 0.34);
-  --accent-on: #F1F4F1;
+  --accent: #F5F5F7;
+  --accent-deep: #FFFFFF;
+  --accent-glow: #3D86FF;
+  --accent-soft: #26262B;
+  --accent-line: rgba(245, 245, 247, 0.28);
+  --accent-on: #111214;
 
   --gold: #D5A94E;
   --gold-soft: #2A2317;
-  /* On Vault, gold already reads 9.4:1, so the text step is the same colour. */
   --gold-ink: #D5A94E;
   --brand-plate: #0D3D2B;
 
-  --income: #4FB98A;
-  --expense: #D97070;
-  --warn: #D2A254;
-  --info: #8E99D6;
-  --success-soft: #16281F;
-  --danger-soft: rgba(217, 112, 112, 0.13);
-  --warning-soft: #2A2317;
-  --violet: #8E7CC3;
-  --violet-soft: rgba(142, 124, 195, 0.16);
+  --income: #34C759;
+  --expense: #FF4F9A;
+  --warn: #FFB340;
+  --info: #3D86FF;
+  --success-soft: rgba(52, 199, 89, 0.12);
+  --danger-soft: rgba(255, 79, 154, 0.12);
+  --warning-soft: rgba(255, 179, 64, 0.12);
+  --violet: #6FA4FF;
+  --violet-soft: rgba(61, 134, 255, 0.16);
 
-  /* Near-black on emerald reads 9.4:1; white would be 2.4:1. */
   --primary: var(--accent);
   --primary-fg: var(--accent-on);
 
-  --fill: rgba(255, 255, 255, 0.045);
+  --fill: rgba(255, 255, 255, 0.05);
   --fill-strong: rgba(255, 255, 255, 0.08);
-  --grid-line: rgba(255, 255, 255, 0.055);
+  --grid-line: rgba(255, 255, 255, 0.06);
 
-  /* Vault uses BORDERS, not shadows. A drop shadow on a near-black canvas is
-     invisible, and faking depth with a glow is what makes finance UI look like
-     a crypto exchange. Only true overlays get one. */
-  --shadow-1: none;
-  --shadow-2: none;
+  --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 30px -18px rgba(0, 0, 0, 0.9);
+  --shadow-2: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 16px 34px -16px rgba(0, 0, 0, 0.95);
   --shadow-3: 0 24px 48px -24px rgba(0, 0, 0, 0.75);
-  --glow: 0 0 0 3px rgba(32, 201, 138, 0.22);
-  --shadow-glow: 0 10px 28px -8px color-mix(in srgb, var(--accent) 55%, transparent);
+  --glow: 0 0 0 3px rgba(61, 134, 255, 0.22);
+  --shadow-glow: 0 10px 22px -10px rgba(0, 0, 0, 0.8);
   --shadow-float: 0 16px 40px -12px rgba(0, 0, 0, 0.7);
 
-  --hero-bg:
-    radial-gradient(120% 150% at 88% -10%, rgba(217, 173, 82, 0.16), transparent 58%),
-    radial-gradient(90% 120% at 8% 110%, rgba(32, 201, 138, 0.10), transparent 60%),
-    linear-gradient(168deg, #12241C 0%, var(--ink-surface) 62%);
+  --hero-bg: radial-gradient(110% 120% at 100% 0%, rgba(61, 134, 255, 0.30), transparent 55%), radial-gradient(90% 120% at 0% 110%, rgba(237, 152, 97, 0.18), transparent 60%), linear-gradient(165deg, #1A1B1F 0%, var(--ink-surface) 65%);
 
-  /* --- Categorical chart series, Vault step ----------------------------- */
-  /* Lifted in lightness so each mark reads against a near-black card. Same
-     hues as the Ledger step above, one rung up — a series must not change
-     identity when the theme does, only its lightness.
-     Generated from domain/palette.ts; asserted by domain/palette.test.ts. */
+  /* Generated from domain/palette.ts; asserted by domain/palette.test.ts. */
   --c1: #4EB982; --c2: #A4AAF6; --c3: #C19C3A; --c4: #63A1D5;
   --c5: #EA8760; --c6: #73C7CC; --c7: #CA7CB4; --c8: #9CAA65;
+
+  --series-1: #3D86FF; --series-2: #34C759; --series-3: #FF4F9A; --series-4: #6E6E76;
+  --series-5: #8DB8FF; --series-6: #7FDB93; --series-7: #FF8DBC; --series-8: #A1A1A8;
+
+  --home-header: #0E0E10;
+  --home-header-ink: #F5F5F7;
+  --home-header-muted: #8E8E93;
+  --home-header-fill: rgba(255, 255, 255, 0.06);
+  --home-header-line: rgba(255, 255, 255, 0.09);
+  --home-sheet: #0E0E10;
+  --home-group: #1C1C20;
+  --home-group-edge: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 30px -18px rgba(0, 0, 0, 0.9);
+  --home-sheet-shadow: none;
+  --home-pill: #F5F5F7;
+  --home-pill-ink: #111214;
+
+  --data-blue: #3D86FF;
+  --data-blue-a: #6FA4FF;
+  --data-blue-b: #2A63E8;
+  --data-blue-2: #6FA4FF;
+  --data-hatch: #29406E;
+  --data-green: #34C759;
+  --data-green-ink: #34C759;
+  --data-green-2: #9AF2C0;
+  --data-rose: #FF4F9A;
+  --data-rose-2: #FF8DBC;
+  --data-amber: #FFB340;
+  --insight-bg: radial-gradient(110% 90% at 100% 0%, rgba(237, 152, 97, 0.85), transparent 55%), radial-gradient(120% 120% at 0% 100%, #0E1A40, transparent 62%), linear-gradient(160deg, #2E6BA6 0%, #1D3A84 50%, #C97C4C 100%);
 
   color-scheme: dark;
 }
@@ -210,8 +231,8 @@
   --radius-sm: 8px;     /* badges that are not pills, chart chrome */
   --radius-btn: 12px;   /* buttons, inputs, selects, segmented controls */
   --radius-input: 12px; /* alias, so a form never disagrees with a button */
-  --radius-card: 20px;
-  --radius-panel: 24px;
+  --radius-card: 24px;
+  --radius-panel: 28px;
   --radius-modal: 24px;
   /* A pill is for a status word that is genuinely a token — a count, a state.
      It is not a container style. */
@@ -277,6 +298,13 @@
   --color-surface-2: var(--surface-2);
   --color-card: var(--card);
   --color-card-2: var(--card-2);
+  --color-tray: var(--tray);
+  --color-data-blue: var(--data-blue);
+  --color-data-green: var(--data-green);
+  --color-data-rose: var(--data-rose);
+  --color-data-amber: var(--data-amber);
+  --color-series-1: var(--series-1); --color-series-2: var(--series-2); --color-series-3: var(--series-3); --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5); --color-series-6: var(--series-6); --color-series-7: var(--series-7); --color-series-8: var(--series-8);
 
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
@@ -324,8 +352,8 @@
   /* Prescribed per component. "Everything is a giant rounded rectangle" is the
      generic look this system avoids: a button is tighter than a card, a card is
      tighter than a modal. */
-  --radius-card: 20px;
-  --radius-panel: 24px;
+  --radius-card: 24px;
+  --radius-panel: 28px;
   --radius-btn: 12px;
   --radius-input: 12px;
   --radius-modal: 24px;
@@ -354,7 +382,7 @@ body {
   min-height: 100vh;
   color: var(--ink);
   background: var(--canvas);
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
   font-size: var(--fs-sm);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -374,10 +402,14 @@ body {
 .card,
 .glass {
   background: var(--card);
-  border: 1px solid var(--line);
+  /* Barely there: a panel is lifted by its shadow and top highlight, the
+     way the reference separates #F8F8F8 cards from a #F2F2F2 canvas. */
+  border: 1px solid transparent;
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-1);
 }
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .glass { border-color: rgba(255, 255, 255, 0.035); }
 
 /* Hover elevation, opt-in. */
 .lift {
@@ -406,6 +438,116 @@ body {
  * where there is nothing legible behind it to bleed. */
 .glass-panel {
   background: var(--canvas);
+}
+
+/* Phone home: the top bar takes the header's colour so the two read as one
+   surface; on every other screen it keeps the canvas. */
+@media (max-width: 899px) {
+  .topbar-home { background: var(--home-header); border-color: transparent; }
+}
+.home-header { background: var(--home-header); color: var(--home-header-ink); }
+.home-sheet { background: var(--home-sheet); box-shadow: var(--home-sheet-shadow); }
+/* Inside the sheet, groups are inset panels, not bordered boxes. */
+.home-sheet .card { background: var(--home-group); border-color: transparent; box-shadow: var(--home-group-edge); }
+
+/* ---- Depth kit (Zentra) --------------------------------------------------
+   Icon tile: PLAIN. A flat tinted circle in its own hue — no gloss, no
+   gradient, no coloured drop. Set --tile-b (the hue). */
+.gloss-tile {
+  background: color-mix(in srgb, var(--tile-b) 14%, transparent);
+  color: var(--tile-b);
+}
+/* Gauge: a thick pill in a white recessed track, the value on a chip at its
+   tip. Fine = blue, near a limit = amber, over = pink. */
+.gauge-track {
+  position: relative;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--card-2);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.10);
+  padding: 3px;
+}
+.gauge-fill {
+  height: 100%;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.40) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(90deg, color-mix(in srgb, var(--g-b) 55%, #fff), var(--g-b));
+  box-shadow: 0 6px 12px -6px var(--g-b);
+  display: flex; align-items: center; justify-content: flex-end; padding-right: 3px;
+  min-width: 46px;
+}
+.gauge-chip {
+  height: 100%;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  font-size: 10.5px; font-weight: 600; color: #fff;
+  background: rgba(255, 255, 255, 0.25);
+}
+/* Floating value pill — chart callouts. */
+.float-pill {
+  background: var(--surface);
+  border-radius: 999px;
+  box-shadow: 0 3px 8px -4px rgba(0, 0, 0, 0.2);
+}
+
+/* Touchable surfaces: the 2D/3D blend. A raised control has a lit top edge
+   and a soft drop; a tray is recessed, holding raised cards inside it. */
+.btn-raised {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 60%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 16px -8px rgba(0, 0, 0, 0.55);
+}
+.btn-soft {
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 3px 8px -4px rgba(0, 0, 0, 0.18);
+}
+:root[data-theme="dark"] .btn-soft { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 3px 8px -4px rgba(0, 0, 0, 0.6); }
+@layer components {
+  .tray {
+    background: var(--tray);
+    border-radius: 18px;
+  }
+}
+@layer components {
+/* A raised white tile inside a card (KPI tiles, inset figures). */
+.inset {
+  background: var(--card-2);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+:root[data-theme="dark"] .inset { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+/* A quiet chip: a type label, a status word. */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11.5px; line-height: 1.2; padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--card-2);
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.18);
+}
+/* Large figures: light, not bold. Paise smaller and muted. */
+.figure { font-weight: 300; letter-spacing: -0.03em; line-height: 1.05; }
+.paise { font-size: 0.5em; color: var(--muted); font-weight: 400; letter-spacing: 0; }
+}
+
+/* Diagonal-stripe fill for data: texture instead of more colour. Set
+   --hatch to the series colour. */
+.hatch {
+  background:
+    repeating-linear-gradient(-45deg, var(--hatch) 0 2px, transparent 2px 5px),
+    color-mix(in srgb, var(--hatch) 18%, transparent);
+}
+
+/* Film grain over the insight gradient, so it reads as a material. */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* The single dark focal surface (net-worth hero, portfolio hero). */
@@ -449,21 +591,20 @@ body {
    a utility class on the element wins. */
 @layer base {
   h1, h2, h3, .font-display {
-    font-family: var(--font-display), var(--font-inter), sans-serif;
-    letter-spacing: -0.022em;
-    font-weight: 700;
+    font-family: var(--font-display), var(--font-sans), sans-serif;
+    letter-spacing: -0.015em;
+    font-weight: 500;
     text-wrap: balance;
   }
-  h1 { font-size: var(--fs-h1); letter-spacing: -0.03em; }
+  h1 { font-size: var(--fs-h1); font-weight: 400; letter-spacing: -0.03em; }
   h2 { font-size: var(--fs-h2); letter-spacing: -0.025em; }
   h3 { font-size: var(--fs-h3); }
 }
 
+/* Section label: sentence case, never letter-spaced caps. */
 .eyebrow {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 12.5px;
+  font-weight: 400;
   color: var(--muted);
 }
 

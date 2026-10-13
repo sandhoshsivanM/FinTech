@@ -26,8 +26,11 @@ const WEBAPP = resolve(HERE, '..');
 const REPO = resolve(WEBAPP, '..');
 const SOURCE = join(REPO, 'assets', 'brand', 'khazana-mark.png');
 
-/** The Vault plate the mark sits on. Matches --bg in the dark theme. */
-const PLATE = { r: 7, g: 13, b: 10, alpha: 1 };
+/**
+ * The plate the mark sits on: white, as on the brand sheet's light app icon.
+ * The mark is deep green, so a dark plate would swallow it.
+ */
+const PLATE = { r: 255, g: 255, b: 255, alpha: 1 };
 
 /**
  * How much of the canvas the mark occupies.
@@ -135,10 +138,15 @@ async function plated(size, purpose = 'any') {
     .png()
     .toBuffer();
 
-  return sharp({ create: { width: size, height: size, channels: 4, background: PLATE } })
+  const composed = await sharp({ create: { width: size, height: size, channels: 4, background: PLATE } })
     .composite([{ input: mark, gravity: 'centre' }])
-    .png({ compressionLevel: 9 })
+    .png()
     .toBuffer();
+  // Plated icons are fully opaque, so drop the alpha channel outright: App
+  // Store Connect rejects a marketing icon that merely *has* one (ITMS-90717),
+  // and release-mobile.yml checks for exactly that. A second pass, because in a
+  // single pipeline sharp would strip alpha before compositing.
+  return sharp(composed).removeAlpha().png({ compressionLevel: 9 }).toBuffer();
 }
 
 /** The mark alone, transparent. For the in-app BrandMark and the brand sheet. */
@@ -156,7 +164,11 @@ async function bare(size) {
  * dependency for.
  */
 async function buildIco(sizes) {
-  const images = await Promise.all(sizes.map((s) => plated(s, 'any')));
+  // ICO entries keep an alpha channel: Next's ICO decoder (and some Windows
+  // shells) reject embedded PNGs that are not RGBA, even fully opaque ones.
+  const images = await Promise.all(
+    sizes.map(async (s) => sharp(await plated(s, 'any')).ensureAlpha().png({ compressionLevel: 9 }).toBuffer()),
+  );
   const count = images.length;
   const header = Buffer.alloc(6);
   header.writeUInt16LE(0, 0); // reserved

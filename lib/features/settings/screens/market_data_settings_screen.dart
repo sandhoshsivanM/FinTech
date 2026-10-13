@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -36,7 +37,12 @@ class _State extends ConsumerState<MarketDataSettingsScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Market Data')),
+      appBar: AppBar(
+        title: InfoHint.titled(
+          const Text('Market Data'),
+          'settings.marketData',
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
@@ -72,8 +78,9 @@ class _State extends ConsumerState<MarketDataSettingsScreen> {
               await ref
                   .read(marketKeysActionsProvider)
                   .save(alphaVantage: _av.text, twelveData: _td.text);
-              messenger
-                  .showSnackBar(const SnackBar(content: Text('Keys saved.')));
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Keys saved.')),
+              );
             },
           ),
         ],

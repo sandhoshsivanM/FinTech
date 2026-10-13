@@ -41,6 +41,7 @@ class DivergingBarChart extends StatefulWidget {
 
   final List<DivergingBar> bars;
   final String Function(double value)? formatValue;
+
   /// Null means "use the theme's income/expense", resolved in `build`.
   final Color? positiveColor;
   final Color? negativeColor;
@@ -66,110 +67,123 @@ class _DivergingBarChartState extends State<DivergingBarChart> {
       return SizedBox(
         height: 80,
         child: Center(
-          child: Text(widget.emptyLabel,
-              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+          child: Text(
+            widget.emptyLabel,
+            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
         ),
       );
     }
 
-    final extent = bars.fold(0.0, (m, b) => b.value.abs() > m ? b.value.abs() : m);
+    final extent = bars.fold(
+      0.0,
+      (m, b) => b.value.abs() > m ? b.value.abs() : m,
+    );
     // With nothing negative there is nothing to diverge from, so the spine
     // moves to the left edge and the bars use the full width. Keeping it
     // centred threw away half the resolution of every comparison to reserve
     // room for values that cannot occur.
     final centred = bars.any((b) => b.value < 0);
-    String fmt(double v) =>
-        widget.formatValue?.call(v) ?? v.toStringAsFixed(0);
+    String fmt(double v) => widget.formatValue?.call(v) ?? v.toStringAsFixed(0);
 
     return Semantics(
       label: widget.semanticLabel,
       child: ExcludeSemantics(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var i = 0; i < bars.length; i++)
-              MouseRegion(
-                onEnter: (_) => setState(() => _hover = i),
-                onExit: (_) {
-                  if (_hover == i) setState(() => _hover = null);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 168,
-                        child: Text(
-                          bars[i].label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: text.bodySmall?.copyWith(
-                            fontWeight: _hover == i
-                                ? FontWeight.w800
-                                : FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: 1),
-                          duration: ChartTokens.entranceFor(context),
-                          curve: ChartTokens.entranceCurve,
-                          builder: (context, t, _) => CustomPaint(
-                            size: const Size(double.infinity, 16),
-                            painter: _DivergingBarPainter(
-                              value: bars[i].value,
-                              extent: extent,
-                              centred: centred,
-                              progress: t,
-                              positive: posColor,
-                              negative: negColor,
-                              axis: scheme.outlineVariant,
+        // Columns sized to the card: fixed 168 + 118px label and value
+        // columns overflowed a phone-width card by 32px.
+        child: LayoutBuilder(
+          builder: (context, box) {
+            final labelW = (box.maxWidth * 0.34).clamp(72.0, 168.0);
+            final valueW = (box.maxWidth * 0.30).clamp(84.0, 118.0);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < bars.length; i++)
+                  MouseRegion(
+                    onEnter: (_) => setState(() => _hover = i),
+                    onExit: (_) {
+                      if (_hover == i) setState(() => _hover = null);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: labelW,
+                            child: Text(
+                              bars[i].label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: text.bodySmall?.copyWith(
+                                fontWeight: _hover == i
+                                    ? FontWeight.w500
+                                    : FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      // Amount and percentage get their own fixed columns.
-                      // Concatenating them into one box meant the longest row
-                      // set the truncation point for every row, so a portfolio
-                      // with one six-figure position clipped the percentages
-                      // off all the others.
-                      SizedBox(
-                        width: 118,
-                        child: Text(
-                          fmt(bars[i].value),
-                          textAlign: TextAlign.right,
-                          maxLines: 1,
-                          style: text.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: bars[i].value < 0
-                                ? negColor
-                                : posColor,
-                          ),
-                        ),
-                      ),
-                      ?bars[i].detail == null
-                          ? null
-                          : SizedBox(
-                              width: 68,
-                              child: Text(
-                                bars[i].detail!,
-                                textAlign: TextAlign.right,
-                                maxLines: 1,
-                                style: text.bodySmall?.copyWith(
-                                  color: bars[i].value < 0
-                                      ? negColor
-                                      : posColor,
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0, end: 1),
+                              duration: ChartTokens.entranceFor(context),
+                              curve: ChartTokens.entranceCurve,
+                              builder: (context, t, _) => CustomPaint(
+                                size: const Size(double.infinity, 16),
+                                painter: _DivergingBarPainter(
+                                  value: bars[i].value,
+                                  extent: extent,
+                                  centred: centred,
+                                  progress: t,
+                                  positive: posColor,
+                                  negative: negColor,
+                                  axis: scheme.outlineVariant,
                                 ),
                               ),
                             ),
-                    ],
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          // Amount and percentage get their own fixed columns.
+                          // Concatenating them into one box meant the longest row
+                          // set the truncation point for every row, so a portfolio
+                          // with one six-figure position clipped the percentages
+                          // off all the others.
+                          SizedBox(
+                            width: valueW,
+                            child: Text(
+                              fmt(bars[i].value),
+                              textAlign: TextAlign.right,
+                              maxLines: 1,
+                              style: text.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: bars[i].value < 0 ? negColor : posColor,
+                              ),
+                            ),
+                          ),
+                          ?bars[i].detail == null
+                              ? null
+                              : SizedBox(
+                                  width: (box.maxWidth * 0.17).clamp(
+                                    52.0,
+                                    68.0,
+                                  ),
+                                  child: Text(
+                                    bars[i].detail!,
+                                    textAlign: TextAlign.right,
+                                    maxLines: 1,
+                                    style: text.bodySmall?.copyWith(
+                                      color: bars[i].value < 0
+                                          ? negColor
+                                          : posColor,
+                                    ),
+                                  ),
+                                ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
@@ -224,11 +238,13 @@ class _DivergingBarPainter extends CustomPainter {
         rect,
         // Rounded at the growing end only, so the bar stays welded to its axis.
         topRight: Radius.circular(value >= 0 ? ChartTokens.barCornerRadius : 0),
-        bottomRight:
-            Radius.circular(value >= 0 ? ChartTokens.barCornerRadius : 0),
+        bottomRight: Radius.circular(
+          value >= 0 ? ChartTokens.barCornerRadius : 0,
+        ),
         topLeft: Radius.circular(value < 0 ? ChartTokens.barCornerRadius : 0),
-        bottomLeft:
-            Radius.circular(value < 0 ? ChartTokens.barCornerRadius : 0),
+        bottomLeft: Radius.circular(
+          value < 0 ? ChartTokens.barCornerRadius : 0,
+        ),
       ),
       Paint()..color = value >= 0 ? positive : negative,
     );

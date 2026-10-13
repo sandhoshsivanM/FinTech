@@ -1,3 +1,5 @@
+import '../../../core/help/info_hint.dart';
+import '../../../presentation/striped_bar.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
@@ -32,13 +34,21 @@ class _CalendarLedgerScreenState extends ConsumerState<CalendarLedgerScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-        () => ref.read(wideLayoutProvider.notifier).state = true);
+    _wide = ref.read(wideLayoutProvider.notifier);
+    Future.microtask(() => ref.read(wideLayoutProvider.notifier).state = true);
   }
+
+  /// Captured while mounted: `ref` cannot be read from dispose(), and doing so
+  /// threw "Cannot use ref after the widget was disposed" every time the
+  /// calendar was left.
+  late final StateController<bool> _wide;
 
   @override
   void dispose() {
-    ref.read(wideLayoutProvider.notifier).state = false;
+    // Deferred: changing a provider while the tree is being torn down is not
+    // allowed either.
+    final wide = _wide;
+    Future.microtask(() => wide.state = false);
     super.dispose();
   }
 
@@ -102,9 +112,7 @@ class _WideLayout extends ConsumerWidget {
             children: [
               SizedBox(
                 width: 250,
-                child: Column(children: const [
-                  _MonthTotalsCard(),
-                ]),
+                child: Column(children: const [_MonthTotalsCard()]),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -144,7 +152,11 @@ void _showDaySheet(BuildContext context, DateTime day) {
     builder: (context) => SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.sizeOf(context).height * 0.7,
@@ -181,31 +193,38 @@ class _MonthTotalsCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(DateFormat('MMMM yyyy').format(cursor),
-              style: const TextStyle(fontWeight: FontWeight.w700)),
+          InfoHint.titled(
+            Text(
+              DateFormat('MMMM yyyy').format(cursor),
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            'calendar.thisMonth',
+          ),
           const SizedBox(height: AppSpacing.md),
           _StatRow(
-              icon: Icons.south_west,
-              label: 'Income',
-              value: income,
-              color: context.colors.income),
+            icon: Icons.south_west,
+            label: 'Income',
+            value: income,
+            color: context.colors.income,
+          ),
           const SizedBox(height: AppSpacing.sm),
           _StatRow(
-              icon: Icons.north_east,
-              label: 'Spending',
-              value: expense,
-              color: context.colors.expense),
+            icon: Icons.north_east,
+            label: 'Spending',
+            value: expense,
+            color: context.colors.expense,
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: Divider(height: 1),
           ),
           _StatRow(
-            icon: net >= Decimal.zero
-                ? Icons.trending_up
-                : Icons.trending_down,
+            icon: net >= Decimal.zero ? Icons.trending_up : Icons.trending_down,
             label: 'Net',
             value: net,
-            color: net >= Decimal.zero ? context.colors.income : context.colors.expense,
+            color: net >= Decimal.zero
+                ? context.colors.income
+                : context.colors.expense,
             emphasize: true,
           ),
         ],
@@ -248,7 +267,7 @@ class _StatRow extends StatelessWidget {
           Money.format(value),
           style: TextStyle(
             color: color,
-            fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
+            fontWeight: emphasize ? FontWeight.w500 : FontWeight.w600,
             fontSize: emphasize ? 16 : 14,
           ),
         ),
@@ -285,22 +304,29 @@ class _CalendarCard extends ConsumerWidget {
     final cells = <Widget>[
       for (final w in _weekdayLabels)
         Center(
-          child: Text(w,
-              style: TextStyle(
-                  fontSize: 11.5,
-                  color: muted,
-                  fontWeight: FontWeight.w700)),
+          child: Text(
+            w,
+            style: TextStyle(
+              fontSize: 11.5,
+              color: muted,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       for (var i = 0; i < leadingBlanks; i++) const SizedBox.shrink(),
       for (var d = 1; d <= daysInMonth; d++)
         _DayCell(
           date: DateTime(cursor.year, cursor.month, d),
-          ledger: ledgers[CalendarAggregator.dayKey(
-              DateTime(cursor.year, cursor.month, d))],
-          isToday: today.year == cursor.year &&
+          ledger:
+              ledgers[CalendarAggregator.dayKey(
+                DateTime(cursor.year, cursor.month, d),
+              )],
+          isToday:
+              today.year == cursor.year &&
               today.month == cursor.month &&
               today.day == d,
-          isSelected: selected != null &&
+          isSelected:
+              selected != null &&
               selected.year == cursor.year &&
               selected.month == cursor.month &&
               selected.day == d,
@@ -315,22 +341,29 @@ class _CalendarCard extends ConsumerWidget {
           Row(
             children: [
               _NavButton(
-                  icon: Icons.chevron_left,
-                  tooltip: 'Previous month',
-                  onTap: () => shift(-1)),
+                icon: Icons.chevron_left,
+                tooltip: 'Previous month',
+                onTap: () => shift(-1),
+              ),
               Expanded(
                 child: Center(
-                  child: Text(
-                    DateFormat('MMMM yyyy').format(cursor),
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700),
+                  child: InfoHint.titled(
+                    Text(
+                      DateFormat('MMMM yyyy').format(cursor),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    'calendar.monthGrid',
                   ),
                 ),
               ),
               _NavButton(
-                  icon: Icons.chevron_right,
-                  tooltip: 'Next month',
-                  onTap: () => shift(1)),
+                icon: Icons.chevron_right,
+                tooltip: 'Next month',
+                onTap: () => shift(1),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -358,8 +391,11 @@ class _CalendarCard extends ConsumerWidget {
 }
 
 class _NavButton extends StatelessWidget {
-  const _NavButton(
-      {required this.icon, required this.tooltip, required this.onTap});
+  const _NavButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
   final IconData icon;
   final String tooltip;
   final VoidCallback onTap;
@@ -389,14 +425,18 @@ class _LegendDot extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
         const SizedBox(width: 5),
-        Text(label,
-            style: TextStyle(
-                fontSize: 11,
-                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
@@ -454,20 +494,21 @@ class _DayCell extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text('${date.day}',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight:
-                          isToday ? FontWeight.w800 : FontWeight.w500,
-                      color: isToday || isSelected
-                          ? context.colors.accent
-                          : null,
-                    )),
+                Text(
+                  '${date.day}',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: isToday ? FontWeight.w500 : FontWeight.w500,
+                    color: isToday || isSelected ? context.colors.accent : null,
+                  ),
+                ),
                 const Spacer(),
                 if (ledger?.hasAttachment ?? false)
-                  Icon(Icons.attach_file,
-                      size: 11,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  Icon(
+                    Icons.attach_file,
+                    size: 11,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
               ],
             ),
             const Spacer(),
@@ -484,11 +525,11 @@ class _DayCell extends StatelessWidget {
   }
 
   Widget _dot(Color c) => Container(
-        width: 6,
-        height: 6,
-        margin: const EdgeInsets.only(right: 3),
-        decoration: BoxDecoration(color: c, shape: BoxShape.circle),
-      );
+    width: 6,
+    height: 6,
+    margin: const EdgeInsets.only(right: 3),
+    decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -502,8 +543,7 @@ class _DayDetail extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final txns = ref.watch(dayTransactionsProvider(day));
-    final categories =
-        ref.watch(categoryListProvider).valueOrNull ?? const [];
+    final categories = ref.watch(categoryListProvider).valueOrNull ?? const [];
     final byId = {for (final c in categories) c.id: c.name};
 
     var income = Decimal.zero;
@@ -519,17 +559,22 @@ class _DayDetail extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(DateFormat('EEEE, d MMM').format(day),
-            style:
-                const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+        InfoHint.titled(
+          Text(
+            DateFormat('EEEE, d MMM').format(day),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          ),
+          'calendar.day',
+        ),
         if (txns.isNotEmpty) ...[
           const SizedBox(height: 2),
           Text(
             '${Money.formatSigned(income, isIncome: true)}  ·  '
             '${Money.formatSigned(expense, isIncome: false)}',
             style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant),
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
         const SizedBox(height: AppSpacing.sm),
@@ -545,18 +590,19 @@ class _DayDetail extends ConsumerWidget {
                     width: 34,
                     height: 34,
                     decoration: BoxDecoration(
-                      color: (t.type == TxnType.income
-                              ? context.colors.income
-                              : context.colors.expense)
-                          .withValues(alpha: 0.12),
+                      color:
+                          (t.type == TxnType.income
+                                  ? context.colors.income
+                                  : context.colors.expense)
+                              .withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       t.attachmentRef != null
                           ? Icons.receipt_long
                           : (t.type == TxnType.income
-                              ? Icons.south_west
-                              : Icons.north_east),
+                                ? Icons.south_west
+                                : Icons.north_east),
                       size: 17,
                       color: t.type == TxnType.income
                           ? context.colors.income
@@ -568,23 +614,31 @@ class _DayDetail extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(t.merchant ?? byId[t.categoryId] ?? 'Transaction',
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
-                        Text(byId[t.categoryId] ?? '',
-                            style: TextStyle(
-                                fontSize: 11.5,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant)),
+                        Text(
+                          t.merchant ?? byId[t.categoryId] ?? 'Transaction',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          byId[t.categoryId] ?? '',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
-                    Money.formatSigned(t.amount,
-                        isIncome: t.type == TxnType.income),
+                    Money.formatSigned(
+                      t.amount,
+                      isIncome: t.type == TxnType.income,
+                    ),
                     style: TextStyle(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                       color: t.type == TxnType.income
                           ? context.colors.income
                           : context.colors.expense,
@@ -608,8 +662,7 @@ class _BudgetTracker extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progress = ref.watch(budgetProgressProvider);
-    final categories =
-        ref.watch(categoryListProvider).valueOrNull ?? const [];
+    final categories = ref.watch(categoryListProvider).valueOrNull ?? const [];
     final byId = {for (final c in categories) c.id: c.name};
     if (progress.isEmpty) return const SizedBox.shrink();
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
@@ -620,10 +673,17 @@ class _BudgetTracker extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.pie_chart_outline,
-                  size: 18, color: context.colors.accent),
+              Icon(
+                Icons.pie_chart_outline,
+                size: 18,
+                color: context.colors.accent,
+              ),
               const SizedBox(width: AppSpacing.sm),
-              const Text('Budgets', style: TextStyle(fontWeight: FontWeight.w700)),
+              const Text(
+                'Budgets',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const InfoHint('calendar.budgets'),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -641,10 +701,9 @@ class _BudgetTracker extends ConsumerWidget {
             const SizedBox(height: 5),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
+              child: StripedBar(
                 value: p.fraction,
-                minHeight: 7,
-                backgroundColor: AppColors.glassFillLight,
+                height: 7,
                 color: _budgetColor(context.colors, p.status),
               ),
             ),
@@ -657,10 +716,10 @@ class _BudgetTracker extends ConsumerWidget {
 }
 
 Color _budgetColor(SemanticColors c, BudgetStatus status) => switch (status) {
-      BudgetStatus.ok => c.budgetOk,
-      BudgetStatus.warning => c.budgetWarn,
-      BudgetStatus.over => c.budgetOver,
-    };
+  BudgetStatus.ok => c.budgetOk,
+  BudgetStatus.warning => c.budgetWarn,
+  BudgetStatus.over => c.budgetOver,
+};
 
 class _EmptyHint extends StatelessWidget {
   const _EmptyHint(this.text);
@@ -670,9 +729,10 @@ class _EmptyHint extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-      child: Text(text,
-          style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant)),
+      child: Text(
+        text,
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+      ),
     );
   }
 }

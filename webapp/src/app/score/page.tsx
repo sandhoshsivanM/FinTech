@@ -7,7 +7,7 @@ import { useApp } from '@/lib/store';
 import { healthScore, type HealthCategory } from '@/domain/health';
 import { liquidBalance } from '@/domain/accountLedger';
 import { investmentTotals } from '@/domain/investmentTotals';
-import { PageIntro, GlassCard, SectionHeader, ProgressBar, Button, Gauge, AreaChart } from '@/components/ui';
+import { PageIntro, GlassCard, SectionHeader, ProgressBar, Button, Gauge, AreaChart, scoreColor } from '@/components/ui';
 import { ScoreMethod } from '@/components/ScoreMethod';
 
 /** Where each category's data comes from, so an untracked card can point somewhere. */
@@ -18,8 +18,7 @@ const CTA: Record<string, { href: string; label: string }> = {
   future: { href: '/goals', label: 'Add a goal' },
 };
 
-const band = (f: number) =>
-  f >= 0.7 ? 'var(--income)' : f >= 0.4 ? 'var(--warn)' : 'var(--expense)';
+const band = (f: number) => scoreColor(f);
 
 export default function ScorePage() {
   const txns = useApp((s) => s.txns);
@@ -81,12 +80,17 @@ export default function ScorePage() {
 
       <ScoreMethod />
 
-      <div className="space-y-3">
-        {health.categories.map((c) => <CategoryCard key={c.key} category={c} />)}
-      </div>
+      {/* The four areas in one card: a tray of gauges. Each row still opens
+          in place to show what is behind its number. */}
+      <GlassCard>
+        <SectionHeader title="Four areas" info="score.fourAreas" />
+        <div className="tray p-1.5 grid gap-1">
+          {health.categories.map((c) => <CategoryCard key={c.key} category={c} />)}
+        </div>
+      </GlassCard>
 
       <GlassCard>
-        <SectionHeader title="Score history" />
+        <SectionHeader title="Score history" info="score.scoreHistory" />
         <AreaChart values={history} height={130} emptyLabel="Your score trend will appear here" format={(n) => String(Math.round(n))} />
       </GlassCard>
 
@@ -108,7 +112,7 @@ function CategoryCard({ category }: { category: HealthCategory }) {
   const cta = CTA[category.key];
 
   return (
-    <GlassCard className="p-0 overflow-hidden">
+    <div className="rounded-[14px] overflow-hidden">
       <button
         type="button"
         // An untracked category has nothing to disclose; making it expandable
@@ -117,12 +121,12 @@ function CategoryCard({ category }: { category: HealthCategory }) {
         disabled={!tracked}
         aria-expanded={tracked ? open : undefined}
         className={clsx(
-          'w-full text-left px-5 py-4',
+          'w-full text-left px-3 py-3 rounded-[14px]',
           tracked && 'focus-ring hover:bg-[var(--fill)] transition-colors',
         )}
       >
         <div className="flex items-center gap-2">
-          <span className="flex-1 font-semibold text-[15px] tracking-tight">{category.label}</span>
+          <span className="flex-1 text-[14px]">{category.label}</span>
           {/* "23/30" alone never said what the 30 was. Naming the unit once
               here is what makes the four areas legible as a weighting rather
               than four unrelated fractions. */}
@@ -152,7 +156,7 @@ function CategoryCard({ category }: { category: HealthCategory }) {
           interactive element in another is invalid HTML and leaves keyboard and
           screen-reader users unable to reach the inner one. */}
       {!tracked && cta && (
-        <div className="px-5 pb-4 -mt-1">
+        <div className="px-3 pb-3 -mt-1">
           <Link href={cta.href}>
             <Button variant="soft">{cta.label} <ArrowRight size={14} /></Button>
           </Link>
@@ -160,7 +164,7 @@ function CategoryCard({ category }: { category: HealthCategory }) {
       )}
 
       {tracked && open && (
-        <div className="px-5 pb-4 space-y-3 border-t border-[var(--line)] pt-3.5">
+        <div className="inset mx-1 mb-2 px-4 pb-3.5 space-y-3 pt-3.5">
           {category.metrics.map((m) => (
             <div key={m.key} className="flex gap-2.5">
               <span
@@ -182,6 +186,6 @@ function CategoryCard({ category }: { category: HealthCategory }) {
           ))}
         </div>
       )}
-    </GlassCard>
+    </div>
   );
 }

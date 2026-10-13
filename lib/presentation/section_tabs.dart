@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../core/router/nav_sections.dart';
 import '../core/theme/app_tokens.dart';
-import '../core/theme/semantic_colors.dart';
 
 /// The segmented strip that moves between a section's sibling screens.
 ///
@@ -53,12 +52,17 @@ class SectionTabs extends StatelessWidget {
   static bool _isSelected(String here, String route, NavSection section) {
     // Exact wins outright.
     if (here == route) return true;
+    // A sibling that matches exactly owns the location outright.
+    if (section.children.any((c) => c.route == here)) return false;
     // Otherwise the longest sibling that prefixes the location owns it, so a
     // sub-page keeps its parent segment lit.
     final owner = section.children
         .map((c) => c.route)
         .where((r) => here.startsWith('$r/'))
-        .fold<String?>(null, (best, r) => best == null || r.length > best.length ? r : best);
+        .fold<String?>(
+          null,
+          (best, r) => best == null || r.length > best.length ? r : best,
+        );
     return owner == route;
   }
 }
@@ -79,7 +83,12 @@ class _Segment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? context.colors.accent : scheme.surfaceContainerHighest,
+      color: selected
+          ? scheme.primary
+          : (Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF222226)
+                : Colors.white),
+      elevation: 0,
       borderRadius: BorderRadius.circular(AppRadii.pill),
       child: InkWell(
         onTap: onTap,
@@ -91,13 +100,9 @@ class _Segment extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 letterSpacing: -0.1,
-                // Near-black on emerald, not white: the accent is light enough
-                // that white text on it reads about 2.4:1.
-                color: selected
-                    ? scheme.onPrimary
-                    : scheme.onSurfaceVariant,
+                color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
               ),
             ),
           ),

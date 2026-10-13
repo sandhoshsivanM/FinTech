@@ -239,7 +239,7 @@ export function runDiagnostics(input: DiagnosticsInput): Check[] {
     ? { id: 'holding-dates', label: 'Purchase dates', level: 'ok', detail: 'Every holding has a purchase date.' }
     : {
         id: 'holding-dates', label: 'Purchase dates', level: 'warn',
-        detail: `${noDate.length} holding${noDate.length === 1 ? ' has' : 's have'} no purchase date, so the Tax Centre cannot tell short-term gains from long-term.`,
+        detail: `${noDate.length} holding${noDate.length === 1 ? ' has' : 's have'} no purchase date, so the Tax centre cannot tell short-term gains from long-term.`,
         offenders: noDate.slice(0, 20),
       });
 

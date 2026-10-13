@@ -58,7 +58,7 @@ export function DashboardStarter() {
   };
 
   return (
-    <Section title="Start here" first
+    <Section title="Start here" info="dashboard.startHere" first
       description="Your vault is empty, so there is nothing to total up yet. Pick a starting point.">
       <ul className="mt-5 grid gap-2.5 sm:grid-cols-3">
         {STARTERS.map(({ href, icon: Icon, label, hint }) => (

@@ -140,7 +140,7 @@ describe('Budget — "envelope donut: spend by category against the total budget
     withConfirm(<BudgetPage />);
     expect(screen.getByText('Envelopes')).toBeInTheDocument();
     // Both categories appear as slices in the donut's legend.
-    const card = screen.getByText('Envelopes').closest('div')!.parentElement!;
+    const card = screen.getByText('Envelopes').closest('.card') as HTMLElement;
     expect(within(card).getByText('Food')).toBeInTheDocument();
     expect(within(card).getByText('Travel')).toBeInTheDocument();
   });
@@ -152,7 +152,7 @@ describe('Budget — "envelope donut: spend by category against the total budget
       txns: [spend('c1', '4000')],
     });
     withConfirm(<BudgetPage />);
-    const card = screen.getByText('Envelopes').closest('div')!.parentElement!;
+    const card = screen.getByText('Envelopes').closest('.card') as HTMLElement;
     expect(within(card).queryByText('Travel')).not.toBeInTheDocument();
   });
 });

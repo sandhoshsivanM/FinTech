@@ -1,3 +1,4 @@
+import '../../home/home_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/semantic_colors.dart';
@@ -51,7 +52,9 @@ class BudgetStrip extends ConsumerWidget {
 
     return GlassCard(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -64,8 +67,11 @@ class BudgetStrip extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  Icon(Icons.pie_chart_outline,
-                      size: 16, color: scheme.onSurfaceVariant),
+                  Icon(
+                    Icons.pie_chart_outline,
+                    size: 16,
+                    color: scheme.onSurfaceVariant,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
@@ -107,11 +113,15 @@ class BudgetStrip extends ConsumerWidget {
                       ranked.length > _maxShown
                           ? 'All ${ranked.length} budgets'
                           : 'Manage budgets',
-                      style: text.labelMedium
-                          ?.copyWith(color: context.colors.accent),
+                      style: text.labelMedium?.copyWith(
+                        color: context.colors.accent,
+                      ),
                     ),
-                    Icon(Icons.chevron_right_rounded,
-                        size: 16, color: context.colors.accent),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: context.colors.accent,
+                    ),
                   ],
                 ),
               ),
@@ -140,15 +150,19 @@ class _BudgetRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    // Blue when fine, amber near the limit, rose over — the same bars as
+    // the home budget card.
+    final palette = HomePalette.of(context);
     final color = switch (progress.status) {
-      BudgetStatus.over => context.colors.budgetOver,
+      BudgetStatus.over => palette.rose,
       BudgetStatus.warning => context.colors.budgetWarn,
-      BudgetStatus.ok => context.colors.budgetOk,
+      BudgetStatus.ok => palette.blue,
     };
     final over = progress.status == BudgetStatus.over;
 
     return Semantics(
-      label: '$label, ${Money.toWords(progress.spent)} of '
+      label:
+          '$label, ${Money.toWords(progress.spent)} of '
           '${Money.toWords(progress.budget.amountLimit)} spent',
       child: ExcludeSemantics(
         child: Column(
@@ -162,7 +176,7 @@ class _BudgetRow extends StatelessWidget {
                   '${Money.format(progress.budget.amountLimit)}',
                   style: text.labelSmall?.copyWith(
                     color: over ? color : scheme.onSurfaceVariant,
-                    fontWeight: over ? FontWeight.w700 : null,
+                    fontWeight: over ? FontWeight.w500 : null,
                   ),
                 ),
               ],
@@ -170,11 +184,27 @@ class _BudgetRow extends StatelessWidget {
             const SizedBox(height: 4),
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadii.pill),
-              child: LinearProgressIndicator(
-                value: progress.fraction,
-                minHeight: 5,
-                valueColor: AlwaysStoppedAnimation(color),
-                backgroundColor: scheme.onSurfaceVariant.withValues(alpha: 0.15),
+              child: SizedBox(
+                height: 8,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: ColoredBox(
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.12),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: progress.fraction.clamp(0, 1),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadii.pill),
+                        child: CustomPaint(
+                          painter: HatchPainter(color),
+                          size: const Size(double.infinity, 8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

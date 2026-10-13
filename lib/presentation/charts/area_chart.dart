@@ -75,7 +75,7 @@ class _AreaChartState extends State<AreaChart> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final c = widget.color ?? context.colors.accent;
+    final c = widget.color ?? context.colors.info;
     final values = widget.values;
 
     if (values.length < ChartTokens.minSeriesPoints) {
@@ -144,10 +144,13 @@ class _AreaChartState extends State<AreaChart> {
               height: 18,
               child: readout == null
                   ? null
-                  : Text(readout,
+                  : Text(
+                      readout,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600)),
+                        color: scheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
           ],
         ),
@@ -176,11 +179,12 @@ class _Empty extends StatelessWidget {
               color: scheme.outlineVariant,
             ),
             const SizedBox(height: AppSpacing.sm),
-            Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: scheme.onSurfaceVariant)),
+            Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
           ],
         ),
       ),
@@ -249,14 +253,10 @@ class _AreaPainter extends CustomPainter {
     canvas.drawPath(
       fill,
       Paint()
-        ..shader = ui.Gradient.linear(
-          Offset(0, 0),
-          Offset(0, size.height),
-          [
-            color.withValues(alpha: fillOpacity + 0.06),
-            color.withValues(alpha: 0),
-          ],
-        ),
+        ..shader = ui.Gradient.linear(Offset(0, 0), Offset(0, size.height), [
+          color.withValues(alpha: fillOpacity + 0.06),
+          color.withValues(alpha: 0),
+        ]),
     );
 
     canvas.drawPath(
@@ -281,7 +281,10 @@ class _AreaPainter extends CustomPainter {
         Paint()..color = surface,
       );
       canvas.drawCircle(
-          end, ChartTokens.endMarkerRadius, Paint()..color = color);
+        end,
+        ChartTokens.endMarkerRadius,
+        Paint()..color = color,
+      );
     }
 
     // Crosshair last, so it sits above the fill and the line rather than being
@@ -305,7 +308,10 @@ class _AreaPainter extends CustomPainter {
         Paint()..color = surface,
       );
       canvas.drawCircle(
-          Offset(dx, dy), ChartTokens.endMarkerRadius, Paint()..color = color);
+        Offset(dx, dy),
+        ChartTokens.endMarkerRadius,
+        Paint()..color = color,
+      );
     }
   }
 

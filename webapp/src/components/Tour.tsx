@@ -118,7 +118,7 @@ export function Tour() {
       )}
       <div className="absolute card p-4 shadow-xl" style={{ top, left, width: W }}>
         <div className="eyebrow">Step {i + 1} of {STEPS.length}</div>
-        <h3 className="mt-1 text-[15px] font-bold tracking-tight">{step.title}</h3>
+        <h3 className="mt-1 text-[15px] font-medium tracking-tight">{step.title}</h3>
         <p className="mt-1.5 text-[13px] text-ink-soft leading-relaxed">{step.body}</p>
         <div className="mt-4 flex items-center justify-between">
           <button onClick={finish} className="text-[12.5px] text-muted hover:text-ink transition-colors">Skip</button>

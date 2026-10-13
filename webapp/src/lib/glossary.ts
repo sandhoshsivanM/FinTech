@@ -177,3 +177,503 @@ export const GLOSSARY = {
 } as const satisfies Record<string, Term>;
 
 export type TermKey = keyof typeof GLOSSARY;
+
+/**
+ * What each card on each screen is for.
+ *
+ * The glossary above explains a *word*; these explain a *section* — the card
+ * titled "Allocation" or "Upcoming bills" — in the same plain voice: what it
+ * shows, how it is worked out where that is not obvious, and what to do with
+ * it. Keys are `<route>.<section>` so the screen a sentence belongs to is
+ * never in doubt, and so they cannot collide with a glossary term.
+ *
+ * The Flutter app reuses this wording verbatim; change it here, not there.
+ */
+export const SECTION_HELP = {
+  // ---- /dashboard -------------------------------------------------------------
+  "dashboard.totalBalance": {
+    title: "Total balance",
+    body: "The combined balance of every active bank and cash account — the money you can actually spend. Investments, cards and loans are not included. Tap the eye to hide amounts.",
+  },
+  "dashboard.myWallet": {
+    title: "My wallet",
+    body: "Your bank, cash and credit card accounts as a deck of cards, fullest balance in front. Swipe or tap the dots to flip through them, and use Manage to add or edit accounts.",
+  },
+  "dashboard.lastSevenDays": {
+    title: "Last 7 days",
+    body: "Money in (green, above the line) and money out (pink, below) for each of the past seven days, on one shared scale. Tap a day for its exact figures. The comparison is this week's spending against the seven days before.",
+  },
+  "dashboard.quickInsights": {
+    title: "Insights",
+    body: "One finding at a time from your own records: this week's spending against last week, how much of this month's budget is used, and which category took the biggest share of this month's spending. Tap the bars to switch.",
+  },
+  "dashboard.budgetThisMonth": {
+    title: "Budget this month",
+    body: "What you have spent this calendar month against the total of all your budgets, including any amount rolled over from last month. Below it are the three categories closest to their limit.",
+  },
+  "dashboard.latestTransactions": {
+    title: "Latest transactions",
+    body: "Your five most recent transactions, newest first. Tap one to view or edit it, or See all for the full list.",
+  },
+  "dashboard.startHere": {
+    title: "Start here",
+    body: "Your vault is empty, so there is nothing to total up yet. Add an account, a holding or a transaction to begin, or load sample data to explore the app — you can erase it any time from Settings.",
+  },
+  "dashboard.netWorth": {
+    title: "Net worth",
+    body: "What you own minus what you owe: the money your transactions add up to, plus your investments at their latest price (or cost, if unpriced), minus the outstanding principal on your liabilities. The change shown is against your last snapshot before this month.",
+  },
+  "dashboard.thisMonth": {
+    title: "This month",
+    body: "Income, expenses and net cash flow for the selected calendar month. Savings rate is net cash flow as a share of income — the part of what you earned that you kept. Use the month arrows above to look back.",
+  },
+  "dashboard.portfolioPerformance": {
+    title: "Portfolio performance",
+    body: "Your net worth over the chosen range, from a snapshot Khazana records once a day you open it. Until two snapshots exist, the line is estimated from your transactions with today's investments and liabilities held constant.",
+  },
+  "dashboard.allocation": {
+    title: "Allocation",
+    body: "How your holdings' current value splits by asset type, sector or market cap. Sector and cap come from a bundled list of instruments; anything it cannot match is shown in grey as Unclassified.",
+  },
+  "dashboard.movers": {
+    title: "Movers",
+    body: "Your three best and three weakest holdings by percentage return since you bought them, comparing current value with cost. Only positions above or below cost are listed.",
+  },
+  "dashboard.financialHealth": {
+    title: "Financial health",
+    body: "A score out of 100 across four areas — wealth, protection, efficiency and future — each worth a fixed number of points. Areas with no data are left out rather than scored zero. Open Financial Health from the menu for the details.",
+  },
+  "dashboard.insights": {
+    title: "Insights",
+    body: "Plain-language observations built from your score, investments, spending and recurring bills — for example an unusual jump in a category. They are informational only, not investment advice.",
+  },
+  "dashboard.topHoldings": {
+    title: "Top holdings",
+    body: "Your six largest holdings by current value, with each one's share of your portfolio (weight) and its return since purchase. View all opens the full holdings list.",
+  },
+  "dashboard.upcomingBills": {
+    title: "Upcoming bills",
+    body: "The next five payments due from your recurring rules, soonest first, with how many days remain. See all to manage the rules themselves.",
+  },
+
+  // ---- /transactions ----------------------------------------------------------
+  "transactions.page": {
+    title: "Cash flow",
+    body: "Every income, expense, investment and transfer you have recorded, newest first. Search by merchant, amount, date or category, or narrow by type, account and dates. Each day header shows that day's income minus its spending and investments; transfers are left out.",
+  },
+
+  // ---- /add -------------------------------------------------------------------
+  "add.page": {
+    title: "Add transaction",
+    body: "Records one entry against an account. Expenses and income change your balance, budgets and reports; an investment is money moved, not lost; a transfer moves money between two of your own accounts. Editing the amount, date or account asks you to confirm first.",
+  },
+  "add.quickAdd": {
+    title: "Quick add",
+    body: "Type a sentence like 'spent 450 on groceries at bigbasket' and tap Parse to fill the form. It picks up the first amount (k, lakh and crore work), a matching category, the merchant after 'at' or 'from', and words like 'salary' or 'received' for income. Check the fields before saving.",
+  },
+
+  // ---- /budget ----------------------------------------------------------------
+  "budget.envelopes": {
+    title: "Envelopes",
+    body: "Shows this month's actual spending split by budgeted category, with the total spent against the total budgeted in the middle. Totals include any rolled-over amounts. Use it to see at a glance where the month's money went.",
+  },
+  "budget.guidance": {
+    title: "50/30/20 guidance",
+    body: "A simple rule of thumb: about 50% of income on needs, 30% on wants and 20% on savings. The app does not sort your categories into these groups; use it as a yardstick when setting limits. It is a guideline, not financial advice.",
+  },
+  "budget.newBudget": {
+    title: "New budget",
+    body: "Sets a monthly spending limit for one category. You are warned once spending reaches the alert threshold (90% by default). Turn on rollover to add last month's unspent amount to this month's limit; overspending is never carried forward.",
+  },
+
+  // ---- /calendar --------------------------------------------------------------
+  "calendar.thisMonth": {
+    title: "This month",
+    body: "Totals for the month on the calendar: everything earned, everything spent, and the net (income minus expense). Investment purchases are left out, because that money is still yours, just in a different place.",
+  },
+  "calendar.monthGrid": {
+    title: "Month calendar",
+    body: "Each day shows its income in green above its spending in red. A paperclip means a receipt is attached. Use the arrows to change month and tap a day to see its entries.",
+  },
+  "calendar.day": {
+    title: "Day ledger",
+    body: "Lists every transaction on the day you tapped, newest first, with its category and amount. Pick another day on the calendar to switch.",
+  },
+  "calendar.budgets": {
+    title: "Budgets",
+    body: "How much of each budget has been spent in the month on the calendar. The bar fills toward the limit, including any amount rolled over from the month before. Set or change limits on the Budget page.",
+  },
+
+  // ---- /recurring -------------------------------------------------------------
+  "recurring.page": {
+    title: "Recurring",
+    body: "Bills, subscriptions and income that repeat on a schedule. Each rule is converted to a monthly figure (daily x30, weekly x4.33, yearly /12); Committed a year is your monthly outgoings x12. Run due now posts every overdue occurrence; Post now records just one rule.",
+  },
+
+  // ---- /accounts --------------------------------------------------------------
+  "accounts.reassign": {
+    title: "Transactions not on a real account",
+    body: "Entries recorded before you added accounts all sit on the built-in Cash account. Pick the account they really came from, usually your salary account, to move them all at once and rewrite their ledger entries. Entries you already tagged are left alone.",
+  },
+  "accounts.form": {
+    title: "Add an account",
+    body: "Name the account, choose Bank or Cash, and enter what it holds today. Transactions then move the balance from that starting point. Changing the balance later shifts the current balance by the same amount.",
+  },
+  "accounts.bank": {
+    title: "Bank accounts",
+    body: "Your bank accounts, with the total they hold. Each balance is the starting balance you entered plus every transaction and transfer recorded against that account.",
+  },
+  "accounts.cash": {
+    title: "Cash & wallets",
+    body: "Cash and wallet accounts, with the total they hold. Each balance is the starting balance plus every entry recorded against it. The built-in Cash account holds anything not assigned to another account.",
+  },
+
+  // ---- /goals -----------------------------------------------------------------
+  "goals.page": {
+    title: "Goals",
+    body: "Savings targets with progress toward each one. A goal linked to an account follows that account's balance; otherwise you add money by hand. With a target date, each card shows the monthly amount still needed: what is left divided by the months remaining.",
+  },
+  "goals.form": {
+    title: "New goal",
+    body: "Give the goal a name, type and target amount. Link the account the money sits in so progress follows its balance, or track it by hand. Add a target date to see how much to save each month.",
+  },
+
+  // ---- /investments -----------------------------------------------------------
+  "investments.portfolioAllocation": {
+    title: "Portfolio allocation",
+    body: "Each holding's share of what your portfolio is worth today, at its last recorded price. The smallest slices fold into Others, which you can expand. A few large slices mean your money rides on a few positions.",
+  },
+  "investments.investmentAllocation": {
+    title: "Investment allocation",
+    body: "Each holding's share of the money you put in, at your average buy price. Compare it with Portfolio allocation: a slice that grew there has gained more than the rest, one that shrank has lagged.",
+  },
+  "investments.assetTypeAllocation": {
+    title: "Asset type allocation",
+    body: "Your current value split by asset type, such as stocks, mutual funds, gold or fixed deposits. It shows how much of your money sits in each kind of investment, whatever the individual holdings are.",
+  },
+  "investments.profitVsLoss": {
+    title: "Profit vs loss",
+    body: "How many positions are above what you paid for them, how many are below and how many are flat. It counts positions, not rupees, so one large loss and one small gain weigh the same here.",
+  },
+  "investments.topGainers": {
+    title: "Top 5 gainers",
+    body: "The five holdings with the highest return since you bought them, as a percentage of what you paid. Only positions currently above cost appear. The return is unrealised: nothing counts until you sell.",
+  },
+  "investments.topLosers": {
+    title: "Top 5 losers",
+    body: "The five holdings furthest below what you paid for them, as a percentage of cost. Only positions currently below cost appear. The loss is unrealised: it is on paper until you sell.",
+  },
+  "investments.pnlByStock": {
+    title: "Overall P&L by stock",
+    body: "Profit or loss in rupees for the eight holdings that move your total the most, gains and losses alike. Each bar is current value minus what you paid. It shows which positions drive your overall result.",
+  },
+  "investments.todayPnlByStock": {
+    title: "Today's P&L by stock",
+    body: "How much each of your eight biggest movers gained or lost today, from the last price against the previous close in your broker file. Without those closes it shows demo figures, badged, if demo market data is on.",
+  },
+  "investments.holdingsSummary": {
+    title: "Holdings summary",
+    body: "Every position in the current filter with its quantity, average price, latest price, value and profit or loss. Weight is the position's share of the filtered portfolio's value. Search, sort or export it, or open Full grid to edit.",
+  },
+  "investments.sectorAllocation": {
+    title: "Sector allocation",
+    body: "Your current value split by industry sector, using the sector you set on a holding or Khazana's built-in instrument list. Holdings it cannot match show as Unclassified, in grey.",
+  },
+  "investments.diversificationScore": {
+    title: "Diversification score",
+    body: "A 0-100 score from how many asset groups and sectors you hold, how much sits in your largest asset group and how big your largest single position is. It needs at least two holdings. It is a guideline, not financial advice.",
+  },
+
+  // ---- /holdings --------------------------------------------------------------
+  "holdings.allPositions": {
+    title: "All positions",
+    body: "Every holding you own, with its value, cost, return and weight in the portfolio. Fixed-income holdings show their interest rate, interest earned so far and time to maturity. Filter by asset type, search, sort, export, or tap the pencil to edit.",
+  },
+
+  // ---- /watchlist -------------------------------------------------------------
+  "watchlist.page": {
+    title: "Watchlist",
+    body: "Instruments you are tracking but do not own, with a price and target you enter yourself. To target is how far the price must move to reach it, and near target counts those within 6%. Day change is demo data.",
+  },
+
+  // ---- /markets ---------------------------------------------------------------
+  "markets.nifty50": {
+    title: "NIFTY 50",
+    body: "How the NIFTY 50 index, India's 50 largest listed companies, moved over the past month. Khazana never contacts a market data provider, so this line is simulated demo data, not real index levels.",
+  },
+  "markets.topGainers": {
+    title: "Top gainers",
+    body: "The five instruments you hold or watch with the biggest rise today. The day moves are simulated demo data, so use this to see how the screen works, not to make decisions.",
+  },
+  "markets.topLosers": {
+    title: "Top losers",
+    body: "The five instruments you hold or watch with the biggest fall today. The day moves are simulated demo data, so use this to see how the screen works, not to make decisions.",
+  },
+
+  // ---- /dividends -------------------------------------------------------------
+  "dividends.payoutsByMonth": {
+    title: "Payouts by month",
+    body: "Dividends, interest and other payouts you have marked as received, totalled for each of the last twelve months. Expected payouts are left out until you mark them received.",
+  },
+
+  // ---- /tax -------------------------------------------------------------------
+  "tax.positionByPosition": {
+    title: "Position by position",
+    body: "The tax you might owe on each holding if you sold it today: time held decides short or long term, and the ₹1.25 lakh equity exemption is applied once across your portfolio. Holdings without a purchase date stay unclassified. It is an estimate, not tax advice.",
+  },
+
+  // ---- /score -----------------------------------------------------------------
+  "score.fourAreas": {
+    title: "Four areas",
+    body: "Your score's four parts and the points each earned: wealth (30), protection (25), efficiency (25) and future (20). Tap an area to see the checks behind it. Untracked areas show a button to add the data they need.",
+  },
+  "score.scoreHistory": {
+    title: "Score history",
+    body: "Your financial health score over time, taken from the daily snapshots Khazana records when you open it. Days without a score are skipped rather than drawn as zero.",
+  },
+
+  // ---- /reports ---------------------------------------------------------------
+  "reports.export": {
+    title: "Export this period",
+    body: "Downloads a formatted Excel workbook and printable PDF for exactly the period chosen above: transactions, expenses by category, cash flow, balance sheet and holdings. A Pro feature; the CSV export on Transactions stays free.",
+  },
+  "reports.incomeVsExpenses": {
+    title: "Income vs expenses",
+    body: "Your income and spending side by side for each month in the chosen period. Investment purchases are not counted as spending.",
+  },
+  "reports.balanceSheet": {
+    title: "Balance sheet",
+    body: "What you own (assets), what you owe (liabilities) and equity, from your account balances as of today. Net worth is assets minus liabilities. If the figures do not add up, Diagnostics names the records causing it.",
+  },
+  "reports.spendingByCategory": {
+    title: "Spending by category",
+    body: "How your spending in the chosen period splits across categories, largest first. Smaller categories are folded into Other, which you can expand.",
+  },
+  "reports.monthByMonth": {
+    title: "Month by month",
+    body: "The same months as the chart, as a table you can read exactly. Saved is net (income minus expense) as a share of that month's income. Transfers and investment purchases are left out of both income and expense.",
+  },
+  "reports.netWorthTrend": {
+    title: "Net worth trend",
+    body: "A day-by-day running total of your transactions across the chosen period: income adds to it, and every other transaction, including investment purchases, takes away from it.",
+  },
+
+  // ---- /forecast --------------------------------------------------------------
+  "forecast.safeToSpend": {
+    title: "Safe to spend",
+    body: "A daily allowance for the rest of this month: your cash minus recurring payments still due this month, capped by any budget left, divided by the days remaining. It needs some income recorded in the last three months.",
+  },
+  "forecast.cashFlowForecast": {
+    title: "Cash-flow forecast",
+    body: "Your cash projected six months ahead from your recurring rules plus your typical monthly spending — the median of recent completed months, excluding recurring categories. Months where cash would go below zero are marked as a shortfall.",
+  },
+  "forecast.thisMonthSoFar": {
+    title: "This month so far",
+    body: "Income, spending, net and invested so far this month, compared with the same number of days last month so the comparison is fair. Below are the categories whose spending changed most.",
+  },
+  "forecast.netWorthProjected": {
+    title: "Net worth, projected",
+    body: "Your net worth five years out if you keep saving your typical monthly surplus (the median of recent completed months) and invested assets grow 8% a year. Cash is not assumed to grow. A projection, not a prediction.",
+  },
+  "forecast.whatIfDebt": {
+    title: "What if I paid more toward debt?",
+    body: "Enter an extra monthly amount to see when you would be debt free, total interest over five years, and your net worth then. Extra goes to the highest-rate debt first, on top of each debt's minimum payment.",
+  },
+
+  // ---- /analytics -------------------------------------------------------------
+  "analytics.riskDiversification": {
+    title: "Risk & diversification",
+    body: "A diversification score out of 100: up to 55 points for how many asset groups you hold (five or more earns all), and up to 45 for how little sits in the largest one. Below it: sector spread, your largest position and the top five's combined weight.",
+  },
+  "analytics.returnDistribution": {
+    title: "Return distribution",
+    body: "How many of your positions fall in each band of unrealised return, from down more than 10% to up more than 40%. It counts positions rather than weighting by value, so one large winner cannot hide many weak ones. Red bars are below cost.",
+  },
+  "analytics.concentration": {
+    title: "Concentration",
+    body: "Each holding's share of your portfolio's current value, largest first. Any single position at 8% or more is flagged, as that is roughly where one name starts to drive the whole portfolio's return. It is a guideline, not financial advice.",
+  },
+  "analytics.netWorthTrend": {
+    title: "Net worth trend",
+    body: "Your net worth across the selected range, plotted from the daily snapshots Khazana records each day you open it. Longer history appears as more snapshots build up.",
+  },
+  "analytics.netWorthMovement": {
+    title: "Net worth movement",
+    body: "How much your net worth rose or fell each month, using the last snapshot recorded in each month. Shows up to the last 12 months in the selected range.",
+  },
+  "analytics.whereValueSits": {
+    title: "Where value sits",
+    body: "Your portfolio by asset group on the inner ring, and what each group is made of on the outer ring — sectors for equity, instrument types for the rest. Hover or tap a slice for its value.",
+  },
+
+  // ---- /liabilities -----------------------------------------------------------
+  "liabilities.form": {
+    title: "New liability",
+    body: "Add or edit a loan or credit card. Enter the outstanding balance and APR (yearly interest rate); for a loan add the term in months so the EMI can be worked out, and for a card add the credit limit to track utilisation.",
+  },
+  "liabilities.payoffSimulator": {
+    title: "Debt payoff simulator",
+    body: "Shows how long it takes to clear all your debts if you pay a fixed amount each month, and the total interest you would pay. Avalanche puts the money on the highest-APR debt first; snowball puts it on the smallest balance first.",
+  },
+
+  // ---- /insurance -------------------------------------------------------------
+  "insurance.form": {
+    title: "Add policy",
+    body: "Record a policy's type, cover amount (sum assured), annual premium and optional renewal date. Life and term cover count towards your life cover; health policies count towards health cover.",
+  },
+  "insurance.coverageGap": {
+    title: "Coverage gap analysis",
+    body: "Compares your cover with simple guidelines: life cover of 10× your income from the last 365 days, and health cover of ₹5L or half that income, whichever is higher. It is a guideline, not financial advice.",
+  },
+
+  // ---- /safety-net ------------------------------------------------------------
+  "safety-net.readiness": {
+    title: "Safety-net readiness",
+    body: "A 0-100 score built from four parts: emergency fund (35 points), life cover (25), health cover (25) and safe and retirement assets (15). Each part scores by how close it is to its target; the summary names your biggest gap.",
+  },
+  "safety-net.emergencyFund": {
+    title: "Emergency fund",
+    body: "Adds up your emergency-fund goals against their targets. With no target set, the target is 6 months of expenses, using your average monthly spending over the last 90 days. Add to the goal on the Goals page.",
+  },
+  "safety-net.insuranceCover": {
+    title: "Insurance cover",
+    body: "Life and health cover from your policies, against the same guidelines as the Insurance page: life about 10× your annual income, health at least ₹5L or half your income. It is a guideline, not financial advice.",
+  },
+  "safety-net.safeAssets": {
+    title: "Safe & retirement assets",
+    body: "Lists your fixed deposits, PPF / EPF and NPS holdings from Investments, valued at the last price or at cost if none is recorded. About one year of income held here counts as fully covered in the readiness score.",
+  },
+
+  // ---- /import ----------------------------------------------------------------
+  "import.selectBroker": {
+    title: "Select broker",
+    body: "Pick where your holdings file came from to see how to export it. Columns are detected automatically, so any file with symbol, quantity and average-cost columns will work.",
+  },
+  "import.exportGuide": {
+    title: "How to export",
+    body: "Step-by-step instructions for downloading your holdings or statement file from the broker or bank you picked. Save the file, then upload it below.",
+  },
+  "import.assetTemplate": {
+    title: "Step 1 · Download the template",
+    body: "A CSV with example rows for holdings of any asset class. Replace the examples with your own positions (symbol, quantity, average cost), then upload it in step 2.",
+  },
+  "import.uploadHoldings": {
+    title: "Upload file",
+    body: "Drop a .csv, .txt, .xls or .xlsx file to preview it before anything is saved. In Update by Name mode, a row with the same symbol and exchange as one you hold updates it; other rows are added. Rows missing a symbol, quantity or average cost are skipped.",
+  },
+  "import.selectBank": {
+    title: "Select bank",
+    body: "Pick the bank your statement came from to see how to export it. The format is detected automatically, so a statement from a bank not listed may still work.",
+  },
+  "import.txnTemplate": {
+    title: "Step 1 · Download the template",
+    body: "A CSV for income, expenses and transfers. Each row needs a date and an amount; type (IN, OUT or TRANSFER), category and description are optional. Leave category blank to have it guessed from the description.",
+  },
+  "import.uploadStatement": {
+    title: "Upload statement",
+    body: "Drop your statement to preview it before anything is saved. Income and expense rows go into the account you choose. Rows already in your book, same date, amount, type and description, are skipped so nothing is counted twice.",
+  },
+  "import.history": {
+    title: "Import history",
+    body: "Your last ten import runs, newest first, with how many records each added or updated. Undo removes exactly the records a run added; records it updated keep their new values.",
+  },
+
+  // ---- /reconcile -------------------------------------------------------------
+  "reconcile.explain": {
+    title: "This would explain the difference",
+    body: "Uncleared entries whose amount exactly equals the gap between your statement and your cleared balance. If your bank has processed one of them, tick it and the difference should go to zero.",
+  },
+  "reconcile.entries": {
+    title: "Entries",
+    body: "Every entry on this account up to the statement date; tick the ones your bank statement shows. Cleared balance is the opening balance plus ticked entries, and the difference is the statement balance minus that. Zero means the app and the bank agree.",
+  },
+
+  // ---- /alerts ----------------------------------------------------------------
+  "alerts.yourAlerts": {
+    title: "Your alerts",
+    body: "Every rule you have set, with its current condition, when it was last checked and, for price rules, how old the price is. Rules are only checked while Khazana is open. Use the switch to pause a rule.",
+  },
+
+  // ---- /news ------------------------------------------------------------------
+  "news.latest": {
+    title: "Latest",
+    body: "Sample headlines matched to the instruments you hold or watch, plus market-wide stories. Khazana never contacts a news provider, as that would reveal what you own, so these are fixed demo stories. Switch between all, holdings or watchlist.",
+  },
+  "news.indices": {
+    title: "Indices",
+    body: "Today's level and change for major Indian market benchmarks, such as NIFTY 50, SENSEX and BANK NIFTY, plus the rupee against the dollar. These are simulated demo figures, not live quotes.",
+  },
+  "news.upcomingEarnings": {
+    title: "Upcoming earnings",
+    body: "Quarterly results dates for up to five companies you hold, spread over the coming weeks. The dates are demo data, so check the company's own announcement before relying on one.",
+  },
+
+  // ---- /diagnostics -----------------------------------------------------------
+  "diagnostics.recordCounts": {
+    title: "Record counts",
+    body: "How many of each kind of record the active profile holds. A zero where you expect data can mean a restored backup landed under another profile; switch profiles to check.",
+  },
+  "diagnostics.integrityChecks": {
+    title: "Integrity checks",
+    body: "Read-only checks for problems in your data, such as missing prices, uncategorised transactions or stale exchange rates. Nothing is repaired automatically; where there is a fix, a button takes you to the right page.",
+  },
+
+  // ---- /settings --------------------------------------------------------------
+  "settings.appearance": {
+    title: "Appearance",
+    body: "Choose light, dark or system theme, and an accent colour. System follows your device's setting.",
+  },
+  "settings.profiles": {
+    title: "Profiles",
+    body: "Each profile keeps completely separate data inside the same encrypted vault, so you can track yourself, a spouse or a business apart. Switch, rename, add or delete profiles here.",
+  },
+  "settings.notifications": {
+    title: "Notifications",
+    body: "Turn on system notifications and pick what they cover: bills, renewals, goal dates, budgets, price alerts and a catch-up summary. On the web they only appear while a Khazana window is open.",
+  },
+  "settings.privacyBackup": {
+    title: "Privacy & backup",
+    body: "Your vault is encrypted on this device and never sent anywhere. Control live prices and demo data here, export an encrypted .ftos backup, or restore one. Restoring replaces this vault, so set the backup PIN first.",
+  },
+  "settings.displayCurrency": {
+    title: "Display currency",
+    body: "Amounts are stored in rupees and converted to the currency you pick here for display only. Conversion uses the exchange rates you set.",
+  },
+  "settings.exchangeRates": {
+    title: "Exchange rates",
+    body: "The rupee rate for each foreign currency you use, with the date you set it. A rate never set uses a built-in default, and one older than 90 days is marked likely stale. Update them to keep foreign holdings valued correctly.",
+  },
+  "settings.data": {
+    title: "Data",
+    body: "Fill an empty vault with sample transactions, holdings and liabilities to try the app. It never replaces your own records.",
+  },
+  "settings.dangerZone": {
+    title: "Danger zone",
+    body: "Lock the vault to clear decrypted data from memory, or erase it to delete every record permanently. Erasing cannot be undone, so export a backup first.",
+  },
+
+  // ---- /pro -------------------------------------------------------------------
+  "pro.unlocked": {
+    title: "Khazana Pro is unlocked",
+    body: "Pro features are active on this device. The licence is checked here, offline, and only a short order reference is shown. Removing it from this device returns the app to the free tier.",
+  },
+  "pro.pricing": {
+    title: "Price",
+    body: "Khazana Pro is a single one-time payment, not a subscription. Buy it on the website and a licence key is emailed to you; paste it below to unlock Pro.",
+  },
+  "pro.includes": {
+    title: "What Pro includes",
+    body: "Pro adds the Tax Centre, deeper portfolio analysis, statement import, forecast and reconcile, household profiles, and full history and reports. Your ledger, backups and CSV export stay free.",
+  },
+  "pro.licence": {
+    title: "I have a licence key",
+    body: "Paste the key emailed to you after buying. It is checked on this device and never sent anywhere. This licence covers the desktop and web app; App Store purchases are separate.",
+  },
+} as const satisfies Record<string, Term>;
+
+export type SectionKey = keyof typeof SECTION_HELP;
+
+/** Anything the ⓘ button can explain: a term on a figure, or a whole section. */
+export type HelpKey = TermKey | SectionKey;
+
+export const HELP: Record<HelpKey, Term> = { ...GLOSSARY, ...SECTION_HELP };

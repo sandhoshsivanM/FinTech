@@ -170,12 +170,22 @@ void main() {
       }
     });
 
-    test('steps get lighter toward the surface, monotonically', () {
-      final shades = groupShades(AssetGroup.equity, 5, dark: false);
-      double lum(Color c) => c.computeLuminance();
-      for (var i = 1; i < shades.length; i++) {
-        expect(lum(shades[i]), greaterThan(lum(shades[i - 1])),
-            reason: 'step $i is not lighter than step ${i - 1}');
+    test('neighbouring steps are clearly apart, alternating light and dark',
+        () {
+      for (final dark in [false, true]) {
+        final shades = groupShades(AssetGroup.equity, 5, dark: dark);
+        double lum(Color c) => c.computeLuminance();
+        // Odd steps are lighter than the base, even steps darker, so adjacent
+        // sector slices never sit one faint step apart.
+        expect(lum(shades[1]), greaterThan(lum(shades[0])));
+        expect(lum(shades[2]), lessThan(lum(shades[0])));
+        expect(lum(shades[3]), greaterThan(lum(shades[1])));
+        expect(lum(shades[4]), lessThan(lum(shades[2])));
+        for (var i = 1; i < shades.length; i++) {
+          expect((lum(shades[i]) - lum(shades[i - 1])).abs(),
+              greaterThan(0.05),
+              reason: 'steps ${i - 1} and $i are too close (dark: $dark)');
+        }
       }
     });
 

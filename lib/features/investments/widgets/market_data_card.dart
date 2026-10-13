@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/semantic_colors.dart';
@@ -83,9 +84,15 @@ class _MarketDataCardState extends State<MarketDataCard> {
               Icon(Icons.speed_outlined, size: 18, color: muted),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text('Market data',
-                    style:
-                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                child: InfoHint.titled(
+                  Text(
+                    'Market data',
+                    style: text.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  'investments.marketData',
+                ),
               ),
               widget.refreshButton,
             ],
@@ -103,8 +110,7 @@ class _MarketDataCardState extends State<MarketDataCard> {
               for (final q in PriceQuality.values)
                 if ((byQuality[q] ?? 0) > 0)
                   _QualityChip(quality: q, count: byQuality[q]!),
-              if (unpriced > 0)
-                _QualityChip(quality: null, count: unpriced),
+              if (unpriced > 0) _QualityChip(quality: null, count: unpriced),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -113,18 +119,20 @@ class _MarketDataCardState extends State<MarketDataCard> {
             child: TextButton.icon(
               onPressed: () => setState(() => _expanded = !_expanded),
               icon: Icon(
-                  _expanded ? Icons.expand_less : Icons.expand_more,
-                  size: 18),
-              label: Text(_expanded
-                  ? 'Hide price sources'
-                  : 'Show price for each holding'),
+                _expanded ? Icons.expand_less : Icons.expand_more,
+                size: 18,
+              ),
+              label: Text(
+                _expanded
+                    ? 'Hide price sources'
+                    : 'Show price for each holding',
+              ),
             ),
           ),
           if (_expanded) ...[
             const Divider(height: 1),
             const SizedBox(height: AppSpacing.sm),
-            for (final p in _sorted(positions))
-              _PriceRow(position: p),
+            for (final p in _sorted(positions)) _PriceRow(position: p),
           ],
         ],
       ),
@@ -148,11 +156,11 @@ class _MarketDataCardState extends State<MarketDataCard> {
     }
 
     return [...positions]..sort((a, b) {
-        final byRank = rank(a).compareTo(rank(b));
-        return byRank != 0
-            ? byRank
-            : a.instrument.name.compareTo(b.instrument.name);
-      });
+      final byRank = rank(a).compareTo(rank(b));
+      return byRank != 0
+          ? byRank
+          : a.instrument.name.compareTo(b.instrument.name);
+    });
   }
 
   static String _summary(
@@ -167,18 +175,24 @@ class _MarketDataCardState extends State<MarketDataCard> {
 
     final parts = <String>[];
     if (quoted == 0) {
-      parts.add('No holding carries a market quote yet — every value below is '
-          'a price you entered or the cost you paid.');
+      parts.add(
+        'No holding carries a market quote yet — every value below is '
+        'a price you entered or the cost you paid.',
+      );
     } else {
-      parts.add('$quoted of ${quoted + unpriced + (byQuality[PriceQuality.stale] ?? 0) + (byQuality[PriceQuality.indicative] ?? 0) + (byQuality[PriceQuality.unknownDate] ?? 0)} '
-          'holdings carry a market quote.');
+      parts.add(
+        '$quoted of ${quoted + unpriced + (byQuality[PriceQuality.stale] ?? 0) + (byQuality[PriceQuality.indicative] ?? 0) + (byQuality[PriceQuality.unknownDate] ?? 0)} '
+        'holdings carry a market quote.',
+      );
     }
     if (oldest != null) {
       parts.add('Oldest price ${_ago(oldest)}.');
     }
-    parts.add(lastRefreshedAt == null
-        ? 'Never refreshed on this device.'
-        : 'Last checked ${_ago(lastRefreshedAt)}.');
+    parts.add(
+      lastRefreshedAt == null
+          ? 'Never refreshed on this device.'
+          : 'Last checked ${_ago(lastRefreshedAt)}.',
+    );
     return parts.join(' ');
   }
 
@@ -210,7 +224,9 @@ class _QualityChip extends StatelessWidget {
     final (label, color) = describeQuality(context.colors, quality);
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -218,7 +234,10 @@ class _QualityChip extends StatelessWidget {
       child: Text(
         '$count $label',
         style: TextStyle(
-            fontSize: 12, fontWeight: FontWeight.w600, color: color),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
       ),
     );
   }
@@ -226,9 +245,10 @@ class _QualityChip extends StatelessWidget {
 
 /// One label and colour per confidence level, shared by the chips and the rows
 /// so a holding cannot be described one way in the summary and another below.
-(String, Color) describeQuality(SemanticColors c, PriceQuality? q) => switch (q) {
+(String, Color) describeQuality(SemanticColors c, PriceQuality? q) =>
+    switch (q) {
       PriceQuality.live => ('live', c.income),
-      PriceQuality.official => ('official NAV', c.accent),
+      PriceQuality.official => ('official NAV', c.info),
       PriceQuality.stale => ('cached', c.budgetWarn),
       PriceQuality.indicative => ('manual', c.budgetWarn),
       PriceQuality.unknownDate => ('date unknown', c.budgetWarn),
@@ -251,7 +271,8 @@ class _PriceRow extends StatelessWidget {
     // perfectly and then sits there looking authoritative. Age is a separate
     // axis from provenance, and past a week it is the one that matters.
     final at = position.pricedAt;
-    final stale = at != null &&
+    final stale =
+        at != null &&
         position.priceQuality != PriceQuality.unknownDate &&
         DateTime.now().difference(at).inDays > 7;
     if (stale) {
@@ -262,7 +283,8 @@ class _PriceRow extends StatelessWidget {
     // The date is suppressed for unknownDate on purpose: that timestamp is the
     // migration's run time, not an observation, and printing it would dress a
     // fiction up as a fact.
-    final showDate = position.pricedAt != null &&
+    final showDate =
+        position.pricedAt != null &&
         position.priceQuality != PriceQuality.unknownDate;
 
     return Padding(
@@ -279,13 +301,17 @@ class _PriceRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(position.instrument.name,
-                    style: text.bodyMedium, maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
+                Text(
+                  position.instrument.name,
+                  style: text.bodyMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 Text(
                   [
                     label,
-                    if (position.priceSource != null) position.priceSource!.label,
+                    if (position.priceSource != null)
+                      position.priceSource!.label,
                     if (showDate) _date(position.pricedAt!),
                   ].join(' · '),
                   style: text.bodySmall?.copyWith(color: muted),
@@ -295,11 +321,9 @@ class _PriceRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Text(
-            position.price == null
-                ? 'at cost'
-                : Money.format(position.price!),
+            position.price == null ? 'at cost' : Money.format(position.price!),
             style: text.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w500,
               color: position.price == null ? muted : null,
             ),
           ),
@@ -309,8 +333,18 @@ class _PriceRow extends StatelessWidget {
   }
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   static String _date(DateTime d) {

@@ -1,5 +1,7 @@
+import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import '../../../presentation/zentra_kit.dart';
 
 import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,9 +20,7 @@ class RecurringScreen extends StatelessWidget {
   const RecurringScreen({super.key});
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: const DataGate(child: _Body()),
-    );
+    return Scaffold(body: const DataGate(child: _Body()));
   }
 }
 
@@ -39,7 +39,8 @@ class _Body extends ConsumerWidget {
           ? EmptyState(
               icon: Icons.repeat_rounded,
               title: 'No recurring rules yet',
-              message: 'Rent, EMIs, subscriptions — anything that repeats on a '
+              message:
+                  'Rent, EMIs, subscriptions — anything that repeats on a '
                   'schedule. Khazana posts each one automatically on its due '
                   'date so your cash flow stays complete.',
               action: FilledButton.icon(
@@ -50,7 +51,11 @@ class _Body extends ConsumerWidget {
             )
           : ListView(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md, 0, AppSpacing.md, 96),
+                AppSpacing.md,
+                0,
+                AppSpacing.md,
+                96,
+              ),
               children: [
                 _MonthlyTotals(rules: rules),
                 const SizedBox(height: AppSpacing.md),
@@ -94,7 +99,9 @@ class _Body extends ConsumerWidget {
                 controller: amount,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
-                    labelText: 'Amount (₹)', prefixText: '₹ '),
+                  labelText: 'Amount (₹)',
+                  prefixText: '₹ ',
+                ),
               ),
               DropdownButtonFormField<String>(
                 initialValue: categoryId,
@@ -115,6 +122,7 @@ class _Body extends ConsumerWidget {
                 onChanged: (v) => setState(() => freq = v ?? freq),
               ),
               SegmentedButton<TxnType>(
+                showSelectedIcon: false,
                 segments: const [
                   ButtonSegment(value: TxnType.expense, label: Text('Expense')),
                   ButtonSegment(value: TxnType.income, label: Text('Income')),
@@ -126,13 +134,18 @@ class _Body extends ConsumerWidget {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () {
                 final a = Decimal.tryParse(amount.text.trim());
-                if (a == null || a <= Decimal.zero || categoryId == null) return;
-                ref.read(recurringActionsProvider).add(
+                if (a == null || a <= Decimal.zero || categoryId == null) {
+                  return;
+                }
+                ref
+                    .read(recurringActionsProvider)
+                    .add(
                       amount: a,
                       type: type,
                       categoryId: categoryId!,
@@ -165,13 +178,16 @@ class _MonthlyTotals extends StatelessWidget {
   /// Weekly uses 52/12, not 4 — four weeks a month undercounts by ~8%, which on
   /// a large standing order is a visible error rather than a rounding one.
   static Decimal _perMonth(RecurringRule r) => switch (r.frequency) {
-        Frequency.daily => r.amount * Decimal.fromInt(30),
-        Frequency.weekly => (r.amount * Decimal.fromInt(52) / Decimal.fromInt(12))
-            .toDecimal(scaleOnInfinitePrecision: 2),
-        Frequency.monthly => r.amount,
-        Frequency.yearly => (r.amount / Decimal.fromInt(12))
-            .toDecimal(scaleOnInfinitePrecision: 2),
-      };
+    Frequency.daily => r.amount * Decimal.fromInt(30),
+    Frequency.weekly =>
+      (r.amount * Decimal.fromInt(52) / Decimal.fromInt(12)).toDecimal(
+        scaleOnInfinitePrecision: 2,
+      ),
+    Frequency.monthly => r.amount,
+    Frequency.yearly => (r.amount / Decimal.fromInt(12)).toDecimal(
+      scaleOnInfinitePrecision: 2,
+    ),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -187,16 +203,29 @@ class _MonthlyTotals extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
 
-    Widget cell(String label, Decimal value, Color color) => Expanded(
+    Widget cell(String label, Decimal value, Color color, [String? hint]) =>
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: text.labelMedium?.copyWith(color: muted)),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: text.labelMedium?.copyWith(color: muted),
+                    ),
+                  ),
+                  if (hint != null) InfoHint(hint),
+                ],
+              ),
               const SizedBox(height: 2),
               Text(
                 Money.format(value),
-                style: text.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w800, color: color),
+                style: text.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: color,
+                ),
               ),
             ],
           ),
@@ -205,8 +234,14 @@ class _MonthlyTotals extends StatelessWidget {
     return GlassCard(
       child: Row(
         children: [
-          cell('Committed each month', out, context.colors.expense),
-          if (inn > Decimal.zero) cell('Expected in', inn, context.colors.income),
+          cell(
+            'Committed each month',
+            out,
+            context.colors.expense,
+            'recurring.page',
+          ),
+          if (inn > Decimal.zero)
+            cell('Expected in', inn, context.colors.income),
           Expanded(
             child: Text(
               '${rules.length} rule${rules.length == 1 ? '' : 's'}',
@@ -232,13 +267,24 @@ class _RuleCard extends StatelessWidget {
   final VoidCallback onDelete;
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   /// "4 Aug 2026" rather than "2026-08-04". An ISO date is for a log file; a
   /// person reading their own bills wants the month by name.
-  static String _date(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+  static String _date(DateTime d) =>
+      '${d.day} ${_months[d.month - 1]} ${d.year}';
 
   @override
   Widget build(BuildContext context) {
@@ -251,14 +297,16 @@ class _RuleCard extends StatelessWidget {
     final due = days < 0
         ? 'overdue'
         : days == 0
-            ? 'due today'
-            : days == 1
-                ? 'due tomorrow'
-                : 'in $days days';
+        ? 'due today'
+        : days == 1
+        ? 'due tomorrow'
+        : 'in $days days';
 
     return GlassCard(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.md),
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.md,
+      ),
       child: Row(
         children: [
           Container(
@@ -266,19 +314,23 @@ class _RuleCard extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: tint.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+              shape: BoxShape.circle,
             ),
-            child: Icon(income ? Icons.sync_alt : Icons.repeat_rounded,
-                size: 20, color: tint),
+            child: Icon(
+              income ? Icons.sync_alt : Icons.repeat_rounded,
+              size: 20,
+              color: tint,
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(category,
-                    style: text.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  category,
+                  style: text.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   '${rule.frequency.key} · next ${_date(rule.nextRun)} · $due',
@@ -290,11 +342,13 @@ class _RuleCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.md),
           Text(
             '${income ? '+' : '−'}${Money.format(rule.amount)}',
-            style: text.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w800, color: tint),
+            style: text.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: tint,
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, size: 20),
+          IconAction(
+            icon: Icons.delete_outline,
             tooltip: 'Delete rule',
             onPressed: onDelete,
           ),

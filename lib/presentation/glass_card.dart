@@ -30,22 +30,27 @@ class GlassCard extends StatelessWidget {
     // Slightly more opaque than the live-blur fill so text stays crisp without
     // sampling the backdrop.
     final fill = isDark
-        ? AppColors.darkSurface // opaque charcoal surface
+        ? AppColors
+              .darkSurface // opaque charcoal surface
         : AppColors.lightSurface;
-    final border =
-        isDark ? AppColors.glassBorderDark : AppColors.glassBorderLight;
 
     return DecoratedBox(
       decoration: BoxDecoration(
         color: fill,
         borderRadius: radius,
-        border: Border.all(color: border),
-        // Whisper of elevation — hairline border carries the definition.
+        // A faint light edge and a soft drop, not a grey box outline: the
+        // way the reference lifts #F8F8F8 cards off a #F2F2F2 canvas. One
+        // colour on every side — Flutter cannot round a border whose sides
+        // differ.
+        border: Border.all(
+          color: isDark ? const Color(0x12FFFFFF) : const Color(0xE6FFFFFF),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
+            color: isDark ? const Color(0x8C000000) : const Color(0x47111214),
+            blurRadius: 26,
+            offset: const Offset(0, 10),
+            spreadRadius: -18,
           ),
         ],
       ),

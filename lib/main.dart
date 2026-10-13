@@ -1,12 +1,17 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show LicenseEntryWithLineBreaks, LicenseRegistry;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'presentation/app_shell.dart' show isDesktopPlatform;
 
 import 'core/branding.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'core/di/data_providers.dart';
+import 'core/entitlement/entitlement_providers.dart';
 import 'core/router/app_router.dart';
 import 'core/router/layout_providers.dart';
 import 'core/services/crash_guard.dart';
@@ -17,6 +22,12 @@ import 'features/settings/providers/theme_providers.dart';
 import 'presentation/app_background.dart';
 
 Future<void> main() async {
+  // The bundled typeface's licence, so it appears on the app's licences page
+  // (the SIL OFL requires it to travel with the font).
+  LicenseRegistry.addLicense(() async* {
+    final text = await rootBundle.loadString('assets/fonts/AnekLatin-OFL.txt');
+    yield LicenseEntryWithLineBreaks(const ['Anek Latin'], text);
+  });
   // The zone wraps everything, including ensureInitialized, because an error
   // thrown during plugin registration is exactly the kind that used to produce
   // a grey screen and no record of why.
@@ -49,9 +60,15 @@ Future<void> _bootstrap() async {
     CrashGuard.record(tag: 'notifications.init', error: e, stack: st);
   }
 
+  // Loaded before the first frame. Pro status reads it synchronously, and
+  // the first screen to ask (Settings, the paywall) used to get "requireValue
+  // on an AsyncValue that has no value" instead of an answer.
+  final prefs = await SharedPreferences.getInstance();
+
   runApp(ProviderScope(
     overrides: [
       notificationServiceProvider.overrideWithValue(notifications),
+      sharedPreferencesProvider.overrideWith((ref) => prefs),
     ],
     child: const KhazanaApp(),
   ));

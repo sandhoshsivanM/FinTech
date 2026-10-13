@@ -26,14 +26,17 @@ import {
   PageIntro, GlassCard, EmptyState, Button, Field, Input, Select, Segmented, Chip,
 } from '@/components/ui';
 import { Stagger, StaggerItem, useReducedMotion } from '@/components/motion';
+import { WalletCard } from '@/components/home/WalletStack';
 import { useConfirm } from '@/components/Confirm';
 import { NumberInput } from '@/components/NumberInput';
+import { CardTitle } from '@/components/Hint';
+import type { SectionKey } from '@/lib/glossary';
 
 type MoneySubtype = 'bank' | 'cash';
 
-const GROUPS: { subtype: MoneySubtype; label: string; icon: typeof Landmark }[] = [
-  { subtype: 'bank', label: 'Bank accounts', icon: Landmark },
-  { subtype: 'cash', label: 'Cash & wallets', icon: Wallet },
+const GROUPS: { subtype: MoneySubtype; label: string; icon: typeof Landmark; info: SectionKey }[] = [
+  { subtype: 'bank', label: 'Bank accounts', icon: Landmark, info: 'accounts.bank' },
+  { subtype: 'cash', label: 'Cash & wallets', icon: Wallet, info: 'accounts.cash' },
 ];
 
 const SUBTYPE_OPTIONS: { value: MoneySubtype; label: string }[] = [
@@ -138,6 +141,20 @@ export default function AccountsPage() {
         />
       </StaggerItem>
 
+      {/* The accounts as cards, the same faces as the home stack (no swipe).
+          Decorative: every figure on them is in the list below. */}
+      {live.length > 0 && (
+        <StaggerItem>
+          <div aria-hidden className="flex gap-4 overflow-x-auto no-scrollbar snap-x -mx-4 px-4 min-[900px]:mx-0 min-[900px]:px-0 pb-3">
+            {live.map((a) => (
+              <div key={a.id} className="snap-start shrink-0 w-[272px] aspect-[1.586/1]">
+                <WalletCard account={a} balance={balances.get(a.id) ?? ZERO} hidden={ghost} money={fmt.money} decorative />
+              </div>
+            ))}
+          </div>
+        </StaggerItem>
+      )}
+
       {(editing || adding) && (
         <div ref={editorRef} className="grid gap-6 min-w-0 scroll-mt-24">
           <StaggerItem>
@@ -157,13 +174,13 @@ export default function AccountsPage() {
         <StaggerItem>
           <GlassCard>
             <div className="flex items-start gap-3 flex-wrap">
-              <span className="w-9 h-9 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-accent-soft text-accent">
+              <span className="w-9 h-9 shrink-0 rounded-full grid place-items-center bg-[color-mix(in_srgb,var(--data-blue)_14%,transparent)] text-[var(--data-blue)]">
                 <ArrowRightLeft size={17} />
               </span>
               <div className="min-w-0 flex-1">
-                <h3 className="text-[15px] font-semibold tracking-[-0.02em]">
+                <CardTitle as="h3" info="accounts.reassign" className="text-[16px] font-medium tracking-[-0.01em]">
                   {strandedCount} transaction{strandedCount === 1 ? '' : 's'} not on a real account
-                </h3>
+                </CardTitle>
                 <p className="text-[13px] text-ink-soft leading-relaxed mt-1">
                   Everything recorded before accounts existed sits on the built-in Cash account. Move it to the
                   account it actually came from — usually the one your salary lands in — then re-tag the exceptions
@@ -202,8 +219,8 @@ export default function AccountsPage() {
           <section className="card overflow-hidden">
             <div className="flex items-center gap-2.5 px-4 min-[900px]:px-5 py-4 border-b border-line">
               <g.icon size={17} className="text-muted" />
-              <h2 className="text-[15px] font-semibold tracking-[-0.02em]">{g.label}</h2>
-              <span className="ml-auto text-[13px] font-semibold tnum">
+              <CardTitle info={g.info} className="text-[16px] font-medium tracking-[-0.01em]">{g.label}</CardTitle>
+              <span className="ml-auto chip tnum">
                 {mask(fmt.money(g.rows.reduce((s, a) => s.plus(balances.get(a.id) ?? ZERO), ZERO)))}
               </span>
             </div>
@@ -213,7 +230,7 @@ export default function AccountsPage() {
                 return (
                   <li key={a.id} className="group flex items-center gap-3 px-4 min-[900px]:px-5 py-3.5 border-b border-line last:border-0">
                     <span className="min-w-0 flex-1">
-                      <span className="block font-semibold text-[14px] truncate">{a.name}</span>
+                      <span className="block font-medium text-[14px] truncate">{a.name}</span>
                       <span className="block text-[11.5px] text-muted">
                         {D(a.openingBalance).isZero()
                           ? 'No opening balance'
@@ -221,21 +238,21 @@ export default function AccountsPage() {
                         {a.id === defaultCash && <> · <span className="text-ink-soft">built-in</span></>}
                       </span>
                     </span>
-                    <span className={`text-[15px] font-bold tnum ${bal.isNegative() ? 'text-danger' : ''}`}>
+                    <span className={`text-[15px] font-normal tnum ${bal.isNegative() ? 'text-danger' : ''}`}>
                       {mask(fmt.money(bal))}
                     </span>
                     <span className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                       <button
                         onClick={() => { setAdding(false); setEditing(a); }}
                         aria-label={`Edit ${a.name}`}
-                        className="focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-accent hover:bg-accent-soft transition-colors"
+                        className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] text-muted hover:text-ink transition-colors"
                       >
                         <Pencil size={15} />
                       </button>
                       <button
                         onClick={() => void removeAccount(a)}
                         aria-label={`Remove ${a.name}`}
-                        className="focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-danger hover:bg-danger-soft transition-colors"
+                        className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] text-muted hover:text-danger transition-colors"
                       >
                         {(postingCount.get(a.id) ?? 0) > 0 ? <Archive size={15} /> : <Trash2 size={15} />}
                       </button>
@@ -298,9 +315,9 @@ function AccountForm({ editing, vaultId, onDone }: {
   return (
     <GlassCard>
       <div className="flex items-center gap-3 mb-5">
-        <h3 className="text-[15px] font-semibold tracking-[-0.02em]">
+        <CardTitle as="h3" info="accounts.form" className="text-[16px] font-medium tracking-[-0.01em]">
           {editing ? `Edit ${editing.name}` : 'Add an account'}
-        </h3>
+        </CardTitle>
         <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-ink hover:bg-fill transition-colors">
           <X size={16} />
         </button>

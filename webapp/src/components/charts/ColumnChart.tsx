@@ -70,7 +70,7 @@ export function ColumnChart({
                     under the cursor. Reserving the slot keeps it still. */}
                 {!empty && up && (
                   <span
-                    className="text-[10px] font-bold tnum text-ink mb-0.5 whitespace-nowrap"
+                    className="text-[10px] font-semibold tnum text-ink mb-0.5 whitespace-nowrap"
                     style={{ visibility: showValues || hover === i ? 'visible' : 'hidden' }}
                   >
                     {(formatLabel ?? format)(c.value)}
@@ -82,7 +82,7 @@ export function ColumnChart({
                 {!up && !empty && <Bar h={barH} up={false} title={`${c.label}: ${format(c.value)}`} />}
                 {!empty && !up && (
                   <span
-                    className="text-[10px] font-bold tnum text-ink mt-0.5 whitespace-nowrap"
+                    className="text-[10px] font-semibold tnum text-ink mt-0.5 whitespace-nowrap"
                     style={{ visibility: showValues || hover === i ? 'visible' : 'hidden' }}
                   >
                     {(formatLabel ?? format)(c.value)}
@@ -91,7 +91,7 @@ export function ColumnChart({
               </div>
             </div>
             <span className={clsx('text-[11px] truncate max-w-full transition-colors',
-              hover === i ? 'font-bold text-ink' : 'font-semibold text-muted')}>{c.label}</span>
+              hover === i ? 'font-semibold text-ink' : 'text-muted')}>{c.label}</span>
           </div>
         );
       })}
@@ -104,10 +104,15 @@ function Bar({ h, up, title }: { h: number; up: boolean; title: string }) {
     <span
       title={title}
       className={clsx(
-        'block w-full max-w-[22px] min-w-[5px] transition-[filter] duration-150 hover:brightness-110',
-        up ? 'bg-success rounded-t-[4px] origin-bottom' : 'bg-danger rounded-b-[4px] origin-top',
+        // Striped at rest (the .hatch texture), solid on hover.
+        'hatch block w-full max-w-[22px] min-w-[5px] transition-[filter] duration-150 hover:[background:var(--hatch)]',
+        up ? 'rounded-t-[4px] origin-bottom' : 'rounded-b-[4px] origin-top',
       )}
-      style={{ height: h, animation: 'kz-grow 620ms var(--ease) backwards' }}
+      style={{
+        height: h,
+        animation: 'kz-grow 620ms var(--ease) backwards',
+        ['--hatch' as string]: up ? 'var(--data-green)' : 'var(--data-rose)',
+      }}
     />
   );
 }

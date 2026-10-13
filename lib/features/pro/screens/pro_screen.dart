@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/semantic_colors.dart';
@@ -37,8 +38,9 @@ class _ProScreenState extends ConsumerState<ProScreen> {
 
   void _say(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _run(Future<void> Function() action) async {
@@ -51,45 +53,46 @@ class _ProScreenState extends ConsumerState<ProScreen> {
   }
 
   Future<void> _buy() => _run(() async {
-        final outcome = await ref.read(entitlementProvider.notifier).purchase();
-        switch (outcome) {
-          case PurchaseSucceeded():
-            _say(ProCopy.purchaseOk);
-          case PurchaseCancelled():
-            break; // Not an error. The user changed their mind, which is fine.
-          case PurchaseFailed(:final message):
-            _say(message);
-        }
-      });
+    final outcome = await ref.read(entitlementProvider.notifier).purchase();
+    switch (outcome) {
+      case PurchaseSucceeded():
+        _say(ProCopy.purchaseOk);
+      case PurchaseCancelled():
+        break; // Not an error. The user changed their mind, which is fine.
+      case PurchaseFailed(:final message):
+        _say(message);
+    }
+  });
 
   Future<void> _restore() => _run(() async {
-        final outcome =
-            await ref.read(entitlementProvider.notifier).restoreInteractive();
-        _say(switch (outcome) {
-          RestoreFound() => ProCopy.restoredOk,
-          RestoreAbsent() => ProCopy.restoreNothingFound,
-          RestoreUnavailable() => ProCopy.restoreUnavailable,
-        });
-      });
+    final outcome = await ref
+        .read(entitlementProvider.notifier)
+        .restoreInteractive();
+    _say(switch (outcome) {
+      RestoreFound() => ProCopy.restoredOk,
+      RestoreAbsent() => ProCopy.restoreNothingFound,
+      RestoreUnavailable() => ProCopy.restoreUnavailable,
+    });
+  });
 
   Future<void> _activate() => _run(() async {
-        final source = ref.read(licenseSourceProvider);
-        if (source == null) return;
-        if (kLicensePublicKeyIsPlaceholder) {
-          _say(ProCopy.licenceNotConfigured);
-          return;
-        }
+    final source = ref.read(licenseSourceProvider);
+    if (source == null) return;
+    if (kLicensePublicKeyIsPlaceholder) {
+      _say(ProCopy.licenceNotConfigured);
+      return;
+    }
 
-        final check = await source.activate(_licence.text);
-        _say(switch (check.verdict) {
-          LicenseVerdict.valid => ProCopy.licenceOk,
-          LicenseVerdict.malformed => ProCopy.licenceMalformed,
-          LicenseVerdict.badSignature => ProCopy.licenceBadSignature,
-          LicenseVerdict.wrongProduct => ProCopy.licenceWrongProduct,
-          LicenseVerdict.unsupportedVersion => ProCopy.licenceUnsupported,
-        });
-        if (check.isValid) _licence.clear();
-      });
+    final check = await source.activate(_licence.text);
+    _say(switch (check.verdict) {
+      LicenseVerdict.valid => ProCopy.licenceOk,
+      LicenseVerdict.malformed => ProCopy.licenceMalformed,
+      LicenseVerdict.badSignature => ProCopy.licenceBadSignature,
+      LicenseVerdict.wrongProduct => ProCopy.licenceWrongProduct,
+      LicenseVerdict.unsupportedVersion => ProCopy.licenceUnsupported,
+    });
+    if (check.isValid) _licence.clear();
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +110,11 @@ class _ProScreenState extends ConsumerState<ProScreen> {
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md, AppSpacing.sm, AppSpacing.md, 96),
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+            96,
+          ),
           children: [
             if (entitlement.isPro)
               _UnlockedCard(entitlement: entitlement)
@@ -130,8 +137,11 @@ class _ProScreenState extends ConsumerState<ProScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.lock_open_outlined,
-                      size: 18, color: context.colors.income),
+                  Icon(
+                    Icons.lock_open_outlined,
+                    size: 18,
+                    color: context.colors.income,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
@@ -155,14 +165,16 @@ class _ProScreenState extends ConsumerState<ProScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(ProCopy.restoreTitle,
-                        style: TextStyle(fontWeight: FontWeight.w700)),
+                    const Text(
+                      ProCopy.restoreTitle,
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       ProCopy.restoreBody,
                       style: TextStyle(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     OutlinedButton(
@@ -210,22 +222,34 @@ class _PitchCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(ProCopy.title,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w800)),
+          Text(
+            ProCopy.title,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: 6),
-          Text(ProCopy.tagline,
-              style: TextStyle(
-                  height: 1.45,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          Text(
+            ProCopy.tagline,
+            style: TextStyle(
+              height: 1.45,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: AppSpacing.md),
-          Text(price,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.w800)),
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  price,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const InfoHint('pro.pricing'),
+            ],
+          ),
           const SizedBox(height: AppSpacing.md),
           if (onBuy != null)
             SizedBox(
@@ -240,8 +264,9 @@ class _PitchCard extends StatelessWidget {
               'Khazana Pro for this app is bought on the website, and unlocked '
               'with the licence key you are emailed.',
               style: TextStyle(
-                  height: 1.45,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+                height: 1.45,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
         ],
       ),
@@ -266,8 +291,13 @@ class _UnlockedCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Khazana Pro is unlocked',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                InfoHint.titled(
+                  const Text(
+                    'Khazana Pro is unlocked',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  'pro.unlocked',
+                ),
                 const SizedBox(height: 2),
                 Text(
                   // A hashed order reference, never an email or a name — the
@@ -276,7 +306,8 @@ class _UnlockedCard extends StatelessWidget {
                       ? 'Thank you.'
                       : 'Licence …${ref.substring(ref.length - 4)}',
                   style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -296,29 +327,43 @@ class _BenefitsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          InfoHint.titled(
+            const Text(
+              'What Pro includes',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            'pro.includes',
+          ),
+          const SizedBox(height: AppSpacing.xs),
           for (final b in ProCopy.benefits) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
                   padding: EdgeInsets.only(top: 2),
-                  child: Icon(Icons.check_circle_outline,
-                      size: 17, color: context.colors.accent),
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    size: 17,
+                    color: context.colors.accent,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(b.title,
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                      Text(
+                        b.title,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       const SizedBox(height: 2),
-                      Text(b.body,
-                          style: TextStyle(
-                              height: 1.4,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant)),
+                      Text(
+                        b.body,
+                        style: TextStyle(
+                          height: 1.4,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -353,8 +398,13 @@ class _LicenceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(ProCopy.licenceTitle,
-              style: TextStyle(fontWeight: FontWeight.w700)),
+          InfoHint.titled(
+            const Text(
+              ProCopy.licenceTitle,
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            'pro.licence',
+          ),
           const SizedBox(height: AppSpacing.sm),
           TextField(
             controller: controller,
@@ -367,9 +417,12 @@ class _LicenceCard extends StatelessWidget {
             onSubmitted: (_) => onActivate(),
           ),
           const SizedBox(height: 6),
-          Text(ProCopy.licenceHelp,
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          Text(
+            ProCopy.licenceHelp,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: AppSpacing.sm),
           FilledButton(
             onPressed: busy ? null : onActivate,

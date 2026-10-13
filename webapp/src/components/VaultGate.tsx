@@ -61,7 +61,7 @@ export function VaultGate() {
           <BrandMark size={96} priority />
           <WordMark className="mt-5 text-[26px] text-ink" />
           {/* The rules either side of the tagline are from the brand lockup. */}
-          <p className="mt-2.5 flex items-center gap-3 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-gold-ink">
+          <p className="mt-2.5 flex items-center gap-3 text-[11.5px] font-semibold text-gold-ink">
             <span className="h-px w-6 bg-[var(--gold)] opacity-45" aria-hidden="true" />
             {APP_TAGLINE}
             <span className="h-px w-6 bg-[var(--gold)] opacity-45" aria-hidden="true" />
@@ -89,7 +89,7 @@ export function VaultGate() {
                setup would write a new salt over it, so explain instead, and
                make "start again" an explicit, non-destructive choice. */
             <div>
-              <h2 className="text-lg font-bold mb-1">Your earlier data is still here</h2>
+              <h2 className="text-lg font-medium mb-1">Your earlier data is still here</h2>
               <p className="text-sm text-ink-soft leading-relaxed">
                 This browser holds {stranded} encrypted record{stranded === 1 ? '' : 's'} from
                 an earlier vault, but the information needed to open them is missing.
@@ -128,7 +128,7 @@ export function VaultGate() {
               )}
             </div>
           ) : (<>
-          <h2 className="text-lg font-bold mb-1">{isSetup ? 'Set up your vault' : 'Unlock'}</h2>
+          <h2 className="text-lg font-medium mb-1">{isSetup ? 'Set up your vault' : 'Unlock'}</h2>
           {isSetup && (
             <p className="text-sm text-muted mb-4">Your PIN encrypts everything in this browser. It is never stored.</p>
           )}

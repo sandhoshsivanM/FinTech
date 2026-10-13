@@ -224,11 +224,29 @@ export default function TransactionsPage() {
   const pageRows = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
 
   const dayHeaders: Set<string> = new Set();
+  // Net per day over everything the filters let through (not just this page),
+  // so a day header that straddles two pages still reports the whole day.
+  // Transfers move money between your own accounts, so they are left out.
+  const dayTotals = new Map<string, ReturnType<typeof D>>();
+  for (const e of filtered) {
+    if (e.kind !== 'txn') continue;
+    const k = new Date(e.date).toDateString();
+    const v = D(e.txn.amount);
+    dayTotals.set(k, (dayTotals.get(k) ?? D(0)).plus(e.txn.type === 'income' ? v : v.neg()));
+  }
+  const dayLabel = (ms: number) => {
+    const d = new Date(ms); const t = new Date();
+    const y = new Date(); y.setDate(t.getDate() - 1);
+    if (d.toDateString() === t.toDateString()) return 'Today';
+    if (d.toDateString() === y.toDateString()) return 'Yesterday';
+    return formatDate(ms);
+  };
 
   return (
     <div className="space-y-4">
       <PageIntro
         title="Cash Flow"
+        info="transactions.page"
         subtitle={`${txns.length} transaction${txns.length !== 1 ? 's' : ''}${transfers.length > 0 ? ` · ${transfers.length} transfer${transfers.length !== 1 ? 's' : ''}` : ''}`}
         action={
           <div className="flex items-center gap-2">
@@ -253,7 +271,7 @@ export default function TransactionsPage() {
       {/* Search + filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <Input
-          className="flex-1"
+          className="sm:flex-1"
           placeholder="Search merchant, amount, date, category…"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
@@ -287,11 +305,11 @@ export default function TransactionsPage() {
           the two fields handle everything else. */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-[150px]">
-          <label className="text-xs font-semibold text-muted" htmlFor="stmt-from">From</label>
+          <label className="text-[12.5px] text-muted" htmlFor="stmt-from">From</label>
           <div className="mt-1"><DateInput id="stmt-from" value={from} onChange={(v) => { setFrom(v); setPage(0); }} max={to || undefined} /></div>
         </div>
         <div className="w-[150px]">
-          <label className="text-xs font-semibold text-muted" htmlFor="stmt-to">To</label>
+          <label className="text-[12.5px] text-muted" htmlFor="stmt-to">To</label>
           <div className="mt-1"><DateInput id="stmt-to" value={to} onChange={(v) => { setTo(v); setPage(0); }} min={from || undefined} /></div>
         </div>
         <div className="flex flex-wrap gap-1.5 pb-1">
@@ -300,7 +318,7 @@ export default function TransactionsPage() {
               key={p.label}
               type="button"
               onClick={() => { const [f, t] = presetInputRange(p.key); setFrom(f); setTo(t); setPage(0); }}
-              className="px-2.5 py-1.5 rounded-[var(--radius-btn)] border border-line text-[12px] font-semibold text-muted hover:text-ink hover:border-[var(--accent)] transition-colors"
+              className="btn-soft px-3 py-1.5 rounded-full text-[12px] font-medium text-ink-soft hover:text-ink transition-colors"
             >
               {p.label}
             </button>
@@ -309,7 +327,7 @@ export default function TransactionsPage() {
             <button
               type="button"
               onClick={() => { setFrom(''); setTo(''); setPage(0); }}
-              className="px-2.5 py-1.5 rounded-[var(--radius-btn)] border border-line text-[12px] font-semibold text-[var(--accent)] hover:underline"
+              className="px-3 py-1.5 rounded-full text-[12px] font-semibold text-ink hover:underline"
             >
               Clear dates
             </button>
@@ -341,8 +359,8 @@ export default function TransactionsPage() {
       ) : (
         // `overflow-clip`, not `hidden`: clips the corners without becoming a
         // scroll container, so the day headers can still stick.
-        <GlassCard className="p-0 overflow-clip">
-          <div className="divide-y divide-[var(--glass-border)]">
+        <GlassCard className="!p-0 py-1 overflow-clip">
+          <div>
             {pageRows.map((e) => {
               const isTransfer = e.kind === 'transfer';
               const income = e.kind === 'txn' && e.txn.type === 'income';
@@ -353,15 +371,23 @@ export default function TransactionsPage() {
 
               // Transfers are painted neutral, never red or green: the money did
               // not leave or arrive, it moved.
-              const tone = isTransfer ? 'var(--ink-soft)' : income ? 'var(--income)' : 'var(--expense)';
+              const tone = isTransfer ? 'var(--ink-soft)' : income ? 'var(--data-green-ink)' : 'var(--data-rose)';
+              const dayNet = dayTotals.get(dayKey);
 
               return (
                 <div key={e.id}>
                   {showHeader && (
-                    <div className="sticky top-16 z-[1] px-5 py-2 bg-surface-2 border-b border-[var(--glass-border)]">
-                      <span className="text-xs font-semibold text-ink-soft tracking-wide">
-                        {formatDate(e.date)}
-                      </span>
+                    // Sticky day header: the day on the left, its net on the right.
+                    <div className="sticky top-16 z-[1] flex items-center justify-between gap-3 px-4 sm:px-5 py-2 bg-card text-[12px] text-muted">
+                      <span>{dayLabel(e.date)}</span>
+                      {dayNet && !dayNet.isZero() && (
+                        <span
+                          className="tnum"
+                          style={{ color: dayNet.isNegative() ? 'var(--muted)' : 'var(--data-green-ink)' }}
+                        >
+                          {ghost ? '••••' : `${dayNet.isNegative() ? '−' : '+'}${fmt.money(dayNet.abs())}`}
+                        </span>
+                      )}
                     </div>
                   )}
                   {/* Swipe left to delete (it still asks to confirm). The red
@@ -376,7 +402,7 @@ export default function TransactionsPage() {
                     dragElastic={{ left: 0.5, right: 0 }}
                     dragSnapToOrigin
                     onDragEnd={(_, info) => { if (info.offset.x < -90) handleDelete(e); }}
-                    className="relative bg-card flex items-center gap-3 px-5 py-3 hover:bg-[var(--fill)] transition-colors group"
+                    className="relative bg-card flex items-center gap-3 px-4 sm:px-5 py-2.5 hover:bg-[color-mix(in_srgb,var(--ink)_4%,var(--card))] transition-colors group"
                   >
                     {isTransfer ? (
                       <span className="w-10 h-10 rounded-full grid place-items-center shrink-0" style={{ background: 'var(--fill-strong)', color: tone }}>
@@ -388,12 +414,12 @@ export default function TransactionsPage() {
 
                     {/* Details */}
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm truncate">
+                      <div className="font-medium text-[14px] truncate">
                         {isTransfer
                           ? `${acctName(e.transfer.fromAccountId)} → ${acctName(e.transfer.toAccountId)}`
                           : (e.txn.merchant || cat?.name || 'Other')}
                       </div>
-                      <div className="text-xs text-muted truncate">
+                      <div className="text-[11.5px] text-muted truncate">
                         {isTransfer ? 'Transfer' : cat?.name}
                         {!isTransfer && <> · <span className="text-ink-soft">{acctName(e.txn.accountId)}</span></>}
                         {(isTransfer ? e.transfer.note : e.txn.note) ? ` · ${isTransfer ? e.transfer.note : e.txn.note}` : ''}
@@ -404,7 +430,7 @@ export default function TransactionsPage() {
 
                     {/* Amount */}
                     <span
-                      className="font-bold text-sm tnum whitespace-nowrap"
+                      className="font-semibold text-[14px] tnum whitespace-nowrap"
                       style={{ color: tone }}
                     >
                       {isTransfer
@@ -416,10 +442,10 @@ export default function TransactionsPage() {
 
                     {/* Edit + Delete */}
                     {/* Hover-revealed on desktop; always shown on touch, where there is no hover. */}
-                    <div className="flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition ml-1">
+                    <div className="flex max-sm:[@media(hover:hover)]:hidden items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition ml-1">
                       <Link
                         href={`/add?id=${e.id}`}
-                        className="p-1.5 rounded-[var(--radius-card)] text-ink-soft hover:text-ink hover:bg-[var(--fill)] transition"
+                        className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] text-ink-soft hover:text-ink transition"
                         aria-label={isTransfer ? 'Edit transfer' : 'Edit transaction'}
                       >
                         <Pencil size={14} />
@@ -427,7 +453,7 @@ export default function TransactionsPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(e)}
-                        className="p-1.5 rounded-[var(--radius-card)] text-expense hover:bg-expense/10 transition"
+                        className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] transition text-muted hover:text-expense"
                         aria-label={isTransfer ? 'Delete transfer' : 'Delete transaction'}
                       >
                         <Trash2 size={15} />

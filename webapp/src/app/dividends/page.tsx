@@ -24,6 +24,7 @@ import { DateInput } from '@/components/DateInput';
 import { formatDate, formatMonthShort } from '@/lib/dateFormat';
 import { contains, monthsBack, monthsIn } from '@/domain/period';
 import { NumberInput } from '@/components/NumberInput';
+import { CardTitle } from '@/components/Hint';
 
 const KIND_LABEL: Record<string, string> = { dividend: 'Dividend', interest: 'Interest', bonus: 'Bonus', buyback: 'Buyback' };
 
@@ -168,7 +169,7 @@ function DividendsPageInner() {
           <StaggerItem>
             <section className="card">
               <div className="px-5 py-4 border-b border-line">
-                <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Payouts by month</h2>
+                <CardTitle info="dividends.payoutsByMonth" className="text-[16px] font-medium tracking-[-0.01em]">Payouts by month</CardTitle>
                 <p className="text-xs text-muted mt-0.5">Received only, last twelve months</p>
               </div>
               <div className="p-5">

@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Banknote, Building2, CreditCard, Wifi } from 'lucide-react';
 import clsx from 'clsx';
@@ -10,6 +10,7 @@ import { accountBalances, MONEY_SUBTYPES } from '@/domain/accountLedger';
 import { ZERO } from '@/lib/money';
 import type { Account } from '@/lib/types';
 import { motion, SPRING_SOFT } from '../motion';
+import { CardTitle } from '../Hint';
 
 /**
  * Per account type: a label and a card finish. The card is dark in both
@@ -51,7 +52,8 @@ const DEPTH = 2;
  * The dots are real buttons, so the deck works without a drag gesture — for a
  * keyboard, a switch device, or reduced motion.
  */
-export function WalletStack() {
+/** `anchorId` lets one instance (the phone home's) be a scroll target without the desktop twin duplicating the id. */
+export function WalletStack({ anchorId }: { anchorId?: string } = {}) {
   const accounts = useApp((s) => s.accounts);
   const postings = useApp((s) => s.postings);
   const ghost = useApp((s) => s.ghost);
@@ -70,10 +72,10 @@ export function WalletStack() {
   const go = (d: number) => setFront((f) => (f + d + n) % n);
 
   return (
-    <section aria-label="My wallet">
+    <section id={anchorId} aria-label="My wallet" className="card scroll-mt-24 px-4 pt-4 pb-3">
       <div className="flex items-baseline justify-between mb-3">
-        <h2 className="text-[15px] font-semibold tracking-[-0.02em]">My wallet</h2>
-        <Link href="/accounts" className="text-[12.5px] font-semibold text-accent">Manage</Link>
+        <CardTitle info="dashboard.myWallet" className="text-[16px] font-medium tracking-[-0.01em]">My wallet</CardTitle>
+        <Link href="/accounts" className="text-[12.5px] font-semibold text-ink-soft">Manage</Link>
       </div>
 
       {/* ISO ID-1 proportions (85.6 × 54 mm), so it reads as a card. The
@@ -122,7 +124,7 @@ export function WalletStack() {
               <span
                 className={clsx(
                   'block h-1.5 rounded-full transition-all duration-300',
-                  i === front ? 'w-5 bg-accent' : 'w-1.5 bg-line-strong',
+                  i === front ? 'w-5 bg-[var(--data-blue)]' : 'w-1.5 bg-[color-mix(in_srgb,var(--ink)_22%,transparent)]',
                 )}
               />
             </button>
@@ -133,9 +135,21 @@ export function WalletStack() {
   );
 }
 
-function WalletCard({
-  account, balance, hidden, money,
-}: { account: Account; balance: Decimal; hidden: boolean; money: (v: Decimal.Value) => string }) {
+/**
+ * Text on a decorative card. When the card duplicates figures shown elsewhere
+ * (the accounts list), the words are painted from a data attribute so they are
+ * not a second copy in the DOM text — the card is aria-hidden either way.
+ */
+function T({ text, decorative }: { text: string; decorative?: boolean }) {
+  return decorative
+    ? <span data-text={text} className="before:content-[attr(data-text)]" />
+    : <>{text}</>;
+}
+
+/** One account as a payment card. Also used, without the swipe, on Accounts. */
+export function WalletCard({
+  account, balance, hidden, money, decorative = false,
+}: { account: Account; balance: Decimal; hidden: boolean; money: (v: Decimal.Value) => string; decorative?: boolean }) {
   const kind = KIND[account.subtype] ?? KIND.bank;
   const Icon = kind.icon;
   // Balances are debit-signed: a credit card in use is negative, i.e. owed.
@@ -149,15 +163,15 @@ function WalletCard({
       {/* The accent glow, top right, over the type's base finish. */}
       <span
         aria-hidden
-        className="pointer-events-none absolute -right-10 -top-16 w-48 h-48 rounded-full opacity-35 blur-2xl"
+        className="pointer-events-none absolute -right-10 -top-16 w-48 h-48 rounded-full opacity-[0.12] blur-2xl"
         style={{ background: 'var(--accent-glow)' }}
       />
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="font-semibold text-[15px] leading-tight truncate">{account.name}</div>
+          <div className="font-semibold text-[15px] leading-tight truncate"><T text={account.name} decorative={decorative} /></div>
           <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.14em] text-white/55">
             <Icon size={12} aria-hidden />
-            {owed ? 'Outstanding' : kind.label}
+            <T text={owed ? 'Outstanding' : kind.label} decorative={decorative} />
           </div>
         </div>
         <Wifi size={20} className="shrink-0 rotate-90 text-white/70" aria-hidden />
@@ -168,8 +182,8 @@ function WalletCard({
       </div>
 
       <div className="relative mt-auto">
-        <div className="text-[25px] font-bold tracking-[-0.02em] tnum leading-none">
-          {hidden ? '••••••' : money(shown)}
+        <div className="text-[25px] font-semibold tracking-[-0.02em] tnum leading-none">
+          <T text={hidden ? '••••••' : money(shown)} decorative={decorative} />
         </div>
         <div className="mt-2.5 flex items-center justify-between">
           {/* Masked, and deliberately not a made-up number: the vault holds no
@@ -189,16 +203,20 @@ function WalletCard({
 
 /** An EMV contact chip, drawn rather than imported. */
 function Chip() {
+  // Unique per instance: the dashboard mounts the phone and desktop homes
+  // together (one hidden), and a shared id resolves to the hidden copy's
+  // gradient, which never paints — leaving the chip as a bare outline.
+  const gid = `kz-chip-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   return (
     <svg width="38" height="28" viewBox="0 0 38 28" aria-hidden className="drop-shadow-sm">
       <defs>
-        <linearGradient id="kz-chip" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#F2D98C" />
           <stop offset="0.5" stopColor="#C9A24A" />
           <stop offset="1" stopColor="#E8CB78" />
         </linearGradient>
       </defs>
-      <rect x="0.5" y="0.5" width="37" height="27" rx="5" fill="url(#kz-chip)" stroke="rgba(0,0,0,0.25)" />
+      <rect x="0.5" y="0.5" width="37" height="27" rx="5" fill={`url(#${gid})`} stroke="rgba(0,0,0,0.25)" />
       <path d="M0.5 9.5h11M0.5 18.5h11M26.5 9.5h11M26.5 18.5h11M11.5 0.5v27M26.5 0.5v27M11.5 14h15"
         stroke="rgba(80,55,10,0.45)" strokeWidth="1" fill="none" />
     </svg>

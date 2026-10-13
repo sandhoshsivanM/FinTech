@@ -15,7 +15,7 @@ import { useEntrance } from './useEntrance';
 export function AreaChart({
   values,
   height = 140,
-  color = 'var(--accent)',
+  color = 'var(--data-blue)',
   emptyLabel = 'Not enough data yet',
   format,
   labels,
