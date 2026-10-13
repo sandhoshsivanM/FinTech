@@ -51,7 +51,7 @@ export interface NavGroup {
  * look at it, grow it, spend it, protect it, everything else.
  *
  * `/investments` is the Portfolio screen. The route keeps its old path because
- * it is one of the five Flutter bottom-bar tabs and renaming it would break
+ * it is one of the four Flutter bottom-bar tabs and renaming it would break
  * cross-client parity; only the label moved.
  */
 export const NAV_GROUPS: NavGroup[] = [
@@ -122,7 +122,8 @@ export const NAV_GROUPS: NavGroup[] = [
 export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 /**
- * The five phone destinations, matching the Flutter app's tab bar exactly.
+ * The four phone destinations, matching the Flutter app's tab bar exactly.
+ * Settings is reached from the profile menu and the drawer, as on Flutter.
  * `Shell.test.tsx` asserts the two lists stay in step — a user moving between
  * clients should not have to relearn where things are.
  */
@@ -131,7 +132,6 @@ export const BOTTOM_NAV: NavItem[] = [
   { href: '/transactions', label: 'Cash Flow', icon: Receipt },
   { href: '/investments', label: 'Investments', short: 'Invest', icon: TrendingUp },
   { href: '/score', label: 'Score', icon: Gauge },
-  { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 /** Page titles for the mobile topbar. Longest prefix wins. */

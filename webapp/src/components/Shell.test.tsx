@@ -30,11 +30,14 @@ vi.mock('next/navigation', () => ({
 vi.mock('./Tour', () => ({ Tour: () => null }));
 
 /**
- * The Flutter bottom bar, from `lib/presentation/app_shell.dart`'s `_tabs`.
+ * The Flutter bottom bar: the four sections in `lib/core/router/nav_sections.dart`
+ * (`navSections`). Settings is not one of them — Flutter keeps it behind the
+ * avatar, and the web keeps it in the profile menu and the drawer.
+ *
  * Kept as a literal rather than imported, because the point is to catch the two
  * lists drifting apart — a shared source would make the test vacuous.
  */
-const FLUTTER_TABS = ['/dashboard', '/transactions', '/investments', '/score', '/settings'];
+const FLUTTER_TABS = ['/dashboard', '/transactions', '/investments', '/score'];
 
 /**
  * Every route the app serves. Mirrors `_allRoutes` in the Dart test for the
@@ -60,7 +63,7 @@ function renderShell() {
 }
 
 describe('bottom nav', () => {
-  test('has exactly the five Flutter tabs, in order', () => {
+  test('has exactly the four Flutter tabs, in order', () => {
     renderShell();
     const bar = screen.getByRole('navigation', { name: 'Primary' });
     const hrefs = within(bar)

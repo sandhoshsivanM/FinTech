@@ -1,5 +1,5 @@
 'use client';
-import { Fragment, useEffect, useId, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
@@ -7,7 +7,7 @@ import {
   Eye, EyeOff, Lock, Menu, X, Plus, ChevronDown, Check, Search,
   Sun, Moon, Monitor, PanelLeft, Bell, RefreshCw, Download,
   CreditCard, ShieldAlert, BellRing, Inbox, History,
-  User, Users, Briefcase,
+  User, Users, Briefcase, Settings,
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
 import { useApp, type ThemeChoice } from '@/lib/store';
@@ -450,13 +450,12 @@ function SidebarFooter({ rail }: { rail: boolean }) {
 }
 
 /**
- * Phone bottom bar: a floating, rounded dock of the five Flutter tabs with a
+ * Phone bottom bar: a floating, rounded dock of the four Flutter tabs with a
  * raised + in the middle.
  *
- * The + is deliberately OUTSIDE the `<nav>`: the five links inside it are the
+ * The + is deliberately OUTSIDE the `<nav>`: the four links inside it are the
  * Flutter tab bar and `Shell.test.tsx` holds them to exactly that list. A
- * spacer between the second and third tab leaves room for the button, which
- * is positioned over it.
+ * spacer at the bar's centre leaves room for the button, which sits over it.
  *
  * Carries no `data-tour` attributes on purpose: `Tour.tsx` finds its targets
  * with `querySelector`, which returns the first match in DOM order — the
@@ -465,60 +464,56 @@ function SidebarFooter({ rail }: { rail: boolean }) {
  */
 function BottomNav({ path }: { path: string }) {
   const pillId = useId();
-  // The + sits in its own slot after the first `left` tabs. With five tabs that
-  // is 2 | + | 3 — an odd count cannot be symmetric, so the button is placed
-  // over the slot rather than at the bar's centre, where it would cover a tab.
-  const count = BOTTOM_NAV.length;
-  const left = Math.floor(count / 2);
-  // 7px = 1px border + 6px padding each side; 68px is the slot.
-  const plusLeft = `calc(7px + ${left} * (100% - 14px - 68px) / ${count} + 34px)`;
+  // Two equal halves around a centre slot, so the + sits dead centre:
+  // 2 | + | 2 with four tabs.
+  const split = Math.floor(BOTTOM_NAV.length / 2);
+  const tab = (n: (typeof BOTTOM_NAV)[number]) => {
+    const active = isActive(n.href, path);
+    const Icon = n.icon;
+    return (
+      <Link
+        key={n.href}
+        href={n.href}
+        aria-current={active ? 'page' : undefined}
+        className="focus-ring relative flex-1 min-w-0 flex flex-col items-center justify-center gap-1 text-[10.5px] font-medium rounded-[22px]"
+      >
+        <span className="relative grid place-items-center w-11 h-7">
+          {active && (
+            <motion.span
+              layoutId={pillId}
+              transition={SPRING}
+              aria-hidden
+              className="absolute inset-0 rounded-full bg-accent-soft"
+            />
+          )}
+          <Icon
+            size={19}
+            strokeWidth={active ? 2.2 : 1.9}
+            className={clsx('relative transition-colors duration-150', active ? 'text-accent' : 'text-muted')}
+          />
+        </span>
+        <span className={clsx('truncate max-w-full', active ? 'text-accent font-semibold' : 'text-muted')}>
+          {n.short ? <><span aria-hidden>{n.short}</span><span className="sr-only">{n.label}</span></> : n.label}
+        </span>
+      </Link>
+    );
+  };
   return (
     <div className="min-[900px]:hidden fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pointer-events-none">
       <div className="relative mx-auto max-w-[480px] pointer-events-auto">
         <nav
           aria-label="Primary"
-          className="flex items-stretch h-[64px] px-1.5 rounded-[28px] border border-line bg-card shadow-[var(--shadow-float)]"
+          className="flex items-stretch h-[64px] px-1 rounded-[28px] border border-line bg-card shadow-[var(--shadow-float)]"
         >
-          {BOTTOM_NAV.map((n, i) => {
-            const active = isActive(n.href, path);
-            const Icon = n.icon;
-            return (
-              <Fragment key={n.href}>
-                <Link
-                  href={n.href}
-                  aria-current={active ? 'page' : undefined}
-                  className="focus-ring relative flex-1 min-w-0 flex flex-col items-center justify-center gap-1 text-[10.5px] font-medium rounded-[22px]"
-                >
-                  <span className="relative grid place-items-center w-11 h-7">
-                    {active && (
-                      <motion.span
-                        layoutId={pillId}
-                        transition={SPRING}
-                        aria-hidden
-                        className="absolute inset-0 rounded-full bg-accent-soft"
-                      />
-                    )}
-                    <Icon
-                      size={19}
-                      strokeWidth={active ? 2.2 : 1.9}
-                      className={clsx('relative transition-colors duration-150', active ? 'text-accent' : 'text-muted')}
-                    />
-                  </span>
-                  <span className={clsx('truncate max-w-full', active ? 'text-accent font-semibold' : 'text-muted')}>
-                    {n.short ? <><span aria-hidden>{n.short}</span><span className="sr-only">{n.label}</span></> : n.label}
-                  </span>
-                </Link>
-                {i === left - 1 && <span aria-hidden className="w-[68px] shrink-0" />}
-              </Fragment>
-            );
-          })}
+          <div className="flex flex-1 min-w-0">{BOTTOM_NAV.slice(0, split).map(tab)}</div>
+          <span aria-hidden className="w-[72px] shrink-0" />
+          <div className="flex flex-1 min-w-0">{BOTTOM_NAV.slice(split).map(tab)}</div>
         </nav>
         <motion.div
           {...tap}
           initial={{ scale: 0.6, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="absolute -top-5 -translate-x-1/2"
-          style={{ left: plusLeft }}
+          className="absolute left-1/2 -top-5 -translate-x-1/2"
         >
           <Link
             href="/add"
@@ -577,6 +572,15 @@ function ProfileMenu() {
               className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] text-[13px] font-medium text-ink-soft hover:bg-fill transition-colors"
             >
               <Plus size={15} /> Manage profiles
+            </Link>
+            {/* Settings lives here and in the menu, not in the bottom bar —
+                the same place the Flutter app keeps it, behind the avatar. */}
+            <Link
+              href="/settings"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] text-[13px] font-medium text-ink-soft hover:bg-fill transition-colors"
+            >
+              <Settings size={15} /> Settings
             </Link>
           </div>
         </>
