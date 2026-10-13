@@ -164,7 +164,11 @@ async function bare(size) {
  * dependency for.
  */
 async function buildIco(sizes) {
-  const images = await Promise.all(sizes.map((s) => plated(s, 'any')));
+  // ICO entries keep an alpha channel: Next's ICO decoder (and some Windows
+  // shells) reject embedded PNGs that are not RGBA, even fully opaque ones.
+  const images = await Promise.all(
+    sizes.map(async (s) => sharp(await plated(s, 'any')).ensureAlpha().png({ compressionLevel: 9 }).toBuffer()),
+  );
   const count = images.length;
   const header = Buffer.alloc(6);
   header.writeUInt16LE(0, 0); // reserved
