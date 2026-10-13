@@ -8,10 +8,11 @@
  * published through `@theme` in globals.css, so components spell them as
  * `bg-card` / `rounded-btn` rather than as arbitrary `[var(--…)]` values.
  */
-import { useState, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type HTMLAttributes } from 'react';
+import { useEffect, useId, useState, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { Hint } from './Hint';
 import { CHART } from './charts/tokens';
+import { motion, SPRING } from './motion';
 import type { TermKey } from '@/lib/glossary';
 
 /**
@@ -22,10 +23,14 @@ import type { TermKey } from '@/lib/glossary';
  * internal padding (a table, a divided list).
  */
 export function GlassCard({
-  children, className, padded = true, lift = false, ...rest
-}: { children: ReactNode; className?: string; padded?: boolean; lift?: boolean } & HTMLAttributes<HTMLDivElement>) {
+  children, className, padded = true, lift = false, interactive = false, ...rest
+}: {
+  children: ReactNode; className?: string; padded?: boolean; lift?: boolean;
+  /** Tappable card: hover lift plus press-down feedback. */
+  interactive?: boolean;
+} & HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={clsx('card', padded && 'p-5', lift && 'lift', className)} {...rest}>
+    <div className={clsx('card', padded && 'p-5', (lift || interactive) && 'lift', interactive && 'pressable cursor-pointer', className)} {...rest}>
       {children}
     </div>
   );
@@ -64,7 +69,7 @@ export function Button({
 }: { children: ReactNode; variant?: BtnVariant } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const styles: Record<BtnVariant, string> = {
     // Emerald is the INTERACTION colour. Gold is identity and never lands here.
-    primary: 'bg-primary text-[var(--primary-fg)] hover:bg-[var(--accent-deep)]',
+    primary: 'bg-primary text-[var(--primary-fg)] hover:shadow-[var(--shadow-glow)] hover:brightness-110',
     secondary: 'bg-transparent text-ink border border-line-strong hover:border-[var(--accent)] hover:text-accent',
     ghost: 'text-ink-soft hover:bg-fill hover:text-ink',
     soft: 'bg-transparent text-ink border border-line-strong hover:border-[var(--accent)] hover:text-accent',
@@ -78,7 +83,7 @@ export function Button({
         'focus-ring inline-flex items-center justify-center gap-2 rounded-btn h-9 px-3.5',
         'text-[13px] font-semibold tracking-[-0.01em] whitespace-nowrap',
         'transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-standard',
-        'active:translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-y-0',
+        'active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100',
         styles[variant],
         className,
       )}
@@ -92,26 +97,40 @@ export function Button({
 export function Segmented<T extends string>({ options, value, onChange, className }: {
   options: { value: T; label: ReactNode }[]; value: T; onChange: (v: T) => void; className?: string;
 }) {
+  // One shared layoutId per control, so the selected pill slides between
+  // options instead of jumping — and two controls on a page never trade pills.
+  const pillId = useId();
   return (
     <div
       role="group"
-      className={clsx('inline-flex p-[3px] gap-px rounded-[var(--radius-card)] bg-fill max-w-full overflow-x-auto no-scrollbar', className)}
+      className={clsx('inline-flex p-[3px] gap-px rounded-full bg-fill max-w-full overflow-x-auto no-scrollbar', className)}
     >
-      {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          aria-pressed={value === o.value}
-          onClick={() => onChange(o.value)}
-          className={clsx(
-            'focus-ring shrink-0 px-3 py-1.5 rounded-[var(--radius-btn)] text-[12.5px] font-semibold tracking-[-0.01em]',
-            'transition-colors duration-150 ease-standard',
-            value === o.value ? 'bg-surface text-ink shadow-[var(--shadow-1)]' : 'text-muted hover:text-ink',
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
+      {options.map((o) => {
+        const on = value === o.value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onChange(o.value)}
+            className={clsx(
+              'focus-ring relative shrink-0 px-3.5 py-1.5 rounded-full text-[12.5px] font-semibold tracking-[-0.01em]',
+              'transition-colors duration-150 ease-standard',
+              on ? 'text-ink' : 'text-muted hover:text-ink',
+            )}
+          >
+            {on && (
+              <motion.span
+                layoutId={pillId}
+                transition={SPRING}
+                aria-hidden
+                className="absolute inset-0 rounded-full bg-surface shadow-[var(--shadow-1)] border border-line"
+              />
+            )}
+            <span className="relative">{o.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -141,16 +160,31 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return <select {...props} className={clsx(inputCls, 'appearance-none cursor-pointer', props.className)} />;
 }
 
+/**
+ * False on the first paint, true one frame later — so a fill rendered at its
+ * final value still animates in from empty. Reduced motion is handled by the
+ * global CSS rule that zeroes transition durations.
+ */
+function useMounted(): boolean {
+  const [m, setM] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setM(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return m;
+}
+
 // ---- Progress bar (budget zones) ----------------------------------------
 export function ProgressBar({ fraction, color, height = 7 }: { fraction: number; color?: string; height?: number }) {
+  const mounted = useMounted();
   const pct = Math.min(100, Math.max(0, fraction * 100));
   // Zone colour when the caller does not force one: over budget, near it, or fine.
   const c = color ?? (pct > 90 ? 'var(--danger)' : pct >= 70 ? 'var(--warning)' : 'var(--success)');
   return (
     <div className="w-full rounded-full overflow-hidden bg-fill-strong" style={{ height }}>
       <div
-        className="h-full rounded-full transition-[width] duration-500 ease-standard"
-        style={{ width: `${pct}%`, background: c }}
+        className="h-full rounded-full transition-[width] duration-700 ease-standard"
+        style={{ width: `${mounted ? pct : 0}%`, background: c }}
       />
     </div>
   );
@@ -160,9 +194,10 @@ export function ProgressBar({ fraction, color, height = 7 }: { fraction: number;
 export function Ring({ fraction, size = 120, stroke = 11, color = 'var(--accent)', children }: {
   fraction: number; size?: number; stroke?: number; color?: string; children?: ReactNode;
 }) {
+  const mounted = useMounted();
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  const f = Math.min(1, Math.max(0, fraction));
+  const f = mounted ? Math.min(1, Math.max(0, fraction)) : 0;
   return (
     <div className="relative grid place-items-center shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
@@ -170,7 +205,7 @@ export function Ring({ fraction, size = 120, stroke = 11, color = 'var(--accent)
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - f)}
-          style={{ transition: 'stroke-dashoffset .6s cubic-bezier(.4,0,.2,1)' }}
+          style={{ transition: 'stroke-dashoffset .9s cubic-bezier(.22,1,.36,1)' }}
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">{children}</div>

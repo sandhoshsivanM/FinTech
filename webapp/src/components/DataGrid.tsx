@@ -178,7 +178,7 @@ export function DataGrid<T>({
                     >
                       <span className={clsx(
                         'w-4 h-4 rounded-[var(--radius-sm)] grid place-items-center text-[10px] font-bold shrink-0',
-                        on ? 'bg-accent text-white' : 'border border-line-strong',
+                        on ? 'bg-accent text-accent-on' : 'border border-line-strong',
                       )}>
                         {on ? '✓' : ''}
                       </span>

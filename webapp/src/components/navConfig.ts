@@ -9,6 +9,8 @@ import {
 export interface NavItem {
   href: string;
   label: string;
+  /** Shorter label for the phone bottom bar, where a tab is ~60px wide. */
+  short?: string;
   icon: LucideIcon;
   /** Rendered as a count pill on the right of the row. */
   badge?: number;
@@ -127,7 +129,7 @@ export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 export const BOTTOM_NAV: NavItem[] = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/transactions', label: 'Cash Flow', icon: Receipt },
-  { href: '/investments', label: 'Investments', icon: TrendingUp },
+  { href: '/investments', label: 'Investments', short: 'Invest', icon: TrendingUp },
   { href: '/score', label: 'Score', icon: Gauge },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -140,5 +142,8 @@ export const TITLES: Record<string, string> = {
 
 /** True when `href` is the active destination for `path`. */
 export function isActive(href: string, path: string): boolean {
-  return path === href || (href !== '/dashboard' && path.startsWith(href));
+  // The static export uses `trailingSlash: true`, so the live path is
+  // `/dashboard/` — strip it or the home tab is never marked active.
+  const p = path.length > 1 ? path.replace(/\/+$/, '') : path;
+  return p === href || (href !== '/dashboard' && p.startsWith(href));
 }

@@ -1,10 +1,10 @@
 'use client';
-import { useState, useMemo, type ElementType } from 'react';
+import { useState, useMemo } from 'react';
 import {
-  Utensils, Bus, Home, Zap, ShoppingBag, HeartPulse, Clapperboard,
-  Landmark, Wallet, TrendingUp, Shapes, Trash2, RefreshCw, Plus, ChevronDown, ChevronUp,
+  Trash2, RefreshCw, Plus, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { CatIcon } from '@/components/CategoryIcon';
 import { useApp, uid } from '@/lib/store';
 import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
@@ -18,17 +18,6 @@ import { useConfirm } from '@/components/Confirm';
 import { DateInput } from '@/components/DateInput';
 import { formatDate, toInputValue, fromInputValue } from '@/lib/dateFormat';
 import { NumberInput } from '@/components/NumberInput';
-
-// ---- Icon map ----
-const ICON_MAP: Record<string, ElementType> = {
-  Utensils, Bus, Home, Zap, ShoppingBag, HeartPulse,
-  Clapperboard, Landmark, Wallet, TrendingUp, Shapes,
-};
-
-function CatIcon({ name, size = 16 }: { name?: string | null; size?: number }) {
-  const Icon = (name && ICON_MAP[name]) ? ICON_MAP[name] : Shapes;
-  return <Icon size={size} />;
-}
 
 const TYPE_OPTIONS: { value: TxnType; label: string }[] = [
   { value: 'expense', label: 'Expense' },

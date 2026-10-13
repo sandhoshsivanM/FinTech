@@ -14,7 +14,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import { Shell } from './Shell';
-import { NAV_ITEMS } from './navConfig';
+import { NAV_ITEMS, isActive } from './navConfig';
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...rest }: { children: React.ReactNode; href: string }) => (
@@ -67,6 +67,15 @@ describe('bottom nav', () => {
       .getAllByRole('link')
       .map((a) => a.getAttribute('href'));
     expect(hrefs).toEqual(FLUTTER_TABS);
+  });
+
+  test('has a raised + outside the tab list that opens /add', () => {
+    renderShell();
+    const bar = screen.getByRole('navigation', { name: 'Primary' });
+    const plus = screen.getByRole('link', { name: 'New transaction' });
+    expect(plus).toHaveAttribute('href', '/add');
+    expect(bar).not.toContainElement(plus);
+    expect(plus).not.toHaveAttribute('data-tour');
   });
 
   test('marks the active destination with aria-current', () => {
@@ -153,5 +162,13 @@ describe('market session', () => {
     );
     expect(pill, 'the topbar market pill should still exist').toBeTruthy();
     expect(pill!.className).toContain('min-[900px]:hidden');
+  });
+});
+
+describe('isActive', () => {
+  test('tolerates the trailing slash the static export adds', () => {
+    expect(isActive('/dashboard', '/dashboard/')).toBe(true);
+    expect(isActive('/transactions', '/transactions/')).toBe(true);
+    expect(isActive('/dashboard', '/transactions/')).toBe(false);
   });
 });

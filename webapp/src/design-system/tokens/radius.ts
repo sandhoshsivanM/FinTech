@@ -11,10 +11,10 @@ export const radius = {
 } as const;
 
 export const componentRadius = {
-  input: '10px',
-  button: '9px',
-  card: '14px',
-  panel: '16px',
-  modal: '18px',
+  input: '12px',
+  button: '12px',
+  card: '20px',
+  panel: '24px',
+  modal: '24px',
   badge: '999px',
 } as const;

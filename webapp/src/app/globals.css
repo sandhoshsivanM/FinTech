@@ -78,8 +78,10 @@
   --violet: #6E5BB8;
   --violet-soft: rgba(110, 91, 184, 0.10);
 
-  --primary: #176B4D;
-  --primary-fg: #FFFFFF;
+  /* Primary follows the accent, so a recoloured accent recolours the buttons
+     too; `--accent-on` is overridden by accents (lime) that need dark ink. */
+  --primary: var(--accent);
+  --primary-fg: var(--accent-on);
 
   --fill: rgba(16, 22, 19, 0.04);
   --fill-strong: rgba(16, 22, 19, 0.075);
@@ -90,6 +92,10 @@
   --shadow-2: 0 2px 8px rgba(16, 22, 19, 0.08);
   --shadow-3: 0 18px 44px -18px rgba(16, 22, 19, 0.22);
   --glow: 0 0 0 3px var(--accent-soft);
+  /* Coloured lift for the one primary action on screen (the raised + button,
+     the active quick action). Derived from the accent so every accent glows. */
+  --shadow-glow: 0 10px 24px -10px color-mix(in srgb, var(--accent) 70%, transparent);
+  --shadow-float: 0 12px 32px -12px rgba(16, 22, 19, 0.28);
 
   --hero-bg:
     radial-gradient(120% 150% at 88% -10%, rgba(217, 173, 82, 0.20), transparent 58%),
@@ -158,8 +164,8 @@
   --violet-soft: rgba(142, 124, 195, 0.16);
 
   /* Near-black on emerald reads 9.4:1; white would be 2.4:1. */
-  --primary: #3A8B68;
-  --primary-fg: #F1F4F1;
+  --primary: var(--accent);
+  --primary-fg: var(--accent-on);
 
   --fill: rgba(255, 255, 255, 0.045);
   --fill-strong: rgba(255, 255, 255, 0.08);
@@ -172,6 +178,8 @@
   --shadow-2: none;
   --shadow-3: 0 24px 48px -24px rgba(0, 0, 0, 0.75);
   --glow: 0 0 0 3px rgba(32, 201, 138, 0.22);
+  --shadow-glow: 0 10px 28px -8px color-mix(in srgb, var(--accent) 55%, transparent);
+  --shadow-float: 0 16px 40px -12px rgba(0, 0, 0, 0.7);
 
   --hero-bg:
     radial-gradient(120% 150% at 88% -10%, rgba(217, 173, 82, 0.16), transparent 58%),
@@ -194,19 +202,17 @@
    explicit that only colour changes.
    ========================================================================= */
 :root {
-  /* --- Radius: four values, and no others -------------------------------- */
-  /* The app reached twelve distinct radii and forty-six separate pills, which
-     is the signature of software that was assembled rather than designed. The
-     scale is deliberately tight and deliberately SMALL: a soft 14–18px corner
-     on every surface is the generic-SaaS tell. Financial software is squarer
-     than a marketing site because it is denser.
+  /* --- Radius ------------------------------------------------------------- */
+  /* The friendly, touchable scale: soft cards, pill-ish controls. Still a
+     ladder — a button is tighter than a card, a card tighter than a panel —
+     and these values must match the Tailwind bridge below.
      Anything outside these is a defect, not a preference. */
-  --radius-sm: 6px;    /* badges that are not pills, chart chrome */
-  --radius-btn: 8px;   /* buttons, inputs, selects, segmented controls */
-  --radius-input: 8px; /* alias, so a form never disagrees with a button */
-  --radius-card: 10px;
-  --radius-panel: 12px;
-  --radius-modal: 12px;
+  --radius-sm: 8px;     /* badges that are not pills, chart chrome */
+  --radius-btn: 12px;   /* buttons, inputs, selects, segmented controls */
+  --radius-input: 12px; /* alias, so a form never disagrees with a button */
+  --radius-card: 20px;
+  --radius-panel: 24px;
+  --radius-modal: 24px;
   /* A pill is for a status word that is genuinely a token — a count, a state.
      It is not a container style. */
   --radius-pill: 999px;
@@ -309,17 +315,20 @@
   --color-primary: var(--primary);
   --color-primary-fg: var(--primary-fg);
 
+  --shadow-glow: var(--shadow-glow);
+  --shadow-float: var(--shadow-float);
+
   --color-c1: var(--c1); --color-c2: var(--c2); --color-c3: var(--c3); --color-c4: var(--c4);
   --color-c5: var(--c5); --color-c6: var(--c6); --color-c7: var(--c7); --color-c8: var(--c8);
 
   /* Prescribed per component. "Everything is a giant rounded rectangle" is the
      generic look this system avoids: a button is tighter than a card, a card is
      tighter than a modal. */
-  --radius-card: 14px;
-  --radius-panel: 16px;
-  --radius-btn: 9px;
-  --radius-input: 10px;
-  --radius-modal: 18px;
+  --radius-card: 20px;
+  --radius-panel: 24px;
+  --radius-btn: 12px;
+  --radius-input: 12px;
+  --radius-modal: 24px;
   --radius-pill: 999px;
 
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -373,6 +382,8 @@ body {
   box-shadow: var(--shadow-2);
   border-color: var(--line-strong);
 }
+/* Press-down feedback for a tappable card. */
+.pressable:active { transform: scale(0.98); }
 
 /* The sticky chrome surface: topbar, bottom bar, drawers.
  *
@@ -472,6 +483,39 @@ body {
 @keyframes kz-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes kz-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes kz-grow { from { transform: scaleY(0); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@keyframes kz-pop { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.04); opacity: 1; } 100% { transform: none; } }
+@keyframes kz-shake { 0%, 100% { transform: none; } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+@keyframes kz-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes kz-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+
+/* Loading placeholder. */
+.skeleton {
+  border-radius: var(--radius-btn);
+  background: linear-gradient(90deg, var(--fill) 25%, var(--fill-strong) 50%, var(--fill) 75%);
+  background-size: 200% 100%;
+  animation: kz-shimmer 1.4s linear infinite;
+}
+
+/* The wallet card: a dark, glossy payment-card surface used by the home
+   wallet stack and the accounts page. Dark in both themes, like a real card. */
+.wallet-card {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--accent-glow) 28%, transparent), transparent 55%),
+    linear-gradient(150deg, #1C2420 0%, #0C110F 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-float);
+}
+.wallet-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.07) 48%, transparent 60%);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

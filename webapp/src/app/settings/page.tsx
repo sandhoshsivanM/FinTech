@@ -268,7 +268,7 @@ export default function SettingsPage() {
           <div>
             <div className="eyebrow mb-2">Accent color</div>
             <div className="flex items-center gap-2.5 flex-wrap">
-              <AccentSwatch swatch="#34406b" label="Indigo" active={accent === 'default'} onClick={() => setAccent('default')} />
+              <AccentSwatch swatch="#176B4D" label="Vault" active={accent === 'default'} onClick={() => setAccent('default')} />
               {(Object.keys(ACCENTS) as Exclude<AccentName, 'default'>[]).map((k) => (
                 <AccentSwatch key={k} swatch={ACCENTS[k].swatch} label={ACCENTS[k].label} active={accent === k} onClick={() => setAccent(k)} />
               ))}
