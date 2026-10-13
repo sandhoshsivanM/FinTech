@@ -1,5 +1,8 @@
+import '../../../core/help/info_hint.dart';
+import '../../../presentation/striped_bar.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import '../../../presentation/zentra_kit.dart';
 
 import '../../../core/theme/semantic_colors.dart';
 
@@ -12,7 +15,6 @@ import '../../../domain/services/portfolio_analytics.dart';
 import '../../../presentation/charts/bar_chart.dart';
 import '../../../presentation/charts/diverging_bar_chart.dart';
 import '../../../presentation/charts/donut_chart.dart';
-import '../../../presentation/charts/gauge_chart.dart';
 import '../../../presentation/glass_card.dart';
 import '../providers/portfolio_providers.dart';
 
@@ -51,8 +53,14 @@ String _pct(double fraction) =>
 
 /// A titled analytics card, so the six below cannot drift apart.
 class _Card extends StatelessWidget {
-  const _Card({required this.title, required this.child, this.subtitle});
+  const _Card({
+    required this.title,
+    required this.child,
+    this.subtitle,
+    this.help,
+  });
 
+  final String? help;
   final String title;
   final String? subtitle;
   final Widget child;
@@ -65,14 +73,27 @@ class _Card extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+          if (help == null)
+            Text(
+              title,
+              style: text.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+            )
+          else
+            InfoHint.titled(
+              Text(
+                title,
+                style: text.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+              ),
+              help!,
+            ),
           ?subtitle == null
               ? null
               : Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.xs),
-                  child: Text(subtitle!,
-                      style: text.bodySmall?.copyWith(color: muted)),
+                  child: Text(
+                    subtitle!,
+                    style: text.bodySmall?.copyWith(color: muted),
+                  ),
                 ),
           const SizedBox(height: AppSpacing.sm),
           child,
@@ -110,6 +131,7 @@ class PnlByHoldingCard extends StatelessWidget {
 
     return _Card(
       title: 'Gain and loss by holding',
+      help: 'investments.pnlByStock',
       subtitle: hidden > 0
           ? 'Best and worst — $hidden more not shown.'
           : 'Every holding.',
@@ -125,8 +147,7 @@ class PnlByHoldingCard extends StatelessWidget {
               },
             ),
         ],
-        formatValue: (v) =>
-            Money.format(Decimal.parse(v.toStringAsFixed(2))),
+        formatValue: (v) => Money.format(Decimal.parse(v.toStringAsFixed(2))),
         semanticLabel: 'Unrealised gain or loss for each holding',
       ),
     );
@@ -158,11 +179,14 @@ class WinnersLosersCard extends StatelessWidget {
 
     return _Card(
       title: 'Winners and losers',
-      subtitle: '${snap.positions.length} holding'
+      help: 'investments.profitVsLoss',
+      subtitle:
+          '${snap.positions.length} holding'
           '${snap.positions.length == 1 ? '' : 's'}',
       child: DonutChart(
         segments: [
-          if (up > 0) DonutSegment('In profit', up.toDouble(), context.colors.income),
+          if (up > 0)
+            DonutSegment('In profit', up.toDouble(), context.colors.income),
           if (down > 0)
             DonutSegment('At a loss', down.toDouble(), context.colors.expense),
           if (flat > 0)
@@ -196,8 +220,7 @@ class DiversificationCard extends StatelessWidget {
     final positions = snap.positions;
     if (positions.isEmpty) return const SizedBox.shrink();
 
-    final total = positions.fold(
-        Decimal.zero, (s, p) => s + p.marketValue);
+    final total = positions.fold(Decimal.zero, (s, p) => s + p.marketValue);
     if (total <= Decimal.zero) return const SizedBox.shrink();
 
     final largest = positions
@@ -211,25 +234,28 @@ class DiversificationCard extends StatelessWidget {
     final breadth = ((positions.length - 1) / 14 * 100).clamp(0.0, 100.0);
     final score = (concentration * 0.6 + breadth * 0.4).round();
 
-    final biggest = positions
-        .reduce((a, b) => b.marketValue > a.marketValue ? b : a);
+    final biggest = positions.reduce(
+      (a, b) => b.marketValue > a.marketValue ? b : a,
+    );
 
     return _Card(
       title: 'Diversification',
-      subtitle: '${(largest * 100).round()}% sits in '
+      help: 'investments.diversificationScore',
+      subtitle:
+          '${(largest * 100).round()}% sits in '
           '${biggest.instrument.name}.',
       child: Center(
-        child: GaugeChart(
+        child: ScoreRing(
           value: score.toDouble(),
           size: 150,
-          label: '$score',
-          sublabel: score >= 75
+          weakBelow: 40,
+          label: score >= 75
               ? 'Well spread'
               : score >= 50
-                  ? 'Reasonable'
-                  : score >= 25
-                      ? 'Concentrated'
-                      : 'Very concentrated',
+              ? 'Reasonable'
+              : score >= 25
+              ? 'Concentrated'
+              : 'Very concentrated',
         ),
       ),
     );
@@ -273,9 +299,10 @@ class ReturnDistributionCard extends StatelessWidget {
 
     return _Card(
       title: 'Return spread',
+      help: 'analytics.returnDistribution',
       subtitle: undefined > 0
           ? '$undefined holding${undefined == 1 ? '' : 's'} with no cost to '
-              'measure against are left out.'
+                'measure against are left out.'
           : 'Holdings per return band.',
       child: BarChart(
         groups: [
@@ -327,8 +354,9 @@ class PortfolioInsightsCard extends StatelessWidget {
       ..sort((a, b) => b.marketValue.compareTo(a.marketValue));
     final largest = sorted.first;
     final smallest = sorted.last;
-    final topThree =
-        sorted.take(3).fold(Decimal.zero, (s, p) => s + p.marketValue);
+    final topThree = sorted
+        .take(3)
+        .fold(Decimal.zero, (s, p) => s + p.marketValue);
     final best = priced.isEmpty
         ? null
         : priced.reduce((a, b) => _returnOf(b)! > _returnOf(a)! ? b : a);
@@ -347,12 +375,14 @@ class PortfolioInsightsCard extends StatelessWidget {
 
     return _Card(
       title: 'Concentration and extremes',
+      help: 'concentration',
       child: Column(
         children: [
           _InsightRow(
             label: 'Largest',
             value: largest.instrument.name,
-            detail: '${share(largest.marketValue)} · '
+            detail:
+                '${share(largest.marketValue)} · '
                 '${Money.format(largest.marketValue)}',
           ),
           _InsightRow(
@@ -363,7 +393,8 @@ class PortfolioInsightsCard extends StatelessWidget {
           _InsightRow(
             label: 'Smallest',
             value: smallest.instrument.name,
-            detail: '${share(smallest.marketValue)} · '
+            detail:
+                '${share(smallest.marketValue)} · '
                 '${Money.format(smallest.marketValue)}',
           ),
           if (best != null)
@@ -383,7 +414,8 @@ class PortfolioInsightsCard extends StatelessWidget {
           _InsightRow(
             label: 'Invested',
             value: Money.format(invested),
-            detail: '${positions.length} positions · avg '
+            detail:
+                '${positions.length} positions · avg '
                 '${Money.format((total / Decimal.fromInt(positions.length)).toDecimal(scaleOnInfinitePrecision: 2))}',
           ),
         ],
@@ -426,17 +458,21 @@ class _InsightRow extends StatelessWidget {
                 // made every row a different height and the column ragged —
                 // which is most of what "unfinished" looks like on a dense
                 // screen.
-                Text(value,
-                    textAlign: TextAlign.right,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: text.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  value,
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                ),
                 ?detail == null
                     ? null
-                    : Text(detail!,
-                        style: text.bodySmall
-                            ?.copyWith(color: detailColor ?? muted)),
+                    : Text(
+                        detail!,
+                        style: text.bodySmall?.copyWith(
+                          color: detailColor ?? muted,
+                        ),
+                      ),
               ],
             ),
           ),
@@ -465,7 +501,9 @@ class DayChangeCard extends ConsumerWidget {
     if (moves == null || moves.isEmpty) {
       return _Card(
         title: 'Change since last price',
-        subtitle: 'Needs prices from two different days. Refresh again '
+        help: 'dayChange',
+        subtitle:
+            'Needs prices from two different days. Refresh again '
             'tomorrow and the move appears here.',
         child: const SizedBox(height: 24),
       );
@@ -489,7 +527,9 @@ class DayChangeCard extends ConsumerWidget {
 
     return _Card(
       title: 'Change since last price',
-      subtitle: 'Measured from ${_date(oldest!)}. '
+      help: 'dayChange',
+      subtitle:
+          'Measured from ${_date(oldest!)}. '
           '${total >= Decimal.zero ? 'Up' : 'Down'} '
           '${Money.format(total.abs())} across ${rows.length} holding'
           '${rows.length == 1 ? '' : 's'}.',
@@ -499,7 +539,7 @@ class DayChangeCard extends ConsumerWidget {
           Text(
             Money.formatSigned(total, isIncome: total >= Decimal.zero),
             style: text.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w500,
               color: total >= Decimal.zero
                   ? context.colors.income
                   : context.colors.expense,
@@ -531,8 +571,18 @@ class DayChangeCard extends ConsumerWidget {
   }
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   static String _date(DateTime d) => '${d.day} ${_months[d.month - 1]}';
 }
@@ -569,8 +619,14 @@ class _CostVsValueCardState extends State<CostVsValueCard> {
     final grand = _showInvested ? invested : current;
 
     return _Card(
-      title: _showInvested ? 'Allocation by amount invested' : 'Allocation by value',
-      subtitle: '${Money.format(invested)} invested is now '
+      title: _showInvested
+          ? 'Allocation by amount invested'
+          : 'Allocation by value',
+      help: _showInvested
+          ? 'investments.investmentAllocation'
+          : 'investments.portfolioAllocation',
+      subtitle:
+          '${Money.format(invested)} invested is now '
           '${Money.format(current)} — '
           '${pnl >= Decimal.zero ? 'up' : 'down'} ${Money.format(pnl.abs())}.',
       child: Column(
@@ -583,8 +639,7 @@ class _CostVsValueCardState extends State<CostVsValueCard> {
             ],
             selected: {_showInvested},
             showSelectedIcon: false,
-            onSelectionChanged: (v) =>
-                setState(() => _showInvested = v.first),
+            onSelectionChanged: (v) => setState(() => _showInvested = v.first),
           ),
           const SizedBox(height: AppSpacing.md),
           DonutChart(
@@ -595,9 +650,11 @@ class _CostVsValueCardState extends State<CostVsValueCard> {
             // detail a tap away.
             segments: [
               for (var i = 0; i < positions.length; i++)
-                DonutSegment(positions[i].instrument.name,
-                    pick(positions[i]).toDouble(),
-                    _sliceColors[i % _sliceColors.length]),
+                DonutSegment(
+                  positions[i].instrument.name,
+                  pick(positions[i]).toDouble(),
+                  _sliceColors[i % _sliceColors.length],
+                ),
             ],
             size: 130,
             strokeWidth: 18,
@@ -630,6 +687,7 @@ class ValueDistributionCard extends StatelessWidget {
 
     return _Card(
       title: 'Biggest holdings',
+      help: 'dashboard.topHoldings',
       subtitle: positions.length > shown.length
           ? 'Top ${shown.length} of ${positions.length} by value.'
           : 'By value.',
@@ -647,7 +705,7 @@ class ValueDistributionCard extends StatelessWidget {
                   : '${((p.marketValue / total).toDouble() * 100).toStringAsFixed(1)}%',
             ),
         ],
-        positiveColor: context.colors.accent,
+        positiveColor: context.colors.info,
         formatValue: (v) => Money.compact(v),
         semanticLabel: 'Holdings ranked by current value',
       ),
@@ -688,11 +746,13 @@ class GainersLosersCard extends StatelessWidget {
     // two cards are not on a shared scale and do not claim to be — each answers
     // "who leads this group", not "are gains bigger than losses". That question
     // is the diverging chart's.
-    final extent =
-        shown.isEmpty ? 1.0 : shown.map((e) => e.r.abs()).reduce((a, b) => a > b ? a : b);
+    final extent = shown.isEmpty
+        ? 1.0
+        : shown.map((e) => e.r.abs()).reduce((a, b) => a > b ? a : b);
 
     return _Card(
       title: gainers ? 'Top gainers' : 'Top losers',
+      help: gainers ? 'investments.topGainers' : 'investments.topLosers',
       subtitle: shown.isEmpty
           ? (gainers ? 'Nothing is up yet.' : 'Nothing is down.')
           : 'By return.',
@@ -705,36 +765,42 @@ class GainersLosersCard extends StatelessWidget {
                 children: [
                   SizedBox(
                     width: 16,
-                    child: Text('${i + 1}',
-                        style: text.bodySmall?.copyWith(color: muted)),
+                    child: Text(
+                      '${i + 1}',
+                      style: text.bodySmall?.copyWith(color: muted),
+                    ),
                   ),
                   SizedBox(
                     width: 150,
-                    child: Text(shown[i].p.instrument.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: text.bodySmall),
+                    child: Text(
+                      shown[i].p.instrument.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.bodySmall,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
+                      child: StripedBar(
                         value: (shown[i].r.abs() / extent).clamp(0.0, 1.0),
-                        minHeight: 6,
-                        backgroundColor:
-                            Theme.of(context).colorScheme.surfaceContainerHighest,
-                        valueColor: AlwaysStoppedAnimation(color),
+                        height: 6,
+                        color: color,
                       ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   SizedBox(
                     width: 62,
-                    child: Text(_pct(shown[i].r),
-                        textAlign: TextAlign.right,
-                        style: text.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w700, color: color)),
+                    child: Text(
+                      _pct(shown[i].r),
+                      textAlign: TextAlign.right,
+                      style: text.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: color,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -780,25 +846,31 @@ class GroupAllocationCard extends StatelessWidget {
     // Unclassified is pushed last and greyed rather than being given a hue.
     // It is the absence of a category, and colouring it like one puts "not
     // known" on the same footing as "Energy".
-    final classified =
-        entries.where((e) => e.key != unclassifiedLabel).toList();
-    final unknown =
-        entries.where((e) => e.key == unclassifiedLabel).toList();
+    final classified = entries
+        .where((e) => e.key != unclassifiedLabel)
+        .toList();
+    final unknown = entries.where((e) => e.key == unclassifiedLabel).toList();
 
     return _Card(
       title: title,
       subtitle: unknown.isEmpty
           ? null
           : '${((unknown.first.value / grand).toDouble() * 100).round()}% not '
-              'classified yet.',
+                'classified yet.',
       child: DonutChart(
         segments: [
           for (var i = 0; i < classified.length; i++)
-            DonutSegment(classified[i].key, classified[i].value.toDouble(),
-                _sliceColors[i % _sliceColors.length]),
+            DonutSegment(
+              classified[i].key,
+              classified[i].value.toDouble(),
+              _sliceColors[i % _sliceColors.length],
+            ),
           for (final u in unknown)
-            DonutSegment(u.key, u.value.toDouble(),
-                Theme.of(context).colorScheme.outlineVariant),
+            DonutSegment(
+              u.key,
+              u.value.toDouble(),
+              Theme.of(context).colorScheme.outlineVariant,
+            ),
         ],
         size: 116,
         strokeWidth: 16,

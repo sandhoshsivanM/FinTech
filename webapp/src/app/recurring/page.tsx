@@ -4,7 +4,7 @@ import {
   Trash2, RefreshCw, Plus, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { CatIcon } from '@/components/CategoryIcon';
+import { CategoryIcon } from '@/components/CategoryIcon';
 import { useApp, uid } from '@/lib/store';
 import { D, ZERO } from '@/lib/money';
 import { useFmt } from '@/lib/useFmt';
@@ -193,6 +193,7 @@ export default function RecurringPage() {
     <div className="space-y-5">
       <PageIntro
         title="Recurring"
+        info="recurring.page"
         subtitle="Scheduled bills, subscriptions, and income."
         action={
           <Button
@@ -222,7 +223,7 @@ export default function RecurringPage() {
       {posting && (
         <GlassCard>
           <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
-            <h2 className="text-[15px] font-semibold tracking-[-0.02em]">
+            <h2 className="text-[16px] font-medium tracking-[-0.01em]">
               Post {posting.rule.merchant || 'this rule'}
             </h2>
             <span className="text-xs text-muted">
@@ -389,7 +390,9 @@ export default function RecurringPage() {
           />
         </GlassCard>
       ) : (
-        <div className="grid lg:grid-cols-2 gap-4">
+        // One ledger card: rule rows with a category avatar, a cadence chip and
+        // the next date; status as a chip, not a red border.
+        <GlassCard className="!p-0 py-1 overflow-clip">
           {sorted.map((rule) => {
             const income = rule.type === 'income';
             const cat = categories.find((c) => c.id === rule.categoryId);
@@ -401,62 +404,42 @@ export default function RecurringPage() {
             return (
               <div
                 key={rule.id}
-                className="card px-4 py-3.5 flex items-center gap-3 group"
-                style={overdue ? { borderColor: 'var(--expense)', borderWidth: 1 } : undefined}
+                className="px-4 sm:px-5 py-2.5 flex items-center gap-3 group hover:bg-[var(--fill)] transition-colors"
               >
-                {/* Icon avatar */}
-                <span
-                  className="w-10 h-10 rounded-full grid place-items-center shrink-0"
-                  style={{
-                    background: (income ? 'var(--income)' : 'var(--expense)') + '1a',
-                    color: income ? 'var(--income)' : 'var(--expense)',
-                  }}
-                >
-                  <CatIcon name={cat?.icon} size={18} />
-                </span>
+                <CategoryIcon name={cat?.icon} size={40} />
 
-                {/* Details */}
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm truncate">
+                  <div className="font-medium text-[14px] truncate">
                     {rule.merchant || cat?.name || 'Other'}
                   </div>
-                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                    <span
-                      className="inline-block whitespace-nowrap px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
-                      style={{
-                        background: (income ? 'var(--income)' : 'var(--expense)') + '1a',
-                        color: income ? 'var(--income)' : 'var(--expense)',
-                      }}
-                    >
-                      {FREQ_LABEL[rule.frequency]}
-                    </span>
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                    <span className="chip !py-[1px] !text-[11px] text-ink-soft">{FREQ_LABEL[rule.frequency]}</span>
                     {overdue ? (
-                      <span className="text-[11px] font-semibold whitespace-nowrap" style={{ color: 'var(--expense)' }}>
+                      <span className="chip !py-[1px] !text-[11px] !bg-danger-soft !shadow-none text-danger whitespace-nowrap">
                         Overdue · {formatDate(rule.nextRun)}
                       </span>
                     ) : dueSoon ? (
-                      <span className="text-[11px] font-semibold whitespace-nowrap" style={{ color: 'var(--warn)' }}>
+                      <span className="chip !py-[1px] !text-[11px] !bg-warning-soft !shadow-none text-warning whitespace-nowrap">
                         Due soon · {formatDate(rule.nextRun)}
                       </span>
                     ) : (
-                      <span className="text-[11px] text-muted whitespace-nowrap">
-                        Next · {formatDate(rule.nextRun)}
+                      <span className="text-[11.5px] text-muted whitespace-nowrap">
+                        Next {formatDate(rule.nextRun)}
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Amount column */}
                 <div className="text-right shrink-0">
                   <div
-                    className="font-bold text-sm tnum whitespace-nowrap"
-                    style={{ color: income ? 'var(--income)' : 'var(--expense)' }}
+                    className="font-semibold text-[14px] tnum whitespace-nowrap"
+                    style={{ color: income ? 'var(--data-green-ink)' : 'var(--data-rose)' }}
                   >
                     {ghost
                       ? (income ? '+' : '-') + '••••••'
                       : fmt.signed(D(rule.amount), income)}
                   </div>
-                  <div className="text-[10.5px] text-muted tnum whitespace-nowrap">
+                  <div className="text-[11px] text-muted tnum whitespace-nowrap">
                     {ghost ? '••••••' : `~${fmt.money(monthlyEq)}/mo`}
                   </div>
                 </div>
@@ -467,22 +450,19 @@ export default function RecurringPage() {
                   onClick={() => openPost(rule)}
                   title={`Post ${rule.merchant || cat?.name || 'this'} on its own`}
                   className={clsx(
-                    'ml-1 px-2 py-1.5 rounded-[var(--radius-btn)] text-[11.5px] font-semibold whitespace-nowrap transition shrink-0',
-                    'border border-line-strong hover:border-[var(--accent)] hover:text-accent',
+                    'btn-soft ml-1 px-3 h-8 rounded-full text-[12px] font-semibold whitespace-nowrap transition shrink-0',
                     // Always reachable on an overdue rule: that is the one the
-                    // user came to the page for, and hiding its action behind a
-                    // hover is why the batch button looked like the only way.
-                    overdue || dueSoon ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus:opacity-100',
+                    // user came to the page for.
+                    overdue || dueSoon ? 'opacity-100' : 'max-sm:[@media(hover:hover)]:hidden opacity-0 group-hover:opacity-100 focus:opacity-100',
                   )}
                 >
                   Post now
                 </button>
 
-                {/* Delete */}
                 <button
                   type="button"
                   onClick={() => handleDelete(rule.id)}
-                  className="opacity-0 group-hover:opacity-100 focus:opacity-100 ml-1 p-1.5 rounded-[var(--radius-card)] text-expense hover:bg-expense/10 transition shrink-0"
+                  className="max-sm:[@media(hover:hover)]:hidden opacity-0 group-hover:opacity-100 focus:opacity-100 focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] text-muted hover:text-expense transition shrink-0"
                   aria-label="Delete recurring rule"
                 >
                   <Trash2 size={15} />
@@ -490,7 +470,7 @@ export default function RecurringPage() {
               </div>
             );
           })}
-        </div>
+        </GlassCard>
       )}
     </div>
   );

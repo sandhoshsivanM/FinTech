@@ -111,7 +111,7 @@ function ImportHistory() {
 
   return (
     <GlassCard>
-      <SectionHeader title="Import history" action={<span className="text-xs text-muted">{batches.length} run{batches.length === 1 ? '' : 's'}</span>} />
+      <SectionHeader title="Import history" info="import.history" action={<span className="text-xs text-muted">{batches.length} run{batches.length === 1 ? '' : 's'}</span>} />
       <div className="mt-3 divide-y divide-[var(--line)]">
         {batches.slice(0, 10).map((b) => (
           <div key={b.id} className="flex items-center gap-3 py-2.5 text-sm">
@@ -245,7 +245,7 @@ function AssetsImport() {
       {source === 'broker' ? (
         <>
           <GlassCard>
-            <SectionHeader title="Select Broker" />
+            <SectionHeader title="Select broker" info="import.selectBroker" />
             <div className="mt-4">
               <InstitutionGrid institutions={BROKERS} selected={broker} onSelect={setBroker} />
             </div>
@@ -258,12 +258,12 @@ function AssetsImport() {
         </>
       ) : (
         <GlassCard>
-          <SectionHeader title="Step 1: Download Template" />
+          <SectionHeader title="Step 1 · Download the template" info="import.assetTemplate" />
           <p className="mt-2 text-sm text-muted">
             Download the CSV template with example entries, fill it in, and upload it below.
           </p>
           <div className="mt-3">
-            <Button variant="ghost" onClick={() => downloadCsv('khazana-holdings-template.csv', holdingsTemplate())}>
+            <Button variant="soft" onClick={() => downloadCsv('khazana-holdings-template.csv', holdingsTemplate())}>
               <Download size={16} /> Download CSV Template
             </Button>
           </div>
@@ -274,7 +274,7 @@ function AssetsImport() {
       )}
 
       <GlassCard>
-        <SectionHeader title={source === 'broker' ? 'Upload File' : 'Step 2: Upload File'} />
+        <SectionHeader title={source === 'broker' ? 'Upload file' : 'Step 2 · Upload the file'} info="import.uploadHoldings" />
         <div className="mt-4 max-w-sm">
           <Field label="Asset class" hint="Applied to new rows. Positions you already track keep the class you chose for them.">
             <Select value={assetType} onChange={(e) => setAssetType(e.target.value as AssetType)}>
@@ -497,7 +497,7 @@ function MoneyImport() {
       {source === 'bank' ? (
         <>
           <GlassCard>
-            <SectionHeader title="Select bank" />
+            <SectionHeader title="Select bank" info="import.selectBank" />
             <div className="mt-4 space-y-4">
               {BANK_GROUPS.map((g) => (
                 <div key={g.country}>
@@ -514,16 +514,16 @@ function MoneyImport() {
         </>
       ) : (
         <GlassCard>
-          <SectionHeader title="Step 1: Download Template" />
+          <SectionHeader title="Step 1 · Download the template" info="import.txnTemplate" />
           <p className="mt-2 text-sm text-muted">
             Columns: date, description, amount, currency, type, category, from_account, to_account, notes
           </p>
           <div className="mt-3">
-            <Button variant="ghost" onClick={() => downloadCsv('khazana-transactions-template.csv', transactionsTemplate())}>
+            <Button variant="soft" onClick={() => downloadCsv('khazana-transactions-template.csv', transactionsTemplate())}>
               <Download size={16} /> Download CSV Template
             </Button>
           </div>
-          <div className="mt-4 overflow-x-auto rounded-[var(--radius-card)] border border-[var(--line)]">
+          <div className="mt-4 overflow-x-auto rounded-[16px] bg-[var(--card-2)]">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--line)] bg-[var(--surface-2)]">
@@ -553,7 +553,7 @@ function MoneyImport() {
       )}
 
       <GlassCard>
-        <SectionHeader title={source === 'bank' ? 'Upload statement' : 'Step 2: Upload File'} />
+        <SectionHeader title={source === 'bank' ? 'Upload statement' : 'Step 2 · Upload the file'} info="import.uploadStatement" />
 
         <div className="mt-4 grid sm:grid-cols-2 gap-4">
           <Field label="Import into account" hint="Income and expense rows are assigned here. TRANSFER rows use their own from/to columns.">
@@ -629,7 +629,7 @@ function MoneyImport() {
 
 function ModeBanner({ mode, noun }: { mode: WriteMode; noun: string }) {
   return (
-    <div className="rounded-[var(--radius-card)] border border-[var(--warn)]/40 bg-[var(--warn)]/10 p-3.5 text-sm leading-relaxed">
+    <div className="rounded-[16px] bg-warning-soft p-3.5 text-sm leading-relaxed">
       {mode === 'update' ? (
         <>
           <b>Update by Name mode:</b> {noun} whose names match existing ones will have their value,

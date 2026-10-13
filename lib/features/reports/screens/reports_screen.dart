@@ -1,7 +1,9 @@
+import '../../../core/help/info_hint.dart';
 import 'dart:math' as math;
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import '../../../presentation/striped_bar.dart';
 
 import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,8 +60,10 @@ class _ReportsBody extends ConsumerWidget {
             children: [
               Icon(Icons.error_outline, color: context.colors.expense),
               const SizedBox(height: AppSpacing.sm),
-              Text('Could not load data: ${txnState.message}',
-                  textAlign: TextAlign.center),
+              Text(
+                'Could not load data: ${txnState.message}',
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),
@@ -75,13 +79,14 @@ class _ReportsBody extends ConsumerWidget {
 
     return ListView(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       children: [
         // Time-window filter.
         _WindowSelector(
           selected: window,
-          onChanged: (w) =>
-              ref.read(selectedWindowProvider.notifier).state = w,
+          onChanged: (w) => ref.read(selectedWindowProvider.notifier).state = w,
         ),
         const SizedBox(height: AppSpacing.md),
 
@@ -119,6 +124,7 @@ class _WindowSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SegmentedButton<TimeWindow>(
+      showSelectedIcon: false,
       segments: [
         for (final w in TimeWindow.values)
           ButtonSegment(value: w, label: Text(w.label)),
@@ -148,19 +154,21 @@ class _IncomeExpenseCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Income vs Expense',
-            style: Theme.of(context)
-                .textTheme
-                .titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
+          InfoHint.titled(
+            Text(
+              'Income vs Expense',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
+            'reports.incomeVsExpenses',
           ),
           const SizedBox(height: AppSpacing.md),
           _BarRow(
             label: 'Income',
             amount: income,
             larger: larger,
-            color: context.colors.income,
+            color: const Color(0xFF29B340),
             icon: Icons.arrow_downward_rounded,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -168,7 +176,7 @@ class _IncomeExpenseCard extends StatelessWidget {
             label: 'Expense',
             amount: expense,
             larger: larger,
-            color: context.colors.expense,
+            color: const Color(0xFFF33688),
             icon: Icons.arrow_upward_rounded,
           ),
         ],
@@ -210,9 +218,9 @@ class _BarRow extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const Spacer(),
               ExcludeSemantics(
@@ -220,7 +228,7 @@ class _BarRow extends StatelessWidget {
                   Money.format(amount),
                   style: TextStyle(
                     color: color,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
                 ),
@@ -229,29 +237,7 @@ class _BarRow extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           ExcludeSemantics(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadii.pill),
-              child: Stack(
-                children: [
-                  Container(
-                    height: 8,
-                    width: double.infinity,
-                    color: color.withValues(alpha: 0.12),
-                  ),
-                  FractionallySizedBox(
-                    widthFactor: fraction,
-                    child: Container(
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius:
-                            BorderRadius.circular(AppRadii.pill),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            child: StripedBar(value: fraction, height: 14, color: color),
           ),
         ],
       ),
@@ -266,13 +252,13 @@ class _BarRow extends StatelessWidget {
 /// Built per theme rather than declared `const` — three of these six steps are
 /// semantic colours, and the Vault steps are unreadable on a Ledger card.
 List<Color> _categoryPalette(SemanticColors c) => [
-      c.accent,
-      c.budgetWarn,
-      const Color(0xFF8B5CF6),
-      c.income,
-      c.expense,
-      const Color(0xFF64748B),
-    ];
+  c.info,
+  c.budgetWarn,
+  const Color(0xFF7FB0FD),
+  c.income,
+  c.expense,
+  const Color(0xFF8E8E93),
+];
 
 class _SpendingByCategoryCard extends ConsumerWidget {
   const _SpendingByCategoryCard({required this.window});
@@ -284,18 +270,19 @@ class _SpendingByCategoryCard extends ConsumerWidget {
     final txnState = ref.watch(transactionListProvider);
     final categoriesAsync = ref.watch(categoryListProvider);
 
-    final txns =
-        txnState is TransactionData ? txnState.transactions : <Txn>[];
+    final txns = txnState is TransactionData ? txnState.transactions : <Txn>[];
     final categories = categoriesAsync.valueOrNull ?? const [];
     final catMap = {for (final c in categories) c.id: c.name};
 
     // Filter to window expenses.
     final now = DateTime.now();
     final windowStart = now.subtract(window.duration);
-    final expenses = txns.where((t) =>
-        t.type == TxnType.expense &&
-        !t.date.isBefore(windowStart) &&
-        !t.date.isAfter(now));
+    final expenses = txns.where(
+      (t) =>
+          t.type == TxnType.expense &&
+          !t.date.isBefore(windowStart) &&
+          !t.date.isAfter(now),
+    );
 
     // Group by category.
     final grouped = <String, Decimal>{};
@@ -309,12 +296,14 @@ class _SpendingByCategoryCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Spending by Category',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
+            InfoHint.titled(
+              Text(
+                'Spending by Category',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+              ),
+              'reports.spendingByCategory',
             ),
             const SizedBox(height: AppSpacing.md),
             SizedBox(
@@ -323,7 +312,8 @@ class _SpendingByCategoryCard extends ConsumerWidget {
                 child: Text(
                   'No expenses in this period.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),
@@ -348,8 +338,7 @@ class _SpendingByCategoryCard extends ConsumerWidget {
         ),
     ];
 
-    final total =
-        segments.fold<double>(0, (s, seg) => s + seg.value);
+    final total = segments.fold<double>(0, (s, seg) => s + seg.value);
     final largestPct = total <= 0
         ? '0%'
         : '${(segments.first.value / total * 100).round()}%';
@@ -358,12 +347,14 @@ class _SpendingByCategoryCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Spending by Category',
-            style: Theme.of(context)
-                .textTheme
-                .titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
+          InfoHint.titled(
+            Text(
+              'Spending by Category',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
+            'reports.spendingByCategory',
           ),
           const SizedBox(height: AppSpacing.md),
           Semantics(
@@ -399,7 +390,8 @@ class _NetWorthTrendCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final values = series.map((p) => p.value.toDouble()).toList();
-    final allFlat = values.length < 2 ||
+    final allFlat =
+        values.length < 2 ||
         (values.reduce(math.min) == values.reduce(math.max));
 
     if (allFlat) {
@@ -410,14 +402,17 @@ class _NetWorthTrendCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.show_chart,
-                  size: 36, color: Theme.of(context).colorScheme.outline),
+              Icon(
+                Icons.show_chart,
+                size: 36,
+                color: Theme.of(context).colorScheme.outline,
+              ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'Net worth trend will appear here',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color:
-                        Theme.of(context).colorScheme.onSurfaceVariant),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -448,20 +443,22 @@ class _NetWorthTrendCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  'Net Worth Over Time',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                child: InfoHint.titled(
+                  Text(
+                    'Net Worth Over Time',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  'reports.netWorthTrend',
                 ),
               ),
               Text(
                 Money.format(lastValue),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: context.colors.accent,
-                    ),
+                  fontWeight: FontWeight.w500,
+                  color: context.colors.info,
+                ),
               ),
             ],
           ),
@@ -469,8 +466,10 @@ class _NetWorthTrendCard extends StatelessWidget {
           AreaChart(
             values: pts,
             height: 140,
-            formatValue: (v) => Money.format(Decimal.parse(v.toStringAsFixed(2))),
-            semanticLabel: 'Net worth trend over the selected period, '
+            formatValue: (v) =>
+                Money.format(Decimal.parse(v.toStringAsFixed(2))),
+            semanticLabel:
+                'Net worth trend over the selected period, '
                 'ending at ${Money.toWords(lastValue)}',
           ),
         ],
@@ -478,7 +477,6 @@ class _NetWorthTrendCard extends StatelessWidget {
     );
   }
 }
-
 
 // ---------------------------------------------------------------------------
 // 1b. Month-by-month cash flow
@@ -501,8 +499,10 @@ class _MonthlyFlowCard extends ConsumerWidget {
 
     final text = Theme.of(context).textTheme;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    final flows =
-        MonthlyCashFlow.lastMonths(state.transactions, months: _months);
+    final flows = MonthlyCashFlow.lastMonths(
+      state.transactions,
+      months: _months,
+    );
     final withYear = MonthlyCashFlow.spansYears(flows);
 
     final active = flows.where((f) => f.expense > Decimal.zero).toList();
@@ -514,15 +514,20 @@ class _MonthlyFlowCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Month by month',
-              style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+          InfoHint.titled(
+            Text(
+              'Month by month',
+              style: text.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
+            'reports.monthByMonth',
+          ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             busiest == null
                 ? 'Your months will appear here as you record transactions.'
                 : 'Heaviest spending was '
-                    '${busiest.label(withYear: withYear)}, at '
-                    '${Money.format(busiest.expense)}.',
+                      '${busiest.label(withYear: withYear)}, at '
+                      '${Money.format(busiest.expense)}.',
             style: text.bodySmall?.copyWith(color: muted),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -533,13 +538,15 @@ class _MonthlyFlowCard extends ConsumerWidget {
                   label: f.label(withYear: withYear),
                   bars: [
                     Bar(
-                        label: 'In',
-                        value: f.income.toDouble(),
-                        color: context.colors.income),
+                      label: 'In',
+                      value: f.income.toDouble(),
+                      color: context.colors.income,
+                    ),
                     Bar(
-                        label: 'Out',
-                        value: f.expense.toDouble(),
-                        color: context.colors.expense),
+                      label: 'Out',
+                      value: f.expense.toDouble(),
+                      color: context.colors.expense,
+                    ),
                   ],
                 ),
             ],

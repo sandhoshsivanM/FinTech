@@ -21,8 +21,7 @@ class BarGroup {
   final String label;
   final List<Bar> bars;
 
-  double get max =>
-      bars.fold(0.0, (m, b) => b.value > m ? b.value : m);
+  double get max => bars.fold(0.0, (m, b) => b.value > m ? b.value : m);
 }
 
 /// Grouped bars over a categorical axis.
@@ -76,8 +75,10 @@ class _BarChartState extends State<BarChart> {
       return SizedBox(
         height: widget.height,
         child: Center(
-          child: Text(widget.emptyLabel,
-              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+          child: Text(
+            widget.emptyLabel,
+            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
         ),
       );
     }
@@ -87,10 +88,8 @@ class _BarChartState extends State<BarChart> {
         ? groups[_hover!]
         : null;
 
-    String fmt(double v) =>
-        widget.formatValue?.call(v) ?? v.toStringAsFixed(0);
-    String axis(double v) =>
-        widget.formatAxis?.call(v) ?? v.toStringAsFixed(0);
+    String fmt(double v) => widget.formatValue?.call(v) ?? v.toStringAsFixed(0);
+    String axis(double v) => widget.formatAxis?.call(v) ?? v.toStringAsFixed(0);
 
     // A "nice" ceiling, so the top gridline is a number a person would say —
     // ₹90k rather than ₹89,720. Bars are then measured against a round figure
@@ -111,20 +110,28 @@ class _BarChartState extends State<BarChart> {
                   ? null
                   : Row(
                       children: [
-                        Text('${hovered.label}  ',
-                            style: text.bodySmall
-                                ?.copyWith(fontWeight: FontWeight.w700)),
+                        Text(
+                          '${hovered.label}  ',
+                          style: text.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                         for (final b in hovered.bars) ...[
                           Container(
                             width: 8,
                             height: 8,
                             margin: const EdgeInsets.only(right: 4),
                             decoration: BoxDecoration(
-                                color: b.color, shape: BoxShape.circle),
+                              color: b.color,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                          Text('${fmt(b.value)}   ',
-                              style: text.bodySmall
-                                  ?.copyWith(color: scheme.onSurfaceVariant)),
+                          Text(
+                            '${fmt(b.value)}   ',
+                            style: text.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
                         ],
                       ],
                     ),
@@ -205,7 +212,9 @@ const double _labelStripHeight = 20;
 /// number nobody chose. A round ceiling gives the bars somewhere to be short.
 double _niceCeiling(double max) {
   if (max <= 0) return 1;
-  final magnitude = math.pow(10, (math.log(max) / math.ln10).floor()).toDouble();
+  final magnitude = math
+      .pow(10, (math.log(max) / math.ln10).floor())
+      .toDouble();
   for (final step in const [1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10.0]) {
     final candidate = step * magnitude;
     if (candidate >= max) return candidate;
@@ -294,30 +303,56 @@ class _Group extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Flexible, capped at the design width: twelve months of two
+              // bars each did not fit a phone at a fixed width, and the row
+              // overflowed into the yellow-and-black debug stripes.
               for (final b in group.bars)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: LayoutBuilder(
-                    builder: (context, c) {
-                      // A zero-value month still draws a hairline stub. A bar of
-                      // no height is indistinguishable from a month that is not
-                      // in the series at all, and those mean different things.
-                      final frac = max <= 0 ? 0.0 : (b.value / max);
-                      final h = (c.maxHeight * frac * progress).clamp(
-                          b.value > 0 ? 2.0 : 1.0, c.maxHeight);
-                      return Container(
-                        width: ChartTokens.barMaxWidth,
-                        height: h,
-                        decoration: BoxDecoration(
-                          color: b.value > 0
-                              ? b.color
-                              : trackColor.withValues(alpha: 0.6),
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(ChartTokens.barCornerRadius),
-                          ),
-                        ),
-                      );
-                    },
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 1),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: ChartTokens.barMaxWidth,
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, c) {
+                          // A zero-value month still draws a hairline stub. A bar of
+                          // no height is indistinguishable from a month that is not
+                          // in the series at all, and those mean different things.
+                          final frac = max <= 0 ? 0.0 : (b.value / max);
+                          final h = (c.maxHeight * frac * progress).clamp(
+                            b.value > 0 ? 2.0 : 1.0,
+                            c.maxHeight,
+                          );
+                          return Container(
+                            width: double.infinity,
+                            height: h,
+                            decoration: BoxDecoration(
+                              // A soft vertical gradient on real values, the way
+                              // the reference lights its bars.
+                              gradient: b.value > 0
+                                  ? LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        b.color.withValues(alpha: 0.7),
+                                        b.color,
+                                      ],
+                                    )
+                                  : null,
+                              color: b.value > 0
+                                  ? null
+                                  : trackColor.withValues(alpha: 0.6),
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(
+                                  ChartTokens.barCornerRadius,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -327,17 +362,17 @@ class _Group extends StatelessWidget {
           height: _labelStripHeight,
           child: Center(
             child: Text(
-          group.label,
-          maxLines: 1,
-          overflow: TextOverflow.clip,
-          style: TextStyle(
-            fontSize: 11,
-            color: labelColor,
-            // Weight, not colour: the axis must never borrow a series hue, or
-            // the label starts looking like a data mark.
-            fontWeight: highlighted ? FontWeight.w800 : FontWeight.w500,
-          ),
-        ),
+              group.label,
+              maxLines: 1,
+              overflow: TextOverflow.clip,
+              style: TextStyle(
+                fontSize: 11,
+                color: labelColor,
+                // Weight, not colour: the axis must never borrow a series hue, or
+                // the label starts looking like a data mark.
+                fontWeight: highlighted ? FontWeight.w500 : FontWeight.w500,
+              ),
+            ),
           ),
         ),
       ],

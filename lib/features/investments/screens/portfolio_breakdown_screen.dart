@@ -1,3 +1,5 @@
+import '../../../core/help/info_hint.dart';
+import '../../../presentation/striped_bar.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
@@ -25,9 +27,7 @@ class PortfolioBreakdownScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      body: DataGate(child: _Body()),
-    );
+    return Scaffold(body: DataGate(child: _Body()));
   }
 }
 
@@ -77,8 +77,7 @@ class _Empty extends StatelessWidget {
           children: [
             const Icon(Icons.pie_chart_outline, size: 48, color: Colors.grey),
             const SizedBox(height: AppSpacing.md),
-            Text('No lots yet',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text('No lots yet', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
             const Text(
               'Add a holding with its purchase price to see profit and loss '
@@ -109,16 +108,18 @@ class _TotalsCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Current value',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          Text(
+            'Current value',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: 2),
           Text(
             Money.format(snap.marketValue),
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: AppSpacing.md),
           Wrap(
@@ -151,7 +152,9 @@ class _TotalsCard extends ConsumerWidget {
                     : '${(xirr * 100).toStringAsFixed(1)}%',
                 valueColor: xirr == null
                     ? null
-                    : (xirr >= 0 ? context.colors.income : context.colors.expense),
+                    : (xirr >= 0
+                          ? context.colors.income
+                          : context.colors.expense),
               ),
             ],
           ),
@@ -173,18 +176,22 @@ class _PriceAsOf extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-        fontStyle: FontStyle.italic);
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+      fontStyle: FontStyle.italic,
+    );
     if (at == null) {
-      return Text('No prices recorded — showing cost, not value.', style: style);
+      return Text(
+        'No prices recorded — showing cost, not value.',
+        style: style,
+      );
     }
     final days = DateTime.now().difference(at!).inDays;
     final when = DateFormat('d MMM y').format(at!);
     final staleness = days <= 0
         ? 'today'
         : days == 1
-            ? 'yesterday'
-            : '$days days ago';
+        ? 'yesterday'
+        : '$days days ago';
     return Text('Prices as of $when ($staleness)', style: style);
   }
 }
@@ -237,20 +244,25 @@ class _AllocationCard extends ConsumerWidget {
           groupColor(AssetGroup.values.firstWhere((g) => g.name == r.key)),
         ),
     ];
-    final largest =
-        rows.reduce((a, b) => b.marketValue > a.marketValue ? b : a);
-    final pct =
-        (largest.marketValue.toDouble() / total.toDouble() * 100).round();
+    final largest = rows.reduce(
+      (a, b) => b.marketValue > a.marketValue ? b : a,
+    );
+    final pct = (largest.marketValue.toDouble() / total.toDouble() * 100)
+        .round();
 
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Allocation',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          InfoHint.titled(
+            Text(
+              'Allocation',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
+            'dashboard.allocation',
+          ),
           const SizedBox(height: AppSpacing.md),
           DonutChart(
             segments: segments,
@@ -294,9 +306,9 @@ class _DimensionPicker extends ConsumerWidget {
               child: ChoiceChip(
                 label: Text(entry.value),
                 selected: current == entry.key,
-                onSelected: (_) => ref
-                    .read(rollupDimensionProvider.notifier)
-                    .state = entry.key,
+                onSelected: (_) =>
+                    ref.read(rollupDimensionProvider.notifier).state =
+                        entry.key,
               ),
             ),
         ],
@@ -334,11 +346,15 @@ class _RollupTable extends ConsumerWidget {
             child: Row(
               children: [
                 const Expanded(
-                  child: Text('Total',
-                      style: TextStyle(fontWeight: FontWeight.w800)),
+                  child: Text(
+                    'Total',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
                 ),
-                Text(Money.format(total),
-                    style: const TextStyle(fontWeight: FontWeight.w800)),
+                Text(
+                  Money.format(total),
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(width: AppSpacing.md),
                 SizedBox(
                   width: 96,
@@ -346,8 +362,9 @@ class _RollupTable extends ConsumerWidget {
                     _signed(snap.unrealisedPnl),
                     textAlign: TextAlign.right,
                     style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: _pnlColor(context.colors, snap.unrealisedPnl)),
+                      fontWeight: FontWeight.w500,
+                      color: _pnlColor(context.colors, snap.unrealisedPnl),
+                    ),
                   ),
                 ),
               ],
@@ -373,7 +390,8 @@ class _RollupRowTile extends StatelessWidget {
     final pct = row.pnlPct;
 
     return Semantics(
-      label: '${row.label}, value ${Money.toWords(row.marketValue)}, '
+      label:
+          '${row.label}, value ${Money.toWords(row.marketValue)}, '
           '${row.pnl >= Decimal.zero ? "gain" : "loss"} '
           '${Money.toWords(row.pnl.abs())}',
       child: ExcludeSemantics(
@@ -390,7 +408,7 @@ class _RollupRowTile extends StatelessWidget {
                       children: [
                         Text(
                           row.label,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          style: const TextStyle(fontWeight: FontWeight.w500),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -400,13 +418,12 @@ class _RollupRowTile extends StatelessWidget {
                           '${row.instrumentCount == 1 ? '' : 's'}'
                           ' · ${(share * 100).toStringAsFixed(1)}%'
                           '${row.unpricedCount > 0 ? ' · ${row.unpricedCount} unpriced' : ''}',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
                       ],
                     ),
@@ -414,11 +431,15 @@ class _RollupRowTile extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(Money.format(row.marketValue),
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                      Text(
+                        Money.format(row.marketValue),
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       const SizedBox(height: 2),
-                      Text('cost ${Money.format(row.costBasis)}',
-                          style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        'cost ${Money.format(row.costBasis)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -431,8 +452,9 @@ class _RollupRowTile extends StatelessWidget {
                           _signed(row.pnl),
                           textAlign: TextAlign.right,
                           style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: _pnlColor(context.colors, row.pnl)),
+                            fontWeight: FontWeight.w500,
+                            color: _pnlColor(context.colors, row.pnl),
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -440,10 +462,10 @@ class _RollupRowTile extends StatelessWidget {
                           // as 0%.
                           pct == null ? '—' : '${_pctText(pct)}%',
                           textAlign: TextAlign.right,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: _pnlColor(context.colors, row.pnl)),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: _pnlColor(context.colors, row.pnl),
+                              ),
                         ),
                       ],
                     ),
@@ -453,12 +475,7 @@ class _RollupRowTile extends StatelessWidget {
               const SizedBox(height: 6),
               ClipRRect(
                 borderRadius: BorderRadius.circular(3),
-                child: LinearProgressIndicator(
-                  value: share.clamp(0.0, 1.0),
-                  minHeight: 4,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                ),
+                child: StripedBar(value: share.clamp(0.0, 1.0), height: 4),
               ),
             ],
           ),
@@ -486,24 +503,29 @@ class _Stat extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 2),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontWeight: FontWeight.w700, color: valueColor)),
+            Text(
+              value,
+              style: TextStyle(fontWeight: FontWeight.w500, color: valueColor),
+            ),
             if (sub != null) ...[
               const SizedBox(width: 4),
-              Text(sub!,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: valueColor)),
+              Text(
+                sub!,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: valueColor),
+              ),
             ],
           ],
         ),

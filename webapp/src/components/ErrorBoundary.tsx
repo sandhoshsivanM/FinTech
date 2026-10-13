@@ -56,7 +56,7 @@ export class ErrorBoundary extends Component<Props, State> {
       <div className="grid place-items-center py-16 px-4">
         <div className="max-w-md text-center">
           <AlertTriangle size={26} className="mx-auto" style={{ color: 'var(--warn)' }} />
-          <h2 className="mt-4 text-lg font-bold">This screen hit an error</h2>
+          <h2 className="mt-4 text-lg font-medium">This screen hit an error</h2>
           <p className="mt-2 text-sm text-muted leading-relaxed">
             Your data is safe — it is stored encrypted on this device and nothing here changed it.
             Try again, or move to another screen and come back.

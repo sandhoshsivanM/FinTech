@@ -144,11 +144,14 @@ export function AnimatedNumber({
   format = (n) => n.toLocaleString('en-IN', { maximumFractionDigits: 0 }),
   durationMs = 900,
   className,
+  render,
 }: {
   value: number;
   format?: (n: number) => string;
   durationMs?: number;
   className?: string;
+  /** Lays out the formatted string, e.g. to set paise smaller. */
+  render?: (formatted: string) => ReactNode;
 }) {
   const reduced = useReducedMotion();
   const [shown, setShown] = useState(value);
@@ -176,7 +179,7 @@ export function AnimatedNumber({
   // A screen reader gets the settled figure, not the ticking one.
   return (
     <span className={className}>
-      <span aria-hidden="true">{format(shown)}</span>
+      <span aria-hidden="true">{render ? render(format(shown)) : format(shown)}</span>
       <span className="sr-only">{format(value)}</span>
     </span>
   );

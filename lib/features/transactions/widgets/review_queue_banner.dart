@@ -24,7 +24,8 @@ class ReviewQueueBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pending = ref.watch(pendingCaptureListProvider).valueOrNull ?? const [];
+    final pending =
+        ref.watch(pendingCaptureListProvider).valueOrNull ?? const [];
     if (pending.isEmpty) return const SizedBox.shrink();
 
     final n = pending.length;
@@ -40,11 +41,16 @@ class ReviewQueueBanner extends ConsumerWidget {
           onTap: () => context.go(Routes.captureInbox),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
             child: Row(
               children: [
-                Icon(Icons.auto_awesome_motion_outlined,
-                    size: 18, color: context.colors.budgetWarn),
+                Icon(
+                  Icons.auto_awesome_motion_outlined,
+                  size: 18,
+                  color: context.colors.budgetWarn,
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
@@ -61,12 +67,18 @@ class ReviewQueueBanner extends ConsumerWidget {
                     ),
                   ),
                 ),
-                Text('Review',
-                    style: text.labelMedium?.copyWith(
-                        color: context.colors.goldInk,
-                        fontWeight: FontWeight.w700)),
-                Icon(Icons.chevron_right_rounded,
-                    size: 18, color: context.colors.budgetWarn),
+                Text(
+                  'Review',
+                  style: text.labelMedium?.copyWith(
+                    color: context.colors.goldInk,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: context.colors.budgetWarn,
+                ),
               ],
             ),
           ),

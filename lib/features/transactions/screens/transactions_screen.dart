@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
@@ -106,24 +107,38 @@ class _TransactionList extends ConsumerWidget {
       TransactionLoading() => const Center(child: CircularProgressIndicator()),
       TransactionError(:final message) => Center(child: Text(message)),
       TransactionData(:final transactions) => Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(
-                  AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
-              child: Column(
-                children: [
-                  ReviewQueueBanner(),
-                  BudgetStrip(),
-                ],
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(left: AppSpacing.lg),
+              child: InfoHint.titled(
+                Text(
+                  'Cash flow',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                'transactions.page',
               ),
             ),
-            Expanded(
-              child: transactions.isEmpty
-                  ? const _EmptyState()
-                  : _Ledger(rows: _groupByDay(transactions), categories: byId),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+              0,
             ),
-          ],
-        ),
+            child: Column(children: [ReviewQueueBanner(), BudgetStrip()]),
+          ),
+          Expanded(
+            child: transactions.isEmpty
+                ? const _EmptyState()
+                : _Ledger(rows: _groupByDay(transactions), categories: byId),
+          ),
+        ],
+      ),
     };
   }
 }
@@ -137,18 +152,18 @@ class _Ledger extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListView.builder(
-      padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: 88),
+      padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: 128),
       itemCount: rows.length,
       itemBuilder: (context, i) {
         final row = rows[i];
         return switch (row) {
           _DayHeader() => _DayHeaderTile(header: row),
           _TxnRow(:final txn) => TransactionTile(
-              txn: txn,
-              category: categories[txn.categoryId],
-              onDelete: () =>
-                  ref.read(transactionListProvider.notifier).remove(txn.id),
-            ),
+            txn: txn,
+            category: categories[txn.categoryId],
+            onDelete: () =>
+                ref.read(transactionListProvider.notifier).remove(txn.id),
+          ),
         };
       },
     );
@@ -178,14 +193,18 @@ class _DayHeaderTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xs),
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.xs,
+      ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               _label(header.date),
               style: text.labelLarge?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w500,
                 color: scheme.onSurfaceVariant,
               ),
             ),
@@ -215,15 +234,18 @@ class _EmptyState extends StatelessWidget {
           children: [
             const Icon(Icons.receipt_long_outlined, size: 64),
             const SizedBox(height: AppSpacing.md),
-            Text('No transactions yet',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'No transactions yet',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               'Tap Add to log your first one — or paste a line like '
               '"spent 450 on groceries" and it will be parsed for you.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),

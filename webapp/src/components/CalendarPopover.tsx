@@ -93,7 +93,7 @@ export function CalendarPopover({
           className="p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-[var(--fg)] hover:bg-[var(--surface-2)]">
           <ChevronLeft size={15} />
         </button>
-        <span className="flex-1 text-center text-sm font-bold">
+        <span className="flex-1 text-center text-sm font-semibold">
           {MONTHS[cursor.month]} {cursor.year}
         </span>
         <button type="button" aria-label="Next month" onClick={() => step(1)}
@@ -104,7 +104,7 @@ export function CalendarPopover({
 
       <div className="grid grid-cols-7 gap-0.5 mb-1">
         {WEEKDAYS.map((w) => (
-          <span key={w} className="text-[10px] font-bold text-muted text-center py-1">{w}</span>
+          <span key={w} className="text-[10px] font-semibold text-muted text-center py-1">{w}</span>
         ))}
       </div>
 
@@ -125,8 +125,8 @@ export function CalendarPopover({
                 'h-8 rounded-[var(--radius-btn)] text-[12.5px] tnum transition-colors',
                 disabled ? 'opacity-25 cursor-not-allowed' : 'hover:bg-[var(--surface-2)]',
                 c.outside ? 'text-muted' : '',
-                isSelected ? 'bg-[var(--accent)] text-[var(--accent-on)] font-bold hover:bg-[var(--accent)]' : '',
-                !isSelected && isToday ? 'font-bold text-[var(--accent)]' : '',
+                isSelected ? 'bg-[var(--accent)] text-[var(--accent-on)] font-semibold hover:bg-[var(--accent)]' : '',
+                !isSelected && isToday ? 'font-semibold text-[var(--accent)]' : '',
               ].join(' ')}
             >
               {c.day}

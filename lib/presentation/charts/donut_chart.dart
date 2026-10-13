@@ -71,8 +71,9 @@ class _DonutChartState extends State<DonutChart> {
 
   bool get _shouldFold =>
       widget.maxSlices != null && widget.segments.length > widget.maxSlices!;
-  List<DonutSegment> get _head =>
-      _shouldFold ? widget.segments.sublist(0, widget.maxSlices!) : widget.segments;
+  List<DonutSegment> get _head => _shouldFold
+      ? widget.segments.sublist(0, widget.maxSlices!)
+      : widget.segments;
   List<DonutSegment> get _tail =>
       _shouldFold ? widget.segments.sublist(widget.maxSlices!) : const [];
 
@@ -91,7 +92,8 @@ class _DonutChartState extends State<DonutChart> {
 
     // atan2 measures from the positive x-axis; the ring starts at 12 o'clock,
     // so shift by a quarter turn and wrap into [0, 2pi).
-    var a = math.atan2(local.dy - centre.dy, local.dx - centre.dx) + math.pi / 2;
+    var a =
+        math.atan2(local.dy - centre.dy, local.dx - centre.dx) + math.pi / 2;
     if (a < 0) a += 2 * math.pi;
 
     var sweptTo = 0.0;
@@ -108,24 +110,37 @@ class _DonutChartState extends State<DonutChart> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final size = widget.size;
-    final total =
-        widget.segments.fold<double>(0, (s, e) => s + (e.value < 0 ? 0 : e.value));
+    final total = widget.segments.fold<double>(
+      0,
+      (s, e) => s + (e.value < 0 ? 0 : e.value),
+    );
 
     final head = _head;
     final tail = _tail;
-    final tailTotal = tail.fold<double>(0, (s, e) => s + (e.value < 0 ? 0 : e.value));
+    final tailTotal = tail.fold<double>(
+      0,
+      (s, e) => s + (e.value < 0 ? 0 : e.value),
+    );
     final otherColor = widget.otherColor ?? cs.onSurfaceVariant;
     final segments = <DonutSegment>[
       ...head,
       if (_shouldFold)
-        DonutSegment('${widget.otherLabel} (${tail.length})', tailTotal, otherColor),
+        DonutSegment(
+          '${widget.otherLabel} (${tail.length})',
+          tailTotal,
+          otherColor,
+        ),
     ];
 
     final hover = _hover;
-    final hovered = hover != null && hover < segments.length ? segments[hover] : null;
+    final hovered = hover != null && hover < segments.length
+        ? segments[hover]
+        : null;
     final share = hovered == null || total <= 0
         ? null
-        : (hovered.value / total * 100).toStringAsFixed(hovered.value / total < 0.1 ? 1 : 0);
+        : (hovered.value / total * 100).toStringAsFixed(
+            hovered.value / total < 0.1 ? 1 : 0,
+          );
 
     final ring = SizedBox(
       width: size,
@@ -137,9 +152,12 @@ class _DonutChartState extends State<DonutChart> {
         },
         onExit: (_) => setState(() => _hover = null),
         child: CustomPaint(
-          painter: _DonutPainter(segments, widget.strokeWidth,
-              Theme.of(context).colorScheme.surfaceContainerHighest,
-              hover: hover),
+          painter: _DonutPainter(
+            segments,
+            widget.strokeWidth,
+            Theme.of(context).colorScheme.surfaceContainerHighest,
+            hover: hover,
+          ),
           child: Center(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: widget.strokeWidth),
@@ -156,10 +174,9 @@ class _DonutChartState extends State<DonutChart> {
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w800),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   Text(
                     hovered != null
@@ -169,7 +186,8 @@ class _DonutChartState extends State<DonutChart> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -207,31 +225,36 @@ class _DonutChartState extends State<DonutChart> {
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
-                              color: otherColor, shape: BoxShape.circle),
+                            color: otherColor,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
-                          child: Text('${widget.otherLabel} (${tail.length})',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodySmall),
+                          child: Text(
+                            '${widget.otherLabel} (${tail.length})',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         Text(
                           total <= 0
                               ? '0%'
                               : '${(tailTotal / total * 100).round()}%',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(width: 2),
                         AnimatedRotation(
                           turns: _expanded ? 0.5 : 0,
                           duration: const Duration(milliseconds: 150),
-                          child: Icon(Icons.keyboard_arrow_down_rounded,
-                              size: 16, color: cs.onSurfaceVariant),
+                          child: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 16,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -248,15 +271,14 @@ class _DonutChartState extends State<DonutChart> {
                       padding: const EdgeInsets.only(left: AppSpacing.sm),
                       decoration: BoxDecoration(
                         border: Border(
-                            left: BorderSide(
-                                color: cs.outlineVariant, width: 1)),
+                          left: BorderSide(color: cs.outlineVariant, width: 1),
+                        ),
                       ),
                       child: ListView(
                         shrinkWrap: true,
                         padding: EdgeInsets.zero,
                         children: [
-                          for (final s in tail)
-                            _tailRow(context, s, total),
+                          for (final s in tail) _tailRow(context, s, total),
                         ],
                       ),
                     ),
@@ -283,21 +305,23 @@ Widget _legendRow(BuildContext context, DonutSegment s, double total) {
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
-            child: Text(s.label,
-                // Two lines before ellipsis. A truncated category name is
-                // unidentifiable — "Financial Ser…" and "Financial Services"
-                // share a prefix with half a dozen other labels — and a chart
-                // whose legend cannot be read is decoration.
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall)),
+          child: Text(
+            s.label,
+            // Two lines before ellipsis. A truncated category name is
+            // unidentifiable — "Financial Ser…" and "Financial Services"
+            // share a prefix with half a dozen other labels — and a chart
+            // whose legend cannot be read is decoration.
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
         const SizedBox(width: AppSpacing.sm),
         Text(
           total <= 0 ? '0%' : '${(s.value / total * 100).round()}%',
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
         ),
       ],
     ),
@@ -313,21 +337,22 @@ Widget _tailRow(BuildContext context, DonutSegment s, double total) {
     child: Row(
       children: [
         Expanded(
-          child: Text(s.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: cs.onSurfaceVariant)),
+          child: Text(
+            s.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
         ),
         const SizedBox(width: AppSpacing.sm),
         Text(
           total <= 0 ? '0%' : '${(s.value / total * 100).round()}%',
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(fontWeight: FontWeight.w700, color: cs.onSurface),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w500,
+            color: cs.onSurface,
+          ),
         ),
       ],
     ),
@@ -350,7 +375,37 @@ class _DonutPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final center = rect.center;
     final radius = (math.min(size.width, size.height) - stroke) / 2;
-    final total = segments.fold<double>(0, (s, e) => s + (e.value < 0 ? 0 : e.value));
+    final total = segments.fold<double>(
+      0,
+      (s, e) => s + (e.value < 0 ? 0 : e.value),
+    );
+
+    // The 2D/3D blend: the ring floats (a soft drop under it) inside a thin
+    // machined bezel on both edges. Data colours are untouched.
+    canvas.drawCircle(
+      center.translate(0, 6),
+      radius,
+      Paint()
+        ..color = const Color(0x24000000)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+    final bezel = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.25
+      ..shader = const SweepGradient(
+        colors: [
+          Color(0xF2FFFFFF),
+          Color(0x739A9AA2),
+          Color(0xE6FFFFFF),
+          Color(0x739A9AA2),
+          Color(0xF2FFFFFF),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: radius + stroke));
+    canvas
+      ..drawCircle(center, radius + stroke / 2 + 3, bezel)
+      ..drawCircle(center, radius - stroke / 2 - 3, bezel);
 
     // Track.
     canvas.drawCircle(
@@ -393,10 +448,29 @@ class _DonutPainter extends CustomPainter {
       );
       start += full;
     }
+
+    // Gloss on the inner edge, shade on the outer: the flat band reads as a
+    // lit tube.
+    canvas
+      ..drawCircle(
+        center,
+        radius - stroke * 0.24,
+        Paint()
+          ..color = const Color(0x2EFFFFFF)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke * 0.16,
+      )
+      ..drawCircle(
+        center,
+        radius + stroke * 0.36,
+        Paint()
+          ..color = const Color(0x14000000)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke * 0.14,
+      );
   }
 
   @override
   bool shouldRepaint(_DonutPainter old) =>
-      old.hover != hover ||
-      old.segments != segments || old.stroke != stroke;
+      old.hover != hover || old.segments != segments || old.stroke != stroke;
 }

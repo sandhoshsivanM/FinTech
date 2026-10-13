@@ -290,6 +290,11 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
     final notifier = ref.read(vaultUnlockProvider.notifier);
     final recovering = widget.state.recovery;
     await notifier.unlockWithPin(_pin.text);
+    // A successful unlock replaces this form, disposing the controller.
+    if (!mounted) {
+      if (_remember && !recovering) await notifier.disableLock();
+      return;
+    }
     _pin.clear();
     // Only after the PIN is verified: disableLock reads the live session key,
     // so a wrong PIN cannot turn the lock off.

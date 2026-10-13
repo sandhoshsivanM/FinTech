@@ -14,6 +14,7 @@ import { PageIntro, Chip, GlassCard, EmptyState, Segmented } from '@/components/
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { AssetMark } from '@/components/primitives';
+import { CardTitle } from '@/components/Hint';
 import { demoNews, agoLabel } from '@/lib/demo/news';
 import { demoIndices, demoEarnings } from '@/lib/demo/marketFeed';
 import { pct } from '@/lib/format';
@@ -66,7 +67,7 @@ function NewsPageInner() {
           <section className="card overflow-hidden">
             <div className="flex items-center gap-3 flex-wrap px-5 py-4 border-b border-line">
               <div className="min-w-0">
-                <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Latest</h2>
+                <CardTitle info="news.latest" className="text-[16px] font-medium tracking-[-0.01em]">Latest</CardTitle>
                 <p className="text-xs text-muted mt-0.5">{stories.length} stories in the last 72 hours</p>
               </div>
               <span className="ml-auto">
@@ -79,19 +80,16 @@ function NewsPageInner() {
             </div>
             <div>
               {stories.map((s) => (
-                <article key={s.id} className="flex gap-3 px-5 py-4 border-b border-line last:border-0 hover:bg-fill transition-colors">
-                  <span className="w-8 h-8 mt-0.5 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-accent-soft text-accent">
+                <article key={s.id} className="flex items-start gap-3 px-4 sm:px-5 py-3 hover:bg-fill transition-colors">
+                  <span className="w-10 h-10 shrink-0 rounded-full grid place-items-center bg-[color-mix(in_srgb,var(--data-blue)_14%,transparent)] text-[var(--data-blue)]">
                     <Newspaper size={15} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                      <Chip tone="accent">{s.category}</Chip>
-                      <span className="text-[11.5px] text-muted">{agoLabel(s.agoHours)} · {s.source}</span>
-                    </div>
-                    <h3 className="text-[14.5px] font-semibold tracking-[-0.015em] leading-snug text-balance">{s.title}</h3>
-                    <p className="text-[11.5px] text-muted mt-1.5">
-                      {s.symbols.length ? `Affects ${s.symbols.join(', ')}` : 'Portfolio-wide'}
+                    <h3 className="text-[14px] font-medium tracking-[-0.01em] leading-snug text-balance">{s.title}</h3>
+                    <p className="text-[11.5px] text-muted mt-1">
+                      {s.source} · {agoLabel(s.agoHours)} · {s.symbols.length ? s.symbols.join(', ') : 'Portfolio-wide'}
                     </p>
+                    <div className="mt-1.5"><Chip>{s.category}</Chip></div>
                   </div>
                   <ExternalLink size={15} className="text-muted shrink-0 mt-1 hidden min-[560px]:block" />
                 </article>
@@ -104,15 +102,15 @@ function NewsPageInner() {
           <StaggerItem>
             <section className="card">
               <div className="px-5 py-4 border-b border-line flex items-center gap-3">
-                <h3 className="text-[18px] font-semibold tracking-[-0.02em]">Indices</h3>
+                <CardTitle as="h3" info="news.indices" className="text-[16px] font-medium tracking-[-0.01em]">Indices</CardTitle>
                 <span className="ml-auto"><DemoBadge /></span>
               </div>
               <div className="p-5 grid gap-3.5">
                 {indices.map((i) => (
                   <div key={i.symbol} className="flex items-center gap-3">
                     <span className="flex-1 text-[13px] text-ink-soft truncate">{i.name}</span>
-                    <b className="text-[13.5px] font-semibold tnum">{i.level.toLocaleString('en-IN', { minimumFractionDigits: i.digits, maximumFractionDigits: i.digits })}</b>
-                    <span className={`text-[12px] font-semibold tnum min-w-[58px] text-right ${i.changePct >= 0 ? 'text-success' : 'text-danger'}`}>
+                    <b className="text-[14px] font-normal tnum">{i.level.toLocaleString('en-IN', { minimumFractionDigits: i.digits, maximumFractionDigits: i.digits })}</b>
+                    <span className={`text-[12px] font-semibold tnum min-w-[58px] text-right ${i.changePct >= 0 ? 'text-[var(--data-green-ink)]' : 'text-[var(--data-rose)]'}`}>
                       {pct(i.changePct)}
                     </span>
                   </div>
@@ -125,7 +123,7 @@ function NewsPageInner() {
             <StaggerItem>
               <section className="card">
                 <div className="px-5 py-4 border-b border-line flex items-center gap-3">
-                  <h3 className="text-[18px] font-semibold tracking-[-0.02em]">Upcoming earnings</h3>
+                  <CardTitle as="h3" info="news.upcomingEarnings" className="text-[16px] font-medium tracking-[-0.01em]">Upcoming earnings</CardTitle>
                   <span className="ml-auto"><DemoBadge /></span>
                 </div>
                 <div>
@@ -133,7 +131,7 @@ function NewsPageInner() {
                     <div key={e.symbol} className="flex items-center gap-3 px-5 py-3 border-b border-line last:border-0">
                       <AssetMark colour="var(--c5)" />
                       <span className="flex-1 min-w-0">
-                        <span className="block text-[13.5px] font-semibold truncate">{e.symbol}</span>
+                        <span className="block text-[14px] font-medium truncate">{e.symbol}</span>
                         <span className="block text-[11.5px] text-muted">{e.quarter}</span>
                       </span>
                       <Chip>{formatDayMonth(e.date)}</Chip>

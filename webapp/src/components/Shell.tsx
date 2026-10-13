@@ -7,7 +7,7 @@ import {
   Eye, EyeOff, Lock, Menu, X, Plus, ChevronDown, Check, Search,
   Sun, Moon, Monitor, PanelLeft, Bell, RefreshCw, Download,
   CreditCard, ShieldAlert, BellRing, Inbox, History,
-  User, Users, Briefcase, Settings,
+  User, Users, Briefcase, Settings, Hand,
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
 import { useApp, type ThemeChoice } from '@/lib/store';
@@ -16,6 +16,7 @@ import { evaluateAlerts, triggered } from '@/domain/alerts';
 import { marketState } from '@/lib/marketClock';
 import { useNow } from '@/lib/useNow';
 import { useNotificationDriver } from '@/lib/useNotificationDriver';
+import { loadSeen, markSeen, unreadCount } from '@/lib/notifSeen';
 import { demoIndices, demoSeries } from '@/lib/demo/marketFeed';
 import { MiniSparkline } from './charts/MiniSparkline';
 import { BrandMark, WordMark } from './BrandMark';
@@ -85,7 +86,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="fixed inset-0 z-40 min-[900px]:hidden" onClick={() => setDrawer(false)}>
           <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
           <aside
-            className="absolute left-0 top-0 h-full w-[280px] bg-surface border-r border-line flex flex-col overflow-y-auto"
+            className="absolute left-0 top-0 h-full w-[280px] bg-[var(--card-2)] border-r border-line flex flex-col overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pr-3">
@@ -147,7 +148,7 @@ function Greeting() {
     <span className="min-[900px]:hidden min-w-0 leading-tight">
       <span className="block text-[11.5px] text-muted">{hello},</span>
       <span className="block font-semibold tracking-tight truncate">
-        {name ?? 'there'} <span aria-hidden>👋</span>
+        {name ?? 'there'} <Hand size={15} aria-hidden className="inline -mt-0.5 ml-0.5 text-gold" />
       </span>
     </span>
   );
@@ -159,7 +160,7 @@ function TopBar({ title, home, onMenu, onRail }: { title: string; home: boolean;
   const lock = useApp((s) => s.lock);
 
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-2 px-4 min-[900px]:px-8 h-16 border-b border-line glass-panel">
+    <header className={clsx('sticky top-0 z-30 flex items-center gap-2 px-4 min-[900px]:px-8 h-16 border-b border-line glass-panel', home && 'topbar-home')}>
       <button
         className="min-[900px]:hidden focus-ring w-9 h-9 grid place-items-center rounded-[var(--radius-card)] text-ink-soft hover:bg-fill"
         onClick={onMenu}
@@ -310,7 +311,7 @@ function PortfolioSelector() {
       )}
       title="Switch portfolio"
     >
-      <span className="w-[26px] h-[26px] grid place-items-center rounded-[var(--radius-btn)] bg-accent-soft text-accent ring-1 ring-inset ring-accent-line">
+      <span className="w-[26px] h-[26px] grid place-items-center rounded-full bg-primary text-[var(--primary-fg)]">
         <ProfileMark kind={active?.kind} size={14} />
       </span>
       <span className="hidden min-[1024px]:block min-w-0 text-left">
@@ -347,7 +348,7 @@ function Nav({
           {rail ? (
             gi > 0 && <div className="mx-2.5 mb-2 h-px bg-line" />
           ) : (
-            <p className="px-2.5 pb-1.5 text-[10px] font-bold uppercase tracking-[0.11em] text-muted leading-snug">
+            <p className="px-2.5 pb-1.5 text-[12px] font-normal text-muted leading-snug">
               {group.label}
             </p>
           )}
@@ -363,14 +364,15 @@ function Nav({
                 data-tour={`nav-${n.href.replace('/', '')}`}
                 title={rail ? n.label : undefined}
                 className={clsx(
-                  'group/nav relative flex items-center gap-3 rounded-[var(--radius-card)] mb-0.5 text-[13.5px] leading-[1.45]',
+                  'group/nav relative flex items-center gap-3 rounded-[12px] mb-0.5 text-[13.5px] leading-[1.45]',
                   'transition-colors duration-150 ease-standard',
                   rail ? 'justify-center p-2.5' : 'px-2.5 py-1.5',
                   // Vault: #12352A on #20C98A. Ledger: #E1F3EB on #087A56.
                   // Both come straight from --accent-soft / --accent.
+                  // Zentra: the active row is the near-black pill.
                   active
-                    ? 'text-accent font-semibold'
-                    : 'text-ink-soft font-medium hover:bg-fill hover:text-ink',
+                    ? 'text-[var(--primary-fg)] font-medium'
+                    : 'text-ink-soft font-normal hover:bg-fill hover:text-ink',
                 )}
               >
                 {/* The active pill slides from the old row to the new one. */}
@@ -379,13 +381,13 @@ function Nav({
                     layoutId={pillId}
                     transition={SPRING}
                     aria-hidden
-                    className="absolute inset-0 rounded-[var(--radius-card)] bg-accent-soft"
+                    className="absolute inset-0 rounded-[12px] bg-primary shadow-[0_6px_14px_-8px_rgba(0,0,0,0.5)]"
                   />
                 )}
                 <Icon size={17.5} strokeWidth={active ? 2.2 : 1.9} className="relative shrink-0" />
                 {!rail && <span className="relative truncate">{n.label}</span>}
                 {!rail && n.badge != null && (
-                  <span className="ml-auto text-[10px] font-bold px-1.5 rounded-full bg-danger text-white">{n.badge}</span>
+                  <span className="relative ml-auto text-[10px] font-semibold px-1.5 rounded-full bg-danger text-white">{n.badge}</span>
                 )}
                 {/* A quiet lock, not a hard stop. The row still navigates —
                     the screen renders the real content blurred behind the
@@ -393,7 +395,7 @@ function Nav({
                     change shape on purchase, and would stop anyone discovering
                     what they are being sold. */}
                 {!rail && n.pro && !isPro && n.badge == null && (
-                  <span className="ml-auto rounded-full bg-accent-soft px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-[0.08em] text-accent">
+                  <span className={clsx('relative ml-auto rounded-full px-1.5 py-[1px] text-[10px] font-medium', active ? 'bg-white/20 text-[var(--primary-fg)]' : 'bg-[var(--card-2)] text-ink-soft shadow-[0_1px_4px_-1px_rgba(0,0,0,0.2)]')}>
                     Pro
                   </span>
                 )}
@@ -477,22 +479,22 @@ function BottomNav({ path }: { path: string }) {
         aria-current={active ? 'page' : undefined}
         className="focus-ring relative flex-1 min-w-0 flex flex-col items-center justify-center gap-1 text-[10.5px] font-medium rounded-[22px]"
       >
-        <span className="relative grid place-items-center w-11 h-7">
+        <span className="relative grid place-items-center w-12 h-8">
           {active && (
             <motion.span
               layoutId={pillId}
               transition={SPRING}
               aria-hidden
-              className="absolute inset-0 rounded-full bg-accent-soft"
+              className="absolute inset-0 rounded-full bg-[var(--home-pill)] shadow-[0_6px_14px_-6px_rgba(0,0,0,0.45)]"
             />
           )}
           <Icon
             size={19}
             strokeWidth={active ? 2.2 : 1.9}
-            className={clsx('relative transition-colors duration-150', active ? 'text-accent' : 'text-muted')}
+            className={clsx('relative transition-colors duration-150', active ? 'text-[var(--home-pill-ink)]' : 'text-muted')}
           />
         </span>
-        <span className={clsx('truncate max-w-full', active ? 'text-accent font-semibold' : 'text-muted')}>
+        <span className={clsx('truncate max-w-full', active ? 'text-ink font-semibold' : 'text-muted')}>
           {n.short ? <><span aria-hidden>{n.short}</span><span className="sr-only">{n.label}</span></> : n.label}
         </span>
       </Link>
@@ -503,7 +505,7 @@ function BottomNav({ path }: { path: string }) {
       <div className="relative mx-auto max-w-[480px] pointer-events-auto">
         <nav
           aria-label="Primary"
-          className="flex items-stretch h-[64px] px-1 rounded-[28px] border border-line bg-card shadow-[var(--shadow-float)]"
+          className="flex items-stretch h-[64px] px-1 rounded-[28px] bg-[var(--card-2)] shadow-[0_16px_30px_-14px_rgba(0,0,0,0.35)]"
         >
           <div className="flex flex-1 min-w-0">{BOTTOM_NAV.slice(0, split).map(tab)}</div>
           <span aria-hidden className="w-[72px] shrink-0" />
@@ -518,7 +520,7 @@ function BottomNav({ path }: { path: string }) {
           <Link
             href="/add"
             aria-label="New transaction"
-            className="focus-ring grid place-items-center w-[60px] h-[60px] rounded-full bg-primary text-primary-fg shadow-[var(--shadow-glow)] ring-4 ring-[var(--canvas)]"
+            className="focus-ring grid place-items-center w-[60px] h-[60px] rounded-full bg-[var(--home-pill)] text-[var(--home-pill-ink)] shadow-[0_12px_26px_-10px_rgba(0,0,0,0.55)] ring-4 ring-[var(--canvas)]"
           >
             <Plus size={26} strokeWidth={2.4} />
           </Link>
@@ -638,7 +640,7 @@ function MarketStatusCard() {
       </div>
       {nifty ? (
         <>
-          <div className="mt-2 text-[17px] font-bold tracking-[-0.03em] tnum">
+          <div className="mt-2 text-[18px] font-light tracking-[-0.02em] tnum">
             {nifty.level.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className={clsx('text-[11px] font-semibold tnum', nifty.changePct >= 0 ? 'text-success' : 'text-danger')}>
@@ -761,13 +763,16 @@ function NotificationsMenu() {
   const { plan, acknowledgeMissed } = useNotificationDriver();
 
   const items = useMemo(() => {
-    const out: { id: string; icon: 'alert' | 'bill' | 'policy' | 'missed'; title: string; sub: string; href: string }[] = [];
+    // `key` is the occurrence key read-state is tracked by (see notifSeen.ts):
+    // it changes only when the item itself does, never with "due in N days".
+    const out: { id: string; key: string; icon: 'alert' | 'bill' | 'policy' | 'missed'; title: string; sub: string; href: string }[] = [];
     if (!now) return out;
     const DAY = 86_400_000;
 
     for (const m of plan.missed) {
       out.push({
         id: `m-${m.dedupeKey}`,
+        key: `m-${m.dedupeKey}`,
         icon: 'missed',
         title: m.title,
         sub: `While you were away — ${m.body}`,
@@ -783,13 +788,14 @@ function NotificationsMenu() {
     for (const e of triggered(evaluateAlerts({
       alerts, holdings, budgets, categories, txns, insurances, now,
     }))) {
-      out.push({ id: `a-${e.alert.id}`, icon: 'alert', title: e.alert.label, sub: e.message, href: '/alerts' });
+      out.push({ id: `a-${e.alert.id}`, key: `a-${e.alert.id}`, icon: 'alert', title: e.alert.label, sub: e.message, href: '/alerts' });
     }
     for (const b of recurring) {
       const days = Math.ceil((b.nextRun - now) / DAY);
       if (days <= 7) {
         out.push({
           id: `b-${b.id}`,
+          key: `b-${b.id}:${b.nextRun}`,
           icon: 'bill',
           title: b.merchant || 'Scheduled payment',
           sub: days <= 0 ? 'Due today' : `Due in ${days} day${days === 1 ? '' : 's'}`,
@@ -803,6 +809,7 @@ function NotificationsMenu() {
       if (days <= 30) {
         out.push({
           id: `p-${p.id}`,
+          key: `p-${p.id}:${p.renewalDate}`,
           icon: 'policy',
           title: `${p.name} renews`,
           sub: days <= 0 ? 'Overdue' : `In ${days} day${days === 1 ? '' : 's'}`,
@@ -815,21 +822,37 @@ function NotificationsMenu() {
 
   const ICONS = { alert: BellRing, bill: CreditCard, policy: ShieldAlert, missed: History } as const;
 
+  // Read-state. Loaded after mount (localStorage is client-only; the page is
+  // statically exported), so the first paint never disagrees with hydration.
+  const [seen, setSeen] = useState<Set<string> | null>(null);
+  useEffect(() => { setSeen(loadSeen()); }, []);
+  const keys = useMemo(() => items.map((n) => n.key), [items]);
+  const unread = seen ? unreadCount(keys, seen) : 0;
+  // What was unread when the menu opened stays highlighted while it is open,
+  // even though opening marks it read.
+  const [freshOnOpen, setFreshOnOpen] = useState<ReadonlySet<string>>(new Set());
+
   return (
     <div className="relative shrink-0">
       <IconBtn
-        label={`Notifications${items.length ? ` (${items.length})` : ''}`}
+        label={`Notifications${unread ? ` (${unread} unread)` : ''}`}
         onClick={() => {
           // Opening the menu *is* the delivery for a missed reminder — there is
           // no other channel it could have arrived through. Marking it here is
           // what stops it being offered again on every visit forever.
-          if (!open) acknowledgeMissed();
+          if (!open) {
+            acknowledgeMissed();
+            // Opening is reading: everything listed now counts as seen, so the
+            // dot clears and only a new occurrence brings it back.
+            setFreshOnOpen(new Set(keys.filter((k) => !seen?.has(k))));
+            setSeen(markSeen(keys));
+          }
           setOpen((o) => !o);
         }}
         className="relative"
       >
         <Bell size={18} />
-        {items.length > 0 && (
+        {unread > 0 && (
           <span className="absolute top-1.5 right-2 w-[7px] h-[7px] rounded-full bg-danger ring-2 ring-[var(--canvas)]" />
         )}
       </IconBtn>
@@ -839,7 +862,7 @@ function NotificationsMenu() {
           <div className="absolute right-0 mt-2 w-[320px] z-50 card overflow-hidden shadow-[var(--shadow-2)]">
             <div className="px-4 py-3 border-b border-line flex items-center gap-2">
               <p className="eyebrow">Notifications</p>
-              {items.length > 0 && <span className="ml-auto text-[11px] font-semibold text-muted">{items.length}</span>}
+              {freshOnOpen.size > 0 && <span className="ml-auto text-[11px] font-semibold text-muted">{freshOnOpen.size} new</span>}
             </div>
             {items.length === 0 ? (
               <div className="px-4 py-8 text-center">
@@ -855,6 +878,7 @@ function NotificationsMenu() {
               <div className="max-h-[340px] overflow-y-auto">
                 {items.slice(0, 8).map((n) => {
                   const Icon = ICONS[n.icon];
+                  const fresh = freshOnOpen.has(n.key);
                   return (
                     <Link
                       key={n.id}
@@ -871,9 +895,10 @@ function NotificationsMenu() {
                         <Icon size={15} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[13px] font-medium truncate">{n.title}</span>
+                        <span className={clsx('block text-[13px] truncate', fresh ? 'font-semibold text-ink' : 'font-normal text-ink-soft')}>{n.title}</span>
                         <span className="block text-[11.5px] text-muted">{n.sub}</span>
                       </span>
+                      {fresh && <span aria-label="New" className="shrink-0 w-2 h-2 rounded-full bg-[var(--data-blue)]" />}
                     </Link>
                   );
                 })}

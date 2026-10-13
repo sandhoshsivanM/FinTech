@@ -1,3 +1,5 @@
+import '../../../core/help/info_hint.dart';
+import '../../../presentation/striped_bar.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
@@ -42,7 +44,9 @@ class InvestmentsScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text('Investments'),
+        // On a phone the shell already says "Invest" with Portfolio selected,
+        // so a second title here only repeated it.
+        title: isDesktopPlatform ? const Text('Investments') : null,
         actions: [
           // 'Full breakdown' and 'Analytics' used to live here. Both are now
           // segments in the section strip above, and an action that duplicates
@@ -53,15 +57,22 @@ class InvestmentsScreen extends ConsumerWidget {
             icon: const Icon(Icons.upload_file_outlined),
             onPressed: () => context.go(Routes.investmentsImportLots),
           ),
-          Padding(
-            padding: const EdgeInsets.only(
-                left: AppSpacing.xs, right: AppSpacing.md),
-            child: FilledButton.icon(
-              onPressed: () => context.go(Routes.investmentsAddLot),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add lot'),
-            ),
-          ),
+          // Desktop only: on a phone the floating "Add lot" is the action,
+          // and showing both put two identical buttons on one screen.
+          if (isDesktopPlatform)
+            Padding(
+              padding: const EdgeInsets.only(
+                left: AppSpacing.xs,
+                right: AppSpacing.md,
+              ),
+              child: FilledButton.icon(
+                onPressed: () => context.go(Routes.investmentsAddLot),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add lot'),
+              ),
+            )
+          else
+            const SizedBox(width: AppSpacing.sm),
         ],
       ),
       body: const SafeArea(child: DataGate(child: _Body())),
@@ -108,15 +119,16 @@ class _RefreshPricesButtonState extends ConsumerState<_RefreshPricesButton> {
       // streamed, so nothing else would notice they changed.
       ref.invalidate(portfolioSnapshotProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_describe(result))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_describe(result))));
     } on Object catch (e) {
       await recordPriceRefresh(ref.read(currentVaultIdProvider));
       ref.invalidate(lastPriceRefreshProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Could not refresh prices: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not refresh prices: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -127,7 +139,7 @@ class _RefreshPricesButtonState extends ConsumerState<_RefreshPricesButton> {
     if (r.didNothing && r.failures.isEmpty) {
       return r.skipped > 0
           ? 'Nothing to refresh — ${r.skipped} holding'
-              '${r.skipped == 1 ? '' : 's'} priced manually.'
+                '${r.skipped == 1 ? '' : 's'} priced manually.'
           : 'Nothing to refresh.';
     }
     final parts = <String>[
@@ -180,21 +192,26 @@ class _ImportBar extends StatelessWidget {
               color: context.colors.accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(Icons.description_outlined,
-                color: context.colors.accent, size: 19),
+            child: Icon(
+              Icons.description_outlined,
+              color: context.colors.accent,
+              size: 19,
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Import your holdings',
-                    style:
-                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  'Import your holdings',
+                  style: text.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+                ),
                 Text(
                   'Broker CSV. Nothing is written until you review it.',
-                  style: text.labelSmall
-                      ?.copyWith(color: scheme.onSurfaceVariant),
+                  style: text.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -240,11 +257,7 @@ class _Body extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Column(
-                      children: [
-                        _AllocationCard(snap: snap),
-                      ],
-                    ),
+                    child: Column(children: [_AllocationCard(snap: snap)]),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
@@ -303,19 +316,22 @@ class _Body extends ConsumerWidget {
               CostVsValueCard(snap: snap),
               const SizedBox(height: AppSpacing.md),
               GroupAllocationCard(
-                  snap: snap,
-                  title: 'Asset type',
-                  by: (p) => p.instrument.kind.label),
+                snap: snap,
+                title: 'Asset type',
+                by: (p) => p.instrument.kind.label,
+              ),
               const SizedBox(height: AppSpacing.md),
               GroupAllocationCard(
-                  snap: snap,
-                  title: 'Sector',
-                  by: (p) => p.instrument.sectorCode),
+                snap: snap,
+                title: 'Sector',
+                by: (p) => p.instrument.sectorCode,
+              ),
               const SizedBox(height: AppSpacing.md),
               GroupAllocationCard(
-                  snap: snap,
-                  title: 'Market cap',
-                  by: (p) => p.instrument.marketCapBand?.label),
+                snap: snap,
+                title: 'Market cap',
+                by: (p) => p.instrument.marketCapBand?.label,
+              ),
             ],
             const SizedBox(height: AppSpacing.md),
 
@@ -327,7 +343,8 @@ class _Body extends ConsumerWidget {
                   Expanded(child: GainersLosersCard(snap: snap)),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
-                      child: GainersLosersCard(snap: snap, gainers: false)),
+                    child: GainersLosersCard(snap: snap, gainers: false),
+                  ),
                 ],
               )
             else ...[
@@ -396,28 +413,36 @@ class _StatGrid extends ConsumerWidget {
     final tiles = <Widget>[
       StatTile(
         label: 'Current value',
+        term: 'investments',
         value: Money.format(snap.marketValue),
         emphasise: true,
         footer: _asOfText(snap.lastPricedAt) ?? 'No prices recorded',
       ),
-      StatTile(label: 'Invested', value: Money.format(snap.costBasis)),
+      StatTile(
+        label: 'Invested',
+        term: 'invested',
+        value: Money.format(snap.costBasis),
+      ),
       StatTile(
         label: 'Unrealised P&L',
+        term: 'unrealisedPnl',
         value: _signed(snap.unrealisedPnl),
         valueColor: _pnlColor(context.colors, snap.unrealisedPnl),
         footer: pct == null ? null : '${_pctText(pct)}%',
       ),
       StatTile(
         label: 'Realised P&L',
+        term: 'investments.realisedPnl',
         value: _signed(snap.realisedPnl),
         valueColor: _pnlColor(context.colors, snap.realisedPnl),
         footer: snap.disposals.isEmpty
             ? 'No sales yet'
             : '${snap.disposals.length} disposal'
-                '${snap.disposals.length == 1 ? '' : 's'}',
+                  '${snap.disposals.length == 1 ? '' : 's'}',
       ),
       StatTile(
         label: 'XIRR',
+        term: 'xirr',
         // Null means the solver had nothing to work with. Never invent a return.
         value: xirr == null ? '—' : '${(xirr * 100).toStringAsFixed(1)}%',
         valueColor: xirr == null
@@ -437,8 +462,8 @@ class _StatGrid extends ConsumerWidget {
         final columns = c.maxWidth >= 1000
             ? 6
             : c.maxWidth >= 700
-                ? 3
-                : 2;
+            ? 3
+            : 2;
         return GridView.count(
           crossAxisCount: columns,
           shrinkWrap: true,
@@ -477,20 +502,23 @@ class _Notices extends ConsumerWidget {
       if (unconverted.isNotEmpty)
         _Notice(
           icon: Icons.currency_exchange,
-          text: 'Holdings in ${unconverted.join(', ')} are not in your totals '
+          text:
+              'Holdings in ${unconverted.join(', ')} are not in your totals '
               '— no exchange rate stored. Fetch rates in Settings > Currency.',
         ),
       if (snap.unpriced.isNotEmpty)
         _Notice(
           icon: Icons.help_outline,
-          text: '${snap.unpriced.length} holding'
+          text:
+              '${snap.unpriced.length} holding'
               '${snap.unpriced.length == 1 ? '' : 's'} have no price, so they '
               'count at cost and show no profit or loss.',
         ),
       if (unreviewed > 0)
         _Notice(
           icon: Icons.fact_check_outlined,
-          text: '$unreviewed imported lot${unreviewed == 1 ? '' : 's'} still '
+          text:
+              '$unreviewed imported lot${unreviewed == 1 ? '' : 's'} still '
               'need confirming. Their figures are provisional until reviewed.',
         ),
     ];
@@ -556,8 +584,9 @@ class _AllocationCard extends ConsumerWidget {
       children: [
         for (final n in nodes)
           () {
-            final group =
-                AssetGroup.values.firstWhere((g) => g.name == n.row.key);
+            final group = AssetGroup.values.firstWhere(
+              (g) => g.name == n.row.key,
+            );
             final shades = groupShades(group, n.children.length, dark: dark);
             // Anything past the ramp's cap shares its last step; the labels in
             // the caption and legend are what keep them apart.
@@ -586,12 +615,13 @@ class _AllocationCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardTitle('Allocation'),
+          const _CardTitle('Allocation', help: 'dashboard.allocation'),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Asset class, then sector inside it. Tap a slice to zoom in.',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           SunburstChart(
@@ -609,7 +639,8 @@ class _AllocationCard extends ConsumerWidget {
               '${(unclassified * 100).round()}% of your holdings have no sector '
               'yet — set one from a holding to sharpen this.',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ],
@@ -641,14 +672,20 @@ class _SectorPnlCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(child: _CardTitle('Profit & loss by sector')),
+              const Expanded(
+                child: _CardTitle(
+                  'Profit & loss by sector',
+                  help: 'investments.sectorPnl',
+                ),
+              ),
               TextButton(
                 onPressed: () => context.go(Routes.investmentsBreakdown),
                 child: const Text('All'),
               ),
             ],
           ),
-          for (final r in shown) _RollupRowTile(row: r, total: snap.marketValue),
+          for (final r in shown)
+            _RollupRowTile(row: r, total: snap.marketValue),
           if (rows.length > shown.length)
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -688,14 +725,20 @@ class _RollupRowTile extends StatelessWidget {
                 child: Text(
                   row.label,
                   style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 13.5),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13.5,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(Money.format(row.marketValue),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 13.5)),
+              Text(
+                Money.format(row.marketValue),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13.5,
+                ),
+              ),
               const SizedBox(width: AppSpacing.sm),
               SizedBox(
                 width: 74,
@@ -703,9 +746,10 @@ class _RollupRowTile extends StatelessWidget {
                   pct == null ? '—' : '${_pctText(pct)}%',
                   textAlign: TextAlign.right,
                   style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: _pnlColor(context.colors, row.pnl)),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                    color: _pnlColor(context.colors, row.pnl),
+                  ),
                 ),
               ),
             ],
@@ -713,12 +757,7 @@ class _RollupRowTile extends StatelessWidget {
           const SizedBox(height: 5),
           ClipRRect(
             borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: share.clamp(0.0, 1.0),
-              minHeight: 4,
-              backgroundColor:
-                  Theme.of(context).colorScheme.surfaceContainerHighest,
-            ),
+            child: StripedBar(value: share.clamp(0.0, 1.0), height: 4),
           ),
         ],
       ),
@@ -742,17 +781,18 @@ class _MoversCard extends StatelessWidget {
     final priced = snap.positions.where((p) => !p.isUnpriced).toList();
     if (priced.isEmpty) return const SizedBox.shrink();
 
-    final sorted = [...priced]
-      ..sort((a, b) => _pctOf(b).compareTo(_pctOf(a)));
+    final sorted = [...priced]..sort((a, b) => _pctOf(b).compareTo(_pctOf(a)));
     final best = sorted.take(3).toList();
-    final worst =
-        sorted.reversed.take(3).where((p) => !best.contains(p)).toList();
+    final worst = sorted.reversed
+        .take(3)
+        .where((p) => !best.contains(p))
+        .toList();
 
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _CardTitle('Movers'),
+          const _CardTitle('Movers', help: 'dashboard.movers'),
           const SizedBox(height: AppSpacing.xs),
           for (final p in best) _MoverRow(position: p, pct: _pctOf(p)),
           if (worst.isNotEmpty) ...[
@@ -782,22 +822,27 @@ class _MoverRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
-          Icon(up ? Icons.arrow_upward : Icons.arrow_downward,
-              size: 14, color: up ? context.colors.income : context.colors.expense),
+          Icon(
+            up ? Icons.arrow_upward : Icons.arrow_downward,
+            size: 14,
+            color: up ? context.colors.income : context.colors.expense,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               position.instrument.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13.5,
+              ),
             ),
           ),
           Text(
             '${up ? '+' : ''}${pct.toStringAsFixed(2)}%',
             style: TextStyle(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w500,
               fontSize: 13,
               color: up ? context.colors.income : context.colors.expense,
             ),
@@ -828,7 +873,10 @@ class _HoldingsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _CardTitle('Holdings (${positions.length})'),
+          _CardTitle(
+            'Holdings (${positions.length})',
+            help: 'investments.holdingsSummary',
+          ),
           const SizedBox(height: AppSpacing.xs),
           if (positions.isEmpty)
             Padding(
@@ -868,7 +916,10 @@ class _PositionTile extends ConsumerWidget {
     return ExpansionTile(
       tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       childrenPadding: const EdgeInsets.only(
-          left: AppSpacing.md, right: AppSpacing.md, bottom: AppSpacing.sm),
+        left: AppSpacing.md,
+        right: AppSpacing.md,
+        bottom: AppSpacing.sm,
+      ),
       title: Row(
         children: [
           Expanded(
@@ -883,15 +934,18 @@ class _PositionTile extends ConsumerWidget {
                         p.instrument.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                     ),
                     if (p.hasUnreviewedLots) ...[
                       const SizedBox(width: 6),
                       Tooltip(
                         message: 'Contains lots awaiting review',
-                        child: Icon(Icons.fact_check_outlined,
-                            size: 13, color: context.colors.budgetWarn),
+                        child: Icon(
+                          Icons.fact_check_outlined,
+                          size: 13,
+                          color: context.colors.budgetWarn,
+                        ),
                       ),
                     ],
                   ],
@@ -905,10 +959,9 @@ class _PositionTile extends ConsumerWidget {
                   ].join(' · '),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: scheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -918,22 +971,24 @@ class _PositionTile extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(Money.format(p.marketValue),
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(
+                  Money.format(p.marketValue),
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   p.isUnpriced
                       ? 'at cost — no price'
                       : '${_signed(p.unrealisedPnl)}'
-                          '${pctRaw == null ? '' : ' (${pctRaw >= 0 ? '+' : ''}${pctRaw.toStringAsFixed(2)}%)'}',
+                            '${pctRaw == null ? '' : ' (${pctRaw >= 0 ? '+' : ''}${pctRaw.toStringAsFixed(2)}%)'}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: p.isUnpriced
-                            ? scheme.onSurfaceVariant
-                            : _pnlColor(context.colors, p.unrealisedPnl),
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: p.isUnpriced
+                        ? scheme.onSurfaceVariant
+                        : _pnlColor(context.colors, p.unrealisedPnl),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -943,8 +998,10 @@ class _PositionTile extends ConsumerWidget {
       children: [
         _DetailRow('Invested', Money.format(p.costBasis)),
         _DetailRow('Average cost', Money.format(p.avgCost)),
-        _DetailRow('Current price',
-            p.price == null ? 'Not set' : Money.format(p.price!)),
+        _DetailRow(
+          'Current price',
+          p.price == null ? 'Not set' : Money.format(p.price!),
+        ),
         _DetailRow('Price as of', _asOfText(p.pricedAt) ?? 'Never'),
         if (p.instrument.industry != null)
           _DetailRow('Industry', p.instrument.industry!),
@@ -955,9 +1012,10 @@ class _PositionTile extends ConsumerWidget {
         const Divider(height: AppSpacing.md),
         Align(
           alignment: Alignment.centerLeft,
-          child: Text('Lots (${p.lots.length})',
-              style:
-                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+          child: Text(
+            'Lots (${p.lots.length})',
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12.5),
+          ),
         ),
         const SizedBox(height: 4),
         for (final lot in p.lots)
@@ -973,10 +1031,13 @@ class _PositionTile extends ConsumerWidget {
                   ),
                 ),
                 if (!lot.isReviewed)
-                  Text('unreviewed',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: context.colors.budgetWarn,
-                          fontWeight: FontWeight.w700)),
+                  Text(
+                    'unreviewed',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: context.colors.budgetWarn,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1042,17 +1103,21 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
           Flexible(
-            child: Text(value,
-                textAlign: TextAlign.right,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w600)),
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -1079,8 +1144,10 @@ class _EmptyState extends StatelessWidget {
             children: [
               const Icon(Icons.trending_up, size: 52, color: Colors.grey),
               const SizedBox(height: AppSpacing.md),
-              Text('No holdings yet',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'No holdings yet',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'Add a lot with its purchase price and charges, or import a '
@@ -1130,12 +1197,16 @@ class _ErrorState extends StatelessWidget {
           children: [
             Icon(Icons.error_outline, size: 44, color: context.colors.expense),
             const SizedBox(height: AppSpacing.md),
-            Text('Could not load the portfolio',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Could not load the portfolio',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: AppSpacing.sm),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
         ),
       ),
@@ -1144,18 +1215,26 @@ class _ErrorState extends StatelessWidget {
 }
 
 class _CardTitle extends StatelessWidget {
-  const _CardTitle(this.text);
+  const _CardTitle(this.text, {this.help});
 
   final String text;
+  final String? help;
 
   @override
-  Widget build(BuildContext context) => Text(
-        text,
-        style: Theme.of(context)
-            .textTheme
-            .titleSmall
-            ?.copyWith(fontWeight: FontWeight.w700),
-      );
+  Widget build(BuildContext context) {
+    final title = Text(
+      text,
+      style: Theme.of(
+        context,
+      ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+    );
+    return help == null
+        ? title
+        : Align(
+            alignment: Alignment.centerLeft,
+            child: InfoHint.titled(title, help!),
+          );
+  }
 }
 
 String _signed(Decimal v) =>
@@ -1179,7 +1258,6 @@ String? _asOfText(DateTime? at) {
   if (days == 1) return 'Priced yesterday';
   return 'Priced $when ($days days ago)';
 }
-
 
 /// Binds the market-data card to the last-refresh timestamp and hands it the
 /// existing refresh control, so there is still exactly one code path that

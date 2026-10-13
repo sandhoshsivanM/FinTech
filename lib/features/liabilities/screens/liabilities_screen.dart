@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
@@ -9,15 +10,16 @@ import '../../../core/utils/money_format.dart';
 import '../../../domain/entities/liability.dart';
 import '../../../domain/services/debt_calculator.dart';
 import '../../../presentation/data_gate.dart';
+import '../../../presentation/glass_card.dart';
+import '../../../presentation/stat_tile.dart';
+import '../../../presentation/zentra_kit.dart';
 import '../providers/liability_providers.dart';
 
 class LiabilitiesScreen extends StatelessWidget {
   const LiabilitiesScreen({super.key});
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: const DataGate(child: _Body()),
-    );
+    return Scaffold(body: const DataGate(child: _Body()));
   }
 }
 
@@ -29,40 +31,53 @@ class _Body extends ConsumerWidget {
     final liabilities =
         ref.watch(liabilityListProvider).valueOrNull ?? const [];
     final calc = ref.watch(debtCalculatorProvider);
-    final totalDebt =
-        liabilities.fold(Decimal.zero, (s, l) => s + l.principal);
+    final totalDebt = liabilities.fold(Decimal.zero, (s, l) => s + l.principal);
 
+    final text = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Column(
       children: [
-        Card(
-          margin: const EdgeInsets.all(AppSpacing.lg),
-          child: ListTile(
-            title: const Text('Total outstanding'),
-            trailing: Text(Money.format(totalDebt),
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: context.colors.expense)),
-          ),
-        ),
         Expanded(
-          child: liabilities.isEmpty
-              ? const Center(child: Text('No liabilities tracked.'))
-              : ListView(
-                  children: [
-                    for (final l in liabilities)
-                      ListTile(
-                        leading: Icon(l.kind == LiabilityKind.creditCard
-                            ? Icons.credit_card
-                            : Icons.account_balance),
-                        title: Text(l.name),
-                        subtitle: Text(
-                            '${l.aprPct}% APR'
-                            '${l.termMonths != null ? ' · EMI ${Money.format(calc.emi(l.principal, l.aprPct, l.termMonths!))}' : ''}'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            children: [
+              KpiGrid(
+                children: [
+                  StatTile(
+                    label: 'Total outstanding',
+                    term: 'liabilities',
+                    value: Money.format(totalDebt),
+                    valueColor: totalDebt > Decimal.zero
+                        ? context.colors.expense
+                        : null,
+                    footer:
+                        '${liabilities.length} ${liabilities.length == 1 ? 'debt' : 'debts'}',
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              if (liabilities.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(AppSpacing.xl),
+                  child: Center(child: Text('No liabilities tracked.')),
+                ),
+              for (final l in liabilities)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: GlassCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Text(Money.format(l.principal)),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline),
+                            TypeChip(
+                              l.kind == LiabilityKind.creditCard
+                                  ? 'Credit card'
+                                  : 'Loan',
+                            ),
+                            const Spacer(),
+                            IconAction(
+                              icon: Icons.delete_outline,
                               tooltip: 'Delete',
                               onPressed: () => ref
                                   .read(liabilityActionsProvider)
@@ -70,9 +85,33 @@ class _Body extends ConsumerWidget {
                             ),
                           ],
                         ),
-                      ),
-                  ],
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(l.name, style: text.titleLarge),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          'Outstanding',
+                          style: text.bodySmall?.copyWith(color: muted),
+                        ),
+                        Text(
+                          Money.format(l.principal),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${l.aprPct}% APR'
+                          '${l.termMonths != null ? ' · EMI ${Money.format(calc.emi(l.principal, l.aprPct, l.termMonths!))}' : ''}',
+                          style: text.bodySmall?.copyWith(color: muted),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
+            ],
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -113,53 +152,70 @@ class _Body extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Add liability'),
+          title: InfoHint.titled(
+            const Text('Add liability'),
+            'liabilities.form',
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
-                    controller: name,
-                    decoration: const InputDecoration(labelText: 'Name')),
+                  controller: name,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
                 SegmentedButton<LiabilityKind>(
+                  showSelectedIcon: false,
                   segments: const [
                     ButtonSegment(
-                        value: LiabilityKind.creditCard,
-                        label: Text('Card')),
+                      value: LiabilityKind.creditCard,
+                      label: Text('Card'),
+                    ),
                     ButtonSegment(
-                        value: LiabilityKind.loan, label: Text('Loan')),
+                      value: LiabilityKind.loan,
+                      label: Text('Loan'),
+                    ),
                   ],
                   selected: {kind},
                   onSelectionChanged: (s) => setState(() => kind = s.first),
                 ),
                 TextField(
-                    controller: principal,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                        labelText: 'Outstanding (₹)', prefixText: '₹ ')),
+                  controller: principal,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Outstanding (₹)',
+                    prefixText: '₹ ',
+                  ),
+                ),
                 TextField(
-                    controller: apr,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'APR %')),
+                  controller: apr,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'APR %'),
+                ),
                 if (kind == LiabilityKind.loan)
                   TextField(
-                      controller: term,
-                      keyboardType: TextInputType.number,
-                      decoration:
-                          const InputDecoration(labelText: 'Term (months)')),
+                    controller: term,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Term (months)',
+                    ),
+                  ),
               ],
             ),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () {
                 final p = Decimal.tryParse(principal.text.trim());
                 final a = Decimal.tryParse(apr.text.trim());
                 if (p == null || a == null || name.text.trim().isEmpty) return;
-                ref.read(liabilityActionsProvider).add(
+                ref
+                    .read(liabilityActionsProvider)
+                    .add(
                       name: name.text.trim(),
                       kind: kind,
                       principal: p,
@@ -177,7 +233,10 @@ class _Body extends ConsumerWidget {
   }
 
   Future<void> _simulate(
-      BuildContext context, WidgetRef ref, List<Liability> liabilities) async {
+    BuildContext context,
+    WidgetRef ref,
+    List<Liability> liabilities,
+  ) async {
     final budget = TextEditingController();
     var strategy = PayoffStrategy.avalanche;
 
@@ -193,7 +252,10 @@ class _Body extends ConsumerWidget {
                 .simulate(liabilities, amt, strategy);
           }
           return AlertDialog(
-            title: const Text('Debt payoff plan'),
+            title: InfoHint.titled(
+              const Text('Debt payoff plan'),
+              'liabilities.payoffSimulator',
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -201,18 +263,23 @@ class _Body extends ConsumerWidget {
                   controller: budget,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                      labelText: 'Monthly payment (₹)', prefixText: '₹ '),
+                    labelText: 'Monthly payment (₹)',
+                    prefixText: '₹ ',
+                  ),
                   onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 SegmentedButton<PayoffStrategy>(
+                  showSelectedIcon: false,
                   segments: const [
                     ButtonSegment(
-                        value: PayoffStrategy.avalanche,
-                        label: Text('Avalanche')),
+                      value: PayoffStrategy.avalanche,
+                      label: Text('Avalanche'),
+                    ),
                     ButtonSegment(
-                        value: PayoffStrategy.snowball,
-                        label: Text('Snowball')),
+                      value: PayoffStrategy.snowball,
+                      label: Text('Snowball'),
+                    ),
                   ],
                   selected: {strategy},
                   onSelectionChanged: (s) => setState(() => strategy = s.first),
@@ -227,13 +294,15 @@ class _Body extends ConsumerWidget {
                         )
                       : Text(
                           'That payment is too low to cover interest. Increase it.',
-                          style: TextStyle(color: context.colors.expense)),
+                          style: TextStyle(color: context.colors.expense),
+                        ),
               ],
             ),
             actions: [
               TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Close')),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
             ],
           );
         },

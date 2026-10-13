@@ -8,12 +8,10 @@ import { useNow } from '@/lib/useNow';
 import { ZERO } from '@/lib/money';
 import { currentMonth } from '@/domain/period';
 import { budgetRollover, evaluateBudget, spentForCategory } from '@/domain/finance';
-import { GlassCard, ProgressBar, Ring } from '../ui';
-import { AnimatedNumber } from '../motion';
+import { GlassCard } from '../ui';
+import { CardTitle } from '../Hint';
+import { Gauge, gaugeHue } from './depth';
 import { CategoryIcon } from '../CategoryIcon';
-
-/** Ring colour by how much of the month's budget is gone. */
-const zone = (pct: number) => (pct > 100 ? 'var(--danger)' : pct >= 80 ? 'var(--warning)' : 'var(--accent)');
 
 /**
  * This month's budgets at a glance: one ring for the total, then the three
@@ -40,11 +38,11 @@ export function BudgetRingCard() {
     return (
       <Link href="/budget" className="block">
         <GlassCard interactive className="flex items-center gap-4">
-          <span className="grid place-items-center w-11 h-11 rounded-full bg-accent-soft text-accent shrink-0">
+          <span className="grid place-items-center w-11 h-11 rounded-full bg-[color-mix(in_srgb,var(--data-blue)_14%,transparent)] text-[var(--data-blue)] shrink-0">
             <PiggyBank size={20} />
           </span>
           <span className="min-w-0">
-            <span className="block font-semibold text-[14px]">Set a monthly budget</span>
+            <span className="block font-medium text-[14px]">Set a monthly budget</span>
             <span className="block text-[12px] text-muted">See how much is left at a glance.</span>
           </span>
         </GlassCard>
@@ -53,44 +51,36 @@ export function BudgetRingCard() {
   }
 
   const cat = (id: string) => categories.find((c) => c.id === id);
-  const mask = (s: string) => (ghost ? '••••' : s);
+  const mask = (v: string) => (ghost ? '••••' : v);
 
   return (
     <GlassCard>
-      <div className="flex items-baseline justify-between mb-4">
-        <h2 className="text-[15px] font-semibold tracking-[-0.02em]">Budget this month</h2>
-        <Link href="/budget" className="text-[12.5px] font-semibold text-accent">Details</Link>
+      <div className="flex items-baseline justify-between mb-3">
+        <CardTitle info="dashboard.budgetThisMonth" className="text-[17px] font-medium tracking-[-0.01em]">Budget this month</CardTitle>
+        <Link href="/budget" className="text-[12.5px] font-semibold text-ink-soft">Details</Link>
       </div>
-      <div className="flex items-center gap-5">
-        <Ring fraction={data.pct / 100} size={112} stroke={12} color={zone(data.pct)}>
-          <div>
-            <div className="text-[22px] font-bold tracking-[-0.03em] tnum leading-none">
-              <AnimatedNumber value={Math.round(data.pct)} format={(n) => `${Math.round(n)}%`} />
-            </div>
-            <div className="text-[10.5px] text-muted mt-1">used</div>
-          </div>
-        </Ring>
-        <div className="min-w-0 flex-1">
-          <div className="text-[12px] text-muted">Spent</div>
-          <div className="text-[18px] font-semibold tnum">{mask(fmt.money(data.spent))}</div>
-          <div className="text-[12px] text-muted mt-1">
-            of {mask(fmt.money(data.limit))}
-          </div>
-        </div>
+      <div className="flex items-baseline gap-2">
+        <span className="text-[26px] font-light tracking-[-0.03em] leading-none tnum">{mask(fmt.money(data.spent))}</span>
+        <span className="chip text-[var(--data-blue)] tnum">{Math.round(data.pct)}% used</span>
       </div>
-      <ul className="mt-5 grid gap-3">
+      <p className="mt-1.5 text-[12.5px] text-muted tnum">of {mask(fmt.money(data.limit))} budgeted</p>
+
+      <ul className="tray mt-3 grid gap-3.5 p-3">
         {data.top.map((r) => {
           const c = cat(r.budget.categoryId);
           return (
-            <li key={r.budget.id} className="flex items-center gap-3">
-              <CategoryIcon name={c?.icon} size={32} />
-              <div className="min-w-0 flex-1">
-                <div className="flex justify-between text-[12.5px] mb-1">
-                  <span className="truncate font-medium">{c?.name ?? 'Uncategorized'}</span>
-                  <span className="text-muted tnum">{Math.round(r.ratio * 100)}%</span>
-                </div>
-                <ProgressBar fraction={r.fraction} height={6} />
+            <li key={r.budget.id}>
+              <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[13px]">
+                <span className="flex items-center gap-2 min-w-0">
+                  <CategoryIcon name={c?.icon} size={24} />
+                  <span className="truncate">{c?.name ?? 'Uncategorized'}</span>
+                </span>
+                <span className="tnum font-semibold whitespace-nowrap">
+                  {mask(fmt.money(r.spent))}
+                  <span className="font-normal text-muted"> / {mask(fmt.money(r.limit))}</span>
+                </span>
               </div>
+              <Gauge fraction={r.ratio} hue={gaugeHue(r.ratio)} />
             </li>
           );
         })}

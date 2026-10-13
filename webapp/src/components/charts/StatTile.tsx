@@ -54,14 +54,14 @@ export function StatTile({
         {icon && (
           <div
             className="w-[34px] h-[34px] rounded-[var(--radius-card)] grid place-items-center mb-2"
-            style={{ background: `color-mix(in srgb, ${iconColor ?? 'var(--accent)'} 12%, transparent)`, color: iconColor ?? 'var(--accent)' }}
+            style={{ background: `color-mix(in srgb, ${iconColor ?? 'var(--data-blue)'} 12%, transparent)`, color: iconColor ?? 'var(--data-blue)' }}
           >
             {icon}
           </div>
         )}
         <div className="eyebrow truncate">{label}</div>
         <div
-          className={clsx('mt-1.5 font-bold tracking-tight tnum tabular-nums truncate', emphasise ? 'text-[22px]' : 'text-[19px]')}
+          className={clsx('mt-1.5 font-light tracking-tight tnum tabular-nums truncate', emphasise ? 'text-[22px]' : 'text-[19px]')}
           style={valueColor ? { color: valueColor } : undefined}
         >
           {ghost ? '••••••' : value}

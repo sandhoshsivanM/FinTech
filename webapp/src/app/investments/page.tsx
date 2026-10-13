@@ -47,6 +47,8 @@ import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { DateInput } from '@/components/DateInput';
 import { AssetMark } from '@/components/primitives';
+import { CardTitle } from '@/components/Hint';
+import type { SectionKey } from '@/lib/glossary';
 
 const SERIES = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)', 'var(--c7)', 'var(--c8)'];
 
@@ -286,7 +288,7 @@ export default function PortfolioPage() {
       <StaggerItem>
         <div className="flex items-end gap-3 flex-wrap">
           <div className="min-w-0">
-            <h1 className="text-[var(--fs-h1)] leading-[1.15] font-bold tracking-[-0.03em] font-display">Portfolio Overview</h1>
+            <h1 className="text-[36px] leading-[1.1] font-normal tracking-[-0.035em] font-display">Portfolio Overview</h1>
             <p className="text-ink-soft text-sm mt-1.5">All your investments at a glance</p>
           </div>
 
@@ -404,7 +406,7 @@ export default function PortfolioPage() {
           <Kpi label="Portfolio Value" term="investments" icon={Wallet} tone="accent"
             value={ghost ? '••••' : undefined} numeric={ghost ? undefined : totalValue}
             format={(n) => short(n, fmt.symbol)}
-            footer={<><span>Current value</span>{spark.length > 1 && <span className="ml-auto"><MiniSparkline values={spark} color="var(--accent)" /></span>}</>} />
+            footer={<><span>Current value</span>{spark.length > 1 && <span className="ml-auto"><MiniSparkline values={spark} color="var(--data-blue)" /></span>}</>} />
           <Kpi label="Total Investment" term="invested" icon={Coins} tone="warning"
             value={ghost ? '••••' : undefined} numeric={ghost ? undefined : summary.invested.toNumber()}
             format={(n) => short(n, fmt.symbol)} footer="Invested amount" />
@@ -435,37 +437,37 @@ export default function PortfolioPage() {
       {/* ---- Four allocation donuts ----------------------------------------- */}
       <div className="grid gap-5 min-w-0 grid-cols-[repeat(auto-fit,minmax(0,1fr))] min-[900px]:grid-cols-2 min-[1400px]:grid-cols-4">
         <StaggerItem>
-          <Panel align="start" title="Portfolio Allocation" sub="by current value">
+          <Panel align="start" title="Portfolio Allocation" info="investments.portfolioAllocation" sub="by current value">
             <Donut segments={topSegs('current')} size={148} stroke={20} maxSlices={7}
               formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))}
               centerText={ghost ? '••••' : short(totalValue, fmt.symbol)} centerSub="Total" />
           </Panel>
         </StaggerItem>
         <StaggerItem>
-          <Panel align="start" title="Investment Allocation" sub="by invested amount">
+          <Panel align="start" title="Investment Allocation" info="investments.investmentAllocation" sub="by invested amount">
             <Donut segments={topSegs('invested')} size={148} stroke={20} maxSlices={7}
               formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))}
               centerText={ghost ? '••••' : short(summary.invested.toNumber(), fmt.symbol)} centerSub="Total" />
           </Panel>
         </StaggerItem>
         <StaggerItem>
-          <Panel align="start" title="Asset Type Allocation" sub={`${assetTypeSegs.length} type${assetTypeSegs.length === 1 ? '' : 's'}`}>
+          <Panel align="start" title="Asset Type Allocation" info="investments.assetTypeAllocation" sub={`${assetTypeSegs.length} type${assetTypeSegs.length === 1 ? '' : 's'}`}>
             <Donut segments={assetTypeSegs} size={148} stroke={20} maxSlices={6}
               formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))}
               centerText={ghost ? '••••' : short(totalValue, fmt.symbol)} centerSub="Total" />
           </Panel>
         </StaggerItem>
         <StaggerItem>
-          <Panel align="start" title="Profit vs Loss" sub="by position count">
+          <Panel align="start" title="Profit vs Loss" info="investments.profitVsLoss" sub="by position count">
             <Donut
               segments={[
-                { label: `Profitable (${profitable})`, value: profitable, color: 'var(--success)' },
-                { label: `Losing (${losing})`, value: losing, color: 'var(--danger)' },
+                { label: `Profitable (${profitable})`, value: profitable, color: 'var(--data-green)' },
+                { label: `Losing (${losing})`, value: losing, color: 'var(--data-rose)' },
                 ...(rows.length - profitable - losing > 0
                   ? [{ label: `Flat (${rows.length - profitable - losing})`, value: rows.length - profitable - losing, color: 'var(--muted)' }]
                   : []),
               ]}
-              size={148} stroke={20}
+              size={148} stroke={20} keepColors
               centerText={String(rows.length)} centerSub="Positions"
             />
           </Panel>
@@ -475,19 +477,19 @@ export default function PortfolioPage() {
       {/* ---- Gainers / losers / P&L charts ---------------------------------- */}
       <div className="grid gap-5 min-w-0 grid-cols-[repeat(auto-fit,minmax(0,1fr))] min-[900px]:grid-cols-2 min-[1400px]:grid-cols-4">
         <StaggerItem>
-          <Panel title="Top 5 Gainers" sub="overall return %" icon={<ArrowUpRight size={15} className="text-success" />}>
+          <Panel title="Top 5 Gainers" info="investments.topGainers" sub="overall return %" icon={<ArrowUpRight size={15} className="text-success" />}>
             <RankBars rows={gainers.map((r) => ({ key: r.id, label: r.symbol, sub: r.sector, value: r.pnlPct }))}
               color="var(--success)" formatValue={(n) => fmtPct(n)} emptyLabel="Nothing above cost" />
           </Panel>
         </StaggerItem>
         <StaggerItem>
-          <Panel title="Top 5 Losers" sub="overall return %" icon={<ArrowDownRight size={15} className="text-danger" />}>
+          <Panel title="Top 5 Losers" info="investments.topLosers" sub="overall return %" icon={<ArrowDownRight size={15} className="text-danger" />}>
             <RankBars rows={losers.map((r) => ({ key: r.id, label: r.symbol, sub: r.sector, value: r.pnlPct }))}
               color="var(--danger)" formatValue={(n) => fmtPct(n)} emptyLabel="Nothing below cost" />
           </Panel>
         </StaggerItem>
         <StaggerItem>
-          <Panel title="Overall P&L by Stock" sub="top 8 by contribution">
+          <Panel title="Overall P&L by Stock" info="investments.pnlByStock" sub="top 8 by contribution">
             <ColumnChart columns={pnlColumns} height={190} format={(n) => fmt.money(n)}
               ariaLabel="Unrealised profit and loss for the eight largest contributors" />
           </Panel>
@@ -495,7 +497,7 @@ export default function PortfolioPage() {
         <StaggerItem>
           {/* Badged on the source of the numbers, not on the demo switch: with
               real closes imported these columns are facts even while demo is on. */}
-          <Panel title="Today's P&L by Stock" sub="top 8 by movement" badge={!day.isReal && dayColumns.length > 0 ? <DemoBadge label="Demo" /> : undefined}>
+          <Panel title="Today's P&L by Stock" info="investments.todayPnlByStock" sub="top 8 by movement" badge={!day.isReal && dayColumns.length > 0 ? <DemoBadge label="Demo" /> : undefined}>
             {dayColumns.length > 0
               ? <ColumnChart columns={dayColumns} height={190} format={(n) => fmt.money(n)} ariaLabel="Today's profit and loss by stock" />
               : <p className="py-14 text-center text-[12.5px] text-muted">Import a broker file with a previous-close or day-P&L column to see this, or turn demo market data on in Settings to preview it.</p>}
@@ -509,7 +511,7 @@ export default function PortfolioPage() {
           <section className="card overflow-hidden">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
               <div>
-                <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Holdings Summary</h2>
+                <CardTitle info="investments.holdingsSummary" className="text-[16px] font-medium tracking-[-0.01em]">Holdings Summary</CardTitle>
                 <p className="text-xs text-muted mt-0.5">{rows.length} of {holdings.length} positions</p>
               </div>
               <Link href="/holdings" className="ml-auto focus-ring text-[13px] font-semibold text-accent hover:underline">Full grid</Link>
@@ -527,14 +529,14 @@ export default function PortfolioPage() {
 
         <div className="grid gap-5 min-w-0">
           <StaggerItem>
-            <Panel title="Sector Allocation" sub={sectorCount ? `${sectorCount} classified` : 'Not classified'}>
+            <Panel title="Sector Allocation" info="investments.sectorAllocation" sub={sectorCount ? `${sectorCount} classified` : 'Not classified'}>
               <Donut segments={sectorSegs} size={140} stroke={19} legend maxSlices={6}
                 formatValue={(n) => (ghost ? '••••' : short(n, fmt.symbol))} />
             </Panel>
           </StaggerItem>
           <StaggerItem>
             <section className="card p-5 grid justify-items-center gap-3 text-center min-w-0 overflow-hidden">
-              <h3 className="text-[18px] font-semibold tracking-[-0.02em] justify-self-start">Diversification Score</h3>
+              <CardTitle as="h3" info="investments.diversificationScore" className="text-[16px] font-medium tracking-[-0.01em]" wrapClassName="justify-self-start">Diversification Score</CardTitle>
               <Gauge value={divScore} size={172} sublabel={divLabel} />
               <p className="text-[12.5px] text-muted leading-relaxed">
                 {divScore == null
@@ -551,9 +553,11 @@ export default function PortfolioPage() {
 
 /** A titled card with an optional right-hand badge. */
 function Panel({
-  title, sub, children, icon, badge, align = 'center',
+  title, sub, children, icon, badge, align = 'center', info,
 }: {
   title: string; sub?: string; children: React.ReactNode;
+  /** SECTION_HELP key: the ⓘ explaining this card, right after the title. */
+  info?: SectionKey;
   icon?: React.ReactNode; badge?: React.ReactNode;
   /**
    * Where the body sits in the leftover space.
@@ -570,7 +574,7 @@ function Panel({
       <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
         {icon}
         <div className="min-w-0 flex-1">
-          <h3 className="text-[15px] font-semibold tracking-[-0.02em] truncate whitespace-nowrap">{title}</h3>
+          <CardTitle as="h3" info={info} className="text-[16px] font-medium tracking-[-0.01em] truncate whitespace-nowrap">{title}</CardTitle>
           {sub && <p className="text-[11.5px] text-muted mt-0.5 truncate">{sub}</p>}
         </div>
         {badge && <span className="shrink-0">{badge}</span>}

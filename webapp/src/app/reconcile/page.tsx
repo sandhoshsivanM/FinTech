@@ -128,7 +128,7 @@ function ReconcilePageInner() {
 
           {suggestions.length > 0 && (
             <GlassCard>
-              <SectionHeader title="This would explain the difference" />
+              <SectionHeader title="This would explain the difference" info="reconcile.explain" />
               <p className="mt-1 text-xs text-muted">
                 {suggestions.length === 1 ? 'This entry matches' : 'Each of these matches'} the gap exactly.
                 Tick {suggestions.length === 1 ? 'it' : 'one'} if your bank has processed it.
@@ -149,6 +149,7 @@ function ReconcilePageInner() {
             <div className="px-5 py-4 border-b border-[var(--line)]">
               <SectionHeader
                 title="Entries"
+                info="reconcile.entries"
                 action={<span className="text-xs text-muted">{result.unclearedCount} not yet cleared</span>}
               />
             </div>
@@ -189,7 +190,7 @@ function Tile({ label, value, hint, color }: { label: string; value: string; hin
   return (
     <GlassCard className="flex flex-col gap-1">
       <span className="text-xs font-semibold text-muted">{label}</span>
-      <span className="text-xl font-extrabold tnum" style={color ? { color } : undefined}>{value}</span>
+      <span className="text-xl font-light tnum" style={color ? { color } : undefined}>{value}</span>
       {hint && <span className="text-[11px] text-muted">{hint}</span>}
     </GlassCard>
   );

@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -49,16 +50,21 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
   @override
   void dispose() {
     for (final c in [
-      _name, _symbol, _isin, _schemeCode,
-      _qty, _price, _charges, _currentPrice,
+      _name,
+      _symbol,
+      _isin,
+      _schemeCode,
+      _qty,
+      _price,
+      _charges,
+      _currentPrice,
     ]) {
       c.dispose();
     }
     super.dispose();
   }
 
-  bool get _isFund =>
-      _kind == AssetType.equityMf || _kind == AssetType.debtMf;
+  bool get _isFund => _kind == AssetType.equityMf || _kind == AssetType.debtMf;
 
   Decimal? _parse(String s) {
     final t = s.trim();
@@ -91,25 +97,30 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
         name: _name.text.trim().isEmpty ? symbol : _name.text.trim(),
         kind: _kind,
         symbol: symbol.isEmpty ? null : symbol,
-        isin: _isin.text.trim().isEmpty ? null : _isin.text.trim().toUpperCase(),
+        isin: _isin.text.trim().isEmpty
+            ? null
+            : _isin.text.trim().toUpperCase(),
         exchange: _isFund ? null : _exchange,
-        schemeCode:
-            _schemeCode.text.trim().isEmpty ? null : _schemeCode.text.trim(),
+        schemeCode: _schemeCode.text.trim().isEmpty
+            ? null
+            : _schemeCode.text.trim(),
       );
 
-      await actions.addTrade(Trade(
-        id: _uuid.v4(),
-        vaultId: vaultId,
-        instrumentId: instrument.id,
-        side: _side,
-        quantity: _parse(_qty.text)!,
-        pricePerUnit: _parse(_price.text)!,
-        tradeDate: _date,
-        otherCharges: _parse(_charges.text),
-        source: TradeSource.manual,
-        // Hand-entered, so it is confirmed by definition — unlike an import.
-        isReviewed: true,
-      ));
+      await actions.addTrade(
+        Trade(
+          id: _uuid.v4(),
+          vaultId: vaultId,
+          instrumentId: instrument.id,
+          side: _side,
+          quantity: _parse(_qty.text)!,
+          pricePerUnit: _parse(_price.text)!,
+          tradeDate: _date,
+          otherCharges: _parse(_charges.text),
+          source: TradeSource.manual,
+          // Hand-entered, so it is confirmed by definition — unlike an import.
+          isReviewed: true,
+        ),
+      );
 
       final current = _parse(_currentPrice.text);
       if (current != null) {
@@ -120,16 +131,19 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
       }
 
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(
-        content: Text('${_side == TradeSide.buy ? 'Buy' : 'Sell'} recorded'
-            '${current == null ? ' — add a price to see profit and loss' : ''}'),
-      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            '${_side == TradeSide.buy ? 'Buy' : 'Sell'} recorded'
+            '${current == null ? ' — add a price to see profit and loss' : ''}',
+          ),
+        ),
+      );
       Navigator.of(context).pop(true);
     } on Object catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(
-          SnackBar(content: Text('Could not save: $e')));
+      messenger.showSnackBar(SnackBar(content: Text('Could not save: $e')));
     }
   }
 
@@ -141,7 +155,9 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
         ?.lookup(symbol: _symbol.text.trim().toUpperCase());
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add lot')),
+      appBar: AppBar(
+        title: InfoHint.titled(const Text('Add lot'), 'investments.addLot'),
+      ),
       body: DataGate(
         child: Form(
           key: _form,
@@ -153,10 +169,13 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SegmentedButton<TradeSide>(
+                      showSelectedIcon: false,
                       segments: const [
                         ButtonSegment(value: TradeSide.buy, label: Text('Buy')),
                         ButtonSegment(
-                            value: TradeSide.sell, label: Text('Sell')),
+                          value: TradeSide.sell,
+                          label: Text('Sell'),
+                        ),
                       ],
                       selected: {_side},
                       onSelectionChanged: (s) =>
@@ -165,8 +184,9 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<AssetType>(
                       initialValue: _kind,
-                      decoration:
-                          const InputDecoration(labelText: 'Asset type'),
+                      decoration: const InputDecoration(
+                        labelText: 'Asset type',
+                      ),
                       items: [
                         for (final t in AssetType.values)
                           DropdownMenuItem(value: t, child: Text(t.label)),
@@ -184,7 +204,7 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                         helperText: classified == null
                             ? null
                             : 'Recognised: ${classified.sector}'
-                                ' · ${classified.industry}',
+                                  ' · ${classified.industry}',
                       ),
                       onChanged: (_) => setState(() {}),
                       validator: (v) {
@@ -211,8 +231,9 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                       const SizedBox(height: AppSpacing.md),
                       DropdownButtonFormField<String>(
                         initialValue: _exchange,
-                        decoration:
-                            const InputDecoration(labelText: 'Exchange'),
+                        decoration: const InputDecoration(
+                          labelText: 'Exchange',
+                        ),
                         items: const [
                           DropdownMenuItem(value: 'NSE', child: Text('NSE')),
                           DropdownMenuItem(value: 'BSE', child: Text('BSE')),
@@ -238,7 +259,8 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           labelText: 'AMFI scheme code (optional)',
-                          helperText: 'Enables NAV lookup and fund look-through',
+                          helperText:
+                              'Enables NAV lookup and fund look-through',
                         ),
                       ),
                     ],
@@ -250,19 +272,20 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('The lot',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      'The lot',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       controller: _qty,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'[0-9.]')),
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                       ],
                       decoration: InputDecoration(
                         labelText: _isFund ? 'Units' : 'Quantity',
@@ -272,15 +295,14 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       controller: _price,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                       ],
                       decoration: InputDecoration(
-                        labelText: _isFund
-                            ? 'NAV per unit'
-                            : 'Price per share',
+                        labelText: _isFund ? 'NAV per unit' : 'Price per share',
                         prefixText: '₹ ',
                       ),
                       validator: _requiredPositive,
@@ -288,8 +310,9 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       controller: _charges,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                       ],
@@ -331,26 +354,27 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Current price',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        'Current price',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         'Optional. Without a price this holding counts at cost '
                         'and shows no profit or loss — a value with no date '
                         'would be worse than none.',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: _currentPrice,
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          decimal: true,
+                        ),
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                         ],

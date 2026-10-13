@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
@@ -10,32 +11,26 @@ import '../../../domain/entities/insurance.dart';
 import '../../../domain/services/insurance_advisor.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/empty_state.dart';
+import '../../../presentation/glass_card.dart';
+import '../../../presentation/stat_tile.dart';
+import '../../../presentation/zentra_kit.dart';
+import '../../home/widgets/depth.dart';
 import '../providers/insurance_providers.dart';
 
-IconData _typeIcon(InsuranceType t) => switch (t) {
-      InsuranceType.life || InsuranceType.term => Icons.shield_outlined,
-      InsuranceType.health => Icons.local_hospital_outlined,
-      InsuranceType.vehicle => Icons.directions_car_outlined,
-      InsuranceType.home => Icons.home_outlined,
-      InsuranceType.other => Icons.policy_outlined,
-    };
-
 String _typeLabel(InsuranceType t) => switch (t) {
-      InsuranceType.life => 'Life',
-      InsuranceType.term => 'Term',
-      InsuranceType.health => 'Health',
-      InsuranceType.vehicle => 'Vehicle',
-      InsuranceType.home => 'Home',
-      InsuranceType.other => 'Other',
-    };
+  InsuranceType.life => 'Life',
+  InsuranceType.term => 'Term',
+  InsuranceType.health => 'Health',
+  InsuranceType.vehicle => 'Vehicle',
+  InsuranceType.home => 'Home',
+  InsuranceType.other => 'Other',
+};
 
 class InsuranceScreen extends StatelessWidget {
   const InsuranceScreen({super.key});
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: const DataGate(child: _Body()),
-    );
+    return Scaffold(body: const DataGate(child: _Body()));
   }
 }
 
@@ -47,8 +42,7 @@ class _Body extends ConsumerWidget {
     final policies = ref.watch(insuranceListProvider).valueOrNull ?? const [];
     final gaps = ref.watch(coverageGapsProvider);
     final advisor = ref.watch(insuranceAdvisorProvider);
-    final totalCover =
-        policies.fold(Decimal.zero, (s, p) => s + p.coverAmount);
+    final totalCover = policies.fold(Decimal.zero, (s, p) => s + p.coverAmount);
     final premium = advisor.annualPremiumTotal(policies);
 
     return Column(
@@ -57,83 +51,78 @@ class _Body extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              // Summary
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Row(
-                    children: [
-                      _Metric('Total cover', Money.format(totalCover)),
-                      _Metric('Annual premium', Money.format(premium)),
-                      _Metric('Policies', '${policies.length}'),
-                    ],
+              KpiGrid(
+                children: [
+                  StatTile(
+                    label: 'Total cover',
+                    term: 'sumAssured',
+                    value: Money.format(totalCover),
+                    footer:
+                        '${policies.length} ${policies.length == 1 ? 'policy' : 'policies'}',
                   ),
-                ),
+                  StatTile(
+                    label: 'Annual premium',
+                    value: Money.format(premium),
+                    footer: 'sum of all',
+                  ),
+                  StatTile(
+                    label: 'Policies',
+                    value: '${policies.length}',
+                    footer: 'tracked',
+                  ),
+                  if (gaps.isNotEmpty)
+                    StatTile(
+                      label: '${gaps.first.label} gap',
+                      term: 'coverageGap',
+                      value: Money.format(gaps.first.gap),
+                      valueColor: gaps.first.gap > Decimal.zero
+                          ? context.colors.expense
+                          : null,
+                      footer: '${gaps.first.coveredPct}% of guideline',
+                    ),
+                ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.md),
 
-              // Coverage gap analysis
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Coverage gap analysis',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
-                      const SizedBox(height: AppSpacing.sm),
-                      for (final g in gaps) _GapRow(gap: g),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Guideline: life cover ≈ ${InsuranceAdvisor.lifeCoverMultiple}× annual '
-                        'income; health ≥ ₹5L. Not financial advice.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelSmall
-                            ?.copyWith(
-                                color: AppColors.darkOnSurfaceMuted),
-                      ),
-                    ],
+              TrayCard(
+                title: 'Coverage gap',
+                help: 'insurance.coverageGap',
+                footer: Text(
+                  'Guideline only, not advice — life ≈ '
+                  '${InsuranceAdvisor.lifeCoverMultiple}× annual income; '
+                  'health ≥ ₹5L.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < gaps.length; i++) ...[
+                      if (i > 0) const SizedBox(height: AppSpacing.md),
+                      _GapRow(gap: gaps[i]),
+                    ],
+                  ],
+                ),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.md),
 
               if (policies.isEmpty)
                 const EmptyState(
                   icon: Icons.umbrella_outlined,
                   title: 'No policies tracked yet',
-                  message: 'Add your life and health cover and the gap analysis '
+                  message:
+                      'Add your life and health cover and the gap analysis '
                       'above becomes a real reading of where you stand, rather '
                       'than 0% against a guideline.',
                 )
               else
                 for (final p in policies)
-                  Card(
-                    child: ListTile(
-                      leading: Icon(_typeIcon(p.type), color: context.colors.accent),
-                      title: Text(p.name),
-                      subtitle: Text([
-                        _typeLabel(p.type),
-                        if (p.provider != null && p.provider!.isNotEmpty)
-                          p.provider!,
-                        'premium ${Money.format(p.premium)}/yr',
-                      ].join(' · ')),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(Money.format(p.coverAmount),
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold)),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            tooltip: 'Delete',
-                            onPressed: () => ref
-                                .read(insuranceActionsProvider)
-                                .delete(p.id),
-                          ),
-                        ],
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: _PolicyCard(
+                      policy: p,
+                      onDelete: () =>
+                          ref.read(insuranceActionsProvider).delete(p.id),
                     ),
                   ),
             ],
@@ -165,14 +154,15 @@ class _Body extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Add policy'),
+          title: InfoHint.titled(const Text('Add policy'), 'insurance.form'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
-                    controller: name,
-                    decoration: const InputDecoration(labelText: 'Name')),
+                  controller: name,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 DropdownButtonFormField<InsuranceType>(
                   initialValue: type,
@@ -184,32 +174,43 @@ class _Body extends ConsumerWidget {
                   onChanged: (v) => setState(() => type = v ?? type),
                 ),
                 TextField(
-                    controller: provider,
-                    decoration:
-                        const InputDecoration(labelText: 'Provider (optional)')),
+                  controller: provider,
+                  decoration: const InputDecoration(
+                    labelText: 'Provider (optional)',
+                  ),
+                ),
                 TextField(
-                    controller: cover,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                        labelText: 'Cover amount (₹)', prefixText: '₹ ')),
+                  controller: cover,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Cover amount (₹)',
+                    prefixText: '₹ ',
+                  ),
+                ),
                 TextField(
-                    controller: premium,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                        labelText: 'Annual premium (₹)', prefixText: '₹ ')),
+                  controller: premium,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Annual premium (₹)',
+                    prefixText: '₹ ',
+                  ),
+                ),
               ],
             ),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () {
                 final c = Decimal.tryParse(cover.text.trim());
                 final pr = Decimal.tryParse(premium.text.trim());
                 if (name.text.trim().isEmpty || c == null) return;
-                ref.read(insuranceActionsProvider).save(
+                ref
+                    .read(insuranceActionsProvider)
+                    .save(
                       name: name.text.trim(),
                       type: type,
                       provider: provider.text.trim().isEmpty
@@ -229,26 +230,55 @@ class _Body extends ConsumerWidget {
   }
 }
 
-class _Metric extends StatelessWidget {
-  const _Metric(this.label, this.value);
-  final String label;
-  final String value;
+class _PolicyCard extends StatelessWidget {
+  const _PolicyCard({required this.policy, required this.onDelete});
+
+  final Insurance policy;
+  final VoidCallback onDelete;
+
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelSmall
-                  ?.copyWith(color: AppColors.darkOnSurfaceMuted)),
-          const SizedBox(height: 2),
-          Text(value,
+    final text = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final p = policy;
+    return SizedBox(
+      width: double.infinity,
+      child: GlassCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                TypeChip(_typeLabel(p.type)),
+                const Spacer(),
+                IconAction(
+                  icon: Icons.delete_outline,
+                  tooltip: 'Delete',
+                  onPressed: onDelete,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(p.name, style: text.titleLarge),
+            if (p.provider != null && p.provider!.isNotEmpty)
+              Text(p.provider!, style: text.bodySmall?.copyWith(color: muted)),
+            const SizedBox(height: AppSpacing.md),
+            Text('Sum assured', style: text.bodySmall?.copyWith(color: muted)),
+            Text(
+              Money.format(p.coverAmount),
               style: const TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 16)),
-        ],
+                fontSize: 24,
+                fontWeight: FontWeight.w300,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Premium ${Money.format(p.premium)} a year',
+              style: text.bodySmall?.copyWith(color: muted),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -259,47 +289,26 @@ class _GapRow extends StatelessWidget {
   final CoverageGap gap;
   @override
   Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     final frac = (gap.coveredPct / 100).clamp(0.0, 1.0);
-    final color = gap.coveredPct >= 100
-        ? context.colors.income
-        : gap.coveredPct >= 60
-            ? context.colors.budgetWarn
-            : context.colors.expense;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                  child: Text(gap.label,
-                      style: const TextStyle(fontWeight: FontWeight.w600))),
-              Text('${gap.coveredPct}%', style: TextStyle(color: color)),
-            ],
-          ),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadii.pill),
-            child: LinearProgressIndicator(
-              value: frac,
-              minHeight: 6,
-              valueColor: AlwaysStoppedAnimation(color),
-              backgroundColor: color.withValues(alpha: 0.15),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            gap.gap > Decimal.zero
-                ? '${Money.format(gap.current)} of ${Money.format(gap.recommended)} — ${Money.format(gap.gap)} short'
-                : 'Well covered (${Money.format(gap.current)})',
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(color: AppColors.darkOnSurfaceMuted),
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GaugeRow(
+          label: gap.label,
+          fraction: frac,
+          hue: Hue.forCoverage(gap.coveredPct),
+          value: Money.format(gap.current),
+          limit: Money.format(gap.recommended),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          gap.gap > Decimal.zero
+              ? '${Money.format(gap.gap)} short'
+              : 'Well covered',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: muted),
+        ),
+      ],
     );
   }
 }

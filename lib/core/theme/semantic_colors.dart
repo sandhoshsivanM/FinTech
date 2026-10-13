@@ -84,12 +84,12 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
     income: KhazanaColors.vaultSuccess,
     expense: KhazanaColors.vaultDanger,
     accent: KhazanaColors.vaultPrimary,
-    accentGlow: KhazanaColors.emerald500,
+    accentGlow: KhazanaColors.vaultInfo,
     gold: KhazanaColors.vaultGold,
     goldInk: KhazanaColors.vaultGold,
     warn: KhazanaColors.vaultWarning,
     info: KhazanaColors.vaultInfo,
-    budgetOk: KhazanaColors.vaultSuccess,
+    budgetOk: KhazanaColors.vaultInfo,
     budgetWarn: KhazanaColors.vaultWarning,
     budgetOver: KhazanaColors.vaultDanger,
   );
@@ -101,18 +101,17 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
     income: KhazanaColors.ledgerSuccess,
     expense: KhazanaColors.ledgerDanger,
     accent: KhazanaColors.ledgerPrimary,
-    accentGlow: KhazanaColors.emerald600,
+    accentGlow: KhazanaColors.ledgerInfo,
     gold: KhazanaColors.ledgerGold,
     goldInk: KhazanaColors.ledgerGoldInk,
     warn: KhazanaColors.ledgerWarning,
     info: KhazanaColors.ledgerInfo,
-    budgetOk: KhazanaColors.ledgerSuccess,
-    budgetWarn: KhazanaColors.ledgerWarning,
-    budgetOver: KhazanaColors.ledgerDanger,
+    budgetOk: KhazanaColors.ledgerInfo,
+    budgetWarn: Color(0xFFE39A16),
+    budgetOver: Color(0xFFF33688),
   );
 
-  static SemanticColors of(Brightness b) =>
-      b == Brightness.dark ? dark : light;
+  static SemanticColors of(Brightness b) => b == Brightness.dark ? dark : light;
 
   @override
   SemanticColors copyWith({

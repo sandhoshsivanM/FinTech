@@ -33,19 +33,45 @@
  */
 import { saveFile, type SaveOutcome } from '@/lib/saveFile';
 import type { CellValue, ReportSheet, ReportWorkbook } from './model';
+import { loadReportAssets, type ReportAssets } from './assets';
 
 /* -------------------------------------------------------------------------- */
-/* Palette — the app's design tokens, as ARGB for Excel                       */
+/* Palette — Zentra tokens, as ARGB for Excel                                 */
 /* -------------------------------------------------------------------------- */
+//
+// Light and print-friendly: near-black ink, grey trays, colour kept for meaning
+// (green in, pink out, amber for warnings). Header bands are the app's black
+// pill, the same choice the PDF makes.
 
-const INK = 'FF151815';
-const ACCENT_DEEP = 'FF0D3B2E';
-const ACCENT = 'FF176B4D';
-const ACCENT_SOFT = 'FFEDF3EF';
-const RULE = 'FFC7CFC9';
-const ZEBRA = 'FFF7F9F7';
-const EXPENSE = 'FFB54444';
-const MUTED = 'FF5C635E';
+const INK = 'FF111214';
+const INK_SOFT = 'FF5C5C61';
+const MUTED = 'FF8E8E93';
+const LINE = 'FFE6E6E8';
+const TRAY = 'FFF2F2F2';
+const CARD = 'FFF8F8F8';
+const WHITE = 'FFFFFFFF';
+const GREEN = 'FF0BA722';
+const PINK = 'FFF33688';
+const AMBER = 'FFE39A16';
+
+/**
+ * The face. Anek Latin is the app's, but it is not installed on the machines
+ * that open these files and Excel would silently substitute; Calibri is on
+ * every copy of Office and renders predictably in Numbers and LibreOffice.
+ */
+const FONT = 'Calibri';
+const font = (size: number, color: string, extra: Record<string, unknown> = {}) =>
+  ({ name: FONT, size, color: { argb: color }, ...extra });
+const solid = (argb: string) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } });
+
+/** The data colour a figure earns — mirrors `toneOf` in the PDF. */
+function toneOf(key: string, v: CellValue): string | null {
+  if (typeof v !== 'number' || v === 0) return null;
+  if (key === 'income') return GREEN;
+  if (key === 'expense') return PINK;
+  if (key === 'net' || key === 'gain' || key === 'gainPct') return v > 0 ? GREEN : PINK;
+  return v < 0 ? PINK : null;
+}
 
 /**
  * Number formats.
@@ -59,15 +85,18 @@ const MUTED = 'FF5C635E';
  * display and would render it as 5020%.
  */
 const NUM_FORMAT: Record<string, string> = {
-  money: '#,##0.00;[Red]-#,##0.00',
+  // Sign only: the colour comes from the cell font (Zentra pink), not Excel's
+  // stock [Red], which is a different red from everything else in the file.
+  money: '#,##0.00;-#,##0.00',
   number: '#,##0.00',
   integer: '#,##0',
   date: 'dd-mmm-yyyy',
   percent: '#,##0.0"%"',
 };
 
-const thin = { style: 'thin' as const, color: { argb: RULE } };
-const allBorders = { top: thin, left: thin, bottom: thin, right: thin };
+const hair = { style: 'thin' as const, color: { argb: LINE } };
+/** Horizontal rules only — vertical grid lines are what make a sheet look like a form. */
+const rules = { top: hair, bottom: hair };
 
 const isNumeric = (f: string) =>
   f === 'money' || f === 'number' || f === 'integer' || f === 'percent';
@@ -96,42 +125,75 @@ type Sheet = {
   addRow(v: unknown[]): Row;
   views: unknown[];
   autoFilter?: unknown;
+  headerFooter: { oddFooter?: string };
+  addImage(id: number, range: unknown): void;
 };
+
+/**
+ * A value as Excel should store it. Dates are wall-clock: ExcelJS serialises a
+ * `Date` by its UTC instant, so in India a period starting at local midnight
+ * (18:30 UTC the day before) displayed as the previous day. Re-expressing the
+ * local fields as UTC makes the cell show the date the user actually chose.
+ */
+function cellOf(v: CellValue | undefined): CellValue {
+  if (v === undefined) return null;
+  if (v instanceof Date) {
+    return new Date(Date.UTC(
+      v.getFullYear(), v.getMonth(), v.getDate(),
+      v.getHours(), v.getMinutes(), v.getSeconds(), v.getMilliseconds(),
+    ));
+  }
+  return v;
+}
+
+/** Excel header/footer codes treat `&` as an escape; double it in free text. */
+const hf = (s: string) => s.replace(/&/g, '&&');
+
+/** Page footer for print: what this is on the left, page numbers on the right. */
+function printFooter(ws: Sheet, report: ReportWorkbook): void {
+  ws.headerFooter.oddFooter =
+    `&L&"${FONT}"&8${hf(`${report.meta.appName} · ${report.meta.periodLabel}`)}&R&"${FONT}"&8Page &P of &N`;
+}
 
 function buildDataSheet(ws: Sheet, sheet: ReportSheet): void {
   const cols = sheet.columns;
 
+  // The black pill: near-black band, white type.
   const header = ws.addRow(cols.map((c) => c.header));
-  header.height = 24;
+  header.height = 26;
   cols.forEach((c, i) => {
     const cell = header.getCell(i + 1);
-    cell.font = { bold: true, size: 9, color: { argb: ACCENT_DEEP } };
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ACCENT_SOFT } };
-    cell.border = { ...allBorders, bottom: { style: 'medium', color: { argb: ACCENT } } };
+    cell.font = font(10, WHITE, { bold: true });
+    cell.fill = solid(INK);
+    cell.border = { bottom: { style: 'medium', color: { argb: INK } } };
     cell.alignment = {
       horizontal: isNumeric(c.format) ? 'right' : 'left',
       vertical: 'middle',
       wrapText: true,
+      indent: 1,
     };
   });
 
   sheet.rows.forEach((r, ri) => {
-    const row = ws.addRow(cols.map((c) => (r[c.key] === undefined ? null : r[c.key])));
+    const row = ws.addRow(cols.map((c) => cellOf(r[c.key])));
+    row.height = 18;
     cols.forEach((c, i) => {
       const cell = row.getCell(i + 1);
       const fmt = NUM_FORMAT[c.format];
       if (fmt) cell.numFmt = fmt;
-      cell.border = allBorders;
-      cell.alignment = { horizontal: isNumeric(c.format) ? 'right' : 'left', vertical: 'top' };
-      const negative = c.format === 'money'
-        && typeof r[c.key] === 'number' && (r[c.key] as number) < 0;
-      // A negative amount is worth seeing at a glance rather than reading for.
-      cell.font = { size: 10, color: { argb: negative ? EXPENSE : INK } };
+      cell.border = rules;
+      cell.alignment = {
+        horizontal: isNumeric(c.format) ? 'right' : 'left',
+        vertical: 'middle',
+        indent: 1,
+      };
+      // Income green, expense pink, a negative amount pink: the colour is
+      // worth seeing at a glance rather than reading for.
+      const tone = isNumeric(c.format) ? toneOf(c.key, r[c.key] ?? null) : null;
+      cell.font = font(10, tone ?? INK);
       // Banded rows, which is what stops the eye losing its place across a wide
       // ledger.
-      if (ri % 2 === 1) {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ZEBRA } };
-      }
+      if (ri % 2 === 1) cell.fill = solid(TRAY);
     });
   });
 
@@ -150,114 +212,183 @@ function buildDataSheet(ws: Sheet, sheet: ReportSheet): void {
     // One blank row first, so the autofilter above can never reach the totals.
     ws.addRow([]);
     const totals = ws.addRow(
-      cols.map((c) => (sheet.totals![c.key] === undefined ? null : sheet.totals![c.key])),
+      cols.map((c) => cellOf(sheet.totals![c.key])),
     );
-    totals.height = 20;
+    totals.height = 22;
     cols.forEach((c, i) => {
       const cell = totals.getCell(i + 1);
       const fmt = NUM_FORMAT[c.format];
       if (fmt) cell.numFmt = fmt;
-      cell.font = { bold: true, size: 10, color: { argb: ACCENT_DEEP } };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ACCENT_SOFT } };
-      cell.border = { ...allBorders, top: { style: 'medium', color: { argb: ACCENT } } };
-      cell.alignment = { horizontal: isNumeric(c.format) ? 'right' : 'left' };
+      const tone = isNumeric(c.format) ? toneOf(c.key, sheet.totals![c.key] ?? null) : null;
+      cell.font = font(10.5, tone ?? INK, { bold: true });
+      cell.border = { top: { style: 'medium', color: { argb: INK } } };
+      cell.alignment = {
+        horizontal: isNumeric(c.format) ? 'right' : 'left',
+        vertical: 'middle',
+        indent: 1,
+      };
     });
   }
 
   ws.columns = cols.map((c) => ({ width: widthOf(c.width, c.header) }));
 }
 
-/** The one sheet formatted for a person rather than a pivot table. */
-function buildSummarySheet(ws: Sheet, report: ReportWorkbook): void {
+/**
+ * The one sheet formatted for a person rather than a pivot table — the cover.
+ * `logoId` is the workbook image id of the brand mark, when it could be loaded.
+ */
+function buildSummarySheet(ws: Sheet, report: ReportWorkbook, logoId: number | null): void {
   const { meta } = report;
+  const span = [1, 2, 3];
 
-  const title = ws.addRow([`${meta.appName} — Financial report`]);
-  title.height = 32;
-  title.getCell(1).font = { bold: true, size: 18, color: { argb: ACCENT_DEEP } };
+  // Masthead: the mark floating over A1, the letter-spaced wordmark beside it.
+  // Excel has no tracking, so the spacing is literal — this is the one label
+  // in the file allowed to look like that.
+  const brand = ws.addRow([meta.appName.toUpperCase().split('').join(' ')]);
+  brand.height = 34;
+  brand.getCell(1).font = font(11, INK, { bold: true });
+  // Six indent levels (~one character each) clear the 30 px mark with room to
+  // spare in Excel, Numbers and LibreOffice alike.
+  brand.getCell(1).alignment = { vertical: 'middle', indent: logoId === null ? 0 : 6 };
+  if (logoId !== null) {
+    ws.addImage(logoId, {
+      tl: { col: 0.03, row: 0.15 },
+      ext: { width: 30, height: 30 },
+      editAs: 'oneCell',
+    });
+  }
+
+  const title = ws.addRow(['Financial report']);
+  title.height = 36;
+  // Big figure, light treatment: large and not bold.
+  title.getCell(1).font = font(24, INK);
+  title.getCell(1).alignment = { vertical: 'bottom' };
 
   const period = ws.addRow([meta.periodLabel]);
-  period.getCell(1).font = { size: 11, color: { argb: MUTED } };
+  period.height = 20;
+  period.getCell(1).font = font(12, INK_SOFT);
 
   ws.addRow([]);
 
   const metaRow = (label: string, value: CellValue, fmt?: string) => {
-    const row = ws.addRow([label, value]);
-    row.getCell(1).font = { size: 9, bold: true, color: { argb: MUTED } };
+    const row = ws.addRow([label, cellOf(value)]);
+    row.height = 18;
+    for (const i of span) {
+      const c = row.getCell(i);
+      c.fill = solid(CARD);
+      c.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+    }
+    row.getCell(1).font = font(10, INK_SOFT);
     const v = row.getCell(2);
-    v.font = { size: 10, bold: true, color: { argb: INK } };
+    v.font = font(11, INK, { bold: true });
     if (fmt) v.numFmt = fmt;
   };
-  metaRow('PROFILE', meta.profileName);
-  metaRow('CURRENCY', meta.currencyCode);
-  metaRow('PERIOD START', meta.periodStart, NUM_FORMAT.date);
-  metaRow('PERIOD END', meta.periodEnd, NUM_FORMAT.date);
-  metaRow('GENERATED', meta.generatedAt, NUM_FORMAT.date);
-  metaRow('VERSION', meta.appVersion);
+  metaRow('Profile', meta.profileName);
+  metaRow('Currency', meta.currencyCode);
+  metaRow('Period start', meta.periodStart, NUM_FORMAT.date);
+  metaRow('Period end', meta.periodEnd, NUM_FORMAT.date);
+  metaRow('Generated', meta.generatedAt, NUM_FORMAT.date);
+  metaRow('Version', meta.appVersion);
 
   if (!meta.ledgerBalanced) {
     ws.addRow([]);
     const warn = ws.addRow([
-      'WARNING — the books do not balance',
+      'Warning — the books do not balance',
       meta.discrepancy,
       'An entry whose postings do not sum to zero, or a posting against an account not in the chart. See the Balance sheet tab.',
     ]);
-    warn.getCell(1).font = { bold: true, size: 11, color: { argb: EXPENSE } };
+    warn.height = 30;
+    for (const i of span) {
+      const c = warn.getCell(i);
+      c.fill = solid('FFFCF5E8');
+      c.border = { left: i === 1 ? { style: 'thick', color: { argb: AMBER } } : undefined };
+      c.alignment = { vertical: 'middle', wrapText: i === 3, indent: 1 };
+    }
+    warn.getCell(1).font = font(11, INK, { bold: true });
     warn.getCell(2).numFmt = NUM_FORMAT.money;
-    warn.getCell(2).font = { bold: true, color: { argb: EXPENSE } };
-    warn.getCell(3).font = { size: 9, color: { argb: MUTED } };
+    warn.getCell(2).font = font(11, AMBER, { bold: true });
+    warn.getCell(2).alignment = { vertical: 'middle', horizontal: 'right' };
+    warn.getCell(3).font = font(9, INK_SOFT);
   }
 
-  for (const group of report.summary) {
+  report.summary.forEach((group, gi) => {
     ws.addRow([]);
+    // Same black pill as the data sheets' headers.
     const head = ws.addRow([group.heading]);
-    head.height = 20;
-    for (const i of [1, 2, 3]) {
+    head.height = 24;
+    for (const i of span) {
       const c = head.getCell(i);
-      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ACCENT_DEEP } };
-      c.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } };
-      c.alignment = { vertical: 'middle' };
+      c.fill = solid(INK);
+      c.font = font(11, WHITE, { bold: true });
+      c.alignment = { vertical: 'middle', indent: 1 };
     }
 
-    for (const s of group.stats) {
-      const row = ws.addRow([s.label, s.value, s.hint ?? '']);
-      row.height = 18;
-      row.getCell(1).font = { size: 10, color: { argb: MUTED } };
+    group.stats.forEach((s, si) => {
+      const row = ws.addRow([s.label, cellOf(s.value), s.hint ?? '']);
+      row.height = 24;
+      const label = row.getCell(1);
+      label.font = font(10.5, INK_SOFT);
+      label.alignment = { vertical: 'middle', indent: 1 };
       const v = row.getCell(2);
       const fmt = NUM_FORMAT[s.format];
       if (fmt) v.numFmt = fmt;
-      v.font = {
-        bold: true,
-        size: 12,
-        color: { argb: typeof s.value === 'number' && s.value < 0 ? EXPENSE : INK },
-      };
-      v.alignment = { horizontal: 'right' };
-      row.getCell(3).font = { size: 9, color: { argb: MUTED } };
-      for (const i of [1, 2, 3]) row.getCell(i).border = allBorders;
-    }
-  }
+      // Income and expenses lead the report, so they carry their colours;
+      // after that a figure is coloured only when it is negative.
+      const negative = typeof s.value === 'number' && s.value < 0;
+      const tone = negative ? PINK : gi === 0 && si === 0 ? GREEN : gi === 0 && si === 1 ? PINK : INK;
+      // Big figures: larger, not bold — the app's light numerals.
+      v.font = font(14, tone);
+      v.alignment = { horizontal: 'right', vertical: 'middle' };
+      const hint = row.getCell(3);
+      hint.font = font(9, INK_SOFT);
+      hint.alignment = { vertical: 'middle', indent: 1 };
+      for (const i of span) row.getCell(i).border = { bottom: hair };
+    });
+  });
 
   ws.addRow([]);
   const foot = ws.addRow([
     'Every other sheet is plain tabular data: one row per record, header in row 1, no merged cells — so it can be filtered and pivoted directly.',
   ]);
-  foot.getCell(1).font = { italic: true, size: 9, color: { argb: MUTED } };
+  foot.getCell(1).font = font(9, MUTED, { italic: true });
 
-  ws.columns = [{ width: 34 }, { width: 22 }, { width: 62 }];
-  ws.views = [{ state: 'frozen', ySplit: 2 }];
+  ws.columns = [{ width: 34 }, { width: 24 }, { width: 62 }];
+  // A cover, not a grid: no gridlines, and the title stays put while scrolling.
+  ws.views = [{ state: 'frozen', ySplit: 3, showGridLines: false }];
 }
 
 /* -------------------------------------------------------------------------- */
 /* Entry points                                                               */
 /* -------------------------------------------------------------------------- */
 
-/** Builds the styled workbook and returns the .xlsx bytes. */
-export async function buildXlsx(report: ReportWorkbook): Promise<Uint8Array> {
+/**
+ * Builds the styled workbook and returns the .xlsx bytes. `assets` is for
+ * callers that already hold the logo (tests, scripts); the app fetches it.
+ */
+export async function buildXlsx(report: ReportWorkbook, assets?: ReportAssets): Promise<Uint8Array> {
   const ExcelJS = (await import('exceljs')).default;
+  const { logoPng } = assets ?? await loadReportAssets();
   const wb = new ExcelJS.Workbook();
   wb.creator = report.meta.appName;
   wb.created = report.meta.generatedAt;
+  wb.title = `${report.meta.appName} financial report — ${report.meta.periodLabel}`;
+  wb.subject = `Financial report for ${report.meta.profileName}`;
 
-  buildSummarySheet(wb.addWorksheet('Summary') as unknown as Sheet, report);
+  let logoId: number | null = null;
+  if (logoPng) {
+    try {
+      logoId = wb.addImage({ base64: logoPng, extension: 'png' });
+    } catch {
+      logoId = null;
+    }
+  }
+
+  const summary = wb.addWorksheet('Summary', {
+    pageSetup: { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+  }) as unknown as Sheet;
+  buildSummarySheet(summary, report, logoId);
+  printFooter(summary, report);
+
   for (const sheet of report.sheets) {
     // Landscape for the wide tables, so a ten-column sheet prints without
     // spilling its last column onto a second page.
@@ -267,9 +398,12 @@ export async function buildXlsx(report: ReportWorkbook): Promise<Uint8Array> {
         fitToPage: true,
         fitToWidth: 1,
         fitToHeight: 0,
+        // The header band repeats on every printed page.
+        printTitlesRow: '1:1',
       },
-    });
-    buildDataSheet(ws as unknown as Sheet, sheet);
+    }) as unknown as Sheet;
+    buildDataSheet(ws, sheet);
+    printFooter(ws, report);
   }
 
   const buf = await wb.xlsx.writeBuffer();

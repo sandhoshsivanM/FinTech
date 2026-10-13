@@ -29,7 +29,7 @@ abstract final class AppColors {
 
   static const Color accent = KhazanaColors.vaultPrimary;
   static const Color accentDeep = KhazanaColors.vaultPrimaryHover;
-  static const Color accentGlow = KhazanaColors.emerald500;
+  static const Color accentGlow = KhazanaColors.vaultInfo;
 
   // Semantic money colours.
   //
@@ -84,13 +84,16 @@ abstract final class AppColors {
   // so a card is the brightest surface in light exactly as it is in dark. Both
   // themes then read as "the data sits above the page".
   static const Color lightCanvas = KhazanaColors.ledgerBackground;
-  static const Color lightSurface = Color(0xFFFFFFFF);
+  static const Color lightSurface = KhazanaColors.ledgerSurface;
   static const Color lightOnSurface = KhazanaColors.ledgerTextPrimary;
   static const Color glassFillLight = Color(0x0D141A24); // ~5% ink fill
   static const Color glassBorderLight = Color(0x1F141A24); // ~12% ink hairline
 
   /// Accent gradient for hero surfaces and primary actions.
-  static const List<Color> accentGradient = [KhazanaColors.vaultPrimary, KhazanaColors.emerald600];
+  static const List<Color> accentGradient = [
+    KhazanaColors.vaultPrimary,
+    KhazanaColors.vaultInfo,
+  ];
 }
 
 /// The web's spacing scale, step for step.
@@ -121,10 +124,10 @@ abstract final class AppSpacing {
 /// web's 14 and buttons 14 against 9 — enough rounder that the two clients read
 /// as different design languages before any colour is considered.
 abstract final class AppRadii {
-  static const double card = 14;
-  static const double panel = 16;
-  static const double button = 9;
-  static const double input = 10;
-  static const double modal = 18;
+  static const double card = 24;
+  static const double panel = 28;
+  static const double button = 12;
+  static const double input = 12;
+  static const double modal = 24;
   static const double pill = 999;
 }

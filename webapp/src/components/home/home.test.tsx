@@ -6,6 +6,8 @@ import type { Account, Txn } from '@/lib/types';
 import { WalletStack, walletAccounts } from './WalletStack';
 import { LatestTransactions } from './LatestTransactions';
 import { BalanceHero } from './BalanceHero';
+import { WeekFlowCard } from './WeekFlowCard';
+import { InsightCard } from './InsightCard';
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...rest }: { children: React.ReactNode; href: string }) => (
@@ -86,5 +88,69 @@ describe('balance hero', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Hide amounts' }));
     expect(useApp.getState().ghost).toBe(true);
     expect(screen.getByRole('button', { name: 'Show amounts' })).toBeInTheDocument();
+  });
+});
+
+describe('last 7 days', () => {
+  test('defaults to today, and a tap shows that day in exact figures', async () => {
+    const today = new Date(); today.setHours(12, 0, 0, 0);
+    const yesterday = today.getTime() - 86_400_000;
+    seed({
+      txns: [
+        txn('t1', today.getTime(), { amount: '1240', type: 'expense' }),
+        txn('t2', yesterday, { amount: '90000', type: 'income' }),
+      ],
+    });
+    render(<WeekFlowCard />);
+    const group = await screen.findByRole('group', { name: 'Income and spending per day' });
+    const days = within(group).getAllByRole('button');
+    expect(days).toHaveLength(7);
+    expect(days[6]).toHaveAttribute('aria-pressed', 'true');
+    const readout = () => document.querySelector('[aria-live="polite"]')!;
+    expect(readout()).toHaveTextContent('Out ₹1,240.00');
+
+    await userEvent.click(days[5]);
+    expect(days[5]).toHaveAttribute('aria-pressed', 'true');
+    expect(readout()).toHaveTextContent('In ₹90,000.00');
+  });
+
+  test('ghost mode masks every figure', async () => {
+    seed({ ghost: true, txns: [txn('t1', Date.now(), { amount: '1240', type: 'expense' })] });
+    render(<WeekFlowCard />);
+    await screen.findAllByRole('button');
+    expect(screen.queryByText(/1,240/)).not.toBeInTheDocument();
+  });
+});
+
+describe('insights', () => {
+  const dayAgo = (n: number) => { const d = new Date(); d.setHours(12, 0, 0, 0); return d.getTime() - n * 86_400_000; };
+
+  test('compares this week with last, and the dashes switch insight', async () => {
+    seed({
+      categories: [{ id: 'food', vaultId: 'v', name: 'Food', icon: 'Utensils' }],
+      txns: [
+        txn('a', dayAgo(1), { amount: '118', type: 'expense' }),
+        txn('b', dayAgo(9), { amount: '100', type: 'expense' }),
+      ],
+    });
+    render(<InsightCard />);
+    expect(await screen.findByText('18%')).toBeInTheDocument();
+    expect(screen.getByText('More spent than last week.')).toBeInTheDocument();
+    const dashes = screen.getAllByRole('button', { name: /Insight \d of/ });
+    await userEvent.click(dashes[dashes.length - 1]);
+    expect(screen.getByText(/went on Food/)).toBeInTheDocument();
+  });
+
+  test('ghost mode masks the amounts', async () => {
+    seed({
+      ghost: true,
+      txns: [
+        txn('a', dayAgo(1), { amount: '118', type: 'expense' }),
+        txn('b', dayAgo(9), { amount: '100', type: 'expense' }),
+      ],
+    });
+    render(<InsightCard />);
+    await screen.findByText('18%');
+    expect(screen.queryByText(/₹118/)).not.toBeInTheDocument();
   });
 });

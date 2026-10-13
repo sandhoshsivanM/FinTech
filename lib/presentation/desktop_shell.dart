@@ -316,11 +316,10 @@ class _Sidebar extends ConsumerWidget {
                       bottom: AppSpacing.xs,
                     ),
                     child: Text(
-                      section.title.toUpperCase(),
+                      section.title,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: scheme.onSurfaceVariant,
-                        letterSpacing: 1.1,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -361,7 +360,7 @@ class _BrandHeader extends StatelessWidget {
                 Text(
                   kAppName,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
@@ -437,7 +436,7 @@ class _NavItem extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: selected
-                                ? FontWeight.w700
+                                ? FontWeight.w500
                                 : FontWeight.w500,
                             color: selected
                                 ? context.colors.accent

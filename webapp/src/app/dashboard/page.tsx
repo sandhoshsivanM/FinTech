@@ -35,16 +35,16 @@ import { currentMonth, custom, trailingDays, type DateRange } from '@/domain/per
 import { MonthNav } from '@/components/MonthNav';
 import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { dayChange, priceAsOfLabel } from '@/domain/dayChange';
-import { GlassCard, SectionHeader, Ring, ProgressBar, Segmented, Chip, Delta, Donut, type DonutSeg } from '@/components/ui';
+import { GlassCard, SectionHeader, Ring, ProgressBar, Segmented, Chip, Delta, Donut, scoreColor, type DonutSeg } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
 import {
   PageHeader, Section, Metric, MetricRow, MoneyValue, LedgerLine, AssetMark } from '@/components/primitives';
 import { LineChart } from '@/components/charts/LineChart';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { DashboardStarter } from '@/components/DashboardStarter';
-import { Hint } from '@/components/Hint';
+import { Hint, CardTitle } from '@/components/Hint';
 import { Stagger, StaggerItem } from '@/components/motion';
-import { PhoneHome } from '@/components/home/PhoneHome';
+import { PhoneHome, DesktopHome } from '@/components/home/PhoneHome';
 
 /** Ranges the snapshot history can answer. */
 const RANGES = [
@@ -56,7 +56,7 @@ type RangeKey = (typeof RANGES)[number]['key'];
 const SERIES_COLOURS = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)', 'var(--c7)', 'var(--c8)'];
 
 const toneColor = (t: NarrativeTone) =>
-  t === 'positive' ? 'var(--success)' : t === 'caution' ? 'var(--warning)' : 'var(--accent)';
+  t === 'positive' ? 'var(--success)' : t === 'caution' ? 'var(--warning)' : 'var(--data-blue)';
 
 export default function DashboardPage() {
   const txns = useApp((s) => s.txns);
@@ -227,10 +227,8 @@ export default function DashboardPage() {
     }),
     [txns, holdings, liabilities, goals, insurances, budgets, snapshots, accounts, postings],
   );
-  const ringColor =
-    health.score === null ? 'var(--muted)'
-      : health.score >= 70 ? 'var(--success)'
-        : health.score >= 40 ? 'var(--warning)' : 'var(--danger)';
+  // The score ring is always the Zentra blue; colour is for weak parts only.
+  const ringColor = 'var(--data-blue)';
 
   // Insights come from the narrative engine, which assembles every sentence
   // from a fixed template table and is tested against a banned-phrase list.
@@ -281,7 +279,7 @@ export default function DashboardPage() {
               <button
                 onClick={toggleGhost}
                 data-tour="networth"
-                className="focus-ring inline-flex items-center gap-2 h-[var(--control-md)] px-3 rounded-[var(--radius-btn)] border border-line bg-card text-[13px] font-semibold text-ink-soft hover:text-ink hover:border-line-strong transition-colors"
+                className="focus-ring btn-soft inline-flex items-center gap-2 h-[var(--control-md)] px-3.5 rounded-full text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors"
               >
                 {ghost ? <EyeOff size={15} /> : <Eye size={15} />}
                 {ghost ? 'Amounts hidden' : 'Hide amounts'}
@@ -291,9 +289,12 @@ export default function DashboardPage() {
         />
       </StaggerItem>
 
+      {/* Desktop: the same everyday-money cards in a 12-column row. */}
+      {!isEmptyVault && <DesktopHome />}
+
       <StaggerItem>
         {isEmptyVault ? <DashboardStarter /> : (
-        <Section title="Net worth" first description="What you own minus what you owe">
+        <Section title="Net worth" info="dashboard.netWorth" first description="What you own minus what you owe">
           <MoneyValue size="xl" hidden={ghost}>
             {fmt.money(cash.plus(summary.current).minus(liab))}
           </MoneyValue>
@@ -345,7 +346,7 @@ export default function DashboardPage() {
       {/* The dedicated current-month surface: you should not have to choose a
           reporting window to learn where you are this month. */}
       <StaggerItem>
-        <Section title="This month" description={month.label}>
+        <Section title="This month" info="dashboard.thisMonth" description={month.label}>
           <div className="grid gap-x-10 md:grid-cols-2">
             <div>
               <LedgerLine label="Income" value={fmt.money(period.income)} hidden={ghost} />
@@ -360,7 +361,7 @@ export default function DashboardPage() {
               />
             </div>
             <div className="mt-5 md:mt-0 flex flex-col justify-center gap-1">
-              <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">
+              <div className="flex items-center gap-1 text-[11px] font-normal text-muted">
                 Savings rate
                 <Hint term="savingsRate" />
               </div>
@@ -376,7 +377,7 @@ export default function DashboardPage() {
               </div>
               {dayPnl != null && day.isReal && (
                 <div className="mt-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">
+                  <div className="text-[11px] font-normal text-muted">
                     Day change
                   </div>
                   <div className="flex items-baseline gap-2 mt-1">
@@ -401,7 +402,7 @@ export default function DashboardPage() {
         <section className="card">
           <div className="flex items-center gap-3 flex-wrap px-5 py-4 border-b border-line">
             <div className="min-w-0">
-              <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Portfolio performance</h2>
+              <CardTitle info="dashboard.portfolioPerformance" className="text-[16px] font-medium tracking-[-0.01em]">Portfolio performance</CardTitle>
               <p className="text-xs text-muted mt-0.5">
                 {snapshots.length >= 2 ? `${snapshots.length} recorded snapshots` : 'Recorded once a day when you open Khazana'}
               </p>
@@ -418,7 +419,7 @@ export default function DashboardPage() {
             <div className="flex items-end gap-4 flex-wrap mb-5">
               <div>
                 <div className="eyebrow">Net worth</div>
-                <div className="text-[34px] font-bold tracking-[-0.04em] leading-[1.05] tnum mt-1">
+                <div className="text-[34px] font-light tracking-[-0.04em] leading-[1.05] tnum mt-1">
                   {mask(fmt.money(cash.plus(summary.current).minus(liab)))}
                 </div>
               </div>
@@ -456,7 +457,7 @@ export default function DashboardPage() {
         <StaggerItem>
           <section className="card h-full">
             <div className="flex items-center gap-3 flex-wrap px-5 py-4 border-b border-line">
-              <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Allocation</h2>
+              <CardTitle info="dashboard.allocation" className="text-[16px] font-medium tracking-[-0.01em]">Allocation</CardTitle>
               <span className="ml-auto">
                 <Segmented
                   value={allocDim}
@@ -490,7 +491,7 @@ export default function DashboardPage() {
         <StaggerItem>
           <section className="card h-full">
             <div className="px-5 py-4 border-b border-line">
-              <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Movers</h2>
+              <CardTitle info="dashboard.movers" className="text-[16px] font-medium tracking-[-0.01em]">Movers</CardTitle>
               <p className="text-xs text-muted mt-0.5">By return since purchase</p>
             </div>
             <div className="p-5 grid gap-5">
@@ -534,12 +535,12 @@ export default function DashboardPage() {
       <div className="grid gap-6 min-[1100px]:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <StaggerItem>
           <GlassCard className="h-full">
-            <SectionHeader title="Financial health" />
+            <SectionHeader title="Financial health" info="dashboard.financialHealth" />
             <div className="flex flex-col sm:flex-row items-center gap-5">
-              <Ring fraction={(health.score ?? 0) / 100} size={110} stroke={10} color={ringColor}>
+              <Ring fraction={(health.score ?? 0) / 100} size={130} stroke={11} color={ringColor}>
                 <div className="text-center">
-                  <div className="text-2xl font-bold leading-none" style={{ color: ringColor }}>{health.score ?? '—'}</div>
-                  <div className="text-[10px] font-semibold text-muted mt-0.5">{health.grade ?? 'Not yet scored'}</div>
+                  <div className="text-[34px] font-light leading-none tracking-[-0.03em]">{health.score ?? '—'}</div>
+                  <div className="text-[11.5px] text-muted mt-1">{health.grade ?? 'Not yet scored'}</div>
                 </div>
               </Ring>
               {/* An untracked category shows a grey bar and the words "Not yet
@@ -549,16 +550,14 @@ export default function DashboardPage() {
                 {health.categories.map((c) => (
                   <div key={c.key}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold">{c.label}</span>
+                      <span className="text-[13px]">{c.label}</span>
                       <span className="text-xs text-muted">
                         {c.tracked ? `${Math.round(c.score as number)}/${c.weight}` : 'Not yet tracked'}
                       </span>
                     </div>
                     <ProgressBar
                       fraction={c.fraction ?? 0}
-                      color={!c.tracked ? 'transparent'
-                        : (c.fraction as number) >= 0.7 ? 'var(--success)'
-                          : (c.fraction as number) >= 0.4 ? 'var(--warning)' : 'var(--danger)'}
+                      color={!c.tracked ? 'transparent' : scoreColor(c.fraction)}
                       height={5}
                     />
                   </div>
@@ -573,7 +572,7 @@ export default function DashboardPage() {
           <section className="card h-full flex flex-col">
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
               <Sparkles size={17} className="text-accent" />
-              <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Insights</h2>
+              <CardTitle info="dashboard.insights" className="text-[16px] font-medium tracking-[-0.01em]">Insights</CardTitle>
               <span className="ml-auto"><Chip>{narratives.length} observation{narratives.length === 1 ? '' : 's'}</Chip></span>
             </div>
             {narratives.length === 0 ? (
@@ -595,7 +594,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
-            <p className="px-5 py-3 text-[11px] text-muted border-t border-line bg-fill">{NARRATIVE_DISCLAIMER}</p>
+            <p className="px-5 py-3 text-[11px] text-muted border-t border-line bg-fill rounded-b-[inherit]">{NARRATIVE_DISCLAIMER}</p>
           </section>
         </StaggerItem>
       </div>
@@ -606,7 +605,7 @@ export default function DashboardPage() {
           <section className="card overflow-hidden h-full">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
               <div>
-                <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Top holdings</h2>
+                <CardTitle info="dashboard.topHoldings" className="text-[16px] font-medium tracking-[-0.01em]">Top holdings</CardTitle>
                 <p className="text-xs text-muted mt-0.5">By value · {holdings.length} total</p>
               </div>
               <Link href="/holdings" className="ml-auto focus-ring inline-flex items-center gap-1 text-[13px] font-semibold text-accent hover:underline">
@@ -623,7 +622,7 @@ export default function DashboardPage() {
                   <thead>
                     <tr>
                       {['Company', 'Value', 'Weight', 'Return'].map((h, i) => (
-                        <th key={h} className={`sticky top-0 bg-card-2 border-b border-line px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.05em] text-muted whitespace-nowrap ${i === 0 ? 'text-left' : 'text-right'}`}>
+                        <th key={h} className={`sticky top-0 bg-card-2 border-b border-line px-3 py-2.5 text-[11px] font-normal text-muted whitespace-nowrap ${i === 0 ? 'text-left' : 'text-right'}`}>
                           {h}
                         </th>
                       ))}
@@ -661,7 +660,7 @@ export default function DashboardPage() {
         <StaggerItem>
           <section className="card overflow-hidden h-full">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
-              <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Upcoming bills</h2>
+              <CardTitle info="dashboard.upcomingBills" className="text-[16px] font-medium tracking-[-0.01em]">Upcoming bills</CardTitle>
               <Link href="/recurring" className="ml-auto focus-ring inline-flex items-center gap-1 text-[13px] font-semibold text-accent hover:underline">
                 See all <ChevronRight size={15} />
               </Link>
@@ -673,7 +672,7 @@ export default function DashboardPage() {
                 const due = daysUntil(b.nextRun, now);
                 return (
                   <div key={b.id} className="flex items-center gap-3 px-5 py-3 border-b border-line last:border-0 hover:bg-fill transition-colors">
-                    <span className="w-9 h-9 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-warning-soft text-warning">
+                    <span className="w-9 h-9 shrink-0 rounded-full grid place-items-center bg-[color-mix(in_srgb,var(--data-blue)_14%,transparent)] text-[var(--data-blue)]">
                       <CreditCard size={16} />
                     </span>
                     <span className="flex-1 min-w-0">

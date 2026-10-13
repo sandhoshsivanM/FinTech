@@ -1,6 +1,5 @@
 'use client';
-import type { ReactNode } from 'react';
-import { CHART } from './tokens';
+import { useId, type ReactNode } from 'react';
 import { useEntrance } from './useEntrance';
 
 export interface GaugeBand {
@@ -20,8 +19,10 @@ export const HEALTH_BANDS: GaugeBand[] = [
 ];
 
 /**
- * A banded arc gauge for a single graded number. The web twin of Flutter's
- * `GaugeChart`.
+ * The Zentra score ring for a single graded number: a 270° arc open at the
+ * bottom, round caps, a blue gradient with a soft blue glow, and the score
+ * large and light in the middle. Bands still drive the grade word, not the
+ * colour — the ring stays blue. The web twin of Flutter's `GaugeChart`.
  *
  * Two things separate it from `Ring`, which is used for goals and budgets:
  *
@@ -39,7 +40,7 @@ export function Gauge({
   bands = HEALTH_BANDS,
   size = 180,
   stroke = 14,
-  sweepDegrees = 240,
+  sweepDegrees = 270,
   label,
   sublabel,
   untrackedLabel = 'Not yet tracked',
@@ -58,13 +59,14 @@ export function Gauge({
   children?: ReactNode;
 }) {
   const { progress, transition } = useEntrance(value);
+  const gid = useId().replace(/:/g, '');
   const tracked = value !== null;
   const clamped = tracked ? Math.min(max, Math.max(min, value)) : min;
   const fraction = max <= min ? 0 : (clamped - min) / (max - min);
 
-  const bandColor = (v: number) =>
-    bands.find((b) => v <= b.upTo)?.color ?? bands[bands.length - 1]?.color ?? 'var(--accent)';
-  const active = tracked ? bandColor(clamped) : 'var(--muted)';
+  // Bands are kept in the signature for the grade text callers derive; the
+  // ring itself is always the blue gradient.
+  void bands;
 
   const cx = size / 2;
   const r = (size - stroke) / 2;
@@ -84,8 +86,8 @@ export function Gauge({
   };
 
   // The arc is open at the bottom; trimming that dead space stops the gauge
-  // pushing everything below it down by a quarter of its own height.
-  const height = size * 0.82;
+  // pushing everything below it down.
+  const height = size * 0.9;
 
   return (
     <div
@@ -94,62 +96,51 @@ export function Gauge({
       role="img"
       aria-label={tracked ? `${label ?? Math.round(clamped)}${sublabel ? `, ${sublabel}` : ''}` : untrackedLabel}
     >
-      <svg width={size} height={height} viewBox={`0 0 ${size} ${height}`} aria-hidden>
-        {/* Track: the active band lightened toward the surface, so the state
-            reads across the whole arc rather than only its filled part. */}
+      <svg width={size} height={height} viewBox={`0 0 ${size} ${height}`} aria-hidden className="overflow-visible">
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="var(--data-blue-a)" />
+            <stop offset="1" stopColor="var(--data-blue)" />
+          </linearGradient>
+        </defs>
         <path
           d={arc(start, start + sweep)}
           fill="none"
           strokeWidth={stroke}
           strokeLinecap="round"
-          stroke={tracked ? active : 'var(--fill-strong)'}
-          opacity={tracked ? 0.18 : 1}
+          stroke="color-mix(in srgb, var(--ink) 8%, transparent)"
         />
         {tracked && fraction > 0 && (() => {
-          // Drawn at full length and revealed with dash-offset. Transitioning
-          // the path's own `d` is not reliably animatable across browsers,
-          // whereas stroke-dashoffset is, and it sweeps in the same direction.
+          // Drawn at full length and revealed with dash-offset: stroke-dashoffset
+          // animates reliably across browsers where a path's `d` does not.
           const len = r * sweep * fraction;
           return (
             <path
               d={arc(start, start + sweep * fraction)}
               fill="none"
-              stroke={active}
+              stroke={`url(#${gid})`}
               strokeWidth={stroke}
               strokeLinecap="round"
               strokeDasharray={len}
               strokeDashoffset={len * (1 - progress)}
-              style={{ transition: `stroke-dashoffset ${transition}` }}
+              style={{
+                transition: `stroke-dashoffset ${transition}`,
+                filter: 'drop-shadow(0 5px 6px color-mix(in srgb, var(--data-blue) 35%, transparent))',
+              }}
             />
           );
         })()}
-        {/* Band boundaries as gaps in the track. Five coloured segments would
-            put a rainbow on what is an ordered scale. */}
-        {tracked && max > min && bands.map((b) => {
-          if (b.upTo <= min || b.upTo >= max) return null;
-          const a = start + sweep * ((b.upTo - min) / (max - min));
-          const [x1, y1] = point(a, r - stroke / 2);
-          const [x2, y2] = point(a, r + stroke / 2);
-          return (
-            <line
-              key={b.upTo}
-              x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke="var(--surface)"
-              strokeWidth={CHART.markGap}
-            />
-          );
-        })}
       </svg>
-      <div className="absolute inset-0 grid place-items-center text-center" style={{ paddingTop: size * 0.08 }}>
+      <div className="absolute inset-0 grid place-items-center text-center">
         {children ?? (
           <div>
             <div
-              className="font-extrabold leading-none"
-              style={{ color: active, fontSize: size * 0.19 }}
+              className="font-light leading-none tracking-[-0.03em] text-ink"
+              style={{ fontSize: size * 0.24 }}
             >
               {label ?? (tracked ? Math.round(clamped) : '—')}
             </div>
-            <div className="text-[11px] font-semibold text-muted mt-1">
+            <div className="text-[12px] text-muted mt-1.5">
               {tracked ? (sublabel ?? '') : untrackedLabel}
             </div>
           </div>

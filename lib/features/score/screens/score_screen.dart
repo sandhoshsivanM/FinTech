@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/semantic_colors.dart';
@@ -9,9 +10,10 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../domain/services/financial_health.dart';
 import '../../../domain/services/narrative_engine.dart';
 import '../../../presentation/charts/area_chart.dart';
-import '../../../presentation/charts/gauge_chart.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
+import '../../../presentation/zentra_kit.dart';
+import '../../home/widgets/depth.dart';
 import '../../reports/providers/dashboard_providers.dart';
 
 /// Where each category's data actually comes from, so an untracked card can
@@ -56,6 +58,18 @@ class _Body extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         const _WeeklyReportCard(),
         const SizedBox(height: AppSpacing.md),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: InfoHint.titled(
+            Text(
+              'Four areas',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
+            'score.fourAreas',
+          ),
+        ),
         for (final c in health.categories) ...[
           _CategoryCard(category: c),
           const SizedBox(height: AppSpacing.sm),
@@ -82,10 +96,17 @@ class _ScoreHero extends StatelessWidget {
     return GlassCard(
       child: Column(
         children: [
-          GaugeChart(
+          InfoHint.titled(
+            Text(
+              'Financial health',
+              style: text.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
+            'dashboard.financialHealth',
+          ),
+          ScoreRing(
             value: health.score?.toDouble(),
-            size: 200,
-            sublabel: health.grade,
+            label: health.grade ?? '',
+            size: 170,
           ),
           const SizedBox(height: AppSpacing.sm),
           if (health.isPartial)
@@ -162,7 +183,9 @@ class _MethodCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final muted = text.bodySmall?.copyWith(
-        color: scheme.onSurfaceVariant, height: 1.4);
+      color: scheme.onSurfaceVariant,
+      height: 1.4,
+    );
     final total = _areas.fold<double>(0, (s, a) => s + a.$2);
 
     // Not a card. This is a disclosure row: one line of text and a chevron,
@@ -179,10 +202,15 @@ class _MethodCard extends StatelessWidget {
         child: ExpansionTile(
           tilePadding: EdgeInsets.zero,
           childrenPadding: const EdgeInsets.only(bottom: AppSpacing.md),
-          leading: Icon(Icons.help_outline,
-              size: 20, color: scheme.onSurfaceVariant),
-          title: Text('How is this calculated?',
-              style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+          leading: Icon(
+            Icons.help_outline,
+            size: 20,
+            color: scheme.onSurfaceVariant,
+          ),
+          title: Text(
+            'How is this calculated?',
+            style: text.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+          ),
           children: [
             Align(
               alignment: Alignment.centerLeft,
@@ -205,12 +233,18 @@ class _MethodCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text(label,
-                                  style: text.bodySmall?.copyWith(
-                                      fontWeight: FontWeight.w700)),
-                              Text(' · ${weight.toInt()} points',
-                                  style: text.bodySmall
-                                      ?.copyWith(color: scheme.onSurfaceVariant)),
+                              Text(
+                                label,
+                                style: text.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                ' · ${weight.toInt()} points',
+                                style: text.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
                             ],
                           ),
                           Text(blurb, style: muted),
@@ -218,9 +252,12 @@ class _MethodCard extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: AppSpacing.xs),
-                  Text('Areas you have not tracked are left out',
-                      style: text.bodySmall
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    'Areas you have not tracked are left out',
+                    style: text.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'An area with no data is not scored zero — it is removed '
@@ -242,9 +279,12 @@ class _MethodCard extends StatelessWidget {
                     style: muted,
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  Text('Grades',
-                      style: text.bodySmall
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    'Grades',
+                    style: text.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   for (final (range, label) in _bands)
                     Padding(
@@ -253,9 +293,12 @@ class _MethodCard extends StatelessWidget {
                         children: [
                           SizedBox(
                             width: 96,
-                            child: Text(range,
-                                style: text.bodySmall?.copyWith(
-                                    color: scheme.onSurfaceVariant)),
+                            child: Text(
+                              range,
+                              style: text.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
                           ),
                           Text(label, style: text.bodySmall),
                         ],
@@ -296,16 +339,22 @@ class _WeeklyReportCard extends ConsumerWidget {
             children: [
               Icon(Icons.auto_awesome, size: 18, color: context.colors.accent),
               const SizedBox(width: AppSpacing.xs),
-              Text('This period',
-                  style:
-                      text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+              InfoHint.titled(
+                Text(
+                  'This period',
+                  style: text.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+                ),
+                'score.thisPeriod',
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(report, style: text.bodyMedium),
           const SizedBox(height: AppSpacing.sm),
-          Text(kNarrativeDisclaimer,
-              style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant)),
+          Text(
+            kNarrativeDisclaimer,
+            style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
         ],
       ),
     );
@@ -318,11 +367,18 @@ class _CategoryCard extends StatelessWidget {
   const _CategoryCard({required this.category});
   final HealthCategory category;
 
-  static Color _band(SemanticColors c, double f) => f >= 0.7
-      ? c.income
+  /// Blue while healthy, amber when weak, pink when poor.
+  static Hue _hue(double f) => f >= 0.7
+      ? Hue.blue
       : f >= 0.4
-          ? c.budgetWarn
-          : c.expense;
+      ? Hue.amber
+      : Hue.pink;
+
+  static Color _band(SemanticColors c, double f) => f >= 0.7
+      ? c.info
+      : f >= 0.4
+      ? c.budgetWarn
+      : c.expense;
 
   @override
   Widget build(BuildContext context) {
@@ -334,7 +390,9 @@ class _CategoryCard extends StatelessWidget {
 
     return GlassCard(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       child: Theme(
         // The default expansion divider fights the card's own hairline border.
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -348,9 +406,10 @@ class _CategoryCard extends StatelessWidget {
           title: Row(
             children: [
               Expanded(
-                child: Text(category.label,
-                    style:
-                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                child: Text(
+                  category.label,
+                  style: text.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+                ),
               ),
               // "23/30" alone never said what the 30 was. Naming the unit once
               // is what makes the four areas read as a weighting rather than
@@ -361,7 +420,7 @@ class _CategoryCard extends StatelessWidget {
                     : 'Not yet tracked',
                 style: text.labelMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
-                  fontWeight: tracked ? FontWeight.w700 : FontWeight.w500,
+                  fontWeight: tracked ? FontWeight.w500 : FontWeight.w500,
                 ),
               ),
             ],
@@ -371,22 +430,17 @@ class _CategoryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadii.pill),
-                  child: LinearProgressIndicator(
-                    value: fraction ?? 0,
-                    minHeight: 6,
-                    valueColor: AlwaysStoppedAnimation(
-                      tracked ? _band(context.colors, fraction) : Colors.transparent,
-                    ),
-                    backgroundColor:
-                        scheme.onSurfaceVariant.withValues(alpha: 0.15),
+                if (tracked)
+                  Gauge(fraction: fraction, hue: _hue(fraction))
+                else
+                  const SizedBox(height: 4),
+                const SizedBox(height: 6),
+                Text(
+                  category.detail,
+                  style: text.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(category.detail,
-                    style:
-                        text.labelSmall?.copyWith(color: scheme.onSurfaceVariant)),
                 if (!tracked && cta != null) ...[
                   const SizedBox(height: AppSpacing.sm),
                   Align(
@@ -452,14 +506,18 @@ class _MetricRow extends StatelessWidget {
                     // No percentage for an untracked metric. A number here
                     // would be the fabrication the whole design avoids.
                     value == null ? 'Not tracked' : '${(value * 100).round()}%',
-                    style: text.labelSmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
+                    style: text.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
-              Text(metric.detail,
-                  style:
-                      text.labelSmall?.copyWith(color: scheme.onSurfaceVariant)),
+              Text(
+                metric.detail,
+                style: text.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
         ),
@@ -479,8 +537,13 @@ class _HistoryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Score history',
-              style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+          InfoHint.titled(
+            Text(
+              'Score history',
+              style: text.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
+            'score.scoreHistory',
+          ),
           const SizedBox(height: AppSpacing.sm),
           AreaChart(
             values: history,
@@ -489,7 +552,7 @@ class _HistoryCard extends StatelessWidget {
             semanticLabel: history.length < 2
                 ? null
                 : 'Score history, ${history.length} points, '
-                    'latest ${history.last.round()}',
+                      'latest ${history.last.round()}',
           ),
         ],
       ),

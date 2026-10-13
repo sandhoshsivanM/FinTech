@@ -11,7 +11,12 @@ import { Wallet } from 'lucide-react';
 import { Hint } from './Hint';
 import { Kpi } from './Kpi';
 import { StatStrip } from './ui';
-import { GLOSSARY, type TermKey } from '@/lib/glossary';
+import { GLOSSARY, SECTION_HELP, HELP, type TermKey, type SectionKey } from '@/lib/glossary';
+import { Section } from './primitives';
+import { SectionHeader } from './ui';
+import { CardTitle, SectionInfo } from './Hint';
+import { readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
 beforeEach(cleanup);
 
@@ -62,7 +67,7 @@ describe('the affordance itself', () => {
     const user = userEvent.setup();
     render(<Hint term="weight" align="right" />);
     await user.click(screen.getByRole('button'));
-    expect(screen.getByRole('tooltip').className).toContain('right-0');
+    expect(screen.getByRole('tooltip')).toHaveAttribute('data-align', 'right');
   });
 });
 
@@ -136,6 +141,141 @@ describe('the glossary keeps its house rules', () => {
     // what the number IS before what it is for.
     for (const [key, term] of entries) {
       expect(term.body.toLowerCase().startsWith(term.title.toLowerCase()), key).toBe(false);
+    }
+  });
+});
+
+// ---- Section help: the ⓘ beside every card title ---------------------------
+describe('section help keeps the same house rules', () => {
+  const entries = Object.entries(SECTION_HELP) as [SectionKey, { title: string; body: string }][];
+  const routes = new Set(
+    readdirSync(join(__dirname, '../app')).filter((d) => statSync(join(__dirname, '../app', d)).isDirectory()),
+  );
+
+  test('there is section help to test', () => {
+    expect(entries.length).toBeGreaterThan(50);
+  });
+
+  test('every entry has a real title and a real body', () => {
+    for (const [key, s] of entries) {
+      expect(s.title.trim().length, key).toBeGreaterThan(2);
+      expect(s.body.trim().length, key).toBeGreaterThan(30);
+      expect(s.body, key).not.toMatch(/TODO|TBD|lorem/i);
+      expect(s.body.toLowerCase().startsWith(s.title.toLowerCase()), key).toBe(false);
+    }
+  });
+
+  test('every entry is one to three sentences, short enough for a phone popover', () => {
+    for (const [key, s] of entries) {
+      const sentences = s.body.split(/[.!?](?:\s|$)/).filter(Boolean).length;
+      expect(sentences, `${key} has ${sentences} sentences`).toBeLessThanOrEqual(3);
+      expect(s.body.length, `${key} is too long`).toBeLessThanOrEqual(320);
+    }
+  });
+
+  test('titles are sentence case', () => {
+    // "Spending by category", not "Spending By Category". Acronyms (FY, EMI,
+    // NIFTY) are allowed to stay upper case.
+    for (const [key, s] of entries) {
+      // Proper nouns stay capitalised, and so does the first word after a
+      // "Step 1 ·" prefix.
+      const PROPER = new Set(['Pro', 'Khazana']);
+      const words = s.title.split(/\s+/).filter((w, i, a) => i > 0 && a[i - 1] !== '·' && !PROPER.has(w));
+      for (const w of words) {
+        const titleCased = /^[A-Z][a-z]+$/.test(w);
+        expect(titleCased, `${key}: "${w}" in "${s.title}"`).toBe(false);
+      }
+    }
+  });
+
+  test('every key names a route that exists', () => {
+    for (const [key] of entries) {
+      const [route, name] = key.split('.');
+      expect(routes.has(route), `${key}: no src/app/${route}`).toBe(true);
+      expect(name, key).toMatch(/^[a-z][A-Za-z0-9]*$/);
+    }
+  });
+
+  test('section keys never shadow a glossary term', () => {
+    for (const key of Object.keys(SECTION_HELP)) {
+      expect(key in GLOSSARY, key).toBe(false);
+      expect(HELP[key as SectionKey]).toBe(SECTION_HELP[key as SectionKey]);
+    }
+  });
+});
+
+describe('section titles carry their ⓘ', () => {
+  const [key, help] = Object.entries(SECTION_HELP)[0] as [SectionKey, { title: string; body: string }];
+  const label = new RegExp(`^What is ${help.title.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\?$`);
+
+  test('a Section with info shows a "What is …?" button that opens the text', async () => {
+    const user = userEvent.setup();
+    render(<Section title="Card title" info={key}><p>body</p></Section>);
+    const btn = screen.getByRole('button', { name: label });
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    await user.click(btn);
+    const tip = screen.getByRole('tooltip');
+    expect(tip).toHaveTextContent(help.title);
+    expect(tip).toHaveTextContent(help.body.slice(0, 40));
+    expect(btn).toHaveAttribute('aria-describedby', tip.id);
+  });
+
+  test('the button sits beside the heading, not inside it', () => {
+    // Inside, "What is …?" would become part of the heading's accessible name
+    // and every test that finds a card by its heading would break.
+    render(<Section title="Card title" info={key}><p>body</p></Section>);
+    expect(screen.getByRole('heading', { name: 'Card title' })).toBeInTheDocument();
+  });
+
+  test('a Section without info renders no button', () => {
+    render(<Section title="Card title"><p>body</p></Section>);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  test('SectionHeader and CardTitle carry the same ⓘ', () => {
+    render(<div><SectionHeader title="One" info={key} /><CardTitle info={key}>Two</CardTitle></div>);
+    expect(screen.getAllByRole('button', { name: label })).toHaveLength(2);
+    expect(screen.getByRole('heading', { name: 'One' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Two' })).toBeInTheDocument();
+  });
+
+  test('the section icon is 16px', () => {
+    render(<SectionInfo k={key} />);
+    const btn = screen.getByRole('button');
+    expect(btn.style.width).toBe('16px');
+    expect(btn.querySelector('svg')?.getAttribute('width')).toBe('16');
+  });
+
+  test('the panel escapes a clipping card', async () => {
+    // Several cards are `overflow-hidden` (tables, divided lists). The panel is
+    // portalled to <body> so the card cannot swallow it.
+    const user = userEvent.setup();
+    const { container } = render(
+      <div className="card overflow-hidden"><CardTitle info={key}>Clipped</CardTitle></div>,
+    );
+    await user.click(screen.getByRole('button', { name: label }));
+    const tip = screen.getByRole('tooltip');
+    expect(container.contains(tip)).toBe(false);
+    expect(document.body.contains(tip)).toBe(true);
+  });
+
+  test('the panel stays inside a 390px viewport', async () => {
+    const user = userEvent.setup();
+    const prev = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    try {
+      render(<CardTitle info={key}>Edge</CardTitle>);
+      const btn = screen.getByRole('button', { name: label });
+      // Pretend the icon sits 10px from the right edge of the phone.
+      btn.getBoundingClientRect = () => ({ left: 370, right: 386, top: 100, bottom: 116, width: 16, height: 16, x: 370, y: 100, toJSON: () => ({}) });
+      await user.click(btn);
+      const tip = screen.getByRole('tooltip');
+      const left = parseFloat(tip.style.left);
+      const width = parseFloat(tip.style.width);
+      expect(left).toBeGreaterThanOrEqual(8);
+      expect(left + width).toBeLessThanOrEqual(390 - 8);
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: prev });
     }
   });
 });

@@ -24,6 +24,7 @@ import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { Stagger, StaggerItem, useReducedMotion } from '@/components/motion';
 import { HoldingForm, ImportPanel } from '@/components/HoldingEditor';
 import { AssetMark } from '@/components/primitives';
+import { CardTitle } from '@/components/Hint';
 import type { Holding } from '@/lib/types';
 import { portfolioSummary, ASSET_META, ASSET_GROUP_OF } from '@/domain/portfolio';
 import type { AssetType } from '@/lib/types';
@@ -223,7 +224,7 @@ export default function HoldingsPage() {
         <button
           onClick={() => { setEditing(r.holding); setPanel('none'); }}
           aria-label={`Edit ${r.symbol}`}
-          className="focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-accent hover:bg-accent-soft transition-colors"
+          className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] text-muted hover:text-ink transition-colors"
         >
           <Pencil size={15} />
         </button>
@@ -307,7 +308,7 @@ export default function HoldingsPage() {
         <section className="card overflow-hidden">
           <div className="flex items-center gap-3 px-4 min-[900px]:px-5 py-4 border-b border-line">
             <div className="min-w-0">
-              <h2 className="text-[18px] font-semibold tracking-[-0.02em]">All positions</h2>
+              <CardTitle info="holdings.allPositions" className="text-[16px] font-medium tracking-[-0.01em]">All positions</CardTitle>
               <p className="text-xs text-muted mt-0.5">Sort, filter and export the full book</p>
             </div>
             {demo && !anyRealClose && <span className="ml-auto"><DemoBadge label="Day change" title="Day change is synthesised on this device. Turn on live prices in Settings to measure it against a real previous close." /></span>}

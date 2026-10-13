@@ -38,6 +38,7 @@ import { NumberInput } from '@/components/NumberInput';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { short } from '@/lib/format';
 import { formatDate } from '@/lib/dateFormat';
+import { CardTitle } from '@/components/Hint';
 
 function ForecastPageInner() {
   const txns = useApp((s) => s.txns);
@@ -109,6 +110,7 @@ function ForecastPageInner() {
         <GlassCard>
           <SectionHeader
             title="Safe to spend"
+            info="forecast.safeToSpend"
             action={<span className="text-xs text-muted">{month.label}</span>}
           />
           {sts.perDay == null ? (
@@ -132,7 +134,7 @@ function ForecastPageInner() {
             <>
               <div className="mt-3 flex items-end gap-3 flex-wrap">
                 <div>
-                  <div className="text-[34px] font-bold tracking-[-0.04em] leading-none tnum">
+                  <div className="text-[34px] font-light tracking-[-0.04em] leading-none tnum">
                     {money(sts.perDay)}
                   </div>
                   <div className="text-xs text-muted mt-1.5">per day for {sts.inputs.daysRemaining} more days</div>
@@ -170,7 +172,7 @@ function ForecastPageInner() {
         <GlassCard padded={false}>
           <div className="px-5 py-4 border-b border-[var(--line)] flex items-center gap-3 flex-wrap">
             <div>
-              <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Cash-flow forecast</h2>
+              <CardTitle info="forecast.cashFlowForecast" className="text-[16px] font-medium tracking-[-0.01em]">Cash-flow forecast</CardTitle>
               <p className="text-xs text-muted mt-0.5">
                 {forecast.monthlyDiscretionary == null
                   ? 'Recurring rules only — not enough history for typical spending'
@@ -184,7 +186,7 @@ function ForecastPageInner() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[11px] uppercase tracking-wide text-muted">
+                <tr className="text-[11px] text-muted">
                   <th className="text-left font-semibold px-5 py-2">Month</th>
                   <th className="text-right font-semibold px-3 py-2">Scheduled in</th>
                   <th className="text-right font-semibold px-3 py-2">Scheduled out</th>
@@ -226,6 +228,7 @@ function ForecastPageInner() {
         <GlassCard>
           <SectionHeader
             title="This month so far"
+            info="forecast.thisMonthSoFar"
             action={
               <span className="text-xs text-muted">
                 vs the same days of {formatDate(review.previous.start)}–{formatDate(review.previous.end)}
@@ -254,7 +257,7 @@ function ForecastPageInner() {
 
           {review.categoryMoves.length > 0 && (
             <div className="mt-5 pt-4 border-t border-[var(--line)]">
-              <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2.5">
+              <p className="text-xs font-normal text-muted mb-2.5">
                 What changed most
               </p>
               <div className="grid gap-1.5">
@@ -278,6 +281,7 @@ function ForecastPageInner() {
         <GlassCard>
           <SectionHeader
             title="Net worth, projected"
+            info="forecast.netWorthProjected"
             action={<span className="text-xs text-muted">5 years</span>}
           />
           {projection.basedOnMonths < 2 ? (
@@ -298,7 +302,7 @@ function ForecastPageInner() {
               </div>
               <div className="mt-4 flex items-baseline justify-between gap-3">
                 <span className="text-sm text-muted">In five years</span>
-                <span className="text-[22px] font-bold tnum">
+                <span className="text-[22px] font-light tnum">
                   {money(projection.points[projection.points.length - 1].value)}
                 </span>
               </div>
@@ -320,6 +324,7 @@ function ForecastPageInner() {
         <GlassCard>
           <SectionHeader
             title="What if I paid more toward debt?"
+            info="forecast.whatIfDebt"
             action={<Sparkles size={16} className="text-muted" />}
           />
           {liabilities.length === 0 ? (
@@ -372,7 +377,7 @@ function Outcome({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[var(--radius-card)] border border-[var(--line)] p-3">
       <div className="text-xs text-muted">{label}</div>
-      <div className="text-[17px] font-bold tnum mt-1">{value}</div>
+      <div className="text-[17px] font-light tnum mt-1">{value}</div>
     </div>
   );
 }

@@ -152,6 +152,11 @@ const routesWithOwnPrimaryAction = <String>{
   Routes.recurring,
   Routes.transactions,
   Routes.investments,
+  // These three have their own bottom action row (50/30/20 + Add budget,
+  // Payoff plan + Add, Add policy); the raised + used to sit on top of it.
+  Routes.budget,
+  Routes.liabilities,
+  Routes.insurance,
 };
 
 /// The section that owns a route, or null when nothing does.

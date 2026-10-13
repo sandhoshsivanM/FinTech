@@ -1,17 +1,21 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Anek_Latin } from 'next/font/google';
 import './globals.css';
 import { AppFrame } from '@/components/AppFrame';
 import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE, APP_TITLE } from '@/lib/brand';
 
-// One family, two roles. Display weight and tighter tracking carry the
-// hierarchy instead of a second typeface — the same call Stripe, Linear and
-// Vercel make, and it drops a font request from every page load.
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
+// Anek Latin, by the Indian foundry Ek Type: a ₹ drawn as part of the face
+// (not a fallback glyph), slightly narrow tabular digits that keep lakh and
+// crore figures compact, and sibling families for Devanagari, Tamil and other
+// Indian scripts if the app is ever localised. Same face as the Flutter app.
+//
+// `latin-ext` is required, not optional: Google's `latin` subset stops short
+// of U+20B9, so without it every ₹ would silently render in a fallback font.
+const sans = Anek_Latin({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-sans',
   display: 'swap',
-  axes: ['opsz'],
+  axes: ['wdth'],
 });
 
 export const metadata: Metadata = {
@@ -58,12 +62,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    // --font-display resolves to Inter too; globals.css keeps the variable so
-    // `.font-display` and h1–h3 stay meaningful selectors.
+    // --font-display resolves to the same family; globals.css keeps the
+    // variable so `.font-display` and h1–h3 stay meaningful selectors.
     <html
       lang="en"
-      className={`${inter.variable}`}
-      style={{ '--font-display': 'var(--font-inter)' } as React.CSSProperties}
+      className={`${sans.variable}`}
+      style={{ '--font-display': 'var(--font-sans)' } as React.CSSProperties}
       suppressHydrationWarning
     >
       <body>

@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -43,16 +44,21 @@ class _NotificationSettingsScreenState
   Future<void> _setEnabled(bool on) async {
     final notifier = ref.read(notifyPrefsProvider.notifier);
     if (on) {
-      final granted = await ref.read(notificationServiceProvider).requestPermission();
+      final granted = await ref
+          .read(notificationServiceProvider)
+          .requestPermission();
       if (!mounted) return;
       if (!granted) {
         // Recording "on" while the OS says no would leave a switch claiming
         // something the app cannot do.
         setState(() => _permitted = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Your device declined. Turn notifications on for Khazana in system settings, then try again.'),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Your device declined. Turn notifications on for Khazana in system settings, then try again.',
+            ),
+          ),
+        );
         return;
       }
     }
@@ -79,7 +85,12 @@ class _NotificationSettingsScreenState
     final on = prefs.enabled;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(
+        title: InfoHint.titled(
+          const Text('Notifications'),
+          'settings.notifications',
+        ),
+      ),
       body: ListView(
         children: [
           SwitchListTile(
@@ -87,14 +98,16 @@ class _NotificationSettingsScreenState
             onChanged: _setEnabled,
             title: const Text('Allow notifications'),
             subtitle: const Text(
-                'Reminders are scheduled on this device. Nothing is sent to a server.'),
+              'Reminders are scheduled on this device. Nothing is sent to a server.',
+            ),
           ),
           if (_permitted == false)
             const ListTile(
               leading: Icon(Icons.info_outline),
               title: Text('Your device is blocking notifications'),
               subtitle: Text(
-                  'Khazana can schedule them, but the system will not show them until it is allowed in system settings.'),
+                'Khazana can schedule them, but the system will not show them until it is allowed in system settings.',
+              ),
             ),
 
           const _SectionHeader('What to tell you about'),
@@ -194,7 +207,8 @@ class _NotificationSettingsScreenState
                 : null,
             title: const Text('Keep amounts off the lock screen'),
             subtitle: const Text(
-                'A notification preview is the one place Khazana\'s data is visible without your PIN.'),
+              'A notification preview is the one place Khazana\'s data is visible without your PIN.',
+            ),
           ),
 
           const _SectionHeader('What this can and cannot do'),
@@ -215,7 +229,9 @@ class _NotificationSettingsScreenState
           ),
           ListTile(
             leading: const Icon(Icons.schedule_outlined),
-            title: Text('$_pending reminder${_pending == 1 ? '' : 's'} scheduled'),
+            title: Text(
+              '$_pending reminder${_pending == 1 ? '' : 's'} scheduled',
+            ),
             subtitle: const Text('Held by your device, not by Khazana'),
             trailing: IconButton(
               icon: const Icon(Icons.refresh),
@@ -251,11 +267,11 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SwitchListTile(
-        value: prefs.categories.contains(category),
-        onChanged: enabled ? (v) => onChanged(category, v) : null,
-        title: Text(title),
-        subtitle: subtitle == null ? null : Text(subtitle!),
-      );
+    value: prefs.categories.contains(category),
+    onChanged: enabled ? (v) => onChanged(category, v) : null,
+    title: Text(title),
+    subtitle: subtitle == null ? null : Text(subtitle!),
+  );
 }
 
 class _HourTile extends StatelessWidget {
@@ -271,22 +287,21 @@ class _HourTile extends StatelessWidget {
   final bool enabled;
   final ValueChanged<int> onChanged;
 
-  static String label(int h) =>
-      '${h.toString().padLeft(2, '0')}:00';
+  static String label(int h) => '${h.toString().padLeft(2, '0')}:00';
 
   @override
   Widget build(BuildContext context) => ListTile(
-        enabled: enabled,
-        title: Text(title),
-        trailing: DropdownButton<int>(
-          value: value.clamp(0, 23),
-          onChanged: enabled ? (v) => v == null ? null : onChanged(v) : null,
-          items: [
-            for (var h = 0; h < 24; h++)
-              DropdownMenuItem(value: h, child: Text(label(h))),
-          ],
-        ),
-      );
+    enabled: enabled,
+    title: Text(title),
+    trailing: DropdownButton<int>(
+      value: value.clamp(0, 23),
+      onChanged: enabled ? (v) => v == null ? null : onChanged(v) : null,
+      items: [
+        for (var h = 0; h < 24; h++)
+          DropdownMenuItem(value: h, child: Text(label(h))),
+      ],
+    ),
+  );
 }
 
 class _DaysTile extends StatelessWidget {
@@ -333,13 +348,12 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-        child: Text(
-          title,
-          style: Theme.of(context)
-              .textTheme
-              .labelLarge
-              ?.copyWith(color: Theme.of(context).colorScheme.primary),
-        ),
-      );
+    padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+    child: Text(
+      title,
+      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+        color: Theme.of(context).colorScheme.primary,
+      ),
+    ),
+  );
 }

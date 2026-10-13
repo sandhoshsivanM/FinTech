@@ -179,7 +179,7 @@ class _CrashPlaceholder extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Your data is safe and unchanged. Go back and try again — '
-                'Settings → Export error log will tell us what happened.',
+                'Settings, then Export error log, will tell us what happened.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),

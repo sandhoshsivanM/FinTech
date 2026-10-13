@@ -26,8 +26,11 @@ const WEBAPP = resolve(HERE, '..');
 const REPO = resolve(WEBAPP, '..');
 const SOURCE = join(REPO, 'assets', 'brand', 'khazana-mark.png');
 
-/** The Vault plate the mark sits on. Matches --bg in the dark theme. */
-const PLATE = { r: 7, g: 13, b: 10, alpha: 1 };
+/**
+ * The plate the mark sits on: white, as on the brand sheet's light app icon.
+ * The mark is deep green, so a dark plate would swallow it.
+ */
+const PLATE = { r: 255, g: 255, b: 255, alpha: 1 };
 
 /**
  * How much of the canvas the mark occupies.

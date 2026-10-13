@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/di/data_providers.dart';
 import '../core/di/providers.dart';
 import '../core/theme/app_tokens.dart';
-import '../data/database/encrypted_executor.dart' show VaultKeyMismatchException;
+import '../data/database/encrypted_executor.dart'
+    show VaultKeyMismatchException;
 
 /// Gates feature content on the encrypted database being open. Downstream
 /// providers may safely use `requireValue` once this shows [child].
@@ -47,28 +48,33 @@ class _OpenFailure extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(mismatch ? Icons.key_off_outlined : Icons.error_outline,
-                  size: 40, color: scheme.error),
+              Icon(
+                mismatch ? Icons.key_off_outlined : Icons.error_outline,
+                size: 40,
+                color: scheme.error,
+              ),
               const SizedBox(height: AppSpacing.md),
               Text(
                 mismatch
                     ? 'This vault belongs to a different PIN'
                     : 'Could not open the vault',
                 textAlign: TextAlign.center,
-                style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                style: text.titleMedium?.copyWith(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 mismatch
                     ? 'An encrypted database is already stored on this device, '
-                        'but the current PIN does not decrypt it. Nothing has '
-                        'been changed or deleted.\n\n'
-                        'If you set up a new PIN after an update, your data '
-                        'can usually still be opened with the PIN you used '
-                        'before.'
+                          'but the current PIN does not decrypt it. Nothing has '
+                          'been changed or deleted.\n\n'
+                          'If you set up a new PIN after an update, your data '
+                          'can usually still be opened with the PIN you used '
+                          'before.'
                     : '$error',
                 textAlign: TextAlign.center,
-                style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+                style: text.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
               if (mismatch) ...[
                 const SizedBox(height: AppSpacing.lg),

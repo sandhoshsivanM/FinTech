@@ -41,7 +41,9 @@ Future<void> main(List<String> args) async {
   final algo = Ed25519();
   final seed = base64Decode(privateB64);
   if (seed.length != 32) {
-    stderr.writeln('Private key must be 32 bytes (base64). Got ${seed.length}.');
+    stderr.writeln(
+      'Private key must be 32 bytes (base64). Got ${seed.length}.',
+    );
     exit(2);
   }
   final keyPair = await algo.newKeyPairFromSeed(seed);
@@ -59,8 +61,10 @@ Future<void> main(List<String> args) async {
     final orderRef = Uint8List.fromList(
       List.generate(8, (_) => rng.nextInt(256)),
     );
-    final payload =
-        LicenseKey.buildPayload(issuedAt: issuedAt, orderRefBytes: orderRef);
+    final payload = LicenseKey.buildPayload(
+      issuedAt: issuedAt,
+      orderRefBytes: orderRef,
+    );
     final signature = await algo.sign(payload, keyPair: keyPair);
     final key = LicenseKey.encode(payload, signature.bytes);
 

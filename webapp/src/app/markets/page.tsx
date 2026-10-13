@@ -18,6 +18,7 @@ import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { LineChart } from '@/components/charts/LineChart';
 import { AssetMark } from '@/components/primitives';
+import { CardTitle } from '@/components/Hint';
 import { demoIndices, demoDayChangePct, demoSeries, rangeLabels } from '@/lib/demo/marketFeed';
 import { marketState } from '@/lib/marketClock';
 import { pct } from '@/lib/format';
@@ -84,7 +85,7 @@ function MarketsPageInner() {
           <section className="card">
             <div className="flex items-center gap-3 flex-wrap px-5 py-4 border-b border-line">
               <div>
-                <h2 className="text-[18px] font-semibold tracking-[-0.02em]">NIFTY 50</h2>
+                <CardTitle info="markets.nifty50" className="text-[16px] font-medium tracking-[-0.01em]">NIFTY 50</CardTitle>
                 <p className="text-xs text-muted mt-0.5">One month</p>
               </div>
               <span className="ml-auto"><DemoBadge /></span>
@@ -100,11 +101,11 @@ function MarketsPageInner() {
 
       {universe.length > 0 && (
         <div className="grid gap-6 md:grid-cols-2">
-          {([['Top gainers', movers.slice(0, 5), 'success'], ['Top losers', [...movers].reverse().slice(0, 5), 'danger']] as const).map(([title, list, tone]) => (
+          {([['Top gainers', movers.slice(0, 5), 'success', 'markets.topGainers'], ['Top losers', [...movers].reverse().slice(0, 5), 'danger', 'markets.topLosers']] as const).map(([title, list, tone, info]) => (
             <StaggerItem key={title}>
               <section className="card overflow-hidden">
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
-                  <h3 className="text-[18px] font-semibold tracking-[-0.02em]">{title}</h3>
+                  <CardTitle as="h3" info={info} className="text-[16px] font-medium tracking-[-0.01em]">{title}</CardTitle>
                   <span className="ml-auto"><DemoBadge /></span>
                 </div>
                 <div>

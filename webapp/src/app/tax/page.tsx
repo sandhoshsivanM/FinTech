@@ -1,6 +1,6 @@
 'use client';
 /**
- * Tax Center — unrealised capital gains, split short vs long term.
+ * Tax centre — unrealised capital gains, split short vs long term.
  *
  * Every figure comes from `domain/tax.ts` (India FY25 rules) applied to the
  * user's own holdings. Nothing here is synthesised.
@@ -26,6 +26,7 @@ import { Stagger, StaggerItem } from '@/components/motion';
 import { holdingView, ASSET_META } from '@/domain/portfolio';
 import { estimatePortfolioTax, TAX_RULES } from '@/domain/tax';
 import { short } from '@/lib/format';
+import { CardTitle } from '@/components/Hint';
 
 interface TaxRow {
   id: string;
@@ -119,7 +120,7 @@ function TaxPageInner() {
   if (holdings.length === 0) {
     return (
       <Stagger className="grid gap-6">
-        <StaggerItem><PageIntro title="Tax Center" subtitle="Estimated capital gains if you sold today" /></StaggerItem>
+        <StaggerItem><PageIntro title="Tax centre" subtitle="Estimated capital gains if you sold today" /></StaggerItem>
         <StaggerItem>
           <GlassCard padded={false}>
             <EmptyState icon={<Landmark size={22} />} title="No holdings to assess"
@@ -134,7 +135,7 @@ function TaxPageInner() {
   return (
     <Stagger className="grid gap-6">
       <StaggerItem>
-        <PageIntro title="Tax Center" subtitle={`Estimated capital gains if every position were sold today · ${estimate.ruleSet}`} />
+        <PageIntro title="Tax centre" subtitle={`Estimated capital gains if every position were sold today · ${estimate.ruleSet}`} />
       </StaggerItem>
 
       <StaggerItem>
@@ -178,7 +179,7 @@ function TaxPageInner() {
       <StaggerItem>
         <section className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-line">
-            <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Position by position</h2>
+            <CardTitle info="tax.positionByPosition" className="text-[16px] font-medium tracking-[-0.01em]">Position by position</CardTitle>
             <p className="text-xs text-muted mt-0.5">Unrealised — nothing has been sold</p>
           </div>
           <DataGrid rows={rows} columns={columns} rowKey={(r) => r.id}

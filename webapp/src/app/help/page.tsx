@@ -6,7 +6,7 @@
  * codebase is built around, and a user deserves to be able to read it.
  */
 import Link from 'next/link';
-import { HelpCircle, ShieldCheck, Command, Download, Compass, FlaskConical } from 'lucide-react';
+import { HelpCircle, ShieldCheck, Command, Download, Compass, FlaskConical, ChevronDown } from 'lucide-react';
 import { PageIntro, Button, GlassCard, Chip } from '@/components/ui';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { TOUR_EVENT } from '@/components/Tour';
@@ -36,15 +36,20 @@ export default function HelpPage() {
 
       <div className="grid gap-6 min-[1100px]:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <StaggerItem>
-          <section className="card overflow-hidden">
-            <div className="px-5 py-4 border-b border-line">
-              <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Common questions</h2>
-            </div>
-            {FAQ.map(([q, a]) => (
-              <div key={q} className="px-5 py-4 border-b border-line last:border-0">
-                <h3 className="text-[14px] font-semibold tracking-[-0.015em]">{q}</h3>
-                <p className="text-[13px] text-ink-soft mt-1.5 leading-relaxed">{a}</p>
-              </div>
+          <section aria-label="Common questions" className="grid gap-3">
+            <h2 className="text-[16px] font-medium tracking-[-0.01em] px-1">Common questions</h2>
+            {/* One card per question, with a disclosure chevron. The first is
+                open so the page never lands as a wall of closed rows. */}
+            {FAQ.map(([q, a], i) => (
+              <details key={q} open={i === 0} className="card group px-5 py-4 [&_summary::-webkit-details-marker]:hidden">
+                <summary className="focus-ring flex items-center justify-between gap-3 cursor-pointer list-none rounded-[12px]">
+                  <h3 className="text-[15px] font-medium tracking-[-0.01em]">{q}</h3>
+                  <span className="grid place-items-center w-8 h-8 shrink-0 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] text-ink-soft transition-transform group-open:rotate-180">
+                    <ChevronDown size={16} />
+                  </span>
+                </summary>
+                <p className="text-[13.5px] text-ink-soft mt-2.5 leading-relaxed">{a}</p>
+              </details>
             ))}
           </section>
         </StaggerItem>
@@ -54,12 +59,12 @@ export default function HelpPage() {
             <section className="card">
               <div className="px-5 py-4 border-b border-line flex items-center gap-2.5">
                 <Command size={17} className="text-muted" />
-                <h3 className="text-[18px] font-semibold tracking-[-0.02em]">Keyboard</h3>
+                <h3 className="text-[16px] font-medium tracking-[-0.01em]">Keyboard</h3>
               </div>
               <div className="p-5 grid gap-3">
                 {SHORTCUTS.map(([keys, what]) => (
                   <div key={keys} className="flex items-start gap-3">
-                    <kbd className="shrink-0 text-[10.5px] font-semibold px-1.5 py-1 rounded-[var(--radius-btn)] bg-fill-strong text-ink-soft border border-line">{keys}</kbd>
+                    <kbd className="chip shrink-0 !text-[11px] font-medium text-ink-soft">{keys}</kbd>
                     <span className="text-[12.5px] text-ink-soft leading-snug">{what}</span>
                   </div>
                 ))}
@@ -70,8 +75,8 @@ export default function HelpPage() {
           <StaggerItem>
             <GlassCard>
               <div className="flex items-center gap-2.5 mb-3">
-                <ShieldCheck size={17} className="text-success" />
-                <h3 className="text-[15px] font-semibold tracking-[-0.02em]">Privacy</h3>
+                <ShieldCheck size={17} className="text-muted" />
+                <h3 className="text-[16px] font-medium tracking-[-0.01em]">Privacy</h3>
               </div>
               <ul className="grid gap-2.5 text-[12.5px] text-ink-soft leading-relaxed">
                 <li className="flex gap-2"><Chip tone="success">No server</Chip> No account, and nowhere to upload your vault to.</li>
@@ -96,7 +101,7 @@ export default function HelpPage() {
             <GlassCard>
               <div className="flex items-center gap-2.5 mb-2">
                 <HelpCircle size={17} className="text-muted" />
-                <h3 className="text-[15px] font-semibold tracking-[-0.02em]">Still stuck?</h3>
+                <h3 className="text-[16px] font-medium tracking-[-0.01em]">Still stuck?</h3>
               </div>
               <p className="text-[12.5px] text-ink-soft leading-relaxed">
                 Khazana runs entirely on your device, so there is no account to look up and no support team who can see your data. Exporting a backup before you experiment is always the safe move.

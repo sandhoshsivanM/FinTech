@@ -78,7 +78,7 @@ export function Histogram({
                   hover pushed the bar down, so the chart jumped under the
                   cursor. */}
               <span
-                className="mb-0.5 whitespace-nowrap text-[10px] font-bold tnum text-ink"
+                className="mb-0.5 whitespace-nowrap text-[10px] font-semibold tnum text-ink"
                 style={{ visibility: !empty && hover === i ? 'visible' : 'hidden' }}
               >
                 {b.count}
@@ -89,7 +89,7 @@ export function Histogram({
                   className="block w-full min-w-[5px] max-w-[26px] rounded-t-[4px] transition-[filter] duration-150 hover:brightness-110"
                   style={{
                     height: barH,
-                    background: b.color ?? 'var(--accent)',
+                    background: b.color ?? 'var(--data-blue)',
                     animation: 'kz-grow 620ms var(--ease) backwards',
                   }}
                 />
@@ -98,7 +98,7 @@ export function Histogram({
             <span
               className={clsx(
                 'max-w-full truncate text-[11px] transition-colors',
-                hover === i ? 'font-bold text-ink' : 'font-semibold text-muted',
+                hover === i ? 'font-semibold text-ink' : 'font-semibold text-muted',
               )}
             >
               {b.label}

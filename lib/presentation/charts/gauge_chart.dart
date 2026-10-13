@@ -20,12 +20,12 @@ class GaugeBand {
 /// Built from the active theme rather than declared `const`: the Vault steps
 /// are unreadable on a Ledger card. See `core/theme/semantic_colors.dart`.
 List<GaugeBand> healthBands(SemanticColors c) => [
-      GaugeBand(40, c.expense, 'At risk'),
-      GaugeBand(55, c.budgetWarn, 'Needs work'),
-      GaugeBand(70, c.budgetWarn, 'Fair'),
-      GaugeBand(85, c.income, 'Strong'),
-      GaugeBand(100, c.income, 'Excellent'),
-    ];
+  GaugeBand(40, c.expense, 'At risk'),
+  GaugeBand(55, c.budgetWarn, 'Needs work'),
+  GaugeBand(70, c.budgetWarn, 'Fair'),
+  GaugeBand(85, c.income, 'Strong'),
+  GaugeBand(100, c.income, 'Excellent'),
+];
 
 /// Budget consumption bands, matching the thresholds the Budget screen paints
 /// its progress bars with.
@@ -34,10 +34,10 @@ List<GaugeBand> healthBands(SemanticColors c) => [
 /// high health score is good and a high budget fraction is not. Reusing the
 /// health bands here would have painted a nearly-spent budget green.
 List<GaugeBand> budgetBands(SemanticColors c) => [
-      GaugeBand(70, c.budgetOk, 'On track'),
-      GaugeBand(90, c.budgetWarn, 'Close to limit'),
-      GaugeBand(100, c.budgetOver, 'At or over'),
-    ];
+  GaugeBand(70, c.budgetOk, 'On track'),
+  GaugeBand(90, c.budgetWarn, 'Close to limit'),
+  GaugeBand(100, c.budgetOver, 'At or over'),
+];
 
 /// A banded arc gauge for a single graded number.
 ///
@@ -75,6 +75,7 @@ class GaugeChart extends StatelessWidget {
 
   final double min;
   final double max;
+
   /// Defaults to [healthBands] for the active theme when null.
   final List<GaugeBand>? bands;
   final double size;
@@ -105,10 +106,9 @@ class GaugeChart extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final resolvedBands = bands ?? healthBands(context.colors);
     final tracked = value != null;
-    final clamped =
-        tracked ? value!.clamp(min, max).toDouble() : min;
+    final clamped = tracked ? value!.clamp(min, max).toDouble() : min;
     final active = tracked
-        ? _bandColor(resolvedBands, clamped, scheme.primary)
+        ? _bandColor(resolvedBands, clamped, context.colors.info)
         : scheme.onSurfaceVariant;
     final track = tracked
         ? Color.lerp(active, scheme.surface, 0.85)!
@@ -119,7 +119,7 @@ class GaugeChart extends StatelessWidget {
     return Semantics(
       label: tracked
           ? '${label ?? clamped.round().toString()}'
-              '${sublabel == null ? '' : ', $sublabel'}'
+                '${sublabel == null ? '' : ', $sublabel'}'
           : untrackedLabel,
       child: ExcludeSemantics(
         child: SizedBox(
@@ -157,7 +157,7 @@ class GaugeChart extends StatelessWidget {
                     Text(
                       label ?? (tracked ? '${clamped.round()}' : '—'),
                       style: text.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w500,
                         color: active,
                         fontSize: size * 0.19,
                       ),
@@ -165,8 +165,9 @@ class GaugeChart extends StatelessWidget {
                     Text(
                       tracked ? (sublabel ?? '') : untrackedLabel,
                       textAlign: TextAlign.center,
-                      style: text.labelSmall
-                          ?.copyWith(color: scheme.onSurfaceVariant),
+                      style: text.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -245,9 +246,11 @@ class _GaugePainter extends CustomPainter {
       for (final b in bands) {
         if (b.upTo <= min || b.upTo >= max) continue;
         final angle = start + sweepRadians * ((b.upTo - min) / (max - min));
-        final inner = center +
+        final inner =
+            center +
             Offset(math.cos(angle), math.sin(angle)) * (radius - stroke / 2);
-        final outer = center +
+        final outer =
+            center +
             Offset(math.cos(angle), math.sin(angle)) * (radius + stroke / 2);
         canvas.drawLine(inner, outer, tick);
       }

@@ -34,7 +34,7 @@ function Section({ icon, title, children }: {
       <GlassCard>
         <div className="mb-3 flex items-center gap-2.5">
           <span className="text-accent">{icon}</span>
-          <h2 className="text-[15px] font-semibold tracking-[-0.02em]">{title}</h2>
+          <h2 className="text-[16px] font-medium tracking-[-0.01em]">{title}</h2>
         </div>
         <div className="grid gap-3 text-[13px] leading-relaxed text-ink-soft">{children}</div>
       </GlassCard>
@@ -109,7 +109,7 @@ export default function TermsPage() {
       </Section>
 
       <Section icon={<Ban size={17} />} title="No warranty, and keep your backups">
-        <p className="uppercase text-[11.5px] tracking-wide">
+        <p className=" text-[11.5px]">
           The software is provided &ldquo;as is&rdquo;, without warranty of any kind, express or
           implied, including merchantability, fitness for a particular purpose and
           non-infringement.

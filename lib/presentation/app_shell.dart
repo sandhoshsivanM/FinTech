@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ import '../core/services/notification_sync_service.dart';
 import '../features/capture/providers/capture_providers.dart';
 import '../core/theme/app_tokens.dart';
 import '../core/theme/semantic_colors.dart';
+import '../features/home/home_palette.dart';
 import 'desktop_shell.dart';
 import 'section_tabs.dart';
 
@@ -105,7 +107,18 @@ class _AppShellState extends ConsumerState<AppShell>
         }
       }
     }
-    return best < 0 ? 0 : best;
+    // -1 when no section owns the route (Settings, Search, Pro…): those
+    // pages used to fall back to Home, so Settings opened under the Home
+    // greeting with the Home tab lit.
+    return best;
+  }
+
+  /// The title for a page outside the four sections.
+  static String _titleFor(String here) {
+    for (final m in avatarMenu) {
+      if (here == m.route || here.startsWith('${m.route}/')) return m.label;
+    }
+    return 'Khazana';
   }
 
   @override
@@ -133,9 +146,12 @@ class _AppShellState extends ConsumerState<AppShell>
     // Keyboard shortcuts (PRD Phase 4): N = new transaction, Cmd/Ctrl+L = lock.
     return Shortcuts(
       shortcuts: <ShortcutActivator, Intent>{
-        const SingleActivator(LogicalKeyboardKey.keyN): const _NewTransactionIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyL, control: true): const _LockIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyL, meta: true): const _LockIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyN):
+            const _NewTransactionIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyL, control: true):
+            const _LockIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyL, meta: true):
+            const _LockIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -154,10 +170,7 @@ class _AppShellState extends ConsumerState<AppShell>
             },
           ),
         },
-        child: Focus(
-          autofocus: true,
-          child: _buildScaffold(context, index),
-        ),
+        child: Focus(autofocus: true, child: _buildScaffold(context, index)),
       ),
     );
   }
@@ -166,18 +179,43 @@ class _AppShellState extends ConsumerState<AppShell>
     if (isDesktopPlatform) {
       return DesktopShell(child: widget.child);
     }
-    final section = navSections[index];
+    final section = index >= 0 ? navSections[index] : null;
     final here = GoRouterState.of(context).matchedLocation;
     final ownsAction = routesWithOwnPrimaryAction.contains(here);
+    final home = here == Routes.dashboard;
     return Scaffold(
       // One header for the whole app, owned here rather than repeated in every
       // screen. Screens used to each declare `AppBar(title: Text('Budget'))`,
       // which is why the section strip had nowhere to live: a shell cannot put
       // anything beneath a bar its child owns.
       appBar: AppBar(
-        title: Text(section.label),
-        actions: const [AvatarMenu(), SizedBox(width: AppSpacing.xs)],
-        bottom: section.children.isEmpty
+        // Home greets; every other section is titled by its name.
+        // Sections open with a large, light heading on the left, like the
+        // reference's "Overview" — not a small bold label in the middle.
+        title: home
+            ? const _HomeGreeting()
+            : Text(
+                section?.label ?? _titleFor(here),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.8,
+                ),
+              ),
+        // The greeting reads left-to-right like a sentence; centred under the
+        // notch it looked like a heading with nothing to head.
+        centerTitle: false,
+        toolbarHeight: home ? null : 64,
+        // Home: the bar takes the header's colour so the two read as one
+        // surface, and stays flat when the sheet scrolls under it.
+        backgroundColor: home ? HomePalette.of(context).header : null,
+        scrolledUnderElevation: home ? 0 : null,
+        surfaceTintColor: home ? Colors.transparent : null,
+        actions: const [
+          AvatarMenu(),
+          SizedBox(width: AppSpacing.xs),
+        ],
+        bottom: section == null || section.children.isEmpty
             ? null
             : PreferredSize(
                 preferredSize: const Size.fromHeight(46),
@@ -197,22 +235,33 @@ class _AppShellState extends ConsumerState<AppShell>
           ? null
           : Builder(
               builder: (context) {
-                final scheme = Theme.of(context).colorScheme;
-                return SizedBox(
-                  // 58, not Material's 56. The notch is cut to the button plus
-                  // its margin, and at the default size the two halves of the
-                  // bar sat a hair closer to the centre than the outer items
-                  // did to the edges.
-                  height: 58,
-                  width: 58,
+                final pill = HomePalette.of(context);
+                // Raised above the floating bar: a ring in the page colour
+                // separates it from the bar, and a soft shadow lifts it.
+                return Container(
+                  height: 66,
+                  width: 66,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x59000000),
+                        blurRadius: 20,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
                   child: FloatingActionButton(
                     onPressed: () => context.go(Routes.addTransaction),
                     tooltip: 'New transaction',
-                    backgroundColor: context.colors.accent,
-                    foregroundColor: scheme.onPrimary,
-                    // Flat. The bar it is docked into is flat, and a shadow
-                    // under a button cut into a surface reads as a mistake
-                    // rather than as elevation.
+                    // The same solid pill as the active tab: one control
+                    // colour for the whole bar.
+                    backgroundColor: pill.pill,
+                    foregroundColor: pill.pillInk,
+                    // The glow comes from the container above, so the button
+                    // itself stays flat.
                     elevation: 0,
                     focusElevation: 0,
                     hoverElevation: 0,
@@ -229,44 +278,62 @@ class _AppShellState extends ConsumerState<AppShell>
   }
 }
 
-/// The bottom bar: four sections with a notch in the middle for the primary
-/// action.
+/// The bottom bar: a floating, rounded dock of four sections, with the primary
+/// action raised over a gap in the middle.
 ///
-/// A `BottomAppBar` rather than `NavigationBar` because Material's
-/// `NavigationBar` distributes its destinations evenly and has no notion of a
-/// gap — docking a FAB into it overlaps the middle destination rather than
-/// making room for it.
+/// Still a `BottomAppBar` (the shell tests look for one, and it brings the
+/// safe-area handling), but transparent: the visible bar is the rounded dock
+/// inside it, inset from the screen edges. The + is docked to its top edge.
 class _SectionBar extends StatelessWidget {
   const _SectionBar({required this.index, required this.notched});
 
   final int index;
 
   /// Whether to leave the centre gap. False on screens that own their primary
-  /// action — a notch with no button in it is just a hole in the bar.
+  /// action — a gap with no button in it is just a hole in the bar.
   final bool notched;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    // Two sections, the notch, then two more.
+    // Two sections, the gap, then two more.
     const leftCount = 2;
     return BottomAppBar(
-      height: 64,
-      padding: EdgeInsets.zero,
-      shape: notched ? const CircularNotchedRectangle() : null,
-      notchMargin: notched ? 8 : 0,
-      color: scheme.surface,
-      child: Row(
-        children: [
-          for (var i = 0; i < leftCount; i++)
-            Expanded(child: _BarItem(i: i, selected: index == i)),
-          // The notch. Sized to the FAB plus its margin so the two halves stay
-          // symmetrical. Collapses when there is no centre button, so the four
-          // sections spread evenly instead of straddling an empty gap.
-          SizedBox(width: notched ? 74 : 0),
-          for (var i = leftCount; i < navSections.length; i++)
-            Expanded(child: _BarItem(i: i, selected: index == i)),
-        ],
+      height: 76,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      color: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          // The raised surface: white in light, #222226 in dark.
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF222226)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x40111214),
+              blurRadius: 30,
+              offset: Offset(0, 16),
+              spreadRadius: -14,
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            for (var i = 0; i < leftCount; i++)
+              Expanded(
+                child: _BarItem(i: i, selected: index == i),
+              ),
+            // The gap under the raised +, kept symmetrical. Collapses when
+            // there is no button, so the four sections spread evenly.
+            SizedBox(width: notched ? 76 : 0),
+            for (var i = leftCount; i < navSections.length; i++)
+              Expanded(
+                child: _BarItem(i: i, selected: index == i),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -282,24 +349,102 @@ class _BarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final section = navSections[i];
     final scheme = Theme.of(context).colorScheme;
-    final color = selected ? context.colors.accent : scheme.onSurfaceVariant;
+    final pill = HomePalette.of(context);
+    final color = selected ? pill.ink : scheme.onSurfaceVariant;
     return InkWell(
+      borderRadius: BorderRadius.circular(22),
       onTap: () => context.go(section.route),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(selected ? section.activeIcon : section.icon, size: 22, color: color),
-          const SizedBox(height: 3),
+          // The selected pill grows in behind the icon.
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            width: selected ? 50 : 32,
+            height: 30,
+            decoration: BoxDecoration(
+              color: selected ? pill.pill : Colors.transparent,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: selected
+                  ? const [
+                      BoxShadow(
+                        color: Color(0x40000000),
+                        blurRadius: 12,
+                        offset: Offset(0, 5),
+                        spreadRadius: -4,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Icon(
+              selected ? section.activeIcon : section.icon,
+              size: 20,
+              color: selected ? pill.pillInk : color,
+            ),
+          ),
+          const SizedBox(height: 2),
           Text(
             section.label,
             style: TextStyle(
               fontSize: 11,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               color: color,
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// "Good morning, [vault name]" with a waving hand — the Home title.
+class _HomeGreeting extends ConsumerWidget {
+  const _HomeGreeting();
+
+  static String _hello(int hour) => hour < 5
+      ? 'Good evening'
+      : hour < 12
+      ? 'Good morning'
+      : hour < 17
+      ? 'Good afternoon'
+      : 'Good evening';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final name = ref.watch(selectedVaultProvider).name;
+    final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '${_hello(DateTime.now().hour)},',
+          style: text.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        // An icon, not the 👋 emoji: the bundled Inter has no emoji glyphs, and
+        // the fallback rendered as a missing-glyph box on iOS.
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                name,
+                overflow: TextOverflow.ellipsis,
+                style: text.titleMedium?.copyWith(fontWeight: FontWeight.w500),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.waving_hand_rounded,
+              size: 18,
+              color: context.colors.gold,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -337,8 +482,8 @@ class AvatarMenu extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         child: CircleAvatar(
           radius: 15,
-          backgroundColor: scheme.primaryContainer,
-          child: Icon(Icons.person_outline, size: 18, color: context.colors.accent),
+          backgroundColor: scheme.primary,
+          child: Icon(Icons.person_outline, size: 18, color: scheme.onPrimary),
         ),
       ),
     );

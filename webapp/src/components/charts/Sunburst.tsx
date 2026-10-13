@@ -222,7 +222,7 @@ export function Sunburst({
             style={{ width: (innerR - ringWidth / 2) * 2, height: (innerR - ringWidth / 2) * 2 }}
           >
             <span>
-              <span className="block text-[17px] font-bold tracking-tight tnum">
+              <span className="block text-[17px] font-light tracking-tight tnum">
                 {formatValue(focus.value)}
               </span>
               <span className="block text-[10.5px] text-muted">

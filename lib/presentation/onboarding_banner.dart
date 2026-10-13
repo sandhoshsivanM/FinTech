@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'glass_card.dart';
 
 import '../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,9 +45,7 @@ class OnboardingBanner extends ConsumerWidget {
   ];
 
   Future<void> _loadSample(BuildContext context, WidgetRef ref) async {
-    // No confirmation here, and only here: this card is shown on a dashboard
-    // with nothing on it, so the wipe inside `load()` has nothing to destroy.
-    // Settings keeps its dialog, where that is not true.
+    // No confirmation here: `load()` only adds records, it deletes nothing.
     final messenger = ScaffoldMessenger.of(context);
     final rootNav = Navigator.of(context, rootNavigator: true);
     showDialog<void>(
@@ -57,8 +56,12 @@ class OnboardingBanner extends ConsumerWidget {
     try {
       await ref.read(sampleDataProvider).load();
       if (rootNav.canPop()) rootNav.pop();
+      // Loading the sample IS choosing a starting point, so the welcome card
+      // has done its job; left up, it pushed the home screen below the fold.
+      await ref.read(onboardingActionsProvider).markSeen();
       messenger.showSnackBar(
-          const SnackBar(content: Text('Sample data loaded.')));
+        const SnackBar(content: Text('Sample data loaded.')),
+      );
     } catch (e) {
       if (rootNav.canPop()) rootNav.pop();
       messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
@@ -72,34 +75,34 @@ class OnboardingBanner extends ConsumerWidget {
 
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colors.accent.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: context.colors.accent.withValues(alpha: 0.25)),
-      ),
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return GlassCard(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.md, AppSpacing.sm, AppSpacing.md),
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.waving_hand, color: context.colors.accent, size: 20),
+              Icon(Icons.waving_hand, color: context.colors.gold, size: 20),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text('Welcome to $kAppName',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                child: Text(
+                  'Welcome to $kAppName',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 icon: const Icon(Icons.close, size: 18),
                 tooltip: 'Dismiss',
-                onPressed: () =>
-                    ref.read(onboardingActionsProvider).markSeen(),
+                onPressed: () => ref.read(onboardingActionsProvider).markSeen(),
               ),
             ],
           ),
@@ -114,32 +117,59 @@ class OnboardingBanner extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
           for (final (icon, label, hint, route) in _starters)
             Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              padding: const EdgeInsets.only(
+                bottom: AppSpacing.sm,
+                right: AppSpacing.md,
+              ),
               child: InkWell(
                 onTap: () => context.go(route),
-                borderRadius: BorderRadius.circular(AppRadii.card),
+                borderRadius: BorderRadius.circular(18),
                 child: Semantics(
                   button: true,
                   label: '$label. $hint',
                   child: ExcludeSemantics(
-                    child: Padding(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: dark ? const Color(0xFF222226) : Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
                       padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.sm, horizontal: AppSpacing.xs),
+                        vertical: AppSpacing.md,
+                        horizontal: AppSpacing.md,
+                      ),
                       child: Row(
                         children: [
-                          Icon(icon, size: 18, color: context.colors.accent),
-                          const SizedBox(width: AppSpacing.sm),
+                          Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: context.colors.info.withValues(
+                                alpha: 0.14,
+                              ),
+                            ),
+                            child: Icon(
+                              icon,
+                              size: 16,
+                              color: context.colors.info,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(label,
-                                    style: const TextStyle(
-                                        fontSize: 13.5,
-                                        fontWeight: FontWeight.w600)),
-                                Text(hint,
-                                    style: TextStyle(
-                                        fontSize: 12, color: muted)),
+                                Text(
+                                  label,
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  hint,
+                                  style: TextStyle(fontSize: 12, color: muted),
+                                ),
                               ],
                             ),
                           ),
@@ -151,7 +181,7 @@ class OnboardingBanner extends ConsumerWidget {
                 ),
               ),
             ),
-          const Divider(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
               Expanded(
@@ -162,10 +192,13 @@ class OnboardingBanner extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              OutlinedButton.icon(
-                onPressed: () => _loadSample(context, ref),
-                icon: const Icon(Icons.auto_awesome, size: 16),
-                label: const Text('Sample data'),
+              Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.md),
+                child: FilledButton.icon(
+                  onPressed: () => _loadSample(context, ref),
+                  icon: const Icon(Icons.auto_awesome, size: 16),
+                  label: const Text('Sample data'),
+                ),
               ),
             ],
           ),

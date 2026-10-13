@@ -82,7 +82,7 @@ export function BudgetStrip() {
         <div className="mt-3 space-y-3">
           {ranked.slice(0, MAX_SHOWN).map(({ budget, progress, spent, limit, ratio }) => {
             const over = ratio > 1;
-            const color = over ? 'var(--expense)' : ratio >= 0.7 ? 'var(--warn)' : 'var(--income)';
+            const color = over ? 'var(--data-rose)' : ratio >= 0.7 ? 'var(--warn)' : 'var(--data-blue)';
             return (
               <div key={budget.id}>
                 <div className="flex items-baseline gap-2 mb-1">
@@ -93,10 +93,10 @@ export function BudgetStrip() {
                     {money(spent)} / {money(limit)}
                   </span>
                 </div>
-                <div className="w-full rounded-full overflow-hidden" style={{ height: 5, background: 'var(--fill-strong)' }}>
+                <div className="w-full rounded-full overflow-hidden" style={{ height: 8, background: 'var(--fill-strong)' }}>
                   <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, progress.fraction * 100)}%`, background: color }}
+                    className="hatch h-full rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, progress.fraction * 100)}%`, ['--hatch' as string]: color }}
                   />
                 </div>
               </div>

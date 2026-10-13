@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_tokens.dart';
 import '../domain/entities/asset_group.dart';
 
 /// The categorical palette for the seven chart groups.
@@ -13,12 +12,8 @@ import '../domain/entities/asset_group.dart';
 /// (ΔE 9.1 protan in one, 12.7 deuteranopia in the other) — numbers no check
 /// could ever have contradicted.
 ///
-/// Two slots are pinned for MEANING, not position:
-///   * gold   -> the gold hue. A slice labelled "Gold" rendering blue — or, as
-///               an earlier palette had it, green — reads as a bug to anyone
-///               looking at the legend.
-///   * equity -> the emerald. The brand-leading colour, and almost always the
-///               largest slice.
+/// Zentra series: blue, green, pink, grey, then tints of those. Gold takes the
+/// one Zentra amber so a slice labelled "Gold" never reads as a bug.
 ///
 /// **A step per theme.** The previous set used one value for both grounds,
 /// which forced every hue into the middle of the lightness range: washed out on
@@ -33,22 +28,22 @@ import '../domain/entities/asset_group.dart';
 /// free choice rather than a hazard.
 Color groupColor(AssetGroup g, {bool dark = true}) => dark
     ? switch (g) {
-        AssetGroup.equity => const Color(0xFF4EB982),
-        AssetGroup.debt => const Color(0xFFA4AAF6),
-        AssetGroup.gold => const Color(0xFFC19C3A),
-        AssetGroup.realEstate => const Color(0xFF63A1D5),
-        AssetGroup.retirement => const Color(0xFFEA8760),
-        AssetGroup.crypto => const Color(0xFF73C7CC),
-        AssetGroup.cash => const Color(0xFFCA7CB4),
+        AssetGroup.equity => const Color(0xFF3D86FF),
+        AssetGroup.debt => const Color(0xFF34C759),
+        AssetGroup.gold => const Color(0xFFF0B03A),
+        AssetGroup.realEstate => const Color(0xFFFF4F9A),
+        AssetGroup.retirement => const Color(0xFF8E8E93),
+        AssetGroup.crypto => const Color(0xFF86B4FF),
+        AssetGroup.cash => const Color(0xFFFD9CC6),
       }
     : switch (g) {
-        AssetGroup.equity => const Color(0xFF008451),
-        AssetGroup.debt => const Color(0xFF757AC2),
-        AssetGroup.gold => const Color(0xFFA07C06),
-        AssetGroup.realEstate => const Color(0xFF2F6D9E),
-        AssetGroup.retirement => const Color(0xFF983E14),
-        AssetGroup.crypto => const Color(0xFF3E9498),
-        AssetGroup.cash => const Color(0xFF8D447A),
+        AssetGroup.equity => const Color(0xFF1C6FFB),
+        AssetGroup.debt => const Color(0xFF29B340),
+        AssetGroup.gold => const Color(0xFFE39A16),
+        AssetGroup.realEstate => const Color(0xFFF33688),
+        AssetGroup.retirement => const Color(0xFF8E8E93),
+        AssetGroup.crypto => const Color(0xFF7FB0FD),
+        AssetGroup.cash => const Color(0xFFFC9CC4),
       };
 
 /// Most steps a single hue family can carry before they stop separating.
@@ -79,10 +74,19 @@ const kMaxGroupShades = 5;
 /// nothing.
 List<Color> groupShades(AssetGroup g, int count, {required bool dark}) {
   final base = groupColor(g, dark: dark);
-  final toward = dark ? AppColors.darkSurface : AppColors.lightSurface;
   final n = count.clamp(1, kMaxGroupShades);
+  // Alternate lighter and darker steps around the base, so neighbours always
+  // differ by a full step in opposite directions. A one-way fade at 14% a step
+  // left adjacent sector slices looking like the same colour.
+  const light = Color(0xFFFFFFFF);
+  const deep = Color(0xFF0B1530);
   return [
     for (var i = 0; i < n; i++)
-      i == 0 ? base : Color.lerp(base, toward, 0.14 * i)!,
+      if (i == 0)
+        base
+      else if (i.isOdd)
+        Color.lerp(base, light, 0.30 * ((i + 1) ~/ 2))!
+      else
+        Color.lerp(base, deep, 0.28 * (i ~/ 2))!,
   ];
 }

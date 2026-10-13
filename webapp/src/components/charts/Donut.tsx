@@ -2,8 +2,21 @@
 
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import clsx from 'clsx';
 
-/** A single slice. `color` is supplied by the caller — see ASSET_GROUP_META. */
+/**
+ * The Zentra donut series: blue, green, pink, grey, then tints of those.
+ * CSS variables, so dark mode lifts them.
+ */
+export const ZENTRA_SERIES = [
+  'var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)',
+  'var(--series-5)', 'var(--series-6)', 'var(--series-7)', 'var(--series-8)',
+] as const;
+
+/** Colours a caller passes that mean "not a category" keep their grey. */
+const NEUTRAL = new Set(['var(--muted)', 'var(--disabled)']);
+
+/** A single slice. `color` is the caller's; the ring recolours by position to the Zentra series unless `keepColors`. */
 export interface DonutSeg {
   label: string;
   value: number;
@@ -41,8 +54,9 @@ export function Donut({
   legend = true,
   maxSlices,
   otherLabel = 'Others',
-  otherColor = 'var(--muted)',
+  otherColor = 'var(--series-4)',
   formatValue,
+  keepColors = false,
 }: {
   segments: DonutSeg[];
   size?: number;
@@ -56,10 +70,18 @@ export function Donut({
   otherColor?: string;
   /** Renders each legend row's absolute figure beside its share. */
   formatValue?: (n: number) => string;
+  /** Use each segment's own colour instead of the Zentra series. */
+  keepColors?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [hover, setHover] = useState<number | null>(null);
 
+  // Recolour by position: the legend is drawn from the same list, so ring and
+  // legend always agree. Grey "unclassified" slices stay grey.
+  let k = 0;
+  segments = keepColors ? segments : segments.map((x) => (
+    NEUTRAL.has(x.color) ? x : { ...x, color: ZENTRA_SERIES[k++ % ZENTRA_SERIES.length] }
+  ));
   const total = segments.reduce((s, x) => s + Math.max(0, x.value), 0);
   const shouldFold = maxSlices != null && segments.length > maxSlices;
   const head = shouldFold ? segments.slice(0, maxSlices) : segments;
@@ -75,6 +97,9 @@ export function Donut({
 
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
+  // Floating % pills need room around the ring; small donuts in a tight
+  // grid keep just the legend.
+  const callouts = size >= 140;
   let offset = 0;
 
   return (
@@ -86,9 +111,19 @@ export function Donut({
     // against a taller legend, so a row of donuts whose legends differ in
     // length showed its rings at different heights — the alignment complaint.
     <div className="@container/donut flex flex-col @[380px]/donut:flex-row @[380px]/donut:items-start gap-4 @[380px]/donut:gap-5 min-w-0 w-full">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 self-center">
+      <div className={clsx('shrink-0 self-center', callouts && 'p-6')}>
+      {/* Padding holds the floating % pills, which sit outside the ring. */}
+      <svg
+        width={size} height={size} viewBox={`0 0 ${size} ${size}`}
+        className="overflow-visible"
+        // The ring floats: a soft drop under it, the way the reference lifts
+        // its donut off the card.
+        style={{ filter: 'drop-shadow(0 8px 10px rgba(0, 0, 0, 0.14))' }}
+      >
         <g transform={`translate(${size / 2},${size / 2}) rotate(-90)`}>
-          <circle r={r} fill="none" stroke="var(--fill-strong)" strokeWidth={stroke} />
+          <circle r={r} fill="none" stroke="color-mix(in srgb, var(--ink) 7%, transparent)" strokeWidth={stroke} />
+          {/* A raised centre disc the total sits on. */}
+          <circle r={Math.max(0, r - stroke / 2 - 7)} fill="var(--card-2)" style={{ filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.14))' }} />
           {total > 0 &&
             arcs.map((s, i) => {
               const len = (Math.max(0, s.value) / total) * c;
@@ -125,6 +160,45 @@ export function Donut({
               return el;
             })}
         </g>
+        {/* Floating % pills on leader lines, for the slices big enough to
+            name — the legend still carries every one. */}
+        {callouts && total > 0 && (() => {
+          let acc = 0;
+          const out: React.ReactNode[] = [];
+          arcs.forEach((sg, i) => {
+            const v = Math.max(0, sg.value);
+            const share = v / total;
+            const mid = (acc + v / 2) / total;
+            acc += v;
+            if (share < 0.06 || out.length >= 5) return;
+            const a = mid * Math.PI * 2 - Math.PI / 2;
+            const cx = size / 2, cy = size / 2;
+            const r1 = r + stroke / 2 + 2, r2 = r + stroke / 2 + 13;
+            const x1 = cx + Math.cos(a) * r1, y1 = cy + Math.sin(a) * r1;
+            const x2 = cx + Math.cos(a) * r2, y2 = cy + Math.sin(a) * r2;
+            const right = Math.cos(a) >= 0;
+            const px = x2 + (right ? 6 : -6);
+            const label = `${Math.round(share * 100)}%`;
+            const w = label.length * 6.2 + 12;
+            out.push(
+              <g key={`co-${i}`} pointerEvents="none">
+                <polyline points={`${x1},${y1} ${x2},${y2} ${px},${y2}`} fill="none" stroke="var(--line-strong)" strokeWidth={0.8} />
+                <rect
+                  x={right ? px : px - w} y={y2 - 9} width={w} height={18} rx={9}
+                  fill="var(--card-2)"
+                  style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))' }}
+                />
+                <text
+                  x={right ? px + w / 2 : px - w / 2} y={y2 + 0.5} textAnchor="middle" dominantBaseline="middle"
+                  className="fill-ink" style={{ fontSize: 10, fontWeight: 600 }}
+                >
+                  {label}
+                </text>
+              </g>,
+            );
+          });
+          return out;
+        })()}
         {/* While an arc is hovered the centre reports that slice instead of the
             total — the value appears where the reader is already looking,
             rather than in a tooltip that covers the neighbouring arcs. */}
@@ -132,7 +206,7 @@ export function Donut({
           <text
             x="50%" y="46%" textAnchor="middle" dominantBaseline="middle"
             className="fill-ink"
-            style={{ fontSize: size > 150 ? 19 : 16, fontWeight: 700, letterSpacing: '-0.02em' }}
+            style={{ fontSize: size > 150 ? 19 : 16, fontWeight: 400, letterSpacing: '-0.02em' }}
           >
             {hovered
               ? (formatValue ? formatValue(hovered.value) : String(hovered.value))
@@ -142,12 +216,13 @@ export function Donut({
         {(hovered ? true : centerSub) && (
           <text
             x="50%" y="60%" textAnchor="middle" dominantBaseline="middle"
-            fill="var(--muted)" style={{ fontSize: 10.5, letterSpacing: '0.04em' }}
+            fill="var(--muted)" style={{ fontSize: 10.5 }}
           >
             {hovered ? `${hovered.label} · ${pct(hovered.value)}` : centerSub}
           </text>
         )}
       </svg>
+      </div>
 
       {legend && (
         <div className="flex-1 min-w-0 w-full grid gap-2 @[380px]/donut:gap-2.5 grid-cols-1 @[240px]/donut:grid-cols-2 @[380px]/donut:grid-cols-1">

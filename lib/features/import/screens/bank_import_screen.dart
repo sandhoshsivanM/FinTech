@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,12 @@ class BankImportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Import bank statement')),
+      appBar: AppBar(
+        title: InfoHint.titled(
+          const Text('Import bank statement'),
+          'import.uploadStatement',
+        ),
+      ),
       body: const DataGate(child: _Body()),
     );
   }
@@ -82,8 +88,9 @@ class _BodyState extends ConsumerState<_Body> {
       _fileName = file?.name;
     });
     try {
-      final preview =
-          await ref.read(bankImportProvider).preview(_bank.parser, bytes);
+      final preview = await ref
+          .read(bankImportProvider)
+          .preview(_bank.parser, bytes);
       setState(() => _preview = preview);
     } on Exception catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Parse failed: $e')));
@@ -97,7 +104,8 @@ class _BodyState extends ConsumerState<_Body> {
     if (preview == null) return;
     final cats = ref.read(categoryListProvider).valueOrNull ?? const [];
     final fallback =
-        cats.where((c) => c.name == 'Other').firstOrNull?.id ?? cats.firstOrNull?.id;
+        cats.where((c) => c.name == 'Other').firstOrNull?.id ??
+        cats.firstOrNull?.id;
     if (fallback == null) return;
 
     // Totals are computed from the rows about to be written, before the commit
@@ -143,7 +151,11 @@ class _BodyState extends ConsumerState<_Body> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.sm),
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.sm,
+          ),
           child: _BankPicker(
             selected: _bank,
             // Changing bank invalidates a preview parsed with the other bank's
@@ -161,8 +173,8 @@ class _BodyState extends ConsumerState<_Body> {
           child: preview != null
               ? _Preview(preview: preview, fileName: _fileName)
               : report != null
-                  ? _Report(report: report)
-                  : const _Instructions(),
+              ? _Report(report: report)
+              : const _Instructions(),
         ),
         Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -173,7 +185,8 @@ class _BodyState extends ConsumerState<_Body> {
                   onPressed: _busy ? null : _pickAndParse,
                   icon: const Icon(Icons.upload_file),
                   label: Text(
-                      preview == null ? 'Choose file' : 'Choose another file'),
+                    preview == null ? 'Choose file' : 'Choose another file',
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
@@ -181,9 +194,9 @@ class _BodyState extends ConsumerState<_Body> {
                 child: FilledButton.icon(
                   onPressed: (preview?.newCount ?? 0) > 0 ? _commit : null,
                   icon: const Icon(Icons.check),
-                  label: Text(preview == null
-                      ? 'Import'
-                      : 'Import ${preview.newCount}'),
+                  label: Text(
+                    preview == null ? 'Import' : 'Import ${preview.newCount}',
+                  ),
                 ),
               ),
             ],
@@ -211,12 +224,14 @@ class _BankPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text('Bank',
-            style: Theme.of(context)
-                .textTheme
-                .labelLarge
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-        const SizedBox(width: AppSpacing.md),
+        Text(
+          'Bank',
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const InfoHint('import.selectBank'),
+        const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: Wrap(
             spacing: AppSpacing.sm,
@@ -244,7 +259,8 @@ class _Instructions extends StatelessWidget {
     return const EmptyState(
       icon: Icons.description_outlined,
       title: 'Choose a statement to preview',
-      message: 'Export a CSV or Excel statement from your bank\'s net banking, '
+      message:
+          'Export a CSV or Excel statement from your bank\'s net banking, '
           'then pick it here. Khazana parses it on this device, marks rows it '
           'has already seen, and writes nothing until you press Import.',
     );
@@ -319,7 +335,8 @@ class _Preview extends StatelessWidget {
             child: Text(
               'Covering ${_date(from)} to ${_date(to)}.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         const SizedBox(height: AppSpacing.md),
@@ -366,8 +383,9 @@ class _StagedRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: text.bodyMedium?.copyWith(
                     color: txn.isDuplicate ? muted : null,
-                    decoration:
-                        txn.isDuplicate ? TextDecoration.lineThrough : null,
+                    decoration: txn.isDuplicate
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
                 Text(
@@ -381,8 +399,10 @@ class _StagedRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Text(
             Money.format(txn.amount),
-            style: text.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w700, color: tint),
+            style: text.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+              color: tint,
+            ),
           ),
         ],
       ),
@@ -409,14 +429,18 @@ class _Report extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.check_circle_outline,
-                      size: 20, color: context.colors.income),
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 20,
+                    color: context.colors.income,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
                     '${report.imported} transaction'
                     '${report.imported == 1 ? '' : 's'} imported',
-                    style:
-                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                    style: text.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -484,8 +508,18 @@ class _Report extends StatelessWidget {
 }
 
 const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 /// "4 Aug 2026". An ISO date belongs in a log, not in front of someone

@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -73,12 +74,16 @@ class _ImportLotsScreenState extends ConsumerState<ImportLotsScreen> {
         datesWereMissing: _datesMissing,
       );
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(
-        content: Text('Imported ${result.inserted} lot'
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Imported ${result.inserted} lot'
             '${result.inserted == 1 ? '' : 's'}'
             '${result.rejected.isEmpty ? '' : ', ${result.rejected.length} skipped'}'
-            '. Re-importing the same file will not duplicate them.'),
-      ));
+            '. Re-importing the same file will not duplicate them.',
+          ),
+        ),
+      );
       Navigator.of(context).pop(true);
     } on Object catch (e) {
       if (!mounted) return;
@@ -92,7 +97,12 @@ class _ImportLotsScreenState extends ConsumerState<ImportLotsScreen> {
     final parsed = _parsed;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Import lots')),
+      appBar: AppBar(
+        title: InfoHint.titled(
+          const Text('Import lots'),
+          'investments.importLots',
+        ),
+      ),
       body: DataGate(
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -101,19 +111,20 @@ class _ImportLotsScreenState extends ConsumerState<ImportLotsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Broker CSV',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    'Broker CSV',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Works with tradebook and holdings exports. Columns are '
                     'matched by name, so the order does not matter. Parsing '
                     'happens on this device — the file is never uploaded.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onSurfaceVariant),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   OutlinedButton.icon(
@@ -150,8 +161,10 @@ class _ImportLotsScreenState extends ConsumerState<ImportLotsScreen> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text('Import ${parsed.lots.length} lot'
-                        '${parsed.lots.length == 1 ? '' : 's'}'),
+                    : Text(
+                        'Import ${parsed.lots.length} lot'
+                        '${parsed.lots.length == 1 ? '' : 's'}',
+                      ),
               ),
             ],
             const SizedBox(height: AppSpacing.xl),
@@ -197,12 +210,17 @@ class _RejectedCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.error_outline,
-                  size: 18, color: context.colors.expense),
+              Icon(
+                Icons.error_outline,
+                size: 18,
+                color: context.colors.expense,
+              ),
               const SizedBox(width: AppSpacing.sm),
-              Text('${rejected.length} row'
-                  '${rejected.length == 1 ? '' : 's'} skipped',
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(
+                '${rejected.length} row'
+                '${rejected.length == 1 ? '' : 's'} skipped',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -216,8 +234,10 @@ class _RejectedCard extends StatelessWidget {
               ),
             ),
           if (rejected.length > 12)
-            Text('…and ${rejected.length - 12} more',
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              '…and ${rejected.length - 12} more',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
         ],
       ),
     );
@@ -235,11 +255,12 @@ class _PreviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('${lots.length} lot${lots.length == 1 ? '' : 's'} to import',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            '${lots.length} lot${lots.length == 1 ? '' : 's'} to import',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: AppSpacing.sm),
           for (final lot in lots.take(50)) ...[
             Padding(
@@ -248,19 +269,22 @@ class _PreviewCard extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: (lot.side == TradeSide.buy
-                              ? context.colors.income
-                              : context.colors.expense)
-                          .withValues(alpha: 0.14),
+                      color:
+                          (lot.side == TradeSide.buy
+                                  ? context.colors.income
+                                  : context.colors.expense)
+                              .withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       lot.side == TradeSide.buy ? 'BUY' : 'SELL',
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w500,
                         color: lot.side == TradeSide.buy
                             ? context.colors.income
                             : context.colors.expense,
@@ -272,11 +296,12 @@ class _PreviewCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(lot.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600)),
+                        Text(
+                          lot.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                         Text(
                           '${lot.quantity} @ ${Money.format(lot.pricePerUnit)}'
                           ' · ${DateFormat('d MMM y').format(lot.tradeDate)}'
@@ -288,15 +313,17 @@ class _PreviewCard extends StatelessWidget {
                   ),
                   Text(
                     Money.format(lot.quantity * lot.pricePerUnit),
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
             ),
           ],
           if (lots.length > 50)
-            Text('…and ${lots.length - 50} more',
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              '…and ${lots.length - 50} more',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
         ],
       ),
     );

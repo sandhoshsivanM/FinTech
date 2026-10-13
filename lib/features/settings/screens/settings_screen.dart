@@ -1,5 +1,8 @@
+import '../../../core/help/info_hint.dart';
+import '../../../presentation/app_shell.dart' show isDesktopPlatform;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../../../presentation/glass_card.dart';
 
 import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +31,8 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      // On a phone the shell's large header already says "Settings".
+      appBar: isDesktopPlatform ? AppBar(title: const Text('Settings')) : null,
       body: const DataGate(child: _SettingsBody()),
     );
   }
@@ -58,7 +62,8 @@ class _SettingsBody extends ConsumerWidget {
       context: context,
       applicationName: kAppName,
       applicationVersion: kAppVersion,
-      applicationLegalese: '© 2026 Sandhosh Sivan\n\n'
+      applicationLegalese:
+          '© 2026 Sandhosh Sivan\n\n'
           '$kAppName keeps your financial records on this device, encrypted '
           'with a key derived from your PIN. We never receive them and cannot '
           'read them.\n\n'
@@ -121,8 +126,7 @@ class _SettingsBody extends ConsumerWidget {
 
     try {
       await actions.restoreBackup(path);
-      messenger.showSnackBar(
-          const SnackBar(content: Text('Backup restored.')));
+      messenger.showSnackBar(const SnackBar(content: Text('Backup restored.')));
       if (context.mounted) context.go(Routes.dashboard);
     } on AppError catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
@@ -158,11 +162,13 @@ class _SettingsBody extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Load')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Load'),
+          ),
         ],
       ),
     );
@@ -182,7 +188,8 @@ class _SettingsBody extends ConsumerWidget {
       await ref.read(sampleDataProvider).load();
       if (rootNav.canPop()) rootNav.pop(); // close spinner
       messenger.showSnackBar(
-          const SnackBar(content: Text('Sample data loaded.')));
+        const SnackBar(content: Text('Sample data loaded.')),
+      );
       if (context.mounted) context.go(Routes.dashboard);
     } catch (e) {
       if (rootNav.canPop()) rootNav.pop();
@@ -203,10 +210,13 @@ class _SettingsBody extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: context.colors.expense),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.colors.expense,
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Erase everything'),
           ),
@@ -218,8 +228,7 @@ class _SettingsBody extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await ref.read(settingsActionsProvider).eraseAllData();
-      messenger.showSnackBar(
-          const SnackBar(content: Text('All data erased.')));
+      messenger.showSnackBar(const SnackBar(content: Text('All data erased.')));
       if (context.mounted) context.go(Routes.dashboard);
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
@@ -232,169 +241,231 @@ class _SettingsBody extends ConsumerWidget {
     final actions = ref.watch(settingsActionsProvider);
 
     return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        120,
+      ),
       children: [
-        const _SectionHeader('Appearance'),
-        const _ThemeTile(),
-        const Divider(),
-        const _SectionHeader('Notifications'),
-        ListTile(
-          leading: const Icon(Icons.notifications_outlined),
-          title: const Text('Notifications'),
-          subtitle: const Text('Reminders for bills, renewals and budgets'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.go(Routes.notifications),
+        _SettingsGroup(
+          title: 'Appearance',
+          help: 'settings.appearance',
+          children: [const _ThemeTile()],
         ),
-        const Divider(),
-        const _SectionHeader('Vault'),
-        ListTile(
-          leading: const Icon(Icons.account_balance_wallet_outlined),
-          title: const Text('Active vault'),
-          subtitle: Text(vaultId),
+        _SettingsGroup(
+          title: 'Notifications',
+          help: 'settings.notifications',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.notifications_outlined),
+              title: const Text('Notifications'),
+              subtitle: const Text('Reminders for bills, renewals and budgets'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.go(Routes.notifications),
+            ),
+          ],
         ),
-        const _BiometricUnlockTile(),
-        const _RequirePinTile(),
-        ListTile(
-          leading: const Icon(Icons.lock_outline),
-          title: const Text('Lock now'),
-          onTap: () => ref.read(vaultUnlockProvider.notifier).lock(force: true),
+        _SettingsGroup(
+          title: 'Vault',
+          help: 'settings.profiles',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.account_balance_wallet_outlined),
+              title: const Text('Active vault'),
+              subtitle: Text(vaultId),
+            ),
+            const _BiometricUnlockTile(),
+            const _RequirePinTile(),
+            ListTile(
+              leading: const Icon(Icons.lock_outline),
+              title: const Text('Lock now'),
+              onTap: () =>
+                  ref.read(vaultUnlockProvider.notifier).lock(force: true),
+            ),
+            ListTile(
+              leading: const Icon(Icons.swap_horiz),
+              title: const Text('Switch / add vault'),
+              subtitle: const Text('Re-authentication required'),
+              onTap: () => _showVaultSwitcher(context, ref),
+            ),
+          ],
         ),
-        ListTile(
-          leading: const Icon(Icons.swap_horiz),
-          title: const Text('Switch / add vault'),
-          subtitle: const Text('Re-authentication required'),
-          onTap: () => _showVaultSwitcher(context, ref),
+        _SettingsGroup(
+          title: 'Help',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.school_outlined),
+              title: const Text('Take a tour'),
+              subtitle: const Text('A quick walkthrough of every area'),
+              onTap: () => showTour(context, ref),
+            ),
+          ],
         ),
-        const Divider(),
-        const _SectionHeader('Help'),
-        ListTile(
-          leading: const Icon(Icons.school_outlined),
-          title: const Text('Take a tour'),
-          subtitle: const Text('A quick walkthrough of every area'),
-          onTap: () => showTour(context, ref),
+        _SettingsGroup(
+          title: 'Demo',
+          help: 'settings.data',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.auto_awesome),
+              title: const Text('Load sample data'),
+              subtitle: const Text('Fill this vault with realistic demo data'),
+              onTap: () => _loadSampleData(context, ref),
+            ),
+          ],
         ),
-        const Divider(),
-        const _SectionHeader('Demo'),
-        ListTile(
-          leading: const Icon(Icons.auto_awesome),
-          title: const Text('Load sample data'),
-          subtitle: const Text('Fill this vault with realistic demo data'),
-          onTap: () => _loadSampleData(context, ref),
+        _SettingsGroup(
+          title: 'Import',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.calendar_month_outlined),
+              title: const Text('Calendar ledger'),
+              subtitle: const Text('Day-by-day income, spend & budgets'),
+              onTap: () => context.go(Routes.calendar),
+            ),
+            ListTile(
+              leading: const Icon(Icons.auto_awesome_motion_outlined),
+              title: const Text('Auto-capture'),
+              subtitle: const Text('Review SMS / notification transactions'),
+              onTap: () => context.go(Routes.captureInbox),
+            ),
+            ListTile(
+              leading: const Icon(Icons.account_balance),
+              title: const Text('Import bank statement'),
+              subtitle: const Text('HDFC / ICICI / SBI / Axis'),
+              onTap: () => context.go(Routes.bankImport),
+            ),
+            ListTile(
+              leading: const Icon(Icons.show_chart),
+              title: const Text('Market data'),
+              subtitle: const Text('API keys for live prices'),
+              onTap: () => context.go(Routes.marketData),
+            ),
+            ListTile(
+              leading: const Icon(Icons.currency_exchange),
+              title: const Text('Currency'),
+              subtitle: const Text('Exchange rates'),
+              onTap: () => context.go(Routes.currency),
+            ),
+          ],
         ),
-        const Divider(),
-        const _SectionHeader('Import'),
-        ListTile(
-          leading: const Icon(Icons.calendar_month_outlined),
-          title: const Text('Calendar ledger'),
-          subtitle: const Text('Day-by-day income, spend & budgets'),
-          onTap: () => context.go(Routes.calendar),
+        _SettingsGroup(
+          title: null,
+          children: [
+            // Above Backup on purpose: someone who has already paid comes to
+            // Settings looking for "Restore", and it has to be findable without
+            // first walking into a paywall.
+            Consumer(
+              builder: (context, ref, _) {
+                final entitlement = ref.watch(entitlementProvider);
+                return ListTile(
+                  leading: Icon(
+                    Icons.workspace_premium_outlined,
+                    color: context.colors.accent,
+                  ),
+                  title: const Text('Khazana Pro'),
+                  subtitle: Text(
+                    entitlement.isPro
+                        ? 'Unlocked${entitlement.orderRef == null ? '' : ' · Licence …${entitlement.orderRef!.substring(entitlement.orderRef!.length - 4)}'}'
+                        : 'One payment. Yours forever.',
+                  ),
+                  trailing: entitlement.isPro
+                      ? Icon(
+                          Icons.verified_outlined,
+                          size: 18,
+                          color: context.colors.income,
+                        )
+                      : const Icon(Icons.chevron_right),
+                  onTap: () => context.go(Routes.pro),
+                );
+              },
+            ),
+          ],
         ),
-        ListTile(
-          leading: const Icon(Icons.auto_awesome_motion_outlined),
-          title: const Text('Auto-capture'),
-          subtitle: const Text('Review SMS / notification transactions'),
-          onTap: () => context.go(Routes.captureInbox),
+        _SettingsGroup(
+          title: 'Backup',
+          help: 'settings.privacyBackup',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.save_alt),
+              title: const Text('Export encrypted backup'),
+              subtitle: const Text('AES-256-GCM, verified on restore'),
+              onTap: () => _run(
+                context,
+                actions.exportBackup,
+                shareText: '$kAppName encrypted backup',
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings_backup_restore),
+              title: const Text('Restore from backup'),
+              subtitle: const Text('Replaces everything in this vault'),
+              onTap: () => _restoreBackup(context, ref),
+            ),
+          ],
         ),
-        ListTile(
-          leading: const Icon(Icons.account_balance),
-          title: const Text('Import bank statement'),
-          subtitle: const Text('HDFC / ICICI / SBI / Axis'),
-          onTap: () => context.go(Routes.bankImport),
+        _SettingsGroup(
+          title: 'Data & Privacy',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.bug_report_outlined),
+              title: const Text('Export error log'),
+              subtitle: const Text('Plaintext logs.json — no financial data'),
+              onTap: () => _showLogDisclaimer(context, ref),
+            ),
+            // Google Play requires a privacy policy reachable from *inside* the app
+            // for anything handling financial data, not only from the store
+            // listing. Apple checks the same thing during review.
+            ListTile(
+              leading: const Icon(Icons.privacy_tip_outlined),
+              title: const Text('Privacy policy'),
+              subtitle: const Text(
+                'What stays on this device, and what does not',
+              ),
+              trailing: const Icon(Icons.open_in_new, size: 16),
+              onTap: () => _openLegal(context, kPrivacyPolicyUrl),
+            ),
+            ListTile(
+              leading: const Icon(Icons.gavel_outlined),
+              title: const Text('Terms of use'),
+              subtitle: const Text(
+                'Licence, refunds, and what $kAppName is not',
+              ),
+              trailing: const Icon(Icons.open_in_new, size: 16),
+              onTap: () => _openLegal(context, kTermsUrl),
+            ),
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('About $kAppName'),
+              subtitle: const Text('Version $kAppVersion'),
+              onTap: () => _showAbout(context),
+            ),
+          ],
         ),
-        ListTile(
-          leading: const Icon(Icons.show_chart),
-          title: const Text('Market data'),
-          subtitle: const Text('API keys for live prices'),
-          onTap: () => context.go(Routes.marketData),
-        ),
-        ListTile(
-          leading: const Icon(Icons.currency_exchange),
-          title: const Text('Currency'),
-          subtitle: const Text('Exchange rates'),
-          onTap: () => context.go(Routes.currency),
-        ),
-        const Divider(),
-        // Above Backup on purpose: someone who has already paid comes to
-        // Settings looking for "Restore", and it has to be findable without
-        // first walking into a paywall.
-        Consumer(builder: (context, ref, _) {
-          final entitlement = ref.watch(entitlementProvider);
-          return ListTile(
-            leading: Icon(Icons.workspace_premium_outlined,
-                color: context.colors.accent),
-            title: const Text('Khazana Pro'),
-            subtitle: Text(entitlement.isPro
-                ? 'Unlocked${entitlement.orderRef == null ? '' : ' · Licence …${entitlement.orderRef!.substring(entitlement.orderRef!.length - 4)}'}'
-                : 'One payment. Yours forever.'),
-            trailing: entitlement.isPro
-                ? Icon(Icons.verified_outlined,
-                    size: 18, color: context.colors.income)
-                : const Icon(Icons.chevron_right),
-            onTap: () => context.go(Routes.pro),
-          );
-        }),
-        const Divider(),
-        const _SectionHeader('Backup'),
-        ListTile(
-          leading: const Icon(Icons.save_alt),
-          title: const Text('Export encrypted backup'),
-          subtitle: const Text('AES-256-GCM, verified on restore'),
-          onTap: () => _run(context, actions.exportBackup,
-              shareText: '$kAppName encrypted backup'),
-        ),
-        ListTile(
-          leading: const Icon(Icons.settings_backup_restore),
-          title: const Text('Restore from backup'),
-          subtitle: const Text('Replaces everything in this vault'),
-          onTap: () => _restoreBackup(context, ref),
-        ),
-        const Divider(),
-        const _SectionHeader('Data & Privacy'),
-        ListTile(
-          leading: const Icon(Icons.bug_report_outlined),
-          title: const Text('Export error log'),
-          subtitle: const Text('Plaintext logs.json — no financial data'),
-          onTap: () => _showLogDisclaimer(context, ref),
-        ),
-        // Google Play requires a privacy policy reachable from *inside* the app
-        // for anything handling financial data, not only from the store
-        // listing. Apple checks the same thing during review.
-        ListTile(
-          leading: const Icon(Icons.privacy_tip_outlined),
-          title: const Text('Privacy policy'),
-          subtitle: const Text('What stays on this device, and what does not'),
-          trailing: const Icon(Icons.open_in_new, size: 16),
-          onTap: () => _openLegal(context, kPrivacyPolicyUrl),
-        ),
-        ListTile(
-          leading: const Icon(Icons.gavel_outlined),
-          title: const Text('Terms of use'),
-          subtitle: const Text('Licence, refunds, and what $kAppName is not'),
-          trailing: const Icon(Icons.open_in_new, size: 16),
-          onTap: () => _openLegal(context, kTermsUrl),
-        ),
-        ListTile(
-          leading: const Icon(Icons.info_outline),
-          title: const Text('About $kAppName'),
-          subtitle: const Text('Version $kAppVersion'),
-          onTap: () => _showAbout(context),
-        ),
-        const Divider(),
-        const _SectionHeader('Danger zone'),
-        ListTile(
-          leading: Icon(Icons.delete_forever_outlined,
-              color: context.colors.expense),
-          title: const Text('Erase all data'),
-          subtitle: const Text(
-              'Permanently delete all financial data in this vault'),
-          onTap: () => _eraseAllData(context, ref),
-        ),
-        const Padding(
-          padding: EdgeInsets.all(AppSpacing.lg),
-          child: Text(
-            '$kAppName is fully offline. Nothing leaves this device without '
-            'your explicit action.',
-            style: TextStyle(fontStyle: FontStyle.italic),
-          ),
+        _SettingsGroup(
+          title: 'Danger zone',
+          help: 'settings.dangerZone',
+          children: [
+            ListTile(
+              leading: Icon(
+                Icons.delete_forever_outlined,
+                color: context.colors.expense,
+              ),
+              title: const Text('Erase all data'),
+              subtitle: const Text(
+                'Permanently delete all financial data in this vault',
+              ),
+              onTap: () => _eraseAllData(context, ref),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(AppSpacing.lg),
+              child: Text(
+                '$kAppName is fully offline. Nothing leaves this device without '
+                'your explicit action.',
+                style: TextStyle(fontStyle: FontStyle.italic),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -412,13 +483,18 @@ class _SettingsBody extends ConsumerWidget {
           children: [
             const Padding(
               padding: EdgeInsets.all(AppSpacing.lg),
-              child: Text('Vaults', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(
+                'Vaults',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
             ),
             for (final v in vaults)
               ListTile(
-                leading: Icon(v.id == current
-                    ? Icons.check_circle
-                    : Icons.account_balance_wallet_outlined),
+                leading: Icon(
+                  v.id == current
+                      ? Icons.check_circle
+                      : Icons.account_balance_wallet_outlined,
+                ),
                 title: Text(v.name),
                 enabled: v.id != current,
                 onTap: () {
@@ -455,15 +531,18 @@ class _SettingsBody extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () {
               final n = name.text.trim();
               if (n.isEmpty) return;
               // Point the gate at a brand-new vault id → setup flow runs.
-              ref.read(selectedVaultProvider.notifier).state =
-                  VaultInfo(id: const Uuid().v4(), name: n);
+              ref.read(selectedVaultProvider.notifier).state = VaultInfo(
+                id: const Uuid().v4(),
+                name: n,
+              );
               Navigator.pop(context);
             },
             child: const Text('Continue'),
@@ -486,17 +565,22 @@ class _SettingsBody extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Export')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Export'),
+          ),
         ],
       ),
     );
     if (ok != true || !context.mounted) return;
-    await _run(context, actions.exportErrorLog,
-        shareText: '$kAppName error log (no financial data)');
+    await _run(
+      context,
+      actions.exportErrorLog,
+      shareText: '$kAppName error log (no financial data)',
+    );
   }
 }
 
@@ -531,8 +615,9 @@ class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
 
   Future<void> _load() async {
     final vaultId = ref.read(currentVaultIdProvider);
-    final enabled =
-        await ref.read(vaultCredentialStoreProvider).biometricEnabled(vaultId);
+    final enabled = await ref
+        .read(vaultCredentialStoreProvider)
+        .biometricEnabled(vaultId);
     var available = false;
     try {
       available = await ref.read(biometricGateProvider).isAvailable();
@@ -562,8 +647,9 @@ class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
     await _load();
     if (!mounted) return;
     setState(() => _busy = false);
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -583,10 +669,10 @@ class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
         !_available
             ? 'No fingerprint or Face ID is set up on this device'
             : enabled
-                ? 'Your key is stored in the keychain so a fingerprint can '
-                    'unlock it'
-                : 'Off — your PIN derives the key each time, and nothing is '
-                    'stored',
+            ? 'Your key is stored in the keychain so a fingerprint can '
+                  'unlock it'
+            : 'Off — your PIN derives the key each time, and nothing is '
+                  'stored',
       ),
       value: enabled,
       onChanged: (!_available || _busy) ? null : _toggle,
@@ -594,25 +680,50 @@ class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title);
-  final String title;
+/// A titled card of settings rows.
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({
+    required this.title,
+    required this.children,
+    this.help,
+  });
+  final String? help;
+  final String? title;
+  final List<Widget> children;
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xs),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: context.colors.accent,
-              fontWeight: FontWeight.bold,
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.sm,
+                AppSpacing.sm,
+                AppSpacing.sm,
+                AppSpacing.sm,
+              ),
+              child: help == null
+                  ? Text(title!, style: Theme.of(context).textTheme.titleMedium)
+                  : InfoHint.titled(
+                      Text(
+                        title!,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      help!,
+                    ),
             ),
+          GlassCard(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            child: Column(children: children),
+          ),
+        ],
       ),
     );
   }
 }
-
 
 /// Turns the launch PIN back on, or off.
 ///
@@ -637,8 +748,9 @@ class _RequirePinTileState extends ConsumerState<_RequirePinTile> {
   }
 
   Future<void> _load() async {
-    final disabled =
-        await ref.read(vaultUnlockProvider.notifier).lockIsDisabled();
+    final disabled = await ref
+        .read(vaultUnlockProvider.notifier)
+        .lockIsDisabled();
     if (mounted) setState(() => _required = !disabled);
   }
 
@@ -647,13 +759,16 @@ class _RequirePinTileState extends ConsumerState<_RequirePinTile> {
     final required = _required;
     return SwitchListTile(
       secondary: const Icon(Icons.password_outlined),
-      title: const Text('Require a PIN to open Khazana'),
+      title: InfoHint.titled(
+        const Text('Require a PIN to open Khazana'),
+        'settings.security',
+      ),
       subtitle: Text(
         required == false
             ? 'Off — the key that decrypts your vault is stored on this device, '
-                'so anyone who can use it can open Khazana.'
+                  'so anyone who can use it can open Khazana.'
             : 'On — your vault key is recomputed from your PIN each time and '
-                'never written to disk.',
+                  'never written to disk.',
       ),
       value: required ?? true,
       onChanged: _busy || required == null
@@ -676,16 +791,18 @@ class _RequirePinTileState extends ConsumerState<_RequirePinTile> {
                 _busy = false;
               });
               if (!ok) {
-                messenger.showSnackBar(const SnackBar(
-                  content: Text(
-                      'Could not store the key, so the PIN is still required.'),
-                ));
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Could not store the key, so the PIN is still required.',
+                    ),
+                  ),
+                );
               }
             },
     );
   }
 }
-
 
 /// Light, dark, or whatever the OS says.
 class _ThemeTile extends ConsumerWidget {
@@ -696,11 +813,17 @@ class _ThemeTile extends ConsumerWidget {
     final mode = ref.watch(themeModeProvider);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm),
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
       child: Row(
         children: [
-          Icon(Icons.contrast,
-              color: Theme.of(context).colorScheme.onSurfaceVariant),
+          Icon(
+            Icons.contrast,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           const SizedBox(width: AppSpacing.lg),
           const Expanded(child: Text('Theme')),
           SegmentedButton<ThemeMode>(

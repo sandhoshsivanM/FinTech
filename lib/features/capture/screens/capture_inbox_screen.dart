@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/semantic_colors.dart';
@@ -28,7 +29,7 @@ class CaptureInboxScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text('Auto-capture'),
+        title: InfoHint.titled(const Text('Auto-capture'), 'capture.inbox'),
       ),
       body: const SafeArea(child: DataGate(child: _Body())),
     );
@@ -41,7 +42,8 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final supported = ref.watch(captureSupportedProvider);
-    final captures = ref.watch(pendingCaptureListProvider).valueOrNull ?? const [];
+    final captures =
+        ref.watch(pendingCaptureListProvider).valueOrNull ?? const [];
     final categories = ref.watch(categoryListProvider).valueOrNull ?? const [];
 
     return ListView(
@@ -77,12 +79,17 @@ class _EmptyState extends StatelessWidget {
               color: context.colors.accent.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.auto_awesome_motion_outlined,
-                size: 34, color: context.colors.accent),
+            child: Icon(
+              Icons.auto_awesome_motion_outlined,
+              size: 34,
+              color: context.colors.accent,
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text('Nothing to review',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+          const Text(
+            'Nothing to review',
+            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+          ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Incoming bank SMS and notifications are parsed on-device and appear '
@@ -108,11 +115,16 @@ class _PermissionCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.verified_user_outlined,
-                  size: 18, color: context.colors.accent),
+              Icon(
+                Icons.verified_user_outlined,
+                size: 18,
+                color: context.colors.accent,
+              ),
               const SizedBox(width: AppSpacing.sm),
-              const Text('Capture access',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
+              const Text(
+                'Capture access',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -121,8 +133,9 @@ class _PermissionCard extends ConsumerWidget {
             'raw text is discarded immediately — only the amount, merchant and '
             'date are kept.',
             style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.4),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(
@@ -150,8 +163,9 @@ class _UnsupportedCard extends StatelessWidget {
               'Automatic notification capture is available on Android only. '
               'You can still add transactions manually.',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  height: 1.4),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
             ),
           ),
         ],
@@ -178,7 +192,8 @@ class _CaptureCardState extends ConsumerState<_CaptureCard> {
     final isIncome = c.type == TxnType.income;
     final df = DateFormat('d MMM yyyy');
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    final selected = _categoryId ??
+    final selected =
+        _categoryId ??
         (widget.categories.isNotEmpty ? widget.categories.first.id : null);
 
     return GlassCard(
@@ -207,19 +222,25 @@ class _CaptureCardState extends ConsumerState<_CaptureCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(c.merchant ?? 'Unknown merchant',
-                        style: const TextStyle(fontWeight: FontWeight.w700)),
-                    Text('${df.format(c.occurredAt)} · ${isIncome ? 'Income' : 'Expense'}',
-                        style: TextStyle(fontSize: 12, color: muted)),
+                    Text(
+                      c.merchant ?? 'Unknown merchant',
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    Text(
+                      '${df.format(c.occurredAt)} · ${isIncome ? 'Income' : 'Expense'}',
+                      style: TextStyle(fontSize: 12, color: muted),
+                    ),
                   ],
                 ),
               ),
               Text(
                 Money.formatSigned(c.amount, isIncome: isIncome),
                 style: TextStyle(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w500,
                   fontSize: 16,
-                  color: isIncome ? context.colors.income : context.colors.expense,
+                  color: isIncome
+                      ? context.colors.income
+                      : context.colors.expense,
                 ),
               ),
             ],
@@ -253,9 +274,12 @@ class _CaptureCardState extends ConsumerState<_CaptureCard> {
                 onPressed: selected == null
                     ? null
                     : () {
-                        final cat = widget.categories
-                            .firstWhere((x) => x.id == selected);
-                        ref.read(captureActionsProvider).confirm(
+                        final cat = widget.categories.firstWhere(
+                          (x) => x.id == selected,
+                        );
+                        ref
+                            .read(captureActionsProvider)
+                            .confirm(
                               c,
                               categoryId: cat.id,
                               categoryName: cat.name,

@@ -21,6 +21,7 @@ import { useConfirm } from '@/components/Confirm';
 import { formatDate } from '@/lib/dateFormat';
 import { startOfDay } from '@/domain/period';
 import { NumberInput } from '@/components/NumberInput';
+import { SectionInfo } from '@/components/Hint';
 
 /**
  * Receipt size cap. Base64 inflates a file by a third, the result lives in one
@@ -207,8 +208,9 @@ export default function AddTransactionPage() {
   // Neutral for a transfer: it is neither a gain nor a loss, and painting it
   // red would say the opposite of what the entity exists to express.
   // Investment is neutral, like a transfer: the money moved, it was not lost.
-  const amountColor = mode === 'transfer' || mode === 'investment' ? 'var(--ink)'
-    : type === 'income' ? 'var(--income)' : 'var(--expense)';
+  // Zentra: the amount is large, light and ink. The mode is already on the
+  // segmented control; the figure does not need to shout it in colour.
+  const amountColor = 'var(--ink)';
 
   function handleQuickParse() {
     const parsed = parseQuickAdd(quickText, categories.map((c) => c.name));
@@ -314,6 +316,7 @@ export default function AddTransactionPage() {
         title={editId
           ? (mode === 'transfer' ? 'Edit Transfer' : 'Edit Transaction')
           : 'Add Transaction'}
+        info="add.page"
         action={
           <Button variant="ghost" onClick={() => router.back()}>
             <X size={16} /> Cancel
@@ -325,7 +328,10 @@ export default function AddTransactionPage() {
           offer a transfer. */}
       {mode !== 'transfer' && (
       <GlassCard>
-        <p className="text-xs font-semibold text-ink-soft mb-2">Quick add</p>
+        <div className="flex items-center gap-1.5 mb-2">
+          <p className="text-xs font-semibold text-ink-soft">Quick add</p>
+          <SectionInfo k="add.quickAdd" />
+        </div>
         <div className="flex gap-2">
           <Input
             className="flex-1"
@@ -350,17 +356,14 @@ export default function AddTransactionPage() {
         {/* Big amount input */}
         <div className="flex flex-col items-center gap-1">
           <div className="flex items-center gap-2">
-            <span
-              className="text-4xl font-extrabold font-display"
-              style={{ color: amountColor }}
-            >
+            <span className="text-4xl font-light font-display text-muted">
               {fmt.symbol}
             </span>
             <NumberInput
               placeholder="0.00"
               value={amountRaw}
               onChange={setAmountRaw}
-              className="text-4xl font-extrabold font-display w-52 bg-transparent outline-none tnum text-center"
+              className="text-[44px] font-light tracking-[-0.035em] font-display w-56 bg-transparent outline-none tnum text-center"
               style={{ color: amountColor }}
               aria-label="Amount"
             />

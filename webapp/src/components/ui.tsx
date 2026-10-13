@@ -10,10 +10,10 @@
  */
 import { useEffect, useId, useState, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
-import { Hint } from './Hint';
+import { Hint, SectionInfo } from './Hint';
 import { CHART } from './charts/tokens';
 import { motion, SPRING } from './motion';
-import type { TermKey } from '@/lib/glossary';
+import type { SectionKey, TermKey } from '@/lib/glossary';
 
 /**
  * The standard card.
@@ -30,22 +30,30 @@ export function GlassCard({
   interactive?: boolean;
 } & HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={clsx('card', padded && 'p-5', (lift || interactive) && 'lift', interactive && 'pressable cursor-pointer', className)} {...rest}>
+    <div className={clsx('card', padded && 'p-4 sm:p-5', (lift || interactive) && 'lift', interactive && 'pressable cursor-pointer', className)} {...rest}>
       {children}
     </div>
   );
 }
 
-export function SectionHeader({ title, action }: { title: string; action?: ReactNode }) {
+export function SectionHeader({ title, action, info, infoAlign }: {
+  title: string; action?: ReactNode;
+  /** SECTION_HELP key: renders the ⓘ explaining this card right after the title. */
+  info?: SectionKey;
+  infoAlign?: 'left' | 'right';
+}) {
   return (
     <div className="flex items-center justify-between gap-3 mb-4">
-      <h2 className="text-[15px] font-semibold tracking-[-0.02em] text-ink">{title}</h2>
+      <div className="flex items-center gap-1.5 min-w-0">
+        <h2 className="text-[17px] font-medium tracking-[-0.015em] text-ink">{title}</h2>
+        {info && <SectionInfo k={info} align={infoAlign} />}
+      </div>
       {action}
     </div>
   );
 }
 
-/** Uppercase overline used above a figure. */
+/** Sentence-case label used above a figure. */
 export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
   return <div className={clsx('eyebrow', className)}>{children}</div>;
 }
@@ -69,10 +77,14 @@ export function Button({
 }: { children: ReactNode; variant?: BtnVariant } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const styles: Record<BtnVariant, string> = {
     // Emerald is the INTERACTION colour. Gold is identity and never lands here.
-    primary: 'bg-primary text-[var(--primary-fg)] hover:shadow-[var(--shadow-glow)] hover:brightness-110',
-    secondary: 'bg-transparent text-ink border border-line-strong hover:border-[var(--accent)] hover:text-accent',
+    // Glossy and raised: a lighter top and a soft drop, so a button reads as
+    // something to press rather than a coloured rectangle.
+    // The near-black pill (white in dark mode): the one action a screen wants.
+    primary: 'btn-raised bg-primary text-[var(--primary-fg)] hover:brightness-110',
+    // A raised light pill for everything else.
+    secondary: 'btn-soft text-ink hover:border-line-strong',
     ghost: 'text-ink-soft hover:bg-fill hover:text-ink',
-    soft: 'bg-transparent text-ink border border-line-strong hover:border-[var(--accent)] hover:text-accent',
+    soft: 'btn-soft text-ink hover:border-line-strong',
     danger: 'bg-transparent text-danger border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] hover:bg-danger-soft',
   };
   return (
@@ -80,7 +92,7 @@ export function Button({
       type={type}
       {...rest}
       className={clsx(
-        'focus-ring inline-flex items-center justify-center gap-2 rounded-btn h-9 px-3.5',
+        'focus-ring inline-flex items-center justify-center gap-2 rounded-full h-9 px-4',
         'text-[13px] font-semibold tracking-[-0.01em] whitespace-nowrap',
         'transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-standard',
         'active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100',
@@ -103,7 +115,7 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
   return (
     <div
       role="group"
-      className={clsx('inline-flex p-[3px] gap-px rounded-full bg-fill max-w-full overflow-x-auto no-scrollbar', className)}
+      className={clsx('inline-flex p-[3px] gap-px rounded-full bg-[color-mix(in_srgb,var(--ink)_7%,transparent)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] max-w-full overflow-x-auto no-scrollbar', className)}
     >
       {options.map((o) => {
         const on = value === o.value;
@@ -114,9 +126,9 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
             aria-pressed={on}
             onClick={() => onChange(o.value)}
             className={clsx(
-              'focus-ring relative shrink-0 px-3.5 py-1.5 rounded-full text-[12.5px] font-semibold tracking-[-0.01em]',
+              'focus-ring relative shrink-0 px-3.5 py-1.5 rounded-full text-[12.5px] tracking-[-0.01em]',
               'transition-colors duration-150 ease-standard',
-              on ? 'text-ink' : 'text-muted hover:text-ink',
+              on ? 'text-ink font-semibold' : 'text-muted font-medium hover:text-ink',
             )}
           >
             {on && (
@@ -124,7 +136,7 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
                 layoutId={pillId}
                 transition={SPRING}
                 aria-hidden
-                className="absolute inset-0 rounded-full bg-surface shadow-[var(--shadow-1)] border border-line"
+                className="absolute inset-0 rounded-full bg-[var(--card-2)] shadow-[0_3px_8px_-3px_rgba(0,0,0,0.25)]"
               />
             )}
             <span className="relative">{o.label}</span>
@@ -135,11 +147,40 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
   );
 }
 
+// ---- Toggle --------------------------------------------------------------
+/** The Zentra switch: green when on, a white knob with a soft drop. */
+export function Toggle({ on, onChange, label, disabled }: {
+  on: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!on)}
+      className={clsx(
+        'focus-ring relative w-[46px] h-7 rounded-full shrink-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-colors duration-[250ms]',
+        on ? 'bg-[var(--data-green)]' : 'bg-[color-mix(in_srgb,var(--ink)_14%,transparent)]',
+        disabled && 'opacity-40 cursor-not-allowed',
+      )}
+    >
+      <span
+        className={clsx(
+          'absolute top-[3px] left-[3px] w-[22px] h-[22px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-transform duration-[250ms]',
+          on && 'translate-x-[18px]',
+        )}
+      />
+    </button>
+  );
+}
+
 // ---- Inputs --------------------------------------------------------------
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="text-xs font-semibold text-ink-soft">{label}</span>
+      <span className="text-[12.5px] font-medium text-ink-soft">{label}</span>
       <div className="mt-1.5">{children}</div>
       {hint && <span className="mt-1.5 block text-[11.5px] text-muted">{hint}</span>}
     </label>
@@ -147,7 +188,7 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 const inputCls = clsx(
-  'focus-ring w-full rounded-input border border-line-strong bg-surface',
+  'focus-ring w-full rounded-[14px] border border-line bg-[var(--card-2)]',
   'px-3 h-[38px] text-sm text-ink placeholder:text-muted outline-none',
   'transition-[border-color,box-shadow] duration-150 ease-standard',
   'hover:border-[color-mix(in_srgb,var(--ink)_22%,transparent)]',
@@ -174,39 +215,79 @@ function useMounted(): boolean {
   return m;
 }
 
-// ---- Progress bar (budget zones) ----------------------------------------
-export function ProgressBar({ fraction, color, height = 7 }: { fraction: number; color?: string; height?: number }) {
+// ---- Progress bar (budget / coverage / goal) ----------------------------
+/**
+ * The Zentra gauge: a thick pill in a white recessed track with the value on
+ * a % chip at its tip. Blue while fine, amber from 80%, pink when over —
+ * unless the caller forces a colour (coverage pages invert the meaning).
+ * `height` is accepted for older call sites and ignored: one bar style.
+ */
+export function ProgressBar({ fraction, color, label }: { fraction: number; color?: string; height?: number; label?: string }) {
   const mounted = useMounted();
-  const pct = Math.min(100, Math.max(0, fraction * 100));
-  // Zone colour when the caller does not force one: over budget, near it, or fine.
-  const c = color ?? (pct > 90 ? 'var(--danger)' : pct >= 70 ? 'var(--warning)' : 'var(--success)');
+  const safe = Number.isFinite(fraction) ? fraction : 0;
+  const pct = Math.min(100, Math.max(0, safe * 100));
+  const c = color ?? (safe > 1 ? 'var(--data-rose)' : safe >= 0.8 ? 'var(--data-amber)' : 'var(--data-blue)');
   return (
-    <div className="w-full rounded-full overflow-hidden bg-fill-strong" style={{ height }}>
+    <div className="gauge-track w-full">
       <div
-        className="h-full rounded-full transition-[width] duration-700 ease-standard"
-        style={{ width: `${mounted ? pct : 0}%`, background: c }}
-      />
+        className="gauge-fill transition-[width] duration-700 ease-standard"
+        style={{ width: mounted ? `max(46px, ${pct}%)` : '46px', ['--g-b' as string]: c }}
+      >
+        <span className="gauge-chip tnum">{label ?? `${Math.round(safe * 100)}%`}</span>
+      </div>
     </div>
   );
 }
 
+/**
+ * Colour for a "higher is better" part score (health areas, coverage): blue
+ * while healthy, amber when it needs work, pink when it is weak. Colour only
+ * appears when a part is weak.
+ */
+export function scoreColor(fraction: number | null | undefined): string {
+  if (fraction == null || !Number.isFinite(fraction)) return 'var(--muted)';
+  return fraction >= 0.7 ? 'var(--data-blue)' : fraction >= 0.4 ? 'var(--data-amber)' : 'var(--data-rose)';
+}
+
 // ---- Progress ring (goals / health) -------------------------------------
-export function Ring({ fraction, size = 120, stroke = 11, color = 'var(--accent)', children }: {
+/**
+ * The Zentra score ring: a 270° arc open at the bottom, round caps, a blue
+ * gradient (#4691FE → #1C6FFB) with a soft blue glow. The figure sits in the
+ * middle, large and light. `color` overrides the gradient's deep end.
+ */
+export function Ring({ fraction, size = 120, stroke = 11, color = 'var(--data-blue)', children }: {
   fraction: number; size?: number; stroke?: number; color?: string; children?: ReactNode;
 }) {
   const mounted = useMounted();
-  const r = (size - stroke) / 2;
+  const ringId = useId().replace(/:/g, '');
+  const r = (size - stroke) / 2 - 2;
   const c = 2 * Math.PI * r;
-  const f = mounted ? Math.min(1, Math.max(0, fraction)) : 0;
+  const sweep = c * 0.75;
+  const f = mounted ? Math.min(1, Math.max(0, Number.isFinite(fraction) ? fraction : 0)) : 0;
   return (
     <div className="relative grid place-items-center shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--fill-strong)" strokeWidth={stroke} />
+      <svg width={size} height={size} className="rotate-[135deg] overflow-visible" aria-hidden="true">
+        <defs>
+          <linearGradient id={ringId} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor={color === 'var(--data-blue)' ? 'var(--data-blue-a)' : `color-mix(in srgb, ${color} 60%, #fff)`} />
+            <stop offset="1" stopColor={color} />
+          </linearGradient>
+        </defs>
         <circle
-          cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
-          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - f)}
-          style={{ transition: 'stroke-dashoffset .9s cubic-bezier(.22,1,.36,1)' }}
+          cx={size / 2} cy={size / 2} r={r} fill="none"
+          stroke="color-mix(in srgb, var(--ink) 8%, transparent)" strokeWidth={stroke}
+          strokeLinecap="round" strokeDasharray={`${sweep} ${c}`}
         />
+        {f > 0 && (
+          <circle
+            cx={size / 2} cy={size / 2} r={r} fill="none" stroke={`url(#${ringId})`} strokeWidth={stroke}
+            strokeLinecap="round" strokeDasharray={`${sweep * f} ${c}`}
+            style={{
+              filter: `drop-shadow(0 5px 6px color-mix(in srgb, ${color} 35%, transparent))`,
+              transition: 'stroke-dasharray .9s cubic-bezier(.22,1,.36,1)',
+            }}
+          />
+        )}
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">{children}</div>
     </div>
@@ -217,15 +298,15 @@ export function Ring({ fraction, size = 120, stroke = 11, color = 'var(--accent)
 type ChipTone = 'neutral' | 'accent' | 'success' | 'danger' | 'warning' | 'violet';
 export function Chip({ children, tone = 'neutral', className }: { children: ReactNode; tone?: ChipTone; className?: string }) {
   const tones: Record<ChipTone, string> = {
-    neutral: 'bg-fill text-ink-soft border-line',
-    accent: 'bg-accent-soft text-accent border-accent-line',
+    neutral: 'bg-[var(--card-2)] text-ink border-transparent shadow-[0_2px_6px_-2px_rgba(0,0,0,0.18)]',
+    accent: 'bg-[color-mix(in_srgb,var(--data-blue)_12%,transparent)] text-[var(--data-blue)] border-transparent',
     success: 'bg-success-soft text-success border-[color-mix(in_srgb,var(--success)_26%,transparent)]',
     danger: 'bg-danger-soft text-danger border-[color-mix(in_srgb,var(--danger)_26%,transparent)]',
     warning: 'bg-warning-soft text-warning border-[color-mix(in_srgb,var(--warning)_30%,transparent)]',
     violet: 'bg-violet-soft text-violet border-[color-mix(in_srgb,var(--violet)_30%,transparent)]',
   };
   return (
-    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full border text-[11px] font-semibold whitespace-nowrap', tones[tone], className)}>
+    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full border text-[11.5px] font-medium whitespace-nowrap', tones[tone], className)}>
       {children}
     </span>
   );
@@ -349,7 +430,10 @@ export function Bars({ groups, height = 200, formatY }: { groups: BarGroup[]; he
                       style={{
                         height: v.value > 0 ? Math.max((v.value / max) * barsH, 3) : 0,
                         maxWidth: CHART.maxBarThickness,
-                        background: v.color,
+                        // Striped at rest, solid when hovered: the Zentra rule.
+                        background: hover === i
+                          ? v.color
+                          : `repeating-linear-gradient(-45deg, ${v.color} 0 2px, transparent 2px 5px), color-mix(in srgb, ${v.color} 22%, transparent)`,
                       }}
                     />
                   ))}
@@ -358,7 +442,7 @@ export function Bars({ groups, height = 200, formatY }: { groups: BarGroup[]; he
               <span
                 className={clsx(
                   'text-[11px] truncate max-w-full transition-colors',
-                  hover === i ? 'font-bold text-ink' : 'font-semibold text-muted',
+                  hover === i ? 'font-semibold text-ink' : 'text-muted',
                 )}
               >
                 {g.label}
@@ -393,16 +477,16 @@ export function StatStrip({ items }: { items: StatItem[] }) {
     // NOT `overflow-hidden`. The rounded corners are what that was for, and
     // `rounded-[inherit]` on the inner grid clips them just as well — while
     // `overflow-hidden` also clipped every Hint popover opened inside a cell.
-    <div className="card">
-      <div className={clsx('grid grid-cols-2 rounded-[inherit]', cols, 'divide-x divide-y md:divide-y-0 divide-line')}>
+    <div className="card p-2">
+      <div className={clsx('grid grid-cols-2 gap-2', cols)}>
         {items.map((it, i) => (
-          <div key={i} className="px-5 py-4 min-w-0">
+          <div key={i} className="inset px-4 py-3 min-w-0">
             <div className="flex items-center gap-1">
-              <div className="eyebrow truncate">{it.label}</div>
+              <div className="text-[12.5px] text-muted truncate">{it.label}</div>
               {it.term && <Hint term={it.term} className="shrink-0" />}
             </div>
             <div
-              className="mt-2 text-[22px] font-bold tracking-[-0.035em] tnum truncate"
+              className="mt-1.5 text-[clamp(16px,4.4vw,22px)] font-light tracking-[-0.02em] tnum truncate"
               style={it.accent ? { color: it.accent } : undefined}
             >
               {it.value}
@@ -416,11 +500,21 @@ export function StatStrip({ items }: { items: StatItem[] }) {
 }
 
 // ---- Page header + empty state ------------------------------------------
-export function PageIntro({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
+export function PageIntro({ title, subtitle, action, info }: {
+  title: string; subtitle?: string; action?: ReactNode;
+  /**
+   * SECTION_HELP key for a screen that is one list with no card titles of its
+   * own (transactions, the add form): the ⓘ then explains the screen itself.
+   */
+  info?: SectionKey;
+}) {
   return (
     <div className="flex items-end gap-4 flex-wrap mb-6">
       <div className="min-w-0">
-        <h1 className="text-[var(--fs-h1)] leading-[1.15] font-bold tracking-[-0.03em] font-display">{title}</h1>
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="text-[32px] leading-[1.1] font-normal tracking-[-0.03em] font-display">{title}</h1>
+          {info && <SectionInfo k={info} />}
+        </div>
         {subtitle && <p className="text-ink-soft text-sm mt-1.5">{subtitle}</p>}
       </div>
       {action && <div className="ml-auto flex items-center gap-2 flex-wrap">{action}</div>}
@@ -432,11 +526,11 @@ export function EmptyState({ icon, title, hint, action }: { icon?: ReactNode; ti
   return (
     <div className="flex flex-col items-center justify-center text-center py-14 px-4">
       {icon && (
-        <div className="w-12 h-12 rounded-[16px] bg-fill border border-line text-ink-soft grid place-items-center mb-4">
+        <div className="w-12 h-12 rounded-full bg-[var(--card-2)] shadow-[0_3px_10px_-4px_rgba(0,0,0,0.2)] text-ink-soft grid place-items-center mb-4">
           {icon}
         </div>
       )}
-      <p className="font-semibold text-ink text-[15px]">{title}</p>
+      <p className="font-medium text-ink text-[16px]">{title}</p>
       {hint && <p className="text-[13px] text-muted mt-2 max-w-sm leading-relaxed">{hint}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>

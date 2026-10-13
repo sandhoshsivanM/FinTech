@@ -40,54 +40,54 @@ abstract final class KhazanaColors {
   // --- Vault (dark) ---------------------------------------------------------
   // Four surface levels. Jumping from near-black straight to a bright card is
   // what makes dark UI look flat; each step is a small, even lift.
-  static const Color vaultBackground = Color(0xFF080D0B);
-  static const Color vaultSurface = Color(0xFF101714);
-  static const Color vaultSurfaceElevated = Color(0xFF151E1A);
-  static const Color vaultSurfaceStrong = Color(0xFF1A2520);
-  static const Color vaultBorder = Color(0xFF26342E);
-  static const Color vaultBorderStrong = Color(0xFF34443C);
+  static const Color vaultBackground = Color(0xFF0E0E10);
+  static const Color vaultSurface = Color(0xFF141417);
+  static const Color vaultSurfaceElevated = Color(0xFF1C1C20);
+  static const Color vaultSurfaceStrong = Color(0xFF26262B);
+  static const Color vaultBorder = Color(0xFF26262B);
+  static const Color vaultBorderStrong = Color(0xFF34343A);
 
-  static const Color vaultTextPrimary = Color(0xFFF4F7F5);
-  static const Color vaultTextSecondary = Color(0xFFA0ADA7);
-  static const Color vaultTextMuted = Color(0xFF718079);
-  static const Color vaultTextDisabled = Color(0xFF4E5A55);
+  static const Color vaultTextPrimary = Color(0xFFF5F5F7);
+  static const Color vaultTextSecondary = Color(0xFFA1A1A8);
+  static const Color vaultTextMuted = Color(0xFF76767E);
+  static const Color vaultTextDisabled = Color(0xFF48484E);
 
-  static const Color vaultPrimary = Color(0xFF20C98A);
-  static const Color vaultPrimaryHover = Color(0xFF2BDB99);
-  static const Color vaultPrimarySoft = Color(0xFF12352A);
+  static const Color vaultPrimary = Color(0xFFF5F5F7);
+  static const Color vaultPrimaryHover = Color(0xFFFFFFFF);
+  static const Color vaultPrimarySoft = Color(0xFF26262B);
 
   /// Text ON an emerald fill. Near-black reads 8.9:1; white would be 2.4:1.
-  static const Color vaultPrimaryOn = Color(0xFF06110C);
+  static const Color vaultPrimaryOn = Color(0xFF111214);
 
   static const Color vaultGold = Color(0xFFD9AD52);
   static const Color vaultGoldSoft = Color(0xFF302718);
 
-  static const Color vaultSuccess = Color(0xFF20C98A);
-  static const Color vaultWarning = Color(0xFFE5B84D);
-  static const Color vaultDanger = Color(0xFFF06464);
-  static const Color vaultInfo = Color(0xFF63A8FF);
+  static const Color vaultSuccess = Color(0xFF34C759);
+  static const Color vaultWarning = Color(0xFFFFB340);
+  static const Color vaultDanger = Color(0xFFFF4F9A);
+  static const Color vaultInfo = Color(0xFF3D86FF);
 
   // --- Ledger (light) -------------------------------------------------------
   // The page is #F6F7F5 and cards are white, so a card is the brightest
   // surface. That one step gives the light theme depth without a shadow.
   //
   // These are `--canvas`, `--card` and `--line` from globals.css verbatim.
-  static const Color ledgerBackground = Color(0xFFF6F7F5);
-  static const Color ledgerSurface = Color(0xFFFFFFFF);
-  static const Color ledgerSurfaceSecondary = Color(0xFFEDF2EF);
-  static const Color ledgerBorder = Color(0xFFE2E6E1);
-  static const Color ledgerBorderStrong = Color(0xFFC7D2CC);
+  static const Color ledgerBackground = Color(0xFFF2F2F2);
+  static const Color ledgerSurface = Color(0xFFF8F8F8);
+  static const Color ledgerSurfaceSecondary = Color(0xFFEDEDEF);
+  static const Color ledgerBorder = Color(0xFFE6E6E8);
+  static const Color ledgerBorderStrong = Color(0xFFD4D4D8);
 
-  static const Color ledgerTextPrimary = Color(0xFF101613);
-  static const Color ledgerTextSecondary = Color(0xFF53625B);
-  static const Color ledgerTextMuted = Color(0xFF718079);
-  static const Color ledgerTextDisabled = Color(0xFFA7B1AC);
+  static const Color ledgerTextPrimary = Color(0xFF111214);
+  static const Color ledgerTextSecondary = Color(0xFF5C5C61);
+  static const Color ledgerTextMuted = Color(0xFF8E8E93);
+  static const Color ledgerTextDisabled = Color(0xFFB5B5B5);
 
   /// `--accent` from globals.css. 6.47:1 on a white card, up from the 5.35:1
   /// of the #087A56 this replaced.
-  static const Color ledgerPrimary = Color(0xFF176B4D);
-  static const Color ledgerPrimaryHover = Color(0xFF0D3B2E);
-  static const Color ledgerPrimarySoft = Color(0xFFE1F3EB);
+  static const Color ledgerPrimary = Color(0xFF111214);
+  static const Color ledgerPrimaryHover = Color(0xFF000000);
+  static const Color ledgerPrimarySoft = Color(0xFFE9E9EC);
   static const Color ledgerPrimaryOn = Color(0xFFFFFFFF);
 
   static const Color ledgerGold = Color(0xFFA97922);
@@ -103,10 +103,10 @@ abstract final class KhazanaColors {
   /// more. They were both #087A56, which made a primary button pixel-identical
   /// to a profit figure — the one confusion this palette's own header says must
   /// never happen.
-  static const Color ledgerSuccess = Color(0xFF19734D);
-  static const Color ledgerWarning = Color(0xFFA97922);
-  static const Color ledgerDanger = Color(0xFFB54444);
-  static const Color ledgerInfo = Color(0xFF2672C8);
+  static const Color ledgerSuccess = Color(0xFF0B8A1E);
+  static const Color ledgerWarning = Color(0xFFB86E00);
+  static const Color ledgerDanger = Color(0xFFD61F69);
+  static const Color ledgerInfo = Color(0xFF1C6FFB);
 
   /// Categorical chart series. Emerald leads, gold follows.
   ///
@@ -118,26 +118,26 @@ abstract final class KhazanaColors {
   /// (target 8), normal-vision floor 18.2. The ORDER is the colourblind-safety
   /// mechanism; do not re-order.
   static const List<Color> seriesDark = [
-    Color(0xFF4EB982), // equity
-    Color(0xFFA4AAF6), // debt
-    Color(0xFFC19C3A), // gold
-    Color(0xFF63A1D5), // real estate
-    Color(0xFFEA8760), // retirement
-    Color(0xFF73C7CC), // crypto
-    Color(0xFFCA7CB4), // cash
-    Color(0xFF9CAA65), // spare
+    Color(0xFF3D86FF), // blue
+    Color(0xFF34C759), // green
+    Color(0xFFFF4F9A), // pink
+    Color(0xFF8E8E93), // grey
+    Color(0xFF86B4FF), // blue tint
+    Color(0xFF8ADB98), // green tint
+    Color(0xFFFD9CC6), // pink tint
+    Color(0xFF5A5A60), // dark grey
   ];
 
-  /// The Ledger step. Same hues, dropped so each mark clears 3:1 on white.
+  /// The Ledger step: the Zentra data colours, then tints and neutrals.
   static const List<Color> seriesLight = [
-    Color(0xFF008451), // equity
-    Color(0xFF757AC2), // debt
-    Color(0xFFA07C06), // gold
-    Color(0xFF2F6D9E), // real estate
-    Color(0xFF983E14), // retirement
-    Color(0xFF3E9498), // crypto
-    Color(0xFF8D447A), // cash
-    Color(0xFF646F2B), // spare
+    Color(0xFF1C6FFB), // blue
+    Color(0xFF29B340), // green
+    Color(0xFFF33688), // pink
+    Color(0xFFB5B5BB), // grey
+    Color(0xFF7FB0FD), // blue tint
+    Color(0xFF8ADB98), // green tint
+    Color(0xFFFC9CC4), // pink tint
+    Color(0xFF8E8E93), // dark grey
   ];
 
   /// Back-compat: callers that predate per-theme values get the Vault step.
@@ -145,6 +145,6 @@ abstract final class KhazanaColors {
 
   /// Reserved neutral for "Other" / "Unclassified" — a coverage fact, not a
   /// category, so it must never compete with a real slice.
-  static const Color seriesNeutralDark = Color(0xFF718079);
-  static const Color seriesNeutralLight = Color(0xFFA7B1AC);
+  static const Color seriesNeutralDark = Color(0xFF5A5A60);
+  static const Color seriesNeutralLight = Color(0xFFCFCFD4);
 }

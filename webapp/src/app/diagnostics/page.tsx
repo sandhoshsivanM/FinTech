@@ -19,10 +19,15 @@ import { runDiagnostics, worstLevel, type Check } from '@/domain/diagnostics';
 import { GlassCard, PageIntro, SectionHeader, Chip } from '@/components/ui';
 
 const ICON = {
-  ok: <CheckCircle2 size={17} style={{ color: 'var(--income)' }} />,
-  warn: <AlertTriangle size={17} style={{ color: 'var(--warn)' }} />,
-  error: <XCircle size={17} style={{ color: 'var(--expense)' }} />,
+  ok: <CheckCircle2 size={17} />,
+  warn: <AlertTriangle size={17} />,
+  error: <XCircle size={17} />,
 };
+const TONE = {
+  ok: { c: 'var(--data-green-ink)', chip: 'success', word: 'OK' },
+  warn: { c: 'var(--warn)', chip: 'warning', word: 'Check' },
+  error: { c: 'var(--expense)', chip: 'danger', word: 'Error' },
+} as const;
 
 /**
  * Where each failing check is actually resolved.
@@ -52,15 +57,23 @@ function CheckRow({ check }: { check: Check }) {
   // green tick would invite work that does not need doing.
   const fix = check.level === 'ok' ? undefined : FIX[check.id];
   return (
-    <div className="flex gap-3 py-3">
-      <span className="shrink-0 mt-0.5">{ICON[check.level]}</span>
-      <div className="min-w-0">
-        <div className="font-semibold text-sm">{check.label}</div>
+    <div className="flex items-start gap-3 py-3">
+      <span
+        className="shrink-0 grid place-items-center w-9 h-9 rounded-full"
+        style={{ color: TONE[check.level].c, background: `color-mix(in srgb, ${TONE[check.level].c} 12%, transparent)` }}
+      >
+        {ICON[check.level]}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-[14px] flex-1 min-w-0">{check.label}</span>
+          <Chip tone={TONE[check.level].chip}>{TONE[check.level].word}</Chip>
+        </div>
         <p className="text-[13px] text-muted leading-relaxed mt-0.5">{check.detail}</p>
         {fix && (
           <Link
             href={fix.href}
-            className="focus-ring mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[var(--accent)] hover:underline"
+            className="focus-ring btn-soft mt-2 inline-flex items-center gap-1 h-8 px-3 rounded-full text-xs font-semibold text-ink"
           >
             {fix.label}
             <ArrowRight size={13} aria-hidden="true" />
@@ -128,12 +141,12 @@ export default function DiagnosticsPage() {
       />
 
       <GlassCard>
-        <SectionHeader title="Record counts" />
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <SectionHeader title="Record counts" info="diagnostics.recordCounts" />
+        <div className="tray p-2 mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           {counts.map(([label, n]) => (
-            <div key={label} className="rounded-[var(--radius-card)] border border-[var(--line)] p-3">
+            <div key={label} className="inset p-3">
               <div className="text-xs text-muted">{label}</div>
-              <div className="text-xl font-bold tnum mt-0.5">{n.toLocaleString('en-IN')}</div>
+              <div className="text-xl font-light tnum mt-0.5">{n.toLocaleString('en-IN')}</div>
             </div>
           ))}
         </div>
@@ -147,6 +160,7 @@ export default function DiagnosticsPage() {
       <GlassCard>
         <SectionHeader
           title="Integrity checks"
+          info="diagnostics.integrityChecks"
           action={<Stethoscope size={16} className="text-muted" />}
         />
         <div className="mt-1 divide-y divide-[var(--line)]">

@@ -13,7 +13,7 @@ export function MiniSparkline({
   values,
   width = 92,
   height = 30,
-  color = 'var(--accent)',
+  color = 'var(--data-blue)',
   fill = true,
 }: {
   values: number[];

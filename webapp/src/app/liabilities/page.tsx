@@ -57,7 +57,7 @@ function SummaryTile({ label, value, sub, accent, term }: {
         <div className="eyebrow">{label}</div>
         {term && <Hint term={term} className="shrink-0" />}
       </div>
-      <div className="mt-1.5 text-[22px] font-bold tracking-tight tnum" style={accent ? { color: accent } : undefined}>{value}</div>
+      <div className="mt-1.5 text-[22px] font-light tracking-tight tnum" style={accent ? { color: accent } : undefined}>{value}</div>
       {sub && <div className="text-[11.5px] text-muted mt-0.5">{sub}</div>}
     </div>
   );
@@ -228,23 +228,23 @@ export default function LiabilitiesPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     <span
-                      className="w-9 h-9 rounded-[var(--radius-panel)] grid place-items-center"
+                      className="w-9 h-9 rounded-full grid place-items-center"
                       style={{
-                        background: l.kind === 'credit_card' ? 'var(--violet)22' : 'var(--accent)22',
-                        color: l.kind === 'credit_card' ? 'var(--violet)' : 'var(--accent)',
+                        background: 'color-mix(in srgb, var(--data-blue) 14%, transparent)',
+                        color: 'var(--data-blue)',
                       }}
                     >
                       {l.kind === 'credit_card' ? <CreditCard size={17} /> : <Landmark size={17} />}
                     </span>
                     <div>
-                      <div className="font-bold text-sm">{l.name}</div>
+                      <div className="font-semibold text-sm">{l.name}</div>
                       <KindBadge kind={l.kind} />
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      className="p-1.5 rounded-[var(--radius-card)] text-ink-soft hover:bg-black/5 transition"
+                      className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] transition text-ink-soft hover:text-ink"
                       aria-label="Edit liability"
                       onClick={() => startEdit(l.id)}
                     >
@@ -252,7 +252,7 @@ export default function LiabilitiesPage() {
                     </button>
                     <button
                       type="button"
-                      className="p-1.5 rounded-[var(--radius-card)] text-expense hover:bg-expense/10 transition"
+                      className="focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] transition text-muted hover:text-expense"
                       aria-label="Delete liability"
                       onClick={() => deleteLiability(l.id)}
                     >
@@ -265,13 +265,13 @@ export default function LiabilitiesPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <div className="text-[11px] text-muted">Balance</div>
-                    <div className="font-extrabold text-base tnum" style={{ color: 'var(--expense)' }}>
+                    <div className="font-semibold text-base tnum" style={{ color: 'var(--expense)' }}>
                       {mask(fmt.money(principal))}
                     </div>
                   </div>
                   <div>
                     <div className="text-[11px] text-muted">APR</div>
-                    <div className="font-bold text-base tnum">{aprPct.toFixed(2)}%</div>
+                    <div className="font-semibold text-base tnum">{aprPct.toFixed(2)}%</div>
                   </div>
                 </div>
 
@@ -281,7 +281,7 @@ export default function LiabilitiesPage() {
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-muted">Utilization</span>
                       <span
-                        className="text-xs font-bold tnum"
+                        className="text-xs font-semibold tnum"
                         style={{ color: utilizationPct! > 70 ? 'var(--expense)' : utilizationPct! >= 30 ? 'var(--warn)' : 'var(--income)' }}
                       >
                         {utilizationPct}%
@@ -298,7 +298,7 @@ export default function LiabilitiesPage() {
                 {l.kind === 'loan' && monthlyEmi && (
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted">Monthly EMI</span>
-                    <span className="font-bold tnum">{mask(fmt.money(monthlyEmi))}</span>
+                    <span className="font-semibold tnum">{mask(fmt.money(monthlyEmi))}</span>
                   </div>
                 )}
 
@@ -314,7 +314,7 @@ export default function LiabilitiesPage() {
       {/* Add / Edit liability form */}
       {showAdd && (
         <GlassCard>
-          <SectionHeader title={editingId ? 'Edit Liability' : 'New Liability'} />
+          <SectionHeader title={editingId ? 'Edit Liability' : 'New Liability'} info="liabilities.form" />
           <div className="space-y-4">
             <Field label="Name">
               <Input
@@ -396,7 +396,7 @@ export default function LiabilitiesPage() {
       {/* Debt Payoff Simulator */}
       {liabilities.length > 0 && (
         <GlassCard>
-          <SectionHeader title="Debt Payoff Simulator" />
+          <SectionHeader title="Debt Payoff Simulator" info="liabilities.payoffSimulator" />
           <p className="text-xs text-muted mb-4">
             Calculate how long it takes to pay off all debts given a fixed monthly payment.
           </p>
@@ -437,13 +437,13 @@ export default function LiabilitiesPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="text-[11px] text-muted">Payoff Time</div>
-                      <div className="font-extrabold text-xl tnum" style={{ color: 'var(--income)' }}>
+                      <div className="font-light text-xl tnum" style={{ color: 'var(--income)' }}>
                         {formatMonths(simResult.months)}
                       </div>
                     </div>
                     <div>
                       <div className="text-[11px] text-muted">Total Interest</div>
-                      <div className="font-extrabold text-xl tnum" style={{ color: 'var(--expense)' }}>
+                      <div className="font-light text-xl tnum" style={{ color: 'var(--expense)' }}>
                         {mask(fmt.money(simResult.totalInterest))}
                       </div>
                     </div>

@@ -1,3 +1,4 @@
+import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
@@ -71,7 +72,7 @@ Future<void> _showAddAccount(BuildContext context, WidgetRef ref) async {
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        title: const Text('Add account'),
+        title: InfoHint.titled(const Text('Add account'), 'accounts.form'),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 380),
           child: Column(
@@ -104,8 +105,9 @@ Future<void> _showAddAccount(BuildContext context, WidgetRef ref) async {
               const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: balance,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Balance today',
                   prefixText: '₹ ',
@@ -118,7 +120,8 @@ Future<void> _showAddAccount(BuildContext context, WidgetRef ref) async {
                 'holds now and every transaction you record moves it from '
                 'there.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -136,21 +139,26 @@ Future<void> _showAddAccount(BuildContext context, WidgetRef ref) async {
               // An unparseable balance is rejected rather than silently treated
               // as zero: an account that quietly opens at nothing is worse than
               // one that refuses to be created.
-              final opening =
-                  raw.isEmpty ? Decimal.zero : Decimal.tryParse(raw);
+              final opening = raw.isEmpty
+                  ? Decimal.zero
+                  : Decimal.tryParse(raw);
               if (opening == null) {
                 setState(() => error = true);
                 return;
               }
               final vaultId = ref.read(currentVaultIdProvider);
-              await ref.read(accountRepositoryProvider).save(Account(
-                    id: 'acct-${_uuid.v4()}',
-                    vaultId: vaultId,
-                    name: label,
-                    type: AccountType.asset,
-                    subtype: group.subtype,
-                    openingBalance: opening.abs(),
-                  ));
+              await ref
+                  .read(accountRepositoryProvider)
+                  .save(
+                    Account(
+                      id: 'acct-${_uuid.v4()}',
+                      vaultId: vaultId,
+                      name: label,
+                      type: AccountType.asset,
+                      subtype: group.subtype,
+                      openingBalance: opening.abs(),
+                    ),
+                  );
               if (context.mounted) Navigator.pop(context);
             },
             child: const Text('Add'),
@@ -175,10 +183,11 @@ Future<void> _showAddAccount(BuildContext context, WidgetRef ref) async {
 /// worse than not showing them — an empty "Credit cards" heading reads as
 /// "you have none".
 enum _Group {
-  bank('Bank', 'bank', Icons.account_balance_outlined),
-  cash('Cash & wallets', 'cash', Icons.payments_outlined);
+  bank('Bank', 'bank', Icons.account_balance_outlined, 'accounts.bank'),
+  cash('Cash & wallets', 'cash', Icons.payments_outlined, 'accounts.cash');
 
-  const _Group(this.label, this.subtype, this.icon);
+  const _Group(this.label, this.subtype, this.icon, this.help);
+  final String help;
   final String label;
   final String subtype;
   final IconData icon;
@@ -191,7 +200,8 @@ class _Body extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final accounts = ref.watch(accountListProvider).valueOrNull;
     final postings = ref.watch(postingListProvider).valueOrNull;
-    final liabilities = ref.watch(liabilityListProvider).valueOrNull ?? const [];
+    final liabilities =
+        ref.watch(liabilityListProvider).valueOrNull ?? const [];
 
     // Distinguish "still loading" from "nothing here": an empty state shown
     // over a stream that has not emitted yet tells the user they have no
@@ -200,8 +210,9 @@ class _Body extends ConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final balances =
-        ref.watch(accountLedgerProvider).accountBalances(accounts, postings);
+    final balances = ref
+        .watch(accountLedgerProvider)
+        .accountBalances(accounts, postings);
 
     final live = accounts.where((a) => !a.archived).toList();
     final grouped = <_Group, List<Account>>{};
@@ -215,7 +226,8 @@ class _Body extends ConsumerWidget {
       return EmptyState(
         icon: Icons.account_balance_outlined,
         title: 'No accounts yet',
-        message: 'Add the accounts your money sits in and Khazana keeps their '
+        message:
+            'Add the accounts your money sits in and Khazana keeps their '
             'balances in step with every transaction you record. Importing a '
             'bank statement fills one in too.',
         action: FilledButton.icon(
@@ -239,13 +251,18 @@ class _Body extends ConsumerWidget {
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.xl),
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.xl,
+      ),
       children: [
         Row(
           children: [
             Expanded(
               child: StatTile(
                 label: 'Cash on hand',
+                term: 'cash',
                 value: Money.format(liquid),
                 icon: Icons.account_balance_wallet_outlined,
                 emphasise: true,
@@ -255,6 +272,7 @@ class _Body extends ConsumerWidget {
             Expanded(
               child: StatTile(
                 label: 'Owed on cards & loans',
+                term: 'liabilities',
                 value: Money.format(owed),
                 icon: Icons.credit_card_outlined,
                 valueColor: owed > Decimal.zero ? context.colors.expense : null,
@@ -281,7 +299,8 @@ class _Body extends ConsumerWidget {
           'they move only when your ledger does. Khazana never connects to a '
           'bank.',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         // Clearance for the FAB.
         const SizedBox(height: 88),
@@ -314,7 +333,6 @@ class _GroupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     var total = Decimal.zero;
     for (final a in accounts) {
       total += _Body._display(a, balances[a.id] ?? Decimal.zero);
@@ -327,17 +345,30 @@ class _GroupCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(group.icon, size: 18, color: muted),
-              const SizedBox(width: AppSpacing.sm),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: context.colors.info.withValues(alpha: 0.14),
+                ),
+                child: Icon(group.icon, size: 16, color: context.colors.info),
+              ),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: Text(group.label,
-                    style:
-                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                child: InfoHint.titled(
+                  Text(
+                    group.label,
+                    style: text.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  group.help,
+                ),
               ),
               Text(
                 Money.format(total),
-                style:
-                    text.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                style: text.titleSmall?.copyWith(fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -367,9 +398,6 @@ class _AccountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-
     // Share of the group, so a list of balances reads as a distribution rather
     // than as numbers to be compared digit by digit. Guarded: a group summing
     // to zero (or to a net credit) has no meaningful share to draw.
@@ -377,38 +405,83 @@ class _AccountRow extends StatelessWidget {
         ? (balance / groupTotal).toDouble().clamp(0.0, 1.0)
         : 0.0;
 
+    // Dark card finish by account type, like the home wallet.
+    final finish = switch (account.subtype) {
+      'bank' => const [Color(0xFF1E3A2F), Color(0xFF0A120E)],
+      'cash' => const [Color(0xFF3A2F1C), Color(0xFF120E08)],
+      _ => const [Color(0xFF262B36), Color(0xFF0E1015)],
+    };
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Text(account.name, style: text.bodyMedium)),
-              Text(
-                Money.format(balance),
-                style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: finish,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    account.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Text(
+                  Money.format(balance),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w300,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: SizedBox(
+                height: 4,
+                child: Stack(
+                  children: [
+                    const Positioned.fill(
+                      child: ColoredBox(color: Color(0x26FFFFFF)),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: share,
+                      child: const ColoredBox(color: Color(0xD9FFFFFF)),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: share,
-              minHeight: 3,
-              backgroundColor:
-                  Theme.of(context).colorScheme.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation(context.colors.accent),
             ),
-          ),
-          if (account.currency != 'INR')
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(account.currency,
-                  style: text.labelSmall?.copyWith(color: muted)),
-            ),
-        ],
+            if (account.currency != 'INR')
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  account.currency,
+                  style: const TextStyle(
+                    color: Color(0x99FFFFFF),
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -441,17 +514,37 @@ class _LiabilityCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.credit_card_outlined, size: 18, color: muted),
-              const SizedBox(width: AppSpacing.sm),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: context.colors.expense.withValues(alpha: 0.14),
+                ),
+                child: Icon(
+                  Icons.credit_card_outlined,
+                  size: 16,
+                  color: context.colors.expense,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: Text('Cards & loans',
-                    style:
-                        text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                child: InfoHint.titled(
+                  Text(
+                    'Cards & loans',
+                    style: text.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  'liabilities',
+                ),
               ),
               Text(
                 Money.format(total),
                 style: text.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800, color: context.colors.expense),
+                  fontWeight: FontWeight.w500,
+                  color: context.colors.expense,
+                ),
               ),
             ],
           ),
@@ -477,8 +570,9 @@ class _LiabilityCard extends StatelessWidget {
                   Text(
                     Money.format(l.principal),
                     style: text.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: context.colors.expense),
+                      fontWeight: FontWeight.w500,
+                      color: context.colors.expense,
+                    ),
                   ),
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/help/info_hint.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../domain/entities/category.dart';
 import '../../../presentation/data_gate.dart';
@@ -14,9 +15,7 @@ class BudgetScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: const DataGate(child: _BudgetBody()),
-    );
+    return Scaffold(body: const DataGate(child: _BudgetBody()));
   }
 }
 
@@ -37,14 +36,23 @@ class _BudgetBody extends ConsumerWidget {
               : ListView(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: InfoHint.titled(
+                        Text(
+                          'Envelopes',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        'budget.envelopes',
+                      ),
+                    ),
                     for (final p in progress)
                       BudgetTile(
                         progress: p,
-                        categoryName: byId[p.budget.categoryId]?.name ??
-                            'Category',
-                        onDelete: () => ref
-                            .read(budgetActionsProvider)
-                            .delete(p.budget.id),
+                        categoryName:
+                            byId[p.budget.categoryId]?.name ?? 'Category',
+                        onDelete: () =>
+                            ref.read(budgetActionsProvider).delete(p.budget.id),
                       ),
                   ],
                 ),
@@ -78,7 +86,10 @@ class _BudgetBody extends ConsumerWidget {
   }
 
   Future<void> _showAdd(
-      BuildContext context, WidgetRef ref, List<Category> categories) async {
+    BuildContext context,
+    WidgetRef ref,
+    List<Category> categories,
+  ) async {
     final amount = TextEditingController();
     String? categoryId = categories.first.id;
     var rollover = false;
@@ -88,7 +99,10 @@ class _BudgetBody extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('New monthly budget'),
+          title: InfoHint.titled(
+            const Text('New monthly budget'),
+            'budget.newBudget',
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -103,10 +117,13 @@ class _BudgetBody extends ConsumerWidget {
               ),
               TextField(
                 controller: amount,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(
-                    labelText: 'Monthly limit (₹)', prefixText: '₹ '),
+                  labelText: 'Monthly limit (₹)',
+                  prefixText: '₹ ',
+                ),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -129,15 +146,20 @@ class _BudgetBody extends ConsumerWidget {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () {
                 final limit = Decimal.tryParse(amount.text.trim());
-                if (limit == null || limit <= Decimal.zero || categoryId == null) {
+                if (limit == null ||
+                    limit <= Decimal.zero ||
+                    categoryId == null) {
                   return;
                 }
-                ref.read(budgetActionsProvider).add(
+                ref
+                    .read(budgetActionsProvider)
+                    .add(
                       categoryId: categoryId!,
                       limit: limit,
                       rollover: rollover,
@@ -158,26 +180,34 @@ class _BudgetBody extends ConsumerWidget {
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('50/30/20 quick start'),
+        title: InfoHint.titled(
+          const Text('50/30/20 quick start'),
+          'budget.guidance',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-                'Splits your monthly income into Needs 50%, Wants 30%, Savings 20%.'),
+              'Splits your monthly income into Needs 50%, Wants 30%, Savings 20%.',
+            ),
             const SizedBox(height: AppSpacing.sm),
             TextField(
               controller: income,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(
-                  labelText: 'Monthly income (₹)', prefixText: '₹ '),
+                labelText: 'Monthly income (₹)',
+                prefixText: '₹ ',
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () {
               final amt = Decimal.tryParse(income.text.trim());
@@ -222,8 +252,10 @@ class _EmptyBudgets extends StatelessWidget {
         children: [
           const Icon(Icons.pie_chart_outline, size: 64),
           const SizedBox(height: AppSpacing.md),
-          Text('No budgets yet',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'No budgets yet',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: AppSpacing.xs),
           const Text('Add one or use the 50/30/20 quick start.'),
         ],

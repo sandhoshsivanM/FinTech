@@ -1,5 +1,8 @@
+import '../../../core/help/info_hint.dart';
+import '../../../presentation/striped_bar.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import '../../../presentation/zentra_kit.dart';
 
 import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +16,6 @@ import '../../../domain/entities/net_worth_snapshot.dart';
 import '../../../domain/services/portfolio_analytics.dart';
 import '../../../presentation/charts/area_chart.dart';
 import '../../../presentation/charts/bar_chart.dart';
-import '../../../presentation/charts/gauge_chart.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/empty_state.dart';
 import '../../reports/providers/dashboard_providers.dart';
@@ -59,7 +61,8 @@ class _Body extends ConsumerWidget {
       return EmptyState(
         icon: Icons.insights_outlined,
         title: 'Nothing to analyse yet',
-        message: 'Add a few holdings and this screen will score '
+        message:
+            'Add a few holdings and this screen will score '
             'diversification, concentration and return quality across the '
             'whole book.',
         action: FilledButton(
@@ -80,43 +83,57 @@ class _Body extends ConsumerWidget {
     final int? diversification = positions.length < 2
         ? null
         : (((groups.clamp(0, 5)) / 5) * 55 + (1 - (conc ?? 1)) * 45)
-            .clamp(0, 100)
-            .round();
+              .clamp(0, 100)
+              .round();
     final int? risk = positions.length < 2
         ? null
-        : (100 - (conc ?? 1) * 70 - (groups <= 2 ? 18 : 0)).clamp(0, 100).round();
+        : (100 - (conc ?? 1) * 70 - (groups <= 2 ? 18 : 0))
+              .clamp(0, 100)
+              .round();
     final pnlPct = totals.costBasis <= Decimal.zero
         ? null
         : (totals.unrealisedPnl / totals.costBasis).toDouble() * 100;
-    final int? performance =
-        pnlPct == null ? null : (50 + pnlPct * 1.6).clamp(0, 100).round();
+    final int? performance = pnlPct == null
+        ? null
+        : (50 + pnlPct * 1.6).clamp(0, 100).round();
 
-    final winners =
-        positions.where((p) => p.unrealisedPnl > Decimal.zero).length;
-    final losers = positions.where((p) => p.unrealisedPnl < Decimal.zero).length;
+    final winners = positions
+        .where((p) => p.unrealisedPnl > Decimal.zero)
+        .length;
+    final losers = positions
+        .where((p) => p.unrealisedPnl < Decimal.zero)
+        .length;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 96),
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        96,
+      ),
       children: [
         Text(
           '${positions.length} position${positions.length == 1 ? '' : 's'} '
           'across $groups asset group${groups == 1 ? '' : 's'}',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: AppSpacing.lg),
 
         _ScoreCard(
           label: 'Diversification',
+          help: 'diversification',
           icon: Icons.layers_outlined,
           score: diversification,
-          sub: '$groups group${groups == 1 ? '' : 's'} · largest '
+          sub:
+              '$groups group${groups == 1 ? '' : 's'} · largest '
               '${conc == null ? '—' : '${(conc * 100).toStringAsFixed(1)}%'}',
         ),
         const SizedBox(height: AppSpacing.md),
         _ScoreCard(
           label: 'Concentration risk',
+          help: 'concentration',
           icon: Icons.shield_outlined,
           score: risk,
           sub: conc == null
@@ -126,6 +143,7 @@ class _Body extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         _ScoreCard(
           label: 'Return quality',
+          help: 'analytics.returnDistribution',
           icon: Icons.emoji_events_outlined,
           score: performance,
           sub: '$winners up · $losers down',
@@ -141,13 +159,13 @@ class _Body extends ConsumerWidget {
         if (history.length > 1) ...[
           KSectionCard(
             title: 'Net worth trend',
+            help: 'analytics.netWorthTrend',
             subtitle: '${history.length} recorded snapshots',
             child: SizedBox(
               height: 180,
               child: AreaChart(
                 values: [for (final s in history) s.netWorth.toDouble()],
-                formatValue: (v) =>
-                    Money.compact(v),
+                formatValue: (v) => Money.compact(v),
               ),
             ),
           ),
@@ -191,8 +209,10 @@ class _ScoreCard extends StatelessWidget {
     required this.icon,
     required this.score,
     required this.sub,
+    required this.help,
   });
 
+  final String help;
   final String label;
   final IconData icon;
   final int? score;
@@ -212,10 +232,11 @@ class _ScoreCard extends StatelessWidget {
     return KCard(
       child: Column(
         children: [
-          GaugeChart(
+          ScoreRing(
             value: score?.toDouble(),
-            size: 156,
-            sublabel: _band(score),
+            label: _band(score) ?? '',
+            size: 150,
+            weakBelow: 40,
           ),
           const SizedBox(height: AppSpacing.md),
           Row(
@@ -223,20 +244,25 @@ class _ScoreCard extends StatelessWidget {
             children: [
               Icon(icon, size: 15, color: cs.onSurfaceVariant),
               const SizedBox(width: AppSpacing.sm),
-              Text(label,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700)),
+              InfoHint.titled(
+                Text(
+                  label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+                ),
+                help,
+              ),
             ],
           ),
           const SizedBox(height: 4),
-          Text(sub,
-              textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: cs.onSurfaceVariant)),
+          Text(
+            sub,
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
         ],
       ),
     );
@@ -261,29 +287,45 @@ class _NetWorthMovement extends StatelessWidget {
     }
 
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final groups = <BarGroup>[];
     for (var i = 1; i < order.length; i++) {
       final delta = byMonth[order[i]]! - byMonth[order[i - 1]]!;
       final m = int.parse(order[i].split('-')[1]);
-      groups.add(BarGroup(
-        label: months[m - 1],
-        bars: [
-          Bar(
-            value: delta.abs(),
-            color: delta >= 0 ? context.colors.income : context.colors.expense,
-            label: delta >= 0 ? 'Up' : 'Down',
-          ),
-        ],
-      ));
+      groups.add(
+        BarGroup(
+          label: months[m - 1],
+          bars: [
+            Bar(
+              value: delta.abs(),
+              color: delta >= 0
+                  ? context.colors.income
+                  : context.colors.expense,
+              label: delta >= 0 ? 'Up' : 'Down',
+            ),
+          ],
+        ),
+      );
     }
-    final last12 =
-        groups.length > 12 ? groups.sublist(groups.length - 12) : groups;
+    final last12 = groups.length > 12
+        ? groups.sublist(groups.length - 12)
+        : groups;
 
     return KSectionCard(
       title: 'Net worth movement',
+      help: 'analytics.netWorthMovement',
       subtitle: 'Month on month, from recorded snapshots',
       child: last12.isEmpty
           ? Padding(
@@ -293,7 +335,8 @@ class _NetWorthMovement extends StatelessWidget {
                 'open Khazana.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             )
           : SizedBox(
@@ -327,19 +370,25 @@ class _ReturnDistribution extends StatelessWidget {
 
     final bands = <(String, int, Color)>[
       ('Above +20%', pcts.where((v) => v > 20).length, context.colors.income),
-      ('+5% to +20%', pcts.where((v) => v > 5 && v <= 20).length,
-          const Color(0xFFBE8420)),
-      ('0% to +5%', pcts.where((v) => v >= 0 && v <= 5).length,
-          const Color(0xFF2E92C4)),
+      (
+        '+5% to +20%',
+        pcts.where((v) => v > 5 && v <= 20).length,
+        const Color(0xFFE39A16),
+      ),
+      (
+        '0% to +5%',
+        pcts.where((v) => v >= 0 && v <= 5).length,
+        const Color(0xFF1C6FFB),
+      ),
       ('Below 0%', losers, context.colors.expense),
     ];
 
-    String signed(double? v) => v == null
-        ? '—'
-        : '${v >= 0 ? '+' : '−'}${v.abs().toStringAsFixed(1)}%';
+    String signed(double? v) =>
+        v == null ? '—' : '${v >= 0 ? '+' : '−'}${v.abs().toStringAsFixed(1)}%';
 
     return KSectionCard(
       title: 'Return distribution',
+      help: 'analytics.returnDistribution',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -354,10 +403,18 @@ class _ReturnDistribution extends StatelessWidget {
           ],
           Divider(color: cs.outlineVariant, height: AppSpacing.lg),
           for (final (label, value) in <(String, double?)>[
-            ('Best', pcts.isEmpty ? null : pcts.reduce((a, b) => a > b ? a : b)),
-            ('Worst', pcts.isEmpty ? null : pcts.reduce((a, b) => a < b ? a : b)),
-            ('Win rate',
-                n == 0 ? null : (pcts.where((v) => v > 0).length / n) * 100),
+            (
+              'Best',
+              pcts.isEmpty ? null : pcts.reduce((a, b) => a > b ? a : b),
+            ),
+            (
+              'Worst',
+              pcts.isEmpty ? null : pcts.reduce((a, b) => a < b ? a : b),
+            ),
+            (
+              'Win rate',
+              n == 0 ? null : (pcts.where((v) => v > 0).length / n) * 100,
+            ),
           ])
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
@@ -365,11 +422,12 @@ class _ReturnDistribution extends StatelessWidget {
                 children: [
                   Text(label, style: Theme.of(context).textTheme.bodyMedium),
                   const Spacer(),
-                  Text(signed(value),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    signed(value),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -414,6 +472,7 @@ class _Concentration extends StatelessWidget {
 
     return KSectionCard(
       title: 'Concentration',
+      help: 'analytics.concentration',
       subtitle: 'Weight of the largest positions',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,17 +484,16 @@ class _Concentration extends StatelessWidget {
               fraction: v / 100,
               // Above half the book in one thing is the point at which this
               // stops being an observation and starts being a risk.
-              color: v > 50 ? context.colors.budgetWarn : cs.primary,
+              color: v > 50 ? context.colors.budgetWarn : context.colors.info,
             ),
             const SizedBox(height: AppSpacing.md),
           ],
           Text(
             'A single holding above 10% of the book, or one sector above 35%, '
             'is where concentration usually starts to matter.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ],
       ),
@@ -460,33 +518,34 @@ class _Meter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Expanded(
-              child: Text(label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
-            Text(trailing,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              trailing,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
           ],
         ),
         const SizedBox(height: 6),
         ClipRRect(
           borderRadius: BorderRadius.circular(AppRadii.pill),
-          child: LinearProgressIndicator(
+          child: StripedBar(
             value: fraction.isFinite ? fraction.clamp(0.0, 1.0) : 0,
-            minHeight: 6,
-            backgroundColor: cs.surfaceContainerHighest,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
+            height: 6,
+            color: color,
           ),
         ),
       ],

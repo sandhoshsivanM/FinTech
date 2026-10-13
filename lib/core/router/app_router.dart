@@ -18,6 +18,7 @@ import '../../features/reports/screens/dashboard_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
 import '../../features/safety_net/screens/safety_net_screen.dart';
 import '../../features/score/screens/score_screen.dart';
+import '../../domain/entities/transaction.dart' show TxnType;
 import '../../features/transactions/screens/add_transaction_screen.dart';
 import '../../features/accounts/screens/accounts_screen.dart';
 import '../../features/transactions/screens/recurring_screen.dart';
@@ -177,7 +178,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           _tab(Routes.transactions, const TransactionsScreen(), children: [
             GoRoute(
               path: 'add',
-              builder: (context, state) => const AddTransactionScreen(),
+              // `?type=income` opens the form on Income — the home screen's
+              // quick actions deep-link here.
+              builder: (context, state) => AddTransactionScreen(
+                initialType: state.uri.queryParameters['type'] == 'income'
+                    ? TxnType.income
+                    : TxnType.expense,
+              ),
             ),
           ]),
           _tab(Routes.search, const SearchScreen()),

@@ -18,8 +18,8 @@
  */
 import type { ReactNode } from 'react';
 import type Decimal from 'decimal.js';
-import { Hint } from './Hint';
-import type { TermKey } from '@/lib/glossary';
+import { Hint, SectionInfo } from './Hint';
+import type { SectionKey, TermKey } from '@/lib/glossary';
 import clsx from 'clsx';
 
 /* -------------------------------------------------------------------------- */
@@ -52,9 +52,10 @@ export interface MoneyValueProps {
 const SIZES: Record<NonNullable<MoneyValueProps['size']>, string> = {
   sm: 'text-[13px]',
   md: 'text-[15px]',
-  lg: 'text-[20px] font-semibold tracking-[-0.02em]',
+  // Sized for a half-width tile on a phone: crore figures must fit.
+  lg: 'text-[clamp(17px,4.6vw,24px)] font-light tracking-[-0.025em]',
   // The one figure on a screen that is allowed to be large.
-  xl: 'text-[32px] font-bold tracking-[-0.03em] leading-[1.1]',
+  xl: 'text-[40px] font-light tracking-[-0.035em] leading-[1.05]',
 };
 
 function toneColor(tone: MoneyTone, sign: number): string | undefined {
@@ -101,9 +102,13 @@ export function MoneyValue({
  * Reach for `GlassCard` only when the thing genuinely is a discrete object.
  */
 export function Section({
-  title, description, action, children, className, first = false,
+  title, description, action, children, className, info, infoAlign,
 }: {
   title?: string;
+  /** SECTION_HELP key: renders the ⓘ explaining this card right after the title. */
+  info?: SectionKey;
+  /** Anchor the ⓘ panel to the right, for a title that sits near the right edge. */
+  infoAlign?: 'left' | 'right';
   description?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
@@ -113,17 +118,19 @@ export function Section({
 }) {
   return (
     <section
-      className={clsx(
-        !first && 'border-t border-[var(--line)] pt-6 mt-6',
-        className,
-      )}
+      // A raised card, like every other group on the page — the old rule-and-
+      // whitespace section read as a different, older app below the home.
+      className={clsx('card p-4 sm:p-5', className)}
     >
       {(title || action) && (
         <div className="flex items-baseline gap-3 flex-wrap mb-3">
           {title && (
-            <h2 className="text-[15px] font-semibold tracking-[-0.02em] text-ink">
-              {title}
-            </h2>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h2 className="text-[16px] font-medium tracking-[-0.01em] text-ink">
+                {title}
+              </h2>
+              {info && <SectionInfo k={info} align={infoAlign} />}
+            </div>
           )}
           {description && <span className="text-xs text-muted">{description}</span>}
           {action && <div className="ml-auto">{action}</div>}
@@ -172,8 +179,9 @@ export function Metric({
   untrackedHint?: ReactNode;
 }) {
   return (
-    <div className="min-w-0">
-      <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">
+    // An inset tile inside its section card: raised card, recessed tile.
+    <div className="min-w-0 rounded-[18px] bg-[var(--card-2)] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+      <div className="flex items-center gap-1 text-[13px] text-muted">
         <span className="truncate">{label}</span>
         {hint && <Hint term={hint} />}
       </div>
@@ -216,7 +224,7 @@ export function MetricRow({
   return (
     <div
       {...rest}
-      className={clsx('grid gap-x-8 gap-y-5', cols ?? 'grid-cols-2 md:grid-cols-4', className)}
+      className={clsx('grid gap-2.5', cols ?? 'grid-cols-2 md:grid-cols-4', className)}
     >
       {children}
     </div>
@@ -279,11 +287,11 @@ export function LedgerLine({
 export type StatusTone = 'neutral' | 'positive' | 'negative' | 'warning' | 'info';
 
 const STATUS: Record<StatusTone, { fg: string; bg: string }> = {
-  neutral: { fg: 'var(--muted)', bg: 'var(--fill)' },
+  neutral: { fg: 'var(--ink-soft)', bg: 'var(--card-2)' },
   positive: { fg: 'var(--income)', bg: 'var(--success-soft)' },
   negative: { fg: 'var(--expense)', bg: 'var(--danger-soft)' },
   warning: { fg: 'var(--warn)', bg: 'var(--warning-soft)' },
-  info: { fg: 'var(--info)', bg: 'var(--fill)' },
+  info: { fg: 'var(--info)', bg: 'var(--violet-soft)' },
 };
 
 /**
@@ -296,7 +304,7 @@ export function StatusBadge({ tone = 'neutral', children }: { tone?: StatusTone;
   const c = STATUS[tone];
   return (
     <span
-      className="inline-flex items-center whitespace-nowrap rounded-[var(--radius-pill)] px-2 py-[3px] text-[11px] font-semibold"
+      className="inline-flex items-center whitespace-nowrap rounded-[var(--radius-pill)] px-2.5 py-[3px] text-[11.5px] font-medium"
       style={{ color: c.fg, background: c.bg }}
     >
       {children}
@@ -324,7 +332,7 @@ export function PageHeader({
   return (
     <header className="flex items-start gap-4 flex-wrap">
       <div className="min-w-0">
-        <h1 className="text-[26px] font-bold tracking-[-0.03em] leading-tight">{title}</h1>
+        <h1 className="text-[32px] font-normal tracking-[-0.03em] leading-[1.1]">{title}</h1>
         {meta && <p className="text-[13px] text-muted mt-1 tnum">{meta}</p>}
         {children}
       </div>
