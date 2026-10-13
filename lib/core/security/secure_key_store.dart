@@ -67,6 +67,16 @@ class SecureKeyStore {
     return _fromHex(hex);
   }
 
+  /// Removes only the stored key, for turning biometric unlock off.
+  ///
+  /// The salt is left alone on purpose. On installs that predate 2e10543 the
+  /// keychain salt is the ONLY copy of the salt their database was created
+  /// with — the one thing, with the old PIN, that can still open it. It is not
+  /// a secret, so keeping it costs nothing.
+  Future<void> deleteDerivedKey(String vaultId) async {
+    await _storage.erase(key: _keyKey(vaultId));
+  }
+
   /// Destroys every secret for a vault.
   ///
   /// Uses [SecureErase.erase] rather than a plain delete so the secret material

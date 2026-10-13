@@ -20,12 +20,19 @@ class VaultLocked extends VaultState {
     this.pinFailures = 0,
     this.biometricAvailable = false,
     this.lastError,
+    this.recovery = false,
   });
 
   final int biometricFailures;
   final int pinFailures;
   final bool biometricAvailable;
   final String? lastError;
+
+  /// A database is on disk but this install has no working credentials for
+  /// it (see `VaultFileProbe`). The PIN entered is tried against the file
+  /// itself, with every salt the device still holds — and setup is NOT
+  /// offered, because setup would make that file unreadable for good.
+  final bool recovery;
 
   /// PRD §14: 3 biometric fails → PIN only.
   bool get biometricExhausted => biometricFailures >= 3;
@@ -41,6 +48,7 @@ class VaultLocked extends VaultState {
       pinFailures: pinFailures ?? this.pinFailures,
       biometricAvailable: biometricAvailable ?? this.biometricAvailable,
       lastError: lastError,
+      recovery: recovery,
     );
   }
 }

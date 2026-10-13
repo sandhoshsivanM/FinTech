@@ -13,7 +13,7 @@
  *      snapshots leaves every trend chart empty. So this seeds insurance,
  *      ninety days of snapshots, dividends, a watchlist and alerts too.
  */
-import { putRecord, clearVault } from './repo';
+import { putRecord, clearVault, userRecordCount } from './repo';
 import { STORE, type Category } from './types';
 import { useApp, uid, repairPostings } from './store';
 import { liquidBalance } from '@/domain/accountLedger';
@@ -86,8 +86,18 @@ export async function loadSampleData() {
   const s = useApp.getState();
   const { key, vaultId } = s;
   if (!key) return;
-  // Idempotent: wipe any existing records (incl. previous sample loads) so
-  // repeated clicks don't stack duplicates. Categories are re-seeded by reload().
+  // Sample data REPLACES the vault, so it is only ever allowed into one that
+  // holds nothing of the user's. This used to clear unconditionally — every
+  // profile, no confirmation — one tap from Settings away from someone's real
+  // finances.
+  if (await userRecordCount(vaultId) > 0) {
+    throw new Error(
+      'Sample data can only be loaded into an empty vault, and this one has '
+      + 'your own records. Nothing was changed.',
+    );
+  }
+  // Only structural records remain (seeded categories and accounts); clearing
+  // them keeps the load idempotent. Categories are re-seeded by reload().
   await clearVault(vaultId);
   await s.reload();
   const cats = useApp.getState().categories;
