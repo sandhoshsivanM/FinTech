@@ -136,13 +136,6 @@ export function gateFor(
     : { allowed: true, reason: 'includedInFree' };
 }
 
-export function isAllowed(
-  feature: ProFeature,
-  entitlement: Entitlement,
-): boolean {
-  return gateFor(feature, entitlement).allowed;
-}
-
 /**
  * Counted allowances — the only two limits in the product.
  *

@@ -53,11 +53,6 @@ export function SectionHeader({ title, action, info, infoAlign }: {
   );
 }
 
-/** Sentence-case label used above a figure. */
-export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={clsx('eyebrow', className)}>{children}</div>;
-}
-
 // ---- Buttons -------------------------------------------------------------
 /**
  * Three variants. Not fifteen.
@@ -343,9 +338,9 @@ export function Delta({ value, suffix = '%', digits = 2, className }: {
 // These live in ./charts/. Re-exported here so every existing import site keeps
 // working; new code should import from ./charts directly.
 export { Donut, type DonutSeg } from './charts/Donut';
-export { AreaChart, EmptyChart } from './charts/AreaChart';
+export { AreaChart } from './charts/AreaChart';
 export { StatTile } from './charts/StatTile';
-export { Gauge, HEALTH_BANDS, type GaugeBand } from './charts/Gauge';
+export { Gauge } from './charts/Gauge';
 export { Sunburst, type SunburstNode } from './charts/Sunburst';
 
 /** @deprecated Renamed to `AreaChart` — it draws a filled area, not a bare line. */

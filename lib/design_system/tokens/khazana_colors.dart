@@ -26,12 +26,6 @@ import 'package:flutter/material.dart';
 /// web's dark accent is a defect there, not a target here.
 abstract final class KhazanaColors {
   // --- Brand ramp, shared by both themes ------------------------------------
-  static const Color emerald500 = Color(0xFF18C98A);
-  static const Color emerald600 = Color(0xFF0FAF73);
-  static const Color emerald700 = Color(0xFF087A56);
-  static const Color gold500 = Color(0xFFD9AD52);
-  static const Color gold600 = Color(0xFFB8892F);
-  static const Color obsidian = Color(0xFF080D0B);
   static const Color forest = Color(0xFF0D1713);
 
   /// The emerald the mark's plate is filled with.
@@ -41,7 +35,6 @@ abstract final class KhazanaColors {
   // Four surface levels. Jumping from near-black straight to a bright card is
   // what makes dark UI look flat; each step is a small, even lift.
   static const Color vaultBackground = Color(0xFF0E0E10);
-  static const Color vaultSurface = Color(0xFF141417);
   static const Color vaultSurfaceElevated = Color(0xFF1C1C20);
   static const Color vaultSurfaceStrong = Color(0xFF26262B);
   static const Color vaultBorder = Color(0xFF26262B);
@@ -49,8 +42,6 @@ abstract final class KhazanaColors {
 
   static const Color vaultTextPrimary = Color(0xFFF5F5F7);
   static const Color vaultTextSecondary = Color(0xFFA1A1A8);
-  static const Color vaultTextMuted = Color(0xFF8E8E93); // 5.21:1 on #1C1C20
-  static const Color vaultTextDisabled = Color(0xFF48484E);
 
   static const Color vaultPrimary = Color(0xFFF5F5F7);
   static const Color vaultPrimaryHover = Color(0xFFFFFFFF);
@@ -60,7 +51,6 @@ abstract final class KhazanaColors {
   static const Color vaultPrimaryOn = Color(0xFF111214);
 
   static const Color vaultGold = Color(0xFFD9AD52);
-  static const Color vaultGoldSoft = Color(0xFF302718);
 
   static const Color vaultSuccess = Color(0xFF34C759);
   static const Color vaultWarning = Color(0xFFFFB340);
@@ -80,18 +70,14 @@ abstract final class KhazanaColors {
 
   static const Color ledgerTextPrimary = Color(0xFF111214);
   static const Color ledgerTextSecondary = Color(0xFF5C5C61);
-  static const Color ledgerTextMuted = Color(0xFF6E6E73); // 4.78:1 on a card
-  static const Color ledgerTextDisabled = Color(0xFFB5B5B5);
 
   /// `--accent` from globals.css. 6.47:1 on a white card, up from the 5.35:1
   /// of the #087A56 this replaced.
   static const Color ledgerPrimary = Color(0xFF111214);
-  static const Color ledgerPrimaryHover = Color(0xFF000000);
   static const Color ledgerPrimarySoft = Color(0xFFE9E9EC);
   static const Color ledgerPrimaryOn = Color(0xFFFFFFFF);
 
   static const Color ledgerGold = Color(0xFFA97922);
-  static const Color ledgerGoldSoft = Color(0xFFF6EEDB);
 
   /// Gold as SMALL TEXT. `ledgerGold` is 3.9:1 on a card — enough for a graphic
   /// (3:1) but under the 4.5:1 body-text bar, so words use this darker step.
@@ -142,9 +128,4 @@ abstract final class KhazanaColors {
 
   /// Back-compat: callers that predate per-theme values get the Vault step.
   static const List<Color> series = seriesDark;
-
-  /// Reserved neutral for "Other" / "Unclassified" — a coverage fact, not a
-  /// category, so it must never compete with a real slice.
-  static const Color seriesNeutralDark = Color(0xFF5A5A60);
-  static const Color seriesNeutralLight = Color(0xFFCFCFD4);
 }

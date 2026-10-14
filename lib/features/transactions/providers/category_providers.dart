@@ -20,20 +20,13 @@ Future<void> _seedIfEmpty(ICategoryRepository repo, String vaultId) async {
   final existing = await repo.getAll(vaultId);
   if (existing.isNotEmpty) return;
   for (final c in kDefaultCategories) {
-    await repo.save(Category(
-      id: _uuid.v4(),
-      vaultId: vaultId,
-      name: c.name,
-      iconCodepoint: c.icon.codePoint,
-    ));
+    await repo.save(
+      Category(
+        id: _uuid.v4(),
+        vaultId: vaultId,
+        name: c.name,
+        iconCodepoint: c.icon.codePoint,
+      ),
+    );
   }
 }
-
-/// Adds a user-defined category.
-final addCategoryProvider = Provider((ref) {
-  return (String name) async {
-    final repo = ref.read(categoryRepositoryProvider);
-    final vaultId = ref.read(currentVaultIdProvider);
-    await repo.save(Category(id: _uuid.v4(), vaultId: vaultId, name: name));
-  };
-});

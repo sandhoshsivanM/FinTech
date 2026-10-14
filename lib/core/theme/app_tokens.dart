@@ -22,13 +22,7 @@ abstract final class AppColors {
   /// Brand plate — the emerald the mark sits on. Matches `--brand-plate` on web.
   static const Color brandPlate = KhazanaColors.brandPlate;
 
-  /// Brand gold — IDENTITY ONLY. The mark, the wordmark, wealth moments.
-  /// Never a button colour: emerald is the interaction colour. Matches
-  /// `--gold` on web.
-  static const Color brandGold = KhazanaColors.vaultGold;
-
   static const Color accent = KhazanaColors.vaultPrimary;
-  static const Color accentDeep = KhazanaColors.vaultPrimaryHover;
   static const Color accentGlow = KhazanaColors.vaultInfo;
 
   // Semantic money colours.
@@ -56,8 +50,6 @@ abstract final class AppColors {
   // at #17191F on a #0E0F13 background — four points of separation, which is
   // below the threshold at which an edge is visible without a border, so every
   // card depended entirely on its hairline to exist.
-  static const Color bgTop = KhazanaColors.forest;
-  static const Color bgBottom = KhazanaColors.vaultBackground;
   static const Color darkCanvas = KhazanaColors.vaultBackground;
   // #17203A, not #141B2D. The test asserting a card is distinguishable from the
   // page caught this at 0.0078 against a 0.008 floor — close enough to pass by
@@ -65,7 +57,6 @@ abstract final class AppColors {
   // margin that should be decided by a number rather than by whoever is looking.
   static const Color darkSurface = KhazanaColors.vaultSurfaceElevated;
   static const Color darkOnSurface = KhazanaColors.vaultTextPrimary;
-  static const Color darkOnSurfaceMuted = KhazanaColors.vaultTextSecondary;
 
   // Hairline surfaces (subtle fills + 1px borders, like the web's --fill/--line).
   static const Color glassFillDark = Color(0x14FFFFFF); // ~8% white fill
@@ -88,12 +79,6 @@ abstract final class AppColors {
   static const Color lightOnSurface = KhazanaColors.ledgerTextPrimary;
   static const Color glassFillLight = Color(0x0D141A24); // ~5% ink fill
   static const Color glassBorderLight = Color(0x1F141A24); // ~12% ink hairline
-
-  /// Accent gradient for hero surfaces and primary actions.
-  static const List<Color> accentGradient = [
-    KhazanaColors.vaultPrimary,
-    KhazanaColors.vaultInfo,
-  ];
 }
 
 /// The web's spacing scale, step for step.
@@ -109,8 +94,6 @@ abstract final class AppSpacing {
   static const double md = 12;
   static const double lg = 16;
   static const double xl = 24;
-  static const double xxl = 32;
-  static const double xxxl = 48;
 
   /// Minimum touch target (PRD §10A): 44pt iOS / 48dp Android — use 48 everywhere.
   static const double minTouchTarget = 48;

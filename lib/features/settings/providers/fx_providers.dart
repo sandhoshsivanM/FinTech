@@ -16,8 +16,9 @@ import '../data/fx_rate_provider.dart';
 const kBaseCurrencyKey = 'base_currency';
 const kDefaultBaseCurrency = 'INR';
 
-final baseCurrencyProvider =
-    NotifierProvider<BaseCurrencyNotifier, String>(BaseCurrencyNotifier.new);
+final baseCurrencyProvider = NotifierProvider<BaseCurrencyNotifier, String>(
+  BaseCurrencyNotifier.new,
+);
 
 class BaseCurrencyNotifier extends Notifier<String> {
   @override
@@ -46,13 +47,15 @@ final fxRatesProvider = FutureProvider<List<FxRate>>((ref) async {
   final db = ref.watch(databaseProvider);
   final rows = await db.fxRateDao.allRates();
   return rows
-      .map((r) => FxRate(
-            baseCurrency: r.baseCurrency,
-            quoteCurrency: r.quoteCurrency,
-            rate: r.rate,
-            source: r.source,
-            fetchedAt: DateTime.fromMillisecondsSinceEpoch(r.fetchedAt),
-          ))
+      .map(
+        (r) => FxRate(
+          baseCurrency: r.baseCurrency,
+          quoteCurrency: r.quoteCurrency,
+          rate: r.rate,
+          source: r.source,
+          fetchedAt: DateTime.fromMillisecondsSinceEpoch(r.fetchedAt),
+        ),
+      )
       .toList();
 });
 
@@ -87,12 +90,6 @@ final fxLookupProvider = Provider<Decimal? Function(String)>((ref) {
   };
 });
 
-/// The converter, ready to use. Its existence here is the fix for the defect
-/// where `currency_converter.dart` was fully written, fully tested, and
-/// imported by nothing.
-final currencyConverterProvider =
-    Provider<CurrencyConverter>((ref) => const CurrencyConverter());
-
 /// Outcome of a live refresh, for the UI to report honestly.
 class FxRefreshResult {
   const FxRefreshResult({
@@ -118,15 +115,21 @@ class FxActions {
 
   /// Adds a manual rate (PRD §12B fallback). [rate] = quote units per 1 base.
   Future<void> addManual(
-      String base, String quote, Decimal rate, int nowMs) async {
+    String base,
+    String quote,
+    Decimal rate,
+    int nowMs,
+  ) async {
     final db = _ref.read(databaseProvider);
-    await db.fxRateDao.insertRate(FxRatesCompanion(
-      baseCurrency: Value(base.toUpperCase()),
-      quoteCurrency: Value(quote.toUpperCase()),
-      rate: Value(rate),
-      source: const Value('manual'),
-      fetchedAt: Value(nowMs),
-    ));
+    await db.fxRateDao.insertRate(
+      FxRatesCompanion(
+        baseCurrency: Value(base.toUpperCase()),
+        quoteCurrency: Value(quote.toUpperCase()),
+        rate: Value(rate),
+        source: const Value('manual'),
+        fetchedAt: Value(nowMs),
+      ),
+    );
     _ref.invalidate(fxRatesProvider);
   }
 
@@ -144,13 +147,15 @@ class FxActions {
     final db = _ref.read(databaseProvider);
     final stamp = result.asOf.millisecondsSinceEpoch;
     for (final entry in result.rates.entries) {
-      await db.fxRateDao.insertRate(FxRatesCompanion(
-        baseCurrency: Value(base),
-        quoteCurrency: Value(entry.key),
-        rate: Value(entry.value),
-        source: const Value('ecb'),
-        fetchedAt: Value(stamp),
-      ));
+      await db.fxRateDao.insertRate(
+        FxRatesCompanion(
+          baseCurrency: Value(base),
+          quoteCurrency: Value(entry.key),
+          rate: Value(entry.value),
+          source: const Value('ecb'),
+          fetchedAt: Value(stamp),
+        ),
+      );
     }
     _ref.invalidate(fxRatesProvider);
     return FxRefreshResult(

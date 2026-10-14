@@ -90,14 +90,3 @@ export function ProGate({
     </div>
   );
 }
-
-/** A small lock chip for nav rows and list items. */
-export function ProBadge() {
-  const isPro = useApp((s) => s.pro.isPro);
-  if (isPro) return null;
-  return (
-    <span className="rounded-full bg-[var(--card-2)] px-1.5 py-[1px] text-[10px] font-medium text-ink-soft shadow-[0_1px_4px_-1px_rgba(0,0,0,0.2)]">
-      Pro
-    </span>
-  );
-}

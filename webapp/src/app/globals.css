@@ -247,7 +247,7 @@
      It is not a container style. */
   --radius-pill: 999px;
 
-  /* --- Spacing: the design-system scale ---------------------------------- */
+  /* --- Spacing scale ---------------------------------------------------- */
   /* xs 4 · sm 8 · md 12 · lg 16 · xl 24 · 2xl 32 · 3xl 48 */
   --space-xs: 4px;  --space-sm: 8px;  --space-md: 12px;
   --space-lg: 16px; --space-xl: 24px; --space-2xl: 32px; --space-3xl: 48px;

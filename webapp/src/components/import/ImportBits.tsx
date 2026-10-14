@@ -39,14 +39,6 @@ const KIND_ICON = {
   bank: Landmark,
 } as const;
 
-const KIND_LABEL = {
-  broker: 'Broker',
-  global: 'International broker',
-  depository: 'Depository',
-  funds: 'Mutual-fund platform',
-  bank: 'Bank',
-} as const;
-
 export function InstitutionBadge({ inst }: { inst: Institution }) {
   const Icon = KIND_ICON[inst.kind];
   return (
@@ -61,9 +53,6 @@ export function InstitutionBadge({ inst }: { inst: Institution }) {
     />
   );
 }
-
-/** The institution kind, spelled out. Used as the accessible description. */
-export const institutionKindLabel = (inst: Institution) => KIND_LABEL[inst.kind];
 
 export function InstitutionGrid({
   institutions,

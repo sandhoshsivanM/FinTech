@@ -18,9 +18,6 @@
  */
 export type TxnType = 'expense' | 'income' | 'investment';
 
-/** The kinds that reduce spendable cash. Both leave the money account. */
-export const CASH_OUT_TYPES: readonly TxnType[] = ['expense', 'investment'];
-
 /**
  * The only kind budgets and expense reporting may count.
  *

@@ -1,15 +1,14 @@
-import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../domain/entities/account.dart';
 import '../../../domain/entities/posting.dart';
 import '../../../domain/services/account_ledger.dart';
-import '../../investments/providers/portfolio_providers.dart';
 import '../services/ledger_writer.dart';
 
-final accountLedgerProvider =
-    Provider<AccountLedger>((ref) => const AccountLedger());
+final accountLedgerProvider = Provider<AccountLedger>(
+  (ref) => const AccountLedger(),
+);
 
 /// Live chart of accounts for the current vault.
 final accountListProvider = StreamProvider<List<Account>>((ref) {
@@ -32,13 +31,4 @@ final ledgerWriterProvider = Provider<LedgerWriter>((ref) {
     postings: ref.watch(postingRepositoryProvider),
     vaultId: ref.watch(currentVaultIdProvider),
   );
-});
-
-/// Net worth from the chart of accounts plus market-priced holdings.
-final accountNetWorthProvider = Provider((ref) {
-  final accounts = ref.watch(accountListProvider).valueOrNull ?? const [];
-  final postings = ref.watch(postingListProvider).valueOrNull ?? const [];
-  final investments = ref.watch(investmentTotalsProvider).valueOrNull;
-  return ref.watch(accountLedgerProvider).netWorth(
-      accounts, postings, investments?.marketValue ?? Decimal.zero);
 });
