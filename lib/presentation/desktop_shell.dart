@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/entitlement/distribution_channel.dart';
 import '../core/theme/semantic_colors.dart';
 
 import '../design_system/components/brand_mark.dart';
@@ -35,7 +36,7 @@ typedef _Section = ({String title, List<_Dest> items});
 /// asserted by `test/widget/desktop_shell_test.dart`, which walks [Routes] and
 /// fails if a route has no sidebar entry. Adding a screen without adding it here
 /// breaks the build.
-const _sections = <_Section>[
+final _sections = <_Section>[
   (
     title: 'Overview',
     items: [
@@ -164,12 +165,13 @@ const _sections = <_Section>[
         label: 'Import',
         hint: 'Bring in a statement or broker file',
       ),
-      (
-        route: Routes.pro,
-        icon: Icons.auto_awesome,
-        label: 'Khazana Pro',
-        hint: 'One payment, yours forever',
-      ),
+      if (kOffersPro)
+        (
+          route: Routes.pro,
+          icon: Icons.auto_awesome,
+          label: 'Khazana Pro',
+          hint: 'One payment, yours forever',
+        ),
       (
         route: Routes.settings,
         icon: Icons.settings_outlined,

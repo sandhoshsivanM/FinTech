@@ -102,6 +102,12 @@ Khazana is a record-keeping and calculation tool. Its scores, projections and es
 > (portfolio analytics, statement import, auto-capture, price refresh, longer
 > reports, score history, multiple vaults) and then add a Pro paragraph here and
 > tick "contains in-app purchases".
+>
+> **Decided 2026-10-14: route (a).** 1.0.0 ships free on Play. Play builds
+> (`--dart-define=KHAZANA_CHANNEL=play`) hide every Pro entry point and do not
+> register the Pro route (`kOffersPro` in
+> `lib/core/entitlement/distribution_channel.dart`). Answer "No" to in-app
+> purchases and do not create `khazana_pro` yet.
 
 ### Release notes, 1.0.0 (500 max per language)
 ```
