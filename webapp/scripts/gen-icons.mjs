@@ -27,6 +27,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const WEBAPP = resolve(HERE, '..');
 const REPO = resolve(WEBAPP, '..');
 const SOURCE = join(REPO, 'assets', 'brand', 'khazana-mark.png');
+const SOURCE_DARK = join(REPO, 'assets', 'brand', 'khazana-mark-dark.png');
 
 /**
  * The plate the mark sits on: white, as on the light app icon.
@@ -42,6 +43,16 @@ const PLATE = { r: 255, g: 255, b: 255, alpha: 1 };
  * to the edge loses its rim to that crop.
  */
 const INSET = { any: 0.76, maskable: 0.58 };
+
+/**
+ * Android adaptive-icon layers are a 108dp canvas of which only the centre
+ * 66dp is guaranteed visible (the launcher mask and parallax eat the rest), so
+ * the mark is fitted inside that 66dp square: 66/108 of the canvas.
+ */
+const SAFE_ZONE = 66 / 108;
+
+/** How much of the splash canvas the mark fills (iOS LaunchImage, Android splash). */
+const SPLASH_INSET = 0.62;
 
 /**
  * Every raster, as [path relative to the repo root, pixel size, treatment].
@@ -79,8 +90,36 @@ const TARGETS = [
   ['android/app/src/main/res/mipmap-xhdpi/ic_launcher.png', 96, 'plate'],
   ['android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png', 144, 'plate'],
   ['android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png', 192, 'plate'],
+  // Adaptive-icon layers (mipmap-anydpi-v26/ic_launcher*.xml): a 108dp canvas,
+  // 108/162/216/324/432 px. `foreground` is the mark fitted in the 66dp safe
+  // zone on transparency (the background layer is the flat colour
+  // @color/ic_launcher_background = white); `mono` is the single-colour
+  // silhouette Android 13+ tints for themed icons.
+  ['android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png', 108, 'foreground'],
+  ['android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png', 162, 'foreground'],
+  ['android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png', 216, 'foreground'],
+  ['android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png', 324, 'foreground'],
+  ['android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png', 432, 'foreground'],
+  ['android/app/src/main/res/mipmap-mdpi/ic_launcher_monochrome.png', 108, 'mono'],
+  ['android/app/src/main/res/mipmap-hdpi/ic_launcher_monochrome.png', 162, 'mono'],
+  ['android/app/src/main/res/mipmap-xhdpi/ic_launcher_monochrome.png', 216, 'mono'],
+  ['android/app/src/main/res/mipmap-xxhdpi/ic_launcher_monochrome.png', 324, 'mono'],
+  ['android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_monochrome.png', 432, 'mono'],
+  // Launch splash mark (launch_background.xml and the Android 12 splash icon):
+  // the mark alone on transparency, light and night variants, over the
+  // #F2F2F2 / #0E0E10 window colour.
+  ['android/app/src/main/res/drawable-nodpi/splash_mark.png', 576, 'splash'],
+  ['android/app/src/main/res/drawable-night-nodpi/splash_mark.png', 576, 'splashDark'],
 
   // iOS — sizes and filenames are fixed by AppIcon.appiconset/Contents.json.
+  // iOS launch image (LaunchScreen.storyboard, 168pt): 1x/2x/3x, light + dark.
+  ['ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage.png', 168, 'splash'],
+  ['ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png', 336, 'splash'],
+  ['ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png', 504, 'splash'],
+  ['ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImageDark.png', 168, 'splashDark'],
+  ['ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImageDark@2x.png', 336, 'splashDark'],
+  ['ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImageDark@3x.png', 504, 'splashDark'],
+
   ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png', 20, 'opaque'],
   ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png', 40, 'opaque'],
   ['ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png', 60, 'opaque'],
@@ -167,6 +206,59 @@ async function bare(size) {
     .toBuffer();
 }
 
+/** The mark (from `source`) fitted into `fraction` of a transparent square canvas. */
+async function fitted(size, fraction, source = SOURCE) {
+  const box = Math.round(size * fraction);
+  const trimmed = await sharp(source).trim().png().toBuffer();
+  const mark = await sharp(trimmed)
+    .resize(box, box, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 }, kernel: 'lanczos3' })
+    .png()
+    .toBuffer();
+  return sharp({ create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: mark, gravity: 'centre' }])
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+}
+
+/** Adaptive-icon foreground: the mark inside the 66dp safe zone of a 108dp canvas. */
+const foreground = (size) => fitted(size, SAFE_ZONE);
+
+/**
+ * Themed-icon silhouette: white where the mark is solid, transparent elsewhere.
+ * The gold keyhole is knocked out (it is the one gold shape inside the dark
+ * body) so the silhouette keeps the mark's recognisable detail; the two gold
+ * shapes are told apart from the green by colour (red channel well above blue).
+ */
+async function mono(size) {
+  const { data, info } = await sharp(SOURCE).raw().toBuffer({ resolveWithObject: true });
+  const split = Math.round(info.width * (504 / 1024)); // the body/triangles gap in the master
+  const out = Buffer.alloc(data.length);
+  for (let i = 0; i < data.length; i += 4) {
+    const x = (i / 4) % info.width;
+    let alpha = data[i + 3];
+    if (x < split) {
+      // Gold (r - b ~ 118) vs green (r - b ~ -5): knock out proportionally so
+      // the keyhole's anti-aliased rim stays smooth.
+      const gold = Math.min(1, Math.max(0, (data[i] - data[i + 2] + 10) / 120));
+      alpha = Math.round(alpha * (1 - gold));
+    }
+    out[i] = out[i + 1] = out[i + 2] = 255;
+    out[i + 3] = alpha;
+  }
+  const master = await sharp(out, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
+  // Resampling leaves faint non-white RGB under the soft edge; the layer must be
+  // exactly one colour, so force white and keep only the alpha.
+  const placed = await sharp(await fitted(size, SAFE_ZONE, master)).raw().toBuffer({ resolveWithObject: true });
+  for (let i = 0; i < placed.data.length; i += 4) placed.data[i] = placed.data[i + 1] = placed.data[i + 2] = 255;
+  return sharp(placed.data, { raw: { width: placed.info.width, height: placed.info.height, channels: 4 } })
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+}
+
+/** Splash mark on transparency, light or night (the night mark is the lighter green). */
+const splash = (size) => fitted(size, SPLASH_INSET);
+const splashDark = (size) => fitted(size, SPLASH_INSET, SOURCE_DARK);
+
 /**
  * A .ico carrying the three sizes Windows and browser tabs actually pick from.
  * Hand-assembled because sharp has no ICO encoder — the format is a short
@@ -212,7 +304,7 @@ async function write(relativePath, buffer) {
 }
 
 async function main() {
-  const make = { plate: (n) => plated(n, 'any'), opaque, maskable: (n) => plated(n, 'maskable'), bare };
+  const make = { plate: (n) => plated(n, 'any'), opaque, maskable: (n) => plated(n, 'maskable'), bare, foreground, mono, splash, splashDark };
 
   // Cached per (treatment, size) so a size used by six platforms is rendered
   // once rather than six times.

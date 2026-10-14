@@ -37,6 +37,15 @@ export function markSeen(current: readonly string[]): Set<string> {
   return next;
 }
 
+/**
+ * Marks one item as seen — the one the user opened — keeping the others
+ * unread. Keys no longer listed are forgotten, as in [markSeen].
+ */
+export function markOneSeen(key: string, current: readonly string[], seen: ReadonlySet<string>): Set<string> {
+  const keep = new Set(current);
+  return markSeen([...seen, key].filter((k) => keep.has(k)));
+}
+
 export function unreadCount(current: readonly string[], seen: ReadonlySet<string>): number {
   return current.reduce((n, k) => (seen.has(k) ? n : n + 1), 0);
 }

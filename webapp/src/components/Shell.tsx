@@ -16,7 +16,7 @@ import { evaluateAlerts, triggered } from '@/domain/alerts';
 import { marketState } from '@/lib/marketClock';
 import { useNow } from '@/lib/useNow';
 import { useNotificationDriver } from '@/lib/useNotificationDriver';
-import { loadSeen, markSeen, unreadCount } from '@/lib/notifSeen';
+import { loadSeen, markOneSeen, markSeen, unreadCount } from '@/lib/notifSeen';
 import { demoIndices, demoSeries } from '@/lib/demo/marketFeed';
 import { MiniSparkline } from './charts/MiniSparkline';
 import { BrandMark, WordMark } from './BrandMark';
@@ -828,9 +828,6 @@ function NotificationsMenu() {
   useEffect(() => { setSeen(loadSeen()); }, []);
   const keys = useMemo(() => items.map((n) => n.key), [items]);
   const unread = seen ? unreadCount(keys, seen) : 0;
-  // What was unread when the menu opened stays highlighted while it is open,
-  // even though opening marks it read.
-  const [freshOnOpen, setFreshOnOpen] = useState<ReadonlySet<string>>(new Set());
 
   return (
     <div className="relative shrink-0">
@@ -840,12 +837,11 @@ function NotificationsMenu() {
           // Opening the menu *is* the delivery for a missed reminder — there is
           // no other channel it could have arrived through. Marking it here is
           // what stops it being offered again on every visit forever.
+          // Opening the menu delivers missed reminders, but does not read
+          // anything: each item is marked read only when it is opened, so the
+          // others stay new until the user gets to them.
           if (!open) {
             acknowledgeMissed();
-            // Opening is reading: everything listed now counts as seen, so the
-            // dot clears and only a new occurrence brings it back.
-            setFreshOnOpen(new Set(keys.filter((k) => !seen?.has(k))));
-            setSeen(markSeen(keys));
           }
           setOpen((o) => !o);
         }}
@@ -862,7 +858,18 @@ function NotificationsMenu() {
           <div className="absolute right-0 mt-2 w-[320px] z-50 card overflow-hidden shadow-[var(--shadow-2)]">
             <div className="px-4 py-3 border-b border-line flex items-center gap-2">
               <p className="eyebrow">Notifications</p>
-              {freshOnOpen.size > 0 && <span className="ml-auto text-[11px] font-semibold text-muted">{freshOnOpen.size} new</span>}
+              {unread > 0 && (
+                <>
+                  <span className="ml-auto text-[11px] font-semibold text-muted">{unread} new</span>
+                  <button
+                    type="button"
+                    onClick={() => setSeen(markSeen(keys))}
+                    className="focus-ring text-[11px] font-semibold text-ink hover:underline"
+                  >
+                    Mark all as read
+                  </button>
+                </>
+              )}
             </div>
             {items.length === 0 ? (
               <div className="px-4 py-8 text-center">
@@ -878,12 +885,15 @@ function NotificationsMenu() {
               <div className="max-h-[340px] overflow-y-auto">
                 {items.slice(0, 8).map((n) => {
                   const Icon = ICONS[n.icon];
-                  const fresh = freshOnOpen.has(n.key);
+                  const fresh = seen ? !seen.has(n.key) : false;
                   return (
                     <Link
                       key={n.id}
                       href={n.href}
-                      onClick={() => setOpen(false)}
+                      onClick={() => {
+                        if (seen) setSeen(markOneSeen(n.key, keys, seen));
+                        setOpen(false);
+                      }}
                       className="flex items-center gap-3 px-4 py-2.5 border-b border-line last:border-0 hover:bg-fill transition-colors"
                     >
                       <span className={clsx(

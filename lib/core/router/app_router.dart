@@ -1,3 +1,4 @@
+import '../entitlement/distribution_channel.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -63,7 +64,6 @@ abstract final class Routes {
   static const currency = '/app/settings/currency';
   static const notifications = '/app/settings/notifications';
   static const settings = '/app/settings';
-
 
   /// The paywall, and where an existing purchase is restored.
   static const pro = '/app/pro';
@@ -175,38 +175,46 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => AppShell(child: child),
         routes: [
           _tab(Routes.dashboard, const DashboardScreen()),
-          _tab(Routes.transactions, const TransactionsScreen(), children: [
-            GoRoute(
-              path: 'add',
-              // `?type=income` opens the form on Income — the home screen's
-              // quick actions deep-link here.
-              builder: (context, state) => AddTransactionScreen(
-                initialType: state.uri.queryParameters['type'] == 'income'
-                    ? TxnType.income
-                    : TxnType.expense,
+          _tab(
+            Routes.transactions,
+            const TransactionsScreen(),
+            children: [
+              GoRoute(
+                path: 'add',
+                // `?type=income` opens the form on Income — the home screen's
+                // quick actions deep-link here.
+                builder: (context, state) => AddTransactionScreen(
+                  initialType: state.uri.queryParameters['type'] == 'income'
+                      ? TxnType.income
+                      : TxnType.expense,
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
           _tab(Routes.search, const SearchScreen()),
           _tab(Routes.budget, const BudgetScreen()),
-          _tab(Routes.investments, const InvestmentsScreen(), children: [
-            GoRoute(
-              path: 'breakdown',
-              builder: (context, state) => const PortfolioBreakdownScreen(),
-            ),
-            GoRoute(
-              path: 'analytics',
-              builder: (context, state) => const AnalyticsScreen(),
-            ),
-            GoRoute(
-              path: 'add-lot',
-              builder: (context, state) => const AddLotScreen(),
-            ),
-            GoRoute(
-              path: 'import-lots',
-              builder: (context, state) => const ImportLotsScreen(),
-            ),
-          ]),
+          _tab(
+            Routes.investments,
+            const InvestmentsScreen(),
+            children: [
+              GoRoute(
+                path: 'breakdown',
+                builder: (context, state) => const PortfolioBreakdownScreen(),
+              ),
+              GoRoute(
+                path: 'analytics',
+                builder: (context, state) => const AnalyticsScreen(),
+              ),
+              GoRoute(
+                path: 'add-lot',
+                builder: (context, state) => const AddLotScreen(),
+              ),
+              GoRoute(
+                path: 'import-lots',
+                builder: (context, state) => const ImportLotsScreen(),
+              ),
+            ],
+          ),
           _tab(Routes.liabilities, const LiabilitiesScreen()),
           _tab(Routes.insurance, const InsuranceScreen()),
           _tab(Routes.safetyNet, const SafetyNetScreen()),
@@ -223,7 +231,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           _tab(Routes.marketData, const MarketDataSettingsScreen()),
           _tab(Routes.currency, const CurrencySettingsScreen()),
           _tab(Routes.notifications, const NotificationSettingsScreen()),
-          _tab(Routes.pro, const ProScreen()),
+          // Play 1.0 ships without Pro (see kOffersPro), so the route is not
+          // registered there and no deep link can reach a paywall.
+          if (kOffersPro) _tab(Routes.pro, const ProScreen()),
         ],
       ),
     ],
@@ -232,7 +242,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
 /// A bottom-nav destination route that swaps in with no transition animation
 /// (instant tab switch — avoids per-switch jank).
-GoRoute _tab(String path, Widget screen, {List<RouteBase> children = const []}) {
+GoRoute _tab(
+  String path,
+  Widget screen, {
+  List<RouteBase> children = const [],
+}) {
   return GoRoute(
     path: path,
     pageBuilder: (context, state) =>

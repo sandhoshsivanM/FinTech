@@ -18,6 +18,7 @@
 // mode they guard against — a screen that still exists, still compiles, still
 // has a route, and is reachable from nowhere — produces no error anywhere else.
 
+import 'package:khazana/core/entitlement/distribution_channel.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:khazana/core/router/app_router.dart';
@@ -25,7 +26,7 @@ import 'package:khazana/core/router/nav_sections.dart';
 import 'package:khazana/presentation/desktop_shell.dart';
 
 /// Every navigable location in the app.
-const _allRoutes = <String>[
+final _allRoutes = <String>[
   Routes.dashboard,
   Routes.transactions,
   Routes.addTransaction,
@@ -50,7 +51,7 @@ const _allRoutes = <String>[
   Routes.marketData,
   Routes.currency,
   Routes.settings,
-  Routes.pro,
+  if (kOffersPro) Routes.pro,
 ];
 
 /// The five bottom-nav destinations, in bar order.
@@ -129,7 +130,10 @@ void main() {
     test('a sibling route with a shared prefix is not mistaken for a child', () {
       // '/app/investments-something' starts with '/app/investments' as a string
       // but is not under it as a path.
-      expect(Routes.ownerTab('/app/investments-hypothetical'), Routes.dashboard);
+      expect(
+        Routes.ownerTab('/app/investments-hypothetical'),
+        Routes.dashboard,
+      );
     });
   });
 
@@ -137,23 +141,30 @@ void main() {
     // The guarantee that was missing. A route owned by a tab is not thereby
     // reachable: ownership only decides which icon highlights. Before the More
     // screen existed, Accounts and Analytics had owners and no way in.
-    test('every route can be reached from the bar, a section strip, or the avatar', () {
-      final reachable = phoneReachableRoutes.toSet();
-      final stranded = _allRoutes
-          .where((r) => !_sidebarExempt.contains(r) && !reachable.contains(r))
-          .toList();
-      expect(
-        stranded,
-        isEmpty,
-        reason: 'These screens exist and compile but nothing on a phone can '
-            'navigate to them: \$stranded',
-      );
-    });
+    test(
+      'every route can be reached from the bar, a section strip, or the avatar',
+      () {
+        final reachable = phoneReachableRoutes.toSet();
+        final stranded = _allRoutes
+            .where((r) => !_sidebarExempt.contains(r) && !reachable.contains(r))
+            .toList();
+        expect(
+          stranded,
+          isEmpty,
+          reason:
+              'These screens exist and compile but nothing on a phone can '
+              'navigate to them: \$stranded',
+        );
+      },
+    );
 
     test('phone navigation lists no route that does not exist', () {
       for (final route in phoneReachableRoutes) {
-        expect(_allRoutes, contains(route),
-            reason: '\$route is in the phone navigation but is not a real route');
+        expect(
+          _allRoutes,
+          contains(route),
+          reason: '\$route is in the phone navigation but is not a real route',
+        );
       }
     });
 
@@ -179,22 +190,25 @@ void main() {
       expect(
         missing,
         isEmpty,
-        reason: 'These screens exist but have no sidebar entry, so on desktop '
+        reason:
+            'These screens exist but have no sidebar entry, so on desktop '
             'they are reachable only by typing a URL: $missing',
       );
     });
 
     test('lists no route that does not exist', () {
       for (final route in desktopSidebarRoutes) {
-        expect(_allRoutes, contains(route),
-            reason: '$route is in the sidebar but is not a real route');
+        expect(
+          _allRoutes,
+          contains(route),
+          reason: '$route is in the sidebar but is not a real route',
+        );
       }
     });
 
     test('has no duplicate entries', () {
       final seen = <String>{};
-      final dupes =
-          desktopSidebarRoutes.where((r) => !seen.add(r)).toList();
+      final dupes = desktopSidebarRoutes.where((r) => !seen.add(r)).toList();
       expect(dupes, isEmpty);
     });
   });

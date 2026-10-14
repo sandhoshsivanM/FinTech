@@ -154,9 +154,17 @@ export default function PrivacyPage() {
         <ul className="ml-4 grid list-disc gap-1.5">
           <li>
             <b className="text-ink">Notification access</b> (optional) — so the app can read
-            transaction alerts from your bank and offer to file them. The text is parsed on the
-            device and nothing is transmitted. You grant this in system settings and can withdraw
-            it there at any time; the feature is off until you do.
+            transaction alerts from your bank and offer to file them. Khazana shows an
+            explanation inside the app and asks for your agreement before it takes you to the
+            system screen where you grant this. Android shares the notifications on your phone
+            with an app that holds this access, so Khazana can technically see all of them; it
+            checks each one in memory for a bank or UPI payment alert and ignores the rest. The
+            text is parsed on the device and thrown away straight away. Only the amount,
+            merchant and date of a payment alert are kept, in your encrypted vault, and only
+            after you approve the suggestion. Nothing is transmitted, shared or used for
+            advertising. You grant this in system settings and can withdraw it there at any
+            time (Settings, Notifications, Notification access); the feature is off until you
+            turn it on.
           </li>
           <li>
             <b className="text-ink">SMS — not requested.</b> Khazana does not ask for

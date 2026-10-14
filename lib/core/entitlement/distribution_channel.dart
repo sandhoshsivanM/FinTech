@@ -47,6 +47,14 @@ final Channel kChannel = Channel.values.firstWhere(
 bool get kUsesStoreBilling =>
     kChannel == Channel.appStore || kChannel == Channel.play;
 
+/// Whether this build offers Khazana Pro at all.
+///
+/// False on Google Play for 1.0: nothing on Android is gated yet and several
+/// Pro benefits exist only on the web, so selling Pro there would promise
+/// features the app does not have (Play's misleading-claims policy). Pro comes
+/// to Play once the Android Pro screens and gates exist.
+bool get kOffersPro => kChannel != Channel.play;
+
 /// Whether this build may show a licence-key field and an external checkout.
 ///
 /// False in every store build. Guard the UI with this, not with a platform
