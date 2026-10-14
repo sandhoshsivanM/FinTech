@@ -11,12 +11,12 @@
  * other changes in the same commit.
  *
  * Written to be honest about the parts that are inconvenient for us — no PIN
- * recovery, data loss is possible, the two purchase ecosystems are separate —
- * because those are exactly the clauses a buyer needs before paying, not after.
+ * recovery, data loss is possible — because those are exactly the clauses a
+ * user needs before trusting the app with their records.
  */
 import Link from 'next/link';
 import {
-  FileText, KeyRound, TriangleAlert, Scale, Receipt, Ban, BookOpen,
+  FileText, KeyRound, TriangleAlert, Scale, Ban, BookOpen,
 } from 'lucide-react';
 import { PageIntro, GlassCard } from '@/components/ui';
 import { Stagger, StaggerItem } from '@/components/motion';
@@ -55,9 +55,9 @@ export default function TermsPage() {
       <Section icon={<FileText size={17} />} title="The short version">
         <p>
           Khazana is proprietary software published by {ENTITY}, an individual developer. You get
-          a personal licence to use it on your own devices. Khazana Pro is a{' '}
-          <b className="text-ink">one-time purchase</b>, not a subscription: it does not expire and
-          you are never billed again.
+          a personal licence to use it on your own devices. Khazana is{' '}
+          <b className="text-ink">free</b>: there is nothing to buy, no subscription and nothing
+          to unlock. You may not redistribute or resell the software.
         </p>
         <p>
           Where a store&rsquo;s own terms conflict with these, that store&rsquo;s terms govern
@@ -75,11 +75,7 @@ export default function TermsPage() {
           for the full picture.
         </p>
         <p>
-          You can export everything at any time — as an encrypted backup and as plain CSV — and
-          both stay available whether or not you have bought Pro.{' '}
-          <b className="text-ink">
-            No feature that gets your own data out of the app is ever behind a payment.
-          </b>
+          You can export everything at any time — as an encrypted backup and as plain CSV.
         </p>
         <p>
           <b className="text-ink">We cannot recover your PIN.</b> There is no reset, no recovery
@@ -142,25 +138,6 @@ export default function TermsPage() {
           Nothing here excludes liability that cannot lawfully be excluded. You may have statutory
           rights — including under Indian consumer protection law and, in the EEA and UK,
           mandatory consumer rights — that this agreement does not affect.
-        </p>
-      </Section>
-
-      <Section icon={<Receipt size={17} />} title="Purchases and refunds">
-        <p>
-          Purchases made through the App Store, Mac App Store or Google Play are refunded
-          according to that store&rsquo;s policy, by that store — we cannot issue those refunds
-          ourselves. Direct purchases are handled by our merchant of record and may be refunded
-          within 14 days.
-        </p>
-        <p>
-          An app store purchase and a direct licence key are{' '}
-          <b className="text-ink">separate</b>. Linking the two would require a server that knows
-          who you are, which we do not operate and do not want to. This is stated on the purchase
-          screen before you pay, not after.
-        </p>
-        <p>
-          You may not redistribute or resell the software, or share a licence key publicly or
-          outside your household.
         </p>
       </Section>
 

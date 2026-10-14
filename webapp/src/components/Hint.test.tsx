@@ -179,7 +179,7 @@ describe('section help keeps the same house rules', () => {
     for (const [key, s] of entries) {
       // Proper nouns stay capitalised, and so does the first word after a
       // "Step 1 ·" prefix.
-      const PROPER = new Set(['Pro', 'Khazana']);
+      const PROPER = new Set(['Khazana']);
       const words = s.title.split(/\s+/).filter((w, i, a) => i > 0 && a[i - 1] !== '·' && !PROPER.has(w));
       for (const w of words) {
         const titleCased = /^[A-Z][a-z]+$/.test(w);

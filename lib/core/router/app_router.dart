@@ -1,4 +1,3 @@
-import '../entitlement/distribution_channel.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,7 +27,6 @@ import '../../features/transactions/screens/transactions_screen.dart';
 import '../../features/settings/screens/currency_settings_screen.dart';
 import '../../features/settings/screens/notification_settings_screen.dart';
 import '../../features/settings/screens/market_data_settings_screen.dart';
-import '../../features/pro/screens/pro_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../presentation/app_shell.dart';
 import '../../presentation/unlock_gate_screen.dart';
@@ -64,9 +62,6 @@ abstract final class Routes {
   static const currency = '/app/settings/currency';
   static const notifications = '/app/settings/notifications';
   static const settings = '/app/settings';
-
-  /// The paywall, and where an existing purchase is restored.
-  static const pro = '/app/pro';
 
   /// Which bottom-nav tab "owns" [location] — i.e. which tab should read as
   /// selected while this screen is open.
@@ -116,7 +111,6 @@ abstract final class Routes {
     marketData: settings,
     currency: settings,
     notifications: settings,
-    pro: settings,
     settings: settings,
     dashboard: dashboard,
   };
@@ -231,9 +225,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           _tab(Routes.marketData, const MarketDataSettingsScreen()),
           _tab(Routes.currency, const CurrencySettingsScreen()),
           _tab(Routes.notifications, const NotificationSettingsScreen()),
-          // Play 1.0 ships without Pro (see kOffersPro), so the route is not
-          // registered there and no deep link can reach a paywall.
-          if (kOffersPro) _tab(Routes.pro, const ProScreen()),
         ],
       ),
     ],

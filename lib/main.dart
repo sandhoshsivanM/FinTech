@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show LicenseEntryWithLineBreaks, LicenseRegistry;
+import 'package:flutter/foundation.dart'
+    show LicenseEntryWithLineBreaks, LicenseRegistry;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,10 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'presentation/app_shell.dart' show isDesktopPlatform;
 
 import 'core/branding.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/di/data_providers.dart';
-import 'core/entitlement/entitlement_providers.dart';
 import 'core/router/app_router.dart';
 import 'core/router/layout_providers.dart';
 import 'core/services/crash_guard.dart';
@@ -60,18 +59,12 @@ Future<void> _bootstrap() async {
     CrashGuard.record(tag: 'notifications.init', error: e, stack: st);
   }
 
-  // Loaded before the first frame. Pro status reads it synchronously, and
-  // the first screen to ask (Settings, the paywall) used to get "requireValue
-  // on an AsyncValue that has no value" instead of an answer.
-  final prefs = await SharedPreferences.getInstance();
-
-  runApp(ProviderScope(
-    overrides: [
-      notificationServiceProvider.overrideWithValue(notifications),
-      sharedPreferencesProvider.overrideWith((ref) => prefs),
-    ],
-    child: const KhazanaApp(),
-  ));
+  runApp(
+    ProviderScope(
+      overrides: [notificationServiceProvider.overrideWithValue(notifications)],
+      child: const KhazanaApp(),
+    ),
+  );
 }
 
 class KhazanaApp extends ConsumerWidget {
@@ -94,9 +87,8 @@ class KhazanaApp extends ConsumerWidget {
       // world.
       themeMode: ref.watch(themeModeProvider),
       routerConfig: router,
-      builder: (context, child) => AppBackground(
-        child: _Responsive(child: child ?? const SizedBox()),
-      ),
+      builder: (context, child) =>
+          AppBackground(child: _Responsive(child: child ?? const SizedBox())),
     );
   }
 }
@@ -117,8 +109,9 @@ class _Responsive extends ConsumerWidget {
     // Desktop draws its own full-width layout (sidebar + content), so capping
     // the width here would put a phone-sized column in the middle of the window.
     if (isDesktopPlatform) return child;
-    final maxWidth =
-        ref.watch(wideLayoutProvider) ? _wideMaxWidth : _mobileMaxWidth;
+    final maxWidth = ref.watch(wideLayoutProvider)
+        ? _wideMaxWidth
+        : _mobileMaxWidth;
     final width = MediaQuery.sizeOf(context).width;
     if (width <= maxWidth) return child;
     return Center(

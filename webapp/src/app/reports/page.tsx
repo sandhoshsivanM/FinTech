@@ -22,7 +22,6 @@ import {
 } from '@/components/ui';
 import { formatMonthShort, formatDate, toInputValue, todayInputValue, fromInputValue } from '@/lib/dateFormat';
 import { balanceSheet } from '@/domain/statements';
-import { ProGate } from '@/components/ProGate';
 import { ExportReport } from '@/components/ExportReport';
 import { CardTitle } from '@/components/Hint';
 import type Decimal from 'decimal.js';
@@ -288,13 +287,7 @@ export default function ReportsPage() {
       {hasTxns && (
         <GlassCard>
           <SectionHeader title="Export this period" info="reports.export" />
-          <ProGate
-            feature="formattedExports"
-            title="Take this report with you"
-            blurb="A formatted Excel workbook and a printable PDF covering the period on screen — transactions, expenses by category, cash flow, balance sheet and holdings. Your free CSV export on the Transactions page is unaffected."
-          >
-            <ExportReport range={range} />
-          </ProGate>
+          <ExportReport range={range} />
         </GlassCard>
       )}
 

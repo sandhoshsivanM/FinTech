@@ -1,4 +1,3 @@
-import '../../../core/entitlement/distribution_channel.dart';
 import '../../../core/help/info_hint.dart';
 import '../../../presentation/app_shell.dart' show isDesktopPlatform;
 import 'package:file_picker/file_picker.dart';
@@ -15,7 +14,6 @@ import 'package:uuid/uuid.dart';
 import '../../../core/branding.dart';
 import '../../../core/di/data_providers.dart';
 import '../../../core/di/providers.dart';
-import '../../../core/entitlement/entitlement_providers.dart';
 import '../../../core/errors/app_error.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/security/vault_registry.dart';
@@ -359,40 +357,6 @@ class _SettingsBody extends ConsumerWidget {
             ),
           ],
         ),
-        if (kOffersPro)
-          _SettingsGroup(
-            title: null,
-            children: [
-              // Above Backup on purpose: someone who has already paid comes to
-              // Settings looking for "Restore", and it has to be findable without
-              // first walking into a paywall.
-              Consumer(
-                builder: (context, ref, _) {
-                  final entitlement = ref.watch(entitlementProvider);
-                  return ListTile(
-                    leading: Icon(
-                      Icons.workspace_premium_outlined,
-                      color: context.colors.accent,
-                    ),
-                    title: const Text('Khazana Pro'),
-                    subtitle: Text(
-                      entitlement.isPro
-                          ? 'Unlocked${entitlement.orderRef == null ? '' : ' · Licence …${entitlement.orderRef!.substring(entitlement.orderRef!.length - 4)}'}'
-                          : 'One payment. Yours forever.',
-                    ),
-                    trailing: entitlement.isPro
-                        ? Icon(
-                            Icons.verified_outlined,
-                            size: 18,
-                            color: context.colors.income,
-                          )
-                        : const Icon(Icons.chevron_right),
-                    onTap: () => context.go(Routes.pro),
-                  );
-                },
-              ),
-            ],
-          ),
         _SettingsGroup(
           title: 'Backup',
           help: 'settings.privacyBackup',

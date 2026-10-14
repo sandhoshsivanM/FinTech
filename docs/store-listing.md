@@ -90,24 +90,9 @@ Khazana is a record-keeping and calculation tool. Its scores, projections and es
 ```
 *3,663 chars (measured; the console shows the live count).*
 
-> **Pro tier: deliberately not mentioned above.** The Android app contains a
-> "Khazana Pro" screen (Settings), but no screen in the Flutter app is wired to
-> `ProGate`, and several benefits on that screen (Tax Centre, household
-> profiles, formatted exports, forecast) exist only in the web client per
-> `docs/pro-gates.json`. Selling or advertising features the Android app does not
-> have is a Play "misleading claims" and "deceptive behaviour" risk. Decide one
-> of two routes before the first closed test: either **(a)** ship 1.0.0 free,
-> do not create the `khazana_pro` in-app product and hide the Pro entry, or
-> **(b)** wire the gates, trim `ProCopy.benefits` to what Android really has
-> (portfolio analytics, statement import, auto-capture, price refresh, longer
-> reports, score history, multiple vaults) and then add a Pro paragraph here and
-> tick "contains in-app purchases".
->
-> **Decided 2026-10-14: route (a).** 1.0.0 ships free on Play. Play builds
-> (`--dart-define=KHAZANA_CHANNEL=play`) hide every Pro entry point and do not
-> register the Pro route (`kOffersPro` in
-> `lib/core/entitlement/distribution_channel.dart`). Answer "No" to in-app
-> purchases and do not create `khazana_pro` yet.
+> **No in-app purchases.** Khazana is free for everyone: no Pro tier, no
+> paywall, no licence keys and no billing library in the app. Answer "No" to
+> in-app purchases.
 
 ### Release notes, 1.0.0 (500 max per language)
 ```
@@ -160,7 +145,7 @@ No tablet screenshots are required for a phone-only listing.
 | Health apps (health features) | No. The "financial health score" is a money metric, not a health feature |
 | Financial features | Declare as a personal-finance tracker. Do **not** tick lending, trading/brokerage, payments, wallets, crypto, insurance sales or advice. If a "no financial features" choice is the only fit, do not use it either, because the app handles financial records. Pick the closest "personal finance management / other" option the form offers |
 | Data safety | See below |
-| In-app purchases | See the Pro note above. Tick "contains in-app purchases" only if route (b) is taken |
+| In-app purchases | **No** |
 
 **App access instructions** (paste into the "App access" box):
 
@@ -184,7 +169,7 @@ Communication, or Other* (Finance apps are rated under this heading).
 | Gambling or simulated gambling | No |
 | User-generated content or user-to-user communication | No |
 | Shares the user's location with others | No |
-| Allows purchases of digital goods | **No** for route (a); **Yes** for route (b) |
+| Allows purchases of digital goods | No |
 | Unrestricted web access / browser | No (it only opens the privacy and terms links in the system browser) |
 
 Expected outcome: Everyone / PEGI 3 / IARC 3+. The questionnaire result is
@@ -204,11 +189,9 @@ the user tapping a refresh or opening a screen that needs a quote):
 | `www.alphavantage.co` | quotes (fallback, user supplies their own API key) | a ticker symbol and the user's own API key |
 | `www.amfiindia.com` | mutual fund NAVs | nothing: a public file is downloaded |
 | `api.frankfurter.dev` | exchange rates (ECB reference rates) | a currency code |
-| Google Play Billing | the Pro purchase (only if route (b)) | handled by Google Play, not by the app |
 
 There is **no** analytics, crash reporting, advertising, attribution, Firebase,
-remote config or sign-in SDK in the app, no server of ours, and no licence
-check over the network (licence keys are verified on the device). Cloud backup
+remote config, billing or sign-in SDK in the app, and no server of ours. Cloud backup
 is switched off (`allowBackup="false"`, data-extraction rules exclude everything).
 
 **Section 1, Data collection and security**
@@ -245,7 +228,6 @@ to data collection:
 | `INTERNET`, `ACCESS_NETWORK_STATE` | app, plugin | price, NAV and FX refresh |
 | `POST_NOTIFICATIONS`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED` | app | local reminders; the boot receiver restores scheduled alarms after a reboot. No exact-alarm permission is used |
 | `USE_BIOMETRIC`, `USE_FINGERPRINT` | `local_auth` plugin | optional unlock; the app gets only yes or no |
-| `com.android.vending.BILLING` | `in_app_purchase` plugin | present whichever route is taken; unused if route (a) |
 | `BIND_NOTIFICATION_LISTENER_SERVICE` (on the service) | app | optional bank-alert auto-capture; see below |
 | `<DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION>` | AndroidX | internal signature permission |
 
@@ -313,8 +295,6 @@ The disclosure text, for the console and the review video:
 - If Play review asks for justification, use the "Notification-listener
   justification" below and offer a short screen recording: Settings, Auto-capture,
   Notification access, the dialog, Agree, the system screen.
-- Capture is described as Pro in the (web-era) gate map and paywall but is not
-  gated in the Android code today (see the Pro note above).
 
 **SMS.** Correctly absent (`RECEIVE_SMS`/`READ_SMS` are Play restricted
 permissions; reading bank texts is not an allowed use).
@@ -365,7 +345,6 @@ and a contact address (the page does).
 - The local `flutter build appbundle --release` is signed with the **debug** key
   when `android/key.properties` is absent. Play rejects that; only the CI build
   with the upload keystore secrets is uploadable.
-- Create the `khazana_pro` product only under route (b).
 - Adaptive launcher icon was fixed in this change (background white, foreground
   mark inside the safe zone, true monochrome layer for themed icons).
 
@@ -415,10 +394,7 @@ No account is required. Khazana works fully offline; a reviewer can create a
 vault with any PIN and use every screen immediately. "Load sample data" in
 Settings populates a realistic dataset for testing.
 
-Khazana Pro is a one-time non-consumable (khazana_pro), not a subscription.
-Restore Purchases is on the Pro screen and in Settings, and remains visible
-after purchase. There is no server: purchases are validated on-device by
-StoreKit.
+Khazana is free. There are no in-app purchases and nothing is locked.
 
 The app has no user accounts, no analytics and no backend. Network requests are
 made only when the user refreshes market prices or exchange rates, and carry
@@ -438,7 +414,7 @@ Six per device, in this order — the first two are what most people ever see:
    frame.
 2. **Financial Health** — the score with its four areas. The hook.
 3. **Investments** — allocation donut and positions.
-4. **Tax Centre** — the strongest Pro justification.
+4. **Tax Centre** — gains and what they may cost.
 5. **Privacy** — "Encrypted on this device. No server. No account." Say the
    differentiator in a screenshot, because most people never read the
    description.
@@ -458,10 +434,10 @@ Markets screen. Never screenshot a real vault.
 
 ## Landing page
 
-On the custom domain, not `*.netlify.app` — a paid finance product on a free
+On the custom domain, not `*.netlify.app` — a finance product on a free
 subdomain reads as untrustworthy, and rightly so.
 
 Above the fold: the one-line pitch, **Try it now** (the live PWA — competitors
-cannot let people try before buying, and you can), and store badges. Below:
-the privacy architecture, a price with the free tier stated plainly, and links
+cannot let people try before installing, and you can), and store badges. Below:
+the privacy architecture, "free for everyone, nothing to unlock" stated plainly, and links
 to `/privacy` and `/terms`.

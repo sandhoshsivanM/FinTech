@@ -107,7 +107,7 @@ class _AppShellState extends ConsumerState<AppShell>
         }
       }
     }
-    // -1 when no section owns the route (Settings, Search, Pro…): those
+    // -1 when no section owns the route (Settings, Search, Import…): those
     // pages used to fall back to Home, so Settings opened under the Home
     // greeting with the Home tab lit.
     return best;
@@ -451,7 +451,7 @@ class _HomeGreeting extends ConsumerWidget {
 
 /// Account-level destinations, behind the avatar.
 ///
-/// Settings, Pro, Import and Search are things you do TO the vault rather than
+/// Settings, Import and Search are things you do TO the vault rather than
 /// screens you read, so they hang off the app bar instead of competing for a
 /// slot in the navigation. Keeping them out of the bar is what let the bar
 /// shrink to four sections that each mean something.

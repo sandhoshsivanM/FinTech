@@ -98,6 +98,7 @@ jobs:
           need('allowBackup')                       # must be declared false
           forbid('android.permission.READ_SMS')     # Play restricted permission
           forbid('android.permission.RECEIVE_SMS')
+          forbid('com.android.vending.BILLING')     # no in-app purchases; Khazana is free
           print('manifest OK')
           PY
 

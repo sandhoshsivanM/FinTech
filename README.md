@@ -126,11 +126,9 @@ preparation, where the critical path is Google Play's twelve-tester, fourteen-da
 closed test for individual publishers rather than anything in the code. **No
 public release yet, and no backend — the second one permanently.**
 
-Khazana is free with no limits on the ledger; **Khazana Pro** is a one-time
-purchase, never a subscription. Backup, restore, CSV export and "erase all data"
-are free forever and are asserted as an invariant by the test suites on both
-clients — see [`docs/pro-gates.json`](docs/pro-gates.json), which is the single
-source of truth both clients load so they cannot drift about what money buys.
+**Free for everyone.** Every feature, on every platform, with no ads, no
+subscription, no paywall, no in-app purchase and no account. There is nothing to
+unlock: both clients carry a test asserting that no screen is gated.
 
 The security story is applied client-side cryptography (see the
 [threat model](docs/THREAT-MODEL.md)), not web-auth or infrastructure security.

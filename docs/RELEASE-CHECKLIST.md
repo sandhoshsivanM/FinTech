@@ -56,30 +56,26 @@ form are in `docs/store-listing.md` (section "Google Play"); the graphics are in
        answers are in `docs/store-listing.md`.
 7. [ ] **Main store listing**: short and full description, `icon-512.png`,
        `feature-graphic.png` and the eight screenshots from `docs/play-store/`.
-8. [ ] **Decide the Pro question before uploading** (see the "Pro tier" note in
-       `docs/store-listing.md`): either ship 1.0.0 with no in-app product and the
-       Pro entry hidden, or wire `ProGate`, trim the Pro copy to what Android
-       really has and create the `khazana_pro` one-time product.
-9. [ ] **Closed testing**: Testing, Closed testing, create a track, upload the
+8. [ ] **Closed testing**: Testing, Closed testing, create a track, upload the
        AAB, add testers (an email list or a Google Group), roll out, and share
        the opt-in link. Add release notes from the listing doc.
-10. [ ] **Run the test properly**: if the account is a *personal* one created
+ 9. [ ] **Run the test properly**: if the account is a *personal* one created
        after 13 Nov 2023, Play requires **at least 12 testers opted in
        continuously for 14 days** before you may apply for production. Recruit
        14 to 15 so a couple of drop-outs do not reset the clock. Ask testers to
        actually open the app (and tell you what breaks). Organization accounts
        are exempt from this rule.
-11. [ ] **Apply for production access** once the 14 days are met (Dashboard,
+10. [ ] **Apply for production access** once the 14 days are met (Dashboard,
        "Apply for production"), answer the questions about what testers did and
        what you changed, then create the production release. Start the staged
        rollout at 20 percent (see "After" below).
-12. [ ] **After approval**: keep `versionCode` strictly increasing (`+2`, `+3`...
+11. [ ] **After approval**: keep `versionCode` strictly increasing (`+2`, `+3`...
        in `pubspec.yaml`), and re-check the Data safety form whenever a network
        call, SDK or permission is added.
 
 ---
 
-## Once, before the first paid release
+## Once, before the first public release
 
 These have external waiting periods measured in weeks. Every day of delay here
 is a day added to launch.
@@ -92,48 +88,17 @@ is a day added to launch.
       committed in `ios/Runner.xcodeproj` may be stale — the only signing
       identity on the build machine belongs to a different team.
 - [ ] Custom domain, and point Netlify at it. `*.netlify.app` on a free tier is
-      not a credible URL for a paid finance product.
+      not a credible URL for a finance product.
 - [ ] Support email on that domain. Both stores require a working support URL.
-- [ ] Merchant of record (LemonSqueezy or Paddle), **not** raw Stripe — an MoR
-      owns Indian GST and EU VAT on your behalf.
-- [x] **DONE** Mint the Ed25519 licence pair. Generated 25 Aug 2026; private
-      seed written to `~/khazana-licence-signing-key.txt` (mode 600) and **not**
-      in this repo. ⚠️ Move it into a password manager and take a paper backup,
-      then delete that file — a key sitting in a home directory is one disk
-      failure from ending the product's ability to issue licences.
-      Public key wired into both clients and verified by a minted key.
-      Original instructions:
-- [ ] ~~**BLOCKER** Mint the Ed25519 licence pair:~~
-      `dart run tool/mint_licenses.dart --generate-keypair`.
-      Private key → password manager **and** a paper backup. Paste the public
-      key into **both** `lib/core/entitlement/license_public_key.dart` and
-      `webapp/src/lib/entitlement/licensePublicKey.ts` — they must match byte
-      for byte. Until then every licence key is refused, by design.
-- [x] **DONE** Mint a key pool and upload it to the merchant as a code list.
-      100 keys minted 19 Sep 2026 to `~/khazana-keys-pool.txt` (mode 600), with
-      `~/khazana-keys-pool.csv` as the key→recipient tracker. All 100 verified
-      against the shipped `LICENSE_PUBLIC_KEY`, 100 distinct order refs. The
-      first 20 are the early-access giveaway; the rest are the launch pool.
-      ⚠️ **Do not redirect stdout straight to the file.** `dart run` prints
-      `Running build...` to *stdout* with no trailing newline, so it glues onto
-      the first key and silently corrupts it. Extract by pattern instead:
-      `dart run tool/mint_licenses.dart --private-key <b64> --count 1000 \
-        2>/dev/null | grep -oE 'KHAZ1\.[A-Za-z0-9_-]{102}' > keys.txt`
-      Original instructions:
-- [ ] ~~Mint a key pool and upload it to the merchant as a code list:~~
-      `dart run tool/mint_licenses.dart --private-key <b64> --count 1000 > keys.txt`
 - [ ] **BLOCKER** Create the Android release keystore. Back it up off-machine —
       **losing it means you can never update the app on Play, ever.**
-- [ ] App Store Connect: create `khazana_pro` as a **non-consumable**, enable
-      **Universal Purchase** (one buy covers iPhone/iPad/Mac) and **Family
-      Sharing**. Play Console: same id, one-time product.
 - [ ] `macos/Runner/Configs/Signing.local.xcconfig` with a real Developer ID,
       `KHAZANA_HARDENED_RUNTIME = YES` and
       `KHAZANA_INJECT_BASE_ENTITLEMENTS = NO`. Set all of them together — a
       half-configured build compiles and then crashes at launch on library
       validation.
 - [ ] Upgrade `flutter_secure_storage` off `^10.0.0-beta.4`. It guards the vault
-      salt; a beta is not a shipping dependency for a paid security product.
+      salt; a beta is not a shipping dependency for a security product.
 
 ---
 
@@ -169,44 +134,19 @@ The failures here are silent and permanent, so they are checked by hand:
       container and the user's vault vanishes. This has happened. Do not change
       an identifier without a migration that copies the old container first.
 
-### 4. Entitlement
+### 4. Everything is free
 
-- [ ] `flutter test test/unit/feature_gate_test.dart` — the always-free
-      invariant.
-- [ ] `flutter test test/unit/license_key_test.dart` and
-      `npx vitest run src/lib/entitlement/` — both verifiers agree on the shared
-      fixture.
-- [ ] Sandbox purchase via a StoreKit `.storekit` config and a Play licence
-      tester. Then **delete the app, reinstall, confirm silent restore**.
-- [ ] Confirm `completePurchase()` fires. **Play auto-refunds anything
-      unacknowledged after three days**, silently — this bug refunds every
-      customer and looks like nothing at all for 72 hours.
-- [ ] Airplane mode on a Pro device: **still Pro**.
-- [ ] App Store build contains no licence-key field
-      (`--dart-define=KHAZANA_CHANNEL=appStore`).
-- [ ] **No dev override in the artifact.** Both clients have a development
-      escape hatch so a gated screen can be worked on without minting a licence.
-      Neither can reach a release build, but confirm it per release:
-      - Flutter: `--dart-define=KHAZANA_PRO=true`. Compile-time
-        (`bool.fromEnvironment`), so a release build without the flag simply
-        does not contain it.
-      - Web: `NEXT_PUBLIC_KHAZANA_PRO=true` in a git-ignored `webapp/.env.local`.
-        Guarded by `NODE_ENV !== 'production'`, which Next inlines at build
-        time, so the branch is dead-code-eliminated. Asserted by
-        `webapp/src/lib/devOverride.test.ts`, which also greps the emitted
-        bundle. To check by hand:
-        `grep -r NEXT_PUBLIC_KHAZANA_PRO webapp/out/` must return nothing.
-      - Either way the entitlement records `ProSource.devOverride`, never
-        `licenseKey` — so a dev build is distinguishable from a purchase in any
-        screenshot or bug report.
+- [ ] `flutter test test/widget/everything_free_test.dart` and
+      `npx vitest run src/app/everythingFree.test.tsx` — no screen is gated, no
+      paywall copy, no `/pro` route.
 
 ### 5. Store artifacts
 
 - [ ] `flutter build appbundle --release --dart-define=KHAZANA_CHANNEL=play`
 - [ ] Signed with the **release** keystore, not debug.
 - [ ] Shipped manifest: `INTERNET` present, `READ_SMS`/`RECEIVE_SMS` absent,
-      `allowBackup="false"`. (The `android` job in `release-mobile.yml` asserts
-      all four.)
+      `allowBackup="false"`, `com.android.vending.BILLING` absent. (The
+      `android` job in `release-mobile.yml` asserts all five.)
 - [ ] `flutter build ipa --release --dart-define=KHAZANA_CHANNEL=appStore`,
       passes Xcode validation with no ITMS errors.
 - [ ] iOS 1024 icon has **no alpha** (ITMS-90717 is an upload failure).
@@ -215,8 +155,8 @@ The failures here are silent and permanent, so they are checked by hand:
 - [ ] macOS: `codesign -dv` shows a real identity and `runtime`, then
       `xcrun notarytool submit … --wait` and `xcrun stapler staple`.
 - [ ] **Desktop installers are signed.** An unsigned build is refused by
-      Gatekeeper and warned about by SmartScreen — fatal to conversion on a
-      *paid* download.
+      Gatekeeper and warned about by SmartScreen — fatal to adoption of a
+      downloaded finance app.
 
 ### 6. Store metadata
 
@@ -231,7 +171,7 @@ The failures here are silent and permanent, so they are checked by hand:
 
 - [ ] Tag `vX.Y.Z` — `release-mobile.yml` asserts the tag matches `pubspec.yaml`.
 - [ ] Staged rollout on Play (start at 20%). Phased release on Apple.
-- [ ] Watch crash rates and refund rate for 48 hours before going to 100%.
+- [ ] Watch crash rates and store reviews for 48 hours before going to 100%.
 
 ---
 
@@ -241,7 +181,3 @@ The failures here are silent and permanent, so they are checked by hand:
   which is why rollouts start at 20%.
 - **Apple:** you cannot pull a live version. Ship a fix and use Phased Release
   to slow the damage.
-- **A bad licence key batch:** re-mint and re-issue via the merchant's order
-  lookup. There is deliberately **no revocation list** — a fetched one needs a
-  server, and a baked-in one goes stale and eventually locks out an honest
-  buyer, which is worse than the piracy it would prevent.

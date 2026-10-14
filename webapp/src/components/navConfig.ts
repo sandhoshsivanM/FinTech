@@ -2,7 +2,6 @@ import {
   LayoutDashboard, LineChart, BarChart3, TrendingUp, Table2, Star, CandlestickChart,
   Coins, Landmark, Wallet, Receipt, CalendarDays, CalendarClock, PieChart, Repeat, Flag, CreditCard,
   Shield, ShieldCheck, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle, Upload, Stethoscope, Scale,
-  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -14,18 +13,6 @@ export interface NavItem {
   icon: LucideIcon;
   /** Rendered as a count pill on the right of the row. */
   badge?: number;
-  /**
-   * Part of Khazana Pro. Renders a small lock chip when not unlocked.
-   *
-   * The row still navigates: the screen itself renders `ProGate`, which
-   * shows the real content blurred behind the paywall card. Hiding gated
-   * rows entirely would make the sidebar change shape on purchase, and
-   * would stop anyone discovering what they are being sold.
-   *
-   * Source of truth is `docs/pro-gates.json`; this flag is only the visual
-   * hint, and `specParity.test.tsx` asserts the two agree.
-   */
-  pro?: boolean;
   /**
    * One line under the label, on the expanded sidebar only.
    *
@@ -63,8 +50,8 @@ export const NAV_GROUPS: NavGroup[] = [
       // looking for a score; they come asking whether they are doing all right.
       { href: '/score', label: 'Financial Health', icon: Gauge, description: 'Your score and the four areas behind it' },
       { href: '/reports', label: 'Reports', icon: BarChart3, description: 'Trends over time' },
-      { href: '/forecast', label: 'Forecast', icon: CalendarClock, description: 'Where this is heading', pro: true },
-      { href: '/analytics', label: 'Analytics', icon: LineChart, description: 'Deeper cuts of the same data', pro: true },
+      { href: '/forecast', label: 'Forecast', icon: CalendarClock, description: 'Where this is heading' },
+      { href: '/analytics', label: 'Analytics', icon: LineChart, description: 'Deeper cuts of the same data' },
     ],
   },
   {
@@ -74,10 +61,10 @@ export const NAV_GROUPS: NavGroup[] = [
       // separate them: one is the summary, the other is the table it summarises.
       { href: '/investments', label: 'Portfolio', icon: TrendingUp, description: 'Allocation, returns, performance' },
       { href: '/holdings', label: 'Holdings', icon: Table2, description: 'Every position, one row each' },
-      { href: '/watchlist', label: 'Watchlist', icon: Star, description: 'Things you do not own yet', pro: true },
-      { href: '/markets', label: 'Markets', icon: CandlestickChart, description: 'Index levels and sessions', pro: true },
-      { href: '/dividends', label: 'Dividends', icon: Coins, description: 'Income your holdings paid out', pro: true },
-      { href: '/tax', label: 'Tax centre', icon: Landmark, description: 'Gains, and what they may cost', pro: true },
+      { href: '/watchlist', label: 'Watchlist', icon: Star, description: 'Things you do not own yet' },
+      { href: '/markets', label: 'Markets', icon: CandlestickChart, description: 'Index levels and sessions' },
+      { href: '/dividends', label: 'Dividends', icon: Coins, description: 'Income your holdings paid out' },
+      { href: '/tax', label: 'Tax centre', icon: Landmark, description: 'Gains, and what they may cost' },
     ],
   },
   {
@@ -106,11 +93,10 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Tools',
     items: [
       { href: '/import', label: 'Import', icon: Upload, description: 'Bring in a statement or broker file' },
-      { href: '/reconcile', label: 'Reconcile', icon: Scale, description: 'Check the app against your bank', pro: true },
+      { href: '/reconcile', label: 'Reconcile', icon: Scale, description: 'Check the app against your bank' },
       { href: '/alerts', label: 'Alerts', icon: Bell, description: 'What the app wants to tell you' },
       { href: '/diagnostics', label: 'Diagnostics', icon: Stethoscope, description: 'Health of the vault itself' },
-      { href: '/news', label: 'News', icon: Newspaper, description: 'Headlines for what you hold', pro: true },
-      { href: '/pro', label: 'Khazana Pro', icon: Sparkles, description: 'One payment, yours forever' },
+      { href: '/news', label: 'News', icon: Newspaper, description: 'Headlines for what you hold' },
       { href: '/settings', label: 'Settings', icon: Settings, description: 'Appearance, profiles, backup' },
       { href: '/help', label: 'Help', icon: HelpCircle, description: 'How this works, and the tour' },
       { href: '/privacy', label: 'Privacy', icon: ShieldCheck, description: 'What leaves your device, and what does not' },

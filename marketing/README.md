@@ -11,9 +11,7 @@ STAGE=compose ./run.sh         # re-compose only, from existing screens/
 ```
 
 - `capture.mjs` creates a throwaway vault, loads **Settings → Load sample data**,
-  and saves every screen in both themes to `screens/`. The Pro screens need a
-  licence key. It reads the last line of `~/khazana-keys-pool.txt` by default,
-  or the file in `LICENSE_KEY_FILE`. The key is never written anywhere.
+  and saves every screen in both themes to `screens/`.
 - `compose.mjs` lays those screens out in `templates/kit.mjs` brand frames and
   writes `output/<format>/…png` at 2x. It also writes a PDF of each carousel for
   LinkedIn document posts.

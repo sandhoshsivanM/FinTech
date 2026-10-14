@@ -12,7 +12,7 @@ void main() {
   });
 
   test('carries the full web section set and glossary', () {
-    expect(kWebSectionHelp.length, 106);
+    expect(kWebSectionHelp.length, 102);
     expect(kGlossary.length, 37);
   });
 

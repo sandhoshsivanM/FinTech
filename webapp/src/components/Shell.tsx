@@ -338,7 +338,6 @@ function Brand({ rail }: { rail: boolean }) {
 function Nav({
   path, rail, className, onNavigate,
 }: { path: string; rail: boolean; className?: string; onNavigate?: () => void }) {
-  const isPro = useApp((s) => s.pro.isPro);
   // Per-instance, so the sidebar and the drawer never animate a pill between them.
   const pillId = useId();
   return (
@@ -388,16 +387,6 @@ function Nav({
                 {!rail && <span className="relative truncate">{n.label}</span>}
                 {!rail && n.badge != null && (
                   <span className="relative ml-auto text-[10px] font-semibold px-1.5 rounded-full bg-danger text-white">{n.badge}</span>
-                )}
-                {/* A quiet lock, not a hard stop. The row still navigates —
-                    the screen renders the real content blurred behind the
-                    paywall — because hiding gated rows would make the sidebar
-                    change shape on purchase, and would stop anyone discovering
-                    what they are being sold. */}
-                {!rail && n.pro && !isPro && n.badge == null && (
-                  <span className={clsx('relative ml-auto rounded-full px-1.5 py-[1px] text-[10px] font-medium', active ? 'bg-white/20 text-[var(--primary-fg)]' : 'bg-[var(--card-2)] text-ink-soft shadow-[0_1px_4px_-1px_rgba(0,0,0,0.2)]')}>
-                    Pro
-                  </span>
                 )}
                 {/* Always in the accessible name, so a screen reader hears
                     "Portfolio, allocation returns performance" and never has to

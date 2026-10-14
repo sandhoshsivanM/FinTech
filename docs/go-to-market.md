@@ -105,13 +105,11 @@ believe the fourth.
 > A personal finance and wealth app that keeps your data on your device —
 > encrypted, offline, no account, no server, no ads, no tracking.
 >
-> Free, with no catch and no limits on your ledger: unlimited transactions,
-> accounts, budgets, goals and holdings. Encrypted backup, restore and a full
-> CSV export are free forever, because nothing that gets your own data out of
-> the app should ever be behind a payment.
->
-> Khazana Pro is one payment — not a subscription — for the Tax Centre, XIRR and
-> benchmark analysis, statement import, and household profiles.
+> Free for everyone, with no catch: every feature, no subscription, no
+> paywall, no in-app purchase. Unlimited transactions, accounts, budgets, goals
+> and holdings, plus the Tax Centre, XIRR and benchmark analysis, statement
+> import and household profiles. Encrypted backup, restore and a full CSV export
+> included.
 >
 > Try it in your browser before you install anything. That link is the whole
 > app.
@@ -128,7 +126,7 @@ believe the fourth.
 1. **The Play closed test, run in public.** Google requires 12 testers for 14
    continuous days before an individual developer gets production access.
    Recruit them from post #2 or #3. This turns a bureaucratic gate into a launch
-   runway and gets real feedback before you charge anyone. **Start it the day
+   runway and gets real feedback before a public launch. **Start it the day
    the Play account clears** — it is the critical path.
 2. **Hacker News, Show HN.** The privacy architecture is genuinely HN-shaped.
    Lead with the engineering, not the product. Post Tue–Thu, ~8am ET.
@@ -147,9 +145,4 @@ so use the signals you legitimately have:
 
 - Play Console and App Store Connect: installs, conversion rate, crashes
 - Netlify: landing-page traffic and PWA installs
-- Merchant of record: sales, refund rate, and where buyers came from
 - Store reviews and support email: the only qualitative signal you get
-
-Refund rate is the number that matters. Above ~5% means the paywall is
-promising something Pro does not deliver, and the fix is the copy, not the
-price.

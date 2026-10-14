@@ -6,7 +6,6 @@
  * session state beside them is not — it is derived from the clock in
  * `lib/marketClock.ts` and is accurate to the session window.
  */
-import { ProGate } from '@/components/ProGate';
 import { useMemo } from 'react';
 import { CandlestickChart, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { useApp } from '@/lib/store';
@@ -23,7 +22,7 @@ import { demoIndices, demoDayChangePct, demoSeries, rangeLabels } from '@/lib/de
 import { marketState } from '@/lib/marketClock';
 import { pct } from '@/lib/format';
 
-function MarketsPageInner() {
+export default function MarketsPage() {
   const holdings = useApp((s) => s.holdings);
   const watchlist = useApp((s) => s.watchlist);
   const fmt = useFmt();
@@ -136,25 +135,5 @@ function MarketsPageInner() {
         </div>
       )}
     </Stagger>
-  );
-}
-
-/**
- * Index levels and sessions — gated.
- *
- * The gate renders the real screen blurred behind the paywall card rather than
- * replacing it: a redirect would lose the user's context and break the back
- * button, and someone who can faintly see their own figures converts where
- * someone shown an empty room does not.
- */
-export default function MarketsPage() {
-  return (
-    <ProGate
-      feature="marketsAndNews"
-      title={'Index levels and sessions'}
-      blurb={'Part of Khazana Pro.'}
-    >
-      <MarketsPageInner />
-    </ProGate>
   );
 }

@@ -174,37 +174,25 @@
   }
   .card .ico svg { width: 18px; height: 18px; stroke: var(--accent); fill: none; stroke-width: 1.9; }
 
-  /* ── Pricing ────────────────────────────────────────────── */
-  .price-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
-  @media (max-width: 820px) { .price-wrap { grid-template-columns: 1fr; } }
-
+  /* ── Free for everyone ───────────────────────────────── */
   .plan {
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--radius-card); padding: 30px;
+    background: var(--surface); border: 1px solid var(--accent);
+    border-radius: var(--radius-card); padding: 30px; box-shadow: var(--shadow-2);
   }
-  .plan.pro {
-    border-color: var(--accent); box-shadow: var(--shadow-2);
-    position: relative;
-  }
-  .plan .pname { font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
-  .plan.pro .pname { color: var(--accent); }
+  .plan .pname { font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
   .plan .amount { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; margin: 10px 0 2px; }
   .plan .amount small { font-size: 16px; font-weight: 500; color: var(--ink-soft); letter-spacing: 0; }
   .plan .terms { color: var(--ink-soft); font-size: 15px; margin-bottom: 22px; }
-  .plan ul { list-style: none; margin: 0 0 26px; padding: 0; }
+  .plan ul { list-style: none; margin: 0 0 26px; padding: 0; columns: 2; column-gap: 28px; }
+  @media (max-width: 820px) { .plan ul { columns: 1; } }
   .plan li {
     padding: 7px 0 7px 27px; position: relative; font-size: 15.5px; color: var(--ink);
-    border-bottom: 1px solid transparent;
+    border-bottom: 1px solid transparent; break-inside: avoid;
   }
   .plan li::before {
     content: ""; position: absolute; left: 4px; top: 14px;
     width: 11px; height: 6px; border-left: 2px solid var(--accent);
     border-bottom: 2px solid var(--accent); transform: rotate(-45deg);
-  }
-  .badge-once {
-    display: inline-block; background: var(--gold-soft); color: #8E641B;
-    border-radius: 999px; padding: 4px 11px; font-size: 13px; font-weight: 650;
-    margin-left: 8px; vertical-align: 3px;
   }
 
   .promise {
@@ -303,7 +291,7 @@
     </a>
     <a class="navlink opt" href="#features">Features</a>
     <a class="navlink opt" href="#download">Download</a>
-    <a class="navlink opt" href="#pricing">Pricing</a>
+    <a class="navlink opt" href="#free">Free</a>
     <a class="navlink opt" href="/case-study/">Case study</a>
     <a class="btn btn-primary btn-sm" href="https://khazana-app.netlify.app">Open the app</a>
   </div>
@@ -322,7 +310,7 @@
     <div class="cta-row">
       <a class="btn btn-onDark" href="https://khazana-app.netlify.app">Try it in your browser</a>
       <a class="btn btn-outlineDark" href="#download">Download for Mac</a>
-      <a class="btn btn-outlineDark" href="#pricing">See what Pro unlocks</a>
+      <a class="btn btn-outlineDark" href="#free">See what is included</a>
     </div>
     <p class="cta-note">
       Nothing to install and nothing to sign up for. The link is the whole app —
@@ -482,69 +470,47 @@
   </div>
 </section>
 
-<!-- ── Pricing ──────────────────────────────────────────────── -->
-<section class="band" id="pricing">
+<!-- ── Free for everyone ─────────────────────────────────── -->
+<section class="band" id="free">
   <div class="wrap">
-    <div class="kicker">Pricing</div>
-    <h2>Free forever, with no catch. Pro is one payment.</h2>
+    <div class="kicker">Price</div>
+    <h2>Free for everyone. Every feature.</h2>
     <p class="lede">
-      No subscription, no trial that expires, and no limits on your ledger —
-      unlimited transactions, accounts, budgets, goals and holdings, in the free app.
+      No subscription, no paywall, no in-app purchase, no ads and no account.
+      There is nothing to unlock — the app you open is the whole app.
     </p>
 
-    <div class="price-wrap">
-
-      <div class="plan">
-        <div class="pname">Khazana</div>
-        <div class="amount">Free<small> — forever</small></div>
-        <div class="terms">Everything you need to run your money today.</div>
-        <ul>
-          <li>Unlimited transactions, accounts, budgets, goals and holdings</li>
-          <li>Double-entry ledger and net worth</li>
-          <li>Investments with cost basis and returns</li>
-          <li>Liabilities, EMIs and payoff plans</li>
-          <li>Financial health score and safety net</li>
-          <li>Encrypted backup, restore and full CSV export</li>
-          <li>PIN lock, biometrics and auto-lock</li>
-        </ul>
-        <a class="btn btn-ghost" href="https://khazana-app.netlify.app">Open the app</a>
-      </div>
-
-      <div class="plan pro">
-        <div class="pname">Khazana Pro</div>
-        <div class="amount">₹999 <small>/ $19.99</small><span class="badge-once">one time</span></div>
-        <div class="terms">Buy once, keep it. Not a subscription.</div>
-        <ul>
-          <li>Tax Centre — capital gains, versioned by disposal date</li>
-          <li>XIRR and benchmark analysis</li>
-          <li>Sector-level profit and loss</li>
-          <li>Bank and broker statement import</li>
-          <li>Automatic capture from bank notifications</li>
-          <li>Household profiles</li>
-          <li><strong>Excel and PDF reports</strong> for any date period</li>
-          <li>Full report history and formatted exports</li>
-        </ul>
-        <!--
-          TODO(launch): replace with the merchant-of-record hosted checkout URL,
-          and keep it in step with PRO_COPY.checkoutUrl in
-          webapp/src/lib/entitlement/proCopy.ts and lib/features/pro/pro_copy.dart.
-          Until the merchant account clears, this points at the in-app paywall,
-          which explains Pro and accepts a licence key.
-        -->
-        <a class="btn btn-primary" href="https://khazana-app.netlify.app/pro">Get Khazana Pro</a>
-      </div>
-
+    <div class="plan">
+      <div class="pname">Khazana</div>
+      <div class="amount">Free<small> — everything included</small></div>
+      <div class="terms">On the web, Android, iPhone, iPad and Mac.</div>
+      <ul>
+        <li>Unlimited transactions, accounts, budgets, goals and holdings</li>
+        <li>Double-entry ledger and net worth</li>
+        <li>Investments with cost basis and returns</li>
+        <li>Liabilities, EMIs and payoff plans</li>
+        <li>Financial health score and safety net</li>
+        <li>Tax Centre — capital gains, versioned by disposal date</li>
+        <li>XIRR and benchmark analysis</li>
+        <li>Sector-level profit and loss</li>
+        <li>Bank and broker statement import</li>
+        <li>Automatic capture from bank notifications</li>
+        <li>Household profiles</li>
+        <li>Excel and PDF reports for any date period</li>
+        <li>Encrypted backup, restore and full CSV export</li>
+        <li>PIN lock, biometrics and auto-lock</li>
+      </ul>
+      <a class="btn btn-primary" href="https://khazana-app.netlify.app">Open the app</a>
     </div>
 
     <div class="promise">
       <h3>Two things we will never do</h3>
       <p>
         <strong>We will never cap your ledger.</strong> A capped ledger is a broken
-        ledger, so there are no limits on what you can record, in any tier, ever.
+        ledger, so there are no limits on what you can record, ever.
         <strong>And we will never hold your data hostage.</strong> Encrypted backup,
-        restore, a full CSV dump and "erase all data" are free forever — nothing that
-        gets your own data out of Khazana will ever sit behind a payment. Both of
-        these are enforced by our test suite, not just promised on a web page.
+        restore, a full CSV dump and "erase all data" are always there — leaving
+        Khazana with your data must always be possible.
       </p>
     </div>
   </div>
@@ -585,21 +551,11 @@
     </details>
 
     <details>
-      <summary>Is Pro really a one-time payment?</summary>
+      <summary>Is it really free? What's the catch?</summary>
       <p>
-        Yes. One payment unlocks Pro and you keep it. There is no subscription, no
-        renewal and no tier that expires. On the App Store it is a Universal Purchase
-        with Family Sharing, so one buy covers your iPhone, iPad and Mac.
-      </p>
-    </details>
-
-    <details>
-      <summary>Does my purchase carry across the app stores and the website?</summary>
-      <p>
-        Not automatically, and we would rather say so before you pay than after. An
-        app-store purchase and a direct licence key are separate, because linking them
-        would require an account server — and we do not have one. Buy on the platform
-        you use most.
+        There isn't one. Every feature is free for everyone, on every platform —
+        no subscription, no paywall, no in-app purchase, no ads and no tracking.
+        There is no server to pay for, so there is nothing to charge you for.
       </p>
     </details>
 

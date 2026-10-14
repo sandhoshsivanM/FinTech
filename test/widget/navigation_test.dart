@@ -18,7 +18,6 @@
 // mode they guard against — a screen that still exists, still compiles, still
 // has a route, and is reachable from nowhere — produces no error anywhere else.
 
-import 'package:khazana/core/entitlement/distribution_channel.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:khazana/core/router/app_router.dart';
@@ -51,7 +50,6 @@ final _allRoutes = <String>[
   Routes.marketData,
   Routes.currency,
   Routes.settings,
-  if (kOffersPro) Routes.pro,
 ];
 
 /// The five bottom-nav destinations, in bar order.
