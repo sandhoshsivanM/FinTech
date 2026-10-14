@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_router.dart';
+import '../entitlement/distribution_channel.dart';
 
 /// The app's information architecture, in one place.
 ///
@@ -125,7 +126,7 @@ const navSections = <NavSection>[
 /// These are things you do TO the vault rather than screens you read, which is
 /// why they are not in the bar. Search is here because it is invoked, not
 /// browsed — it has no resting state to navigate back to.
-const avatarMenu = <({String route, IconData icon, String label})>[
+final avatarMenu = <({String route, IconData icon, String label})>[
   (route: Routes.search, icon: Icons.search, label: 'Search'),
   (
     route: Routes.captureInbox,
@@ -133,7 +134,8 @@ const avatarMenu = <({String route, IconData icon, String label})>[
     label: 'Auto-capture',
   ),
   (route: Routes.bankImport, icon: Icons.upload_outlined, label: 'Import'),
-  (route: Routes.pro, icon: Icons.auto_awesome, label: 'Khazana Pro'),
+  if (kOffersPro)
+    (route: Routes.pro, icon: Icons.auto_awesome, label: 'Khazana Pro'),
   (route: Routes.settings, icon: Icons.settings_outlined, label: 'Settings'),
 ];
 

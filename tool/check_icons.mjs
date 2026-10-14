@@ -171,6 +171,53 @@ for (const { path: rel, size, treatment } of targets) {
   }
 }
 
+// 1b. Android adaptive-icon layers and splash marks. Beyond size/RGBA:
+//   - foreground: transparent corners, and every visible pixel inside the 66dp
+//     safe zone of the 108dp canvas (anything outside gets masked off);
+//   - mono: pure white pixels only (Android 13 tints it), with some transparency;
+//   - the XML must point at the monochrome file, not the colour foreground, and
+//     the background colour must be the white the plated icons use.
+for (const { path: rel, size, treatment } of targets) {
+  if (!['foreground', 'mono', 'splash', 'splashDark'].includes(treatment)) continue;
+  const path = join(REPO, rel);
+  if (!existsSync(path)) continue;
+  const img = decodePng(readFileSync(path));
+  if (!img) { fail(`${rel}: could not decode for content checks`); continue; }
+  let minX = size, minY = size, maxX = -1, maxY = -1, opaque = 0, nonWhite = 0;
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const i = (y * size + x) * 4;
+    if (img.pixels[i + 3] > 8) {
+      opaque++;
+      if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y;
+      if (img.pixels[i] !== 255 || img.pixels[i + 1] !== 255 || img.pixels[i + 2] !== 255) nonWhite++;
+    }
+  }
+  if (opaque === 0) { fail(`${rel}: fully transparent`); continue; }
+  if (img.pixels[3] > 8) fail(`${rel}: top-left pixel is not transparent`);
+  if (treatment === 'foreground' || treatment === 'mono') {
+    const margin = Math.floor((size * (1 - 66 / 108)) / 2) - 1; // 1px of anti-alias slack
+    if (minX < margin || minY < margin || maxX > size - 1 - margin || maxY > size - 1 - margin) {
+      fail(`${rel}: artwork spills outside the 66dp safe zone (bounds ${minX},${minY}-${maxX},${maxY} of ${size})`);
+    }
+  }
+  if (treatment === 'mono' && nonWhite > 0) fail(`${rel}: ${nonWhite} visible pixels are not white; a monochrome layer must be one colour`);
+  if (treatment === 'foreground' && nonWhite === 0) fail(`${rel}: looks like a silhouette, expected the full-colour mark`);
+}
+{
+  const res = 'android/app/src/main/res';
+  for (const xml of ['ic_launcher.xml', 'ic_launcher_round.xml']) {
+    const rel = `${res}/mipmap-anydpi-v26/${xml}`;
+    checked++;
+    if (!existsSync(join(REPO, rel))) { fail(`${rel}: missing`); continue; }
+    const text = readFileSync(join(REPO, rel), 'utf8');
+    if (!/<monochrome android:drawable="@mipmap\/ic_launcher_monochrome"/.test(text)) fail(`${rel}: <monochrome> must be @mipmap/ic_launcher_monochrome`);
+    if (!/<foreground android:drawable="@mipmap\/ic_launcher_foreground"/.test(text)) fail(`${rel}: <foreground> must be @mipmap/ic_launcher_foreground`);
+  }
+  const bgRel = `${res}/values/ic_launcher_background.xml`;
+  checked++;
+  if (!/>#FFFFFF</i.test(readFileSync(join(REPO, bgRel), 'utf8'))) fail(`${bgRel}: ic_launcher_background must be #FFFFFF`);
+}
+
 // 2. Nothing in the iOS AppIcon set may carry alpha, generated or not.
 for (const name of readdirSync(join(REPO, IOS_SET)).filter((f) => f.endsWith('.png'))) {
   const rel = `${IOS_SET}/${name}`;

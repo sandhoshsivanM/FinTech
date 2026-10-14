@@ -14,6 +14,7 @@ import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
 import '../../transactions/providers/category_providers.dart';
 import '../providers/capture_providers.dart';
+import '../widgets/notification_access_disclosure.dart';
 
 /// Review queue for auto-captured SMS / notification transaction drafts. Each
 /// draft is confirmed into a balanced double-entry transaction or dismissed —
@@ -92,8 +93,8 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Incoming bank SMS and notifications are parsed on-device and appear '
-            'here as ready-to-add transactions.',
+            'Bank payment alerts are parsed on-device and appear here as '
+            'ready-to-add transactions.',
             textAlign: TextAlign.center,
             style: TextStyle(color: muted, height: 1.4),
           ),
@@ -129,9 +130,10 @@ class _PermissionCard extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Grant notification access so bank alerts are parsed on-device. The '
-            'raw text is discarded immediately — only the amount, merchant and '
-            'date are kept.',
+            'Optional. With your permission, Khazana reads bank and UPI payment '
+            'alerts on this device and suggests transactions for you to review. '
+            'The raw text is discarded immediately and nothing is uploaded — only '
+            'the amount, merchant and date are kept, after you approve.',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               height: 1.4,
@@ -139,7 +141,12 @@ class _PermissionCard extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(
-            onPressed: channel.openNotificationAccessSettings,
+            onPressed: () async {
+              // Play's prominent-disclosure rule: explain, get an explicit
+              // yes, and only then open the system settings screen.
+              final agreed = await showNotificationAccessDisclosure(context);
+              if (agreed) await channel.openNotificationAccessSettings();
+            },
             icon: const Icon(Icons.notifications_active_outlined, size: 18),
             label: const Text('Notification access'),
           ),

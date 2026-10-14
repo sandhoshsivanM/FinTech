@@ -1,3 +1,4 @@
+import '../../../core/entitlement/distribution_channel.dart';
 import '../../../core/help/info_hint.dart';
 import '../../../presentation/app_shell.dart' show isDesktopPlatform;
 import 'package:file_picker/file_picker.dart';
@@ -326,7 +327,7 @@ class _SettingsBody extends ConsumerWidget {
             ListTile(
               leading: const Icon(Icons.auto_awesome_motion_outlined),
               title: const Text('Auto-capture'),
-              subtitle: const Text('Review SMS / notification transactions'),
+              subtitle: const Text('Review bank-alert transactions'),
               onTap: () => context.go(Routes.captureInbox),
             ),
             ListTile(
@@ -349,39 +350,40 @@ class _SettingsBody extends ConsumerWidget {
             ),
           ],
         ),
-        _SettingsGroup(
-          title: null,
-          children: [
-            // Above Backup on purpose: someone who has already paid comes to
-            // Settings looking for "Restore", and it has to be findable without
-            // first walking into a paywall.
-            Consumer(
-              builder: (context, ref, _) {
-                final entitlement = ref.watch(entitlementProvider);
-                return ListTile(
-                  leading: Icon(
-                    Icons.workspace_premium_outlined,
-                    color: context.colors.accent,
-                  ),
-                  title: const Text('Khazana Pro'),
-                  subtitle: Text(
-                    entitlement.isPro
-                        ? 'Unlocked${entitlement.orderRef == null ? '' : ' · Licence …${entitlement.orderRef!.substring(entitlement.orderRef!.length - 4)}'}'
-                        : 'One payment. Yours forever.',
-                  ),
-                  trailing: entitlement.isPro
-                      ? Icon(
-                          Icons.verified_outlined,
-                          size: 18,
-                          color: context.colors.income,
-                        )
-                      : const Icon(Icons.chevron_right),
-                  onTap: () => context.go(Routes.pro),
-                );
-              },
-            ),
-          ],
-        ),
+        if (kOffersPro)
+          _SettingsGroup(
+            title: null,
+            children: [
+              // Above Backup on purpose: someone who has already paid comes to
+              // Settings looking for "Restore", and it has to be findable without
+              // first walking into a paywall.
+              Consumer(
+                builder: (context, ref, _) {
+                  final entitlement = ref.watch(entitlementProvider);
+                  return ListTile(
+                    leading: Icon(
+                      Icons.workspace_premium_outlined,
+                      color: context.colors.accent,
+                    ),
+                    title: const Text('Khazana Pro'),
+                    subtitle: Text(
+                      entitlement.isPro
+                          ? 'Unlocked${entitlement.orderRef == null ? '' : ' · Licence …${entitlement.orderRef!.substring(entitlement.orderRef!.length - 4)}'}'
+                          : 'One payment. Yours forever.',
+                    ),
+                    trailing: entitlement.isPro
+                        ? Icon(
+                            Icons.verified_outlined,
+                            size: 18,
+                            color: context.colors.income,
+                          )
+                        : const Icon(Icons.chevron_right),
+                    onTap: () => context.go(Routes.pro),
+                  );
+                },
+              ),
+            ],
+          ),
         _SettingsGroup(
           title: 'Backup',
           help: 'settings.privacyBackup',

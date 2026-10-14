@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The launch splash. minSdk is 24, so this is the file that is always used;
-     `drawable/launch_background.xml` is the pre-21 fallback and is never
-     reached. Both are kept in step anyway, because "the dead one drifted" is
-     how the white flash got in.
-
-     `launch_background` is theme-aware (values/ and values-night/), so this
-     matches the app's first painted frame instead of the platform default. -->
+<!-- Launch splash (Android 11 and below; Android 12+ uses the system splash
+     configured in values-v31/styles.xml). Canvas colour plus the centred brand
+     mark. `splash_mark` and `launch_background` both have night variants.
+     Both copies of this file are kept identical (minSdk is 24). -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/launch_background" />
     <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/ic_launcher_foreground" />
+            android:src="@drawable/splash_mark" />
     </item>
 </layer-list>
