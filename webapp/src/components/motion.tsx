@@ -14,7 +14,6 @@
  */
 import {
   motion,
-  useInView,
   useReducedMotion,
   type HTMLMotionProps,
   type Variants,
@@ -54,12 +53,6 @@ export const fadeUp: Variants = {
 export const fade: Variants = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { duration: DUR, ease: EASE } },
-};
-
-/** Scale in from slightly small. For popovers, menus and modals. */
-export const scaleIn: Variants = {
-  hidden: { opacity: 0, scale: 0.97 },
-  show: { opacity: 1, scale: 1, transition: { duration: DUR, ease: EASE } },
 };
 
 /**
@@ -102,30 +95,6 @@ export function StaggerItem({
 }: { children: ReactNode; className?: string } & HTMLMotionProps<'div'>) {
   return (
     <motion.div variants={fadeUp} className={clsx('min-w-0', className)} {...rest}>
-      {children}
-    </motion.div>
-  );
-}
-
-/**
- * Reveals when scrolled into view, once. For content far below the fold, where
- * a mount-time stagger would have finished long before anyone saw it.
- */
-export function Reveal({
-  children,
-  className,
-  delay = 0,
-}: { children: ReactNode; className?: string; delay?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 12 }}
-      animate={inView ? { opacity: 1, y: 0 } : undefined}
-      transition={{ duration: DUR_SLOW, ease: EASE, delay }}
-      className={className}
-    >
       {children}
     </motion.div>
   );
@@ -201,17 +170,6 @@ export function PageTransition({ children, routeKey }: { children: ReactNode; ro
     >
       {children}
     </motion.div>
-  );
-}
-
-/** A tappable surface with press feedback. Renders a `motion.button`. */
-export function Pressable({
-  children, className, ...rest
-}: { children: ReactNode; className?: string } & HTMLMotionProps<'button'>) {
-  return (
-    <motion.button type="button" {...tap} className={clsx('focus-ring', className)} {...rest}>
-      {children}
-    </motion.button>
   );
 }
 

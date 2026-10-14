@@ -488,8 +488,8 @@ const Map<String, HelpEntry> kGlossary = {
     'Dividends received measured against what your holdings are worth today. Because the basis is current value, the figure falls when prices rise.',
   ),
   'diversification': HelpEntry(
-    'Diversification',
-    'How spread your money is across different kinds of asset. A high score means no single sort of holding decides how you do.',
+    'Asset-group balance',
+    'A health-score check on how much of your portfolio sits in its single largest asset group. It earns full marks once no group holds more than 60%. It is narrower than Asset spread on Analytics and the Diversification score on Investments.',
   ),
   'assetSpread': HelpEntry(
     'Asset spread',

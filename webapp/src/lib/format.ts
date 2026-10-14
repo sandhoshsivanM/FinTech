@@ -13,11 +13,6 @@ export function short(n: number, symbol = '₹'): string {
   return `${symbol}${a.toFixed(0)}`;
 }
 
-/** Signed short form, e.g. "+₹2.84 L". Uses a true minus sign, not a hyphen. */
-export function shortSigned(n: number, symbol = '₹'): string {
-  return (n >= 0 ? '+' : '−') + short(n, symbol);
-}
-
 /** Signed percentage to two places. */
 export function pct(n: number, digits = 2): string {
   return (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(digits) + '%';

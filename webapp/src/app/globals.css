@@ -35,6 +35,10 @@
      page (#F2F2F2, 4.53); the old #8E8E93 managed 3.1 / 2.9. Asserted by
      domain/palette.test.ts. */
   --muted: #6E6E73;
+  /* --muted inside a recessed .tray. #6E6E73 on the #ECECEE tray is only
+     4.30:1, and lightening the tray enough to pass would erase the step from
+     the card, so small text in a tray goes one notch darker (4.70:1). */
+  --tray-muted: #68686D;
   /* The lighter grey, for large or decorative text only (paise beside a big
      figure) — never for small labels; it is ~3:1. */
   --muted-soft: #8E8E93;
@@ -151,6 +155,7 @@
   /* #8E8E93 already clears 4.5:1 on graphite (5.2 on #1C1C20, 5.9 on
      #0E0E10); the soft step is dimmer for decorative use only. */
   --muted: #8E8E93;
+  --tray-muted: #8E8E93; /* 5.49:1 on the #17171A tray already */
   --muted-soft: #6E6E76;
   --disabled: #48484E;
 
@@ -247,7 +252,7 @@
      It is not a container style. */
   --radius-pill: 999px;
 
-  /* --- Spacing: the design-system scale ---------------------------------- */
+  /* --- Spacing scale ---------------------------------------------------- */
   /* xs 4 · sm 8 · md 12 · lg 16 · xl 24 · 2xl 32 · 3xl 48 */
   --space-xs: 4px;  --space-sm: 8px;  --space-md: 12px;
   --space-lg: 16px; --space-xl: 24px; --space-2xl: 32px; --space-3xl: 48px;
@@ -518,6 +523,8 @@ body {
   .tray {
     background: var(--tray);
     border-radius: 18px;
+    /* Re-point small muted text at the tray-safe grey (see --tray-muted). */
+    --muted: var(--tray-muted);
   }
 }
 @layer components {

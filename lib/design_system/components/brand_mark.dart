@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 /// The Khazana mark.
 ///
 /// Renders the SUPPLIED brand artwork from `assets/brand/khazana-mark.png` —
-/// the same 1024px master every platform icon is generated from — rather than a
+/// the 1024px render of the vector master `assets/brand/khazana-mark.svg`, and
+/// the same file every platform icon is generated from — rather than a
 /// stand-in glyph. The web app draws the identical file, so the two clients
 /// cannot drift apart.
 ///

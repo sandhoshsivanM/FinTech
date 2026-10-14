@@ -1,7 +1,7 @@
 // Smarter local insights (no network, no LLM). Pure functions over the ledger.
 import Decimal from 'decimal.js';
 import { D, ZERO } from '@/lib/money';
-import type { Goal, RecurringRule, Txn } from '@/lib/types';
+import type { RecurringRule, Txn } from '@/lib/types';
 import { advance } from './recurrence';
 import { contains, currentMonth, shiftMonths } from './period';
 
@@ -64,13 +64,4 @@ export function safeToSpend(txns: Txn[], recurring: RecurringRule[], now = Date.
   const remaining = Decimal.max(ZERO, income.minus(expense).minus(invested).minus(upcoming));
   const daysLeft = Math.max(1, Math.ceil((month.end - now) / 86400000));
   return { remaining, perDay: remaining.div(daysLeft), daysLeft };
-}
-
-// ---- Goal SIP: required monthly contribution to hit target by date ----
-export function requiredMonthlySip(goal: Goal, now = Date.now()): Decimal | null {
-  if (!goal.targetDate) return null;
-  const remaining = D(goal.targetAmount).minus(D(goal.currentAmount));
-  if (remaining.lte(0)) return ZERO;
-  const months = Math.max(1, Math.round((goal.targetDate - now) / (30.44 * 86400000)));
-  return remaining.div(months);
 }

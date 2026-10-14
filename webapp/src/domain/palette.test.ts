@@ -238,6 +238,22 @@ describe('small muted text is readable', () => {
     expect(contrast(token(block, 'muted-soft'), token(block, 'card'))).toBeGreaterThanOrEqual(3);
   });
 
+  test.each([
+    ['light', lightBlock],
+    ['dark', darkBlock],
+  ] as const)('%s small muted text inside a .tray clears 4.5:1 on the tray', (_t, block) => {
+    // .tray re-points --muted at --tray-muted; the plain --muted on the light
+    // #ECECEE tray was 4.30:1.
+    const tm = token(block, 'tray-muted');
+    const tray = token(block, 'tray');
+    expect(contrast(tm, tray), `--tray-muted ${tm} on --tray ${tray}`).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('.tray actually re-points --muted at --tray-muted', () => {
+    const rule = css.match(/\.tray\s*\{[^}]*\}/);
+    expect(rule?.[0]).toMatch(/--muted:\s*var\(--tray-muted\)/);
+  });
+
   test('the home header muted label follows --muted, not the old grey', () => {
     expect(token(lightBlock, 'home-header-muted')).toBe(token(lightBlock, 'muted'));
     expect(contrast(token(darkBlock, 'home-header-muted'), token(darkBlock, 'canvas'))).toBeGreaterThanOrEqual(4.5);

@@ -220,7 +220,9 @@ export function healthScore(input: HealthInputs): HealthScore {
         investedShare === null
           ? 'No assets tracked yet.'
           : `${Math.round(invested.div(assets).toNumber() * 100)}% of assets invested (target 40%).`),
-      metric('wealth.concentration', 'Diversification', 8,
+      // Not "Diversification" (Investments' score) nor "Asset spread"
+      // (Analytics'): this one only asks how much sits in the largest group.
+      metric('wealth.concentration', 'Asset-group balance', 8,
         conc === null ? null : clamp01((1 - conc) / 0.4),
         conc === null
           ? 'No holdings tracked yet.'
