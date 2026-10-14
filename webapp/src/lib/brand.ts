@@ -34,3 +34,13 @@ export const TRUST_POINTS: { title: string; detail: string }[] = [
   { title: 'Encrypted', detail: 'AES-256 at rest. PIN never leaves the device.' },
   { title: 'Offline first', detail: 'Works everywhere. No internet required.' },
 ];
+
+/**
+ * Where "Send feedback" and "Report a problem" are addressed. The only place
+ * the feedback address is written down in the web app.
+ *
+ * The legal pages (`app/terms`, `app/privacy`) each carry their own `CONTACT`
+ * constant for the legal contact. Today it is the same inbox, but it is a
+ * separate decision and deliberately not tied to this one.
+ */
+export const FEEDBACK_EMAIL = 'sandhoshsivan00@gmail.com';

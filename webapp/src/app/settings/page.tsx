@@ -22,6 +22,7 @@ import { quotesAvailable } from '@/lib/quotes/yahoo';
 import { useConfirm } from '@/components/Confirm';
 import { STORE, type FxRate, type ProfileKind } from '@/lib/types';
 import { NumberInput } from '@/components/NumberInput';
+import { FeedbackCard } from '@/components/Feedback';
 import { formatDate } from '@/lib/dateFormat';
 import { useNow } from '@/lib/useNow';
 import { D } from '@/lib/money';
@@ -573,6 +574,9 @@ export default function SettingsPage() {
         </div>
         {sampleNote && <StatusNote note={sampleNote} />}
       </GlassCard>
+
+      {/* Help & feedback */}
+      <FeedbackCard />
 
       {/* Danger zone */}
       <GlassCard>

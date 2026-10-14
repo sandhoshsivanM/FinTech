@@ -10,6 +10,7 @@ import { HelpCircle, ShieldCheck, Command, Download, Compass, FlaskConical, Chev
 import { PageIntro, Button, GlassCard, Chip } from '@/components/ui';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { TOUR_EVENT } from '@/components/Tour';
+import { SendFeedbackLink } from '@/components/Feedback';
 
 const SHORTCUTS: [string, string][] = [
   ['⌘K / Ctrl-K', 'Open search — jump to any page, holding, transaction or goal'],
@@ -106,6 +107,12 @@ export default function HelpPage() {
               <p className="text-[12.5px] text-ink-soft leading-relaxed">
                 Khazana runs entirely on your device, so there is no account to look up and no support team who can see your data. Exporting a backup before you experiment is always the safe move.
               </p>
+              <p className="text-[12.5px] text-ink-soft leading-relaxed mt-2">
+                Found a bug or have an idea? Send it from your own mail app — it carries the app version and browser, never your data.
+              </p>
+              <div className="mt-3">
+                <SendFeedbackLink />
+              </div>
             </GlassCard>
           </StaggerItem>
         </div>
