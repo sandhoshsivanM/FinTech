@@ -14,6 +14,11 @@
 # pin an old shell across deploys. (sw.js is network-first internally; this covers
 # the SW script itself.)
 [[headers]]
+  for = "/build.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
   for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache"

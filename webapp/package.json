@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/write-build-id.mjs",
     "build": "next build",
     "serve": "npx --yes serve out -l 3200",
     "start": "npm run build && npm run serve",
