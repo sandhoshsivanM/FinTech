@@ -92,17 +92,24 @@ class _WalletStackState extends ConsumerState<WalletStack> {
           const SizedBox(height: 4),
           // ISO ID-1 proportions (85.6 x 54 mm). The right margin leaves room
           // for the cards behind to fan out.
-          Padding(
-            padding: const EdgeInsets.only(right: 28),
-            child: AspectRatio(
-              aspectRatio: 1.586,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Paint furthest first so the front card ends up on top.
-                  for (var d = math.min(_depth, n - 1); d >= 0; d--)
-                    _card(cards, (front + d) % n, d, ghost, dur),
-                ],
+          // Capped at a real card's on-screen size: on a wide desktop column
+          // an uncapped 1.586 ratio grew the card to fill the whole window.
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 28),
+                child: AspectRatio(
+                  aspectRatio: 1.586,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Paint furthest first so the front card ends up on top.
+                      for (var d = math.min(_depth, n - 1); d >= 0; d--)
+                        _card(cards, (front + d) % n, d, ghost, dur),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

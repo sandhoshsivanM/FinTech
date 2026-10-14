@@ -522,6 +522,17 @@ const ACTIVE_PROFILE_KEY = 'khazana-active-profile';
 const THEME_KEY = 'khazana-theme';
 const ACCENT_KEY = 'khazana-accent';
 /**
+ * One-time marker for the Zentra redesign. Accents picked before it (Jade,
+ * Sapphire, …) painted the nav and primary buttons in a colour the new
+ * near-black pill was never designed around, so every existing install is
+ * reset to 'default' exactly once. Once the marker is set the accent is never
+ * touched again: a choice made after the redesign is the user's to keep.
+ *
+ * The no-FOUC script in app/layout.tsx runs the same migration before first
+ * paint (it can't import this), so the old accent never flashes on load.
+ */
+export const ACCENT_MIGRATION_KEY = 'khazana-accent-zentra';
+/**
  * Ghost mode (amounts masked). Persisted because the reason someone hides their
  * balances — an open-plan desk, a commute, a shared screen — is still true the
  * next time they open the app. Not a vault secret: it records that the figures
@@ -614,9 +625,9 @@ export type ThemeChoice = 'light' | 'dark' | 'system';
 export type AccentName = 'default' | 'emerald' | 'blue' | 'violet' | 'amber' | 'rose' | 'lime';
 
 // Each accent is tuned separately for light and dark so it always reads well.
-// [accent, accent-deep, accent-glow]. 'default' is Khazana Gold and sets no
+// [accent, accent-deep, accent-glow]. 'default' is Zentra Ink and sets no
 // inline properties at all — it falls through to the CSS defaults in
-// globals.css (#836612 light / #D4A93F dark).
+// globals.css: the near-black pill (#111214 light / #F5F5F7 dark).
 //
 // The five alternates are named and toned as gemstones/metals rather than as
 // web colours, because the product's identity is a treasury. Each light step is
@@ -637,7 +648,7 @@ export const ACCENTS: Record<Exclude<AccentName, 'default'>, {
   on?: { light: string; dark: string };
 }> = {
   // Jade sits deliberately close to the brand plate; it is the one alternate
-  // that keeps the emerald identity while moving the accent off gold.
+  // that brings back the emerald identity in place of the ink pill.
   emerald: { label: 'Jade', swatch: '#1B7F52', light: ['#136344', '#0D4C33', '#1B7F52'], dark: ['#3FD99A', '#1F8A5B', '#7BE9BC'] },
   blue: { label: 'Sapphire', swatch: '#3B5FBF', light: ['#2F4C9C', '#243B7A', '#4F7CFF'], dark: ['#6E93FF', '#4A6FE0', '#A9C1FF'] },
   violet: { label: 'Amethyst', swatch: '#6E5BB8', light: ['#584796', '#443873', '#8E7CC3'], dark: ['#A492DC', '#7E6CB8', '#C9BDEE'] },
@@ -652,6 +663,21 @@ export const ACCENTS: Record<Exclude<AccentName, 'default'>, {
     on: { light: '#FFFFFF', dark: '#0B0F0D' },
   },
 };
+
+/**
+ * Resets a pre-Zentra accent to 'default', once per browser (see
+ * ACCENT_MIGRATION_KEY). Touches only the accent preference — never vault,
+ * profile or any other stored data. Silent when storage is unavailable or
+ * blocked: the worst case is the old accent surviving, never a crash.
+ */
+export function migrateLegacyAccent(): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    if (localStorage.getItem(ACCENT_MIGRATION_KEY) === '1') return;
+    localStorage.setItem(ACCENT_KEY, 'default');
+    localStorage.setItem(ACCENT_MIGRATION_KEY, '1');
+  } catch { /* storage blocked or full — leave things as they are */ }
+}
 
 function applyAccent(name: string, dark: boolean) {
   if (typeof document === 'undefined') return;
@@ -772,6 +798,7 @@ export const useApp = create<AppState>((set, get) => ({
     const strandedRecords = meta ? 0 : await vaultRecordCount();
     const cur = lsGet(CURRENCY_KEY) ?? 'INR';
     const theme = (lsGet(THEME_KEY) as ThemeChoice) ?? 'system';
+    migrateLegacyAccent();
     const accent = (lsGet(ACCENT_KEY) as AccentName) ?? 'default';
     const ghost = lsGet(GHOST_KEY) === '1';
     set({

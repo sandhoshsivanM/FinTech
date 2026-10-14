@@ -21,7 +21,7 @@ import '../../../presentation/empty_state.dart';
 import '../../reports/providers/dashboard_providers.dart';
 import '../providers/portfolio_providers.dart';
 
-/// Analytics — risk, diversification and return quality.
+/// Analytics — risk, asset spread and return quality.
 ///
 /// The web twin is `webapp/src/app/analytics/page.tsx`; the three scores use the
 /// same formulas so a portfolio does not score 71 on one client and 64 on the
@@ -63,7 +63,7 @@ class _Body extends ConsumerWidget {
         title: 'Nothing to analyse yet',
         message:
             'Add a few holdings and this screen will score '
-            'diversification, concentration and return quality across the '
+            'how spread they are, concentration and return quality across the '
             'whole book.',
         action: FilledButton(
           onPressed: () => context.go(Routes.investments),
@@ -122,8 +122,8 @@ class _Body extends ConsumerWidget {
         const SizedBox(height: AppSpacing.lg),
 
         _ScoreCard(
-          label: 'Diversification',
-          help: 'diversification',
+          label: 'Asset spread',
+          help: 'assetSpread',
           icon: Icons.layers_outlined,
           score: diversification,
           sub:

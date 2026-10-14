@@ -82,6 +82,14 @@ export const GLOSSARY = {
     title: 'Diversification',
     body: 'How spread your money is across different kinds of asset. A high score means no single sort of holding decides how you do.',
   },
+  // Analytics' 0–100 asset-group score. Deliberately NOT called
+  // "Diversification": Investments has a "Diversification score" with a
+  // different formula (it also weighs sectors and the largest position), and
+  // two numbers under one name read as a bug.
+  assetSpread: {
+    title: 'Asset spread',
+    body: 'A 0–100 score for how spread your holdings are across asset groups: more groups and a smaller largest group score higher. It looks at asset groups only, so it can differ from the Diversification score on Investments.',
+  },
   concentration: {
     title: 'Concentration',
     body: 'The share of your portfolio sitting in its single largest asset group. The higher it is, the more your fortunes rest on one thing.',
@@ -482,8 +490,8 @@ export const SECTION_HELP = {
 
   // ---- /analytics -------------------------------------------------------------
   "analytics.riskDiversification": {
-    title: "Risk & diversification",
-    body: "A diversification score out of 100: up to 55 points for how many asset groups you hold (five or more earns all), and up to 45 for how little sits in the largest one. Below it: sector spread, your largest position and the top five's combined weight.",
+    title: "Risk & asset spread",
+    body: "An asset spread score out of 100: up to 55 points for how many asset groups you hold (five or more earns all), and up to 45 for how little sits in the largest one. Unlike the Diversification score on Investments, it ignores sectors and single positions. Below it: sector spread, largest position and top-five weight.",
   },
   "analytics.returnDistribution": {
     title: "Return distribution",

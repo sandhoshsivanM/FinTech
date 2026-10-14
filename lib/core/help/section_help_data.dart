@@ -261,8 +261,8 @@ const Map<String, HelpEntry> kWebSectionHelp = {
     'Enter an extra monthly amount to see when you would be debt free, total interest over five years, and your net worth then. Extra goes to the highest-rate debt first, on top of each debt\'s minimum payment.',
   ),
   'analytics.riskDiversification': HelpEntry(
-    'Risk & diversification',
-    'A diversification score out of 100: up to 55 points for how many asset groups you hold (five or more earns all), and up to 45 for how little sits in the largest one. Below it: sector spread, your largest position and the top five\'s combined weight.',
+    'Risk & asset spread',
+    'An asset spread score out of 100: up to 55 points for how many asset groups you hold (five or more earns all), and up to 45 for how little sits in the largest one. Unlike the Diversification score on Investments, it ignores sectors and single positions. Below it: sector spread, largest position and top-five weight.',
   ),
   'analytics.returnDistribution': HelpEntry(
     'Return distribution',
@@ -490,6 +490,10 @@ const Map<String, HelpEntry> kGlossary = {
   'diversification': HelpEntry(
     'Diversification',
     'How spread your money is across different kinds of asset. A high score means no single sort of holding decides how you do.',
+  ),
+  'assetSpread': HelpEntry(
+    'Asset spread',
+    'A 0–100 score for how spread your holdings are across asset groups: more groups and a smaller largest group score higher. It looks at asset groups only, so it can differ from the Diversification score on Investments.',
   ),
   'concentration': HelpEntry(
     'Concentration',

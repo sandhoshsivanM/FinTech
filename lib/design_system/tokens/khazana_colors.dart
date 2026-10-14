@@ -49,7 +49,7 @@ abstract final class KhazanaColors {
 
   static const Color vaultTextPrimary = Color(0xFFF5F5F7);
   static const Color vaultTextSecondary = Color(0xFFA1A1A8);
-  static const Color vaultTextMuted = Color(0xFF76767E);
+  static const Color vaultTextMuted = Color(0xFF8E8E93); // 5.21:1 on #1C1C20
   static const Color vaultTextDisabled = Color(0xFF48484E);
 
   static const Color vaultPrimary = Color(0xFFF5F5F7);
@@ -80,7 +80,7 @@ abstract final class KhazanaColors {
 
   static const Color ledgerTextPrimary = Color(0xFF111214);
   static const Color ledgerTextSecondary = Color(0xFF5C5C61);
-  static const Color ledgerTextMuted = Color(0xFF8E8E93);
+  static const Color ledgerTextMuted = Color(0xFF6E6E73); // 4.78:1 on a card
   static const Color ledgerTextDisabled = Color(0xFFB5B5B5);
 
   /// `--accent` from globals.css. 6.47:1 on a white card, up from the 5.35:1

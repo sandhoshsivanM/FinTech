@@ -13,6 +13,9 @@ import 'package:flutter/material.dart';
 class BrandMark extends StatelessWidget {
   const BrandMark({super.key, this.size = 34, this.glow = false});
 
+  static const lightAsset = 'assets/brand/khazana-mark.png';
+  static const darkAsset = 'assets/brand/khazana-mark-dark.png';
+
   final double size;
 
   /// A soft gold halo, matching the artwork's own lighting. For the unlock
@@ -21,13 +24,21 @@ class BrandMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = Image.asset(
-      'assets/brand/khazana-mark.png',
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-      filterQuality: FilterQuality.medium,
-    );
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    Widget asset(String name, {ImageErrorWidgetBuilder? onError}) =>
+        Image.asset(
+          name,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.medium,
+          errorBuilder: onError,
+        );
+    // Dark backgrounds get the lifted-green variant; if it is not bundled the
+    // standard mark is drawn instead of a broken-image box.
+    final image = dark
+        ? asset(darkAsset, onError: (_, _, _) => asset(lightAsset))
+        : asset(lightAsset);
     if (!glow) return image;
     return DecoratedBox(
       decoration: BoxDecoration(

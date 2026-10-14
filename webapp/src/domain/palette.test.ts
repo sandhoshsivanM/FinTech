@@ -199,3 +199,47 @@ describe('globals.css carries the same palette', () => {
     }
   });
 });
+
+describe('small muted text is readable', () => {
+  // --muted carries the small labels everywhere (stat captions, axis ticks,
+  // list sub-lines). WCAG 1.4.3 asks 4.5:1 for text that size, on every
+  // surface it lands on: the card and the page, in both themes.
+  const css = readFileSync(resolve(process.cwd(), 'src/app/globals.css'), 'utf8');
+  const lightBlock = css.slice(css.indexOf(':root {'), css.indexOf(':root[data-theme="dark"] {'));
+  const darkStart = css.indexOf(':root[data-theme="dark"] {');
+  const darkBlock = css.slice(darkStart, css.indexOf('}', darkStart));
+  const token = (block: string, name: string): string => {
+    const m = block.match(new RegExp(`--${name}:\\s*(#[0-9A-Fa-f]{6})`));
+    if (!m) throw new Error(`--${name} not declared`);
+    return m[1];
+  };
+
+  test.each([
+    ['light', lightBlock, ['card', 'canvas']],
+    ['dark', darkBlock, ['card', 'canvas']],
+  ] as const)('%s --muted clears 4.5:1 on card and page', (_t, block, surfaces) => {
+    const muted = token(block, 'muted');
+    for (const s of surfaces) {
+      const bg = token(block, s);
+      expect(contrast(muted, bg), `--muted ${muted} on --${s} ${bg}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  test('the light values are the audited ones', () => {
+    // #F8F8F8 card and #F2F2F2 page are the two surfaces small labels sit on.
+    expect(contrast(token(lightBlock, 'muted'), '#F8F8F8')).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(token(lightBlock, 'muted'), '#F2F2F2')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test.each([
+    ['light', lightBlock],
+    ['dark', darkBlock],
+  ] as const)('%s --muted-soft (large/decorative only) still clears 3:1 on the card', (_t, block) => {
+    expect(contrast(token(block, 'muted-soft'), token(block, 'card'))).toBeGreaterThanOrEqual(3);
+  });
+
+  test('the home header muted label follows --muted, not the old grey', () => {
+    expect(token(lightBlock, 'home-header-muted')).toBe(token(lightBlock, 'muted'));
+    expect(contrast(token(darkBlock, 'home-header-muted'), token(darkBlock, 'canvas'))).toBeGreaterThanOrEqual(4.5);
+  });
+});

@@ -197,7 +197,7 @@ function AnalyticsPageInner() {
         <StaggerItem>
           <GlassCard padded={false}>
             <EmptyState icon={<LineIcon size={22} />} title="Nothing to analyse yet"
-              hint="Add a few holdings and this page will score diversification, show how returns are spread, and break down where the value sits."
+              hint="Add a few holdings and this page will score how spread they are across asset groups, show how returns are spread, and break down where the value sits."
               action={<Link href="/holdings"><Button>Add a holding</Button></Link>} />
           </GlassCard>
         </StaggerItem>
@@ -235,7 +235,7 @@ function AnalyticsPageInner() {
           <MetricRow role="group" aria-label="Key figures"
             cols="grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
             <Metric
-              label="Diversification" size="md" hint="diversification"
+              label="Asset spread" size="md" hint="assetSpread"
               value={diversification ?? '—'}
               untracked={diversification == null} untrackedHint="Needs two holdings"
               sub={diversification == null ? undefined
@@ -277,7 +277,7 @@ function AnalyticsPageInner() {
       <div className="grid gap-6 min-[1100px]:grid-cols-3">
         <StaggerItem>
           <section className="card h-full p-5">
-            <CardTitle info="analytics.riskDiversification" className="text-[16px] font-medium tracking-[-0.01em]">Risk &amp; diversification</CardTitle>
+            <CardTitle info="analytics.riskDiversification" className="text-[16px] font-medium tracking-[-0.01em]">Risk &amp; asset spread</CardTitle>
             {/* Always stacked. This card is one third of the row, so splitting
                 it on a VIEWPORT breakpoint sized the stat column against the
                 window rather than against the card — at 1440px that left ~150px
@@ -291,7 +291,7 @@ function AnalyticsPageInner() {
                   sublabel={diversification == null ? undefined : diversificationBand(diversification)}
                   untrackedLabel="Not yet scored"
                 />
-                <p className="mt-1 text-center text-[11.5px] text-muted">diversification score</p>
+                <p className="mt-1 text-center text-[11.5px] text-muted">asset spread score</p>
               </div>
               <div className="min-w-0">
                 <LedgerLine label="Holdings" value={stats.holdings} />

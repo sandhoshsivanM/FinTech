@@ -56,10 +56,21 @@ describe('the six figures', () => {
   test('all six are present, as a strip rather than as dials', () => {
     seed(BOOK);
     render(<AnalyticsPage />);
-    for (const label of ['Diversification', 'Concentration', 'Positions',
+    for (const label of ['Asset spread', 'Concentration', 'Positions',
       'Return quality', 'Best position', 'Weakest']) {
       expect(within(strip()).getByText(label)).toBeInTheDocument();
     }
+  });
+
+  test('the asset-group score is not called "Diversification"', () => {
+    // Investments shows a "Diversification score" built from a different
+    // formula (sectors and the largest position count too). Two numbers under
+    // one name read as a bug, so this one is named for what it measures.
+    seed(BOOK);
+    render(<AnalyticsPage />);
+    expect(within(strip()).getByText('Asset spread')).toBeInTheDocument();
+    expect(within(strip()).queryByText('Diversification')).not.toBeInTheDocument();
+    expect(screen.queryByText(/diversification score/i)).not.toBeInTheDocument();
   });
 
   test('best and weakest name the position, by return and not by size', () => {
@@ -83,7 +94,7 @@ describe('the six figures', () => {
 });
 
 describe('the three structural reads', () => {
-  test('risk & diversification carries the stat table, not just a dial', () => {
+  test('risk & asset spread carries the stat table, not just a dial', () => {
     seed(BOOK);
     render(<AnalyticsPage />);
     for (const row of ['Holdings', 'Sectors represented', 'Largest position',
@@ -180,7 +191,7 @@ describe('layout', () => {
     // column against the window and truncated four of six labels.
     seed(BOOK);
     render(<AnalyticsPage />);
-    const card = screen.getByRole('heading', { name: /Risk & diversification/ })
+    const card = screen.getByRole('heading', { name: /Risk & asset spread/ })
       .closest('section')!;
     const grid = card.querySelector('div.grid')!;
     expect(grid.className).not.toMatch(/(sm|md|lg|xl):grid-cols/);
