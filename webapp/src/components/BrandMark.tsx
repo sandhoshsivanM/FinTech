@@ -4,12 +4,12 @@ import Image from 'next/image';
  * The Khazana mark.
  *
  * This renders the SUPPLIED brand artwork — the rendered gold hexagon with its
- * keyhole and K — not a redrawn approximation of it. The master is lifted off
- * the brand sheet by `scripts/extract-mark.mjs` into
- * `assets/brand/khazana-mark.png` (1024px, transparent), and every platform
- * icon is generated from that one file by `scripts/gen-icons.mjs`. The app, the
- * Mac build, the favicon and the installer therefore cannot drift from each
- * other or from the brand sheet — which is exactly what had happened: macOS
+ * keyhole and K — not a redrawn approximation of it. The master is the vector
+ * `assets/brand/khazana-mark.svg`, rendered to `assets/brand/khazana-mark.png`
+ * (1024px, transparent), and every platform icon is generated from that one
+ * file by `scripts/gen-icons.mjs`. The app, the Mac build, the favicon and the
+ * installer therefore cannot drift from each other or from the master — which
+ * is exactly what had happened: macOS
  * carried a different render, the PWA manifest pointed at a flat vector that
  * was a different drawing again, and Flutter web still shipped the stock
  * Flutter logo.
@@ -58,9 +58,9 @@ export function BrandMark({
 /**
  * The wordmark: KHAZANA, wide-tracked geometric caps.
  *
- * Set in Inter rather than shipping the brand sheet's display face for six
- * letters — the tracking is what carries the identity here, and it keeps the
- * lockup on a font the app already loads.
+ * Set in the app's own sans (Anek Latin) rather than shipping a separate
+ * display face for six letters — the tracking is what carries the identity
+ * here, and it keeps the lockup on a font the app already loads.
  */
 export function WordMark({ className }: { className?: string }) {
   return (

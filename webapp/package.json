@@ -12,8 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
     "icons": "node scripts/gen-icons.mjs",
-    "mark": "node scripts/extract-mark.mjs",
     "og": "node scripts/gen-og-image.mjs"
   },
   "dependencies": {
@@ -38,6 +39,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "^4",
     "@tauri-apps/cli": "^2.11.3",
     "@testing-library/dom": "^10.4.1",
