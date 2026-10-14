@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Pre-API-21 fallback. minSdk is 24, so this is never actually loaded —
-     drawable-v21/launch_background.xml is. Kept identical to it so the two
-     cannot drift, which is exactly how the stock white background survived
-     here long after the app went dark. -->
+<!-- Launch splash (Android 11 and below; Android 12+ uses the system splash
+     configured in values-v31/styles.xml). Canvas colour plus the centred brand
+     mark. `splash_mark` and `launch_background` both have night variants.
+     Both copies of this file are kept identical (minSdk is 24). -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/launch_background" />
     <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/ic_launcher_foreground" />
+            android:src="@drawable/splash_mark" />
     </item>
 </layer-list>

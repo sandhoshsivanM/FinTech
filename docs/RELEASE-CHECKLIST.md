@@ -7,6 +7,78 @@ Work top to bottom. Anything marked **BLOCKER** cannot be worked around.
 
 ---
 
+## Play Console: what you do
+
+Everything below needs your identity, your payment details or a secret, so none
+of it can be done for you. Do it in this order. Copy-paste answers for every
+form are in `docs/store-listing.md` (section "Google Play"); the graphics are in
+`docs/play-store/`.
+
+1. [ ] **Create a Play Console developer account** at
+       https://play.google.com/console ($25 once). Choose *Personal* or
+       *Organization* honestly: the type decides the testing rule below. Complete
+       identity verification (it can take days) and the contact details, which
+       are shown publicly.
+2. [ ] **Create the app**: name `Khazana: Private Money Vault`, English (India),
+       *App*, *Free*, then accept the declarations. The package name is fixed at
+       first upload: `com.khazana.app` (never change it; see "Bundle identifiers unchanged" below).
+3. [ ] **Generate an UPLOAD keystore.** Run this yourself, in a terminal, on a
+       machine you trust. Pick strong passwords when prompted and put them in a
+       password manager. Never commit the file or paste the passwords anywhere
+       except GitHub secrets:
+
+       keytool -genkeypair -v -storetype PKCS12 \
+         -keystore ~/khazana-upload.jks -alias upload \
+         -keyalg RSA -keysize 2048 -validity 10000
+
+       Back the `.jks` up off the machine (password manager attachment and an
+       encrypted offline copy). With Play App Signing (step 5) a lost *upload*
+       key can be reset through Play support, but a lost key with nothing backed
+       up still costs you days.
+4. [ ] **Add the four GitHub secrets** (repo Settings, Secrets and variables,
+       Actions). `release-mobile.yml` refuses to build without the first one:
+
+       ANDROID_KEYSTORE_BASE64   output of:  base64 -i ~/khazana-upload.jks | pbcopy
+       ANDROID_STORE_PASSWORD    the keystore password you chose
+       ANDROID_KEY_ALIAS         upload   (the -alias above)
+       ANDROID_KEY_PASSWORD      the key password you chose
+
+       Then tag `v1.0.0` (or run the workflow manually) and download the
+       `khazana-android-aab` artifact. It is signed with the upload key.
+5. [ ] **Enable Play App Signing** when creating the first release (it is the
+       default for new apps): Google holds the real app-signing key and you sign
+       uploads with the upload key from step 3. Do not opt out.
+6. [ ] **Fill in App content** (Policy, App content): privacy policy URL
+       `https://khazana-app.netlify.app/privacy/` (first redeploy the web app so
+       the updated notification-access paragraph is live and check it in a
+       browser), ads = No, app access = the reviewer instructions, content rating
+       questionnaire, target audience 18+, data safety, financial features. All
+       answers are in `docs/store-listing.md`.
+7. [ ] **Main store listing**: short and full description, `icon-512.png`,
+       `feature-graphic.png` and the eight screenshots from `docs/play-store/`.
+8. [ ] **Decide the Pro question before uploading** (see the "Pro tier" note in
+       `docs/store-listing.md`): either ship 1.0.0 with no in-app product and the
+       Pro entry hidden, or wire `ProGate`, trim the Pro copy to what Android
+       really has and create the `khazana_pro` one-time product.
+9. [ ] **Closed testing**: Testing, Closed testing, create a track, upload the
+       AAB, add testers (an email list or a Google Group), roll out, and share
+       the opt-in link. Add release notes from the listing doc.
+10. [ ] **Run the test properly**: if the account is a *personal* one created
+       after 13 Nov 2023, Play requires **at least 12 testers opted in
+       continuously for 14 days** before you may apply for production. Recruit
+       14 to 15 so a couple of drop-outs do not reset the clock. Ask testers to
+       actually open the app (and tell you what breaks). Organization accounts
+       are exempt from this rule.
+11. [ ] **Apply for production access** once the 14 days are met (Dashboard,
+       "Apply for production"), answer the questions about what testers did and
+       what you changed, then create the production release. Start the staged
+       rollout at 20 percent (see "After" below).
+12. [ ] **After approval**: keep `versionCode` strictly increasing (`+2`, `+3`...
+       in `pubspec.yaml`), and re-check the Data safety form whenever a network
+       call, SDK or permission is added.
+
+---
+
 ## Once, before the first paid release
 
 These have external waiting periods measured in weeks. Every day of delay here

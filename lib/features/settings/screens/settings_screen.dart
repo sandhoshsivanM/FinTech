@@ -326,7 +326,7 @@ class _SettingsBody extends ConsumerWidget {
             ListTile(
               leading: const Icon(Icons.auto_awesome_motion_outlined),
               title: const Text('Auto-capture'),
-              subtitle: const Text('Review SMS / notification transactions'),
+              subtitle: const Text('Review bank-alert transactions'),
               onTap: () => context.go(Routes.captureInbox),
             ),
             ListTile(

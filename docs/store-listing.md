@@ -18,114 +18,350 @@ aggregation. Khazana has no server, so it cannot.
 
 ## Google Play
 
-### App name (30 max)
-```
-Khazana: Private Money Vault
-```
-*28 chars.*
+Status of this section: written for the **1.0.0 (1) closed-testing** submission
+and checked against the code on branch `release/play-readiness`. Where an answer
+depends on something only the Play Console can confirm, it says so.
+
+### Store listing
+
+| Field | Value |
+|---|---|
+| App name (30 max) | `Khazana: Private Money Vault` (28) |
+| Default language | English (India) |
+| App or game | App |
+| Category | Finance |
+| Tags | Personal finance, Budgeting, Investing |
+| Developer contact email | the support address on the custom domain (see RELEASE-CHECKLIST) |
+| Website | https://khazana-app.netlify.app |
+| Privacy policy URL | https://khazana-app.netlify.app/privacy/ |
 
 ### Short description (80 max)
 ```
-Encrypted, offline personal finance. No account, no server, no ads, no tracking.
+Private money vault: budgets, net worth, investments. Encrypted. No account.
 ```
-*79 chars.*
+*76 chars.*
 
 ### Full description (4000 max)
 
 ```
-Khazana is a personal finance and wealth app that keeps your money data on your
-phone — encrypted, offline, and out of everyone's reach including ours.
+Khazana is a personal finance app that keeps your money data on your phone: encrypted, offline-first, and out of everyone's reach, including ours.
 
-There is no account to create. No email, no phone number, no sign-up. There is
-no server behind Khazana, so there is nothing for us to look at, nothing to
-sell, and nothing to lose in a breach.
+There is no account to create. No email, no phone number, no sign-up. There is no Khazana server, so there is nothing for us to look at, nothing to sell and nothing to lose in a breach.
 
-WHY THIS IS DIFFERENT
+WHY IT IS DIFFERENT
 
-Most finance apps ask for your bank login so they can aggregate your data on
-their servers. That data is the product. Khazana takes the opposite approach:
-your records live in an encrypted database on this device, unlocked by a PIN
-only you know. We cannot read it. There is no password reset, because a
-recovery path we controlled would mean we could open your vault.
+Most finance apps ask for your bank login and gather your data on their servers. Khazana does the opposite. Your records live in an encrypted database on this device, unlocked by a PIN only you know (or your fingerprint or face, if you turn that on). We cannot read it, and there is no password reset, because a recovery path we controlled would be a way for us to open your vault.
 
-WHAT YOU CAN TRACK
+WHAT YOU CAN DO
 
-• Transactions, accounts and transfers with proper double-entry bookkeeping
-• Budgets per category, with alerts before you overspend
-• Investments — stocks, ETFs, mutual funds — with cost basis and returns
-• Liabilities, EMIs, and payoff plans (avalanche or snowball)
-• Insurance policies and where your cover falls short
-• Goals, and whether you are on track
-• A financial health score across four areas, explained rather than asserted
-• Safety net: how long you could hold out with no income
+- Home: your total balance, income, spend and savings for the month, a stack of cards for your accounts, and a seven-day spending chart.
+- Money: a cash-flow view of every transaction, a calendar ledger, monthly budgets per category, recurring bills and income, and your accounts. Add a transaction in a few taps, or type it in plain words such as "spent 450 on groceries".
+- Invest: portfolio value, invested amount, realised and unrealised profit and loss, XIRR, holdings, goals, debts and EMIs, and insurance cover with the gap against a sensible guideline.
+- Health: a financial health score out of 100 with the reasons behind it, reports for any period, analytics, and a safety-net check that shows how long your savings would last with no income.
+- Little (i) hints beside every figure explain what it means and how it is worked out, in plain language.
+- Light and dark themes, and an option to hide amounts with one tap.
 
-BUILT FOR INDIA
+BUILT FOR INDIA, USABLE ANYWHERE
 
-Rupee formatting with lakh and crore. Capital gains rules for Indian equity and
-mutual funds. AMFI NAV lookup. Statement import for HDFC, ICICI, SBI and Axis.
-Multi-currency for anything held abroad.
+Rupee formatting with lakh and crore. Mutual fund NAVs from the public AMFI file. Statement import for HDFC, ICICI, SBI and Axis bank files. Multi-currency support for money held abroad, with daily exchange rates on request.
 
-FREE FOREVER, WITH NO CATCH
+OPTIONAL AUTO-CAPTURE FROM BANK ALERTS
 
-No limits on your ledger — unlimited transactions, accounts, budgets, goals and
-holdings. Encrypted backup and restore, and a full CSV export, are free and
-always will be. Nothing that gets your own data out of Khazana is ever behind a
-payment.
+If you choose to, Khazana can read bank and UPI payment alerts that appear on your phone and suggest transactions for you to review. This needs Android's Notification access. Khazana explains exactly what it does and asks for your agreement first. Alerts are read on the device, in memory, and thrown away immediately. Only the amount, merchant and date are kept, and only after you tap Add. Nothing is uploaded. It is off until you turn it on, and you can switch it off at any time in Android settings. Khazana never asks for permission to read your SMS messages.
 
-KHAZANA PRO — one payment, not a subscription
+REMINDERS
 
-Unlocks the Tax Centre, XIRR and benchmark analysis, sector-level profit and
-loss, bank and broker statement import, automatic capture from bank
-notifications, household profiles, full report history, and formatted exports.
-Buy once, keep it.
+Optional on-device reminders for bills, renewals and budget limits. They are scheduled on your phone; nothing is pushed from a server.
+
+YOUR DATA, YOUR CONTROL
+
+- Encrypted backup and restore, and a complete CSV export. Getting your own data out is never locked behind anything.
+- Erase all data at any time from Settings.
+- Try it first: Settings, then Load sample data, fills the app with a realistic year. Erase it when you are done.
 
 PRIVACY, PRECISELY
 
-• Your vault: AES-256 encryption (SQLCipher), key derived from your PIN using
-  PBKDF2-HMAC-SHA256 at 600,000 iterations
-• Analytics: none. No telemetry of any kind, from anywhere in the app
-• Ads: none
-• Network: only when you ask for a price or exchange-rate refresh, and those
-  requests carry ticker symbols and currency codes — never anything about you
-• Backups: encrypted files you hold, restorable only with your PIN
+- Your vault: AES-256 encryption (SQLCipher), with the key derived from your PIN using PBKDF2-HMAC-SHA256 at 600,000 iterations.
+- Analytics and tracking: none. Ads: none.
+- Network: used only when you refresh share prices or exchange rates. Those requests carry ticker symbols and currency codes, never your balances, holdings or anything about you.
+- Backups: encrypted files that you hold, restorable only with your PIN. Android's own cloud backup is switched off for this app.
 
-Khazana is a record-keeping and calculation tool. Its scores, projections and
-tax estimates are informational only and are not investment, tax or insurance
-advice.
+Khazana is a record-keeping and calculation tool. Its scores, projections and estimates are for information only and are not investment, tax or insurance advice.
 ```
-*~2,150 chars.*
+*3,663 chars (measured; the console shows the live count).*
 
-### Play Data Safety declaration
+> **Pro tier: deliberately not mentioned above.** The Android app contains a
+> "Khazana Pro" screen (Settings), but no screen in the Flutter app is wired to
+> `ProGate`, and several benefits on that screen (Tax Centre, household
+> profiles, formatted exports, forecast) exist only in the web client per
+> `docs/pro-gates.json`. Selling or advertising features the Android app does not
+> have is a Play "misleading claims" and "deceptive behaviour" risk. Decide one
+> of two routes before the first closed test: either **(a)** ship 1.0.0 free,
+> do not create the `khazana_pro` in-app product and hide the Pro entry, or
+> **(b)** wire the gates, trim `ProCopy.benefits` to what Android really has
+> (portfolio analytics, statement import, auto-capture, price refresh, longer
+> reports, score history, multiple vaults) and then add a Pro paragraph here and
+> tick "contains in-app purchases".
 
-Unusually simple, because the honest answers are all "no":
+### Release notes, 1.0.0 (500 max per language)
+```
+First release of Khazana.
+
+- A private, encrypted money vault: no account, no server, no ads, no tracking
+- Budgets, cash flow, calendar, recurring bills and accounts
+- Portfolio with XIRR and profit and loss, goals, debts and insurance cover
+- Financial health score and safety-net check, with explanations beside every figure
+- Optional auto-capture of bank alerts, off until you turn it on
+- Encrypted backup, CSV export, light and dark themes
+```
+*446 chars.*
+
+### Graphics (in `docs/play-store/`)
+
+| Asset | File | Spec |
+|---|---|---|
+| Hi-res icon | `icon-512.png` | 512 x 512, 32-bit PNG (RGBA), under 1 MB |
+| Feature graphic | `feature-graphic.png` | 1024 x 500, 24-bit PNG, no alpha |
+| Phone screenshots | `phone/01-...` to `phone/08-...` | 1080 x 1920 (9:16), PNG |
+
+Regenerate the first two with `cd webapp && npm run play-graphics`. The
+screenshots are real captures from the Android emulator (API 34, debug build,
+**Settings, Load sample data**, system clock fixed to 9:41, status bar in demo
+mode), in the order Play shows them:
+
+1. `01-home-card-stack.png` home with the account card stack
+2. `02-cash-flow.png` Money, cash flow
+3. `03-investments.png` Invest, portfolio
+4. `04-financial-health.png` Health, score
+5. `05-safety-net.png` Health, safety net
+6. `06-insurance-cover.png` Invest, cover (one sample policy added)
+7. `07-add-transaction.png` add transaction
+8. `08-home-dark.png` home, dark theme
+
+Play needs 2 to 8 phone screenshots; the first three carry most of the weight.
+No tablet screenshots are required for a phone-only listing.
+
+### App content declarations
+
+| Section | Answer |
+|---|---|
+| Privacy policy | https://khazana-app.netlify.app/privacy/ (see "Privacy policy check" below) |
+| Ads | **No**, the app contains no ads |
+| App access | **All functionality is available without special access**, with instructions (below) |
+| Target audience | **18 and over** only. Not designed for children, so the Families policy does not apply |
+| News app | No |
+| Government app | No |
+| Health apps (health features) | No. The "financial health score" is a money metric, not a health feature |
+| Financial features | Declare as a personal-finance tracker. Do **not** tick lending, trading/brokerage, payments, wallets, crypto, insurance sales or advice. If a "no financial features" choice is the only fit, do not use it either, because the app handles financial records. Pick the closest "personal finance management / other" option the form offers |
+| Data safety | See below |
+| In-app purchases | See the Pro note above. Tick "contains in-app purchases" only if route (b) is taken |
+
+**App access instructions** (paste into the "App access" box):
+
+```
+No login or account exists. The app is fully usable without any special access.
+1. Open the app and, on "Set up your vault", enter any PIN twice (for example 482716) and tap Create vault. The PIN is local to the device; there is no account.
+2. On the home screen tap "Sample data" (or Settings, then Load sample data) to fill the app with a realistic year of demonstration data. Skip the short tour if it appears.
+3. Explore with the bottom tabs: Home, Money, Invest, Health.
+Auto-capture from bank alerts is optional and needs Notification access: open Settings, Auto-capture, tap "Notification access", read the disclosure and tap "Agree and continue". It can be skipped; nothing else depends on it.
+```
+
+**Content rating (IARC questionnaire).** Category: *Utility, Productivity,
+Communication, or Other* (Finance apps are rated under this heading).
 
 | Question | Answer |
 |---|---|
-| Does your app collect or share any user data? | **No** |
-| Is all user data encrypted in transit? | N/A — no user data is transmitted |
-| Do you provide a way to delete data? | **Yes** — Settings → Erase all data |
+| Violence / blood / fear | No |
+| Sexual content or nudity | No |
+| Profanity or crude humour | No |
+| Controlled substances (drugs, alcohol, tobacco) | No |
+| Gambling or simulated gambling | No |
+| User-generated content or user-to-user communication | No |
+| Shares the user's location with others | No |
+| Allows purchases of digital goods | **No** for route (a); **Yes** for route (b) |
+| Unrestricted web access / browser | No (it only opens the privacy and terms links in the system browser) |
 
-Financial Features declaration: **not** a lender, broker, payment app, crypto
-exchange or insurance provider. A personal finance manager only.
+Expected outcome: Everyone / PEGI 3 / IARC 3+. The questionnaire result is
+generated by Play; if it comes back higher, re-check the answers above rather
+than appealing.
 
-Restricted permissions to declare:
-- `BIND_NOTIFICATION_LISTENER_SERVICE` — see the justification below.
-- `READ_SMS` / `RECEIVE_SMS` — **not requested.** Removed deliberately.
+### Data safety form (ready to copy)
 
-### Notification-listener justification
+Derived by reading every network call in `lib/` and every manifest permission.
+**Every network call in the app** (nothing runs automatically; each is started by
+the user tapping a refresh or opening a screen that needs a quote):
 
-> Khazana's core function includes recording bank transactions. On Android it
-> can read incoming bank transaction alerts and offer to file them as
-> transactions, so a user does not have to retype every payment by hand.
+| Host | Used for | What leaves the device |
+|---|---|---|
+| `query1.finance.yahoo.com` | share and ETF quotes | a ticker symbol |
+| `api.twelvedata.com` | quotes (fallback, user supplies their own API key) | a ticker symbol and the user's own API key |
+| `www.alphavantage.co` | quotes (fallback, user supplies their own API key) | a ticker symbol and the user's own API key |
+| `www.amfiindia.com` | mutual fund NAVs | nothing: a public file is downloaded |
+| `api.frankfurter.dev` | exchange rates (ECB reference rates) | a currency code |
+| Google Play Billing | the Pro purchase (only if route (b)) | handled by Google Play, not by the app |
+
+There is **no** analytics, crash reporting, advertising, attribution, Firebase,
+remote config or sign-in SDK in the app, no server of ours, and no licence
+check over the network (licence keys are verified on the device). Cloud backup
+is switched off (`allowBackup="false"`, data-extraction rules exclude everything).
+
+**Section 1, Data collection and security**
+
+| Question | Answer |
+|---|---|
+| Does your app collect or share any of the required user data types? | **No** |
+| Is all of the user data collected by your app encrypted in transit? | Not applicable (no data collected). For the record, every request is HTTPS |
+| Do you provide a way for users to request that their data is deleted? | **Yes.** There is no account; all data is on the device and Settings, Erase all data removes it. Uninstalling also removes it. No deletion URL is needed because nothing is held by the developer |
+
+Why "No" is correct: Play defines *collection* as data transmitted off the
+device to the developer or a third party. The only things transmitted are public
+market identifiers (ticker symbols, currency codes) with no link to a person, and
+a public NAV file. No balance, transaction, holding size, name, email or device
+identifier is sent, and nothing is sent to the developer at all. The notification
+text read by auto-capture is processed in memory on the device and never
+transmitted ("processed ephemerally on device" is not collection).
+
+**Conservative alternative.** Providers such as Yahoo Finance necessarily see the
+requester's IP address, and a ticker list can hint at what someone holds. If you
+prefer to over-declare rather than risk a reviewer disagreeing, answer
+**Yes** for collection and declare only:
+- *Financial info, Other financial info* (watch-list ticker symbols): **Shared**
+  with third parties, **optional**, purpose **App functionality**, not required.
+- Nothing else. Do not declare Personal info, Location, Contacts, Messages, App
+  activity, Device or other IDs: none of those are sent.
+The privacy policy table already names all five hosts, so either answer matches it.
+
+**Permissions and the data-safety form.** None of the manifest permissions lead
+to data collection:
+
+| Permission | Source | Why |
+|---|---|---|
+| `INTERNET`, `ACCESS_NETWORK_STATE` | app, plugin | price, NAV and FX refresh |
+| `POST_NOTIFICATIONS`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED` | app | local reminders; the boot receiver restores scheduled alarms after a reboot. No exact-alarm permission is used |
+| `USE_BIOMETRIC`, `USE_FINGERPRINT` | `local_auth` plugin | optional unlock; the app gets only yes or no |
+| `com.android.vending.BILLING` | `in_app_purchase` plugin | present whichever route is taken; unused if route (a) |
+| `BIND_NOTIFICATION_LISTENER_SERVICE` (on the service) | app | optional bank-alert auto-capture; see below |
+| `<DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION>` | AndroidX | internal signature permission |
+
+Not requested: `READ_SMS`, `RECEIVE_SMS`, contacts, location, camera, storage,
+`SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`, foreground-service permissions.
+
+### Policy review: findings
+
+**Target API level.** `targetSdk = flutter.targetSdkVersion`. In the installed
+Flutter 3.38.7 SDK
+(`packages/flutter_tools/gradle/src/main/kotlin/FlutterExtension.kt`) that is
+**36**, with `compileSdk` 36 and `minSdk` 24. The merged release manifest
+confirms `targetSdkVersion="36"`. Play's rule (API 35 or higher for new apps and
+updates) is met. Re-check this after any Flutter upgrade. The 56 MB bundle
+contains arm64-v8a, armeabi-v7a and x86_64 native libraries (64-bit present).
+
+**Exported components** (merged release manifest). Only two are exported:
+`MainActivity` (the launcher, required) and
+`androidx.profileinstaller.ProfileInstallReceiver` (AndroidX, guarded by the
+system `DUMP` permission). The notification listener, the two
+`flutter_local_notifications` receivers and every other service/receiver/provider
+are `exported="false"`. The listener is protected by
+`BIND_NOTIFICATION_LISTENER_SERVICE`, so only the OS can bind it.
+
+**Notification listener, Play User Data policy (prominent disclosure and
+consent).** *Finding, before this change:* **weak.** The Auto-capture screen
+showed a small card ("Grant notification access so bank alerts are parsed
+on-device...") and its button called
+`openNotificationAccessSettings` immediately. That is explanatory text on a
+screen, not a prominent disclosure that needs an explicit action, and it did not
+say the OS shares notifications from *every* app with the listener. *Fix made:*
+`lib/features/capture/widgets/notification_access_disclosure.dart` adds a modal
+dialog that is not dismissible by tapping outside, titled "Read bank alerts to
+add transactions?", with four labelled parts (what Khazana reads, why, where it
+goes, how to turn it off) and two equal buttons, "Not now" and "Agree and
+continue". The system settings screen opens **only** on "Agree and continue".
+The card text was also tightened, and the stale "SMS" wording (SMS capture was
+removed) was removed from the Auto-capture list entry, the empty state and the
+help text. Covered by `test/widget/notification_access_disclosure_test.dart`.
+
+The disclosure text, for the console and the review video:
+
+> **What Khazana reads.** If you continue, Android will ask you to give Khazana
+> notification access. Android shares the notifications that appear on this phone
+> with the app. Khazana looks only for bank and UPI payment alerts (for example
+> "Rs 450 debited at a store") and ignores every other notification.
+> **Why.** To suggest transactions for you to review, so you do not have to type
+> each payment in by hand. Nothing is added until you tap Add.
+> **Where it goes.** Nowhere. The text is read on this device, in memory, and
+> thrown away straight away. Only the amount, merchant and date of a payment alert
+> are kept, in your encrypted vault. Nothing is uploaded, shared or used for ads,
+> because Khazana has no server.
+> **You are in control.** This is optional and off until you turn it on. To turn
+> it off, open Android Settings, then Notifications, then Notification access (the
+> path varies by phone) and switch Khazana off.
+
+*Residual points to be aware of:*
+- The service, once granted, receives notifications from all apps; filtering to
+  bank alerts happens in Dart (`NotificationParser`). That is why the disclosure
+  says "ignores every other notification" rather than implying it never sees them.
+  Do not describe it to Play as "only bank notifications are received".
+- Nothing in the native code stores or sends the text (`CaptureBus` holds at most
+  50 events in memory while the Dart side is not attached). Keep it that way: any
+  change that persists raw text, or logs it, changes the Data safety answers.
+- If Play review asks for justification, use the "Notification-listener
+  justification" below and offer a short screen recording: Settings, Auto-capture,
+  Notification access, the dialog, Agree, the system screen.
+- Capture is described as Pro in the (web-era) gate map and paywall but is not
+  gated in the Android code today (see the Pro note above).
+
+**SMS.** Correctly absent (`RECEIVE_SMS`/`READ_SMS` are Play restricted
+permissions; reading bank texts is not an allowed use).
+
+**Exact alarms, foreground services, full-screen intents, `QUERY_ALL_PACKAGES`,
+`MANAGE_EXTERNAL_STORAGE`:** none present.
+
+**Backup.** `allowBackup="false"` plus data-extraction rules keep the vault out
+of Google backups, consistent with the policy and the "no data leaves the device"
+statement.
+
+**Privacy policy check.** `https://khazana-app.netlify.app/privacy/` answers HTTP
+200 and is reachable in-app (Settings). The source page
+(`webapp/src/app/privacy/page.tsx`) already listed notification access and the
+five network hosts; this change expands the notification-access paragraph to
+match the in-app disclosure (explicit agreement first, all notifications visible
+to the service but filtered in memory, only amount/merchant/date kept after
+approval, not shared or used for ads, how to withdraw). **Redeploy the web app
+for that text to go live** (manual Netlify CLI deploy from `webapp/`), then open
+the page in a browser and confirm it shows the "Permissions the mobile app asks
+for" section. When this was checked, a plain `curl` of the live page returned
+the app shell without that section's text in the HTML, so confirm the live
+version in a browser rather than assuming it is current. Play also requires the
+policy be a working, non-editable web page, not a PDF, and it names the developer
+and a contact address (the page does).
+
+**Notification-listener justification (for the Play Console, if asked)**
+
+> Khazana's core function includes recording bank transactions. On Android it can
+> read incoming bank transaction alerts and offer to file them as transactions, so
+> a user does not have to retype every payment by hand.
 >
-> The feature is entirely optional and off until the user enables it in system
-> settings. The notification text is parsed on the device, in memory. Only the
-> amount, merchant and date are retained, and only after the user approves the
-> suggestion. Nothing is transmitted — the app has no server and makes no
-> network request related to this feature.
+> The feature is entirely optional and off until the user enables it. Before the
+> app opens the system settings screen it shows an in-app disclosure explaining
+> what is read, why, that nothing leaves the device and how to switch it off, and
+> requires the user to tap "Agree and continue". The notification text is parsed
+> on the device, in memory, and discarded. Only the amount, merchant and date are
+> retained, and only after the user approves the suggestion. Nothing is
+> transmitted: the app has no server and makes no network request related to
+> this feature.
 >
-> No less-broad API provides incoming transaction alerts. We deliberately do
-> not request READ_SMS or RECEIVE_SMS.
+> No less-broad API provides incoming transaction alerts. The app deliberately
+> does not request READ_SMS or RECEIVE_SMS.
+
+**Other store-readiness notes**
+- `versionCode` is 1 (from `pubspec.yaml` `1.0.0+1`). Every upload needs a higher
+  `+N`; bump it and run `tool/check_versions.sh`.
+- The local `flutter build appbundle --release` is signed with the **debug** key
+  when `android/key.properties` is absent. Play rejects that; only the CI build
+  with the upload keystore secrets is uploadable.
+- Create the `khazana_pro` product only under route (b).
+- Adaptive launcher icon was fixed in this change (background white, foreground
+  mark inside the safe zone, true monochrome layer for themed icons).
 
 ---
 
@@ -202,7 +438,8 @@ Six per device, in this order — the first two are what most people ever see:
    description.
 6. **Calendar or Budget** — day-to-day usefulness.
 
-Sizes: 6.7" iPhone (1290×2796), 13" iPad (2064×2752), Android phone
+Play screenshots already exist in `docs/play-store/phone/` (see the Google Play
+section). Sizes: 6.7" iPhone (1290×2796), 13" iPad (2064×2752), Android phone
 (1080×1920+), Android tablet, macOS (2880×1800). Play also needs a
 **1024×500 feature graphic**.
 

@@ -15,7 +15,8 @@
     "test:visual": "playwright test",
     "test:visual:update": "playwright test --update-snapshots",
     "icons": "node scripts/gen-icons.mjs",
-    "og": "node scripts/gen-og-image.mjs"
+    "og": "node scripts/gen-og-image.mjs",
+    "play-graphics": "node scripts/gen-play-graphics.mjs"
   },
   "dependencies": {
     "@noble/ed25519": "^2.3.0",

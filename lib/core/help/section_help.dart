@@ -49,7 +49,7 @@ const Map<String, HelpEntry> kFlutterOnlyHelp = {
   ),
   'capture.inbox': HelpEntry(
     'Capture inbox',
-    'Transactions picked up from shared text or notifications, waiting for you to confirm. Review each one, fix the amount or category if needed, then save it or dismiss it. Nothing is added to your books until you confirm.',
+    'Transactions picked up from bank payment alerts, waiting for you to confirm. Review each one, fix the amount or category if needed, then save it or dismiss it. Nothing is added to your books until you confirm.',
   ),
   'investments.addLot': HelpEntry(
     'Add holding',
