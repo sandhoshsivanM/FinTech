@@ -1,9 +1,10 @@
 /**
  * Renders every app icon in the repo from the brand mark.
  *
- * Source of truth: `assets/brand/khazana-mark.png`, which `extract-mark.mjs`
- * lifts off the supplied brand sheet. Nothing here redraws the mark — every
- * output is that same artwork, resized and placed.
+ * Source of truth: the vector master `assets/brand/khazana-mark.svg`, rendered
+ * to the 1024px PNG `assets/brand/khazana-mark.png` that this script reads.
+ * Nothing here redraws the mark — every output is that same artwork, resized
+ * and placed.
  *
  * Before this, the icons were hand-placed and had drifted into three different
  * marks: the brand render on iOS and Android, a *different* render on macOS,
@@ -11,7 +12,8 @@
  * still shipping the stock blue Flutter "F". Generating them all from one file
  * removes the way that happened.
  *
- * Run with `npm run icons` (after `npm run mark` if the brand sheet changed).
+ * Run with `npm run icons` (after re-rendering khazana-mark.png from the SVG if
+ * the mark changed).
  * Deliberately not wired into the build: it writes binaries into the repo, and
  * a build step that rewrites tracked files on every CI run produces noise, not
  * safety.
@@ -27,7 +29,7 @@ const REPO = resolve(WEBAPP, '..');
 const SOURCE = join(REPO, 'assets', 'brand', 'khazana-mark.png');
 
 /**
- * The plate the mark sits on: white, as on the brand sheet's light app icon.
+ * The plate the mark sits on: white, as on the light app icon.
  * The mark is deep green, so a dark plate would swallow it.
  */
 const PLATE = { r: 255, g: 255, b: 255, alpha: 1 };
@@ -157,7 +159,7 @@ async function opaque(size) {
   return sharp(await plated(size, 'any')).removeAlpha().png({ compressionLevel: 9 }).toBuffer();
 }
 
-/** The mark alone, transparent. For the in-app BrandMark and the brand sheet. */
+/** The mark alone, transparent. For the in-app BrandMark. */
 async function bare(size) {
   return sharp(SOURCE)
     .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 }, kernel: 'lanczos3' })

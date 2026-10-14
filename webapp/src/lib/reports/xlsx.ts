@@ -45,7 +45,7 @@ import { loadReportAssets, type ReportAssets } from './assets';
 
 const INK = 'FF111214';
 const INK_SOFT = 'FF5C5C61';
-const MUTED = 'FF8E8E93';
+const MUTED = 'FF6E6E73'; // small text: #8E8E93 was 3.3:1 on white, this is 5.1:1
 const LINE = 'FFE6E6E8';
 const TRAY = 'FFF2F2F2';
 const CARD = 'FFF8F8F8';

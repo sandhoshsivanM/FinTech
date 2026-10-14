@@ -42,7 +42,7 @@ type RGB = [number, number, number];
 
 const INK: RGB = [17, 18, 20]; //        #111214 — text, black pill
 const INK_SOFT: RGB = [92, 92, 97]; //   #5C5C61 — small text that must print
-const MUTED: RGB = [142, 142, 147]; //   #8E8E93 — tertiary text
+const MUTED: RGB = [110, 110, 115]; //   #6E6E73 — tertiary small text (≥4.5:1 on white and tray; #8E8E93 was 3.3:1)
 const LINE: RGB = [230, 230, 232]; //    #E6E6E8 — rules
 const TRAY: RGB = [242, 242, 242]; //    #F2F2F2 — zebra, bar tracks
 const CARD: RGB = [248, 248, 248]; //    #F8F8F8 — tiles, chart cards

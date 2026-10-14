@@ -78,9 +78,12 @@ export const GLOSSARY = {
     title: 'Yield on portfolio',
     body: 'Dividends received measured against what your holdings are worth today. Because the basis is current value, the figure falls when prices rise.',
   },
+  // The health score's Wealth check. Key kept for the Flutter mirror; the
+  // title is NOT "Diversification" (Investments) or "Asset spread" (Analytics),
+  // because it measures only the largest asset group's share.
   diversification: {
-    title: 'Diversification',
-    body: 'How spread your money is across different kinds of asset. A high score means no single sort of holding decides how you do.',
+    title: 'Asset-group balance',
+    body: 'A health-score check on how much of your portfolio sits in its single largest asset group. It earns full marks once no group holds more than 60%. It is narrower than Asset spread on Analytics and the Diversification score on Investments.',
   },
   // Analytics' 0–100 asset-group score. Deliberately NOT called
   // "Diversification": Investments has a "Diversification score" with a
