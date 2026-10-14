@@ -11,6 +11,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { onNotificationNavigate } from '@/lib/notify';
 import { useNotificationDriver } from '@/lib/useNotificationDriver';
 import { installErrorLog } from '@/lib/errorLog';
+import { ReloadIfOutdated, UpdateBanner } from './UpdateBanner';
 
 export function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -66,6 +67,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
   if (status !== 'unlocked') {
     return (
       <MotionConfig reducedMotion="user">
+        <ReloadIfOutdated />
         <VaultGate />
       </MotionConfig>
     );
@@ -77,6 +79,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
         {/* Mounted inside the unlocked branch only: it reads decrypted records,
             which do not exist until the vault is open. */}
         <NotificationDriver />
+        <UpdateBanner />
         <Shell>
           {/* Per-route: a screen that throws must not take the shell with it. */}
           <ErrorBoundary resetKey={pathname}>{children}</ErrorBoundary>
