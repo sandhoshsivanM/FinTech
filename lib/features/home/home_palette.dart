@@ -59,7 +59,7 @@ class HomePalette {
   static const light = HomePalette._(
     header: Color(0xFFF2F2F2),
     ink: Color(0xFF111214),
-    muted: Color(0xFF8E8E93),
+    muted: Color(0xFF6E6E73),
     fill: Color(0xB3FFFFFF),
     line: Color(0xFFE6E6E8),
     sheet: Color(0xFFF2F2F2),

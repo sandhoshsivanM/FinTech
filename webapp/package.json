@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "icons": "node scripts/gen-icons.mjs",
-    "mark": "node scripts/extract-mark.mjs"
+    "mark": "node scripts/extract-mark.mjs",
+    "og": "node scripts/gen-og-image.mjs"
   },
   "dependencies": {
     "@noble/ed25519": "^2.3.0",
