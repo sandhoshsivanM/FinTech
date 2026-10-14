@@ -658,6 +658,10 @@ export const SECTION_HELP = {
     title: "Data",
     body: "Fill an empty vault with sample transactions, holdings and liabilities to try the app. It never replaces your own records.",
   },
+  "settings.feedback": {
+    title: "Help & feedback",
+    body: "Send feedback or a problem report from your own mail app, with the app version, browser and recent error messages filled in. Numbers, emails and links are stripped, and nothing is sent until you press Send.",
+  },
   "settings.dangerZone": {
     title: "Danger zone",
     body: "Lock the vault to clear decrypted data from memory, or erase it to delete every record permanently. Erasing cannot be undone, so export a backup first.",

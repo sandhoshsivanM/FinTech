@@ -50,6 +50,11 @@ const kTermsUrl = '$kSiteUrl/terms';
 /// ticketing and no telemetry to tell us something broke.
 const kSupportEmail = 'sandhoshsivan00@gmail.com';
 
+/// Where "Send feedback" and "Report a problem" are addressed. Today this is
+/// the same inbox as [kSupportEmail]; it is a separate name so feedback can be
+/// moved to its own address without touching the support/legal contact.
+const kFeedbackEmail = kSupportEmail;
+
 /// Encrypted-backup file extension.
 ///
 /// FROZEN: paired with the `0x46544F53` magic in the backup header. Changing it

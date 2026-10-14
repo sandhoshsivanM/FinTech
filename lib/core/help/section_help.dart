@@ -83,6 +83,12 @@ const Map<String, HelpEntry> kFlutterOnlyHelp = {
     'Market data',
     'Choose where live prices come from and add your own API keys. Keys are stored in your device keychain and never leave it except to request prices.',
   ),
+  // Not `settings.feedback`: that key is the web card's, and would collide with
+  // this one the next time section_help_data.dart is regenerated.
+  'settings.helpFeedback': HelpEntry(
+    'Help & feedback',
+    'Send feedback opens your own mail app with the app version and device type filled in, never your financial data. Report a problem shares the error log, which you can review first. Nothing is sent until you press Send.',
+  ),
   'settings.security': HelpEntry(
     'App lock',
     'Asks for your device passcode or biometrics when you open Khazana. It protects the data on this phone if someone else picks it up.',

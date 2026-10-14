@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, type ReactNode } from 'react';
 import { MotionConfig } from 'framer-motion';
-import { useApp } from '@/lib/store';
+import { APP_VERSION, useApp } from '@/lib/store';
 import { VaultGate } from './VaultGate';
 import { Shell } from './Shell';
 import { AutoLock } from './AutoLock';
@@ -10,6 +10,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ErrorBoundary } from './ErrorBoundary';
 import { onNotificationNavigate } from '@/lib/notify';
 import { useNotificationDriver } from '@/lib/useNotificationDriver';
+import { installErrorLog } from '@/lib/errorLog';
 
 export function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -18,6 +19,11 @@ export function AppFrame({ children }: { children: ReactNode }) {
   const init = useApp((s) => s.init);
 
   useEffect(() => { void init(); }, [init]);
+
+  // Local-only record of uncaught errors for Settings → Report a problem.
+  // Installed here, before the vault gate, so a crash on the PIN screen is
+  // captured too. It stores sanitized messages and stacks only — never state.
+  useEffect(() => installErrorLog(APP_VERSION), []);
 
   // Tapping a notification. The worker posts rather than navigating, so this
   // routes in place — a hard navigation would re-mount the app, discard the

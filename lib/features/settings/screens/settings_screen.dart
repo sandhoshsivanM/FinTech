@@ -23,8 +23,10 @@ import '../../../core/theme/app_tokens.dart';
 import '../providers/theme_providers.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/tour_overlay.dart';
+import '../../../core/feedback/feedback_mail.dart';
 import '../providers/sample_data_provider.dart';
 import '../providers/settings_providers.dart';
+import 'help_feedback_tiles.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -140,12 +142,13 @@ class _SettingsBody extends ConsumerWidget {
     BuildContext context,
     Future<String> Function() action, {
     required String shareText,
+    String? subject,
   }) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final path = await action();
       // Hand the file to the OS share sheet (PRD §5B: user shares explicitly).
-      await Share.shareXFiles([XFile(path)], text: shareText);
+      await Share.shareXFiles([XFile(path)], text: shareText, subject: subject);
     } on Exception catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
     }
@@ -293,13 +296,19 @@ class _SettingsBody extends ConsumerWidget {
           ],
         ),
         _SettingsGroup(
-          title: 'Help',
+          title: 'Help & feedback',
+          help: 'settings.helpFeedback',
           children: [
             ListTile(
               leading: const Icon(Icons.school_outlined),
               title: const Text('Take a tour'),
               subtitle: const Text('A quick walkthrough of every area'),
               onTap: () => showTour(context, ref),
+            ),
+            // "Report a problem" replaces the old "Export error log" row: same
+            // disclaimer, same sanitized logs.json, now addressed to us.
+            HelpFeedbackTiles(
+              onReportProblem: () => _showLogDisclaimer(context, ref),
             ),
           ],
         ),
@@ -409,12 +418,6 @@ class _SettingsBody extends ConsumerWidget {
         _SettingsGroup(
           title: 'Data & Privacy',
           children: [
-            ListTile(
-              leading: const Icon(Icons.bug_report_outlined),
-              title: const Text('Export error log'),
-              subtitle: const Text('Plaintext logs.json — no financial data'),
-              onTap: () => _showLogDisclaimer(context, ref),
-            ),
             // Google Play requires a privacy policy reachable from *inside* the app
             // for anything handling financial data, not only from the store
             // listing. Apple checks the same thing during review.
@@ -559,11 +562,13 @@ class _SettingsBody extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Export error log'),
+        title: const Text('Report a problem'),
         // Exact disclaimer text from PRD §5B.
         content: const Text(
           'This file contains error messages and device info. It does not '
-          'contain your financial data. Review before sharing.',
+          'contain your financial data. Review before sharing.\n\n'
+          'Choose your email app in the next step and send it to '
+          '$kFeedbackEmail, with a line about what you were doing.',
         ),
         actions: [
           TextButton(
@@ -572,7 +577,7 @@ class _SettingsBody extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Export'),
+            child: const Text('Continue'),
           ),
         ],
       ),
@@ -581,7 +586,8 @@ class _SettingsBody extends ConsumerWidget {
     await _run(
       context,
       actions.exportErrorLog,
-      shareText: '$kAppName error log (no financial data)',
+      shareText: problemReportShareText(),
+      subject: kProblemReportSubject,
     );
   }
 }
