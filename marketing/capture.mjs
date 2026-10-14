@@ -2,13 +2,11 @@
  * Stage 1 — drive the real Khazana webapp and save raw screens.
  *
  * Serves nothing itself — run.sh serves the static build (webapp/out) on :3200
- * and then calls this. BASE_URL overrides the address. Pro screens are
- * unlocked with a pool licence key (LICENSE_KEY_FILE, last line).
+ * and then calls this. BASE_URL overrides the address.
  * Output: screens/<theme>/<name>.png (viewport) and <name>-tall.png.
  */
 import { chromium } from 'playwright';
-import { mkdir, readFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
+import { mkdir } from 'node:fs/promises';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3200';
 const PIN = '246810'; // throwaway — the vault lives in this headless profile only
@@ -28,12 +26,6 @@ const ROUTES = [
 ];
 const VIEW = { width: 1440, height: 900 };
 const TALL = 1800;
-
-// Pro screens: one licence key from the pool, verified offline by the app.
-// Read at runtime only — never written to the repo, logs or output.
-const keyFile = process.env.LICENSE_KEY_FILE ?? `${homedir()}/khazana-keys-pool.txt`;
-const licence = (await readFile(keyFile, 'utf8').catch(() => '')).trim().split('\n').pop()?.trim();
-if (!licence) console.warn('no licence key found — Pro screens will show the paywall');
 
 const prefs = {
   'khazana-tour-done': '1',
@@ -61,7 +53,6 @@ async function setPrefs(theme) {
     for (const [k, v] of Object.entries(p)) localStorage.setItem(k, v);
     localStorage.setItem('khazana-theme', t);
   }, [prefs, theme]);
-  if (licence) await page.evaluate((k) => localStorage.setItem('khazana-license-v1', k), licence);
 }
 
 /** Handles both first-run setup (PIN twice) and a plain unlock. */

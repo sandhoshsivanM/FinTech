@@ -80,24 +80,23 @@ case study and the threat model all lead with it.
 So: **the consumer build must contain no networking code for claims at all** —
 not disabled, not behind a flag that ships, absent.
 
-The codebase already has the mechanism. `kUsesStoreBilling` is selected by
-`--dart-define=KHAZANA_CHANNEL=play|appStore`, evaluated with
-`bool.fromEnvironment`, so a build without the flag does not contain the branch.
-A `teams` channel reuses a pattern that is already proven and already asserted in
-the release checklist:
+The codebase already has the mechanism. The build channel is selected by
+`--dart-define=KHAZANA_CHANNEL=play|appStore` and read with
+`String.fromEnvironment` (`lib/core/distribution_channel.dart`), so a branch
+guarded by a compile-time constant derived from it is not in a build without the
+flag. A `teams` channel reuses that pattern:
 
 ```
 --dart-define=KHAZANA_CHANNEL=teams     # the only build that can submit a claim
 ```
 
-Add an assertion to the release checklist alongside the existing dev-override
-grep: the consumer artifact must contain no claim-submission symbols and no
+Add an assertion to the release checklist: the consumer artifact must contain no claim-submission symbols and no
 server hostname.
 
 ## 5. Data model additions
 
 Both clients, in step, driven by shared fixtures like every other cross-client
-contract in this project (`docs/pro-gates.json`, `test/fixtures/health_cases.json`).
+contract in this project (`test/fixtures/health_cases.json`, `test/fixtures/notification_cases.json`).
 
 **On a transaction** — useful to consumers on their own, see §7:
 - `costCentre` / `projectId`, or a general tag dimension. Neither exists today;

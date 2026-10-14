@@ -12,7 +12,6 @@
  *     type is unknown. Those are counted separately rather than defaulted to
  *     short term, which would overstate the bill.
  */
-import { ProGate } from '@/components/ProGate';
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { Landmark, Clock, TrendingUp, CircleHelp } from 'lucide-react';
@@ -39,7 +38,7 @@ interface TaxRow {
   heldDays: number | null;
 }
 
-function TaxPageInner() {
+export default function TaxPage() {
   const holdings = useApp((s) => s.holdings);
   const fmt = useFmt();
   const now = new Date();
@@ -194,25 +193,5 @@ function TaxPageInner() {
         </section>
       </StaggerItem>
     </Stagger>
-  );
-}
-
-/**
- * See what your gains would cost you — gated.
- *
- * The gate renders the real screen blurred behind the paywall card rather than
- * replacing it: a redirect would lose the user's context and break the back
- * button, and someone who can faintly see their own figures converts where
- * someone shown an empty room does not.
- */
-export default function TaxPage() {
-  return (
-    <ProGate
-      feature="taxCentre"
-      title={'See what your gains would cost you'}
-      blurb={'Short- and long-term capital gains, realised gains for the year, and what a position would cost if you sold it today.'}
-    >
-      <TaxPageInner />
-    </ProGate>
   );
 }

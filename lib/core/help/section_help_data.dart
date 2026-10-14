@@ -218,7 +218,7 @@ const Map<String, HelpEntry> kWebSectionHelp = {
   ),
   'reports.export': HelpEntry(
     'Export this period',
-    'Downloads a formatted Excel workbook and printable PDF for exactly the period chosen above: transactions, expenses by category, cash flow, balance sheet and holdings. A Pro feature; the CSV export on Transactions stays free.',
+    'Downloads a formatted Excel workbook and printable PDF for exactly the period chosen above: transactions, expenses by category, cash flow, balance sheet and holdings. The CSV export on Transactions covers every record.',
   ),
   'reports.incomeVsExpenses': HelpEntry(
     'Income vs expenses',
@@ -411,22 +411,6 @@ const Map<String, HelpEntry> kWebSectionHelp = {
   'settings.dangerZone': HelpEntry(
     'Danger zone',
     'Lock the vault to clear decrypted data from memory, or erase it to delete every record permanently. Erasing cannot be undone, so export a backup first.',
-  ),
-  'pro.unlocked': HelpEntry(
-    'Khazana Pro is unlocked',
-    'Pro features are active on this device. The licence is checked here, offline, and only a short order reference is shown. Removing it from this device returns the app to the free tier.',
-  ),
-  'pro.pricing': HelpEntry(
-    'Price',
-    'Khazana Pro is a single one-time payment, not a subscription. Buy it on the website and a licence key is emailed to you; paste it below to unlock Pro.',
-  ),
-  'pro.includes': HelpEntry(
-    'What Pro includes',
-    'Pro adds the Tax Centre, deeper portfolio analysis, statement import, forecast and reconcile, household profiles, and full history and reports. Your ledger, backups and CSV export stay free.',
-  ),
-  'pro.licence': HelpEntry(
-    'I have a licence key',
-    'Paste the key emailed to you after buying. It is checked on this device and never sent anywhere. This licence covers the desktop and web app; App Store purchases are separate.',
   ),
 };
 

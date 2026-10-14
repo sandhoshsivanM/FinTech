@@ -1,9 +1,6 @@
 'use client';
 import { create } from 'zustand';
 import { db, persistenceState, requestPersistence, type PersistenceState } from './db';
-import { FREE, parseEntitlement, type Entitlement } from './entitlement/entitlement';
-import { verifyLicense } from './entitlement/license';
-import { LICENSE_PUBLIC_KEY, LICENSE_KEY_IS_PLACEHOLDER } from './entitlement/licensePublicKey';
 import { deriveKey, encryptJson, decryptJson, randomBytes, bufToB64, b64ToBuf, type Encrypted } from './crypto';
 import { BackupError } from './backupError';
 import { decodeBackup, encodeBackup } from './backupFormat';
@@ -433,14 +430,6 @@ interface AppState extends Data {
    * Settings, because if it is `denied` the user's only copy of their data is
    * something the browser may clear without warning.
    */
-  /**
-   * Whether Khazana Pro is unlocked. Lives OUTSIDE `Data` on purpose, so
-   * `lock()` and `wipe()` — which spread `...emptyData` — cannot clear it by
-   * accident. Erasing your financial data must never revoke a purchase.
-   */
-  pro: Entitlement;
-  activateLicense: (key: string) => Promise<string>;
-  removeLicense: () => void;
   persistence: PersistenceState;
   /**
    * Encrypted records found with no vault row to open them (no salt). Setup
@@ -539,18 +528,6 @@ export const ACCENT_MIGRATION_KEY = 'khazana-accent-zentra';
  * were hidden, never what they were.
  */
 const GHOST_KEY = 'khazana-ghost';
-/**
- * Khazana Pro. Kept in localStorage rather than in the vault for the same
- * reasons as the Flutter side: it must survive `wipe()` (erasing your
- * finances is not a reason to lose a purchase) and be readable before the
- * vault is unlocked, since the paywall and the Settings row both need it.
- *
- * The raw key is stored alongside the cached entitlement so every launch
- * re-verifies the SIGNATURE rather than trusting a cached boolean — the cache
- * is a convenience for the first paint, not the trust anchor.
- */
-const PRO_KEY = 'khazana-entitlement-v1';
-const LICENSE_KEY_STORAGE = 'khazana-license-v1';
 /** Account the add-transaction form defaults to. A convenience, not vault data. */
 export const LAST_ACCOUNT_KEY = 'khazana-last-account';
 
@@ -713,67 +690,6 @@ export function applyAppearance() {
   applyAccent(accent, !!dark);
 }
 
-
-/**
- * Re-verifies the stored licence key and returns the resulting entitlement.
- *
- * Runs on every `init()`. Verification is a local Ed25519 check taking well
- * under a millisecond, so it happens synchronously before first paint and there
- * is no window in which a paying user sees a paywall.
- *
- * The cached entitlement is only a fallback for the case where a real public
- * key has not been compiled in yet: refusing a genuine key because the BUILD is
- * unfinished would be our mistake charged to the customer.
- */
-/**
- * Development escape hatch — the web twin of Flutter's `kProOverride`
- * (`lib/core/entitlement/distribution_channel.dart:63`).
- *
- * Set `NEXT_PUBLIC_KHAZANA_PRO=true` in `webapp/.env.local` and `npm run dev`
- * runs as Pro. Without it, working on a gated screen means either minting a
- * licence or staring at the paywall you just built.
- *
- * **It cannot reach a shipped build, and that is a property of the compiler
- * rather than of care.** Next inlines both of these at build time — but only
- * for literal `process.env.X` references, never a dynamic lookup, which is why
- * they are spelled out in full here. In a production build the first term
- * becomes the literal `false`, so the whole expression folds to `false` and
- * minification deletes the branch. The env var could be set on the build
- * machine and it would still be absent from the bundle.
- *
- * `devOverride` is reported as the source, never `licenseKey`. The entitlement
- * should always be honest about where it came from — a dev build must not be
- * indistinguishable from a purchase in a bug report or a screenshot.
- */
-function devProOverride(): boolean {
-  return process.env.NODE_ENV !== 'production'
-    && process.env.NEXT_PUBLIC_KHAZANA_PRO === 'true';
-}
-
-function resolvePro(): Entitlement {
-  if (devProOverride()) {
-    return { isPro: true, source: 'devOverride', lastVerifiedAt: new Date().toISOString() };
-  }
-
-  const raw = lsGet(LICENSE_KEY_STORAGE);
-  if (!raw) return FREE;
-
-  if (LICENSE_KEY_IS_PLACEHOLDER) return parseEntitlement(lsGet(PRO_KEY));
-
-  const check = verifyLicense(raw, LICENSE_PUBLIC_KEY);
-  if (check.verdict !== 'valid') return FREE;
-
-  const entitlement: Entitlement = {
-    isPro: true,
-    source: 'licenseKey',
-    grantedAt: check.issuedAt?.toISOString(),
-    lastVerifiedAt: new Date().toISOString(),
-    orderRef: check.orderRef,
-  };
-  lsSet(PRO_KEY, JSON.stringify(entitlement));
-  return entitlement;
-}
-
 export const useApp = create<AppState>((set, get) => ({
   ...emptyData,
   status: 'loading',
@@ -786,7 +702,6 @@ export const useApp = create<AppState>((set, get) => ({
   accent: 'default',
   profiles: [],
   activeProfileId: '',
-  pro: FREE,
   persistence: 'unsupported',
   strandedRecords: 0,
   pinFailures: 0,
@@ -810,7 +725,6 @@ export const useApp = create<AppState>((set, get) => ({
       ghost,
       pinFailures: Number(lsGet(PIN_FAILURES_KEY) ?? 0) || 0,
       lockedOutUntil: Number(lsGet(LOCKOUT_UNTIL_KEY) ?? 0) || 0,
-      pro: resolvePro(),
     });
     applyAppearance();
     // Read-only: asking to upgrade here would prompt before the user has any
@@ -924,48 +838,6 @@ export const useApp = create<AppState>((set, get) => ({
     lsSet(GHOST_KEY, ghost ? '1' : '0');
     return { ghost };
   }),
-
-  /**
-   * Applies a licence key the user pasted. Returns a message to show them.
-   *
-   * Never contacts anything. A key is a signature over a payload, and the
-   * public half is compiled in — so this works offline, and no third party
-   * learns that this person is unlocking Khazana today.
-   */
-  activateLicense: async (key) => {
-    if (LICENSE_KEY_IS_PLACEHOLDER) {
-      return 'This build cannot check licence keys yet. Please contact support.';
-    }
-    const check = verifyLicense(key, LICENSE_PUBLIC_KEY);
-    if (check.verdict !== 'valid') {
-      return {
-        malformed: 'That does not look like a Khazana licence key. Copy the whole line, including the KHAZ1. prefix.',
-        badSignature: 'That key could not be verified. Check it was copied in full.',
-        wrongProduct: 'That is a valid key, but for a different product.',
-        unsupportedVersion: 'That key was issued for a newer version of Khazana. Please update the app.',
-        valid: '',
-      }[check.verdict];
-    }
-
-    const entitlement: Entitlement = {
-      isPro: true,
-      source: 'licenseKey',
-      grantedAt: check.issuedAt?.toISOString(),
-      lastVerifiedAt: new Date().toISOString(),
-      orderRef: check.orderRef,
-    };
-    lsSet(LICENSE_KEY_STORAGE, key.trim());
-    lsSet(PRO_KEY, JSON.stringify(entitlement));
-    set({ pro: entitlement });
-    return 'Licence accepted. Khazana Pro is unlocked.';
-  },
-
-  /** Removes a licence from this device — for handing a machine on. */
-  removeLicense: () => {
-    lsSet(LICENSE_KEY_STORAGE, '');
-    lsSet(PRO_KEY, '');
-    set({ pro: FREE });
-  },
 
   setCurrency: (code) => {
     if (typeof localStorage !== 'undefined') localStorage.setItem(CURRENCY_KEY, code);

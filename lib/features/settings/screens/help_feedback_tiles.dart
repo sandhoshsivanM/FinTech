@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/branding.dart';
-import '../../../core/entitlement/distribution_channel.dart';
+import '../../../core/distribution_channel.dart';
 import '../../../core/feedback/feedback_mail.dart';
 import '../providers/theme_providers.dart';
 

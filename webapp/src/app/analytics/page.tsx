@@ -17,7 +17,6 @@
  * render `null` — a dash — when their inputs are missing, never a zero that
  * would read as a real, terrible score.
  */
-import { ProGate } from '@/components/ProGate';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { LineChart as LineIcon, AlertTriangle } from 'lucide-react';
@@ -61,7 +60,7 @@ type RangeKey = (typeof RANGES)[number]['key'];
 /** Positions listed in the concentration ranking before it stops being a ranking. */
 const CONCENTRATION_ROWS = 7;
 
-function AnalyticsPageInner() {
+export default function AnalyticsPage() {
   const holdings = useApp((s) => s.holdings);
   const fxRates = useApp((s) => s.fxRates);
   const snapshots = useApp((s) => s.snapshots);
@@ -428,25 +427,5 @@ function AnalyticsPageInner() {
         </StaggerItem>
       </div>
     </Stagger>
-  );
-}
-
-/**
- * The analysis on top of your data — gated.
- *
- * The gate renders the real screen blurred behind the paywall card rather than
- * replacing it: a redirect would lose the user's context and break the back
- * button, and someone who can faintly see their own figures converts where
- * someone shown an empty room does not.
- */
-export default function AnalyticsPage() {
-  return (
-    <ProGate
-      feature="portfolioAnalytics"
-      title={'The analysis on top of your data'}
-      blurb={'XIRR, benchmark comparison and movers. Your holdings and their value stay free — this is what we compute from them.'}
-    >
-      <AnalyticsPageInner />
-    </ProGate>
   );
 }

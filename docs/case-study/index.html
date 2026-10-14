@@ -57,7 +57,7 @@
     <li class="part">Part III — Engineering practice</li>
     <li><span class="n">13</span>Decisions and trade-offs <span class="d">The choices worth defending, and what was rejected</span></li>
     <li><span class="n">14</span>Testing, CI and measured performance <span class="d">1,504 tests, three pipelines, benchmarks that are measured rather than claimed</span></li>
-    <li><span class="n">15</span>From project to product <span class="d">Monetisation without introducing a server</span></li>
+    <li><span class="n">15</span>Free for everyone <span class="d">No Pro tier, no paywall, nothing to unlock</span></li>
     <li><span class="n">16</span>Metrics, limitations and roadmap <span class="d">Including what does not work yet</span></li>
 
     <li class="part" data-audience="private">Appendices — ready to use</li>
@@ -122,7 +122,7 @@
   <h3>What that constraint bought</h3>
   <ul>
     <li><strong>A threat model small enough to reason about.</strong> No JWT, OAuth, RBAC, CORS or CSRF surface exists to get wrong, because no endpoint exists. The entire security question reduces to "is on-device data unreadable without the PIN?"</li>
-    <li><strong>Zero running cost.</strong> The app has no marginal cost per user, which is what makes a one-time price honest instead of a subscription in disguise.</li>
+    <li><strong>Zero running cost.</strong> The app has no marginal cost per user, which is what lets it be free for everyone without ads or a subscription.</li>
     <li><strong>Genuine offline capability.</strong> Not a cached degraded mode — the device holds the truth, so a flight or a dead connection changes nothing.</li>
     <li><strong>Longevity.</strong> If I stop maintaining it tomorrow, every installed copy keeps working. Nothing expires when a server is switched off.</li>
   </ul>
@@ -134,7 +134,7 @@
 <!-- ══════════════════════════ 03 ══════════════════════════ -->
 <section>
   <h2><span class="num">Section 03</span><span class="t">What it does</span></h2>
-  <p class="lead">Twenty-seven screens in the Flutter client and thirty-one routes in the web client, grouped into five areas. Features marked <span class="tag pro">Pro</span> are behind the paid unlock; everything else is free forever.</p>
+  <p class="lead">Twenty-six screens in the Flutter client and thirty routes in the web client, grouped into five areas. Every feature is free for everyone.</p>
 
   <h3>Money — the ledger</h3>
   <table class="compact">
@@ -157,12 +157,12 @@
     <tbody>
       <tr><td class="k">Holdings and lots</td><td>Lot-level positions across fourteen asset types — equity and ETFs, equity and debt mutual funds, gold, bonds, cash, real estate, crypto, fixed deposits, PPF/EPF, NPS, Sukanya Samriddhi, sovereign gold bonds and ULIPs.</td></tr>
       <tr><td class="k">Allocation</td><td>Donut and sunburst breakdowns by asset group, sector, industry, market cap and currency.</td></tr>
-      <tr><td class="k">Sector P&amp;L <span class="tag pro">Pro</span></td><td>Realised and unrealised profit and loss rolled up along any dimension, computed from FIFO lot matching.</td></tr>
-      <tr><td class="k">XIRR <span class="tag pro">Pro</span></td><td>Money-weighted return across the whole portfolio or a single instrument.</td></tr>
-      <tr><td class="k">Analytics <span class="tag pro">Pro</span></td><td>Concentration risk, return distribution histogram and drill-down.</td></tr>
-      <tr><td class="k">Dividends <span class="tag pro">Pro</span></td><td>Dividend, bonus, buyback and interest events, detected from statement narrations and matched only against instruments actually held.</td></tr>
-      <tr><td class="k">Tax centre <span class="tag pro">Pro</span></td><td>Short- and long-term capital-gains estimation under Indian rules, versioned by disposal date, with the ₹1.25 lakh annual exemption pooled and allocated deterministically.</td></tr>
-      <tr><td class="k">Markets, watchlist, news <span class="tag pro">Pro</span></td><td>Opt-in index levels, a market clock, a watchlist and a news view. Market data fetches carry no personal data.</td></tr>
+      <tr><td class="k">Sector P&amp;L</td><td>Realised and unrealised profit and loss rolled up along any dimension, computed from FIFO lot matching.</td></tr>
+      <tr><td class="k">XIRR</td><td>Money-weighted return across the whole portfolio or a single instrument.</td></tr>
+      <tr><td class="k">Analytics</td><td>Concentration risk, return distribution histogram and drill-down.</td></tr>
+      <tr><td class="k">Dividends</td><td>Dividend, bonus, buyback and interest events, detected from statement narrations and matched only against instruments actually held.</td></tr>
+      <tr><td class="k">Tax centre</td><td>Short- and long-term capital-gains estimation under Indian rules, versioned by disposal date, with the ₹1.25 lakh annual exemption pooled and allocated deterministically.</td></tr>
+      <tr><td class="k">Markets, watchlist, news</td><td>Opt-in index levels, a market clock, a watchlist and a news view. Market data fetches carry no personal data.</td></tr>
     </tbody>
   </table>
 
@@ -183,7 +183,7 @@
       <tr><td class="k">Dashboard</td><td>Net worth, key metrics, safe-to-spend, a generated narrative and a net-worth sparkline drawn from real daily snapshots.</td></tr>
       <tr><td class="k">Financial health</td><td>A 0–100 score across four weighted categories — Wealth 30, Protection 25, Efficiency 25, Future 20 — with the methodology shown to the user rather than hidden.</td></tr>
       <tr><td class="k">Reports</td><td>Income and expense columns, category donut, net-worth trend, over selectable windows.</td></tr>
-      <tr><td class="k">Forecast <span class="tag pro">Pro</span></td><td>Cash-flow projection from the median of completed months, net-worth projection, and what-if debt scenarios.</td></tr>
+      <tr><td class="k">Forecast</td><td>Cash-flow projection from the median of completed months, net-worth projection, and what-if debt scenarios.</td></tr>
       <tr><td class="k">Insights</td><td>Spending anomalies against a trailing three-month per-category average, required SIP for a goal, and safe-to-spend as the minimum of two honest ceilings. Pure rules — no LLM, no network.</td></tr>
     </tbody>
   </table>
@@ -195,8 +195,8 @@
       <tr><td class="k">Bank import</td><td>One auto-detecting CSV and XLSX engine rather than a parser per bank — column aliasing plus header scanning covers HDFC, SBI, ICICI, IDFC, Kotak and Qatari banks, handling both separate debit/credit columns and single signed amounts.</td></tr>
       <tr><td class="k">Broker import</td><td>Trade and lot import with charges broken out into brokerage, STT, stamp duty, GST and other, flagging rows for review when a trade date is missing — because that date decides short versus long term.</td></tr>
       <tr><td class="k">Deduplication</td><td>Fingerprinting on date, amount, direction and normalised narration, deduping within the file as well as against the existing vault. Every import is one undoable batch.</td></tr>
-      <tr><td class="k">Auto-capture <span class="tag pro">Pro</span></td><td>Android notification-listener capture of bank alerts. The parser extracts amount, merchant and timestamp, discards the raw message immediately, and queues a draft — nothing auto-commits to the ledger.</td></tr>
-      <tr><td class="k">Reconcile <span class="tag pro">Pro</span></td><td>Statement-balance reconciliation with an explicit uncleared list as the explanation for any difference.</td></tr>
+      <tr><td class="k">Auto-capture</td><td>Android notification-listener capture of bank alerts. The parser extracts amount, merchant and timestamp, discards the raw message immediately, and queues a draft — nothing auto-commits to the ledger.</td></tr>
+      <tr><td class="k">Reconcile</td><td>Statement-balance reconciliation with an explicit uncleared list as the explanation for any difference.</td></tr>
       <tr><td class="k">Diagnostics</td><td>Self-checks for undecryptable records, journal entries whose postings do not sum to zero, postings against deleted accounts, unclean money strings, lot-to-holding mismatches and stale FX rates.</td></tr>
       <tr><td class="k">Reminders</td><td>Local notifications for bills, budgets, renewals, goals and a digest — with quiet hours, cooldowns, and amounts hidden by default.</td></tr>
       <tr><td class="k">Backup and restore</td><td>An encrypted, authenticated, versioned backup file, plus a plain CSV dump and an erase-everything command. All free forever.</td></tr>
@@ -209,18 +209,18 @@
 <!-- ══════════════════════════ 04 ══════════════════════════ -->
 <section>
   <h2><span class="num">Section 04</span><span class="t">Every screen, and why it exists</span></h2>
-  <p class="lead">Fifty-nine routes across two clients. This section lists all of them, then takes twelve apart — because a screen list proves surface area, and only the reasoning proves engineering.</p>
+  <p class="lead">Fifty-seven routes across two clients. This section lists all of them, then takes twelve apart — because a screen list proves surface area, and only the reasoning proves engineering.</p>
 
   <div class="strip">
-    <div class="m"><div class="v">59</div><div class="l">Routes in total</div></div>
-    <div class="m"><div class="v">32</div><div class="l">Next.js</div></div>
-    <div class="m"><div class="v">27</div><div class="l">Flutter</div></div>
-    <div class="m"><div class="v">8</div><div class="l">Behind the paywall</div></div>
+    <div class="m"><div class="v">57</div><div class="l">Routes in total</div></div>
+    <div class="m"><div class="v">31</div><div class="l">Next.js</div></div>
+    <div class="m"><div class="v">26</div><div class="l">Flutter</div></div>
+    <div class="m"><div class="v">0</div><div class="l">Behind a paywall</div></div>
   </div>
 
   <h3>How the navigation is organised</h3>
   <p>The web client groups its routes into five sections — Overview, Invest, Money, Protect and Tools — declared once in <code>navConfig.ts</code> and consumed by the sidebar, the mobile drawer and the command palette alike. The Flutter client carries two shells chosen by width: a five-tab bottom bar with a notched centre action on phones, and a nineteen-destination sidebar on desktop.</p>
-  <p>The two clients are not allowed to drift apart on this. A parity test asserts the web navigation's Pro flags against <code>docs/pro-gates.json</code>, and a second asserts that the web bottom navigation lists the same five destinations as the Flutter tab bar. Navigation is the part of a product users build muscle memory for, and two clients that disagree about where Budget lives are two different products wearing one name.</p>
+  <p>The two clients are not allowed to drift apart on this. A parity test asserts that the web bottom navigation lists the same five destinations as the Flutter tab bar. Navigation is the part of a product users build muscle memory for, and two clients that disagree about where Budget lives are two different products wearing one name.</p>
   <p>One detail in the Flutter router is worth pulling out, because it began as a bug. The app has five tabs and twenty-seven screens, so most locations are not a tab. The shell originally resolved "which tab is selected" with a <code>startsWith</code> scan that fell back to index zero — which meant Budget, Goals, Liabilities and eight other screens all highlighted Dashboard as the current tab. The fix was an explicit map, because the relationship it encodes ("Reports lives under Score") is a product decision and not something a string prefix can be asked to infer.</p>
 
   <h3>The web client — 32 routes</h3>
@@ -230,15 +230,15 @@
       <tr><td class="r">/</td><td class="f">page.tsx</td><td>Client-side replace to <code>/dashboard</code>. Deliberately not a server <code>redirect()</code>, which compiles to a marker that breaks the Tauri window under static export.</td></tr>
       <tr><td class="r">/dashboard</td><td class="f">dashboard/page.tsx</td><td>Net worth, monthly flow, portfolio performance, allocation, movers, health score, insights, upcoming bills.</td></tr>
       <tr><td class="r">/score</td><td class="f">score/page.tsx</td><td>Financial-health gauge, method explainer, four category cards, score history.</td></tr>
-      <tr><td class="r">/reports</td><td class="f">reports/page.tsx</td><td>Income vs expense, balance sheet, category mix, month-by-month savings rate. Formatted export is Pro <span class="tag pro">pro</span>; raw CSV stays free.</td></tr>
-      <tr><td class="r">/forecast</td><td class="f">forecast/page.tsx</td><td>Safe-to-spend with its workings shown, six-month cash flow, five-year net worth, debt what-if. <span class="tag pro">pro</span></td></tr>
-      <tr><td class="r">/analytics</td><td class="f">analytics/page.tsx</td><td>Risk, diversification, return distribution, concentration, sunburst allocation. <span class="tag pro">pro</span></td></tr>
+      <tr><td class="r">/reports</td><td class="f">reports/page.tsx</td><td>Income vs expense, balance sheet, category mix, month-by-month savings rate. Formatted Excel and PDF export alongside the raw CSV.</td></tr>
+      <tr><td class="r">/forecast</td><td class="f">forecast/page.tsx</td><td>Safe-to-spend with its workings shown, six-month cash flow, five-year net worth, debt what-if.</td></tr>
+      <tr><td class="r">/analytics</td><td class="f">analytics/page.tsx</td><td>Risk, diversification, return distribution, concentration, sunburst allocation.</td></tr>
       <tr><td class="r">/investments</td><td class="f">investments/page.tsx</td><td>Portfolio overview: one asset-group filter driving six KPIs, four allocation donuts, gainers and losers.</td></tr>
       <tr><td class="r">/holdings</td><td class="f">holdings/page.tsx</td><td>The full position grid with inline editor and import panel.</td></tr>
-      <tr><td class="r">/watchlist</td><td class="f">watchlist/page.tsx</td><td>Instruments tracked but not owned, with target gaps. <span class="tag pro">pro</span></td></tr>
-      <tr><td class="r">/markets</td><td class="f">markets/page.tsx</td><td>Index levels and session state. Levels are synthesised; the market clock is real. <span class="tag pro">pro</span></td></tr>
-      <tr><td class="r">/dividends</td><td class="f">dividends/page.tsx</td><td>Received vs expected income, yield on actual portfolio value, twelve-month history. <span class="tag pro">pro</span></td></tr>
-      <tr><td class="r">/tax</td><td class="f">tax/page.tsx</td><td>Indian capital-gains estimate under rules versioned by disposal date. <span class="tag pro">pro</span></td></tr>
+      <tr><td class="r">/watchlist</td><td class="f">watchlist/page.tsx</td><td>Instruments tracked but not owned, with target gaps.</td></tr>
+      <tr><td class="r">/markets</td><td class="f">markets/page.tsx</td><td>Index levels and session state. Levels are synthesised; the market clock is real.</td></tr>
+      <tr><td class="r">/dividends</td><td class="f">dividends/page.tsx</td><td>Received vs expected income, yield on actual portfolio value, twelve-month history.</td></tr>
+      <tr><td class="r">/tax</td><td class="f">tax/page.tsx</td><td>Indian capital-gains estimate under rules versioned by disposal date.</td></tr>
       <tr><td class="r">/accounts</td><td class="f">accounts/page.tsx</td><td>Bank and cash accounts with balances derived from postings; archive rather than delete.</td></tr>
       <tr><td class="r">/transactions</td><td class="f">transactions/page.tsx</td><td>One timeline over two entities, with search, four filters and free CSV export of the filtered set.</td></tr>
       <tr><td class="r">/add</td><td class="f">add/page.tsx</td><td>Add or edit expense, income, investment or transfer, with a natural-language quick-add bar.</td></tr>
@@ -250,11 +250,10 @@
       <tr><td class="r">/insurance</td><td class="f">insurance/page.tsx</td><td>Policies with coverage-gap analysis against income-multiple guidelines.</td></tr>
       <tr><td class="r">/safety-net</td><td class="f">safety-net/page.tsx</td><td>One readiness ring over emergency fund, life cover, health cover and safe assets.</td></tr>
       <tr><td class="r">/import</td><td class="f">import/page.tsx</td><td>Assets and transactions, each parse → preview → confirm, with per-run undo.</td></tr>
-      <tr><td class="r">/reconcile</td><td class="f">reconcile/page.tsx</td><td>Tick entries against a statement; suggests entries matching the difference exactly. <span class="tag pro">pro</span></td></tr>
+      <tr><td class="r">/reconcile</td><td class="f">reconcile/page.tsx</td><td>Tick entries against a statement; suggests entries matching the difference exactly.</td></tr>
       <tr><td class="r">/alerts</td><td class="f">alerts/page.tsx</td><td>User rules on price, weight, budget and renewal, sharing one evaluator with the bell.</td></tr>
       <tr><td class="r">/diagnostics</td><td class="f">diagnostics/page.tsx</td><td>Eleven integrity checks over the vault. Read-only by design.</td></tr>
-      <tr><td class="r">/news</td><td class="f">news/page.tsx</td><td>Synthesised headlines filtered to held and watched symbols, badged as such. <span class="tag pro">pro</span></td></tr>
-      <tr><td class="r">/pro</td><td class="f">pro/page.tsx</td><td>Paywall and offline Ed25519 licence activation.</td></tr>
+      <tr><td class="r">/news</td><td class="f">news/page.tsx</td><td>Synthesised headlines filtered to held and watched symbols, badged as such.</td></tr>
       <tr><td class="r">/help</td><td class="f">help/page.tsx</td><td>FAQ, keyboard shortcuts, privacy chips, tour replay.</td></tr>
       <tr><td class="r">/privacy</td><td class="f">privacy/page.tsx</td><td>The store-listing privacy policy, written to be true of the mobile app too.</td></tr>
       <tr><td class="r">/terms</td><td class="f">terms/page.tsx</td><td>Terms, including an explicit not-financial-advice clause.</td></tr>
@@ -293,7 +292,6 @@
       <tr><td class="r">/app/settings/market-data</td><td class="f">MarketDataSettingsScreen</td><td>Fallback price-provider keys, stored in the OS keychain.</td></tr>
       <tr><td class="r">/app/settings/currency</td><td class="f">CurrencySettingsScreen</td><td>Manual exchange rates and their history.</td></tr>
       <tr><td class="r">/app/settings/notifications</td><td class="f">NotificationSettingsScreen</td><td>Per-category toggles and the pending count read back from the OS scheduler.</td></tr>
-      <tr><td class="r">/app/pro</td><td class="f">ProScreen</td><td>Store purchase, licence-key entry and restore.</td></tr>
     </tbody>
   </table>
 
@@ -666,7 +664,6 @@
     <tbody>
       <tr><td class="k">Authentication</td><td>A PIN stretched into the encryption key. There is no account, so there is no session, token, refresh or revocation.</td><td>No recovery. A forgotten PIN is a destroyed vault, stated plainly rather than hedged.</td></tr>
       <tr><td class="k">Multi-device sync</td><td>Deterministic last-write-wins merge over exported backups, with 90-day tombstones so a delete is not undone by a stale copy.</td><td>Not real time. The user carries the file, and the merge must be symmetric — same result whichever side runs it.</td></tr>
-      <tr><td class="k">Licence validation</td><td>Ed25519 signature verified offline. The key encodes a payload and a signature; no server learns who runs the app.</td><td>A leaked key cannot be revoked. Accepted: the alternative is an activation server, which is the thing being refused.</td></tr>
       <tr><td class="k">Schema migration</td><td>Idempotent migrations with deterministic identifiers, running on a database that can never be inspected or rolled back centrally.</td><td>Every migration must be correct the first time, on data nobody has ever seen.</td></tr>
       <tr><td class="k">Crash reporting</td><td>An encrypted local ring buffer, drained into a log database once the vault opens. User-initiated, never transmitted.</td><td>No aggregate view of failures across users. The trade is deliberate: an error message here can quote a merchant and an amount.</td></tr>
       <tr><td class="k">Price data</td><td>One allowlisted host, opt-in, desktop only, routed through Rust because the endpoint sends no permissive headers.</td><td>Mobile and browser users enter prices by hand or import them.</td></tr>
@@ -1144,13 +1141,11 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
   <p>The naive answers both fail. A shared package means one language, which means Flutter-on-web and the compromises that come with it. A code generator means maintaining a code generator. What worked instead was to make disagreement <em>fail a test</em>, using three mechanisms.</p>
 
   <h3>1 · Byte-identical fixtures</h3>
-  <p>The financial-health test cases exist as a single JSON file duplicated byte for byte on both sides and loaded by both suites. Neither implementation can be adjusted to make its own tests pass without the other's tests failing on the same data. The same pattern covers the notification scheduler and the licence-key format.</p>
+  <p>The financial-health test cases exist as a single JSON file duplicated byte for byte on both sides and loaded by both suites. Neither implementation can be adjusted to make its own tests pass without the other's tests failing on the same data. The same pattern covers the notification scheduler.</p>
 
   <h3>2 · Cross-language assertions on shared inputs</h3>
   <p>The Safety Net score is asserted at exactly 100, 25, 50 and 85 for four shared fixtures — in <code>test/unit/safety_net_test.dart</code> and in <code>webapp/src/domain/safetyNet.test.ts</code>. The same is true of the portfolio roll-up reconciliation invariant and the narrative generator's shared banned-phrase list, which enforces "describe, never advise" identically in both languages.</p>
 
-  <h3>3 · A specification file that drives both clients</h3>
-  <p>The free-versus-Pro feature map lives in <code>docs/pro-gates.json</code> and is loaded by the Dart gate tests, the TypeScript gate tests, and a parity test that checks the web navigation's Pro flags against it. The two clients cannot disagree about what money buys, because neither of them is the source of truth — the specification is.</p>
 
   <div class="pull">A five-way version-consistency check runs first in CI, because the version number is a compatibility gate in the backup header — and it had already drifted once, with the app at 1.0.0 while the web and desktop builds said 0.1.0.</div>
 
@@ -1291,37 +1286,16 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
 
 <!-- ══════════════════════════ 15 ══════════════════════════ -->
 <section>
-  <h2><span class="num">Section 15</span><span class="t">From project to product</span></h2>
-  <p class="lead">In August 2026 Khazana stopped being a portfolio project and became something I intend to sell. The interesting constraint was monetising it without breaking the one rule the whole architecture rests on.</p>
+  <h2><span class="num">Section 15</span><span class="t">Free for everyone</span></h2>
+  <p class="lead">Khazana is free for everyone: every feature, on every platform, with no subscription, no paywall, no in-app purchase, no ads and no account.</p>
+  <p>An earlier version sold a one-time Pro unlock, with offline Ed25519 licence keys for the web and desktop builds and store purchases on mobile. In October 2026 that tier was removed from both clients. There is no entitlement code, no licence verification and no billing library left in either app, and both test suites assert that no screen is gated.</p>
 
-  <h3>The commercial shape</h3>
-  <ul class="tight">
-    <li><strong>One brand, both clients.</strong> The Flutter app goes to the App Store, Play Store and Mac App Store. The web and Tauri desktop builds sell directly through a merchant of record, so they own Indian GST and EU VAT obligations rather than me.</li>
-    <li><strong>A one-time unlock, not a subscription.</strong> Khazana Pro at roughly ₹999 or $19.99, as a non-consumable with Family Sharing. A subscription would require a server to check, which is exactly the thing that must not exist.</li>
-    <li><strong>Published as an individual.</strong> The consequence is concrete: Google Play requires a twelve-tester, fourteen-day continuous closed test before production access. That is the critical path to launch, and it is not a code problem.</li>
-  </ul>
-
-  <h3>Licensing with no licence server</h3>
-  <p>Direct-sale licence keys are Ed25519-signed and verified entirely offline. The key is a 76-byte payload encoded to about a hundred characters: a format version, a product byte, an issue date, eight bytes of order-reference hash, and a 64-byte signature over the rest. Keys are minted in batches by a local command-line tool and uploaded as a pre-signed pool to the merchant — so a purchase hands out a key from the pool and no validation endpoint ever exists.</p>
-  <p>Two details in that format are deliberate and worth defending. There is <strong>no expiry field</strong>, because offline verification would have to trust the device clock, and a user who changes their date should not lose the software they bought — this is the strongest structural reason Pro can never become a subscription without a server. And there is <strong>no name, email or device identifier</strong>, only a hash of the order reference, so the paywall can display "Licence …4F2A" for support purposes while holding no personal data at all.</p>
-
-  <h3>Two rules that constrain every gate</h3>
+  <h3>Two rules that outlived the paywall</h3>
   <div class="note">
     <span class="h">Non-negotiable</span>
-    <p><strong>1. Backup export, restore, plain CSV dump and erase-everything are free forever.</strong> Never hold a user's own data hostage to a purchase.<br>
-    <strong>2. The ledger is never capped.</strong> No transaction, account, budget or holding limits in any tier — because a capped ledger reports wrong totals, and every derived figure inherits the lie.</p>
+    <p><strong>1. Backup export, restore, plain CSV dump and erase-everything are always available.</strong> Never hold a user's own data hostage.<br>
+    <strong>2. The ledger is never capped.</strong> No transaction, account, budget or holding limits — because a capped ledger reports wrong totals, and every derived figure inherits the lie.</p>
   </div>
-  <p>These are enforced structurally rather than by discipline. The always-free set is checked <em>before</em> the entitlement is even read: the ordering is the enforcement. Only two counted allowances exist in the free tier — one profile and one committed import, and that import is undoable.</p>
-
-  <h3>Entitlement engineering</h3>
-  <ul class="tight">
-    <li>One interface with three implementations: StoreKit non-consumable, Play Billing one-time purchase, and offline signed keys for web and desktop.</li>
-    <li>Entitlement persists outside the vault, so it survives an erase-all-data and can be read before unlock — a paywall that needs the PIN to know whether to show itself is a paywall that shows itself at the wrong time.</li>
-    <li>Revocation requires two absent store queries at least seven days apart. An interactive "restore purchases" can never revoke. Someone on a plane does not lose the software they paid for.</li>
-    <li>The Pro gate renders the real content blurred and inert behind the upgrade card rather than redirecting, so the user can see what they would get.</li>
-    <li>The licence-key entry UI is removed at <em>compile time</em> from App Store builds rather than hidden behind a runtime condition, because App Store guideline 3.1.1 prohibits pointing at outside purchase mechanisms — and a hidden branch is still shipped code.</li>
-  </ul>
-  <p>One limitation is stated on the paywall before purchase rather than discovered afterwards: an app-store purchase and a direct licence key are separate entitlements. Linking them across ecosystems needs an account server, and there is not going to be one.</p>
 </section>
 
 <!-- ══════════════════════════ 16 ══════════════════════════ -->
@@ -1537,7 +1511,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
 
   <div class="qa">
     <div class="q">You have two implementations of the same logic. How do they not drift?</div>
-    <p>By making drift a test failure. The health-score cases are one JSON file duplicated byte for byte and loaded by both suites, so neither side can be tuned to pass without breaking the other. The Safety Net score is asserted at the same four values in both languages on the same fixtures. And the free-versus-Pro feature map lives in a specification file that both clients' gate tests read, so neither client is the source of truth. There is also a version-consistency check that runs first in CI across five declaration sites, because the version is a compatibility gate in the backup header and it had already drifted once.</p>
+    <p>By making drift a test failure. The health-score cases are one JSON file duplicated byte for byte and loaded by both suites, so neither side can be tuned to pass without breaking the other. The Safety Net score is asserted at the same four values in both languages on the same fixtures. There is also a version-consistency check that runs first in CI across five declaration sites, because the version is a compatibility gate in the backup header and it had already drifted once.</p>
   </div>
 
   <h3>Security</h3>
@@ -1635,7 +1609,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
 
   <div class="qa">
     <div class="q">How do you stop the two clients drifting apart on navigation?</div>
-    <p>Tests. One asserts the web navigation's Pro flags against <code>docs/pro-gates.json</code>, which both clients load, so neither is the source of truth about what money buys — the specification is. A second asserts that the web bottom navigation lists the same five destinations as the Flutter tab bar. Navigation is what users build muscle memory for, and two clients disagreeing about where Budget lives are two products wearing one name.</p>
+    <p>Tests. One asserts that the web bottom navigation lists the same five destinations as the Flutter tab bar. Navigation is what users build muscle memory for, and two clients disagreeing about where Budget lives are two products wearing one name.</p>
   </div>
 
   <div class="qa">
@@ -1709,7 +1683,7 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
 
   <div class="qa">
     <div class="q">How do two separate implementations stay in agreement?</div>
-    <p>Three mechanisms, in increasing order of strength. Byte-identical fixture files loaded by both suites. Cross-language assertions on shared inputs — the same vault produces the same health score in Dart and TypeScript. And a specification file, <code>docs/pro-gates.json</code>, that both clients load at runtime and both test suites assert against, so neither client is the source of truth. Where parity is deliberately not attempted, I say so: the web client does not yet have the lot-level model, and that is in the defect log rather than glossed over.</p>
+    <p>Two mechanisms, in increasing order of strength. Byte-identical fixture files loaded by both suites. And cross-language assertions on shared inputs — the same vault produces the same health score in Dart and TypeScript. Where parity is deliberately not attempted, I say so: the web client does not yet have the lot-level model, and that is in the defect log rather than glossed over.</p>
   </div>
 
   <div class="qa">
@@ -1735,8 +1709,8 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
   </div>
 
   <div class="qa">
-    <div class="q">How do you monetise without a server?</div>
-    <p>A one-time purchase, never a subscription, verified by an Ed25519 signature checked offline. The key carries a payload and a signature; no server ever learns who is running the app. Two rules constrain every gate: the ledger is never limited, and backup, restore, CSV export and erase-all-data are free forever — asserted as an invariant by both test suites, so a future me cannot quietly paywall the exit. A leaked key cannot be revoked, which I accept, because the alternative is an activation server and that is the thing being refused.</p>
+    <div class="q">How do you make money from it?</div>
+    <p>I don't. Khazana is free for everyone — no subscription, no paywall, no in-app purchase and no ads. An earlier version sold a one-time Pro unlock verified offline with Ed25519 signatures; it was removed in October 2026. Two rules survived it: the ledger is never limited, and backup, restore, CSV export and erase-all-data are always available.</p>
   </div>
 
   <div class="qa">

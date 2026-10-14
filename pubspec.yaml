@@ -71,12 +71,6 @@ dependencies:
   # Network (opt-in live market data only — ticker symbols, zero user data)
   http: ^1.2.2
 
-  # Khazana Pro: a single non-consumable / one-time product, `khazana_pro`.
-  # StoreKit on iOS + macOS (one Universal Purchase covers iPhone, iPad and
-  # Mac), Play Billing on Android. Direct builds never touch this — they use
-  # Ed25519 licence keys, selected at compile time by KHAZANA_CHANNEL.
-  in_app_purchase: ^3.2.0
-
   # Opens the privacy policy and terms in the system browser. Not an in-app
   # webview on purpose: a finance app rendering its own legal pages inside a
   # webview is both a bigger attack surface and less trustworthy to the reader,

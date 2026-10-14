@@ -6,7 +6,6 @@
  * imported — so everything on this page is the user's own data. Yield is
  * computed against the actual holding value where the symbol matches.
  */
-import { ProGate } from '@/components/ProGate';
 import { useMemo, useState } from 'react';
 import { Coins, CalendarClock, Percent, Wallet, Plus, Check } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
@@ -28,7 +27,7 @@ import { CardTitle } from '@/components/Hint';
 
 const KIND_LABEL: Record<string, string> = { dividend: 'Dividend', interest: 'Interest', bonus: 'Bonus', buyback: 'Buyback' };
 
-function DividendsPageInner() {
+export default function DividendsPage() {
   const dividends = useApp((s) => s.dividends);
   const holdings = useApp((s) => s.holdings);
   const fxRates = useApp((s) => s.fxRates);
@@ -199,25 +198,5 @@ function DividendsPageInner() {
         </>
       )}
     </Stagger>
-  );
-}
-
-/**
- * Income your holdings paid out — gated.
- *
- * The gate renders the real screen blurred behind the paywall card rather than
- * replacing it: a redirect would lose the user's context and break the back
- * button, and someone who can faintly see their own figures converts where
- * someone shown an empty room does not.
- */
-export default function DividendsPage() {
-  return (
-    <ProGate
-      feature="dividends"
-      title={'Income your holdings paid out'}
-      blurb={'Track dividends against the positions that produced them. Part of Khazana Pro.'}
-    >
-      <DividendsPageInner />
-    </ProGate>
   );
 }

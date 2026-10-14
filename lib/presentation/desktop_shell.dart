@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../core/entitlement/distribution_channel.dart';
 import '../core/theme/semantic_colors.dart';
 
 import '../design_system/components/brand_mark.dart';
@@ -165,13 +164,6 @@ final _sections = <_Section>[
         label: 'Import',
         hint: 'Bring in a statement or broker file',
       ),
-      if (kOffersPro)
-        (
-          route: Routes.pro,
-          icon: Icons.auto_awesome,
-          label: 'Khazana Pro',
-          hint: 'One payment, yours forever',
-        ),
       (
         route: Routes.settings,
         icon: Icons.settings_outlined,

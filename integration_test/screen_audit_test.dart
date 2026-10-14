@@ -8,9 +8,7 @@ import 'package:khazana/core/security/vault_registry.dart';
 import 'package:khazana/features/settings/providers/onboarding_providers.dart';
 import 'package:khazana/features/settings/providers/sample_data_provider.dart';
 import 'package:khazana/features/transactions/providers/transaction_providers.dart';
-import 'package:khazana/core/entitlement/entitlement_providers.dart';
 import 'package:khazana/main.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// Visual audit: visits every phone screen with sample data and prints
 /// `SHOT <name>` when each one has settled, so a host-side watcher can take a
@@ -42,16 +40,13 @@ void main() {
     'bank-import': Routes.bankImport,
     'import-lots': Routes.investmentsImportLots,
     'add-lot': Routes.investmentsAddLot,
-    'pro': Routes.pro,
   };
 
   testWidgets('audit every screen', (tester) async {
-    final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           tourSeenProvider.overrideWith((ref) async => true),
-          sharedPreferencesProvider.overrideWith((ref) => prefs),
           selectedVaultProvider.overrideWith(
             (ref) => const VaultInfo(id: 'audit', name: 'Audit'),
           ),

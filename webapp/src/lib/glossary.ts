@@ -446,7 +446,7 @@ export const SECTION_HELP = {
   // ---- /reports ---------------------------------------------------------------
   "reports.export": {
     title: "Export this period",
-    body: "Downloads a formatted Excel workbook and printable PDF for exactly the period chosen above: transactions, expenses by category, cash flow, balance sheet and holdings. A Pro feature; the CSV export on Transactions stays free.",
+    body: "Downloads a formatted Excel workbook and printable PDF for exactly the period chosen above: transactions, expenses by category, cash flow, balance sheet and holdings. The CSV export on Transactions covers every record.",
   },
   "reports.incomeVsExpenses": {
     title: "Income vs expenses",
@@ -665,24 +665,6 @@ export const SECTION_HELP = {
   "settings.dangerZone": {
     title: "Danger zone",
     body: "Lock the vault to clear decrypted data from memory, or erase it to delete every record permanently. Erasing cannot be undone, so export a backup first.",
-  },
-
-  // ---- /pro -------------------------------------------------------------------
-  "pro.unlocked": {
-    title: "Khazana Pro is unlocked",
-    body: "Pro features are active on this device. The licence is checked here, offline, and only a short order reference is shown. Removing it from this device returns the app to the free tier.",
-  },
-  "pro.pricing": {
-    title: "Price",
-    body: "Khazana Pro is a single one-time payment, not a subscription. Buy it on the website and a licence key is emailed to you; paste it below to unlock Pro.",
-  },
-  "pro.includes": {
-    title: "What Pro includes",
-    body: "Pro adds the Tax Centre, deeper portfolio analysis, statement import, forecast and reconcile, household profiles, and full history and reports. Your ledger, backups and CSV export stay free.",
-  },
-  "pro.licence": {
-    title: "I have a licence key",
-    body: "Paste the key emailed to you after buying. It is checked on this device and never sent anywhere. This licence covers the desktop and web app; App Store purchases are separate.",
   },
 } as const satisfies Record<string, Term>;
 

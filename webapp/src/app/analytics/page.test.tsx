@@ -32,11 +32,6 @@ function seed(holdings: Holding[]) {
     holdings, snapshots: [], fxRates: [], ghost: false, currencyCode: 'INR',
     txns: [], liabilities: [], accounts: [], postings: [], categories: [],
     budgets: [], goals: [], insurances: [], recurring: [], dividends: [],
-    // Analytics is a Pro screen. These tests are about the figures it computes,
-    // not about the paywall — the gate itself is covered by gates.test.ts.
-    // Without this the page renders blurred behind the Pro card and every
-    // query below finds nothing.
-    pro: { isPro: true, source: 'licenseKey' },
   });
 }
 

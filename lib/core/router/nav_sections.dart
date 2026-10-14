@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'app_router.dart';
-import '../entitlement/distribution_channel.dart';
 
 /// The app's information architecture, in one place.
 ///
@@ -24,7 +23,7 @@ import '../entitlement/distribution_channel.dart';
 ///   * [addTransaction] is the centre action in the bar. It is the single most
 ///     frequent thing anyone does in this app, and a primary action belongs in
 ///     the chrome, not in a menu.
-///   * Settings, Pro, Import and the capture inbox are account-level, not
+///   * Settings, Import and the capture inbox are account-level, not
 ///     navigation. They hang off the avatar in the app bar, which is where
 ///     every app of this kind puts them. Mixing them into the main nav is what
 ///     made the old list twenty items long.
@@ -134,8 +133,6 @@ final avatarMenu = <({String route, IconData icon, String label})>[
     label: 'Auto-capture',
   ),
   (route: Routes.bankImport, icon: Icons.upload_outlined, label: 'Import'),
-  if (kOffersPro)
-    (route: Routes.pro, icon: Icons.auto_awesome, label: 'Khazana Pro'),
   (route: Routes.settings, icon: Icons.settings_outlined, label: 'Settings'),
 ];
 

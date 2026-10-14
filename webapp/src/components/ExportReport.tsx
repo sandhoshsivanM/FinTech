@@ -3,12 +3,7 @@
  * The export control on Reports: one period in, a spreadsheet or a printable
  * document out.
  *
- * Gated on `formattedExports`, which is a Pro feature. The raw CSV dump on the
- * Transactions page stays free and untouched — `pro-gates.json` lists
- * `csvDumpAll` under `alwaysFree` on the principle that nothing which gets a
- * user's own data *out* is ever behind a payment. What Pro buys here is the
- * presentation: statements, roll-ups and a formatted workbook, not access to
- * the records themselves.
+ * Available to everyone, alongside the raw CSV dump on the Transactions page.
  */
 import { useState } from 'react';
 import { FileSpreadsheet, Printer } from 'lucide-react';
