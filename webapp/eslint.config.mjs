@@ -15,6 +15,9 @@ const eslintConfig = defineConfig([
     // Rust/Tauri build artifacts — not JS we author.
     "src-tauri/**",
     "**/target/**",
+    // Playwright run output (bundled report JS, traces) — generated.
+    "e2e/.report/**",
+    "e2e/.results/**",
   ]),
 ]);
 

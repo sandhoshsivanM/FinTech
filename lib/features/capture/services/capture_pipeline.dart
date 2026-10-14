@@ -1,7 +1,6 @@
 import 'package:uuid/uuid.dart';
 
 import '../../../domain/entities/pending_capture.dart';
-import '../../../domain/entities/transaction.dart';
 import '../../../domain/repositories/pending_capture_repository.dart';
 import '../../../domain/services/notification_parser.dart';
 import 'capture_channel.dart';
@@ -15,9 +14,9 @@ class CapturePipeline {
     required String vaultId,
     this.parser = const NotificationParser(),
     Uuid uuid = const Uuid(),
-  })  : _repo = repo,
-        _vaultId = vaultId,
-        _uuid = uuid;
+  }) : _repo = repo,
+       _vaultId = vaultId,
+       _uuid = uuid;
 
   final IPendingCaptureRepository _repo;
   final String _vaultId;
@@ -28,7 +27,11 @@ class CapturePipeline {
   /// the message isn't a transaction or is a duplicate. The raw text is dropped
   /// as soon as [NotificationParser.parse] returns.
   Future<PendingCapture?> ingest(CapturedMessage msg) async {
-    final parsed = parser.parse(msg.text, now: msg.postedAt, sender: msg.sender);
+    final parsed = parser.parse(
+      msg.text,
+      now: msg.postedAt,
+      sender: msg.sender,
+    );
     if (parsed == null) return null;
 
     final fingerprint = parsed.fingerprintInput;
@@ -51,20 +54,3 @@ class CapturePipeline {
     return capture;
   }
 }
-
-/// Resolves a [PendingCapture]'s suggested category from learned merchant
-/// aliases (best-effort; null when nothing matches). Pure helper.
-String? suggestCategoryId(
-  PendingCapture capture,
-  Map<String, String> merchantToCategoryId,
-) {
-  final m = capture.merchant?.toLowerCase();
-  if (m == null) return null;
-  for (final entry in merchantToCategoryId.entries) {
-    if (m.contains(entry.key.toLowerCase())) return entry.value;
-  }
-  return null;
-}
-
-/// Whether a draft is income (for UI sign/colour).
-bool isIncomeCapture(PendingCapture c) => c.type == TxnType.income;

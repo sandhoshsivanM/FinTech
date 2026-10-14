@@ -9,16 +9,6 @@ sealed class AppError implements Exception {
   String toString() => '$runtimeType: $message';
 }
 
-/// Database / persistence failures.
-class DatabaseError extends AppError {
-  const DatabaseError(super.message);
-}
-
-/// Wrong PIN, biometric failure, or locked-out vault.
-class AuthError extends AppError {
-  const AuthError(super.message);
-}
-
 /// Backup file is not a valid Khazana backup, or failed validation (PRD §11).
 class BackupError extends AppError {
   const BackupError(super.message);
@@ -27,9 +17,4 @@ class BackupError extends AppError {
 /// File import / parsing failures.
 class ImportError extends AppError {
   const ImportError(super.message);
-}
-
-/// Validation failure surfaced to the UI (e.g. start date after end date).
-class ValidationError extends AppError {
-  const ValidationError(super.message);
 }

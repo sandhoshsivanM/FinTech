@@ -159,22 +159,14 @@ const routesWithOwnPrimaryAction = <String>{
   Routes.insurance,
 };
 
-/// The section that owns a route, or null when nothing does.
-NavSection? sectionFor(String route) {
-  for (final s in navSections) {
-    if (s.routes.contains(route)) return s;
-  }
-  return null;
-}
-
 /// Every route reachable from the bar, a section's sub-nav, or the avatar menu.
 ///
 /// `test/widget/navigation_test.dart` asserts no screen falls outside this —
 /// the guarantee the old structure lacked, which is how Accounts and Analytics
 /// came to exist with no way in.
 List<String> get phoneReachableRoutes => [
-      for (final s in navSections) ...s.routes,
-      for (final m in avatarMenu) m.route,
-      // The centre action in the bar.
-      Routes.addTransaction,
-    ];
+  for (final s in navSections) ...s.routes,
+  for (final m in avatarMenu) m.route,
+  // The centre action in the bar.
+  Routes.addTransaction,
+];

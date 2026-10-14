@@ -128,9 +128,6 @@ export function rulesFor(saleDate: Date): TaxRuleSet {
   return TAX_RULE_SETS.find((s) => t >= s.effectiveFrom) ?? TAX_RULE_SETS[TAX_RULE_SETS.length - 1];
 }
 
-/** The current rules, for UI that names them without pricing a disposal. */
-export const CURRENT_RULES = TAX_RULE_SETS[0];
-
 /** Kept for callers that only need today's table. */
 export const TAX_RULES = FY25_RULES;
 

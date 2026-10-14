@@ -240,7 +240,7 @@ class FinancialHealth {
         ),
         HealthMetric(
           key: 'wealth.concentration',
-          label: 'Diversification',
+          label: 'Asset-group balance',
           weight: 8,
           // Full marks at or below 60% in one group, tapering to zero at 100%.
           value: conc == null ? null : _clamp01((1 - conc) / 0.4),

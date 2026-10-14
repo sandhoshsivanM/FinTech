@@ -38,7 +38,9 @@ class GateDecision {
 
   @override
   bool operator ==(Object other) =>
-      other is GateDecision && other.allowed == allowed && other.reason == reason;
+      other is GateDecision &&
+      other.allowed == allowed &&
+      other.reason == reason;
 
   @override
   int get hashCode => Object.hash(allowed, reason);
@@ -64,10 +66,6 @@ GateDecision gateFor(ProFeature feature, Entitlement entitlement) {
       ? GateDecision._needsPro
       : GateDecision._included;
 }
-
-/// Convenience for the common boolean question.
-bool isAllowed(ProFeature feature, Entitlement entitlement) =>
-    gateFor(feature, entitlement).allowed;
 
 /// Whether a counted import may still be committed.
 ///

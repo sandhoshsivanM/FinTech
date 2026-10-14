@@ -1,4 +1,3 @@
-import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
 
 import '../database/converters.dart';
@@ -192,16 +191,14 @@ class MerchantAliases extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// Shared helper for an empty Decimal-typed expression default if needed.
-Expression<String> decimalLiteral(Decimal d) => Constant(d.toString());
-
 /// Insurance policies (parity with web app — coverage + gap analysis).
 @DataClassName('InsuranceRow')
 class Insurances extends Table {
   TextColumn get id => text()();
   TextColumn get vaultId => text()();
   TextColumn get name => text()();
-  TextColumn get type => text()(); // life | health | term | vehicle | home | other
+  TextColumn get type =>
+      text()(); // life | health | term | vehicle | home | other
   TextColumn get provider => text().nullable()();
   TextColumn get coverAmount => text().map(const DecimalConverter())();
   TextColumn get premium => text().map(const DecimalConverter())();
@@ -245,7 +242,8 @@ class Accounts extends Table {
   TextColumn get id => text()();
   TextColumn get vaultId => text()();
   TextColumn get name => text()();
-  TextColumn get type => text()(); // asset | liability | income | expense | equity
+  TextColumn get type =>
+      text()(); // asset | liability | income | expense | equity
   TextColumn get subtype => text().withDefault(const Constant('cash'))();
   TextColumn get currency => text().withDefault(const Constant('INR'))();
   TextColumn get openingBalance =>
@@ -386,8 +384,7 @@ class Trades extends Table {
 
   /// False until the user has confirmed an imported or backfilled row. Nothing
   /// unreviewed should be presented as an authoritative number.
-  BoolColumn get isReviewed =>
-      boolean().withDefault(const Constant(false))();
+  BoolColumn get isReviewed => boolean().withDefault(const Constant(false))();
 
   IntColumn get createdAt => integer()();
 

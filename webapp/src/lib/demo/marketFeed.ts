@@ -58,12 +58,6 @@ export function demoDayChangePct(symbol: string, now: Date = new Date()): number
   return Number((x * Math.abs(x) * 2.6).toFixed(2));
 }
 
-/** Previous close implied by a current price and the day's change. */
-export function demoPreviousClose(symbol: string, lastPrice: number, now: Date = new Date()): number {
-  const pct = demoDayChangePct(symbol, now);
-  return lastPrice / (1 + pct / 100);
-}
-
 export type RangeKey = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '3Y' | 'ALL';
 
 /** Number of points and the total drift each range covers. */
@@ -77,8 +71,6 @@ const RANGE_SPEC: Record<RangeKey, { points: number; days: number; vol: number }
   '3Y': { points: 160, days: 1095, vol: 0.42 },
   ALL: { points: 180, days: 1825, vol: 0.48 },
 };
-
-export const RANGE_KEYS: RangeKey[] = ['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', 'ALL'];
 
 /** Human labels for a range's x-axis. */
 export function rangeLabels(range: RangeKey, now: Date = new Date()): string[] {

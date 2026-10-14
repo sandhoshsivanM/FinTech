@@ -55,7 +55,7 @@ shows the light or dark set to match your own GitHub theme.
     <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/safety-net-dark.jpg"><img src="docs/showcase/safety-net-light.jpg" alt="Safety net"></picture><br><sub><b>Safety net</b> — Emergency fund, insurance and safe assets</sub></td>
   </tr>
   <tr>
-    <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/analytics-dark.jpg"><img src="docs/showcase/analytics-light.jpg" alt="Analytics"></picture><br><sub><b>Analytics</b> — Diversification, concentration, return quality</sub></td>
+    <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/analytics-dark.jpg"><img src="docs/showcase/analytics-light.jpg" alt="Analytics"></picture><br><sub><b>Analytics</b> — Asset spread, concentration, return quality</sub></td>
     <td width="50%" valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/showcase/forecast-dark.jpg"><img src="docs/showcase/forecast-light.jpg" alt="Forecast"></picture><br><sub><b>Forecast</b> — Safe-to-spend and cash-flow projections</sub></td>
   </tr>
 </table>
@@ -84,7 +84,7 @@ by [`marketing/`](marketing/README.md).
 | `webapp/` | Next.js web app — `src/domain/` (TS port), `src/lib/` (crypto, store, Dexie), `src/app/` (routes), `src/components/` |
 | `test/` | Flutter unit / integration / golden / benchmark tests |
 | `docs/` | Architecture and threat-model docs |
-| `.github/workflows/` | CI (lint + tests + build, both stacks) |
+| `.github/workflows/` | CI — tests and static build for both stacks, visual regression screenshots, icon checks, advisory lint |
 
 ## Run it
 

@@ -13,12 +13,6 @@ import type { FxRate } from '@/lib/types';
 export interface Currency { code: string; symbol: string; name: string; rateToInr: number }
 
 /**
- * When these seeds were last touched. Shown to the user, because a rate without
- * a date is a claim with no evidence behind it.
- */
-export const SEED_AS_OF = Date.UTC(2026, 7, 1);
-
-/**
  * Seed rates. Superseded per-currency the moment the user records one.
  *
  * USD sat at 83.30 for a long time — roughly the 2024 level. A real $102

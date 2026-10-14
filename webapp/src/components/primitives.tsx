@@ -17,7 +17,6 @@
  * genuinely need attention impossible to spot.
  */
 import type { ReactNode } from 'react';
-import type Decimal from 'decimal.js';
 import { Hint, SectionInfo } from './Hint';
 import type { SectionKey, TermKey } from '@/lib/glossary';
 import clsx from 'clsx';
@@ -277,38 +276,6 @@ export function LedgerLine({
         {value}
       </MoneyValue>
     </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Status                                                                     */
-/* -------------------------------------------------------------------------- */
-
-export type StatusTone = 'neutral' | 'positive' | 'negative' | 'warning' | 'info';
-
-const STATUS: Record<StatusTone, { fg: string; bg: string }> = {
-  neutral: { fg: 'var(--ink-soft)', bg: 'var(--card-2)' },
-  positive: { fg: 'var(--income)', bg: 'var(--success-soft)' },
-  negative: { fg: 'var(--expense)', bg: 'var(--danger-soft)' },
-  warning: { fg: 'var(--warn)', bg: 'var(--warning-soft)' },
-  info: { fg: 'var(--info)', bg: 'var(--violet-soft)' },
-};
-
-/**
- * A state word — Triggered, Paused, Over budget.
- *
- * Small, quiet, and a pill only because a single state word genuinely is a
- * token. It is not a container: nothing that is a sentence goes in here.
- */
-export function StatusBadge({ tone = 'neutral', children }: { tone?: StatusTone; children: ReactNode }) {
-  const c = STATUS[tone];
-  return (
-    <span
-      className="inline-flex items-center whitespace-nowrap rounded-[var(--radius-pill)] px-2.5 py-[3px] text-[11.5px] font-medium"
-      style={{ color: c.fg, background: c.bg }}
-    >
-      {children}
-    </span>
   );
 }
 

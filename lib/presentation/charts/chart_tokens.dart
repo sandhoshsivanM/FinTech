@@ -26,14 +26,6 @@ abstract final class ChartTokens {
   static const double endMarkerRadius = 4;
   static const double endMarkerRingWidth = 2;
 
-  /// Bars never get thicker than this — past it they stop reading as a bar
-  /// chart and start reading as a stacked block.
-  static const double maxBarThickness = 24;
-
-  /// Bars round at the data end only; the baseline end stays square so the
-  /// zero line reads as a hard edge.
-  static const Radius barDataEndRadius = Radius.circular(4);
-
   /// Gap between touching marks (donut slices, sunburst arcs, adjacent bars).
   /// Painted as a *gap* — a surface-coloured stroke would show as a seam over
   /// the app's gradient backdrop, whose colour varies with position.
@@ -77,6 +69,6 @@ abstract final class ChartTokens {
   /// deterministic without every test having to pump for the full duration.
   static Duration entranceFor(BuildContext context) =>
       MediaQuery.maybeOf(context)?.disableAnimations ?? false
-          ? Duration.zero
-          : entrance;
+      ? Duration.zero
+      : entrance;
 }
