@@ -137,6 +137,7 @@ flutter:
   assets:
     - assets/fonts/AnekLatin-OFL.txt
     - assets/brand/khazana-mark.png
+    - assets/brand/khazana-mark-dark.png
     - assets/tax_rules.json
     - assets/instrument_master.json
     - assets/fund_portfolios.json

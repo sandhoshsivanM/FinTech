@@ -31,7 +31,13 @@
 
   --ink: #111214;
   --ink-soft: #5C5C61;
-  --muted: #8E8E93;
+  /* Small labels. #6E6E73 clears 4.5:1 on the card (#F8F8F8, 4.78) and the
+     page (#F2F2F2, 4.53); the old #8E8E93 managed 3.1 / 2.9. Asserted by
+     domain/palette.test.ts. */
+  --muted: #6E6E73;
+  /* The lighter grey, for large or decorative text only (paise beside a big
+     figure) — never for small labels; it is ~3:1. */
+  --muted-soft: #8E8E93;
   --disabled: #B5B5BB;
 
   /* --- Ink = INTERACTION ------------------------------------------------- */
@@ -94,7 +100,7 @@
   /* --- Home ---------------------------------------------------------------- */
   --home-header: #F2F2F2;
   --home-header-ink: #111214;
-  --home-header-muted: #8E8E93;
+  --home-header-muted: #6E6E73;
   --home-header-fill: rgba(17, 18, 20, 0.05);
   --home-header-line: rgba(17, 18, 20, 0.08);
   --home-sheet: #F2F2F2;
@@ -142,7 +148,10 @@
 
   --ink: #F5F5F7;
   --ink-soft: #A1A1A8;
+  /* #8E8E93 already clears 4.5:1 on graphite (5.2 on #1C1C20, 5.9 on
+     #0E0E10); the soft step is dimmer for decorative use only. */
   --muted: #8E8E93;
+  --muted-soft: #6E6E76;
   --disabled: #48484E;
 
   --accent: #F5F5F7;
@@ -309,6 +318,7 @@
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
   --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
 
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
@@ -528,7 +538,7 @@ body {
 }
 /* Large figures: light, not bold. Paise smaller and muted. */
 .figure { font-weight: 300; letter-spacing: -0.03em; line-height: 1.05; }
-.paise { font-size: 0.5em; color: var(--muted); font-weight: 400; letter-spacing: 0; }
+.paise { font-size: 0.5em; color: var(--muted-soft); font-weight: 400; letter-spacing: 0; }
 }
 
 /* Diagonal-stripe fill for data: texture instead of more colour. Set
@@ -674,4 +684,19 @@ body {
     scroll-behavior: auto !important;
   }
   .lift:hover { transform: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Brand mark: light/dark variant switch (see components/BrandMark.tsx).
+   Hide-only rules, so whatever display the caller's className gives the
+   visible one is left alone. The no-data-theme branch covers the instant
+   before the inline script runs, and any page rendered without it.
+   ------------------------------------------------------------------------ */
+:root[data-theme="light"] .brandmark-dark,
+:root[data-theme="dark"] .brandmark-light { display: none !important; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .brandmark-light { display: none !important; }
+}
+@media not (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .brandmark-dark { display: none !important; }
 }

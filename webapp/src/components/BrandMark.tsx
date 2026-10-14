@@ -17,6 +17,15 @@ import Image from 'next/image';
  * Because it is raster, it is used at 24px and above. Below that the 3D bevel
  * and the keyhole stop resolving, so the favicon set is pre-composited on the
  * Vault plate at each exact size rather than scaled in the browser.
+ *
+ * Dark theme: the deep-green master (#0F4535→#05271F) all but vanishes on the
+ * #0E0E10 graphite page, so a lifted variant (`khazana-mark-dark.png`, rendered
+ * from `assets/brand/khazana-mark-dark.svg`; gold untouched) is shown there.
+ * Both <img>s are always rendered and CSS picks one (`.brandmark-light` /
+ * `.brandmark-dark` in globals.css, keyed on [data-theme] with a
+ * prefers-color-scheme fallback when no theme is set). Choosing in JS would
+ * render the light mark on the server and swap after hydration — a mismatch
+ * and a visible flash. Unless `priority` is set, the hidden one is lazy and never fetched.
  */
 export function BrandMark({
   size = 34,
@@ -28,16 +37,21 @@ export function BrandMark({
   /** Set on the vault gate, where the mark is the largest thing on screen. */
   priority?: boolean;
 }) {
+  const common = {
+    alt: 'Khazana',
+    width: size,
+    height: size,
+    // `priority` is deprecated in Next 16; eager + high fetch priority is the
+    // documented replacement for an above-the-fold image.
+    ...(priority ? { loading: 'eager' as const, fetchPriority: 'high' as const } : {}),
+    style: { width: size, height: size, objectFit: 'contain' as const },
+  };
+  const cls = (variant: string) => (className ? `${variant} ${className}` : variant);
   return (
-    <Image
-      src="/khazana-mark.png"
-      alt="Khazana"
-      width={size}
-      height={size}
-      priority={priority}
-      className={className}
-      style={{ width: size, height: size, objectFit: 'contain' }}
-    />
+    <>
+      <Image src="/khazana-mark.png" className={cls('brandmark-light')} {...common} />
+      <Image src="/khazana-mark-dark.png" className={cls('brandmark-dark')} {...common} alt="" aria-hidden />
+    </>
   );
 }
 

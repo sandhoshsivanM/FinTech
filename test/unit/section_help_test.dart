@@ -13,7 +13,7 @@ void main() {
 
   test('carries the full web section set and glossary', () {
     expect(kWebSectionHelp.length, 106);
-    expect(kGlossary.length, 36);
+    expect(kGlossary.length, 37);
   });
 
   test('section, Flutter-only and glossary keys never collide', () {
