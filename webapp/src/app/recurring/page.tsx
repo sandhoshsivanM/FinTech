@@ -1,7 +1,7 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import {
-  Trash2, RefreshCw, Plus, ChevronDown, ChevronUp,
+  Trash2, RefreshCw, Plus, ChevronDown, ChevronUp, Pencil,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -70,8 +70,13 @@ export default function RecurringPage() {
   const [formMerchant, setFormMerchant] = useState('');
   const [formAccountId, setFormAccountId] = useState('');
   const [formFrequency, setFormFrequency] = useState<Frequency>('monthly');
-  const [formFirstRun, setFormFirstRun] = useState(() => new Date().toISOString().slice(0, 10));
+  const [formFirstRun, setFormFirstRun] = useState(() => toInputValue(Date.now()));
   const [saving, setSaving] = useState(false);
+  // Set while the form is editing an existing rule rather than adding one.
+  // A bill's price changes (a cheaper plan, a fare hike) without the bill
+  // stopping, so the rule is corrected in place and keeps its schedule.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const pickable = useMemo(() => moneyAccounts(accounts), [accounts]);
 
@@ -153,30 +158,57 @@ export default function RecurringPage() {
     }
   }
 
+  function resetForm() {
+    setFormAmount('');
+    setFormType('expense');
+    setFormCategoryId('');
+    setFormMerchant('');
+    setFormAccountId('');
+    setFormFrequency('monthly');
+    setFormFirstRun(toInputValue(Date.now()));
+    setEditingId(null);
+    setShowForm(false);
+  }
+
+  function startEdit(rule: RecurringRule) {
+    setPosting(null);
+    setEditingId(rule.id);
+    setFormAmount(rule.amount);
+    setFormType(rule.type);
+    setFormCategoryId(rule.categoryId);
+    setFormMerchant(rule.merchant ?? '');
+    setFormAccountId(rule.accountId ?? '');
+    setFormFrequency(rule.frequency);
+    setFormFirstRun(toInputValue(rule.nextRun));
+    setShowForm(true);
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
+
   async function handleSave() {
     if (!formValid) return;
+    const existing = editingId ? recurring.find((r) => r.id === editingId) : undefined;
     setSaving(true);
     try {
       await put(STORE.recurring, {
-        id: uid(),
+        // Editing keeps the id, so this replaces the rule. Only future
+        // postings read the new figures; past transactions are their own
+        // records and stay as they were.
+        id: existing?.id ?? uid(),
         vaultId,
         amount: String(D(formAmount.replace(/,/g, '')).toFixed(2)),
         type: formType,
         categoryId: formCategoryId,
         merchant: formMerchant.trim() || null,
         frequency: formFrequency,
-        nextRun: new Date(formFirstRun).getTime(),
+        // An untouched date keeps the schedule exactly as it was; a half-typed
+        // one falls back to it (or to today for a new rule) rather than
+        // dating the rule to the epoch.
+        nextRun: existing && formFirstRun === toInputValue(existing.nextRun)
+          ? existing.nextRun
+          : fromInputValue(formFirstRun) ?? existing?.nextRun ?? Date.now(),
         accountId: formAccountId || null,
       });
-      // Reset form
-      setFormAmount('');
-      setFormType('expense');
-      setFormCategoryId('');
-      setFormMerchant('');
-      setFormAccountId('');
-      setFormFrequency('monthly');
-      setFormFirstRun(new Date().toISOString().slice(0, 10));
-      setShowForm(false);
+      resetForm();
     } finally {
       setSaving(false);
     }
@@ -185,6 +217,7 @@ export default function RecurringPage() {
   async function handleDelete(id: string) {
     if (!(await confirm({ title: 'Delete this recurring rule?', confirmLabel: 'Delete', danger: true }))) return;
     await del(STORE.recurring, id);
+    if (editingId === id) resetForm();
   }
 
   const mask = (s: string) => (ghost ? '••••••' : s);
@@ -303,14 +336,15 @@ export default function RecurringPage() {
       )}
 
       {/* Add recurring toggle */}
+      <div ref={formRef} className="scroll-mt-4">
       <GlassCard>
         <button
           type="button"
           className="w-full flex items-center justify-between text-sm font-semibold text-accent"
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => (showForm ? resetForm() : setShowForm(true))}
         >
           <span className="flex items-center gap-2">
-            <Plus size={16} /> Add recurring rule
+            {editingId ? <><Pencil size={16} /> Edit recurring rule</> : <><Plus size={16} /> Add recurring rule</>}
           </span>
           {showForm ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
@@ -351,6 +385,7 @@ export default function RecurringPage() {
               {pickable.length > 0 && (
                 <Field label="Account" hint="Which account these land in">
                   <Select value={formAccountId} onChange={(e) => setFormAccountId(e.target.value)}>
+                    <option value="">Cash (default)</option>
                     {pickable.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                   </Select>
                 </Field>
@@ -365,20 +400,27 @@ export default function RecurringPage() {
                   ))}
                 </Select>
               </Field>
-              <Field label="First run date">
+              <Field label={editingId ? 'Next run date' : 'First run date'}>
                 <DateInput value={formFirstRun} onChange={setFormFirstRun} />
               </Field>
             </div>
 
+            {editingId && (
+              <p className="text-[12.5px] leading-snug text-[var(--ink-soft)]">
+                Changes apply to future postings. Transactions already posted keep their amounts.
+              </p>
+            )}
+
             <div className="flex justify-end gap-2 pt-1">
-              <Button variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button variant="ghost" onClick={resetForm}>Cancel</Button>
               <Button variant="primary" onClick={handleSave} disabled={!formValid || saving}>
-                {saving ? 'Saving…' : 'Save Rule'}
+                {saving ? 'Saving…' : editingId ? 'Update rule' : 'Save Rule'}
               </Button>
             </div>
           </div>
         )}
       </GlassCard>
+      </div>
 
       {/* Rules list — 2-column grid on lg */}
       {sorted.length === 0 ? (
@@ -409,7 +451,7 @@ export default function RecurringPage() {
                 <CategoryIcon name={cat?.icon} size={40} />
 
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-[14px] truncate">
+                  <div className="font-medium text-[14px] truncate cursor-pointer" onClick={() => startEdit(rule)}>
                     {rule.merchant || cat?.name || 'Other'}
                   </div>
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -457,6 +499,15 @@ export default function RecurringPage() {
                   )}
                 >
                   Post now
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => startEdit(rule)}
+                  className="max-sm:[@media(hover:hover)]:hidden opacity-0 group-hover:opacity-100 focus:opacity-100 focus-ring grid place-items-center w-8 h-8 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] text-muted hover:text-accent transition shrink-0"
+                  aria-label="Edit recurring rule"
+                >
+                  <Pencil size={15} />
                 </button>
 
                 <button
