@@ -6,7 +6,7 @@ import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { useNow } from '@/lib/useNow';
 import { ZERO } from '@/lib/money';
-import { currentMonth } from '@/domain/period';
+import { currentMonth, monthName, type DateRange } from '@/domain/period';
 import { budgetRollover, evaluateBudget, spentForCategory } from '@/domain/finance';
 import { GlassCard } from '../ui';
 import { CardTitle } from '../Hint';
@@ -17,7 +17,7 @@ import { CategoryIcon } from '../CategoryIcon';
  * This month's budgets at a glance: one ring for the total, then the three
  * categories closest to their limit.
  */
-export function BudgetRingCard() {
+export function BudgetRingCard({ month: picked }: { month?: DateRange }) {
   const budgets = useApp((s) => s.budgets);
   const txns = useApp((s) => s.txns);
   const categories = useApp((s) => s.categories);
@@ -26,13 +26,13 @@ export function BudgetRingCard() {
   const now = useNow(60_000);
 
   const data = useMemo(() => {
-    const month = currentMonth(now || undefined);
+    const month = picked ?? currentMonth(now || undefined);
     const rows = budgets.map((b) => evaluateBudget(b, spentForCategory(txns, b.categoryId, month), budgetRollover(b, txns, month)));
     const spent = rows.reduce((s, r) => s.plus(r.spent), ZERO);
     const limit = rows.reduce((s, r) => s.plus(r.limit), ZERO);
     const top = [...rows].sort((a, b) => b.ratio - a.ratio).slice(0, 3);
     return { spent, limit, top, pct: limit.isZero() ? 0 : spent.div(limit).toNumber() * 100 };
-  }, [budgets, txns, now]);
+  }, [budgets, txns, now, picked]);
 
   if (budgets.length === 0) {
     return (
@@ -50,13 +50,15 @@ export function BudgetRingCard() {
     );
   }
 
+  // Looking back at another month: say which one, rather than "this month".
+  const isPast = !!picked && !!now && (now < picked.start || now > picked.end);
   const cat = (id: string) => categories.find((c) => c.id === id);
   const mask = (v: string) => (ghost ? '••••' : v);
 
   return (
     <GlassCard>
       <div className="flex items-baseline justify-between mb-3">
-        <CardTitle info="dashboard.budgetThisMonth" className="text-[17px] font-medium tracking-[-0.01em]">Budget this month</CardTitle>
+        <CardTitle info="dashboard.budgetThisMonth" className="text-[17px] font-medium tracking-[-0.01em]">{isPast ? `Budget · ${monthName(picked!.start)}` : 'Budget this month'}</CardTitle>
         <Link href="/budget" className="text-[12.5px] font-semibold text-ink-soft">Details</Link>
       </div>
       <div className="flex items-baseline gap-2">

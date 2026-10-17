@@ -17,7 +17,7 @@ import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import { GripVertical, EyeOff } from 'lucide-react';
 import {
-  allowedSizes, moveWidget, nudgeWidget, packSpans, setWidgetHidden, setWidgetSize, widgetTitle, SIZE_COLS, SIZE_LABEL, SIZE_NAME, TABLET_COLS,
+  allowedSizes, isLiveWidget, moveWidget, nudgeWidget, packSpans, setWidgetHidden, setWidgetSize, widgetTitle, SIZE_COLS, SIZE_LABEL, SIZE_NAME, TABLET_COLS,
   type Layout,
 } from '@/domain/dashboardLayout';
 
@@ -26,8 +26,10 @@ import {
 const SWAP_COOLDOWN_MS = 160;
 const EDGE_SCROLL_PX = 90;
 
-export function WidgetGrid({ layout, widgets, editing, onChange }: {
+export function WidgetGrid({ layout, widgets, editing, onChange, tagLive = false }: {
   layout: Layout;
+  /** Tag the cards that show today's figures, for when a past month is picked. */
+  tagLive?: boolean;
   /** Node per widget id; null or missing means "nothing to show" and the slot is skipped. */
   widgets: Record<string, ReactNode>;
   editing: boolean;
@@ -126,6 +128,14 @@ export function WidgetGrid({ layout, widgets, editing, onChange }: {
                   <EyeOff size={15} />
                 </button>
               </div>
+            )}
+            {tagLive && !editing && isLiveWidget(w.id) && (
+              <span
+                className="absolute -top-2.5 right-5 z-10 px-2 py-[2px] rounded-full bg-card-2 shadow-[var(--shadow-float)] text-[10.5px] font-semibold text-ink-soft pointer-events-none"
+                title="Shows today's figures, whatever month is picked"
+              >
+                Today
+              </span>
             )}
             {/* A size container, so a card lays itself out by its own width
                 rather than the window's. While editing, it is a picture of

@@ -32,7 +32,7 @@ import {
   portfolioSummary, allocationByGroup, rollup, ASSET_GROUP_META, UNCLASSIFIED_KEY,
 } from '@/domain/portfolio';
 import { netWorthTotal, netWorthSeries, windowSummary } from '@/domain/finance';
-import { currentMonth, custom, trailingDays, type DateRange } from '@/domain/period';
+import { currentMonth, custom, monthName, trailingDays, type DateRange } from '@/domain/period';
 import { MonthNav } from '@/components/MonthNav';
 import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
 import { dayChange, priceAsOfLabel } from '@/domain/dayChange';
@@ -289,11 +289,11 @@ export default function DashboardPage() {
       </div>
     ),
     wallet: <WalletStack />,
-    insight: <InsightCard />,
+    insight: <InsightCard month={month} />,
     week: <WeekFlowCard />,
-    budgetMonth: <BudgetRingCard />,
+    budgetMonth: <BudgetRingCard month={month} />,
     latest: <LatestTransactions />,
-    monthTiles: <MonthTiles />,
+    monthTiles: <MonthTiles month={month} />,
     // The board waits for the clock: "this week" and "today" mean nothing at 0.
     ...(now > 0 ? board : {}),
     netWorth: (
@@ -707,6 +707,26 @@ export default function DashboardPage() {
         />
       </StaggerItem>
 
+      {/* Looking back: say so, and say which cards cannot look back with it. */}
+      {pinnedMonth != null && !editing && !isEmptyVault && (
+        <StaggerItem>
+          <div className="card px-5 py-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <p className="m-0 mr-auto text-[13px] text-ink-soft">
+              Viewing <span className="font-semibold text-ink">{monthName(month.start)}</span>. Cards tagged
+              <span className="mx-1 px-2 py-[1px] rounded-full bg-card-2 shadow-[var(--shadow-float)] text-[10.5px] font-semibold">Today</span>
+              show current figures: balances and holdings have no history to look back on.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPinnedMonth(null)}
+              className="focus-ring btn-soft inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12.5px] font-semibold"
+            >
+              Back to this month
+            </button>
+          </div>
+        </StaggerItem>
+      )}
+
       {editing && (
         <StaggerItem>
           <div className="card px-5 py-4 flex flex-wrap items-center gap-3">
@@ -742,7 +762,7 @@ export default function DashboardPage() {
       <StaggerItem>
         {isEmptyVault
           ? <DashboardStarter />
-          : <WidgetGrid layout={layout} widgets={widgets} editing={editing} onChange={setLayout} />}
+          : <WidgetGrid layout={layout} widgets={widgets} editing={editing} onChange={setLayout} tagLive={pinnedMonth != null} />}
       </StaggerItem>
     </Stagger>
   );
