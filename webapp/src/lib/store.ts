@@ -455,6 +455,8 @@ interface AppState extends Data {
   setActiveProfile: (id: string) => Promise<void>;
   addProfile: (name: string, kind: ProfileKind) => Promise<void>;
   renameProfile: (id: string, name: string) => Promise<void>;
+  /** Sets or clears (null) a profile's photo. */
+  setProfilePhoto: (id: string, photo: string | null) => Promise<void>;
   deleteProfile: (id: string) => Promise<void>;
   captureSnapshot: () => Promise<void>;
   reload: () => Promise<void>;
@@ -865,6 +867,15 @@ export const useApp = create<AppState>((set, get) => ({
     const p = profiles.find((x) => x.id === id);
     if (!p) return;
     await putRecord(key, STORE.profile, vaultId, id, { ...p, name: name.trim() || p.name });
+    await get().reload();
+  },
+
+  setProfilePhoto: async (id, photo) => {
+    const { key, vaultId, profiles } = get();
+    if (!key) return;
+    const p = profiles.find((x) => x.id === id);
+    if (!p) return;
+    await putRecord(key, STORE.profile, vaultId, id, { ...p, photo });
     await get().reload();
   },
 

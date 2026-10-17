@@ -33,7 +33,8 @@ function seed() {
 
 /** Drives the hidden restore file input. */
 async function choose(user: ReturnType<typeof userEvent.setup>, body: string) {
-  const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+  // The backup input, not the profile-photo one (which only takes images).
+  const input = document.querySelector('input[type="file"]:not([accept^="image"])') as HTMLInputElement;
   await user.upload(input, new File([body], 'khazana-backup.ftos'));
 }
 
