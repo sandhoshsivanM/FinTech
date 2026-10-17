@@ -106,14 +106,18 @@ const Empty = ({ children }: { children: ReactNode }) => (
   <p className="flex-1 grid place-items-center py-8 text-center text-[13px] text-muted">{children}</p>
 );
 
-export function ChartBoard({ month, now, netWorth, investments, liabilities }: {
+/**
+ * The board's cards, one node per widget id (see domain/dashboardLayout), so
+ * the dashboard can place, size and hide each one independently.
+ */
+export function useChartBoardWidgets({ month, now, netWorth, investments, liabilities }: {
   month: DateRange;
   now: number;
   /** Today's headline figures from the dashboard, so the tiles end on the same numbers. */
   netWorth: Decimal;
   investments: Decimal;
   liabilities: Decimal;
-}) {
+}): Record<string, ReactNode> {
   const txns = useApp((s) => s.txns);
   const categories = useApp((s) => s.categories);
   const goals = useApp((s) => s.goals);
@@ -188,10 +192,9 @@ export function ChartBoard({ month, now, netWorth, investments, liabilities }: {
   const todayLabel = `${new Date(now).getDate()} ${SHORT_MONTHS[new Date(now).getMonth()]}`;
   const pnlCount = `${holdings.length} position${holdings.length === 1 ? '' : 's'}`;
 
-  return (
-    <div className="grid gap-4 grid-cols-1 min-[768px]:grid-cols-2 min-[1200px]:grid-cols-12">
-      {/* ---- Row 1: income, goals, the week ---- */}
-      <BoardCard title="Income" sub={`By source · ${month.label}`} href="/transactions" className="min-[1200px]:col-span-4">
+  return {
+      income: (
+      <BoardCard title="Income" sub={`By source · ${month.label}`} href="/transactions">
         {data.sources.length === 0 ? <Empty>No income recorded in {month.label}.</Empty> : (
           <>
             <Headline value={money(data.incomeNow)}>
@@ -204,8 +207,10 @@ export function ChartBoard({ month, now, netWorth, investments, liabilities }: {
           </>
         )}
       </BoardCard>
+    ),
 
-      <BoardCard title="Saved toward goals" sub={`${goals.length} goal${goals.length === 1 ? '' : 's'}`} href="/goals" className="min-[1200px]:col-span-4">
+      goalsSaved: (
+      <BoardCard title="Saved toward goals" sub={`${goals.length} goal${goals.length === 1 ? '' : 's'}`} href="/goals">
         {data.goalRows.length === 0 ? <Empty>Add a goal to watch it fill up.</Empty> : (
           <>
             <Headline value={money(data.goalRows.reduce((s, g) => s.plus(g.saved), ZERO))}>
@@ -218,8 +223,10 @@ export function ChartBoard({ month, now, netWorth, investments, liabilities }: {
           </>
         )}
       </BoardCard>
+    ),
 
-      <BoardCard title="Spent this week" sub="Last 7 days" href="/transactions" className="min-[768px]:col-span-2 min-[1200px]:col-span-4">
+      spentWeek: (
+      <BoardCard title="Spent this week" sub="Last 7 days" href="/transactions">
         <Headline value={money(data.weekTotal)}>
           <Change now={data.weekTotal} before={data.lastWeekTotal} goodWhenUp={false} label="vs last week" />
         </Headline>
@@ -231,9 +238,9 @@ export function ChartBoard({ month, now, netWorth, investments, liabilities }: {
           format={money}
         />
       </BoardCard>
-
-      {/* ---- Row 2: twelve months in and out, six months of income split ---- */}
-      <BoardCard title="Money in and out" sub="12 months · out is spending plus investing" className="min-[1200px]:col-span-4">
+    ),
+      inOut: (
+      <BoardCard title="Money in and out" sub="12 months · out is spending plus investing">
         <MirrorBars
           height={230}
           rows={data.flow12.map((m) => ({ label: m.label, up: m.income.toNumber(), down: m.expense.plus(m.invested).toNumber() }))}
@@ -251,8 +258,10 @@ export function ChartBoard({ month, now, netWorth, investments, liabilities }: {
           );
         })()}
       </BoardCard>
+    ),
 
-      <BoardCard title="Cash flow" sub="Each month's income, split into spent and saved" href="/reports" className="min-[1200px]:col-span-8">
+      cashFlow: (
+      <BoardCard title="Cash flow" sub="Each month's income, split into spent and saved" href="/reports">
         <Headline value={money(data.flow6.reduce((s, m) => s.plus(m.income.minus(m.expense)), ZERO))}>
           <span className="text-[12.5px] text-muted">saved over six months</span>
         </Headline>
@@ -274,30 +283,31 @@ export function ChartBoard({ month, now, netWorth, investments, liabilities }: {
           formatTick={(n) => (n === 0 ? `${fmt.symbol}0` : compact(n))}
         />
       </BoardCard>
-
-      {/* ---- Row 3: the three balances, each with its trend ---- */}
-      <TrendTile
-        className="min-[1200px]:col-span-4" title="Net worth" value={short(fmt.toNum(netWorth), fmt.symbol)}
+    ),
+      tileNetWorth: (
+      <TrendTile title="Net worth" value={short(fmt.toNum(netWorth), fmt.symbol)}
         values={nw.nums} color="var(--data-blue)" tint="color-mix(in srgb, var(--data-blue) 9%, transparent)"
         change={nw.change} sub="What you own minus what you owe"
         marker={short(fmt.toNum(netWorth), fmt.symbol)} markerSub={todayLabel} ghost={ghost}
       />
-      <TrendTile
-        className="min-[1200px]:col-span-4" title="Investments" value={short(fmt.toNum(investments), fmt.symbol)}
+    ),
+      tileInvestments: (
+      <TrendTile title="Investments" value={short(fmt.toNum(investments), fmt.symbol)}
         values={inv.nums} color="var(--data-green)" tint="var(--success-soft)"
         change={inv.change} sub={pnlCount}
         marker={short(fmt.toNum(investments), fmt.symbol)} markerSub={todayLabel} ghost={ghost}
       />
-      <TrendTile
-        className="min-[768px]:col-span-2 min-[1200px]:col-span-4" title="Liabilities" value={short(fmt.toNum(liabilities), fmt.symbol)}
+    ),
+      tileLiabilities: (
+      <TrendTile title="Liabilities" value={short(fmt.toNum(liabilities), fmt.symbol)}
         values={li.nums} color="var(--data-rose)" tint="var(--danger-soft)"
         change={li.change}
         sub={`${liabilityRows.length} account${liabilityRows.length === 1 ? '' : 's'}`}
         marker={short(fmt.toNum(liabilities), fmt.symbol)} markerSub={todayLabel} ghost={ghost}
       />
-
-      {/* ---- Row 4: where it went, the goals, the budgets ---- */}
-      <BoardCard title="Spending by category" sub={month.label} href="/reports" className="min-[1200px]:col-span-4">
+    ),
+      spendCategory: (
+      <BoardCard title="Spending by category" sub={month.label} href="/reports">
         {spendSegs.length === 0 ? <Empty>No spending recorded in {month.label}.</Empty> : (
           <Donut
             segments={spendSegs}
@@ -310,8 +320,10 @@ export function ChartBoard({ month, now, netWorth, investments, liabilities }: {
           />
         )}
       </BoardCard>
+    ),
 
-      <BoardCard title="Goals" sub="Progress and what each needs a month" href="/goals" className="min-[1200px]:col-span-4">
+      goals: (
+      <BoardCard title="Goals" sub="Progress and what each needs a month" href="/goals">
         {data.goalRows.length === 0 ? <Empty><Link href="/goals" className="font-semibold text-ink">Add your first goal</Link></Empty> : (
           <ul className="grid gap-3.5">
             {data.goalRows.slice(0, 4).map((g, i) => {
@@ -339,8 +351,10 @@ export function ChartBoard({ month, now, netWorth, investments, liabilities }: {
           </ul>
         )}
       </BoardCard>
+    ),
 
-      <BoardCard title="Budgets" sub={`${month.label} · against the calendar`} href="/budget" className="min-[768px]:col-span-2 min-[1200px]:col-span-4">
+      budgets: (
+      <BoardCard title="Budgets" sub={`${month.label} · against the calendar`} href="/budget">
         {data.budgetRows.length === 0 ? <Empty><Link href="/budget" className="font-semibold text-ink">Set a monthly budget</Link></Empty> : (
           <PaceBars
             elapsed={data.elapsed}
@@ -357,9 +371,9 @@ export function ChartBoard({ month, now, netWorth, investments, liabilities }: {
           />
         )}
       </BoardCard>
-
-      {/* ---- Row 5: the month, day by day ---- */}
-      <BoardCard title="Daily spending" sub={month.label} href="/calendar" className="min-[768px]:col-span-2 min-[1200px]:col-span-12">
+    ),
+      dailySpend: (
+      <BoardCard title="Daily spending" sub={month.label} href="/calendar">
         <div className="grid gap-6 min-[720px]:grid-cols-[minmax(0,1fr)_220px] items-start">
           <SpendCalendar
             days={data.days.map((d) => ({ date: d.date, value: d.spent ? d.spent.toNumber() : null }))}
@@ -378,6 +392,6 @@ export function ChartBoard({ month, now, netWorth, investments, liabilities }: {
           </dl>
         </div>
       </BoardCard>
-    </div>
-  );
+    ),
+  };
 }

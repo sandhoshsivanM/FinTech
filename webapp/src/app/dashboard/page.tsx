@@ -10,11 +10,12 @@
  * day's gain, which needs a price feed the app deliberately does not have — it
  * is behind the demo switch and carries the badge.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import {
   Wallet, TrendingUp, Percent, Coins, Landmark, Layers, HandCoins,
   Sparkles, ArrowUpRight, ArrowDownRight, CreditCard, ChevronRight, Eye, EyeOff,
+  LayoutGrid, Check, Plus, RotateCcw,
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { D, ZERO } from '@/lib/money';
@@ -44,8 +45,18 @@ import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { DashboardStarter } from '@/components/DashboardStarter';
 import { Hint, CardTitle } from '@/components/Hint';
 import { Stagger, StaggerItem } from '@/components/motion';
-import { PhoneHome, DesktopHome } from '@/components/home/PhoneHome';
-import { ChartBoard } from '@/components/home/ChartBoard';
+import { useChartBoardWidgets } from '@/components/home/ChartBoard';
+import { WidgetGrid } from '@/components/home/WidgetGrid';
+import { BalanceHero } from '@/components/home/BalanceHero';
+import { QuickActions } from '@/components/home/QuickActions';
+import { WalletStack } from '@/components/home/WalletStack';
+import { WeekFlowCard } from '@/components/home/WeekFlowCard';
+import { BudgetRingCard } from '@/components/home/BudgetRingCard';
+import { LatestTransactions } from '@/components/home/LatestTransactions';
+import { InsightCard } from '@/components/home/InsightCard';
+import { MonthTiles } from '@/components/home/MonthTiles';
+import { useDashboardLayout } from '@/lib/useDashboardLayout';
+import { setWidgetHidden, widgetTitle } from '@/domain/dashboardLayout';
 
 /** Ranges the snapshot history can answer. */
 const RANGES = [
@@ -75,6 +86,9 @@ export default function DashboardPage() {
   const postings = useApp((s) => s.postings);
   const ghost = useApp((s) => s.ghost);
   const toggleGhost = useApp((s) => s.toggleGhost);
+  const activeProfileId = useApp((s) => s.activeProfileId);
+  const { layout, setLayout, reset } = useDashboardLayout(activeProfileId);
+  const [editing, setEditing] = useState(false);
 
   const fmt = useFmt();
   const dark = useDarkMode();
@@ -255,60 +269,28 @@ export default function DashboardPage() {
     txns.length === 0 && holdings.length === 0
     && accounts.length === 0 && liabilities.length === 0;
 
-  return (
-    <Stagger className="grid gap-6">
-      {/* Phone only: the everyday-money home (balance, wallet, budget, latest
-          activity) leads, and the full statement below follows it. */}
-      {!isEmptyVault && <PhoneHome />}
-      {/* ---- Position ------------------------------------------------------ */}
-      {/* A statement, not a card grid. The old shape was seven bordered KPI
-          cards in a row — the classic generated-dashboard composition, where
-          every figure shouts equally and none of them is the point. Here net
-          worth is the point, its parts sit under it, and this month reads like
-          the summary of an account. */}
-      <StaggerItem>
-        <PageHeader
-          title="Dashboard"
-          meta={`${month.label}${unpricedCount > 0 ? ` · ${unpricedCount} position${unpricedCount === 1 ? '' : 's'} carried at cost` : ''}`}
-          action={
-            <>
-              <MonthNav
-                month={month}
-                now={now || undefined}
-                onChange={(m) => setPinnedMonth(m.start === currentMonth(now || undefined).start ? null : m)}
-              />
-              <button
-                onClick={toggleGhost}
-                data-tour="networth"
-                className="focus-ring btn-soft inline-flex items-center gap-2 h-[var(--control-md)] px-3.5 rounded-full text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors"
-              >
-                {ghost ? <EyeOff size={15} /> : <Eye size={15} />}
-                {ghost ? 'Amounts hidden' : 'Hide amounts'}
-              </button>
-            </>
-          }
-        />
-      </StaggerItem>
-
-      {/* Desktop: the same everyday-money cards in a 12-column row. */}
-      {!isEmptyVault && <DesktopHome />}
-
-      {/* The chart board: one card per question, each drawn a different way.
-          Waits for the clock, since "this week" and "today" mean nothing at 0. */}
-      {!isEmptyVault && now > 0 && (
-        <StaggerItem>
-          <ChartBoard
-            month={month}
-            now={now}
-            netWorth={cash.plus(summary.current).minus(liab)}
-            investments={summary.current}
-            liabilities={liab}
-          />
-        </StaggerItem>
-      )}
-
-      <StaggerItem>
-        {isEmptyVault ? <DashboardStarter /> : (
+  // ---- Widgets ------------------------------------------------------------
+  // Every card on the page, keyed by its id in domain/dashboardLayout. The
+  // arrangement — order, size, hidden — is the user's, per profile.
+  const board = useChartBoardWidgets({
+    month, now, netWorth: cash.plus(summary.current).minus(liab), investments: summary.current, liabilities: liab,
+  });
+  const widgets: Record<string, ReactNode> = isEmptyVault ? {} : {
+    balance: (
+      <div className="card p-5 grid gap-5 content-between">
+        <BalanceHero />
+        <QuickActions />
+      </div>
+    ),
+    wallet: <WalletStack />,
+    insight: <InsightCard />,
+    week: <WeekFlowCard />,
+    budgetMonth: <BudgetRingCard />,
+    latest: <LatestTransactions />,
+    monthTiles: <MonthTiles />,
+    // The board waits for the clock: "this week" and "today" mean nothing at 0.
+    ...(now > 0 ? board : {}),
+    netWorth: (
         <Section title="Net worth" info="dashboard.netWorth" first description="What you own minus what you owe">
           <MoneyValue size="xl" hidden={ghost}>
             {fmt.money(cash.plus(summary.current).minus(liab))}
@@ -354,13 +336,8 @@ export default function DashboardPage() {
               sub={`${liabilities.length} account${liabilities.length === 1 ? '' : 's'}`} />
           </MetricRow>
         </Section>
-        )}
-      </StaggerItem>
-
-      {/* ---- This month ---------------------------------------------------- */}
-      {/* The dedicated current-month surface: you should not have to choose a
-          reporting window to learn where you are this month. */}
-      <StaggerItem>
+    ),
+    thisMonth: (
         <Section title="This month" info="dashboard.thisMonth" description={month.label}>
           <div className="grid gap-x-10 md:grid-cols-2">
             <div>
@@ -410,10 +387,8 @@ export default function DashboardPage() {
             </div>
           </div>
         </Section>
-      </StaggerItem>
-
-      {/* ---- Performance --------------------------------------------------- */}
-      <StaggerItem>
+    ),
+    performance: (
         <section className="card">
           <div className="flex items-center gap-3 flex-wrap px-5 py-4 border-b border-line">
             <div className="min-w-0">
@@ -465,11 +440,8 @@ export default function DashboardPage() {
             )}
           </div>
         </section>
-      </StaggerItem>
-
-      {/* ---- Allocation + movers ------------------------------------------- */}
-      <div className="grid gap-6 min-[1100px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <StaggerItem>
+    ),
+    allocation: (
           <section className="card h-full">
             <div className="flex items-center gap-3 flex-wrap px-5 py-4 border-b border-line">
               <CardTitle info="dashboard.allocation" className="text-[16px] font-medium tracking-[-0.01em]">Allocation</CardTitle>
@@ -501,9 +473,8 @@ export default function DashboardPage() {
               )}
             </div>
           </section>
-        </StaggerItem>
-
-        <StaggerItem>
+    ),
+    movers: (
           <section className="card h-full">
             <div className="px-5 py-4 border-b border-line">
               <CardTitle info="dashboard.movers" className="text-[16px] font-medium tracking-[-0.01em]">Movers</CardTitle>
@@ -543,12 +514,8 @@ export default function DashboardPage() {
               ))}
             </div>
           </section>
-        </StaggerItem>
-      </div>
-
-      {/* ---- Health + insights --------------------------------------------- */}
-      <div className="grid gap-6 min-[1100px]:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <StaggerItem>
+    ),
+    health: (
           <GlassCard className="h-full">
             <SectionHeader title="Financial health" info="dashboard.financialHealth" />
             <div className="flex flex-col sm:flex-row items-center gap-5">
@@ -581,9 +548,8 @@ export default function DashboardPage() {
             </div>
             <p className="text-xs text-ink-soft mt-4 pt-3 border-t border-line italic">{health.summary}</p>
           </GlassCard>
-        </StaggerItem>
-
-        <StaggerItem>
+    ),
+    insights: (
           <section className="card h-full flex flex-col">
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
               <Sparkles size={17} className="text-accent" />
@@ -611,12 +577,8 @@ export default function DashboardPage() {
             )}
             <p className="px-5 py-3 text-[11px] text-muted border-t border-line bg-fill rounded-b-[inherit]">{NARRATIVE_DISCLAIMER}</p>
           </section>
-        </StaggerItem>
-      </div>
-
-      {/* ---- Positions + bills --------------------------------------------- */}
-      <div className="grid gap-6 min-[1100px]:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <StaggerItem>
+    ),
+    holdings: (
           <section className="card overflow-hidden h-full">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
               <div>
@@ -670,9 +632,8 @@ export default function DashboardPage() {
               </div>
             )}
           </section>
-        </StaggerItem>
-
-        <StaggerItem>
+    ),
+    bills: (
           <section className="card overflow-hidden h-full">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
               <CardTitle info="dashboard.upcomingBills" className="text-[16px] font-medium tracking-[-0.01em]">Upcoming bills</CardTitle>
@@ -700,8 +661,83 @@ export default function DashboardPage() {
               })
             )}
           </section>
+    ),
+  };
+  const hiddenWidgets = layout.filter((w) => w.hidden);
+
+  return (
+    <Stagger className="grid gap-6">
+      <StaggerItem>
+        <PageHeader
+          title="Dashboard"
+          meta={`${month.label}${unpricedCount > 0 ? ` · ${unpricedCount} position${unpricedCount === 1 ? '' : 's'} carried at cost` : ''}`}
+          action={
+            <>
+              <MonthNav
+                month={month}
+                now={now || undefined}
+                onChange={(m) => setPinnedMonth(m.start === currentMonth(now || undefined).start ? null : m)}
+              />
+              <button
+                onClick={toggleGhost}
+                data-tour="networth"
+                className="focus-ring btn-soft inline-flex items-center gap-2 h-[var(--control-md)] px-3.5 rounded-full text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors"
+              >
+                {ghost ? <EyeOff size={15} /> : <Eye size={15} />}
+                {ghost ? 'Amounts hidden' : 'Hide amounts'}
+              </button>
+              {!isEmptyVault && (
+                <button
+                  onClick={() => setEditing((e) => !e)}
+                  aria-pressed={editing}
+                  className="focus-ring btn-soft inline-flex items-center gap-2 h-[var(--control-md)] px-3.5 rounded-full text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors"
+                >
+                  {editing ? <Check size={15} /> : <LayoutGrid size={15} />}
+                  {editing ? 'Done' : 'Customize'}
+                </button>
+              )}
+            </>
+          }
+        />
+      </StaggerItem>
+
+      {editing && (
+        <StaggerItem>
+          <div className="card px-5 py-4 flex flex-wrap items-center gap-3">
+            <p className="m-0 mr-auto text-[13px] text-ink-soft">
+              Drag a card by its handle, pick a size, or hide it. Saved for this profile on this device.
+            </p>
+            {hiddenWidgets.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="eyebrow">Add back</span>
+                {hiddenWidgets.map((w) => (
+                  <button
+                    key={w.id}
+                    type="button"
+                    onClick={() => setLayout(setWidgetHidden(layout, w.id, false))}
+                    className="focus-ring btn-soft inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12.5px] font-medium"
+                  >
+                    <Plus size={13} /> {widgetTitle(w.id)}
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={reset}
+              className="focus-ring inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12.5px] font-semibold text-ink-soft hover:text-ink"
+            >
+              <RotateCcw size={13} /> Reset layout
+            </button>
+          </div>
         </StaggerItem>
-      </div>
+      )}
+
+      <StaggerItem>
+        {isEmptyVault
+          ? <DashboardStarter />
+          : <WidgetGrid layout={layout} widgets={widgets} editing={editing} onChange={setLayout} />}
+      </StaggerItem>
     </Stagger>
   );
 }

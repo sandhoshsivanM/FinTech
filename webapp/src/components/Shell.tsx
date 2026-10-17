@@ -298,6 +298,15 @@ function ProfileMark({ kind, size = 15 }: { kind?: ProfileKind; size?: number })
   return <Icon size={size} strokeWidth={1.75} aria-hidden />;
 }
 
+/** The profile's photo when it has one, otherwise its kind mark. Fills a round parent. */
+function ProfileFace({ profile, size = 15 }: { profile?: { kind?: ProfileKind; photo?: string | null }; size?: number }) {
+  if (profile?.photo) {
+    // eslint-disable-next-line @next/next/no-img-element -- a data URL from the vault; next/image cannot optimise it
+    return <img src={profile.photo} alt="" className="w-full h-full rounded-full object-cover" />;
+  }
+  return <ProfileMark kind={profile?.kind} size={size} />;
+}
+
 function PortfolioSelector() {
   const profiles = useApp((s) => s.profiles);
   const activeId = useApp((s) => s.activeProfileId);
@@ -311,8 +320,8 @@ function PortfolioSelector() {
       )}
       title="Switch portfolio"
     >
-      <span className="w-[26px] h-[26px] grid place-items-center rounded-full bg-primary text-[var(--primary-fg)]">
-        <ProfileMark kind={active?.kind} size={14} />
+      <span className="w-[26px] h-[26px] grid place-items-center rounded-full bg-primary text-[var(--primary-fg)] overflow-hidden">
+        <ProfileFace profile={active} size={14} />
       </span>
       <span className="hidden min-[1024px]:block min-w-0 text-left">
         <span className="block text-[13px] font-semibold leading-tight truncate max-w-[130px]">{active?.name ?? 'Portfolio'}</span>
@@ -531,9 +540,9 @@ function ProfileMenu() {
         data-tour="profile"
         onClick={() => setOpen((o) => !o)}
         aria-label="Profile menu"
-        className="focus-ring w-8 h-8 grid place-items-center rounded-full bg-accent text-[var(--primary-fg)]"
+        className="focus-ring w-8 h-8 grid place-items-center rounded-full bg-accent text-[var(--primary-fg)] overflow-hidden"
       >
-        <ProfileMark kind={active?.kind} />
+        <ProfileFace profile={active} />
       </button>
       {open && (
         <>
@@ -546,8 +555,8 @@ function ProfileMenu() {
                 onClick={() => { void setActive(p.id); setOpen(false); }}
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[var(--radius-card)] hover:bg-fill text-left transition-colors"
               >
-                <span className="w-7 h-7 grid place-items-center rounded-full bg-fill text-ink-soft shrink-0">
-                  <ProfileMark kind={p.kind} size={14} />
+                <span className="w-7 h-7 grid place-items-center rounded-full bg-fill text-ink-soft shrink-0 overflow-hidden">
+                  <ProfileFace profile={p} size={14} />
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block text-[13.5px] font-medium truncate">{p.name}</span>

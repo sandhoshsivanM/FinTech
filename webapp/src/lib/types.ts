@@ -35,6 +35,12 @@ export interface Profile {
   name: string;
   kind: ProfileKind;
   createdAt: number;
+  /**
+   * The profile's photo as a small square JPEG data URL (see lib/profilePhoto).
+   * Kept in the encrypted vault like everything else, never uploaded anywhere.
+   * Absent means "show the kind icon".
+   */
+  photo?: string | null;
 }
 
 export interface Txn {

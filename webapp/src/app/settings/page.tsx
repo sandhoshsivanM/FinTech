@@ -4,7 +4,7 @@ import {
   ShieldCheck, CloudOff, KeyRound, Download, Upload,
   Globe, Lock, Trash2, Sparkles, CheckCircle2, AlertCircle,
   Users, Plus, Pencil, Check, Briefcase, User, Heart, FlaskConical, TrendingUp,
-  HardDrive, ShieldAlert,
+  HardDrive, ShieldAlert, Camera, ImageOff,
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
 import { TOUR_EVENT } from '@/components/Tour';
@@ -27,6 +27,7 @@ import { formatDate } from '@/lib/dateFormat';
 import { useNow } from '@/lib/useNow';
 import { D } from '@/lib/money';
 import { BackupError } from '@/lib/backupError';
+import { fileToProfilePhoto, PhotoError } from '@/lib/profilePhoto';
 import { type NotifyCategory, type NotifyPrefs } from '@/domain/notificationScheduler';
 import {
   getNotifyPrefsServerSnapshot, getNotifyPrefsSnapshot, saveNotifyPrefs, subscribeNotifyPrefs,
@@ -79,6 +80,26 @@ export default function SettingsPage() {
   const addProfile = useApp((s) => s.addProfile);
   const renameProfile = useApp((s) => s.renameProfile);
   const deleteProfile = useApp((s) => s.deleteProfile);
+  const setProfilePhoto = useApp((s) => s.setProfilePhoto);
+
+  // Profile photo: one hidden file input, pointed at whichever profile's
+  // picture was tapped.
+  const photoInput = useRef<HTMLInputElement>(null);
+  const [photoFor, setPhotoFor] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const pickPhoto = (id: string) => {
+    setPhotoFor(id);
+    setPhotoError(null);
+    photoInput.current?.click();
+  };
+  const onPhotoPicked = async (file: File | undefined) => {
+    if (!file || !photoFor) return;
+    try {
+      await setProfilePhoto(photoFor, await fileToProfilePhoto(file));
+    } catch (e) {
+      setPhotoError(e instanceof PhotoError ? e.message : 'The photo could not be saved. Try again.');
+    }
+  };
 
   // Add-profile form state
   const [newName, setNewName] = useState('');
@@ -286,6 +307,20 @@ export default function SettingsPage() {
           Each profile keeps fully separate data — transactions, investments, liabilities, and more — inside the same encrypted vault. Use profiles to track yourself, a spouse, or a business independently.
         </p>
 
+        <p className="text-xs text-muted -mt-2 mb-3">Tap a profile&apos;s picture to add a photo. It stays in your encrypted vault.</p>
+        {photoError && (
+          <p role="alert" className="flex items-center gap-1.5 text-xs text-expense mb-3"><AlertCircle size={13} />{photoError}</p>
+        )}
+        <input
+          ref={photoInput}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          aria-hidden
+          tabIndex={-1}
+          onChange={(e) => { void onPhotoPicked(e.target.files?.[0]); e.target.value = ''; }}
+        />
+
         {/* Profile rows */}
         <div className="divide-y divide-[var(--glass-border)]">
           {profiles.map((p) => {
@@ -297,10 +332,22 @@ export default function SettingsPage() {
 
             return (
               <div key={p.id} className="flex items-center gap-3 py-2.5 min-w-0">
-                {/* Avatar */}
-                <span className="w-8 h-8 rounded-full grid place-items-center bg-accent/12 text-accent shrink-0 font-semibold text-sm select-none">
-                  {initial}
-                </span>
+                {/* Avatar: tap to set a photo */}
+                <button
+                  type="button"
+                  onClick={() => pickPhoto(p.id)}
+                  aria-label={`${p.photo ? 'Change' : 'Add'} photo for ${p.name}`}
+                  title={p.photo ? 'Change photo' : 'Add photo'}
+                  className="group focus-ring relative w-10 h-10 rounded-full grid place-items-center bg-accent/12 text-accent shrink-0 font-semibold text-sm select-none overflow-hidden"
+                >
+                  {p.photo
+                    // eslint-disable-next-line @next/next/no-img-element -- a data URL from the vault; next/image cannot optimise it
+                    ? <img src={p.photo} alt="" className="w-full h-full object-cover" />
+                    : initial}
+                  <span aria-hidden className="absolute inset-0 grid place-items-center bg-black/45 text-white opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
+                    <Camera size={14} />
+                  </span>
+                </button>
 
                 {/* Name / rename input */}
                 <div className="flex-1 min-w-0">
@@ -358,6 +405,16 @@ export default function SettingsPage() {
                           className="px-2.5 py-1 rounded-[var(--radius-btn)] text-[12px] font-semibold text-accent hover:bg-accent/10 border border-accent/25 transition-colors"
                         >
                           Switch
+                        </button>
+                      )}
+                      {p.photo && (
+                        <button
+                          onClick={() => void setProfilePhoto(p.id, null)}
+                          className="p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-ink hover:bg-[var(--glass-border)] transition-colors"
+                          title="Remove photo"
+                          aria-label={`Remove photo for ${p.name}`}
+                        >
+                          <ImageOff size={14} />
                         </button>
                       )}
                       <button
