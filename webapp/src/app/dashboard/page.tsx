@@ -108,7 +108,10 @@ export default function DashboardPage() {
 
   // ---- Headline figures ---------------------------------------------------
   const summary = useMemo(() => portfolioSummary(holdings, undefined, fxRates), [holdings, fxRates]);
-  const cash = useMemo(() => netWorthTotal(txns), [txns]);
+  // Cash is read from the ledger, the same figure Accounts, Forecast, Score and
+  // the daily snapshot use. It was once a sum of transactions, which leaves out
+  // every opening balance — so this card and the one beside it disagreed.
+  const cash = useMemo(() => liquidBalance(accounts, postings), [accounts, postings]);
   const liab = useMemo(() => liabilities.reduce((s, l) => s.plus(D(l.principal)), ZERO), [liabilities]);
   // The daily financial home is the current calendar month (§4.1). This used to
   // be a trailing 30 days captioned "this month" — on the 9th of August that
@@ -196,9 +199,12 @@ export default function DashboardPage() {
       : custom(txns.reduce((m, t) => Math.min(m, t.date), now || Date.now()), now || Date.now());
     const pts = netWorthSeries(txns, span);
     if (pts.length < 2) return [];
-    const baseline = investedNow.minus(liab);
+    // The walk only sees transactions; opening balances are a constant on top,
+    // so the last point still lands on the headline figure.
+    const openings = cash.minus(netWorthTotal(txns));
+    const baseline = investedNow.minus(liab).plus(openings);
     return pts.map((p) => fmt.toNum(p.value.plus(baseline)));
-  }, [hasRecordedHistory, txns, days, investedNow, liab, fmt, now]);
+  }, [hasRecordedHistory, txns, days, investedNow, liab, cash, fmt, now]);
 
   const series = hasRecordedHistory ? snapshotSeries : derivedSeries;
   const estimated = !hasRecordedHistory && derivedSeries.length >= 2;
