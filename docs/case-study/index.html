@@ -68,6 +68,7 @@
     <li data-audience="private"><span class="n">D</span>How this would be built again <span class="d">The build order the repository actually followed, and what each phase had to prove</span></li>
     <li data-audience="private"><span class="n">E</span>Résumé kit <span class="d">The link line, the stack line, bullets at three lengths, and the STAR stories cut to résumé scale</span></li>
     <li data-audience="private"><span class="n">F</span>The guided tour <span class="d">A five-minute screen-by-screen walkthrough with the line to say at each stop</span></li>
+    <li data-audience="private"><span class="n">G</span>The HR pitch <span class="d">The story told for a non-technical room — opener, two-minute keynote, one-line answers and delivery</span></li>
   </ol>
 </div>
 
@@ -1454,6 +1455,33 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
     </tbody>
   </table>
   <p class="small muted">The 600,000-iteration cost is intentional; ~49 ms is the unlock latency budget, spent for brute-force resistance. The pure-Dart figure is the just-in-time test-VM path — release builds are ahead-of-time compiled and faster, and Flutter on web uses Web Crypto directly.</p>
+
+  <h3>The performance scorecard</h3>
+  <p>Khazana has no GPU workload and no server, so its performance is not measured in teraflops or requests per second. It is measured in what a user feels: how long the vault takes to open, how fast a search answers, how much the app downloads, and how quickly a change is proven safe. Every figure below was measured on the development machine on 17 October 2026, from a production build and the committed test suites.</p>
+
+  <div class="strip">
+    <div class="m"><div class="v">≈ 49 ms</div><div class="l">Vault unlock key</div></div>
+    <div class="m"><div class="v">0.13 ms</div><div class="l">Search, 10k entries</div></div>
+    <div class="m"><div class="v">≈ 7 s</div><div class="l">1,042 web tests</div></div>
+    <div class="m"><div class="v">0</div><div class="l">Network calls</div></div>
+  </div>
+
+  <table class="compact">
+    <thead><tr><th style="width:30%">Dimension</th><th style="width:22%">Measure</th><th>What it means</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Security cost</td><td>≈ 49 ms</td><td>600,000 PBKDF2 rounds to open the vault — deliberately slow for an attacker guessing PINs, unnoticeable for the owner.</td></tr>
+      <tr><td class="k">Encryption overhead</td><td>≈ 0.03 ms / record</td><td>Every record is sealed individually with AES-256-GCM; the cost is invisible next to a screen render.</td></tr>
+      <tr><td class="k">Search</td><td>≈ 0.13 ms</td><td>Full-text search across 10,000 transactions on the Flutter client.</td></tr>
+      <tr><td class="k">Feedback loop — tests</td><td>≈ 7 s</td><td>All 1,042 web tests, end to end on a laptop. A change is checked in the time it takes to switch windows.</td></tr>
+      <tr><td class="k">Feedback loop — build</td><td>≈ 8 s</td><td>Production static export of all 31 routes, with the build cache warm.</td></tr>
+      <tr><td class="k">Download — whole app</td><td>7.4 MB</td><td>Every route, font, icon and script for the web client, installable offline.</td></tr>
+      <tr><td class="k">Download — first screen</td><td>≈ 386 KB gzip</td><td>JavaScript to open the dashboard; CSS is 16 KB gzip. The heaviest number on this table, and the next target: the PDF and spreadsheet exporters are candidates to load only when used.</td></tr>
+      <tr><td class="k">Network surface</td><td>0 requests</td><td>After load the client fetches nothing but its own build id. The content-security policy makes that a rule, not a habit.</td></tr>
+      <tr><td class="k">Correctness</td><td>1,633 tests · 40 screenshots</td><td>Unit, integration, cross-language and visual checks on every push.</td></tr>
+      <tr><td class="k">Reach</td><td>5 platforms · 2 clients</td><td>iOS, Android, macOS, web and Windows/Linux desktop from two codebases sharing one financial engine.</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Single-run measurements on one development machine, not averaged benchmarks; the cryptography and search figures come from the committed benchmark scripts above and can be re-run by anyone.</p>
 </section>
 
 <!-- ══════════════════════════ 16 ══════════════════════════ -->
@@ -2218,6 +2246,69 @@ const grade = trackedWeight >= MIN_GRADABLE_WEIGHT ? gradeOf(score) : null;</pre
 
   <h3>The thirty-second whiteboard answer: "How does the data stay consistent?"</h3>
   <div class="pull">One encrypted store, one write path, one reload. Writes are batched — an entry and its two ledger legs commit together or not at all. After every write the store reloads once and every screen re-derives its figures from the same arrays: balances are opening balance plus postings, never a stored total. Each figure has one function, each period one model with its label attached, and an integrity suite asserts the functions agree with each other. Where that convention once slipped, between two dashboard cards, a test now pins them together.</div>
+</section>
+
+<!-- ══════════════════════════ G ══════════════════════════ -->
+<section data-audience="private">
+  <h2><span class="num">Appendix G</span><span class="t">The HR pitch — the story for a non-technical room</span></h2>
+  <p class="lead">For HR and recruiter rounds. The listener cares who you are, how you think and whether you finish things — not about encryption. Told the way a product keynote is told: one problem, one belief, one product, a few numbers that stick, and an ending about their team rather than your code.</p>
+
+  <h3>The thirty-second opener — "Tell me about yourself"</h3>
+  <div class="pull">I build software, and I care about one thing: building products people can trust. I asked a simple question — why does every money app want your bank password, or a copy of your whole financial life on someone else's server? So I built one that doesn't. It is called Khazana. It runs on phones, the web and desktop; your data never leaves your device, and it is locked with a key only you hold. I designed, built and tested it on my own, alongside a full-time job, and ten people use it every day. That is who I am: I see a problem people have accepted, and I don't accept it.</div>
+
+  <h3>The two-minute story</h3>
+  <div class="qa">
+    <div class="q">1 · The problem — make them feel it</div>
+    <p>"Think about your money — salary, savings, loans, investments. It is the most private information you have. And today, to track it, you hand it over: to an app, a server, a company you have never met."</p>
+  </div>
+  <div class="qa">
+    <div class="q">2 · The belief — one sentence, then pause</div>
+    <p>"I believed there had to be another way. <em>Your money data should belong to you, and only you.</em>"</p>
+  </div>
+  <div class="qa">
+    <div class="q">3 · The product — simple words, no jargon</div>
+    <p>"So I built Khazana — it means treasure. It works without the internet. No account, no login, nobody watching. You open it with a PIN, and that PIN is the only key. Not even I can open your data."</p>
+  </div>
+  <div class="qa">
+    <div class="q">4 · The hard part — proof you are an engineer</div>
+    <p>"Building it once was hard. I built it twice — a mobile app and a web app — and the hardest problem was making both show exactly the same numbers, down to the last rupee. So over sixteen hundred automated tests check it every time I change anything."</p>
+  </div>
+  <div class="qa">
+    <div class="q">5 · The care — the detail they remember</div>
+    <p>"Recently I found two cards on the same screen showing different numbers. Nothing crashed; no test failed; most people would never notice. But in a money app, if one number is wrong you stop trusting all of them. So I fixed it at the root, and wrote a test so it can never come back."</p>
+  </div>
+  <div class="qa">
+    <div class="q">6 · The vision — end bigger than you began, and on them</div>
+    <p>"Khazana taught me what I want to do for the rest of my career: build things millions of people can trust without having to think about it. That is what I want to bring to your team."</p>
+  </div>
+
+  <h3>The keynote numbers — say three, not ten</h3>
+  <div class="strip">
+    <div class="m"><div class="v">0</div><div class="l">Servers</div></div>
+    <div class="m"><div class="v">1</div><div class="l">Key — yours</div></div>
+    <div class="m"><div class="v">1,600+</div><div class="l">Automated tests</div></div>
+    <div class="m"><div class="v">5</div><div class="l">Platforms</div></div>
+  </div>
+  <p>If someone asks for performance figures, use the scorecard in Section 15 and say plainly that there is no GPU workload: "It is built to be fast on an ordinary phone — the vault opens in about fifty milliseconds and search answers in a fraction of a millisecond." Real numbers, stated modestly, beat impressive ones that fall apart under a follow-up question.</p>
+
+  <h3>One-line answers</h3>
+  <table class="compact">
+    <thead><tr><th style="width:28%">They ask</th><th>You say</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Why should we hire you?</td><td>"I take ownership end to end — idea, design, testing, release — and I finish what I start. Khazana is the proof."</td></tr>
+      <tr><td class="k">Your biggest strength?</td><td>"I notice the small things that break trust, like two numbers that disagree, and I fix them at the root."</td></tr>
+      <tr><td class="k">A weakness?</td><td>"I built alone, so at first I did everything myself. I learned to write decisions down and lean on reviews and automated checks — in a team, that becomes collaboration."</td></tr>
+      <tr><td class="k">A failure?</td><td>"My live site once ran three weeks behind my code and I did not notice. Now I build systems that warn me instead of relying on memory."</td></tr>
+      <tr><td class="k">Why a large company?</td><td>"I have shown I can build alone. Now I want scale — millions of real users — and people better than me to learn from."</td></tr>
+      <tr><td class="k">Five years from now?</td><td>"Leading products people trust with something important — their money, their health, their data."</td></tr>
+      <tr><td class="k">Did you use AI?</td><td>"Yes, as a tool. I owned every decision — the architecture, the security, what the product refuses to do. AI types faster; it does not decide what is right."</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <span class="h">Delivery</span>
+    <p>Open the app on your phone and show it — one live moment beats ten slides. Pause after the belief line. Say "ten people use it daily", never "users" — honesty is the brand of this product, so it has to be the brand of the pitch. End on their team, not on yourself. Learn the six-part structure, not the words, and say it aloud ten times before the interview; record it once and listen back.</p>
+  </div>
 </section>
 
 <!-- Outside every appendix on purpose: the colophon has to survive the public
