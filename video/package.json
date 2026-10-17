@@ -1,0 +1,27 @@
+{
+  "name": "khazana-video",
+  "private": true,
+  "type": "module",
+  "description": "30-second 4K motion-graphics ad for Khazana, built with Remotion.",
+  "scripts": {
+    "studio": "remotion studio",
+    "capture": "node scripts/capture-phone.mjs",
+    "render:16x9": "remotion render Ad16x9 out/khazana-ad-4k-16x9.mp4 --codec=h264 --crf=16",
+    "render:9x16": "remotion render Ad9x16 out/khazana-ad-4k-9x16.mp4 --codec=h264 --crf=16",
+    "render:all": "npm run render:16x9 && npm run render:9x16",
+    "render:master": "remotion render Ad16x9 out/khazana-ad-4k-16x9.mov --codec=prores --prores-profile=4444",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.536",
+    "@remotion/transitions": "^4.0.536",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "^4.0.536"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "playwright": "^1.64.1",
+    "typescript": "^7.0.2"
+  }
+}
