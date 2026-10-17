@@ -113,6 +113,12 @@ export function forMonth(ms: number): DateRange {
   return { start, end, kind: 'month', label: monthLabel(year, month, start, end) };
 }
 
+/** "September 2025": the month containing `ms`, for a card title. */
+export function monthName(ms: number): string {
+  const d = new Date(ms);
+  return `${MONTH_LONG[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 /** The month `n` months from the one containing `ms`; negative goes back. */
 export function shiftMonths(ms: number, n: number): DateRange {
   const d = new Date(ms);

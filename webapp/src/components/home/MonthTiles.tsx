@@ -4,20 +4,21 @@ import { TrendingDown, TrendingUp, PiggyBank, type LucideIcon } from 'lucide-rea
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { useNow } from '@/lib/useNow';
-import { currentMonth } from '@/domain/period';
+import { currentMonth, monthName, type DateRange } from '@/domain/period';
 import { windowSummary } from '@/domain/finance';
 import { GlossTile, type Hue } from './depth';
 
 /**
- * This month in three numbers — earned, spent, kept — each with a plain tinted icon.
- * The month is the calendar month, so it agrees with the budget card below.
+ * A month in three numbers — earned, spent, kept — each with a plain tinted icon.
+ * The month is the dashboard's selected calendar month (the current one by
+ * default), so it agrees with the budget card and the month picker.
  */
-export function MonthTiles() {
+export function MonthTiles({ month }: { month?: DateRange }) {
   const txns = useApp((s) => s.txns);
   const ghost = useApp((s) => s.ghost);
   const fmt = useFmt();
   const now = useNow(60_000);
-  const m = useMemo(() => (now ? windowSummary(txns, currentMonth(now)) : null), [txns, now]);
+  const m = useMemo(() => (now ? windowSummary(txns, month ?? currentMonth(now)) : null), [txns, now, month]);
   if (!m) return null;
   const saved = m.income.minus(m.expense);
   const tiles: { label: string; value: string; icon: LucideIcon; hue: Hue }[] = [
@@ -26,7 +27,7 @@ export function MonthTiles() {
     { label: 'Saved', value: `${saved.isNegative() ? '−' : ''}${fmt.money(saved.abs())}`, icon: PiggyBank, hue: 'blue' },
   ];
   return (
-    <section aria-label="This month" className="grid grid-cols-3 gap-2">
+    <section aria-label={month ? monthName(month.start) : 'This month'} className="grid grid-cols-3 gap-2">
       {tiles.map((t) => {
         const Icon = t.icon;
         return (

@@ -21,6 +21,11 @@ export interface WidgetDef {
   size: WidgetSize;
   /** The smallest size its contents still read at; smaller sizes are not offered. */
   minSize?: WidgetSize;
+  /**
+   * Shows today's figures whatever month is picked (balances, holdings, the
+   * last 7 days). Tagged "Today" while the dashboard looks at a past month.
+   */
+  live?: boolean;
   /** Off in the default layout; still available from "Add widgets". */
   hiddenByDefault?: boolean;
 }
@@ -30,33 +35,33 @@ export interface WidgetDef {
  * layouts pick it up automatically (see `resolveLayout`).
  */
 export const WIDGETS: WidgetDef[] = [
-  { id: 'balance', title: 'Total balance', size: 's' },
-  { id: 'wallet', title: 'My wallet', size: 's' },
+  { id: 'balance', title: 'Total balance', size: 's', live: true },
+  { id: 'wallet', title: 'My wallet', size: 's', live: true },
   { id: 'insight', title: 'Insight', size: 's' },
-  { id: 'week', title: 'Last 7 days', size: 'l', minSize: 'm' },
+  { id: 'week', title: 'Last 7 days', size: 'l', minSize: 'm', live: true },
   { id: 'budgetMonth', title: 'Budget this month', size: 's' },
   { id: 'income', title: 'Income', size: 's' },
-  { id: 'goalsSaved', title: 'Saved toward goals', size: 's' },
-  { id: 'spentWeek', title: 'Spent this week', size: 's' },
+  { id: 'goalsSaved', title: 'Saved toward goals', size: 's', live: true },
+  { id: 'spentWeek', title: 'Spent this week', size: 's', live: true },
   { id: 'inOut', title: 'Money in and out', size: 's' },
   { id: 'cashFlow', title: 'Cash flow', size: 'l', minSize: 'm' },
-  { id: 'tileNetWorth', title: 'Net worth trend', size: 's' },
-  { id: 'tileInvestments', title: 'Investments trend', size: 's' },
-  { id: 'tileLiabilities', title: 'Liabilities trend', size: 's' },
+  { id: 'tileNetWorth', title: 'Net worth trend', size: 's', live: true },
+  { id: 'tileInvestments', title: 'Investments trend', size: 's', live: true },
+  { id: 'tileLiabilities', title: 'Liabilities trend', size: 's', live: true },
   { id: 'spendCategory', title: 'Spending by category', size: 's' },
-  { id: 'goals', title: 'Goals', size: 's' },
+  { id: 'goals', title: 'Goals', size: 's', live: true },
   { id: 'budgets', title: 'Budgets', size: 's' },
   { id: 'dailySpend', title: 'Daily spending', size: 'xl', minSize: 'm' },
-  { id: 'netWorth', title: 'Net worth', size: 'xl', minSize: 'm' },
+  { id: 'netWorth', title: 'Net worth', size: 'xl', minSize: 'm', live: true },
   { id: 'thisMonth', title: 'This month', size: 'xl', minSize: 'm' },
-  { id: 'performance', title: 'Portfolio performance', size: 'xl', minSize: 'm' },
-  { id: 'allocation', title: 'Allocation', size: 'm' },
-  { id: 'movers', title: 'Movers', size: 'm' },
-  { id: 'health', title: 'Financial health', size: 'm' },
-  { id: 'insights', title: 'Insights list', size: 'm' },
-  { id: 'holdings', title: 'Top holdings', size: 'l', minSize: 'm' },
-  { id: 'bills', title: 'Upcoming bills', size: 's' },
-  { id: 'latest', title: 'Latest transactions', size: 's' },
+  { id: 'performance', title: 'Portfolio performance', size: 'xl', minSize: 'm', live: true },
+  { id: 'allocation', title: 'Allocation', size: 'm', live: true },
+  { id: 'movers', title: 'Movers', size: 'm', live: true },
+  { id: 'health', title: 'Financial health', size: 'm', live: true },
+  { id: 'insights', title: 'Insights list', size: 'm', live: true },
+  { id: 'holdings', title: 'Top holdings', size: 'l', minSize: 'm', live: true },
+  { id: 'bills', title: 'Upcoming bills', size: 's', live: true },
+  { id: 'latest', title: 'Latest transactions', size: 's', live: true },
   { id: 'monthTiles', title: 'Month summary tiles', size: 'm', hiddenByDefault: true },
 ];
 
@@ -170,3 +175,6 @@ export function packSpans(items: { id: string; size: WidgetSize }[], cols: Recor
   closeRow();
   return span;
 }
+
+/** Whether a widget shows today's figures regardless of the picked month. */
+export const isLiveWidget = (id: string): boolean => !!WIDGETS.find((w) => w.id === id)?.live;

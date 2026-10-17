@@ -7,7 +7,7 @@ import { useFmt } from '@/lib/useFmt';
 import { useNow } from '@/lib/useNow';
 import { D, ZERO } from '@/lib/money';
 import { dailyFlow, describeChange } from '@/domain/dailyFlow';
-import { currentMonth } from '@/domain/period';
+import { currentMonth, monthName, type DateRange } from '@/domain/period';
 import { budgetRollover, evaluateBudget, spentForCategory } from '@/domain/finance';
 import { SectionInfo } from '../Hint';
 
@@ -17,8 +17,12 @@ interface Insight { figure: string; title: string; detail: string }
  * One finding at a time, large: the week against last week, the month's
  * budget, the biggest category. Every figure is computed from the vault; an
  * insight with nothing to say is left out rather than padded.
+ *
+ * The month is the dashboard's selected one. Looking back at a past month,
+ * the card speaks about that month only: the "this week" finding is about
+ * today, so it is left out rather than mixed in.
  */
-export function InsightCard() {
+export function InsightCard({ month: picked }: { month?: DateRange }) {
   const txns = useApp((s) => s.txns);
   const budgets = useApp((s) => s.budgets);
   const categories = useApp((s) => s.categories);
@@ -32,11 +36,15 @@ export function InsightCard() {
     const out: Insight[] = [];
     const money = (v: Parameters<typeof fmt.money>[0]) => (ghost ? '••••' : fmt.money(v));
 
+    const month = picked ?? currentMonth(now);
+    const isCurrent = now >= month.start && now <= month.end;
+    const name = monthName(month.start);
+
     const f = dailyFlow(txns, now, 14);
     const thisWeek = f.slice(7).reduce((s, d) => s.plus(d.expense), ZERO);
     const lastWeek = f.slice(0, 7).reduce((s, d) => s.plus(d.expense), ZERO);
     const change = describeChange(thisWeek, lastWeek);
-    if (change) {
+    if (change && isCurrent) {
       const multiple = change.text.endsWith('×');
       out.push({
         figure: change.text,
@@ -47,7 +55,6 @@ export function InsightCard() {
       });
     }
 
-    const month = currentMonth(now);
     if (budgets.length > 0) {
       let spent = ZERO, limit = ZERO;
       for (const b of budgets) {
@@ -56,10 +63,15 @@ export function InsightCard() {
       }
       if (!limit.isZero()) {
         const left = Math.max(0, Math.ceil((month.end - now) / 86_400_000));
+        const over = spent.minus(limit);
         out.push({
           figure: `${spent.div(limit).times(100).toNumber().toFixed(0)}%`,
-          title: 'Of this month’s budget used.',
-          detail: `${money(limit.minus(spent).isNegative() ? ZERO : limit.minus(spent))} left to spend over the next ${left} day${left === 1 ? '' : 's'}.`,
+          title: isCurrent ? 'Of this month’s budget used.' : `Of ${name}’s budget used.`,
+          detail: isCurrent
+            ? `${money(over.gt(0) ? ZERO : limit.minus(spent))} left to spend over the next ${left} day${left === 1 ? '' : 's'}.`
+            : over.gt(0)
+              ? `${money(over)} over the ${money(limit)} budgeted.`
+              : `${money(limit.minus(spent))} of ${money(limit)} left unspent.`,
         });
       }
     }
@@ -73,15 +85,15 @@ export function InsightCard() {
     }
     const top = [...byCat.entries()].sort((a, b) => b[1].cmp(a[1]))[0];
     if (top && !total.isZero()) {
-      const name = categories.find((c) => c.id === top[0])?.name ?? 'One category';
+      const cat = categories.find((c) => c.id === top[0])?.name ?? 'One category';
       out.push({
         figure: `${top[1].div(total).times(100).toNumber().toFixed(0)}%`,
-        title: `Of this month’s spending went on ${name}.`,
-        detail: `${money(top[1])} of ${money(total)} spent so far this month.`,
+        title: `Of ${isCurrent ? 'this month' : name}’s spending went on ${cat}.`,
+        detail: `${money(top[1])} of ${money(total)} spent ${isCurrent ? 'so far this month' : `in ${name}`}.`,
       });
     }
     return out;
-  }, [txns, budgets, categories, ghost, fmt, now]);
+  }, [txns, budgets, categories, ghost, fmt, now, picked]);
 
   if (insights.length === 0) return null;
   const cur = insights[Math.min(i, insights.length - 1)];

@@ -8,6 +8,9 @@ import { LatestTransactions } from './LatestTransactions';
 import { BalanceHero } from './BalanceHero';
 import { WeekFlowCard } from './WeekFlowCard';
 import { InsightCard } from './InsightCard';
+import { MonthTiles } from './MonthTiles';
+import { BudgetRingCard } from './BudgetRingCard';
+import { shiftMonths } from '@/domain/period';
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...rest }: { children: React.ReactNode; href: string }) => (
@@ -152,5 +155,43 @@ describe('insights', () => {
     render(<InsightCard />);
     await screen.findByText('18%');
     expect(screen.queryByText(/₹118/)).not.toBeInTheDocument();
+  });
+});
+
+describe('a past month picked on the dashboard', () => {
+  const lastMonth = () => shiftMonths(Date.now(), -1);
+  const inLastMonth = () => lastMonth().start + 5 * 86_400_000;
+  const recent = () => { const d = new Date(); d.setHours(12, 0, 0, 0); return d.getTime() - 86_400_000; };
+  const longName = (ms: number) => new Date(ms).toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+
+  test('insights speak about that month and leave out "this week"', async () => {
+    seed({
+      categories: [{ id: 'food', vaultId: 'v', name: 'Food', icon: 'Utensils' }],
+      txns: [
+        txn('a', recent(), { amount: '118' }),
+        txn('b', recent() - 8 * 86_400_000, { amount: '100' }),
+        txn('c', inLastMonth(), { amount: '900' }),
+      ],
+    });
+    render(<InsightCard month={lastMonth()} />);
+    expect(await screen.findByText(new RegExp(`Of ${longName(lastMonth().start)}’s spending went on Food`))).toBeInTheDocument();
+    expect(screen.queryByText(/than last week/)).not.toBeInTheDocument();
+  });
+
+  test('month tiles total that month, not this one', async () => {
+    seed({ txns: [txn('a', inLastMonth(), { amount: '900' }), txn('b', recent(), { amount: '50' })] });
+    render(<MonthTiles month={lastMonth()} />);
+    expect(await screen.findByText('₹900.00')).toBeInTheDocument();
+  });
+
+  test('the budget card names the month instead of "this month"', async () => {
+    seed({
+      categories: [{ id: 'food', vaultId: 'v', name: 'Food', icon: 'Utensils' }],
+      budgets: [{ id: 'b1', vaultId: 'v', categoryId: 'food', amountLimit: '1000', rolloverEnabled: false, alertThresholdPct: 90 }],
+      txns: [txn('a', inLastMonth(), { amount: '400' })],
+    });
+    render(<BudgetRingCard month={lastMonth()} />);
+    expect(await screen.findByText(`Budget · ${longName(lastMonth().start)}`)).toBeInTheDocument();
+    expect(screen.getByText('40% used')).toBeInTheDocument();
   });
 });
