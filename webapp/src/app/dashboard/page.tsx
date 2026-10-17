@@ -45,6 +45,7 @@ import { DashboardStarter } from '@/components/DashboardStarter';
 import { Hint, CardTitle } from '@/components/Hint';
 import { Stagger, StaggerItem } from '@/components/motion';
 import { PhoneHome, DesktopHome } from '@/components/home/PhoneHome';
+import { ChartBoard } from '@/components/home/ChartBoard';
 
 /** Ranges the snapshot history can answer. */
 const RANGES = [
@@ -291,6 +292,20 @@ export default function DashboardPage() {
 
       {/* Desktop: the same everyday-money cards in a 12-column row. */}
       {!isEmptyVault && <DesktopHome />}
+
+      {/* The chart board: one card per question, each drawn a different way.
+          Waits for the clock, since "this week" and "today" mean nothing at 0. */}
+      {!isEmptyVault && now > 0 && (
+        <StaggerItem>
+          <ChartBoard
+            month={month}
+            now={now}
+            netWorth={cash.plus(summary.current).minus(liab)}
+            investments={summary.current}
+            liabilities={liab}
+          />
+        </StaggerItem>
+      )}
 
       <StaggerItem>
         {isEmptyVault ? <DashboardStarter /> : (
