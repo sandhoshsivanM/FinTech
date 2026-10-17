@@ -46,7 +46,8 @@ export function DesktopHome() {
         <QuickActions />
       </div>
       <div className="col-span-6 min-[1200px]:col-span-4"><WalletStack /></div>
-      <div className="col-span-6 min-[1200px]:col-span-4"><InsightCard /></div>
+      {/* Stretched to the row, so the card fills the height its neighbours set. */}
+      <div className="col-span-6 min-[1200px]:col-span-4 self-stretch"><InsightCard /></div>
       <div className="col-span-12 min-[1200px]:col-span-8"><WeekFlowCard /></div>
       <div className="col-span-12 min-[1200px]:col-span-4"><BudgetRingCard /></div>
     </StaggerItem>

@@ -89,7 +89,7 @@ export function InsightCard() {
   return (
     <section
       aria-label="Insights"
-      className="relative overflow-hidden rounded-[26px] p-5 text-white shadow-[0_18px_34px_-18px_rgba(21,38,91,0.7)]"
+      className="relative overflow-hidden rounded-[26px] p-5 text-white shadow-[0_18px_34px_-18px_rgba(21,38,91,0.7)] h-full flex flex-col"
       style={{ background: 'var(--insight-bg)' }}
     >
       <div className="relative flex items-center gap-1.5">
@@ -104,7 +104,7 @@ export function InsightCard() {
         <p className="mt-1.5 text-[13px] text-white/80 leading-relaxed">{cur.detail}</p>
       </div>
       {insights.length > 1 && (
-        <div className="relative mt-5 grid gap-2" style={{ gridTemplateColumns: `repeat(${insights.length}, 1fr)` }}>
+        <div className="relative mt-auto pt-5 grid gap-2" style={{ gridTemplateColumns: `repeat(${insights.length}, 1fr)` }}>
           {insights.map((x, k) => (
             <button
               key={k}

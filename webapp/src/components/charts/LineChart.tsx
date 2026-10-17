@@ -134,6 +134,16 @@ export function LineChart({
             <pattern id={`${gradId}-dots`} width="9" height="9" patternUnits="userSpaceOnUse">
               <circle cx="2" cy="2" r="1" fill={color} fillOpacity="0.35" />
             </pattern>
+            {/* The draw-in is a left-to-right reveal, not a stroke-dash trick.
+                `pathLength` dashes with `non-scaling-stroke` on a stretched
+                viewBox are measured differently by Firefox, which ended the
+                line about two-thirds of the way across. */}
+            <clipPath id={`${gradId}-reveal`}>
+              <rect
+                x={-10} y={-20} width={VB_W + 20} height={height + 40}
+                style={{ transform: `scaleX(${progress})`, transformOrigin: '0 0', transition: `transform ${transition}` }}
+              />
+            </clipPath>
           </defs>
 
           {GRID_BANDS.map((f) => {
@@ -156,10 +166,7 @@ export function LineChart({
             strokeLinecap={CHART.lineCap}
             strokeLinejoin={CHART.lineJoin}
             vectorEffect="non-scaling-stroke"
-            pathLength={1}
-            strokeDasharray={1}
-            strokeDashoffset={1 - progress}
-            style={{ transition: `stroke-dashoffset ${transition}` }}
+            clipPath={`url(#${gradId}-reveal)`}
           />
 
         </svg>
