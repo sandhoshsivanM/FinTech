@@ -10,7 +10,7 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
-import type { Holding, Liability, Txn } from '@/lib/types';
+import type { Account, Holding, Liability, Txn } from '@/lib/types';
 import DashboardPage from './page';
 
 vi.mock('next/link', () => ({
@@ -31,6 +31,10 @@ const hold = (over: Partial<Holding> = {}): Holding => ({
 
 const loan = (principal: string): Liability => ({
   id: 'l1', vaultId: 'v', name: 'Car loan', kind: 'loan', principal, aprPct: '9',
+});
+
+const bank = (openingBalance: string): Account => ({
+  id: 'acct-bank', vaultId: 'v', name: 'Savings', type: 'asset', subtype: 'bank', openingBalance,
 });
 
 function seed(over: Partial<Parameters<typeof useApp.setState>[0]> = {}) {
@@ -127,5 +131,18 @@ describe('the terms explain themselves', () => {
     expect(screen.getByRole('tooltip')).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+});
+
+describe('cash is the ledger figure', () => {
+  test('an opening balance counts toward cash and net worth', () => {
+    // The regression this guards: cash was a sum of transactions, so a bank
+    // account opened with ₹50,000 and nothing spent yet showed ₹0 here while
+    // Accounts, the balance hero and the daily snapshot all said ₹50,000.
+    seed({ accounts: [bank('50000')] });
+    render(<DashboardPage />);
+    const card = screen.getByRole('heading', { name: 'Net worth' }).closest('section') as HTMLElement;
+    // Once as the headline, once as the Cash part beneath it.
+    expect(within(card).getAllByText(/50,000/)).toHaveLength(2);
   });
 });
