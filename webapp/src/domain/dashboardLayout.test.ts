@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
-  WIDGETS, defaultLayout, moveWidget, nudgeWidget, resolveLayout, setWidgetHidden, setWidgetSize,
+  WIDGETS, allowedSizes, defaultLayout, moveWidget, packSpans, nudgeWidget, resolveLayout, setWidgetHidden, setWidgetSize,
 } from './dashboardLayout';
 
 const ids = (l: { id: string }[]) => l.map((x) => x.id);
@@ -52,9 +52,32 @@ describe('editing', () => {
     expect(nudgeWidget(base, 'balance', -1)).toBe(base);
   });
 
+  test('a wide widget cannot go below its minimum size, saved or set', () => {
+    expect(allowedSizes('netWorth')).toEqual(['m', 'l', 'xl']);
+    expect(allowedSizes('balance')).toEqual(['s', 'm', 'l', 'xl']);
+    expect(setWidgetSize(base, 'netWorth', 's').find((x) => x.id === 'netWorth')?.size).toBe('m');
+    expect(resolveLayout([{ id: 'netWorth', size: 's', hidden: false }]).find((x) => x.id === 'netWorth')?.size).toBe('m');
+  });
+
   test('size and visibility change only the named widget', () => {
     const l = setWidgetSize(base, 'goals', 'l');
     expect(l.find((x) => x.id === 'goals')?.size).toBe('l');
     expect(l.filter((x) => x.id !== 'goals')).toEqual(base.filter((x) => x.id !== 'goals'));
+  });
+});
+
+describe('packSpans', () => {
+  const S = { s: 4, m: 6, l: 8, xl: 12 } as const;
+  test('the last card of a short row grows to fill it', () => {
+    // M (6) + S (4) leaves 2; the next M does not fit, so the S grows to 6.
+    expect(packSpans([{ id: 'a', size: 'm' }, { id: 'b', size: 's' }, { id: 'c', size: 'm' }], S, 12))
+      .toEqual({ a: 6, b: 6, c: 12 });
+  });
+  test('full rows are left alone', () => {
+    expect(packSpans([{ id: 'a', size: 's' }, { id: 'b', size: 's' }, { id: 'c', size: 's' }, { id: 'd', size: 'l' }, { id: 'e', size: 's' }], S, 12))
+      .toEqual({ a: 4, b: 4, c: 4, d: 8, e: 4 });
+  });
+  test('a size wider than the grid is capped', () => {
+    expect(packSpans([{ id: 'a', size: 'xl' }], { s: 3, m: 3, l: 6, xl: 6 }, 6)).toEqual({ a: 6 });
   });
 });

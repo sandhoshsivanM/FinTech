@@ -5,8 +5,9 @@ describe('centreSquare', () => {
   test('crops the middle of a landscape image', () => {
     expect(centreSquare(4000, 3000)).toEqual({ sx: 500, sy: 0, side: 3000 });
   });
-  test('crops the middle of a portrait image', () => {
-    expect(centreSquare(1080, 1920)).toEqual({ sx: 0, sy: 420, side: 1080 });
+  test('crops a portrait image nearer the top, where the face is', () => {
+    // 840px to spare; 20% of it above the crop, so the head is kept.
+    expect(centreSquare(1080, 1920)).toEqual({ sx: 0, sy: 168, side: 1080 });
   });
   test('a square image is untouched', () => {
     expect(centreSquare(512, 512)).toEqual({ sx: 0, sy: 0, side: 512 });

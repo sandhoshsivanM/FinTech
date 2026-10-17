@@ -374,7 +374,7 @@ export function useChartBoardWidgets({ month, now, netWorth, investments, liabil
     ),
       dailySpend: (
       <BoardCard title="Daily spending" sub={month.label} href="/calendar">
-        <div className="grid gap-6 min-[720px]:grid-cols-[minmax(0,1fr)_220px] items-start">
+        <div className="grid gap-6 @[620px]:grid-cols-[minmax(0,1fr)_220px] items-start">
           <SpendCalendar
             days={data.days.map((d) => ({ date: d.date, value: d.spent ? d.spent.toNumber() : null }))}
             firstWeekday={new Date(month.start).getDay()}

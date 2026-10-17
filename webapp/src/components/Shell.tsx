@@ -540,9 +540,20 @@ function ProfileMenu() {
         data-tour="profile"
         onClick={() => setOpen((o) => !o)}
         aria-label="Profile menu"
-        className="focus-ring w-8 h-8 grid place-items-center rounded-full bg-accent text-[var(--primary-fg)] overflow-hidden"
+        // The same 36px slot as the icon buttons beside it, so the avatar sits
+        // on their centre line; the face itself is 30px inside it.
+        className="focus-ring w-9 h-9 grid place-items-center rounded-full"
       >
-        <ProfileFace profile={active} />
+        <span
+          className={clsx(
+            'w-[30px] h-[30px] grid place-items-center rounded-full overflow-hidden',
+            // A photo gets a hairline edge instead of the accent disc, which
+            // showed as a pale fringe around it in dark mode.
+            active?.photo ? 'ring-1 ring-[var(--line-strong)]' : 'bg-accent text-[var(--primary-fg)]',
+          )}
+        >
+          <ProfileFace profile={active} />
+        </span>
       </button>
       {open && (
         <>

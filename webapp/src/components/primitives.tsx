@@ -184,7 +184,10 @@ export function Metric({
         <span className="truncate">{label}</span>
         {hint && <Hint term={hint} />}
       </div>
-      <div className="mt-1">
+      {/* Truncated rather than overflowing: in a narrow card a long figure
+          must not spill into its neighbour. The full figure is still in the
+          accessible name and in the Net worth total above. */}
+      <div className="mt-1 min-w-0 truncate">
         {untracked ? (
           <MoneyValue size={size} hidden={false}>
             <span className="text-muted">—</span>

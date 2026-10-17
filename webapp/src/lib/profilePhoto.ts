@@ -12,11 +12,18 @@ export const PHOTO_SIZE = 256;
 /** Refuse anything bigger before decoding it: a 40MB RAW file is not a profile photo. */
 export const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
 
-/** The largest centred square inside a `w × h` image. */
+/**
+ * The largest square inside a `w × h` image: centred across a wide photo, but
+ * nearer the top of a tall one. A portrait photo has the face in its upper
+ * part, and a dead-centre crop keeps the chin and cuts off the head.
+ */
 export function centreSquare(w: number, h: number): { sx: number; sy: number; side: number } {
   const side = Math.min(w, h);
-  return { sx: Math.floor((w - side) / 2), sy: Math.floor((h - side) / 2), side };
+  return { sx: Math.floor((w - side) / 2), sy: Math.floor((h - side) * PORTRAIT_TOP_BIAS), side };
 }
+
+/** Where the crop sits in a tall photo's spare height: 0 = top edge, 0.5 = centre. */
+export const PORTRAIT_TOP_BIAS = 0.2;
 
 export class PhotoError extends Error {}
 

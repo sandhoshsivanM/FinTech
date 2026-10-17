@@ -309,7 +309,7 @@ export default function DashboardPage() {
               subtracted from the headline, which left anyone carrying a loan to
               work out the shortfall themselves — or to conclude the total was
               simply wrong. */}
-          <MetricRow className="mt-6">
+          <MetricRow className="mt-6" cols="grid-cols-2 @[620px]:grid-cols-3 @[940px]:grid-cols-5">
             <Metric label="Cash" value={fmt.money(cash)} hidden={ghost} hint="cash"
               sub={`${moneyAccountCount} account${moneyAccountCount === 1 ? '' : 's'}`} />
             {/* A vault with transactions but no holdings is a normal state, and
@@ -339,7 +339,7 @@ export default function DashboardPage() {
     ),
     thisMonth: (
         <Section title="This month" info="dashboard.thisMonth" description={month.label}>
-          <div className="grid gap-x-10 md:grid-cols-2">
+          <div className="grid gap-x-10 @[560px]:grid-cols-2">
             <div>
               <LedgerLine label="Income" value={fmt.money(period.income)} hidden={ghost} />
               <LedgerLine label="Expenses" value={fmt.money(period.expense)} hidden={ghost} />
@@ -352,7 +352,7 @@ export default function DashboardPage() {
                 tone="delta" sign={period.net.toNumber()} emphasis hidden={ghost}
               />
             </div>
-            <div className="mt-5 md:mt-0 flex flex-col justify-center gap-1">
+            <div className="mt-5 @[560px]:mt-0 flex flex-col justify-center gap-1">
               <div className="flex items-center gap-1 text-[11px] font-normal text-muted">
                 Savings rate
                 <Hint term="savingsRate" />
