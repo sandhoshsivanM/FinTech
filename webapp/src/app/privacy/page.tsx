@@ -112,7 +112,7 @@ export default function PrivacyPage() {
 
       <Section icon={<Server size={17} />} title="What leaves your device">
         <p>
-          There is no Khazana server. No screen in the product uploads your records anywhere.
+          No Khazana server holds your data. No screen in the product uploads your records anywhere.
           The requests the app can make are these, and no others:
         </p>
         <div className="overflow-x-auto">
@@ -127,6 +127,7 @@ export default function PrivacyPage() {
             <tbody className="align-top">
               {[
                 ['query1.finance.yahoo.com', 'Share and ETF quotes', 'The ticker symbol only'],
+                ['khazana-app.netlify.app (web only)', 'Relays the Yahoo quote request, since a browser cannot call Yahoo directly. Stores and logs nothing.', 'The ticker symbol only'],
                 ['api.twelvedata.com', 'Share and ETF quotes', 'The ticker symbol only'],
                 ['www.alphavantage.co', 'Share and ETF quotes', 'The ticker symbol only'],
                 ['www.amfiindia.com', 'Mutual-fund NAVs', 'Nothing — a public file is downloaded'],

@@ -1,6 +1,6 @@
 'use client';
 /**
- * Whether the desktop app may fetch live prices.
+ * Whether the app may fetch live prices.
  *
  * **Defaults to ON, and is opt-out.** That is the opposite of `useDemoData()`
  * next door, and the difference is deliberate: the demo feed defaults off
