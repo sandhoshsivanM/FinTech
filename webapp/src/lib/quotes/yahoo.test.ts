@@ -1,5 +1,5 @@
-import { describe, test, expect } from 'vitest';
-import { parseYahooChart, yahooTicker } from './yahoo';
+import { describe, test, expect, vi, afterEach } from 'vitest';
+import { fetchQuotes, parseYahooChart, PROXY_ENDPOINT, yahooTicker } from './yahoo';
 import type { Holding } from '@/lib/types';
 
 const h = (over: Partial<Holding>): Holding => ({
@@ -110,5 +110,27 @@ describe('parseYahooChart', () => {
       expect(() => parseYahooChart(b)).not.toThrow();
       expect(parseYahooChart(b)).toBeNull();
     }
+  });
+});
+
+describe('fetchQuotes in a browser', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  test('asks the same-origin relay, never Yahoo directly', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(chart({ regularMarketPrice: 1500, chartPreviousClose: 1480 }))));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const r = await fetchQuotes([h({ symbol: 'INFY', exchange: 'NSE' })]);
+
+    expect(fetchMock).toHaveBeenCalledWith(`${PROXY_ENDPOINT}?t=INFY.NS`);
+    expect(r.quotes.get('INFY.NS')).toEqual({ price: '1500', previousClose: '1480' });
+    expect(r.failed).toBe(0);
+  });
+
+  test('a relay failure counts as failed, not as a crash', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 502 })));
+    const r = await fetchQuotes([h({})]);
+    expect(r.quotes.size).toBe(0);
+    expect(r.failed).toBe(1);
   });
 });

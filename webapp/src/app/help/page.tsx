@@ -83,11 +83,12 @@ export default function HelpPage() {
                 <li className="flex gap-2"><Chip tone="success">No server</Chip> No account, and nowhere to upload your vault to.</li>
                 <li className="flex gap-2"><Chip tone="success">No analytics</Chip> No telemetry of any kind.</li>
                 <li className="flex gap-2"><Chip tone="violet"><FlaskConical size={11} />Demo</Chip> Market surfaces are generated locally, and off by default.</li>
-                {/* Scoped honestly: this app fetches nothing, but the mobile
-                    app does call price and FX providers on request. Claiming
-                    "never touches the network" for the whole product would be
-                    false, and the privacy policy a reviewer reads says so. */}
-                <li className="flex gap-2"><Chip tone="success">This app</Chip> fetches nothing at all. The mobile app calls price and exchange-rate providers only when you refresh — never carrying anything about you.</li>
+                {/* Scoped honestly: the only request this app makes is a
+                    live-price refresh, and the mobile app also calls price and
+                    FX providers on request. Claiming "never touches the
+                    network" would be false, and the privacy policy a reviewer
+                    reads says so. */}
+                <li className="flex gap-2"><Chip tone="success">Prices only</Chip> The only request Khazana makes is a live-price refresh, carrying a ticker symbol and nothing about you. Turn live prices off in Settings and nothing leaves at all.</li>
               </ul>
               <div className="mt-4 flex gap-2 flex-wrap">
                 <Button variant="soft"><Link href="/settings" className="flex items-center gap-2"><Download size={15} />Export a backup</Link></Button>

@@ -18,7 +18,6 @@ import {
 import { GlassCard, SectionHeader, Button, Field, Select, PageIntro, Input, Segmented } from '@/components/ui';
 import { useDemoData } from '@/components/DemoBadge';
 import { useLivePrices } from '@/lib/quotes/useLivePrices';
-import { quotesAvailable } from '@/lib/quotes/yahoo';
 import { useConfirm } from '@/components/Confirm';
 import { STORE, type FxRate, type ProfileKind } from '@/lib/types';
 import { NumberInput } from '@/components/NumberInput';
@@ -674,13 +673,12 @@ export default function SettingsPage() {
  * The live-price switch.
  *
  * Defaults ON and is opt-out — see `lib/quotes/useLivePrices.ts` for why this
- * differs from the demo switch below. Available in the desktop app only: Yahoo
- * sends no CORS headers, so the browser build cannot make the request at all,
- * and the row says so rather than offering a control that does nothing.
+ * differs from the demo switch below. Works on both builds: the desktop app
+ * asks Yahoo directly, the web app asks Khazana's same-origin relay, which
+ * asks Yahoo (see `lib/quotes/proxy.ts`).
  */
 function LivePricesRow() {
   const [on, setOn] = useLivePrices();
-  const available = quotesAvailable();
 
   return (
     <div className="pt-4 border-t border-[var(--line)]">
@@ -691,34 +689,24 @@ function LivePricesRow() {
         <div className="flex-1 min-w-0">
           <div className="font-medium text-sm">Live prices</div>
           <div className="text-xs text-muted mt-0.5 leading-relaxed">
-            {available ? (
-              <>
-                Fetches share and ETF prices from <b className="text-ink font-semibold">Yahoo Finance</b> when you tap
-                refresh. The request carries the ticker symbol and nothing else — not your holdings, not their value,
-                not anything that identifies you. It is the only network request Khazana makes, and the desktop app is
-                permitted to reach that one address and no other. Turn it off and prices come only from a broker import
-                or what you type in.
-              </>
-            ) : (
-              <>
-                Available in the Khazana desktop app. A browser cannot fetch from Yahoo Finance directly, so on the web
-                prices come from a broker import or what you type in.
-              </>
-            )}
+            Fetches share and ETF prices from <b className="text-ink font-semibold">Yahoo Finance</b> when you tap
+            refresh. The request carries the ticker symbol and nothing else — not your holdings, not their value, not
+            anything that identifies you. On the web it passes through a small Khazana relay that stores and logs
+            nothing; the desktop app asks Yahoo directly. It is the only network request Khazana makes. Turn it off and
+            prices come only from a broker import or what you type in.
           </div>
         </div>
         <button
           role="switch"
-          aria-checked={on && available}
+          aria-checked={on}
           aria-label="Live prices"
-          disabled={!available}
           onClick={() => setOn(!on)}
           className={`focus-ring relative w-[46px] h-7 rounded-full shrink-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-colors duration-[250ms] ${
-            !available ? 'bg-fill-strong opacity-40 cursor-not-allowed' : on ? 'bg-[var(--data-green)]' : 'bg-[color-mix(in_srgb,var(--ink)_14%,transparent)]'
+            on ? 'bg-[var(--data-green)]' : 'bg-[color-mix(in_srgb,var(--ink)_14%,transparent)]'
           }`}
         >
           <span
-            className={`absolute top-[3px] left-[3px] w-[22px] h-[22px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-transform duration-[250ms] ${on && available ? 'translate-x-[18px]' : ''}`}
+            className={`absolute top-[3px] left-[3px] w-[22px] h-[22px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.25)] transition-transform duration-[250ms] ${on ? 'translate-x-[18px]' : ''}`}
           />
         </button>
       </div>

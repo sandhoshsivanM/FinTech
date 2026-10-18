@@ -1,7 +1,8 @@
 # Khazana — static export hosting.
 # `npm run build` emits ./out (next.config.ts sets output:"export", trailingSlash:true),
-# so there is nothing to run server-side and no redirect rules are needed: every route
-# already ships as <route>/index.html, plus a 404.html.
+# so no redirect rules are needed: every route already ships as <route>/index.html,
+# plus a 404.html. The one piece of server-side code is the stateless quote relay in
+# netlify/functions/quote.ts (see src/lib/quotes/proxy.ts).
 
 [build]
   command = "npm run build"
@@ -9,6 +10,9 @@
 
 [build.environment]
   NODE_VERSION = "24"
+
+[functions]
+  directory = "netlify/functions"
 
 # The service worker file itself must never be served stale, or a cached copy can
 # pin an old shell across deploys. (sw.js is network-first internally; this covers
@@ -56,9 +60,10 @@
     # step that hashes the script into the header. The hash route is the right
     # follow-up; this is strictly better than no policy at all.
     #
-    # `connect-src 'self'` is the load-bearing line: this client fetches
-    # nothing, so anything trying to exfiltrate a decrypted vault to another
-    # origin is blocked outright.
+    # `connect-src 'self'` is the load-bearing line: the only request this
+    # client makes is to its own quote relay (/.netlify/functions/quote, which
+    # receives a ticker symbol and nothing else), so anything trying to
+    # exfiltrate a decrypted vault to another origin is blocked outright.
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; manifest-src 'self'; worker-src 'self'"
 
     # Two years, preloadable. The vault requires a secure context anyway —

@@ -4,38 +4,41 @@
  * ── Scope, and why it is this narrow ───────────────────────────────────────
  *
  * This is the ONLY module in the web/desktop client that talks to the network,
- * and it talks to exactly one host. That is enforced in three places, not one:
+ * and it reaches exactly one upstream host. That is enforced in three places:
  *
- *   1. Here — `CHART_ENDPOINT` is a constant and nothing takes a URL argument.
- *   2. `src-tauri/capabilities/default.json` — the HTTP permission is scoped to
- *      `https://query1.finance.yahoo.com/*`, so a request anywhere else is
- *      refused by Tauri itself rather than by our good intentions.
- *   3. The browser build cannot reach it at all (see below).
+ *   1. Here — the endpoints are constants and nothing takes a URL argument.
+ *   2. `src-tauri/capabilities/default.json` — the desktop HTTP permission is
+ *      scoped to `https://query1.finance.yahoo.com/*`, so a request anywhere
+ *      else is refused by Tauri itself rather than by our good intentions.
+ *   3. The web CSP is `connect-src 'self'` (netlify.toml): the browser build can
+ *      reach its own origin and nothing else.
  *
  * The request carries a ticker symbol and nothing else: no vault id, no
  * quantity, no holding value, no identifier of any kind. Yahoo learns which
  * instruments are being looked at, never how much of them anyone owns. This is
- * the behaviour the privacy page has always described.
+ * the behaviour the privacy page describes.
  *
- * ── Why desktop only ───────────────────────────────────────────────────────
+ * ── Two routes to the same endpoint ────────────────────────────────────────
  *
  * Yahoo's chart endpoint sends no CORS headers, so a browser `fetch` to it
- * fails before it leaves the page. The desktop shell has no such limit: the
- * Tauri HTTP plugin performs the request in Rust, outside the webview, where
- * the same-origin policy does not apply.
+ * fails before it leaves the page.
  *
- * The obvious fix for the browser — a proxy route — is not available either.
- * The app is built with `output: 'export'` (next.config.ts), and Next's static
- * export renders Route Handlers once at build time and refuses any handler that
- * reads the `Request`. A proxy is both of those things. Adding a server to get
- * around it would contradict the product's no-server promise, so the browser
- * build keeps manual entry and CSV import, and `quotesAvailable()` tells the UI
- * to say so rather than offering a button that cannot work.
+ * Desktop: the Tauri HTTP plugin performs the request in Rust, outside the
+ * webview, where the same-origin policy does not apply.
+ *
+ * Web: the request goes to `/.netlify/functions/quote` on Khazana's own origin,
+ * a stateless relay (`proxy.ts`) that forwards the ticker to Yahoo and returns
+ * the answer untouched. It is not a Next route handler — `output: 'export'`
+ * cannot serve one — but a Netlify Function deployed beside the static files.
+ * It holds no data and keeps no log, so "no server holds your data" stays true.
  */
 import { isTauri } from '@/lib/notify';
 import type { AssetType, Holding } from '@/lib/types';
 
-const CHART_ENDPOINT = 'https://query1.finance.yahoo.com/v8/finance/chart/';
+import { CHART_ENDPOINT } from './proxy';
+
+/** The web build's same-origin relay. See `proxy.ts`. */
+export const PROXY_ENDPOINT = '/.netlify/functions/quote';
 
 /**
  * Asset types Yahoo can price by ticker.
@@ -129,9 +132,13 @@ function numeric(v: unknown): string | null {
   return null;
 }
 
-/** Whether this build can fetch quotes at all. False in a browser. */
+/**
+ * Whether this build can fetch quotes at all: in the desktop app, and in a
+ * browser page (through the relay). False only during prerender, where there
+ * is no window to fetch from.
+ */
 export function quotesAvailable(): boolean {
-  return isTauri();
+  return typeof window !== 'undefined';
 }
 
 /**
@@ -143,12 +150,15 @@ export function quotesAvailable(): boolean {
  */
 async function fetchOne(ticker: string): Promise<Quote | null> {
   try {
-    // Lazily imported so the browser bundle never carries the Tauri HTTP
-    // client. Its presence there would imply the web app makes requests it
-    // cannot make.
-    const { fetch: tauriFetch } = await import('@tauri-apps/plugin-http');
-    const url = `${CHART_ENDPOINT}${encodeURIComponent(ticker)}?interval=1d&range=1d`;
-    const res = await tauriFetch(url, { method: 'GET' });
+    let res: Response;
+    if (isTauri()) {
+      // Lazily imported so the browser bundle never carries the Tauri HTTP
+      // client it has no use for.
+      const { fetch: tauriFetch } = await import('@tauri-apps/plugin-http');
+      res = await tauriFetch(`${CHART_ENDPOINT}${encodeURIComponent(ticker)}?interval=1d&range=1d`, { method: 'GET' });
+    } else {
+      res = await fetch(`${PROXY_ENDPOINT}?t=${encodeURIComponent(ticker)}`);
+    }
     if (!res.ok) return null;
     return parseYahooChart(await res.json());
   } catch {
