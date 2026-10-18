@@ -339,6 +339,17 @@ class $TransactionsTable extends Transactions
   late final GeneratedColumn<String> attachmentRef = GeneratedColumn<String>(
       'attachment_ref', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _captureIdMeta =
+      const VerificationMeta('captureId');
+  @override
+  late final GeneratedColumn<String> captureId = GeneratedColumn<String>(
+      'capture_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<int> date = GeneratedColumn<int>(
@@ -361,6 +372,8 @@ class $TransactionsTable extends Transactions
         note,
         accountId,
         attachmentRef,
+        source,
+        captureId,
         date,
         createdAt
       ];
@@ -418,6 +431,14 @@ class $TransactionsTable extends Transactions
           attachmentRef.isAcceptableOrUnknown(
               data['attachment_ref']!, _attachmentRefMeta));
     }
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    }
+    if (data.containsKey('capture_id')) {
+      context.handle(_captureIdMeta,
+          captureId.isAcceptableOrUnknown(data['capture_id']!, _captureIdMeta));
+    }
     if (data.containsKey('date')) {
       context.handle(
           _dateMeta, date.isAcceptableOrUnknown(data['date']!, _dateMeta));
@@ -458,6 +479,10 @@ class $TransactionsTable extends Transactions
           .read(DriftSqlType.string, data['${effectivePrefix}account_id']),
       attachmentRef: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}attachment_ref']),
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source']),
+      captureId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}capture_id']),
       date: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}date'])!,
       createdAt: attachedDatabase.typeMapping
@@ -494,6 +519,13 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   /// Receipt attachment — sandbox file path (PRD §11 local media).
   final String? attachmentRef;
 
+  /// Where the entry came from (v7): null/manual, sms or notification. Lets the
+  /// list show an "auto" chip and lets Undo find what auto-capture wrote.
+  final String? source;
+
+  /// The [PendingCaptures] row this entry was created from, if any (v7).
+  final String? captureId;
+
   /// Transaction date and creation time (Unix ms).
   final int date;
   final int createdAt;
@@ -507,6 +539,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       this.note,
       this.accountId,
       this.attachmentRef,
+      this.source,
+      this.captureId,
       required this.date,
       required this.createdAt});
   @override
@@ -532,6 +566,12 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     if (!nullToAbsent || attachmentRef != null) {
       map['attachment_ref'] = Variable<String>(attachmentRef);
     }
+    if (!nullToAbsent || source != null) {
+      map['source'] = Variable<String>(source);
+    }
+    if (!nullToAbsent || captureId != null) {
+      map['capture_id'] = Variable<String>(captureId);
+    }
     map['date'] = Variable<int>(date);
     map['created_at'] = Variable<int>(createdAt);
     return map;
@@ -554,6 +594,11 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       attachmentRef: attachmentRef == null && nullToAbsent
           ? const Value.absent()
           : Value(attachmentRef),
+      source:
+          source == null && nullToAbsent ? const Value.absent() : Value(source),
+      captureId: captureId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(captureId),
       date: Value(date),
       createdAt: Value(createdAt),
     );
@@ -572,6 +617,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       note: serializer.fromJson<String?>(json['note']),
       accountId: serializer.fromJson<String?>(json['accountId']),
       attachmentRef: serializer.fromJson<String?>(json['attachmentRef']),
+      source: serializer.fromJson<String?>(json['source']),
+      captureId: serializer.fromJson<String?>(json['captureId']),
       date: serializer.fromJson<int>(json['date']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
     );
@@ -589,6 +636,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       'note': serializer.toJson<String?>(note),
       'accountId': serializer.toJson<String?>(accountId),
       'attachmentRef': serializer.toJson<String?>(attachmentRef),
+      'source': serializer.toJson<String?>(source),
+      'captureId': serializer.toJson<String?>(captureId),
       'date': serializer.toJson<int>(date),
       'createdAt': serializer.toJson<int>(createdAt),
     };
@@ -604,6 +653,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           Value<String?> note = const Value.absent(),
           Value<String?> accountId = const Value.absent(),
           Value<String?> attachmentRef = const Value.absent(),
+          Value<String?> source = const Value.absent(),
+          Value<String?> captureId = const Value.absent(),
           int? date,
           int? createdAt}) =>
       TransactionRow(
@@ -617,6 +668,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
         accountId: accountId.present ? accountId.value : this.accountId,
         attachmentRef:
             attachmentRef.present ? attachmentRef.value : this.attachmentRef,
+        source: source.present ? source.value : this.source,
+        captureId: captureId.present ? captureId.value : this.captureId,
         date: date ?? this.date,
         createdAt: createdAt ?? this.createdAt,
       );
@@ -634,6 +687,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       attachmentRef: data.attachmentRef.present
           ? data.attachmentRef.value
           : this.attachmentRef,
+      source: data.source.present ? data.source.value : this.source,
+      captureId: data.captureId.present ? data.captureId.value : this.captureId,
       date: data.date.present ? data.date.value : this.date,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -651,6 +706,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           ..write('note: $note, ')
           ..write('accountId: $accountId, ')
           ..write('attachmentRef: $attachmentRef, ')
+          ..write('source: $source, ')
+          ..write('captureId: $captureId, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -658,8 +715,20 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   }
 
   @override
-  int get hashCode => Object.hash(id, vaultId, amount, type, categoryId,
-      merchant, note, accountId, attachmentRef, date, createdAt);
+  int get hashCode => Object.hash(
+      id,
+      vaultId,
+      amount,
+      type,
+      categoryId,
+      merchant,
+      note,
+      accountId,
+      attachmentRef,
+      source,
+      captureId,
+      date,
+      createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -673,6 +742,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           other.note == this.note &&
           other.accountId == this.accountId &&
           other.attachmentRef == this.attachmentRef &&
+          other.source == this.source &&
+          other.captureId == this.captureId &&
           other.date == this.date &&
           other.createdAt == this.createdAt);
 }
@@ -687,6 +758,8 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   final Value<String?> note;
   final Value<String?> accountId;
   final Value<String?> attachmentRef;
+  final Value<String?> source;
+  final Value<String?> captureId;
   final Value<int> date;
   final Value<int> createdAt;
   final Value<int> rowid;
@@ -700,6 +773,8 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     this.note = const Value.absent(),
     this.accountId = const Value.absent(),
     this.attachmentRef = const Value.absent(),
+    this.source = const Value.absent(),
+    this.captureId = const Value.absent(),
     this.date = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -714,6 +789,8 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     this.note = const Value.absent(),
     this.accountId = const Value.absent(),
     this.attachmentRef = const Value.absent(),
+    this.source = const Value.absent(),
+    this.captureId = const Value.absent(),
     required int date,
     required int createdAt,
     this.rowid = const Value.absent(),
@@ -734,6 +811,8 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     Expression<String>? note,
     Expression<String>? accountId,
     Expression<String>? attachmentRef,
+    Expression<String>? source,
+    Expression<String>? captureId,
     Expression<int>? date,
     Expression<int>? createdAt,
     Expression<int>? rowid,
@@ -748,6 +827,8 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       if (note != null) 'note': note,
       if (accountId != null) 'account_id': accountId,
       if (attachmentRef != null) 'attachment_ref': attachmentRef,
+      if (source != null) 'source': source,
+      if (captureId != null) 'capture_id': captureId,
       if (date != null) 'date': date,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -764,6 +845,8 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       Value<String?>? note,
       Value<String?>? accountId,
       Value<String?>? attachmentRef,
+      Value<String?>? source,
+      Value<String?>? captureId,
       Value<int>? date,
       Value<int>? createdAt,
       Value<int>? rowid}) {
@@ -777,6 +860,8 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       note: note ?? this.note,
       accountId: accountId ?? this.accountId,
       attachmentRef: attachmentRef ?? this.attachmentRef,
+      source: source ?? this.source,
+      captureId: captureId ?? this.captureId,
       date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -814,6 +899,12 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     if (attachmentRef.present) {
       map['attachment_ref'] = Variable<String>(attachmentRef.value);
     }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (captureId.present) {
+      map['capture_id'] = Variable<String>(captureId.value);
+    }
     if (date.present) {
       map['date'] = Variable<int>(date.value);
     }
@@ -838,6 +929,8 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
           ..write('note: $note, ')
           ..write('accountId: $accountId, ')
           ..write('attachmentRef: $attachmentRef, ')
+          ..write('source: $source, ')
+          ..write('captureId: $captureId, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -6304,6 +6397,94 @@ class $PendingCapturesTable extends PendingCaptures
   late final GeneratedColumn<int> capturedAt = GeneratedColumn<int>(
       'captured_at', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('pending'));
+  static const VerificationMeta _confidenceMeta =
+      const VerificationMeta('confidence');
+  @override
+  late final GeneratedColumn<int> confidence = GeneratedColumn<int>(
+      'confidence', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _reasonCodesMeta =
+      const VerificationMeta('reasonCodes');
+  @override
+  late final GeneratedColumn<String> reasonCodes = GeneratedColumn<String>(
+      'reason_codes', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _accountIdMeta =
+      const VerificationMeta('accountId');
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+      'account_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _categoryIdMeta =
+      const VerificationMeta('categoryId');
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+      'category_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _utrMeta = const VerificationMeta('utr');
+  @override
+  late final GeneratedColumn<String> utr = GeneratedColumn<String>(
+      'utr', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _accountLast4Meta =
+      const VerificationMeta('accountLast4');
+  @override
+  late final GeneratedColumn<String> accountLast4 = GeneratedColumn<String>(
+      'account_last4', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _availableBalanceMeta =
+      const VerificationMeta('availableBalance');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String>
+      availableBalance = GeneratedColumn<String>(
+              'available_balance', aliasedName, true,
+              type: DriftSqlType.string, requiredDuringInsert: false)
+          .withConverter<Decimal?>(
+              $PendingCapturesTable.$converteravailableBalancen);
+  static const VerificationMeta _instrumentMeta =
+      const VerificationMeta('instrument');
+  @override
+  late final GeneratedColumn<String> instrument = GeneratedColumn<String>(
+      'instrument', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+      'kind', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _profileIdMeta =
+      const VerificationMeta('profileId');
+  @override
+  late final GeneratedColumn<String> profileId = GeneratedColumn<String>(
+      'profile_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _finalAmountMeta =
+      const VerificationMeta('finalAmount');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> finalAmount =
+      GeneratedColumn<String>('final_amount', aliasedName, true,
+              type: DriftSqlType.string, requiredDuringInsert: false)
+          .withConverter<Decimal?>(
+              $PendingCapturesTable.$converterfinalAmountn);
+  static const VerificationMeta _decidedAtMeta =
+      const VerificationMeta('decidedAt');
+  @override
+  late final GeneratedColumn<int> decidedAt = GeneratedColumn<int>(
+      'decided_at', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _postedTxnIdMeta =
+      const VerificationMeta('postedTxnId');
+  @override
+  late final GeneratedColumn<String> postedTxnId = GeneratedColumn<String>(
+      'posted_txn_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -6315,7 +6496,21 @@ class $PendingCapturesTable extends PendingCaptures
         source,
         uncategorized,
         fingerprint,
-        capturedAt
+        capturedAt,
+        status,
+        confidence,
+        reasonCodes,
+        accountId,
+        categoryId,
+        utr,
+        accountLast4,
+        availableBalance,
+        instrument,
+        kind,
+        profileId,
+        finalAmount,
+        decidedAt,
+        postedTxnId
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -6385,6 +6580,68 @@ class $PendingCapturesTable extends PendingCaptures
     } else if (isInserting) {
       context.missing(_capturedAtMeta);
     }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('confidence')) {
+      context.handle(
+          _confidenceMeta,
+          confidence.isAcceptableOrUnknown(
+              data['confidence']!, _confidenceMeta));
+    }
+    if (data.containsKey('reason_codes')) {
+      context.handle(
+          _reasonCodesMeta,
+          reasonCodes.isAcceptableOrUnknown(
+              data['reason_codes']!, _reasonCodesMeta));
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(_accountIdMeta,
+          accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta));
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+          _categoryIdMeta,
+          categoryId.isAcceptableOrUnknown(
+              data['category_id']!, _categoryIdMeta));
+    }
+    if (data.containsKey('utr')) {
+      context.handle(
+          _utrMeta, utr.isAcceptableOrUnknown(data['utr']!, _utrMeta));
+    }
+    if (data.containsKey('account_last4')) {
+      context.handle(
+          _accountLast4Meta,
+          accountLast4.isAcceptableOrUnknown(
+              data['account_last4']!, _accountLast4Meta));
+    }
+    context.handle(_availableBalanceMeta, const VerificationResult.success());
+    if (data.containsKey('instrument')) {
+      context.handle(
+          _instrumentMeta,
+          instrument.isAcceptableOrUnknown(
+              data['instrument']!, _instrumentMeta));
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+          _kindMeta, kind.isAcceptableOrUnknown(data['kind']!, _kindMeta));
+    }
+    if (data.containsKey('profile_id')) {
+      context.handle(_profileIdMeta,
+          profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta));
+    }
+    context.handle(_finalAmountMeta, const VerificationResult.success());
+    if (data.containsKey('decided_at')) {
+      context.handle(_decidedAtMeta,
+          decidedAt.isAcceptableOrUnknown(data['decided_at']!, _decidedAtMeta));
+    }
+    if (data.containsKey('posted_txn_id')) {
+      context.handle(
+          _postedTxnIdMeta,
+          postedTxnId.isAcceptableOrUnknown(
+              data['posted_txn_id']!, _postedTxnIdMeta));
+    }
     return context;
   }
 
@@ -6415,6 +6672,36 @@ class $PendingCapturesTable extends PendingCaptures
           .read(DriftSqlType.string, data['${effectivePrefix}fingerprint'])!,
       capturedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}captured_at'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      confidence: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}confidence']),
+      reasonCodes: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}reason_codes']),
+      accountId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}account_id']),
+      categoryId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category_id']),
+      utr: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}utr']),
+      accountLast4: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}account_last4']),
+      availableBalance: $PendingCapturesTable.$converteravailableBalancen
+          .fromSql(attachedDatabase.typeMapping.read(DriftSqlType.string,
+              data['${effectivePrefix}available_balance'])),
+      instrument: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}instrument']),
+      kind: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}kind']),
+      profileId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}profile_id']),
+      finalAmount: $PendingCapturesTable.$converterfinalAmountn.fromSql(
+          attachedDatabase.typeMapping.read(
+              DriftSqlType.string, data['${effectivePrefix}final_amount'])),
+      decidedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}decided_at']),
+      postedTxnId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}posted_txn_id']),
     );
   }
 
@@ -6425,12 +6712,23 @@ class $PendingCapturesTable extends PendingCaptures
 
   static TypeConverter<Decimal, String> $converteramount =
       const DecimalConverter();
+  static TypeConverter<Decimal, String> $converteravailableBalance =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converteravailableBalancen =
+      NullAwareTypeConverter.wrap($converteravailableBalance);
+  static TypeConverter<Decimal, String> $converterfinalAmount =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterfinalAmountn =
+      NullAwareTypeConverter.wrap($converterfinalAmount);
 }
 
 class PendingCaptureRow extends DataClass
     implements Insertable<PendingCaptureRow> {
   final String id;
   final String vaultId;
+
+  /// The amount as parsed. A user correction goes to [finalAmount], so the
+  /// parser's mistakes stay visible for tuning.
   final Decimal amount;
   final String type;
   final String? merchant;
@@ -6439,6 +6737,26 @@ class PendingCaptureRow extends DataClass
   final bool uncategorized;
   final String fingerprint;
   final int capturedAt;
+
+  /// pending | auto_posted | approved | edited_approved | rejected | reversed
+  final String status;
+
+  /// Router confidence, 0–100. Null for rows captured before v7.
+  final int? confidence;
+
+  /// Comma-separated [ReviewReason] keys explaining a review decision.
+  final String? reasonCodes;
+  final String? accountId;
+  final String? categoryId;
+  final String? utr;
+  final String? accountLast4;
+  final Decimal? availableBalance;
+  final String? instrument;
+  final String? kind;
+  final String? profileId;
+  final Decimal? finalAmount;
+  final int? decidedAt;
+  final String? postedTxnId;
   const PendingCaptureRow(
       {required this.id,
       required this.vaultId,
@@ -6449,7 +6767,21 @@ class PendingCaptureRow extends DataClass
       required this.source,
       required this.uncategorized,
       required this.fingerprint,
-      required this.capturedAt});
+      required this.capturedAt,
+      required this.status,
+      this.confidence,
+      this.reasonCodes,
+      this.accountId,
+      this.categoryId,
+      this.utr,
+      this.accountLast4,
+      this.availableBalance,
+      this.instrument,
+      this.kind,
+      this.profileId,
+      this.finalAmount,
+      this.decidedAt,
+      this.postedTxnId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -6468,6 +6800,49 @@ class PendingCaptureRow extends DataClass
     map['uncategorized'] = Variable<bool>(uncategorized);
     map['fingerprint'] = Variable<String>(fingerprint);
     map['captured_at'] = Variable<int>(capturedAt);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || confidence != null) {
+      map['confidence'] = Variable<int>(confidence);
+    }
+    if (!nullToAbsent || reasonCodes != null) {
+      map['reason_codes'] = Variable<String>(reasonCodes);
+    }
+    if (!nullToAbsent || accountId != null) {
+      map['account_id'] = Variable<String>(accountId);
+    }
+    if (!nullToAbsent || categoryId != null) {
+      map['category_id'] = Variable<String>(categoryId);
+    }
+    if (!nullToAbsent || utr != null) {
+      map['utr'] = Variable<String>(utr);
+    }
+    if (!nullToAbsent || accountLast4 != null) {
+      map['account_last4'] = Variable<String>(accountLast4);
+    }
+    if (!nullToAbsent || availableBalance != null) {
+      map['available_balance'] = Variable<String>($PendingCapturesTable
+          .$converteravailableBalancen
+          .toSql(availableBalance));
+    }
+    if (!nullToAbsent || instrument != null) {
+      map['instrument'] = Variable<String>(instrument);
+    }
+    if (!nullToAbsent || kind != null) {
+      map['kind'] = Variable<String>(kind);
+    }
+    if (!nullToAbsent || profileId != null) {
+      map['profile_id'] = Variable<String>(profileId);
+    }
+    if (!nullToAbsent || finalAmount != null) {
+      map['final_amount'] = Variable<String>(
+          $PendingCapturesTable.$converterfinalAmountn.toSql(finalAmount));
+    }
+    if (!nullToAbsent || decidedAt != null) {
+      map['decided_at'] = Variable<int>(decidedAt);
+    }
+    if (!nullToAbsent || postedTxnId != null) {
+      map['posted_txn_id'] = Variable<String>(postedTxnId);
+    }
     return map;
   }
 
@@ -6485,6 +6860,42 @@ class PendingCaptureRow extends DataClass
       uncategorized: Value(uncategorized),
       fingerprint: Value(fingerprint),
       capturedAt: Value(capturedAt),
+      status: Value(status),
+      confidence: confidence == null && nullToAbsent
+          ? const Value.absent()
+          : Value(confidence),
+      reasonCodes: reasonCodes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reasonCodes),
+      accountId: accountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountId),
+      categoryId: categoryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categoryId),
+      utr: utr == null && nullToAbsent ? const Value.absent() : Value(utr),
+      accountLast4: accountLast4 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountLast4),
+      availableBalance: availableBalance == null && nullToAbsent
+          ? const Value.absent()
+          : Value(availableBalance),
+      instrument: instrument == null && nullToAbsent
+          ? const Value.absent()
+          : Value(instrument),
+      kind: kind == null && nullToAbsent ? const Value.absent() : Value(kind),
+      profileId: profileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(profileId),
+      finalAmount: finalAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(finalAmount),
+      decidedAt: decidedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(decidedAt),
+      postedTxnId: postedTxnId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(postedTxnId),
     );
   }
 
@@ -6502,6 +6913,20 @@ class PendingCaptureRow extends DataClass
       uncategorized: serializer.fromJson<bool>(json['uncategorized']),
       fingerprint: serializer.fromJson<String>(json['fingerprint']),
       capturedAt: serializer.fromJson<int>(json['capturedAt']),
+      status: serializer.fromJson<String>(json['status']),
+      confidence: serializer.fromJson<int?>(json['confidence']),
+      reasonCodes: serializer.fromJson<String?>(json['reasonCodes']),
+      accountId: serializer.fromJson<String?>(json['accountId']),
+      categoryId: serializer.fromJson<String?>(json['categoryId']),
+      utr: serializer.fromJson<String?>(json['utr']),
+      accountLast4: serializer.fromJson<String?>(json['accountLast4']),
+      availableBalance: serializer.fromJson<Decimal?>(json['availableBalance']),
+      instrument: serializer.fromJson<String?>(json['instrument']),
+      kind: serializer.fromJson<String?>(json['kind']),
+      profileId: serializer.fromJson<String?>(json['profileId']),
+      finalAmount: serializer.fromJson<Decimal?>(json['finalAmount']),
+      decidedAt: serializer.fromJson<int?>(json['decidedAt']),
+      postedTxnId: serializer.fromJson<String?>(json['postedTxnId']),
     );
   }
   @override
@@ -6518,6 +6943,20 @@ class PendingCaptureRow extends DataClass
       'uncategorized': serializer.toJson<bool>(uncategorized),
       'fingerprint': serializer.toJson<String>(fingerprint),
       'capturedAt': serializer.toJson<int>(capturedAt),
+      'status': serializer.toJson<String>(status),
+      'confidence': serializer.toJson<int?>(confidence),
+      'reasonCodes': serializer.toJson<String?>(reasonCodes),
+      'accountId': serializer.toJson<String?>(accountId),
+      'categoryId': serializer.toJson<String?>(categoryId),
+      'utr': serializer.toJson<String?>(utr),
+      'accountLast4': serializer.toJson<String?>(accountLast4),
+      'availableBalance': serializer.toJson<Decimal?>(availableBalance),
+      'instrument': serializer.toJson<String?>(instrument),
+      'kind': serializer.toJson<String?>(kind),
+      'profileId': serializer.toJson<String?>(profileId),
+      'finalAmount': serializer.toJson<Decimal?>(finalAmount),
+      'decidedAt': serializer.toJson<int?>(decidedAt),
+      'postedTxnId': serializer.toJson<String?>(postedTxnId),
     };
   }
 
@@ -6531,7 +6970,21 @@ class PendingCaptureRow extends DataClass
           String? source,
           bool? uncategorized,
           String? fingerprint,
-          int? capturedAt}) =>
+          int? capturedAt,
+          String? status,
+          Value<int?> confidence = const Value.absent(),
+          Value<String?> reasonCodes = const Value.absent(),
+          Value<String?> accountId = const Value.absent(),
+          Value<String?> categoryId = const Value.absent(),
+          Value<String?> utr = const Value.absent(),
+          Value<String?> accountLast4 = const Value.absent(),
+          Value<Decimal?> availableBalance = const Value.absent(),
+          Value<String?> instrument = const Value.absent(),
+          Value<String?> kind = const Value.absent(),
+          Value<String?> profileId = const Value.absent(),
+          Value<Decimal?> finalAmount = const Value.absent(),
+          Value<int?> decidedAt = const Value.absent(),
+          Value<String?> postedTxnId = const Value.absent()}) =>
       PendingCaptureRow(
         id: id ?? this.id,
         vaultId: vaultId ?? this.vaultId,
@@ -6543,6 +6996,23 @@ class PendingCaptureRow extends DataClass
         uncategorized: uncategorized ?? this.uncategorized,
         fingerprint: fingerprint ?? this.fingerprint,
         capturedAt: capturedAt ?? this.capturedAt,
+        status: status ?? this.status,
+        confidence: confidence.present ? confidence.value : this.confidence,
+        reasonCodes: reasonCodes.present ? reasonCodes.value : this.reasonCodes,
+        accountId: accountId.present ? accountId.value : this.accountId,
+        categoryId: categoryId.present ? categoryId.value : this.categoryId,
+        utr: utr.present ? utr.value : this.utr,
+        accountLast4:
+            accountLast4.present ? accountLast4.value : this.accountLast4,
+        availableBalance: availableBalance.present
+            ? availableBalance.value
+            : this.availableBalance,
+        instrument: instrument.present ? instrument.value : this.instrument,
+        kind: kind.present ? kind.value : this.kind,
+        profileId: profileId.present ? profileId.value : this.profileId,
+        finalAmount: finalAmount.present ? finalAmount.value : this.finalAmount,
+        decidedAt: decidedAt.present ? decidedAt.value : this.decidedAt,
+        postedTxnId: postedTxnId.present ? postedTxnId.value : this.postedTxnId,
       );
   PendingCaptureRow copyWithCompanion(PendingCapturesCompanion data) {
     return PendingCaptureRow(
@@ -6561,6 +7031,30 @@ class PendingCaptureRow extends DataClass
           data.fingerprint.present ? data.fingerprint.value : this.fingerprint,
       capturedAt:
           data.capturedAt.present ? data.capturedAt.value : this.capturedAt,
+      status: data.status.present ? data.status.value : this.status,
+      confidence:
+          data.confidence.present ? data.confidence.value : this.confidence,
+      reasonCodes:
+          data.reasonCodes.present ? data.reasonCodes.value : this.reasonCodes,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      categoryId:
+          data.categoryId.present ? data.categoryId.value : this.categoryId,
+      utr: data.utr.present ? data.utr.value : this.utr,
+      accountLast4: data.accountLast4.present
+          ? data.accountLast4.value
+          : this.accountLast4,
+      availableBalance: data.availableBalance.present
+          ? data.availableBalance.value
+          : this.availableBalance,
+      instrument:
+          data.instrument.present ? data.instrument.value : this.instrument,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      profileId: data.profileId.present ? data.profileId.value : this.profileId,
+      finalAmount:
+          data.finalAmount.present ? data.finalAmount.value : this.finalAmount,
+      decidedAt: data.decidedAt.present ? data.decidedAt.value : this.decidedAt,
+      postedTxnId:
+          data.postedTxnId.present ? data.postedTxnId.value : this.postedTxnId,
     );
   }
 
@@ -6576,14 +7070,52 @@ class PendingCaptureRow extends DataClass
           ..write('source: $source, ')
           ..write('uncategorized: $uncategorized, ')
           ..write('fingerprint: $fingerprint, ')
-          ..write('capturedAt: $capturedAt')
+          ..write('capturedAt: $capturedAt, ')
+          ..write('status: $status, ')
+          ..write('confidence: $confidence, ')
+          ..write('reasonCodes: $reasonCodes, ')
+          ..write('accountId: $accountId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('utr: $utr, ')
+          ..write('accountLast4: $accountLast4, ')
+          ..write('availableBalance: $availableBalance, ')
+          ..write('instrument: $instrument, ')
+          ..write('kind: $kind, ')
+          ..write('profileId: $profileId, ')
+          ..write('finalAmount: $finalAmount, ')
+          ..write('decidedAt: $decidedAt, ')
+          ..write('postedTxnId: $postedTxnId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, vaultId, amount, type, merchant,
-      occurredAt, source, uncategorized, fingerprint, capturedAt);
+  int get hashCode => Object.hashAll([
+        id,
+        vaultId,
+        amount,
+        type,
+        merchant,
+        occurredAt,
+        source,
+        uncategorized,
+        fingerprint,
+        capturedAt,
+        status,
+        confidence,
+        reasonCodes,
+        accountId,
+        categoryId,
+        utr,
+        accountLast4,
+        availableBalance,
+        instrument,
+        kind,
+        profileId,
+        finalAmount,
+        decidedAt,
+        postedTxnId
+      ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -6597,7 +7129,21 @@ class PendingCaptureRow extends DataClass
           other.source == this.source &&
           other.uncategorized == this.uncategorized &&
           other.fingerprint == this.fingerprint &&
-          other.capturedAt == this.capturedAt);
+          other.capturedAt == this.capturedAt &&
+          other.status == this.status &&
+          other.confidence == this.confidence &&
+          other.reasonCodes == this.reasonCodes &&
+          other.accountId == this.accountId &&
+          other.categoryId == this.categoryId &&
+          other.utr == this.utr &&
+          other.accountLast4 == this.accountLast4 &&
+          other.availableBalance == this.availableBalance &&
+          other.instrument == this.instrument &&
+          other.kind == this.kind &&
+          other.profileId == this.profileId &&
+          other.finalAmount == this.finalAmount &&
+          other.decidedAt == this.decidedAt &&
+          other.postedTxnId == this.postedTxnId);
 }
 
 class PendingCapturesCompanion extends UpdateCompanion<PendingCaptureRow> {
@@ -6611,6 +7157,20 @@ class PendingCapturesCompanion extends UpdateCompanion<PendingCaptureRow> {
   final Value<bool> uncategorized;
   final Value<String> fingerprint;
   final Value<int> capturedAt;
+  final Value<String> status;
+  final Value<int?> confidence;
+  final Value<String?> reasonCodes;
+  final Value<String?> accountId;
+  final Value<String?> categoryId;
+  final Value<String?> utr;
+  final Value<String?> accountLast4;
+  final Value<Decimal?> availableBalance;
+  final Value<String?> instrument;
+  final Value<String?> kind;
+  final Value<String?> profileId;
+  final Value<Decimal?> finalAmount;
+  final Value<int?> decidedAt;
+  final Value<String?> postedTxnId;
   final Value<int> rowid;
   const PendingCapturesCompanion({
     this.id = const Value.absent(),
@@ -6623,6 +7183,20 @@ class PendingCapturesCompanion extends UpdateCompanion<PendingCaptureRow> {
     this.uncategorized = const Value.absent(),
     this.fingerprint = const Value.absent(),
     this.capturedAt = const Value.absent(),
+    this.status = const Value.absent(),
+    this.confidence = const Value.absent(),
+    this.reasonCodes = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.utr = const Value.absent(),
+    this.accountLast4 = const Value.absent(),
+    this.availableBalance = const Value.absent(),
+    this.instrument = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.profileId = const Value.absent(),
+    this.finalAmount = const Value.absent(),
+    this.decidedAt = const Value.absent(),
+    this.postedTxnId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PendingCapturesCompanion.insert({
@@ -6636,6 +7210,20 @@ class PendingCapturesCompanion extends UpdateCompanion<PendingCaptureRow> {
     this.uncategorized = const Value.absent(),
     required String fingerprint,
     required int capturedAt,
+    this.status = const Value.absent(),
+    this.confidence = const Value.absent(),
+    this.reasonCodes = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.utr = const Value.absent(),
+    this.accountLast4 = const Value.absent(),
+    this.availableBalance = const Value.absent(),
+    this.instrument = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.profileId = const Value.absent(),
+    this.finalAmount = const Value.absent(),
+    this.decidedAt = const Value.absent(),
+    this.postedTxnId = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         vaultId = Value(vaultId),
@@ -6656,6 +7244,20 @@ class PendingCapturesCompanion extends UpdateCompanion<PendingCaptureRow> {
     Expression<bool>? uncategorized,
     Expression<String>? fingerprint,
     Expression<int>? capturedAt,
+    Expression<String>? status,
+    Expression<int>? confidence,
+    Expression<String>? reasonCodes,
+    Expression<String>? accountId,
+    Expression<String>? categoryId,
+    Expression<String>? utr,
+    Expression<String>? accountLast4,
+    Expression<String>? availableBalance,
+    Expression<String>? instrument,
+    Expression<String>? kind,
+    Expression<String>? profileId,
+    Expression<String>? finalAmount,
+    Expression<int>? decidedAt,
+    Expression<String>? postedTxnId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -6669,6 +7271,20 @@ class PendingCapturesCompanion extends UpdateCompanion<PendingCaptureRow> {
       if (uncategorized != null) 'uncategorized': uncategorized,
       if (fingerprint != null) 'fingerprint': fingerprint,
       if (capturedAt != null) 'captured_at': capturedAt,
+      if (status != null) 'status': status,
+      if (confidence != null) 'confidence': confidence,
+      if (reasonCodes != null) 'reason_codes': reasonCodes,
+      if (accountId != null) 'account_id': accountId,
+      if (categoryId != null) 'category_id': categoryId,
+      if (utr != null) 'utr': utr,
+      if (accountLast4 != null) 'account_last4': accountLast4,
+      if (availableBalance != null) 'available_balance': availableBalance,
+      if (instrument != null) 'instrument': instrument,
+      if (kind != null) 'kind': kind,
+      if (profileId != null) 'profile_id': profileId,
+      if (finalAmount != null) 'final_amount': finalAmount,
+      if (decidedAt != null) 'decided_at': decidedAt,
+      if (postedTxnId != null) 'posted_txn_id': postedTxnId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -6684,6 +7300,20 @@ class PendingCapturesCompanion extends UpdateCompanion<PendingCaptureRow> {
       Value<bool>? uncategorized,
       Value<String>? fingerprint,
       Value<int>? capturedAt,
+      Value<String>? status,
+      Value<int?>? confidence,
+      Value<String?>? reasonCodes,
+      Value<String?>? accountId,
+      Value<String?>? categoryId,
+      Value<String?>? utr,
+      Value<String?>? accountLast4,
+      Value<Decimal?>? availableBalance,
+      Value<String?>? instrument,
+      Value<String?>? kind,
+      Value<String?>? profileId,
+      Value<Decimal?>? finalAmount,
+      Value<int?>? decidedAt,
+      Value<String?>? postedTxnId,
       Value<int>? rowid}) {
     return PendingCapturesCompanion(
       id: id ?? this.id,
@@ -6696,6 +7326,20 @@ class PendingCapturesCompanion extends UpdateCompanion<PendingCaptureRow> {
       uncategorized: uncategorized ?? this.uncategorized,
       fingerprint: fingerprint ?? this.fingerprint,
       capturedAt: capturedAt ?? this.capturedAt,
+      status: status ?? this.status,
+      confidence: confidence ?? this.confidence,
+      reasonCodes: reasonCodes ?? this.reasonCodes,
+      accountId: accountId ?? this.accountId,
+      categoryId: categoryId ?? this.categoryId,
+      utr: utr ?? this.utr,
+      accountLast4: accountLast4 ?? this.accountLast4,
+      availableBalance: availableBalance ?? this.availableBalance,
+      instrument: instrument ?? this.instrument,
+      kind: kind ?? this.kind,
+      profileId: profileId ?? this.profileId,
+      finalAmount: finalAmount ?? this.finalAmount,
+      decidedAt: decidedAt ?? this.decidedAt,
+      postedTxnId: postedTxnId ?? this.postedTxnId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -6734,6 +7378,52 @@ class PendingCapturesCompanion extends UpdateCompanion<PendingCaptureRow> {
     if (capturedAt.present) {
       map['captured_at'] = Variable<int>(capturedAt.value);
     }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (confidence.present) {
+      map['confidence'] = Variable<int>(confidence.value);
+    }
+    if (reasonCodes.present) {
+      map['reason_codes'] = Variable<String>(reasonCodes.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (utr.present) {
+      map['utr'] = Variable<String>(utr.value);
+    }
+    if (accountLast4.present) {
+      map['account_last4'] = Variable<String>(accountLast4.value);
+    }
+    if (availableBalance.present) {
+      map['available_balance'] = Variable<String>($PendingCapturesTable
+          .$converteravailableBalancen
+          .toSql(availableBalance.value));
+    }
+    if (instrument.present) {
+      map['instrument'] = Variable<String>(instrument.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (profileId.present) {
+      map['profile_id'] = Variable<String>(profileId.value);
+    }
+    if (finalAmount.present) {
+      map['final_amount'] = Variable<String>($PendingCapturesTable
+          .$converterfinalAmountn
+          .toSql(finalAmount.value));
+    }
+    if (decidedAt.present) {
+      map['decided_at'] = Variable<int>(decidedAt.value);
+    }
+    if (postedTxnId.present) {
+      map['posted_txn_id'] = Variable<String>(postedTxnId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -6753,6 +7443,416 @@ class PendingCapturesCompanion extends UpdateCompanion<PendingCaptureRow> {
           ..write('uncategorized: $uncategorized, ')
           ..write('fingerprint: $fingerprint, ')
           ..write('capturedAt: $capturedAt, ')
+          ..write('status: $status, ')
+          ..write('confidence: $confidence, ')
+          ..write('reasonCodes: $reasonCodes, ')
+          ..write('accountId: $accountId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('utr: $utr, ')
+          ..write('accountLast4: $accountLast4, ')
+          ..write('availableBalance: $availableBalance, ')
+          ..write('instrument: $instrument, ')
+          ..write('kind: $kind, ')
+          ..write('profileId: $profileId, ')
+          ..write('finalAmount: $finalAmount, ')
+          ..write('decidedAt: $decidedAt, ')
+          ..write('postedTxnId: $postedTxnId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CaptureAccountLinksTable extends CaptureAccountLinks
+    with TableInfo<$CaptureAccountLinksTable, CaptureAccountLinkRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CaptureAccountLinksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<String> vaultId = GeneratedColumn<String>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _profileIdMeta =
+      const VerificationMeta('profileId');
+  @override
+  late final GeneratedColumn<String> profileId = GeneratedColumn<String>(
+      'profile_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(''));
+  static const VerificationMeta _last4Meta = const VerificationMeta('last4');
+  @override
+  late final GeneratedColumn<String> last4 = GeneratedColumn<String>(
+      'last4', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _instrumentMeta =
+      const VerificationMeta('instrument');
+  @override
+  late final GeneratedColumn<String> instrument = GeneratedColumn<String>(
+      'instrument', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _accountIdMeta =
+      const VerificationMeta('accountId');
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+      'account_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, vaultId, profileId, last4, instrument, accountId, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'capture_account_links';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CaptureAccountLinkRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('profile_id')) {
+      context.handle(_profileIdMeta,
+          profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta));
+    }
+    if (data.containsKey('last4')) {
+      context.handle(
+          _last4Meta, last4.isAcceptableOrUnknown(data['last4']!, _last4Meta));
+    } else if (isInserting) {
+      context.missing(_last4Meta);
+    }
+    if (data.containsKey('instrument')) {
+      context.handle(
+          _instrumentMeta,
+          instrument.isAcceptableOrUnknown(
+              data['instrument']!, _instrumentMeta));
+    } else if (isInserting) {
+      context.missing(_instrumentMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(_accountIdMeta,
+          accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta));
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+        {vaultId, profileId, last4, instrument},
+      ];
+  @override
+  CaptureAccountLinkRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CaptureAccountLinkRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vault_id'])!,
+      profileId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}profile_id'])!,
+      last4: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}last4'])!,
+      instrument: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}instrument'])!,
+      accountId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}account_id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $CaptureAccountLinksTable createAlias(String alias) {
+    return $CaptureAccountLinksTable(attachedDatabase, alias);
+  }
+}
+
+class CaptureAccountLinkRow extends DataClass
+    implements Insertable<CaptureAccountLinkRow> {
+  final String id;
+  final String vaultId;
+
+  /// Matched bank profile id, or '' when the alert named no bank.
+  final String profileId;
+  final String last4;
+
+  /// A [CaptureInstrument] key. A card and an account can share digits.
+  final String instrument;
+  final String accountId;
+  final int createdAt;
+  const CaptureAccountLinkRow(
+      {required this.id,
+      required this.vaultId,
+      required this.profileId,
+      required this.last4,
+      required this.instrument,
+      required this.accountId,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vault_id'] = Variable<String>(vaultId);
+    map['profile_id'] = Variable<String>(profileId);
+    map['last4'] = Variable<String>(last4);
+    map['instrument'] = Variable<String>(instrument);
+    map['account_id'] = Variable<String>(accountId);
+    map['created_at'] = Variable<int>(createdAt);
+    return map;
+  }
+
+  CaptureAccountLinksCompanion toCompanion(bool nullToAbsent) {
+    return CaptureAccountLinksCompanion(
+      id: Value(id),
+      vaultId: Value(vaultId),
+      profileId: Value(profileId),
+      last4: Value(last4),
+      instrument: Value(instrument),
+      accountId: Value(accountId),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory CaptureAccountLinkRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CaptureAccountLinkRow(
+      id: serializer.fromJson<String>(json['id']),
+      vaultId: serializer.fromJson<String>(json['vaultId']),
+      profileId: serializer.fromJson<String>(json['profileId']),
+      last4: serializer.fromJson<String>(json['last4']),
+      instrument: serializer.fromJson<String>(json['instrument']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vaultId': serializer.toJson<String>(vaultId),
+      'profileId': serializer.toJson<String>(profileId),
+      'last4': serializer.toJson<String>(last4),
+      'instrument': serializer.toJson<String>(instrument),
+      'accountId': serializer.toJson<String>(accountId),
+      'createdAt': serializer.toJson<int>(createdAt),
+    };
+  }
+
+  CaptureAccountLinkRow copyWith(
+          {String? id,
+          String? vaultId,
+          String? profileId,
+          String? last4,
+          String? instrument,
+          String? accountId,
+          int? createdAt}) =>
+      CaptureAccountLinkRow(
+        id: id ?? this.id,
+        vaultId: vaultId ?? this.vaultId,
+        profileId: profileId ?? this.profileId,
+        last4: last4 ?? this.last4,
+        instrument: instrument ?? this.instrument,
+        accountId: accountId ?? this.accountId,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  CaptureAccountLinkRow copyWithCompanion(CaptureAccountLinksCompanion data) {
+    return CaptureAccountLinkRow(
+      id: data.id.present ? data.id.value : this.id,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      profileId: data.profileId.present ? data.profileId.value : this.profileId,
+      last4: data.last4.present ? data.last4.value : this.last4,
+      instrument:
+          data.instrument.present ? data.instrument.value : this.instrument,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CaptureAccountLinkRow(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('profileId: $profileId, ')
+          ..write('last4: $last4, ')
+          ..write('instrument: $instrument, ')
+          ..write('accountId: $accountId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, vaultId, profileId, last4, instrument, accountId, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CaptureAccountLinkRow &&
+          other.id == this.id &&
+          other.vaultId == this.vaultId &&
+          other.profileId == this.profileId &&
+          other.last4 == this.last4 &&
+          other.instrument == this.instrument &&
+          other.accountId == this.accountId &&
+          other.createdAt == this.createdAt);
+}
+
+class CaptureAccountLinksCompanion
+    extends UpdateCompanion<CaptureAccountLinkRow> {
+  final Value<String> id;
+  final Value<String> vaultId;
+  final Value<String> profileId;
+  final Value<String> last4;
+  final Value<String> instrument;
+  final Value<String> accountId;
+  final Value<int> createdAt;
+  final Value<int> rowid;
+  const CaptureAccountLinksCompanion({
+    this.id = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.profileId = const Value.absent(),
+    this.last4 = const Value.absent(),
+    this.instrument = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CaptureAccountLinksCompanion.insert({
+    required String id,
+    required String vaultId,
+    this.profileId = const Value.absent(),
+    required String last4,
+    required String instrument,
+    required String accountId,
+    required int createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        vaultId = Value(vaultId),
+        last4 = Value(last4),
+        instrument = Value(instrument),
+        accountId = Value(accountId),
+        createdAt = Value(createdAt);
+  static Insertable<CaptureAccountLinkRow> custom({
+    Expression<String>? id,
+    Expression<String>? vaultId,
+    Expression<String>? profileId,
+    Expression<String>? last4,
+    Expression<String>? instrument,
+    Expression<String>? accountId,
+    Expression<int>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (profileId != null) 'profile_id': profileId,
+      if (last4 != null) 'last4': last4,
+      if (instrument != null) 'instrument': instrument,
+      if (accountId != null) 'account_id': accountId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CaptureAccountLinksCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? vaultId,
+      Value<String>? profileId,
+      Value<String>? last4,
+      Value<String>? instrument,
+      Value<String>? accountId,
+      Value<int>? createdAt,
+      Value<int>? rowid}) {
+    return CaptureAccountLinksCompanion(
+      id: id ?? this.id,
+      vaultId: vaultId ?? this.vaultId,
+      profileId: profileId ?? this.profileId,
+      last4: last4 ?? this.last4,
+      instrument: instrument ?? this.instrument,
+      accountId: accountId ?? this.accountId,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<String>(vaultId.value);
+    }
+    if (profileId.present) {
+      map['profile_id'] = Variable<String>(profileId.value);
+    }
+    if (last4.present) {
+      map['last4'] = Variable<String>(last4.value);
+    }
+    if (instrument.present) {
+      map['instrument'] = Variable<String>(instrument.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CaptureAccountLinksCompanion(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('profileId: $profileId, ')
+          ..write('last4: $last4, ')
+          ..write('instrument: $instrument, ')
+          ..write('accountId: $accountId, ')
+          ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -10448,6 +11548,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PostingsTable postings = $PostingsTable(this);
   late final $PendingCapturesTable pendingCaptures =
       $PendingCapturesTable(this);
+  late final $CaptureAccountLinksTable captureAccountLinks =
+      $CaptureAccountLinksTable(this);
   late final $InstrumentsTable instruments = $InstrumentsTable(this);
   late final $TradesTable trades = $TradesTable(this);
   late final $InstrumentPricesTable instrumentPrices =
@@ -10500,6 +11602,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         accounts,
         postings,
         pendingCaptures,
+        captureAccountLinks,
         instruments,
         trades,
         instrumentPrices,
@@ -10985,6 +12088,8 @@ typedef $$TransactionsTableCreateCompanionBuilder = TransactionsCompanion
   Value<String?> note,
   Value<String?> accountId,
   Value<String?> attachmentRef,
+  Value<String?> source,
+  Value<String?> captureId,
   required int date,
   required int createdAt,
   Value<int> rowid,
@@ -11000,6 +12105,8 @@ typedef $$TransactionsTableUpdateCompanionBuilder = TransactionsCompanion
   Value<String?> note,
   Value<String?> accountId,
   Value<String?> attachmentRef,
+  Value<String?> source,
+  Value<String?> captureId,
   Value<int> date,
   Value<int> createdAt,
   Value<int> rowid,
@@ -11088,6 +12195,12 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<String> get attachmentRef => $composableBuilder(
       column: $table.attachmentRef, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get captureId => $composableBuilder(
+      column: $table.captureId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get date => $composableBuilder(
       column: $table.date, builder: (column) => ColumnFilters(column));
@@ -11192,6 +12305,12 @@ class $$TransactionsTableOrderingComposer
       column: $table.attachmentRef,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get captureId => $composableBuilder(
+      column: $table.captureId, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<int> get date => $composableBuilder(
       column: $table.date, builder: (column) => ColumnOrderings(column));
 
@@ -11251,6 +12370,12 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<String> get attachmentRef => $composableBuilder(
       column: $table.attachmentRef, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get captureId =>
+      $composableBuilder(column: $table.captureId, builder: (column) => column);
 
   GeneratedColumn<int> get date =>
       $composableBuilder(column: $table.date, builder: (column) => column);
@@ -11354,6 +12479,8 @@ class $$TransactionsTableTableManager extends RootTableManager<
             Value<String?> note = const Value.absent(),
             Value<String?> accountId = const Value.absent(),
             Value<String?> attachmentRef = const Value.absent(),
+            Value<String?> source = const Value.absent(),
+            Value<String?> captureId = const Value.absent(),
             Value<int> date = const Value.absent(),
             Value<int> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -11368,6 +12495,8 @@ class $$TransactionsTableTableManager extends RootTableManager<
             note: note,
             accountId: accountId,
             attachmentRef: attachmentRef,
+            source: source,
+            captureId: captureId,
             date: date,
             createdAt: createdAt,
             rowid: rowid,
@@ -11382,6 +12511,8 @@ class $$TransactionsTableTableManager extends RootTableManager<
             Value<String?> note = const Value.absent(),
             Value<String?> accountId = const Value.absent(),
             Value<String?> attachmentRef = const Value.absent(),
+            Value<String?> source = const Value.absent(),
+            Value<String?> captureId = const Value.absent(),
             required int date,
             required int createdAt,
             Value<int> rowid = const Value.absent(),
@@ -11396,6 +12527,8 @@ class $$TransactionsTableTableManager extends RootTableManager<
             note: note,
             accountId: accountId,
             attachmentRef: attachmentRef,
+            source: source,
+            captureId: captureId,
             date: date,
             createdAt: createdAt,
             rowid: rowid,
@@ -15068,6 +16201,20 @@ typedef $$PendingCapturesTableCreateCompanionBuilder = PendingCapturesCompanion
   Value<bool> uncategorized,
   required String fingerprint,
   required int capturedAt,
+  Value<String> status,
+  Value<int?> confidence,
+  Value<String?> reasonCodes,
+  Value<String?> accountId,
+  Value<String?> categoryId,
+  Value<String?> utr,
+  Value<String?> accountLast4,
+  Value<Decimal?> availableBalance,
+  Value<String?> instrument,
+  Value<String?> kind,
+  Value<String?> profileId,
+  Value<Decimal?> finalAmount,
+  Value<int?> decidedAt,
+  Value<String?> postedTxnId,
   Value<int> rowid,
 });
 typedef $$PendingCapturesTableUpdateCompanionBuilder = PendingCapturesCompanion
@@ -15082,6 +16229,20 @@ typedef $$PendingCapturesTableUpdateCompanionBuilder = PendingCapturesCompanion
   Value<bool> uncategorized,
   Value<String> fingerprint,
   Value<int> capturedAt,
+  Value<String> status,
+  Value<int?> confidence,
+  Value<String?> reasonCodes,
+  Value<String?> accountId,
+  Value<String?> categoryId,
+  Value<String?> utr,
+  Value<String?> accountLast4,
+  Value<Decimal?> availableBalance,
+  Value<String?> instrument,
+  Value<String?> kind,
+  Value<String?> profileId,
+  Value<Decimal?> finalAmount,
+  Value<int?> decidedAt,
+  Value<String?> postedTxnId,
   Value<int> rowid,
 });
 
@@ -15125,6 +16286,52 @@ class $$PendingCapturesTableFilterComposer
 
   ColumnFilters<int> get capturedAt => $composableBuilder(
       column: $table.capturedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get confidence => $composableBuilder(
+      column: $table.confidence, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get reasonCodes => $composableBuilder(
+      column: $table.reasonCodes, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+      column: $table.accountId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get utr => $composableBuilder(
+      column: $table.utr, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get accountLast4 => $composableBuilder(
+      column: $table.accountLast4, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
+      get availableBalance => $composableBuilder(
+          column: $table.availableBalance,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<String> get instrument => $composableBuilder(
+      column: $table.instrument, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get profileId => $composableBuilder(
+      column: $table.profileId, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get finalAmount =>
+      $composableBuilder(
+          column: $table.finalAmount,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<int> get decidedAt => $composableBuilder(
+      column: $table.decidedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get postedTxnId => $composableBuilder(
+      column: $table.postedTxnId, builder: (column) => ColumnFilters(column));
 }
 
 class $$PendingCapturesTableOrderingComposer
@@ -15166,6 +16373,50 @@ class $$PendingCapturesTableOrderingComposer
 
   ColumnOrderings<int> get capturedAt => $composableBuilder(
       column: $table.capturedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get confidence => $composableBuilder(
+      column: $table.confidence, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get reasonCodes => $composableBuilder(
+      column: $table.reasonCodes, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+      column: $table.accountId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get utr => $composableBuilder(
+      column: $table.utr, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get accountLast4 => $composableBuilder(
+      column: $table.accountLast4,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get availableBalance => $composableBuilder(
+      column: $table.availableBalance,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get instrument => $composableBuilder(
+      column: $table.instrument, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get profileId => $composableBuilder(
+      column: $table.profileId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get finalAmount => $composableBuilder(
+      column: $table.finalAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get decidedAt => $composableBuilder(
+      column: $table.decidedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get postedTxnId => $composableBuilder(
+      column: $table.postedTxnId, builder: (column) => ColumnOrderings(column));
 }
 
 class $$PendingCapturesTableAnnotationComposer
@@ -15206,6 +16457,50 @@ class $$PendingCapturesTableAnnotationComposer
 
   GeneratedColumn<int> get capturedAt => $composableBuilder(
       column: $table.capturedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get confidence => $composableBuilder(
+      column: $table.confidence, builder: (column) => column);
+
+  GeneratedColumn<String> get reasonCodes => $composableBuilder(
+      column: $table.reasonCodes, builder: (column) => column);
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => column);
+
+  GeneratedColumn<String> get utr =>
+      $composableBuilder(column: $table.utr, builder: (column) => column);
+
+  GeneratedColumn<String> get accountLast4 => $composableBuilder(
+      column: $table.accountLast4, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get availableBalance =>
+      $composableBuilder(
+          column: $table.availableBalance, builder: (column) => column);
+
+  GeneratedColumn<String> get instrument => $composableBuilder(
+      column: $table.instrument, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get profileId =>
+      $composableBuilder(column: $table.profileId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get finalAmount =>
+      $composableBuilder(
+          column: $table.finalAmount, builder: (column) => column);
+
+  GeneratedColumn<int> get decidedAt =>
+      $composableBuilder(column: $table.decidedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get postedTxnId => $composableBuilder(
+      column: $table.postedTxnId, builder: (column) => column);
 }
 
 class $$PendingCapturesTableTableManager extends RootTableManager<
@@ -15245,6 +16540,20 @@ class $$PendingCapturesTableTableManager extends RootTableManager<
             Value<bool> uncategorized = const Value.absent(),
             Value<String> fingerprint = const Value.absent(),
             Value<int> capturedAt = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<int?> confidence = const Value.absent(),
+            Value<String?> reasonCodes = const Value.absent(),
+            Value<String?> accountId = const Value.absent(),
+            Value<String?> categoryId = const Value.absent(),
+            Value<String?> utr = const Value.absent(),
+            Value<String?> accountLast4 = const Value.absent(),
+            Value<Decimal?> availableBalance = const Value.absent(),
+            Value<String?> instrument = const Value.absent(),
+            Value<String?> kind = const Value.absent(),
+            Value<String?> profileId = const Value.absent(),
+            Value<Decimal?> finalAmount = const Value.absent(),
+            Value<int?> decidedAt = const Value.absent(),
+            Value<String?> postedTxnId = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PendingCapturesCompanion(
@@ -15258,6 +16567,20 @@ class $$PendingCapturesTableTableManager extends RootTableManager<
             uncategorized: uncategorized,
             fingerprint: fingerprint,
             capturedAt: capturedAt,
+            status: status,
+            confidence: confidence,
+            reasonCodes: reasonCodes,
+            accountId: accountId,
+            categoryId: categoryId,
+            utr: utr,
+            accountLast4: accountLast4,
+            availableBalance: availableBalance,
+            instrument: instrument,
+            kind: kind,
+            profileId: profileId,
+            finalAmount: finalAmount,
+            decidedAt: decidedAt,
+            postedTxnId: postedTxnId,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -15271,6 +16594,20 @@ class $$PendingCapturesTableTableManager extends RootTableManager<
             Value<bool> uncategorized = const Value.absent(),
             required String fingerprint,
             required int capturedAt,
+            Value<String> status = const Value.absent(),
+            Value<int?> confidence = const Value.absent(),
+            Value<String?> reasonCodes = const Value.absent(),
+            Value<String?> accountId = const Value.absent(),
+            Value<String?> categoryId = const Value.absent(),
+            Value<String?> utr = const Value.absent(),
+            Value<String?> accountLast4 = const Value.absent(),
+            Value<Decimal?> availableBalance = const Value.absent(),
+            Value<String?> instrument = const Value.absent(),
+            Value<String?> kind = const Value.absent(),
+            Value<String?> profileId = const Value.absent(),
+            Value<Decimal?> finalAmount = const Value.absent(),
+            Value<int?> decidedAt = const Value.absent(),
+            Value<String?> postedTxnId = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PendingCapturesCompanion.insert(
@@ -15284,6 +16621,20 @@ class $$PendingCapturesTableTableManager extends RootTableManager<
             uncategorized: uncategorized,
             fingerprint: fingerprint,
             capturedAt: capturedAt,
+            status: status,
+            confidence: confidence,
+            reasonCodes: reasonCodes,
+            accountId: accountId,
+            categoryId: categoryId,
+            utr: utr,
+            accountLast4: accountLast4,
+            availableBalance: availableBalance,
+            instrument: instrument,
+            kind: kind,
+            profileId: profileId,
+            finalAmount: finalAmount,
+            decidedAt: decidedAt,
+            postedTxnId: postedTxnId,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -15307,6 +16658,214 @@ typedef $$PendingCapturesTableProcessedTableManager = ProcessedTableManager<
       BaseReferences<_$AppDatabase, $PendingCapturesTable, PendingCaptureRow>
     ),
     PendingCaptureRow,
+    PrefetchHooks Function()>;
+typedef $$CaptureAccountLinksTableCreateCompanionBuilder
+    = CaptureAccountLinksCompanion Function({
+  required String id,
+  required String vaultId,
+  Value<String> profileId,
+  required String last4,
+  required String instrument,
+  required String accountId,
+  required int createdAt,
+  Value<int> rowid,
+});
+typedef $$CaptureAccountLinksTableUpdateCompanionBuilder
+    = CaptureAccountLinksCompanion Function({
+  Value<String> id,
+  Value<String> vaultId,
+  Value<String> profileId,
+  Value<String> last4,
+  Value<String> instrument,
+  Value<String> accountId,
+  Value<int> createdAt,
+  Value<int> rowid,
+});
+
+class $$CaptureAccountLinksTableFilterComposer
+    extends Composer<_$AppDatabase, $CaptureAccountLinksTable> {
+  $$CaptureAccountLinksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get profileId => $composableBuilder(
+      column: $table.profileId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get last4 => $composableBuilder(
+      column: $table.last4, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get instrument => $composableBuilder(
+      column: $table.instrument, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+      column: $table.accountId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$CaptureAccountLinksTableOrderingComposer
+    extends Composer<_$AppDatabase, $CaptureAccountLinksTable> {
+  $$CaptureAccountLinksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get profileId => $composableBuilder(
+      column: $table.profileId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get last4 => $composableBuilder(
+      column: $table.last4, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get instrument => $composableBuilder(
+      column: $table.instrument, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+      column: $table.accountId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CaptureAccountLinksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CaptureAccountLinksTable> {
+  $$CaptureAccountLinksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<String> get profileId =>
+      $composableBuilder(column: $table.profileId, builder: (column) => column);
+
+  GeneratedColumn<String> get last4 =>
+      $composableBuilder(column: $table.last4, builder: (column) => column);
+
+  GeneratedColumn<String> get instrument => $composableBuilder(
+      column: $table.instrument, builder: (column) => column);
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$CaptureAccountLinksTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CaptureAccountLinksTable,
+    CaptureAccountLinkRow,
+    $$CaptureAccountLinksTableFilterComposer,
+    $$CaptureAccountLinksTableOrderingComposer,
+    $$CaptureAccountLinksTableAnnotationComposer,
+    $$CaptureAccountLinksTableCreateCompanionBuilder,
+    $$CaptureAccountLinksTableUpdateCompanionBuilder,
+    (
+      CaptureAccountLinkRow,
+      BaseReferences<_$AppDatabase, $CaptureAccountLinksTable,
+          CaptureAccountLinkRow>
+    ),
+    CaptureAccountLinkRow,
+    PrefetchHooks Function()> {
+  $$CaptureAccountLinksTableTableManager(
+      _$AppDatabase db, $CaptureAccountLinksTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CaptureAccountLinksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CaptureAccountLinksTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CaptureAccountLinksTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> vaultId = const Value.absent(),
+            Value<String> profileId = const Value.absent(),
+            Value<String> last4 = const Value.absent(),
+            Value<String> instrument = const Value.absent(),
+            Value<String> accountId = const Value.absent(),
+            Value<int> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CaptureAccountLinksCompanion(
+            id: id,
+            vaultId: vaultId,
+            profileId: profileId,
+            last4: last4,
+            instrument: instrument,
+            accountId: accountId,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String vaultId,
+            Value<String> profileId = const Value.absent(),
+            required String last4,
+            required String instrument,
+            required String accountId,
+            required int createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CaptureAccountLinksCompanion.insert(
+            id: id,
+            vaultId: vaultId,
+            profileId: profileId,
+            last4: last4,
+            instrument: instrument,
+            accountId: accountId,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CaptureAccountLinksTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CaptureAccountLinksTable,
+    CaptureAccountLinkRow,
+    $$CaptureAccountLinksTableFilterComposer,
+    $$CaptureAccountLinksTableOrderingComposer,
+    $$CaptureAccountLinksTableAnnotationComposer,
+    $$CaptureAccountLinksTableCreateCompanionBuilder,
+    $$CaptureAccountLinksTableUpdateCompanionBuilder,
+    (
+      CaptureAccountLinkRow,
+      BaseReferences<_$AppDatabase, $CaptureAccountLinksTable,
+          CaptureAccountLinkRow>
+    ),
+    CaptureAccountLinkRow,
     PrefetchHooks Function()>;
 typedef $$InstrumentsTableCreateCompanionBuilder = InstrumentsCompanion
     Function({
@@ -17791,6 +19350,8 @@ class $AppDatabaseManager {
       $$PostingsTableTableManager(_db, _db.postings);
   $$PendingCapturesTableTableManager get pendingCaptures =>
       $$PendingCapturesTableTableManager(_db, _db.pendingCaptures);
+  $$CaptureAccountLinksTableTableManager get captureAccountLinks =>
+      $$CaptureAccountLinksTableTableManager(_db, _db.captureAccountLinks);
   $$InstrumentsTableTableManager get instruments =>
       $$InstrumentsTableTableManager(_db, _db.instruments);
   $$TradesTableTableManager get trades =>

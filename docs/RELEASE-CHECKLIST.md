@@ -142,7 +142,9 @@ The failures here are silent and permanent, so they are checked by hand:
 
 ### 5. Store artifacts
 
-- [ ] `flutter build appbundle --release --dart-define=KHAZANA_CHANNEL=play`
+- [ ] `flutter build appbundle --release --flavor play --dart-define=KHAZANA_CHANNEL=play`
+      (the **play** flavor — never upload a `sideload` build to Play: it declares
+      `READ_SMS`/`RECEIVE_SMS`.)
 - [ ] Signed with the **release** keystore, not debug.
 - [ ] Shipped manifest: `INTERNET` present, `READ_SMS`/`RECEIVE_SMS` absent,
       `allowBackup="false"`, `com.android.vending.BILLING` absent. (The

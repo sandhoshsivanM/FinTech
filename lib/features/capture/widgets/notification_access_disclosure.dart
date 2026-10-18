@@ -59,15 +59,18 @@ class NotificationAccessDisclosure extends StatelessWidget {
             ),
             point(
               'Why',
-              'To suggest transactions for you to review, so you do not have to '
-                  'type each payment in by hand. Nothing is added until you tap Add.',
+              'So you do not have to type each payment in by hand. Payments '
+                  'Khazana is confident about are added for you and announced with '
+                  'an Undo; anything doubtful waits in Auto-capture for you to '
+                  'approve, correct or reject. You can switch automatic adding off.',
             ),
             point(
               'Where it goes',
               'Nowhere. The text is read on this device, in memory, and thrown '
-                  'away straight away. Only the amount, merchant and date of a '
-                  'payment alert are kept, in your encrypted vault. Nothing is '
-                  'uploaded, shared or used for ads, because Khazana has no server.',
+                  'away straight away. Only the amount, merchant, date and the last '
+                  'digits of the account in a payment alert are kept, in your '
+                  'encrypted vault. Nothing is uploaded, shared or used for ads, '
+                  'because Khazana has no server.',
             ),
             point(
               'You are in control',

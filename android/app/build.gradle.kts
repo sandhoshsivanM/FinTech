@@ -43,6 +43,30 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["appLabel"] = "Khazana"
+    }
+
+    // Two Android builds from one codebase. Every Android command now names one:
+    //   flutter run --flavor sideload
+    //   flutter build appbundle --release --flavor play --dart-define=KHAZANA_CHANNEL=play
+    //
+    // play     — the Google Play build. No SMS permissions in its manifest and no
+    //            SMS code in its binary; bank alerts arrive through the
+    //            notification listener. This stays true until Play approves the
+    //            "SMS-based money management" permission exception for Khazana.
+    // sideload — the build installed directly (developer and testers). Adds
+    //            RECEIVE_SMS/READ_SMS and the SMS receiver. Its own application
+    //            id, so it installs beside a Play copy without a signature clash.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("play") {
+            dimension = "distribution"
+        }
+        create("sideload") {
+            dimension = "distribution"
+            applicationIdSuffix = ".sideload"
+            manifestPlaceholders["appLabel"] = "Khazana SMS"
+        }
     }
 
     signingConfigs {

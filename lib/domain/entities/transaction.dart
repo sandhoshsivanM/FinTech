@@ -18,6 +18,8 @@ class Txn {
     required this.createdAt,
     this.accountId,
     this.attachmentRef,
+    this.source,
+    this.captureId,
   });
 
   final String id;
@@ -36,6 +38,15 @@ class Txn {
 
   /// Receipt attachment — sandbox file path on mobile, record id on web.
   final String? attachmentRef;
+
+  /// Where the entry came from: null for manual entry, else a capture source
+  /// key ('sms' | 'notification').
+  final String? source;
+
+  /// The capture this entry was created from, if any.
+  final String? captureId;
+
+  bool get isAutoCaptured => captureId != null;
 
   /// Signed contribution to net worth: income adds, expense subtracts (PRD §16).
   Decimal get signedAmount =>
@@ -63,6 +74,8 @@ class Txn {
       createdAt: createdAt,
       accountId: accountId ?? this.accountId,
       attachmentRef: attachmentRef ?? this.attachmentRef,
+      source: source,
+      captureId: captureId,
     );
   }
 }

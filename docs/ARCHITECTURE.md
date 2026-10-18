@@ -56,7 +56,7 @@ Details and trust boundaries: [THREAT-MODEL.md](THREAT-MODEL.md).
 
 ## Data layer
 
-- **23 Drift tables**, 16 DAOs, repository wrappers; `schemaVersion = 6`, with an
+- **24 Drift tables**, 16 DAOs, repository wrappers; `schemaVersion = 7`, with an
   `onUpgrade` ladder that is additive and idempotent so it is safe to re-run on a
   database that can never be inspected:
   | To | What it does |
@@ -66,6 +66,7 @@ Details and trust boundaries: [THREAT-MODEL.md](THREAT-MODEL.md).
   | v4 | Replaces aggregated holdings with the lot-level model — `Instruments`, `Trades` (with per-leg charges), `InstrumentPrices` as a dated series, `Dividends`, `FundHoldings`. |
   | v5 | Adds health-score columns to snapshots, nullable — a vault with no score for a past month shows nothing there, never `0`. |
   | v6 | Adds `NotificationDeliveries`. |
+  | v7 | Automatic capture: routing state on `PendingCaptures` (status, confidence, reasons, matched account, UTR, balance), `source`/`captureId` on `Transactions`, and the `CaptureAccountLinks` table. Guarded per column, because v3 creates `PendingCaptures` from the current definition. |
 - **FTS5** virtual table + sync triggers + porter tokenizer for transaction
   search; `vaultId` indexed on every table for multi-profile isolation.
 - Money columns are **TEXT/Decimal** via a custom converter — no float drift.

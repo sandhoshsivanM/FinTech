@@ -13,6 +13,7 @@ import '../core/services/notification_sync_service.dart';
 import '../features/capture/providers/capture_providers.dart';
 import '../core/theme/app_tokens.dart';
 import '../core/theme/semantic_colors.dart';
+import '../core/utils/money_format.dart';
 import '../features/home/home_palette.dart';
 import 'desktop_shell.dart';
 import 'section_tabs.dart';
@@ -127,6 +128,41 @@ class _AppShellState extends ConsumerState<AppShell>
     // Start the on-device SMS / notification capture stream while unlocked
     // (Android only; a no-op elsewhere).
     ref.watch(captureListenerProvider);
+    // Every automatic add is announced with an Undo, wherever the user is. The
+    // vault is unlocked whenever capture runs, so showing the amount here is no
+    // more exposure than the transaction list behind it.
+    ref.listen(lastAutoPostedCaptureProvider, (_, next) {
+      if (next == null) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger == null) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text(
+              'Added ${Money.format(next.effectiveAmount)} · ${next.merchant ?? 'payment'}'),
+          duration: const Duration(seconds: 6),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () => ref.read(captureReviewProvider).undo(next),
+          ),
+        ));
+    });
+    // A catch-up or history import can bring in many at once: one summary
+    // instead of a snackbar per message.
+    ref.listen(lastSmsCatchUpProvider, (_, next) {
+      if (next == null) return;
+      final parts = [
+        if (next.autoPosted > 0) 'Added ${next.autoPosted} from bank SMS',
+        if (next.queued > 0) '${next.queued} to review',
+      ];
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+        content: Text(parts.isEmpty ? 'No new bank SMS' : parts.join(' · ')),
+        action: next.queued > 0
+            ? SnackBarAction(
+                label: 'Review', onPressed: () => context.go(Routes.captureInbox))
+            : null,
+      ));
+    });
     // Write the coming weeks' reminders down the moment the vault opens.
     //
     // This is the only point at which the app can both read due dates and talk

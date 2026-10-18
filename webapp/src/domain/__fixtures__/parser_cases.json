@@ -1,0 +1,219 @@
+{
+  "_comment": [
+    "Shared cases for lib/domain/services/notification_parser.dart and",
+    "webapp/src/domain/notificationParser.ts. Both suites load this file and",
+    "must agree on every value.",
+    "",
+    "Vitest cannot import from outside webapp/, so this file is duplicated to",
+    "webapp/src/domain/__fixtures__/parser_cases.json rather than symlinked.",
+    "Both suites assert the two copies are byte-identical; if that fails, copy",
+    "this file over that one.",
+    "",
+    "Messages follow the shapes Indian banks and UPI apps actually send, with",
+    "every account digit, reference number, name and amount made up. Replace",
+    "or extend them with anonymised real alerts from your own phone: a real",
+    "format beats an invented one.",
+    "",
+    "`expect: null` means the parser must reject the message. Otherwise only",
+    "the keys present are asserted. Amounts are compared as Decimal strings,",
+    "which both decimal libraries normalise (\"250.00\" -> \"250\").",
+    "`now` is local wall-clock time with no offset, so both languages read it",
+    "as the same local instant."
+  ],
+
+  "now": "2026-06-30T12:00:00",
+
+  "cases": [
+    {
+      "name": "hdfc upi sent: reference, masked a/c, vpa merchant, embedded date",
+      "sender": "VM-HDFCBK",
+      "text": "Sent Rs.250.00 from HDFC Bank A/C *1234 to swiggy@icici on 05/01/26. Ref 412345678901. Not You? Call 18002586161/SMS BLOCK UPI to 7308080808",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "250", "merchant": "swiggy@icici",
+        "timestamp": "2026-01-05", "utr": "412345678901", "accountLast4": "1234",
+        "availableBalance": null, "instrument": "upi", "profileId": "hdfc",
+        "fingerprint": "utr|412345678901|expense"
+      }
+    },
+    {
+      "name": "hdfc card spend: card suffix without a mask, merchant before on",
+      "sender": "VM-HDFCBK",
+      "text": "Spent Rs.1,499.00 On HDFC Bank Card 5678 At AMAZON PAY INDIA On 2026-01-06:14:22:10. Not You? To Block+Reissue Call 18002586161",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "1499", "merchant": "amazon pay india",
+        "timestamp": "2026-01-06", "utr": null, "accountLast4": "5678", "instrument": "unknown"
+      }
+    },
+    {
+      "name": "icici debit with a credited payee: debit wins, three-digit mask, bare upi ref",
+      "sender": "AX-ICICIT",
+      "text": "ICICI Bank Acct XX789 debited for Rs 5,000.00 on 07-Jan-26; RAHUL K credited. UPI:512345678901. Call 18002662 for dispute. SMS BLOCK 789 to 9215676766",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "5000", "timestamp": "2026-01-07",
+        "utr": "512345678901", "accountLast4": "789", "instrument": "upi", "profileId": "icici"
+      }
+    },
+    {
+      "name": "sbi upi debit with no currency token and refno glued to ref",
+      "sender": "BZ-SBIUPI",
+      "text": "Dear UPI user A/C X4321 debited by 120.0 on date 08Jan26 trf to CHAI POINT Refno 612345678901. If not u? call 1800111109. -SBI",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "120", "merchant": "chai point",
+        "timestamp": "2026-06-30", "utr": "612345678901", "accountLast4": "4321",
+        "instrument": "upi", "profileId": "sbi"
+      }
+    },
+    {
+      "name": "axis upi credit with balance; vpa merchant ends at the bracket",
+      "sender": "VK-AXISBK",
+      "text": "INR 1,500.00 credited to A/c no. XX6789 on 09-01-26 by VPA ravi@okaxis (UPI Ref no 712345678901). Avl Bal INR 25,300.50",
+      "expect": {
+        "type": "income", "kind": "income", "amount": "1500", "merchant": "ravi@okaxis",
+        "timestamp": "2026-01-09", "utr": "712345678901", "accountLast4": "6789",
+        "availableBalance": "25300.5", "instrument": "upi", "profileId": "axis"
+      }
+    },
+    {
+      "name": "kotak credit card spend: available limit is not a balance",
+      "sender": "JD-KOTAKB",
+      "text": "Rs.899.00 spent on your Kotak Credit Card x4455 at NETFLIX on 10/01/2026. Avl limit: Rs.45,101.00. Not you? Call 18602662666",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "899", "merchant": "netflix",
+        "timestamp": "2026-01-10", "accountLast4": "4455", "availableBalance": null,
+        "instrument": "credit_card", "profileId": "kotak"
+      }
+    },
+    {
+      "name": "salary credit in lakh notation",
+      "sender": "VM-HDFCBK",
+      "text": "Update! INR 85,000.00 deposited in HDFC Bank A/c XX1234 on 31-JAN-26 for NEFT Cr-CITI0000001-ACME SOFTWARE PVT LTD-SALARY JAN. Avl bal INR 1,02,345.67",
+      "expect": {
+        "type": "income", "kind": "income", "amount": "85000", "timestamp": "2026-01-31",
+        "accountLast4": "1234", "availableBalance": "102345.67", "instrument": "account"
+      }
+    },
+    {
+      "name": "atm withdrawal: merchant stops at from",
+      "sender": "AD-ICICIB",
+      "text": "Rs 2,000.00 withdrawn at ATM from ICICI Bank Acct XX789 on 11-Jan-26. Avl Bal Rs 18,000.00",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "2000", "merchant": "atm",
+        "timestamp": "2026-01-11", "accountLast4": "789", "availableBalance": "18000"
+      }
+    },
+    {
+      "name": "refund to a debit card is a refund, not a debit",
+      "sender": "VM-HDFCBK",
+      "text": "Refund of Rs.499.00 credited to your HDFC Bank Debit Card XX1234 from FLIPKART on 12-01-26",
+      "expect": {
+        "type": "income", "kind": "refund", "amount": "499", "timestamp": "2026-01-12",
+        "accountLast4": "1234", "instrument": "debit_card"
+      }
+    },
+    {
+      "name": "credit card bill payment received is not income",
+      "sender": "VM-HDFCBK",
+      "text": "Payment of Rs.10,000.00 has been received towards your HDFC Bank Credit Card ending 5678 on 13-01-26. Thank you.",
+      "expect": {
+        "type": "income", "kind": "card_bill_payment", "amount": "10000", "timestamp": "2026-01-13",
+        "accountLast4": "5678", "instrument": "credit_card"
+      }
+    },
+    {
+      "name": "upi app notification with no bank details",
+      "sender": "com.google.android.apps.nbu.paisa.user",
+      "text": "₹350 paid to Ramesh Tea Stall",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "350", "merchant": "ramesh tea stall",
+        "timestamp": "2026-06-30", "utr": null, "accountLast4": null, "profileId": null
+      }
+    },
+    {
+      "name": "a 12-digit mobile number is not a reference",
+      "sender": "VM-HDFCBK",
+      "text": "Rs 500 paid to 919876543210 via UPI from A/c XX1234",
+      "expect": {
+        "type": "expense", "amount": "500", "utr": null, "accountLast4": "1234", "instrument": "upi"
+      }
+    },
+    {
+      "name": "neft credit with an alphanumeric utr",
+      "sender": "VM-HDFCBK",
+      "text": "INR 20,000.00 credited to A/c XX1234 on 14-01-26 via NEFT, UTR No. SBIN526014123456 from PRIYA S. Avl Bal INR 40,000.00",
+      "expect": {
+        "type": "income", "kind": "income", "amount": "20000", "utr": "SBIN526014123456",
+        "accountLast4": "1234", "availableBalance": "40000",
+        "fingerprint": "utr|SBIN526014123456|income"
+      }
+    },
+    {
+      "name": "first of two identical coffees",
+      "sender": "VM-HDFCBK",
+      "text": "Rs 150.00 debited from a/c XX1234 at CAFE BREW on 15-01-26. Avl Bal Rs 9,850.00",
+      "expect": { "amount": "150", "merchant": "cafe brew", "fingerprint": "2026-01-15|150|cafe brew|1234|9850" }
+    },
+    {
+      "name": "second identical coffee gets its own key from the new balance",
+      "sender": "VM-HDFCBK",
+      "text": "Rs 150.00 debited from a/c XX1234 at CAFE BREW on 15-01-26. Avl Bal Rs 9,700.00",
+      "expect": { "amount": "150", "fingerprint": "2026-01-15|150|cafe brew|1234|9700" }
+    },
+    {
+      "name": "sbi credit transfer",
+      "sender": "VM-SBIINB",
+      "text": "Dear SBI User, your A/c X4321-credited by Rs.2,500 on 16Jan26 transfer from ANITA R Ref No 812345678901 -SBI",
+      "expect": {
+        "type": "income", "kind": "income", "amount": "2500", "utr": "812345678901",
+        "accountLast4": "4321", "profileId": "sbi"
+      }
+    },
+    {
+      "name": "the sender beats a bank named in the body",
+      "sender": "AX-ICICIB",
+      "text": "Rs 1,200.00 paid to HDFC ERGO from Acct XX789 on 17-Jan-26",
+      "expect": { "type": "expense", "merchant": "hdfc ergo", "profileId": "icici" }
+    },
+    {
+      "name": "otp for a payment is not a payment",
+      "sender": "VM-HDFCBK",
+      "text": "123456 is the OTP to confirm Rs 2,499.00 to be debited at AMAZON on HDFC Bank Card 5678. Do not share it with anyone.",
+      "expect": null
+    },
+    {
+      "name": "pre-approved loan promotion",
+      "sender": "VM-HDFCBK",
+      "text": "Congratulations! You are eligible for a pre-approved personal loan of up to Rs 5,00,000 credited to your account instantly. Apply now: http://bit.ly/xyz",
+      "expect": null
+    },
+    {
+      "name": "balance enquiry",
+      "sender": "VM-HDFCBK",
+      "text": "Avl Bal in A/c XX1234 is Rs 12,345.67 as on 17-01-26",
+      "expect": null
+    },
+    {
+      "name": "declined transaction",
+      "sender": "VM-HDFCBK",
+      "text": "Transaction of Rs 4,500.00 at CROMA on HDFC Bank Card 5678 declined due to insufficient funds",
+      "expect": null
+    },
+    {
+      "name": "failed transaction that mentions a debit",
+      "sender": "BZ-SBIUPI",
+      "text": "UPI txn failed. Rs 500 debited from A/c X4321 will be reversed within 48 hours.",
+      "expect": null
+    },
+    {
+      "name": "cashback marketing",
+      "sender": "VM-PAYTM",
+      "text": "Get 10% cashback up to Rs 150 on your next recharge. Offer valid till 31 Jan",
+      "expect": null
+    },
+    {
+      "name": "delivery update",
+      "sender": "VM-SWIGGY",
+      "text": "Your Swiggy order has been delivered. Enjoy your meal!",
+      "expect": null
+    }
+  ]
+}

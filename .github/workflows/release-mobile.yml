@@ -81,7 +81,9 @@ jobs:
           EOF
 
       - name: Build AAB
-        run: flutter build appbundle --release --dart-define=KHAZANA_CHANNEL=play
+        # --flavor play: the Play build, whose manifest carries no SMS permission
+        # (the sideload flavor adds it; see android/app/build.gradle.kts).
+        run: flutter build appbundle --release --flavor play --dart-define=KHAZANA_CHANNEL=play
 
       # Belt and braces. R8 + the manifest merge are exactly where a permission
       # or a missing INTERNET quietly reappears, and neither fails the build.
@@ -89,14 +91,14 @@ jobs:
         run: |
           python3 - <<'PY'
           import re, zipfile, sys
-          z = zipfile.ZipFile('build/app/outputs/bundle/release/app-release.aab')
+          z = zipfile.ZipFile('build/app/outputs/bundle/playRelease/app-play-release.aab')
           data = z.read('base/manifest/AndroidManifest.xml')
           blob = b' '.join(re.findall(rb'[ -~]{6,}', data))
           def need(s):   assert s.encode() in blob, f'MISSING: {s}'
           def forbid(s): assert s.encode() not in blob, f'PRESENT (must not be): {s}'
           need('android.permission.INTERNET')       # release builds lost this once
           need('allowBackup')                       # must be declared false
-          forbid('android.permission.READ_SMS')     # Play restricted permission
+          forbid('android.permission.READ_SMS')     # Play restricted permission; sideload flavor only
           forbid('android.permission.RECEIVE_SMS')
           forbid('com.android.vending.BILLING')     # no in-app purchases; Khazana is free
           print('manifest OK')
@@ -109,7 +111,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: khazana-android-aab
-          path: build/app/outputs/bundle/release/app-release.aab
+          path: build/app/outputs/bundle/playRelease/app-play-release.aab
           retention-days: 14
 
   apple:

@@ -47,6 +47,7 @@ part 'app_database.g.dart';
     Accounts,
     Postings,
     PendingCaptures,
+    CaptureAccountLinks,
     Instruments,
     Trades,
     InstrumentPrices,
@@ -87,13 +88,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await _createFtsObjects();
+          await _createCaptureIndexes();
         },
         onUpgrade: (m, from, to) async {
           // v2: insurance policies + daily net-worth snapshots.
@@ -124,6 +126,12 @@ class AppDatabase extends _$AppDatabase {
           if (from < 6) {
             await m.createTable(notificationDeliveries);
           }
+          // v7: automatic capture — routing state on captures, provenance on
+          // transactions, and remembered account links. Every column is
+          // nullable or defaulted, so existing rows stay valid as they are.
+          if (from < 7) {
+            await _migrateToAutoCapture(m);
+          }
         },
       );
 
@@ -137,6 +145,11 @@ class AppDatabase extends _$AppDatabase {
     await m.createTable(pendingCaptures);
     await m.addColumn(transactions, transactions.accountId);
     await m.addColumn(transactions, transactions.attachmentRef);
+    // The select below goes through the generated table, which always knows the
+    // *current* columns. Any column added to `transactions` by a later version
+    // must exist before it runs, or upgrading an old vault fails mid-ladder.
+    await _addColumnIfMissing(m, transactions, transactions.source);
+    await _addColumnIfMissing(m, transactions, transactions.captureId);
 
     final now = DateTime.now().millisecondsSinceEpoch;
     final cats = await select(categories).get();
@@ -285,6 +298,57 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  /// v7 migration: automatic capture. Guarded per column because v3 creates
+  /// [pendingCaptures] from the *current* definition — a vault upgrading from
+  /// v2 already has every v7 column by the time this runs, and an unguarded
+  /// `addColumn` would fail with "duplicate column".
+  Future<void> _migrateToAutoCapture(Migrator m) async {
+    for (final c in [
+      pendingCaptures.status,
+      pendingCaptures.confidence,
+      pendingCaptures.reasonCodes,
+      pendingCaptures.accountId,
+      pendingCaptures.categoryId,
+      pendingCaptures.utr,
+      pendingCaptures.accountLast4,
+      pendingCaptures.availableBalance,
+      pendingCaptures.instrument,
+      pendingCaptures.kind,
+      pendingCaptures.profileId,
+      pendingCaptures.finalAmount,
+      pendingCaptures.decidedAt,
+      pendingCaptures.postedTxnId,
+    ]) {
+      await _addColumnIfMissing(m, pendingCaptures, c);
+    }
+    await _addColumnIfMissing(m, transactions, transactions.source);
+    await _addColumnIfMissing(m, transactions, transactions.captureId);
+    await m.createTable(captureAccountLinks);
+    await _createCaptureIndexes();
+  }
+
+  Future<void> _addColumnIfMissing(
+      Migrator m, TableInfo table, GeneratedColumn column) async {
+    final info = await customSelect(
+            'PRAGMA table_info("${table.actualTableName}")')
+        .get();
+    final exists = info.any((r) => r.read<String>('name') == column.name);
+    if (!exists) await m.addColumn(table, column);
+  }
+
+  /// The dedupe check runs on every captured message, so it must be an index
+  /// seek — O(log n) — not a scan of every capture the vault has ever seen.
+  Future<void> _createCaptureIndexes() async {
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_pending_captures_fingerprint '
+      'ON pending_captures (vault_id, fingerprint)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_pending_captures_status '
+      'ON pending_captures (vault_id, status, captured_at)',
+    );
+  }
+
   /// Erase all user financial data (PRD §11 reset). Keeps categories, merchant
   /// aliases, FX rates and the vault itself so the app stays usable — mirrors
   /// the web app's wipe (a clean, empty vault).
@@ -303,6 +367,9 @@ class AppDatabase extends _$AppDatabase {
       // The chart of accounts is structural (like categories) and is kept.
       await delete(postings).go();
       await delete(pendingCaptures).go();
+      // Masked account suffixes are identifying, so the links go too — unlike
+      // the chart of accounts, they are learned from the user's own messages.
+      await delete(captureAccountLinks).go();
 
       // The whole portfolio, children before parents. [holdings] is the legacy
       // aggregate table; the five v4 tables are where the portfolio actually
