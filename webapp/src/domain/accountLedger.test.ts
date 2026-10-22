@@ -3,8 +3,8 @@ import {
   accountBalances, allEntriesBalanced, isBalanced, netWorth,
   netWorthFromAccounts, postingsForEntry, postingsForTransfer,
   liquidBalance, moneyAccounts,
-} from './accountLedger';
-import type { Account, AccountType, Holding, Posting, Transfer, TxnType } from '@/lib/types';
+} from '@khazana/domain/accountLedger';
+import type { Account, AccountType, Holding, Posting, Transfer, TxnType } from '@khazana/domain/types';
 
 // Parity fixtures shared with test/unit/account_ledger_test.dart — same inputs,
 // same expected numbers on both engines.

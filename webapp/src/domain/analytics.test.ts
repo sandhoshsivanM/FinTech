@@ -3,13 +3,13 @@
 // All of this used to be computed inline in the page component, where none of
 // it could be tested and none of it could be shared with the Flutter client.
 import { describe, test, expect } from 'vitest';
-import { D } from '@/lib/money';
-import type { Holding } from '@/lib/types';
-import { holdingView, rollup, allocationByGroup, UNCLASSIFIED_KEY } from './portfolio';
+import { D } from '@khazana/domain/money';
+import type { Holding } from '@khazana/domain/types';
+import { holdingView, rollup, allocationByGroup, UNCLASSIFIED_KEY } from '@khazana/domain/portfolio';
 import {
   returnBuckets, positionWeights, riskStats, diversificationScore,
   diversificationBand, returnQualityScore, extremes, POSITION_ALERT_WEIGHT,
-} from './analytics';
+} from '@khazana/domain/analytics';
 
 const hold = (over: Partial<Holding>): Holding => ({
   id: over.symbol ?? 'h', vaultId: 'v', symbol: 'X', exchange: 'NSE',

@@ -6,9 +6,9 @@
  * positions claimed ₹12.5 L of exemption between them.
  */
 import { describe, expect, test } from 'vitest';
-import { D } from '@/lib/money';
-import { computeGain, estimatePortfolioTax, rulesFor, TAX_RULE_SETS } from './tax';
-import type { AssetType } from '@/lib/types';
+import { D } from '@khazana/domain/money';
+import { computeGain, estimatePortfolioTax, rulesFor, TAX_RULE_SETS } from '@khazana/domain/tax';
+import type { AssetType } from '@khazana/domain/types';
 
 const SALE = new Date(2026, 7, 9);
 const BOUGHT_LONG = new Date(2024, 7, 9);   // 24 months before

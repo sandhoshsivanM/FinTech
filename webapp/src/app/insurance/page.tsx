@@ -2,9 +2,9 @@
 import { useState, useMemo } from 'react';
 import { Shield, Pencil, Trash2, Plus } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
-import { STORE, type Insurance, type InsuranceType } from '@/lib/types';
+import { STORE, type Insurance, type InsuranceType } from '@khazana/domain/types';
 import {
   PageIntro,
   GlassCard,
@@ -22,10 +22,10 @@ import {
   coverageGaps,
   annualPremiumTotal,
   LIFE_COVER_MULTIPLE,
-} from '@/domain/insurance';
+} from '@khazana/domain/insurance';
 import { DateInput } from '@/components/DateInput';
 import { formatDate } from '@/lib/dateFormat';
-import { contains, trailingDays } from '@/domain/period';
+import { contains, trailingDays } from '@khazana/domain/period';
 
 // ---- Insurance type config ----
 

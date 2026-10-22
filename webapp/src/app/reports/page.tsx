@@ -2,10 +2,10 @@
 import { useMemo, useState } from 'react';
 import { BarChart2 } from 'lucide-react';
 import { useApp } from '@/lib/store';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
-import { netWorthSeries, spentForCategory, windowSummary } from '@/domain/finance';
-import { contains, currentMonth, custom, monthsBack, monthsIn, type DateRange } from '@/domain/period';
+import { netWorthSeries, spentForCategory, windowSummary } from '@khazana/domain/finance';
+import { contains, currentMonth, custom, monthsBack, monthsIn, type DateRange } from '@khazana/domain/period';
 import { MonthNav } from '@/components/MonthNav';
 import { DateInput } from '@/components/DateInput';
 import { useNow } from '@/lib/useNow';
@@ -21,7 +21,7 @@ import {
   Sparkline,
 } from '@/components/ui';
 import { formatMonthShort, formatDate, toInputValue, todayInputValue, fromInputValue } from '@/lib/dateFormat';
-import { balanceSheet } from '@/domain/statements';
+import { balanceSheet } from '@khazana/domain/statements';
 import { ExportReport } from '@/components/ExportReport';
 import { CardTitle } from '@/components/Hint';
 import type Decimal from 'decimal.js';

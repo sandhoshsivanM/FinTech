@@ -2,8 +2,8 @@
 // (Insurance), and safe/retirement assets (Investments) into one score.
 // Pure Decimal math; reuses the existing coverage-gap engine.
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { Goal, Insurance, Txn } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { Goal, Insurance, Txn } from './types';
 import { retirementValue, type InvestmentTotals } from './investmentTotals';
 import { windowSummary } from './finance';
 import { contains, trailingDays } from './period';

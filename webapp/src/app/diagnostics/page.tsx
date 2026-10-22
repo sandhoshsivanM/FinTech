@@ -15,7 +15,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, ArrowRight, CheckCircle2, Stethoscope, XCircle } from 'lucide-react';
 import { useApp } from '@/lib/store';
-import { runDiagnostics, worstLevel, type Check } from '@/domain/diagnostics';
+import { runDiagnostics, worstLevel, type Check } from '@khazana/domain/diagnostics';
 import { GlassCard, PageIntro, SectionHeader, Chip } from '@/components/ui';
 
 const ICON = {

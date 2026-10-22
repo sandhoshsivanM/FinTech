@@ -7,8 +7,8 @@
 // one carries an `asOf` date. Treating the seeds as truth is what left every
 // dollar holding valued at 83.30 forever with nothing on screen to say so.
 import Decimal from 'decimal.js';
-import { D } from '@/lib/money';
-import type { FxRate } from '@/lib/types';
+import { D } from './money';
+import type { FxRate } from './types';
 
 export interface Currency { code: string; symbol: string; name: string; rateToInr: number }
 

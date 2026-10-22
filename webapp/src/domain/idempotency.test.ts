@@ -8,12 +8,12 @@
  * a test here.
  */
 import { describe, expect, test } from 'vitest';
-import { D, ZERO } from '@/lib/money';
-import { advance, materialize } from './recurrence';
-import { postingsForEntry, allEntriesBalanced } from './accountLedger';
-import { windowSummary } from './finance';
-import { custom } from './period';
-import type { RecurringRule, Txn } from '@/lib/types';
+import { D, ZERO } from '@khazana/domain/money';
+import { advance, materialize } from '@khazana/domain/recurrence';
+import { postingsForEntry, allEntriesBalanced } from '@khazana/domain/accountLedger';
+import { windowSummary } from '@khazana/domain/finance';
+import { custom } from '@khazana/domain/period';
+import type { RecurringRule, Txn } from '@khazana/domain/types';
 
 const NOW = new Date(2026, 7, 9, 12, 0).getTime();
 const DAY = 86_400_000;

@@ -21,8 +21,8 @@
  * spreadsheet cannot do for you.
  */
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { Account, Posting, Transfer, Txn } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { Account, Posting, Transfer, Txn } from './types';
 import { openingDebitSigned } from './accountLedger';
 
 export interface ReconcileEntry {

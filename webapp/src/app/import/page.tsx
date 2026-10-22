@@ -13,7 +13,7 @@
 import { useMemo, useState } from 'react';
 import { Download, Loader2, Undo2, Upload } from 'lucide-react';
 import { useApp, uid, cashAcctId } from '@/lib/store';
-import { STORE, type AssetType, type Dividend, type Holding, type Txn, type TxnType } from '@/lib/types';
+import { STORE, type AssetType, type Dividend, type Holding, type Txn, type TxnType } from '@khazana/domain/types';
 import { useFmt } from '@/lib/useFmt';
 import { readSheet } from '@/lib/sheet';
 import { parseHoldingsRows, planImport, importCounts, type CsvHolding } from '@/lib/holdingsCsv';
@@ -23,7 +23,7 @@ import {
 } from '@/lib/txnImport';
 import { BROKERS, BANK_GROUPS, findBroker, findBank } from '@/lib/institutions';
 import { downloadCsv, holdingsTemplate, transactionsTemplate } from '@/lib/importTemplates';
-import { moneyAccounts } from '@/domain/accountLedger';
+import { moneyAccounts } from '@khazana/domain/accountLedger';
 import {
   GlassCard, PageIntro, SectionHeader, Segmented, Button, Field, Select, Chip,
 } from '@/components/ui';

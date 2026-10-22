@@ -4,8 +4,8 @@ import clsx from 'clsx';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { useNow } from '@/lib/useNow';
-import { ZERO } from '@/lib/money';
-import { dailyFlow, describeChange, type DayFlow } from '@/domain/dailyFlow';
+import { ZERO } from '@khazana/domain/money';
+import { dailyFlow, describeChange, type DayFlow } from '@khazana/domain/dailyFlow';
 import { GlassCard } from '../ui';
 import { CardTitle } from '../Hint';
 

@@ -1,8 +1,8 @@
 // Insurance coverage-gap analysis. Pure Decimal math; rules of thumb are
 // configurable constants, not guesses presented as fact.
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { Insurance } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { Insurance } from './types';
 
 export const LIFE_COVER_MULTIPLE = 10;   // recommended life cover ≈ 10× annual income
 export const HEALTH_COVER_FLOOR = 500000; // minimum recommended health cover (₹5L)

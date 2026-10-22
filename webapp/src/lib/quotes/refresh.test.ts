@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { applyQuotes } from './refresh';
 import type { Quote } from './yahoo';
-import type { Holding } from '@/lib/types';
+import type { Holding } from '@khazana/domain/types';
 
 const h = (over: Partial<Holding>): Holding => ({
   id: 'h1', vaultId: 'v1', symbol: 'INFY', exchange: 'NSE',

@@ -12,7 +12,7 @@
  * a zero that would read as a real, terrible score.
  */
 import type Decimal from 'decimal.js';
-import type { Holding } from '@/lib/types';
+import type { Holding } from './types';
 import type { HoldingView, RollupRow } from './portfolio';
 
 /* -------------------------------------------------------------------------- */

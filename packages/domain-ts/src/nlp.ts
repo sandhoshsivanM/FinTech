@@ -1,6 +1,6 @@
 // Quick-add natural language parser (PRD §3 Phase 2 / WealthCare). Pure Dart→TS.
 // e.g. "spent 450 on groceries at bigbasket" → {amount, type, category, merchant}
-import type { TxnType } from '@/lib/types';
+import type { TxnType } from './types';
 
 const INCOME_WORDS = ['received', 'got', 'earned', 'salary', 'credited', 'refund', 'income'];
 

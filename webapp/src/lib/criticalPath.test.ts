@@ -11,16 +11,16 @@
  * would have caught three of those five bugs.
  */
 import { describe, expect, test } from 'vitest';
-import { D } from './money';
+import { D } from '@khazana/domain/money';
 import { parseDelimited } from './sheet';
 import { parseTxnRows, planTxnImport, guessCategory } from './txnImport';
 import { parseHoldingsRows, planImport } from './holdingsCsv';
 import { deriveKey, encryptJson, decryptJson, bufToB64, b64ToBuf } from './crypto';
-import { reconcile } from '@/domain/reconcile';
-import { runDiagnostics } from '@/domain/diagnostics';
-import { portfolioSummary } from '@/domain/portfolio';
-import { postingsForEntry } from '@/domain/accountLedger';
-import type { Account, Category, Posting, Txn } from './types';
+import { reconcile } from '@khazana/domain/reconcile';
+import { runDiagnostics } from '@khazana/domain/diagnostics';
+import { portfolioSummary } from '@khazana/domain/portfolio';
+import { postingsForEntry } from '@khazana/domain/accountLedger';
+import type { Account, Category, Posting, Txn } from '@khazana/domain/types';
 
 const STATEMENT = [
   'Account Number,XXXXXXXX1234',

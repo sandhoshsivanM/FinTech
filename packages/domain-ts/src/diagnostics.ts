@@ -14,10 +14,10 @@
  * how you lose the evidence.
  */
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from './money';
 import type {
   Account, Category, Dividend, FxRate, Holding, HoldingLot, Posting, Transfer, Txn,
-} from '@/lib/types';
+} from './types';
 import { reconcileLots } from './lots';
 import { hasApproximateFx } from './portfolio';
 import { FX_STALE_DAYS, isRateStale, rateAsOf } from './currency';

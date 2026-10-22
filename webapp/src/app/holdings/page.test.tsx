@@ -6,7 +6,7 @@ import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
 import { ConfirmProvider } from '@/components/Confirm';
-import type { Holding } from '@/lib/types';
+import type { Holding } from '@khazana/domain/types';
 import HoldingsPage from './page';
 
 vi.mock('next/link', () => ({

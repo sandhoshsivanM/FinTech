@@ -19,7 +19,7 @@ import { GripVertical, EyeOff } from 'lucide-react';
 import {
   allowedSizes, isLiveWidget, moveWidget, nudgeWidget, packSpans, setWidgetHidden, setWidgetSize, widgetTitle, SIZE_COLS, SIZE_LABEL, SIZE_NAME, TABLET_COLS,
   type Layout,
-} from '@/domain/dashboardLayout';
+} from '@khazana/domain/dashboardLayout';
 
 
 /** After a swap the cards reflow under the pointer; wait before the next one so they do not flicker back. */

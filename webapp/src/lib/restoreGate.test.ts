@@ -11,11 +11,11 @@
 //
 // These pin both halves, and the structural checks that must still refuse.
 import { describe, expect, test } from 'vitest';
-import { runDiagnostics, restoreBlockers, RESTORE_BLOCKING } from '@/domain/diagnostics';
+import { runDiagnostics, restoreBlockers, RESTORE_BLOCKING } from '@khazana/domain/diagnostics';
 import { encodeBackup, decodeBackup } from './backupFormat';
 import { deriveKey } from './crypto';
-import { STORE } from './types';
-import type { Account, Category, FxRate, Holding, HoldingLot, Posting, Txn } from './types';
+import { STORE } from '@khazana/domain/types';
+import type { Account, Category, FxRate, Holding, HoldingLot, Posting, Txn } from '@khazana/domain/types';
 
 /** A decoded backup's records, in the shape importBackup hands to the checker. */
 const snapshot = (over: Partial<Parameters<typeof runDiagnostics>[0]> = {}) => ({

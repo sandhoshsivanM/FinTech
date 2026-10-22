@@ -4,8 +4,8 @@
 // its postings. Net worth is the debit-signed balance of asset + liability
 // accounts plus market-priced holdings (PRD §16).
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { Account, AccountType, Holding, Posting, Transfer, TxnType } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { Account, AccountType, Holding, Posting, Transfer, TxnType } from './types';
 
 export const isDebitNormal = (t: AccountType): boolean =>
   t === 'asset' || t === 'expense';

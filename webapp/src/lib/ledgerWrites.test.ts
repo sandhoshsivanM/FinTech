@@ -1,7 +1,7 @@
 // The write-path invariants that keep the ledger balanced.
 import { describe, expect, test } from 'vitest';
 import { supersedeMutations } from './store';
-import { STORE, type Transfer, type Txn } from './types';
+import { STORE, type Transfer, type Txn } from '@khazana/domain/types';
 
 const txn = (id: string): Txn =>
   ({ id, vaultId: 'v', amount: '100', type: 'expense', categoryId: 'c1', date: 0, createdAt: 0 });

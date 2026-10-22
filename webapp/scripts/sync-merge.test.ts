@@ -1,7 +1,7 @@
 // Run with: npm test  (Vitest). Assertions use node:assert/strict, which Vitest supports.
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { mergeBundles, type SyncBundle } from '../src/domain/syncMerge.ts';
+import { mergeBundles, type SyncBundle } from '@khazana/domain/syncMerge';
 
 const now = 1_700_000_000_000;
 const rec = (id: string, updatedAt: number, extra: Record<string, unknown> = {}) => ({

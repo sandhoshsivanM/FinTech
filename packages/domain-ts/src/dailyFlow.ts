@@ -10,8 +10,8 @@
  * subtracting 24h, so a DST change can never merge or skip a day.
  */
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import { isSpending, type Txn } from '@/lib/types';
+import { D, ZERO } from './money';
+import { isSpending, type Txn } from './types';
 import { startOfDay } from './period';
 
 export interface DayFlow {

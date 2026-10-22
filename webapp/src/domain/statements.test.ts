@@ -1,8 +1,8 @@
 // A balance sheet from postings that already existed. The ledger has been
 // producing one figure per account; this asks it a different question.
 import { describe, expect, test } from 'vitest';
-import { balanceSheet, cashFlow } from './statements';
-import type { Account, Posting } from '@/lib/types';
+import { balanceSheet, cashFlow } from '@khazana/domain/statements';
+import type { Account, Posting } from '@khazana/domain/types';
 
 const acct = (id: string, name: string, type: Account['type'], opening = '0'): Account =>
   ({ id, vaultId: 'v', name, type, subtype: type === 'asset' ? 'bank' : type, openingBalance: opening });

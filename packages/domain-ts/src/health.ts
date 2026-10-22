@@ -7,8 +7,8 @@
 // claiming parity with Dart, and the two portfolio models had already drifted
 // under exactly that arrangement.
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { Budget, Goal, Insurance, Liability, NetWorthSnapshot, Txn } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { Budget, Goal, Insurance, Liability, NetWorthSnapshot, Txn } from './types';
 import { netWorthTotal, spentForCategory, windowSummary } from './finance';
 import { currentMonth, trailingDays } from './period';
 import {

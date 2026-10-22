@@ -14,20 +14,20 @@ import { loadSampleData } from '@/lib/sampleData';
 import { saveFile } from '@/lib/saveFile';
 import {
   CURRENCIES, findCurrency, isRateStale, rateAsOf, resolveRate,
-} from '@/domain/currency';
+} from '@khazana/domain/currency';
 import { GlassCard, SectionHeader, Button, Field, Select, PageIntro, Input, Segmented } from '@/components/ui';
 import { useDemoData } from '@/components/DemoBadge';
 import { useLivePrices } from '@/lib/quotes/useLivePrices';
 import { useConfirm } from '@/components/Confirm';
-import { STORE, type FxRate, type ProfileKind } from '@/lib/types';
+import { STORE, type FxRate, type ProfileKind } from '@khazana/domain/types';
 import { NumberInput } from '@/components/NumberInput';
 import { FeedbackCard } from '@/components/Feedback';
 import { formatDate } from '@/lib/dateFormat';
 import { useNow } from '@/lib/useNow';
-import { D } from '@/lib/money';
+import { D } from '@khazana/domain/money';
 import { BackupError } from '@/lib/backupError';
 import { fileToProfilePhoto, PhotoError } from '@/lib/profilePhoto';
-import { type NotifyCategory, type NotifyPrefs } from '@/domain/notificationScheduler';
+import { type NotifyCategory, type NotifyPrefs } from '@khazana/domain/notificationScheduler';
 import {
   getNotifyPrefsServerSnapshot, getNotifyPrefsSnapshot, saveNotifyPrefs, subscribeNotifyPrefs,
 } from '@/lib/notifyPrefs';

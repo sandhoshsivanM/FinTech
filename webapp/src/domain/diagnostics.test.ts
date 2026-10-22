@@ -1,9 +1,9 @@
 // Each check corresponds to a problem that actually occurred and was reported
 // by nothing at the time.
 import { describe, expect, test } from 'vitest';
-import { runDiagnostics, worstLevel } from './diagnostics';
-import { FX_STALE_DAYS } from './currency';
-import type { Account, Category, FxRate, Holding, Posting, Txn } from '@/lib/types';
+import { runDiagnostics, worstLevel } from '@khazana/domain/diagnostics';
+import { FX_STALE_DAYS } from '@khazana/domain/currency';
+import type { Account, Category, FxRate, Holding, Posting, Txn } from '@khazana/domain/types';
 
 const base = {
   txns: [] as Txn[], transfers: [], postings: [] as Posting[],

@@ -5,9 +5,9 @@ import { ChevronDown, PieChart } from 'lucide-react';
 import clsx from 'clsx';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
-import { D } from '@/lib/money';
-import { evaluateBudget, budgetRollover, spentForCategory } from '@/domain/finance';
-import { currentMonth } from '@/domain/period';
+import { D } from '@khazana/domain/money';
+import { evaluateBudget, budgetRollover, spentForCategory } from '@khazana/domain/finance';
+import { currentMonth } from '@khazana/domain/period';
 import { useNow } from '@/lib/useNow';
 import { GlassCard } from '@/components/ui';
 

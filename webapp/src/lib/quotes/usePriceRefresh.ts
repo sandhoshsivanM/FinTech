@@ -8,7 +8,7 @@
  */
 import { useCallback, useState } from 'react';
 import { useApp } from '@/lib/store';
-import { STORE } from '@/lib/types';
+import { STORE } from '@khazana/domain/types';
 import { fetchQuotes, quotesAvailable } from './yahoo';
 import { applyQuotes } from './refresh';
 import { livePricesEnabled } from './useLivePrices';

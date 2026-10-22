@@ -1,9 +1,9 @@
 // Reconciliation replaces exporting to a spreadsheet and comparing two columns
 // by eye. The arithmetic has to be exactly right or it is worse than nothing.
 import { describe, expect, test } from 'vitest';
-import { D } from '@/lib/money';
-import { explainDifference, reconcile } from './reconcile';
-import type { Account, Posting, Transfer, Txn } from '@/lib/types';
+import { D } from '@khazana/domain/money';
+import { explainDifference, reconcile } from '@khazana/domain/reconcile';
+import type { Account, Posting, Transfer, Txn } from '@khazana/domain/types';
 
 const ACCT: Account = {
   id: 'a1', vaultId: 'v', name: 'HDFC Savings', type: 'asset',

@@ -15,16 +15,16 @@ import Link from 'next/link';
 import type Decimal from 'decimal.js';
 import { ChevronRight, PiggyBank, Home, Car, Plane, GraduationCap, Target } from 'lucide-react';
 import { useApp } from '@/lib/store';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
 import { short } from '@/lib/format';
-import type { GoalType } from '@/lib/types';
-import { windowSummary, evaluateBudget, spentForCategory, budgetRollover } from '@/domain/finance';
-import { dailyFlow, describeChange } from '@/domain/dailyFlow';
-import { shiftMonths, type DateRange } from '@/domain/period';
+import type { GoalType } from '@khazana/domain/types';
+import { windowSummary, evaluateBudget, spentForCategory, budgetRollover } from '@khazana/domain/finance';
+import { dailyFlow, describeChange } from '@khazana/domain/dailyFlow';
+import { shiftMonths, type DateRange } from '@khazana/domain/period';
 import {
   incomeBySource, monthlyFlow, dailySpend, monthElapsed, paceStatus, goalProgress, monthEndSeries, SHORT_MONTHS,
-} from '@/domain/dashboardCharts';
+} from '@khazana/domain/dashboardCharts';
 import { CardTitle } from '../Hint';
 import { Donut, type DonutSeg } from '../charts/Donut';
 import { SplitBar } from '../charts/SplitBar';

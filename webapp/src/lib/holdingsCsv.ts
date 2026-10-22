@@ -9,7 +9,7 @@
  * Anything else is counted as skipped and reported to the user — silently
  * dropping a position from an import is worse than importing nothing.
  */
-import type { AssetType, Holding } from './types';
+import type { AssetType, Holding } from '@khazana/domain/types';
 import { findHeaderRow, headerIndex, num, parseDelimited } from './sheet';
 
 export interface CsvHolding {

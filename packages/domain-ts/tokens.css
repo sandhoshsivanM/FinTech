@@ -1,0 +1,376 @@
+/* ============================================================================
+   KHAZANA DESIGN TOKENS
+
+   One source of truth for colour, space, type, radius, elevation and motion.
+   Both themes share identical spacing, typography, sizing and layout — only
+   colour changes between them.
+
+   Theme mechanism (unchanged, and load-bearing): `data-theme` on <html>, set
+   before paint by the inline script in layout.tsx, owned at runtime by
+   applyAppearance() in lib/store.ts, and observed by lib/useDarkMode.ts.
+   ========================================================================= */
+
+:root {
+  /* ======================= ZENTRA — the light theme ======================= */
+  /* Neutral greys carry the surfaces; colour lives only in data. The card is
+     barely lighter than the page (#F8F8F8 on #F2F2F2) and is lifted by a soft
+     shadow and a white top edge, not by a border. Raised/inset tiles inside a
+     card are pure white; recessed trays are a step darker. */
+  --canvas: #F2F2F2;
+  --surface: #FFFFFF;
+  --surface-2: #F8F8F8;
+  --card: #F8F8F8;
+  --card-2: #FFFFFF;
+  --tray: #ECECEE;
+  --ink-surface: #111214;   /* the single dark focal surface (hero) */
+
+  --line: #E6E6E8;
+  --line-strong: #D4D4D8;
+
+  --ink: #111214;
+  --ink-soft: #5C5C61;
+  /* Small labels. #6E6E73 clears 4.5:1 on the card (#F8F8F8, 4.78) and the
+     page (#F2F2F2, 4.53); the old #8E8E93 managed 3.1 / 2.9. Asserted by
+     domain/palette.test.ts. */
+  --muted: #6E6E73;
+  /* --muted inside a recessed .tray. #6E6E73 on the #ECECEE tray is only
+     4.30:1, and lightening the tray enough to pass would erase the step from
+     the card, so small text in a tray goes one notch darker (4.70:1). */
+  --tray-muted: #68686D;
+  /* The lighter grey, for large or decorative text only (paise beside a big
+     figure) — never for small labels; it is ~3:1. */
+  --muted-soft: #8E8E93;
+  --disabled: #B5B5BB;
+
+  /* --- Ink = INTERACTION ------------------------------------------------- */
+  /* Primary buttons, the active tab and the active nav item are a near-black
+     pill (white in dark mode). Blue is a DATA colour, never a button. */
+  --accent: #111214;
+  --accent-deep: #000000;
+  --accent-glow: #1C6FFB;
+  --accent-soft: #E9E9EC;
+  --accent-line: rgba(17, 18, 20, 0.22);
+  --accent-on: #FFFFFF;
+
+  /* --- Gold = IDENTITY (the mark only; never a bar) ---------------------- */
+  --gold: #C99A3D;
+  --gold-soft: #F7F0E2;
+  --gold-ink: #8E641B;
+  --brand-plate: #0D3D2B;
+
+  /* Meaning colours. Green = money in / gain, pink = money out / loss,
+     amber = near a limit. Text steps are the deeper shade. */
+  --income: #0BA722;
+  --expense: #E5197A;
+  --warn: #B86E00;
+  --info: #1C6FFB;
+  --success: var(--income);
+  --danger: var(--expense);
+  --warning: var(--warn);
+  --success-soft: rgba(41, 179, 64, 0.12);
+  --danger-soft: rgba(243, 54, 136, 0.10);
+  --warning-soft: rgba(227, 154, 22, 0.14);
+  --violet: #4691FE;
+  --violet-soft: rgba(28, 111, 251, 0.10);
+
+  --primary: var(--accent);
+  --primary-fg: var(--accent-on);
+
+  --fill: rgba(17, 18, 20, 0.04);
+  --fill-strong: rgba(17, 18, 20, 0.07);
+  --grid-line: rgba(17, 18, 20, 0.06);
+
+  --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 26px -18px rgba(17, 18, 20, 0.28);
+  --shadow-2: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 14px 32px -16px rgba(17, 18, 20, 0.30);
+  --shadow-3: 0 18px 44px -18px rgba(17, 18, 20, 0.24);
+  --glow: 0 0 0 3px var(--accent-soft);
+  --shadow-glow: 0 10px 22px -10px rgba(0, 0, 0, 0.55);
+  --shadow-float: 0 12px 32px -12px rgba(17, 18, 20, 0.28);
+
+  --hero-bg: radial-gradient(110% 120% at 100% 0%, rgba(28, 111, 251, 0.35), transparent 55%), radial-gradient(90% 120% at 0% 110%, rgba(237, 152, 97, 0.28), transparent 60%), linear-gradient(165deg, #1A1B1F 0%, var(--ink-surface) 65%);
+
+  /* --- Categorical chart series (category avatars, legacy series) ------- */
+  /* Generated from domain/palette.ts; asserted by domain/palette.test.ts. */
+  --c1: #008451; --c2: #757AC2; --c3: #A07C06; --c4: #2F6D9E;
+  --c5: #983E14; --c6: #3E9498; --c7: #8D447A; --c8: #646F2B;
+
+  /* --- Zentra donut / allocation series --------------------------------- */
+  /* Blue, green, pink, grey, then tints of those. No indigo, no periwinkle. */
+  --series-1: #1C6FFB; --series-2: #29B340; --series-3: #F33688; --series-4: #B5B5BB;
+  --series-5: #7FAEFD; --series-6: #86D492; --series-7: #FD8FBE; --series-8: #5C5C61;
+
+  /* --- Home ---------------------------------------------------------------- */
+  --home-header: #F2F2F2;
+  --home-header-ink: #111214;
+  --home-header-muted: #6E6E73;
+  --home-header-fill: rgba(17, 18, 20, 0.05);
+  --home-header-line: rgba(17, 18, 20, 0.08);
+  --home-sheet: #F2F2F2;
+  --home-group: #F8F8F8;
+  --home-group-edge: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 26px -18px rgba(17, 18, 20, 0.28);
+  --home-sheet-shadow: none;
+  /* The one solid control: active tab, primary action, the + button. */
+  --home-pill: #111214;
+  --home-pill-ink: #FFFFFF;
+
+  /* Data colours: vivid, and only ever on data. */
+  --data-blue: #1C6FFB;
+  --data-blue-a: #4691FE;
+  --data-blue-b: #224DE0;
+  --data-blue-2: #4691FE;
+  --data-hatch: #B0CBFD;
+  --data-green: #29B340;
+  --data-green-ink: #0BA722;
+  --data-green-2: #9AF2C0;
+  --data-rose: #F33688;
+  --data-rose-2: #FD6FAB;
+  --data-amber: #E39A16;
+  --insight-bg: radial-gradient(110% 90% at 100% 0%, rgba(237, 152, 97, 0.95), transparent 55%), radial-gradient(120% 120% at 0% 100%, #15265B, transparent 62%), linear-gradient(160deg, #367DC0 0%, #24459A 50%, #ED9861 100%);
+
+  /* --- Back-compat aliases (older markup referenced these) --------------- */
+  --glass-border: var(--line);
+  --bg-top: var(--canvas);
+  --bg-bottom: var(--canvas);
+}
+
+/* ======================= ZENTRA — the dark theme ========================= */
+/* Graphite, same rules after dark: #0E0E10 page, #1C1C20 cards, a white pill,
+   lifted data colours. */
+:root[data-theme="dark"] {
+  --canvas: #0E0E10;
+  --surface: #222226;
+  --surface-2: #1C1C20;
+  --card: #1C1C20;
+  --card-2: #222226;
+  --tray: #17171A;
+  --ink-surface: #0A0A0B;
+
+  --line: #26262B;
+  --line-strong: #34343A;
+
+  --ink: #F5F5F7;
+  --ink-soft: #A1A1A8;
+  /* #8E8E93 already clears 4.5:1 on graphite (5.2 on #1C1C20, 5.9 on
+     #0E0E10); the soft step is dimmer for decorative use only. */
+  --muted: #8E8E93;
+  --tray-muted: #8E8E93; /* 5.49:1 on the #17171A tray already */
+  --muted-soft: #6E6E76;
+  --disabled: #48484E;
+
+  --accent: #F5F5F7;
+  --accent-deep: #FFFFFF;
+  --accent-glow: #3D86FF;
+  --accent-soft: #26262B;
+  --accent-line: rgba(245, 245, 247, 0.28);
+  --accent-on: #111214;
+
+  --gold: #D5A94E;
+  --gold-soft: #2A2317;
+  --gold-ink: #D5A94E;
+  --brand-plate: #0D3D2B;
+
+  --income: #34C759;
+  --expense: #FF4F9A;
+  --warn: #FFB340;
+  --info: #3D86FF;
+  --success-soft: rgba(52, 199, 89, 0.12);
+  --danger-soft: rgba(255, 79, 154, 0.12);
+  --warning-soft: rgba(255, 179, 64, 0.12);
+  --violet: #6FA4FF;
+  --violet-soft: rgba(61, 134, 255, 0.16);
+
+  --primary: var(--accent);
+  --primary-fg: var(--accent-on);
+
+  --fill: rgba(255, 255, 255, 0.05);
+  --fill-strong: rgba(255, 255, 255, 0.08);
+  --grid-line: rgba(255, 255, 255, 0.06);
+
+  --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 30px -18px rgba(0, 0, 0, 0.9);
+  --shadow-2: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 16px 34px -16px rgba(0, 0, 0, 0.95);
+  --shadow-3: 0 24px 48px -24px rgba(0, 0, 0, 0.75);
+  --glow: 0 0 0 3px rgba(61, 134, 255, 0.22);
+  --shadow-glow: 0 10px 22px -10px rgba(0, 0, 0, 0.8);
+  --shadow-float: 0 16px 40px -12px rgba(0, 0, 0, 0.7);
+
+  --hero-bg: radial-gradient(110% 120% at 100% 0%, rgba(61, 134, 255, 0.30), transparent 55%), radial-gradient(90% 120% at 0% 110%, rgba(237, 152, 97, 0.18), transparent 60%), linear-gradient(165deg, #1A1B1F 0%, var(--ink-surface) 65%);
+
+  /* Generated from domain/palette.ts; asserted by domain/palette.test.ts. */
+  --c1: #4EB982; --c2: #A4AAF6; --c3: #C19C3A; --c4: #63A1D5;
+  --c5: #EA8760; --c6: #73C7CC; --c7: #CA7CB4; --c8: #9CAA65;
+
+  --series-1: #3D86FF; --series-2: #34C759; --series-3: #FF4F9A; --series-4: #6E6E76;
+  --series-5: #8DB8FF; --series-6: #7FDB93; --series-7: #FF8DBC; --series-8: #A1A1A8;
+
+  --home-header: #0E0E10;
+  --home-header-ink: #F5F5F7;
+  --home-header-muted: #8E8E93;
+  --home-header-fill: rgba(255, 255, 255, 0.06);
+  --home-header-line: rgba(255, 255, 255, 0.09);
+  --home-sheet: #0E0E10;
+  --home-group: #1C1C20;
+  --home-group-edge: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 30px -18px rgba(0, 0, 0, 0.9);
+  --home-sheet-shadow: none;
+  --home-pill: #F5F5F7;
+  --home-pill-ink: #111214;
+
+  --data-blue: #3D86FF;
+  --data-blue-a: #6FA4FF;
+  --data-blue-b: #2A63E8;
+  --data-blue-2: #6FA4FF;
+  --data-hatch: #29406E;
+  --data-green: #34C759;
+  --data-green-ink: #34C759;
+  --data-green-2: #9AF2C0;
+  --data-rose: #FF4F9A;
+  --data-rose-2: #FF8DBC;
+  --data-amber: #FFB340;
+  --insight-bg: radial-gradient(110% 90% at 100% 0%, rgba(237, 152, 97, 0.85), transparent 55%), radial-gradient(120% 120% at 0% 100%, #0E1A40, transparent 62%), linear-gradient(160deg, #2E6BA6 0%, #1D3A84 50%, #C97C4C 100%);
+
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   Theme-invariant tokens. Identical in both themes, by design — the spec is
+   explicit that only colour changes.
+   ========================================================================= */
+:root {
+  /* --- Radius ------------------------------------------------------------- */
+  /* The friendly, touchable scale: soft cards, pill-ish controls. Still a
+     ladder — a button is tighter than a card, a card tighter than a panel —
+     and these values must match the Tailwind bridge below.
+     Anything outside these is a defect, not a preference. */
+  --radius-sm: 8px;     /* badges that are not pills, chart chrome */
+  --radius-btn: 12px;   /* buttons, inputs, selects, segmented controls */
+  --radius-input: 12px; /* alias, so a form never disagrees with a button */
+  --radius-card: 24px;
+  --radius-panel: 28px;
+  --radius-modal: 24px;
+  /* A pill is for a status word that is genuinely a token — a count, a state.
+     It is not a container style. */
+  --radius-pill: 999px;
+
+  /* --- Spacing scale ---------------------------------------------------- */
+  /* xs 4 · sm 8 · md 12 · lg 16 · xl 24 · 2xl 32 · 3xl 48 */
+  --space-xs: 4px;  --space-sm: 8px;  --space-md: 12px;
+  --space-lg: 16px; --space-xl: 24px; --space-2xl: 32px; --space-3xl: 48px;
+  /* Legacy aliases; the same values under the older names. */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 40px; --s8: 48px; --s9: 64px;
+
+  /* --- Control heights --------------------------------------------------- */
+  /* One ladder for every interactive control, so a button, an input and a
+     select on the same row line up without anyone nudging a padding value. */
+  --control-sm: 32px;
+  --control-md: 36px;
+  --control-lg: 40px;
+
+  /* --- Icon sizes -------------------------------------------------------- */
+  /* One family (Lucide), one stroke, these sizes. Mixing families or sizes is
+     the fastest way back to an assembled look. */
+  --icon-nav: 18px;
+  --icon-table: 16px;
+  --icon-inline: 15px;
+  --icon-action: 16px;
+
+  /* Type scale */
+  --fs-h1: 32px; --fs-h2: 24px; --fs-h3: 20px; --fs-h4: 18px;
+  --fs-body: 16px; --fs-sm: 14px; --fs-xs: 12px; --fs-2xs: 11px;
+
+  /* Motion */
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --dur-slow: 400ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Shell metrics */
+  --nav-w: 248px;
+  --nav-rail: 76px;
+  --top-h: 64px;
+
+  /* NOTE: the categorical series palette --c1..--c8 is NOT here. It used to be,
+     on the reasoning that one step per hue could serve both grounds. It can,
+     but only by sitting in the middle of the lightness range — which is exactly
+     what made the charts look washed out on Vault and weak on Ledger at the
+     same time. Each theme now carries its own step of the same hue; see the
+     two theme blocks above.
+
+     Source of truth is domain/palette.ts, which authors these in OKLCH, and
+     domain/palette.test.ts, which asserts the separation and contrast figures
+     rather than quoting them in a comment. */
+}
+
+/* ============================================================================
+   Tailwind bridge. Every token an app surface needs is published here, so call
+   sites write `bg-card` / `text-ink-soft` rather than `bg-[var(--card)]`.
+   ========================================================================= */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+  --color-tray: var(--tray);
+  --color-data-blue: var(--data-blue);
+  --color-data-green: var(--data-green);
+  --color-data-rose: var(--data-rose);
+  --color-data-amber: var(--data-amber);
+  --color-series-1: var(--series-1); --color-series-2: var(--series-2); --color-series-3: var(--series-3); --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5); --color-series-6: var(--series-6); --color-series-7: var(--series-7); --color-series-8: var(--series-8);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fill: var(--fill);
+  --color-fill-strong: var(--fill-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-glow: var(--accent-glow);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-warn: var(--warn);
+  --color-success: var(--income);
+  --color-danger: var(--expense);
+  --color-warning: var(--warn);
+  --color-success-soft: var(--success-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning-soft: var(--warning-soft);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+  --color-brand-plate: var(--brand-plate);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-ink: var(--gold-ink);
+  --color-info: var(--info);
+  --color-disabled: var(--disabled);
+  --color-accent-on: var(--accent-on);
+
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+
+  --shadow-glow: var(--shadow-glow);
+  --shadow-float: var(--shadow-float);
+
+  --color-c1: var(--c1); --color-c2: var(--c2); --color-c3: var(--c3); --color-c4: var(--c4);
+  --color-c5: var(--c5); --color-c6: var(--c6); --color-c7: var(--c7); --color-c8: var(--c8);
+
+  /* Prescribed per component. "Everything is a giant rounded rectangle" is the
+     generic look this system avoids: a button is tighter than a card, a card is
+     tighter than a modal. */
+  --radius-card: 24px;
+  --radius-panel: 28px;
+  --radius-btn: 12px;
+  --radius-input: 12px;
+  --radius-modal: 24px;
+  --radius-pill: 999px;
+
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}

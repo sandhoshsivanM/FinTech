@@ -18,10 +18,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Landmark, Wallet, Plus, Pencil, Trash2, Archive, ArrowRightLeft, X } from 'lucide-react';
 import { useApp, uid, cashAcctId } from '@/lib/store';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
-import { STORE, type Account } from '@/lib/types';
-import { accountBalances, moneyAccounts, liquidBalance } from '@/domain/accountLedger';
+import { STORE, type Account } from '@khazana/domain/types';
+import { accountBalances, moneyAccounts, liquidBalance } from '@khazana/domain/accountLedger';
 import {
   PageIntro, GlassCard, EmptyState, Button, Field, Input, Select, Segmented, Chip,
 } from '@/components/ui';

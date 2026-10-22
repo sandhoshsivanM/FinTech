@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, test, expect } from 'vitest';
-import { MAX_LENGTH, fingerprintInput, parseNotification } from './notificationParser';
+import { MAX_LENGTH, fingerprintInput, parseNotification } from '@khazana/domain/notificationParser';
 
 // `now` is pinned to local noon so the fallback timestamp is deterministic.
 const NOW = new Date(2026, 5, 30, 12).getTime(); // local June 30 2026, noon

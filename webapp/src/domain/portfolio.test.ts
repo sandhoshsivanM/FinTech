@@ -6,9 +6,9 @@ import {
   portfolioSummary,
   rollup,
   type RollupDimension,
-} from './portfolio';
-import { lookupClassification, parseInstrumentMaster } from './instrumentMaster';
-import type { AssetType, Holding } from '@/lib/types';
+} from '@khazana/domain/portfolio';
+import { lookupClassification, parseInstrumentMaster } from '@khazana/domain/instrumentMaster';
+import type { AssetType, Holding } from '@khazana/domain/types';
 
 /**
  * Paired with test/unit/portfolio_analytics_test.dart. Both sides assert the same

@@ -1,6 +1,6 @@
 'use client';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { forMonth, shiftMonths, type DateRange } from '@/domain/period';
+import { forMonth, shiftMonths, type DateRange } from '@khazana/domain/period';
 
 /**
  * Step a screen back and forward through calendar months (§4.1).

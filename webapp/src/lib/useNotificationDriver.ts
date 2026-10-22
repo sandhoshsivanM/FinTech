@@ -11,7 +11,7 @@
  * and it is surfaced here only so the UI can be honest about what is pending.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { D } from '@/lib/money';
+import { D } from '@khazana/domain/money';
 import { useApp } from '@/lib/store';
 import { useNow } from '@/lib/useNow';
 import {
@@ -19,10 +19,10 @@ import {
   type DueEvent,
   type NotificationPlan,
   type PlannedNotification,
-} from '@/domain/notificationScheduler';
-import { evaluateAlerts, triggered } from '@/domain/alerts';
-import { spentForCategory } from '@/domain/finance';
-import { currentMonth } from '@/domain/period';
+} from '@khazana/domain/notificationScheduler';
+import { evaluateAlerts, triggered } from '@khazana/domain/alerts';
+import { spentForCategory } from '@khazana/domain/finance';
+import { currentMonth } from '@khazana/domain/period';
 import { showLocal } from './notify';
 import {
   getNotifyPrefsServerSnapshot,

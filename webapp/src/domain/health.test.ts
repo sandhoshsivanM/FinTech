@@ -17,9 +17,9 @@ import {
   type HealthCategory,
   type HealthInputs,
   type HealthScore,
-} from './health';
-import { EMPTY_INVESTMENTS, totalsOf } from './investmentTotals';
-import type { AssetType, Budget, Goal, Insurance, Liability, NetWorthSnapshot, Txn } from '@/lib/types';
+} from '@khazana/domain/health';
+import { EMPTY_INVESTMENTS, totalsOf } from '@khazana/domain/investmentTotals';
+import type { AssetType, Budget, Goal, Insurance, Liability, NetWorthSnapshot, Txn } from '@khazana/domain/types';
 import fixture from './__fixtures__/health_cases.json';
 
 const NOW = Date.parse('2026-06-15T00:00:00.000Z');

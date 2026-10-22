@@ -1,5 +1,5 @@
 // Recurring rule scheduling (PRD §14). Pure date math.
-import type { Frequency, RecurringRule } from '@/lib/types';
+import type { Frequency, RecurringRule } from './types';
 
 /**
  * Adds one period, clamping to the end of a short month.

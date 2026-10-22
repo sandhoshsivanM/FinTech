@@ -5,7 +5,7 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
-import type { Account } from '@/lib/types';
+import type { Account } from '@khazana/domain/types';
 import AddTransactionPage from './page';
 import { ConfirmProvider } from '@/components/Confirm';
 

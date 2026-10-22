@@ -5,7 +5,7 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { useApp } from '@/lib/store';
 import { ConfirmProvider } from '@/components/Confirm';
-import type { Category, RecurringRule } from '@/lib/types';
+import type { Category, RecurringRule } from '@khazana/domain/types';
 import RecurringPage from './page';
 
 type AppPatch = Partial<Parameters<typeof useApp.setState>[0]>;

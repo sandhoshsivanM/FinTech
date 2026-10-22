@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { custom } from '@/domain/period';
+import { custom } from '@khazana/domain/period';
 import { buildReport, type ReportInput } from './model';
 import { buildPdf } from './pdf';
 import { EMPTY_ASSETS } from './assets';

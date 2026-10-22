@@ -11,7 +11,7 @@
 // Cap is 31% of your equity" states a fact about the user's own portfolio;
 // "consider diversifying" tells them what to do with it.
 import Decimal from 'decimal.js';
-import type { NetWorthSnapshot } from '@/lib/types';
+import type { NetWorthSnapshot } from './types';
 import type { HealthScore } from './health';
 import type { Anomaly, SafeToSpend } from './insights';
 import type { InvestmentTotals } from './investmentTotals';

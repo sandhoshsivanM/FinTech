@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { newestPriceAsOf, priceAgeLabel } from './freshness';
-import type { Holding } from '@/lib/types';
+import type { Holding } from '@khazana/domain/types';
 
 const h = (over: Partial<Holding>): Holding => ({
   id: 'h1', vaultId: 'v1', symbol: 'INFY', exchange: 'NSE',

@@ -5,7 +5,7 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
-import type { Account, Category, Txn } from '@/lib/types';
+import type { Account, Category, Txn } from '@khazana/domain/types';
 import { ConfirmProvider } from '@/components/Confirm';
 import ImportPage from './page';
 

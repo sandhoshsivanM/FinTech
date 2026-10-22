@@ -14,10 +14,10 @@ import {
   BANNED_PHRASES,
   NARRATIVE_DISCLAIMER,
   type NarrativeContext,
-} from './narrative';
-import { healthScore } from './health';
-import { EMPTY_INVESTMENTS, totalsOf } from './investmentTotals';
-import type { AssetType, NetWorthSnapshot } from '@/lib/types';
+} from '@khazana/domain/narrative';
+import { healthScore } from '@khazana/domain/health';
+import { EMPTY_INVESTMENTS, totalsOf } from '@khazana/domain/investmentTotals';
+import type { AssetType, NetWorthSnapshot } from '@khazana/domain/types';
 
 const NOW = Date.parse('2026-06-15T00:00:00.000Z');
 const DAY = 86_400_000;

@@ -19,7 +19,7 @@ the logic twin of the Flutter app. See the repo root
 
 | Path | What |
 |---|---|
-| `src/domain/` | Framework-free financial logic (TS port of the Dart `lib/domain`) |
+| `../packages/domain-ts/` | Framework-free financial logic and design tokens, shared with Khazana Online (ADR 0007); its tests and fixtures stay in `src/domain/` |
 | `src/lib/` | `crypto.ts`, `store.ts`, Dexie wiring, money/`Decimal`, types |
 | `src/app/` | App-Router routes (`dashboard`, `transactions`, `insurance`, `safety-net`, …) |
 | `src/components/` | `Shell`, `VaultGate`, `Tour`, `AutoLock`, and the `ui.tsx` primitive kit |

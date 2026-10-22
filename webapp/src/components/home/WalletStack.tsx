@@ -6,9 +6,9 @@ import clsx from 'clsx';
 import type Decimal from 'decimal.js';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
-import { accountBalances, MONEY_SUBTYPES } from '@/domain/accountLedger';
-import { ZERO } from '@/lib/money';
-import type { Account } from '@/lib/types';
+import { accountBalances, MONEY_SUBTYPES } from '@khazana/domain/accountLedger';
+import { ZERO } from '@khazana/domain/money';
+import type { Account } from '@khazana/domain/types';
 import { motion, SPRING_SOFT } from '../motion';
 import { CardTitle } from '../Hint';
 

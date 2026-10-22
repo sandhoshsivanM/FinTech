@@ -15,19 +15,19 @@ import {
   TrendingUp, Wallet, CalendarClock, Scale, ArrowRight, Sparkles, CircleHelp,
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
 import { useNow } from '@/lib/useNow';
-import { liquidBalance } from '@/domain/accountLedger';
-import { investmentTotals } from '@/domain/investmentTotals';
-import { netWorth } from '@/domain/accountLedger';
+import { liquidBalance } from '@khazana/domain/accountLedger';
+import { investmentTotals } from '@khazana/domain/investmentTotals';
+import { netWorth } from '@khazana/domain/accountLedger';
 import {
   budgetRollover, evaluateBudget, spentForCategory,
-} from '@/domain/finance';
-import { currentMonth } from '@/domain/period';
+} from '@khazana/domain/finance';
+import { currentMonth } from '@khazana/domain/period';
 import {
   cashFlowForecast, monthlyReview, netWorthProjection, safeToSpend, whatIf,
-} from '@/domain/forecast';
+} from '@khazana/domain/forecast';
 import {
   PageIntro, GlassCard, SectionHeader, EmptyState, Button, Chip,
 } from '@/components/ui';

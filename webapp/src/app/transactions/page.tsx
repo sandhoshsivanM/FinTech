@@ -7,15 +7,15 @@ import {
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { motion } from '@/components/motion';
 import { useApp, cashAcctId } from '@/lib/store';
-import { D } from '@/lib/money';
+import { D } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
-import { STORE, type Transfer, type Txn, type TxnType } from '@/lib/types';
-import { moneyAccounts } from '@/domain/accountLedger';
+import { STORE, type Transfer, type Txn, type TxnType } from '@khazana/domain/types';
+import { moneyAccounts } from '@khazana/domain/accountLedger';
 import { PageIntro, Button, Segmented, Input, Select, EmptyState, GlassCard } from '@/components/ui';
 import { useConfirm } from '@/components/Confirm';
 import { BudgetStrip } from '@/components/BudgetStrip';
 import { formatDate, formatDayMonth, fromInputValue, toInputValue } from '@/lib/dateFormat';
-import { PRESETS, PRESET_LABELS, type PresetKey } from '@/domain/period';
+import { PRESETS, PRESET_LABELS, type PresetKey } from '@khazana/domain/period';
 import { DateInput } from '@/components/DateInput';
 
 type Filter = 'all' | TxnType | 'transfer';

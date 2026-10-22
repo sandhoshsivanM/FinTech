@@ -4,7 +4,7 @@
  * mark is spending faster than the month is passing — the warning a plain
  * "72% used" cannot give on the 5th versus the 28th.
  */
-import type { PaceStatus } from '@/domain/dashboardCharts';
+import type { PaceStatus } from '@khazana/domain/dashboardCharts';
 import { Chip } from '../ui';
 
 export interface PaceRow {

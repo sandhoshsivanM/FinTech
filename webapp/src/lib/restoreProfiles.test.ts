@@ -3,7 +3,7 @@
 // has never seen: "Restored 367 records" followed by an empty Transactions
 // screen. These pin the reconciliation that prevents it.
 import { describe, expect, test } from 'vitest';
-import type { Profile } from './types';
+import type { Profile } from '@khazana/domain/types';
 
 /** Mirrors reload()'s profile-scoped read. */
 const inProfile = (r: { profileId?: string }, active: string, dflt: string) =>

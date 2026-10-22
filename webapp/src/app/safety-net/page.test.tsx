@@ -4,7 +4,7 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { useApp } from '@/lib/store';
-import type { Txn, Goal, Insurance, Holding } from '@/lib/types';
+import type { Txn, Goal, Insurance, Holding } from '@khazana/domain/types';
 import SafetyNetPage from './page';
 
 // next/link needs no router context for a static anchor in tests.
