@@ -453,7 +453,8 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
         (await Purged("sync")).Sent.MessagesOf<AccountDeletedV1>().ShouldBeEmpty();
         await UserStillExists(userId, true);
 
-        var last = await Purged("notification");
+        (await Purged("notification")).Sent.MessagesOf<AccountDeletedV1>().ShouldBeEmpty();
+        var last = await Purged("reporting");
         last.Sent.SingleMessage<AccountDeletedV1>().UserId.ShouldBe(userId);
         await UserStillExists(userId, false);
 
@@ -529,7 +530,7 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
         var settings = scope.ServiceProvider.GetRequiredService<Khazana.Identity.Application.DeletionSettings>();
         var later = DateTimeOffset.UtcNow + Khazana.Identity.Domain.AccountDeletion.CoolingOff + Khazana.Identity.Api.DeletionOverdueCheck.Grace + TimeSpan.FromHours(1);
         var overdue = await Khazana.Identity.Api.DeletionOverdueCheck.FindOverdueAsync(db, settings, later, Ct);
-        overdue.Single(o => o.UserId == userId).Missing.ShouldBe(["sync", "notification"]);
+        overdue.Single(o => o.UserId == userId).Missing.ShouldBe(["sync", "notification", "reporting"]);
         (await Khazana.Identity.Api.DeletionOverdueCheck.FindOverdueAsync(db, settings, DateTimeOffset.UtcNow, Ct))
             .ShouldNotContain(o => o.UserId == userId, "not overdue during the cooling-off");
     }

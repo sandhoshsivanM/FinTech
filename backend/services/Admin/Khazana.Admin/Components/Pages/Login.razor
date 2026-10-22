@@ -1,0 +1,19 @@
+@page "/login"
+@inject IConfiguration Config
+
+<h1>Sign in</h1>
+@if (Config.GetValue("Admin:DevLogin", false))
+{
+    <p class="muted">Development sign-in. Production uses the organisation's identity provider with security keys.</p>
+    <form method="post" action="/login/dev">
+        <AntiforgeryToken />
+        <label><input type="radio" name="role" value="support" checked /> Support</label>
+        <label><input type="radio" name="role" value="security" /> Security</label>
+        <label><input type="radio" name="role" value="ops" /> Ops (offers)</label>
+        <button type="submit">Sign in</button>
+    </form>
+}
+else
+{
+    <p><a href="/">Continue to sign in</a></p>
+}

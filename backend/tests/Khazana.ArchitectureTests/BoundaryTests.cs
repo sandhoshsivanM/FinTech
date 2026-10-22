@@ -40,6 +40,16 @@ public class BoundaryTests
             typeof(Khazana.Notification.Application.PushDispatcher).Assembly,
             typeof(Khazana.Notification.Infrastructure.FcmPushSender).Assembly,
             typeof(Khazana.Notification.Api.PushEndpoints).Assembly),
+        new("AuditReporting",
+            typeof(Khazana.AuditReporting.Domain.AuditChain).Assembly,
+            typeof(Khazana.AuditReporting.Application.AdminQueries).Assembly,
+            typeof(Khazana.AuditReporting.Infrastructure.DependencyInjection).Assembly,
+            typeof(Khazana.AuditReporting.Api.AdminEndpoints).Assembly),
+        new("Catalog",
+            typeof(Khazana.Catalog.Domain.CatalogRules).Assembly,
+            typeof(Khazana.Catalog.Application.CurationService).Assembly,
+            typeof(Khazana.Catalog.Infrastructure.Ed25519CatalogSigner).Assembly,
+            typeof(Khazana.Catalog.Api.CatalogEndpoints).Assembly),
     ];
 
     private static readonly string[] AllServiceNamespaces =
@@ -86,6 +96,14 @@ public class BoundaryTests
         var others = AllServiceNamespaces.Where(n => n != $"Khazana.{service}").ToArray();
         foreach (var assembly in Service(service).All)
             Assert(Types.InAssembly(assembly).ShouldNot().HaveDependencyOnAny(others));
+    }
+
+    [Fact]
+    public void The_admin_panel_depends_on_no_service_and_no_database()
+    {
+        // It may only speak HTTP to Audit & Reporting (design doc §8.10).
+        Assert(Types.InAssembly(typeof(Khazana.Admin.ReportingClient).Assembly).ShouldNot().HaveDependencyOnAny(
+            [.. AllServiceNamespaces, "Khazana.Messaging", "Microsoft.EntityFrameworkCore", "Npgsql", "Wolverine"]));
     }
 
     [Fact]
