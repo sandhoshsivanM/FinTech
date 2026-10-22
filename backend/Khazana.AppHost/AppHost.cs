@@ -13,6 +13,7 @@ var devicesDb = postgres.AddDatabase("devices");
 var syncDb = postgres.AddDatabase("sync");
 var notificationDb = postgres.AddDatabase("notification");
 var reportingDb = postgres.AddDatabase("reporting");
+var catalogDb = postgres.AddDatabase("catalog");
 
 var rabbitMq = builder.AddRabbitMQ("rabbitmq").WithManagementPlugin();
 
@@ -76,12 +77,21 @@ builder.AddProject<Projects.Khazana_Admin>("admin")
     .WithReference(reporting).WaitFor(reporting)
     .WithEnvironment("Admin__ReportingKey", reportingKey);
 
+// Public, signed data. Locally the signing key is a throwaway (Development only).
+var catalogKey = builder.AddParameter("catalog-internal-key",
+    new GenerateParameterDefault { MinLength = 48, Special = false }, secret: true, persist: true);
+var catalog = builder.AddProject<Projects.Khazana_Catalog_Api>("catalog-api")
+    .WithReference(catalogDb).WaitFor(catalogDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WithEnvironment("Catalog__InternalKey", catalogKey);
+
 var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(marketData).WaitFor(marketData)
     .WithReference(identity).WaitFor(identity)
     .WithReference(devices).WaitFor(devices)
     .WithReference(sync).WaitFor(sync)
     .WithReference(notification).WaitFor(notification)
+    .WithReference(catalog).WaitFor(catalog)
     .WithExternalHttpEndpoints();
 
 // DPoP proofs name the URL the app called, which is the gateway's.
