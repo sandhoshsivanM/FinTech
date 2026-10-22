@@ -1,4 +1,6 @@
+using Npgsql;
 using Wolverine;
+using Wolverine.ErrorHandling;
 using Wolverine.Postgresql;
 using Wolverine.RabbitMQ;
 using Wolverine.Util;
@@ -65,12 +67,30 @@ public static class KhazanaMessaging
         // commits their outgoing messages.
         opts.Policies.AutoApplyTransactions();
 
+        // Two handlers touching the same row at once (one user's events arrive
+        // on several queues together) can collide. Those conflicts clear on a
+        // retry; anything else, or the same conflict after three tries, goes to
+        // the dead-letter table for a person to look at.
+        opts.OnException(IsTransientDatabaseConflict, "transient database conflict")
+            .RetryWithCooldown(TimeSpan.FromMilliseconds(50), TimeSpan.FromMilliseconds(250), TimeSpan.FromSeconds(1));
+
         return opts;
     }
 
     /// <summary>This service's own queue for an event: never shared with another service.</summary>
     public static string QueueName(string serviceName, Type messageType) =>
         $"{serviceName}.{(messageType ?? throw new ArgumentNullException(nameof(messageType))).ToMessageTypeName()}";
+
+    /// <summary>Unique violation, serialization failure or deadlock, anywhere in the exception chain.</summary>
+    public static bool IsTransientDatabaseConflict(Exception exception)
+    {
+        for (var e = exception; e is not null; e = e.InnerException)
+        {
+            if (e is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.SerializationFailure or PostgresErrorCodes.DeadlockDetected })
+                return true;
+        }
+        return false;
+    }
 
     /// <summary>A message type that may travel between services.</summary>
     public static bool IsContract(Type type) =>
