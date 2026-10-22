@@ -66,9 +66,11 @@ if (!app.Environment.IsDevelopment()) app.UseHsts();
 // is raised for that path alone, before anything reads the body.
 app.Use((context, next) =>
 {
-    if (context.Request.Path.StartsWithSegments("/v1/sync/push") &&
-        context.Features.Get<IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } body)
-        body.MaxRequestBodySize = 4 * 1024 * 1024;
+    if (context.Features.Get<IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } body)
+    {
+        if (context.Request.Path.StartsWithSegments("/v1/sync/push")) body.MaxRequestBodySize = 4 * 1024 * 1024;
+        else if (context.Request.Path.StartsWithSegments("/v1/sync/attachments")) body.MaxRequestBodySize = 25 * 1024 * 1024;
+    }
     return next(context);
 });
 app.UseMiddleware<SecurityHeaders>();

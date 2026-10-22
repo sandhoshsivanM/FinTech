@@ -20,10 +20,12 @@ var rabbitMq = builder.Configuration.GetConnectionString("rabbitmq")
     ?? throw new InvalidOperationException("ConnectionStrings:rabbitmq is not set.");
 
 builder.Services.AddSingleton<IClock, SystemClock>();
-builder.Services.AddSyncInfrastructure();
-builder.Services.AddKhazanaAuthentication(builder.Configuration);
+builder.Services.AddSyncInfrastructure(builder.Configuration, builder.Environment);
+builder.Services.AddDeletionCancellations(database);
+builder.Services.AddKhazanaAuthentication(builder.Configuration, replayDatabase: database);
 builder.Services.AddDbContextWithWolverineIntegration<SyncDbContext>(o => o.UseNpgsql(database));
 builder.Services.AddScoped<SyncService>();
+builder.Services.AddScoped<AttachmentService>();
 builder.Services.AddHostedService<DatabaseMigrator>();
 builder.Services.AddHostedService<TombstoneSweeper>();
 builder.Services.AddKhazanaJson();
@@ -33,6 +35,7 @@ builder.Host.UseWolverine(opts =>
     opts.UseKhazanaMessaging("sync", rabbitMq, database);
     opts.UseEntityFrameworkCoreTransactions();
     opts.Discovery.IncludeAssembly(typeof(PushRecordsHandler).Assembly);
+    opts.ListenForDeletionCancellations();
 });
 
 var app = builder.Build();
