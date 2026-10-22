@@ -34,7 +34,8 @@ lagging or malicious device from damaging everyone else's copy.
 
 ## Consequences
 - The server can't merge, so conflict resolution (last write wins by
-  `updatedAt`; postings immutable once posted) lives in the client sync engine.
+  `updatedAt`; postings immutable once posted) lives in the Khazana Online sync engine
+  (ADR 0007). The offline apps don't use this protocol.
 - Metadata stays visible to the server: collection names, edit times, sizes.
   This is accepted in the design.
 - **Open items:**
