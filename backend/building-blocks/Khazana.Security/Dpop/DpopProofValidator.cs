@@ -78,8 +78,10 @@ public sealed class DpopProofValidator(IDpopReplayCache replay, TimeProvider tim
             !acceptedUris.Any(u => SameTarget(u, htu)))
             throw new DpopValidationException("DPoP htu does not match the request.");
 
-        if (!jwt.TryGetPayloadValue<long>("iat", out var iatSeconds))
-            throw new DpopValidationException("DPoP iat missing.");
+        // Bounded before conversion: FromUnixTimeSeconds throws on absurd values,
+        // which an attacker can put in a proof signed with their own key.
+        if (!jwt.TryGetPayloadValue<long>("iat", out var iatSeconds) || iatSeconds is < 0 or > 10_000_000_000)
+            throw new DpopValidationException("DPoP iat missing or out of range.");
         var iat = DateTimeOffset.FromUnixTimeSeconds(iatSeconds);
         var now = time.GetUtcNow();
         if (iat < now - Window || iat > now + Window)
@@ -96,7 +98,7 @@ public sealed class DpopProofValidator(IDpopReplayCache replay, TimeProvider tim
         var jkt = Base64UrlEncoder.Encode(key.ComputeJwkThumbprint());
 
         // One use per proof. Kept past the window so a replay can't outlive it.
-        if (!replay.TryRemember($"{jkt}:{jti}", iat + Window + Window))
+        if (!await replay.TryRememberAsync($"{jkt}:{jti}", iat + Window + Window).ConfigureAwait(false))
             throw new DpopValidationException("DPoP proof already used.");
 
         return new DpopProof(jkt, jti, iat);

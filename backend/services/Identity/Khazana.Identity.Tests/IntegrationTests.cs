@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Khazana.Identity.Application;
 using Khazana.Identity.Application.Persistence;
 using Khazana.Messaging.Contracts;
 using Khazana.TestKit;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Shouldly;
 using Testcontainers.PostgreSql;
@@ -25,8 +27,15 @@ namespace Khazana.Identity.Tests;
 /// Google and Apple are replaced by the Development dev provider; everything
 /// else, DPoP, rotation, passkeys, the outbox, is the production code path.
 /// </summary>
+public sealed class TestClock : Khazana.SharedKernel.IClock
+{
+    public TimeSpan Offset { get; set; }
+    public DateTimeOffset UtcNow => DateTimeOffset.UtcNow + Offset;
+}
+
 public sealed class IdentityHost : IAsyncLifetime
 {
+    public TestClock Clock { get; } = new();
     public const string Origin = "http://localhost";
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine").Build();
     private readonly RabbitMqContainer _rabbitMq = new RabbitMqBuilder("rabbitmq:4-management-alpine").Build();
@@ -46,7 +55,12 @@ public sealed class IdentityHost : IAsyncLifetime
 
         Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b
             .UseEnvironment("Development")
-            .ConfigureServices(s => s.ConfigureWolverine(o => o.Discovery.IncludeType(typeof(IdentityEventProbe)))));
+            .ConfigureServices(s =>
+            {
+                s.RemoveAll<Khazana.SharedKernel.IClock>();
+                s.AddSingleton<Khazana.SharedKernel.IClock>(Clock);
+                s.ConfigureWolverine(o => o.Discovery.IncludeType(typeof(IdentityEventProbe)));
+            }));
         _ = Factory.Server;
     }
 
@@ -64,6 +78,8 @@ public static class IdentityEventProbe
     public static void Handle(UserSignedInV1 m) => ArgumentNullException.ThrowIfNull(m);
     public static void Handle(AccountDeletionRequestedV1 m) => ArgumentNullException.ThrowIfNull(m);
     public static void Handle(AccountDeletedV1 m) => ArgumentNullException.ThrowIfNull(m);
+    public static void Handle(AccountDeletionCancelledV1 m) => ArgumentNullException.ThrowIfNull(m);
+    public static void Handle(SessionEndedV1 m) => ArgumentNullException.ThrowIfNull(m);
 }
 
 [CollectionDefinition(nameof(IdentityTestGroup))]
@@ -264,6 +280,156 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
             .PublishMessageAndWaitAsync(new DeviceRevokedV1(
                 tokens.GetProperty("user_id").GetGuid(), tokens.GetProperty("device_id").GetGuid(), DateTimeOffset.UtcNow));
         (await Error(await Refresh(_phone, tokens.GetProperty("refresh_token").GetString()!))).ShouldBe("invalid_grant");
+    }
+
+    // --- fixes from the 2026-10-22 review ------------------------------------
+
+    [Fact]
+    public async Task A_logout_racing_a_refresh_still_kills_the_token_the_refresh_issued()
+    {
+        for (var round = 0; round < 8; round++)
+        {
+            var tokens = await SignIn(_phone, $"dev:{Unique()}");
+            var access = tokens.GetProperty("access_token").GetString()!;
+            var refreshing = Refresh(_phone, tokens.GetProperty("refresh_token").GetString()!);
+            var loggingOut = Call("/v1/auth/logout", access, _phone.Proof("POST", Url("/v1/auth/logout"), access),
+                new JsonObject { ["everywhere"] = true });
+            await Task.WhenAll(refreshing, loggingOut);
+            var refreshed = await refreshing;
+            if (refreshed.StatusCode != HttpStatusCode.OK) continue; // the logout went first: nothing to leak
+            var newToken = (await Json(refreshed)).GetProperty("refresh_token").GetString()!;
+            (await Error(await Refresh(_phone, newToken))).ShouldBe("invalid_grant", $"round {round}: the logout must reach the token minted during it");
+        }
+    }
+
+    [Fact]
+    public async Task Logout_tells_Devices_and_Keys_that_the_session_ended()
+    {
+        var tokens = await SignIn(_phone, $"dev:{Unique()}");
+        var access = tokens.GetProperty("access_token").GetString()!;
+        HttpResponseMessage? response = null;
+        var tracked = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .ExecuteAndWaitAsync((Func<IMessageContext, Task>)(async _ =>
+                response = await Call("/v1/auth/logout", access, _phone.Proof("POST", Url("/v1/auth/logout"), access), new JsonObject { ["everywhere"] = false })));
+        response!.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        tracked.Received.SingleMessage<SessionEndedV1>().DeviceId.ShouldBe(tokens.GetProperty("device_id").GetGuid());
+    }
+
+    [Fact]
+    public async Task A_logged_out_token_cannot_add_a_passkey_and_a_stale_sign_in_must_sign_in_again()
+    {
+        const string path = "/v1/auth/passkeys/register/options";
+        var tokens = await SignIn(_phone, $"dev:{Unique()}");
+        var access = tokens.GetProperty("access_token").GetString()!;
+
+        host.Clock.Offset = SessionService.FreshSignIn + TimeSpan.FromMinutes(1);
+        try
+        {
+            var stale = await Call(path, access, _phone.Proof("POST", Url(path), access));
+            stale.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+            (await Json(stale)).GetProperty("error").GetString().ShouldBe("reauthentication_required");
+        }
+        finally
+        {
+            host.Clock.Offset = TimeSpan.Zero;
+        }
+
+        await Call("/v1/auth/logout", access, _phone.Proof("POST", Url("/v1/auth/logout"), access), new JsonObject { ["everywhere"] = false });
+        var revoked = await Call(path, access, _phone.Proof("POST", Url(path), access));
+        revoked.StatusCode.ShouldBe(HttpStatusCode.Unauthorized, "the access token hasn't expired, but its session has");
+    }
+
+    [Fact]
+    public async Task Two_deletion_requests_at_once_both_succeed_and_announce_once()
+    {
+        var tokens = await SignIn(_phone, $"dev:{Unique()}");
+        var access = tokens.GetProperty("access_token").GetString()!;
+        HttpResponseMessage[] responses = [];
+        var tracked = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .ExecuteAndWaitAsync((Func<IMessageContext, Task>)(async _ =>
+            {
+                async Task<HttpResponseMessage> Delete()
+                {
+                    using var request = new HttpRequestMessage(HttpMethod.Delete, "/v1/account");
+                    Authorize(request, access, _phone.Proof("DELETE", Url("/v1/account"), access));
+                    return await _client.SendAsync(request, Ct);
+                }
+                responses = await Task.WhenAll(Delete(), Delete());
+            }));
+        responses.Count(r => r.StatusCode == HttpStatusCode.Accepted).ShouldBeGreaterThanOrEqualTo(1);
+        responses.ShouldAllBe(r => (int)r.StatusCode < 500, "a double tap is never a server error");
+        tracked.Sent.MessagesOf<AccountDeletionRequestedV1>().Count().ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_user_can_restore_their_account_during_the_cooling_off_but_not_after()
+    {
+        var subject = $"dev:{Unique()}";
+        var tokens = await SignIn(_phone, subject);
+        var access = tokens.GetProperty("access_token").GetString()!;
+        using (var delete = new HttpRequestMessage(HttpMethod.Delete, "/v1/account"))
+        {
+            Authorize(delete, access, _phone.Proof("DELETE", Url("/v1/account"), access));
+            (await _client.SendAsync(delete, Ct)).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        }
+        (await Error(await _client.SendAsync(TokenRequest(_phone, subject), Ct))).ShouldBe("account_deletion_pending");
+
+        HttpResponseMessage? restored = null;
+        var tracked = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .ExecuteAndWaitAsync((Func<IMessageContext, Task>)(async _ =>
+                restored = await _client.SendAsync(RestoreRequest(_phone, subject), Ct)));
+        restored!.StatusCode.ShouldBe(HttpStatusCode.OK);
+        tracked.Received.SingleMessage<AccountDeletionCancelledV1>().UserId.ShouldBe(tokens.GetProperty("user_id").GetGuid());
+        (await _client.SendAsync(TokenRequest(_phone, subject), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK, "an ordinary sign-in works again");
+
+        // Delete again and wait out the cooling-off: now it's final.
+        var again = (await SignIn(_phone, subject)).GetProperty("access_token").GetString()!;
+        using (var delete = new HttpRequestMessage(HttpMethod.Delete, "/v1/account"))
+        {
+            Authorize(delete, again, _phone.Proof("DELETE", Url("/v1/account"), again));
+            await _client.SendAsync(delete, Ct);
+        }
+        host.Clock.Offset = Khazana.Identity.Domain.AccountDeletion.CoolingOff + TimeSpan.FromMinutes(1);
+        try
+        {
+            (await Error(await _client.SendAsync(RestoreRequest(_phone, subject), Ct))).ShouldBe("deletion_in_progress");
+        }
+        finally
+        {
+            host.Clock.Offset = TimeSpan.Zero;
+        }
+    }
+
+    [Fact]
+    public async Task Two_first_sign_ins_with_one_account_at_once_make_one_user()
+    {
+        var subject = $"dev:{Unique()}";
+        using var other = new DeviceKey();
+        var results = await Task.WhenAll(_client.SendAsync(TokenRequest(_phone, subject), Ct), _client.SendAsync(TokenRequest(other, subject), Ct));
+        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
+        var users = await Task.WhenAll(results.Select(Json));
+        users[0].GetProperty("user_id").GetGuid().ShouldBe(users[1].GetProperty("user_id").GetGuid());
+    }
+
+    [Fact]
+    public async Task A_body_with_a_missing_required_field_is_a_400_not_a_crash()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/v1/auth/token")
+        {
+            Content = new StringContent("""{"platform":"ios"}""", Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("DPoP", _phone.Proof("POST", Url("/v1/auth/token")));
+        (await _client.SendAsync(request, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    private static HttpRequestMessage RestoreRequest(DeviceKey device, string idToken)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/v1/account/restore")
+        {
+            Content = JsonContent.Create(new Dictionary<string, object> { ["provider"] = "dev", ["platform"] = "ios", ["id_token"] = idToken }),
+        };
+        request.Headers.Add("DPoP", device.Proof("POST", Url("/v1/account/restore")));
+        return request;
     }
 
     [Fact]

@@ -68,8 +68,29 @@ public static partial class SyncRules
 
     /// <summary>
     /// A device whose cursor is older than the newest purged tombstone may have
-    /// missed a deletion. It must resync from zero rather than keep a record
-    /// every other device has deleted.
+    /// missed a deletion, and must resync from zero rather than keep a record
+    /// every other device deleted. Unless its cursor is from the current
+    /// <paramref name="currentEpoch"/>: then it started reading after the last
+    /// purge (for instance it is in the middle of that very resync), so nothing
+    /// it is owed was removed. Without the epoch, a resync was told to reset
+    /// again on its second page, forever.
     /// </summary>
-    public static bool NeedsReset(long since, long purgedThroughSeq) => since > 0 && since < purgedThroughSeq;
+    public static bool NeedsReset(long since, long epoch, long currentEpoch, long purgedThroughSeq) =>
+        since > 0 && epoch != currentEpoch && since < purgedThroughSeq;
 }
+
+/// <summary>Encrypted files too big for a sync record: receipt photos, statements.</summary>
+public static partial class AttachmentRules
+{
+    /// <summary>A photographed receipt is ~2 MB; a scanned statement a few more.</summary>
+    public const long MaxBytes = 25 * 1024 * 1024;
+
+    /// <summary>Per user, so one account can't fill the disk.</summary>
+    public const long QuotaBytes = 1024L * 1024 * 1024;
+
+    [GeneratedRegex("^[A-Za-z0-9_-]{8,64}$")]
+    private static partial Regex IdPattern();
+
+    public static bool IsValidId(string? id) => id is not null && IdPattern().IsMatch(id);
+}
+

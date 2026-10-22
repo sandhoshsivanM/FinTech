@@ -197,6 +197,14 @@ public class StartupGuardTests
     }
 
     [Fact]
+    public void Google_sign_in_without_nonce_binding_is_refused_outside_Development() =>
+        Should.Throw<InvalidOperationException>(() => Register(new(Safe)
+        {
+            ["Identity:SigningKey"] = "Pem", ["Identity:SigningKeyPath"] = WriteKey(),
+            ["Identity:GoogleClientIds:0"] = "khazana-android", ["Identity:RequireNonce"] = "false",
+        }, Environments.Production)).Message.ShouldContain("RequireNonce");
+
+    [Fact]
     public void A_throwaway_signing_key_is_refused_outside_Development() =>
         Should.Throw<InvalidOperationException>(() => Register(Safe, Environments.Production)).Message.ShouldContain("Ephemeral");
 

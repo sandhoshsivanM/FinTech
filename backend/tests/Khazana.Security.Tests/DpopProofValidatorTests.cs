@@ -54,6 +54,10 @@ public sealed class DpopProofValidatorTests : IDisposable
         Refused(_device.Proof("POST", Url, issuedAt: DateTimeOffset.UtcNow.AddMinutes(5)), "too old");
 
     [Fact]
+    public Task An_absurd_iat_is_refused_not_a_crash() =>
+        Refused(_device.Proof("POST", Url, rawIat: 1_000_000_000_000_000), "out of range");
+
+    [Fact]
     public Task A_symmetric_signature_is_refused() =>
         Refused(_device.Proof("POST", Url, alg: SecurityAlgorithms.HmacSha256), "signature");
 

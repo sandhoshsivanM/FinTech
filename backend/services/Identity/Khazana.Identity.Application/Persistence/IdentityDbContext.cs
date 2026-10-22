@@ -17,6 +17,7 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     public DbSet<WebAuthnChallengeRow> WebAuthnChallenges => Set<WebAuthnChallengeRow>();
     public DbSet<DeletionRequestRow> DeletionRequests => Set<DeletionRequestRow>();
     public DbSet<DeletionConfirmationRow> DeletionConfirmations => Set<DeletionConfirmationRow>();
+    public DbSet<SessionRow> Sessions => Set<SessionRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -108,6 +109,20 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             e.Property(x => x.UserId).HasColumnName("user_id");
             e.Property(x => x.Service).HasColumnName("service").HasMaxLength(32);
             e.Property(x => x.ConfirmedAt).HasColumnName("confirmed_at");
+        });
+
+        modelBuilder.Entity<SessionRow>(e =>
+        {
+            e.ToTable("sessions");
+            e.HasKey(x => x.FamilyId);
+            e.Property(x => x.FamilyId).HasColumnName("family_id");
+            e.Property(x => x.UserId).HasColumnName("user_id");
+            e.Property(x => x.DeviceId).HasColumnName("device_id");
+            e.Property(x => x.CreatedAt).HasColumnName("created_at");
+            e.Property(x => x.RevokedAt).HasColumnName("revoked_at");
+            e.HasIndex(x => x.UserId);
+            e.HasIndex(x => x.DeviceId);
+            e.HasOne<UserRow>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<WebAuthnChallengeRow>(e =>
@@ -212,4 +227,18 @@ public sealed class DeletionConfirmationRow
     public Guid UserId { get; set; }
     public required string Service { get; set; }
     public DateTimeOffset ConfirmedAt { get; set; }
+}
+
+/// <summary>
+/// One sign-in on one device: the lock that keeps a refresh and a logout from
+/// passing each other. A refresh holds this row (FOR UPDATE) while it rotates;
+/// a logout revokes it, waiting for any refresh in flight to finish first.
+/// </summary>
+public sealed class SessionRow
+{
+    public Guid FamilyId { get; set; }
+    public Guid UserId { get; set; }
+    public Guid DeviceId { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? RevokedAt { get; set; }
 }

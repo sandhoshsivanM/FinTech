@@ -29,7 +29,7 @@ builder.Services.AddIdentityInfrastructure(builder.Configuration, builder.Enviro
 
 // Identity checks its own tokens with its own keys (no HTTP to itself).
 builder.Services.AddSingleton<IConfigurationManager<OpenIdConnectConfiguration>, LocalKeysConfigurationManager>();
-builder.Services.AddKhazanaAuthentication(builder.Configuration);
+builder.Services.AddKhazanaAuthentication(builder.Configuration, replayDatabase: database);
 
 builder.Services.AddDbContextWithWolverineIntegration<IdentityDbContext>(o => o.UseNpgsql(database));
 builder.Services.AddSingleton<TokenIssuer>();
@@ -40,6 +40,7 @@ builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<PasskeyService>();
 builder.Services.AddHostedService<DatabaseMigrator>();
 builder.Services.AddHostedService<DeletionOverdueCheck>();
+builder.Services.AddHostedService<ChallengeCleanup>();
 
 builder.Services.AddKhazanaJson();
 

@@ -27,3 +27,17 @@ public sealed record AccountDeletionRequestedV1(Guid UserId, DateTimeOffset Exec
 /// </summary>
 [MessageIdentity("khazana.identity.account-deleted.v1")]
 public sealed record AccountDeletedV1(Guid UserId, DateTimeOffset At);
+
+/// <summary>
+/// The user changed their mind during the cooling-off. Every service drops the
+/// purge it scheduled for <paramref name="ExecuteAfter"/>.
+/// </summary>
+[MessageIdentity("khazana.identity.account-deletion-cancelled.v1")]
+public sealed record AccountDeletionCancelledV1(Guid UserId, DateTimeOffset ExecuteAfter);
+
+/// <summary>
+/// A device's session ended in Identity (logout, log out everywhere, a reused
+/// refresh token). Devices & Keys revokes the device and drops its key envelope.
+/// </summary>
+[MessageIdentity("khazana.identity.session-ended.v1")]
+public sealed record SessionEndedV1(Guid UserId, Guid DeviceId, DateTimeOffset At);

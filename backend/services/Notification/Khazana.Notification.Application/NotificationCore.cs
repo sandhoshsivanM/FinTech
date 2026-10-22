@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Khazana.Messaging;
 using Khazana.Messaging.Contracts;
 using Khazana.Notification.Application.Persistence;
 using Khazana.Notification.Domain;
@@ -52,7 +53,18 @@ public sealed partial class PushDispatcher(IEnumerable<IPushSender> senders, Not
                 NoSender(log, row.Provider);
                 continue;
             }
-            var outcome = await sender.SendAsync(row.Token, message, ct).ConfigureAwait(false);
+            PushOutcome outcome;
+            try
+            {
+                outcome = await sender.SendAsync(row.Token, message, ct).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // one provider's outage must not stop the others or undo the cleanup
+            catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested)
+#pragma warning restore CA1031
+            {
+                SendThrew(log, row.Provider, e);
+                outcome = PushOutcome.Failed;
+            }
             if (outcome == PushOutcome.TokenInvalid) db.PushTokens.Remove(row);
             else if (outcome == PushOutcome.Failed) SendFailed(log, row.Provider, TokenTag(row.Token));
         }
@@ -65,6 +77,9 @@ public sealed partial class PushDispatcher(IEnumerable<IPushSender> senders, Not
     [LoggerMessage(Level = LogLevel.Information, Message = "No push sender configured for {Provider}; skipped.")]
     private static partial void NoSender(ILogger logger, string provider);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Push via {Provider} threw; continuing with the others.")]
+    private static partial void SendThrew(ILogger logger, string provider, Exception exception);
+
     [LoggerMessage(Level = LogLevel.Warning, Message = "Push via {Provider} to token {TokenTag} failed.")]
     private static partial void SendFailed(ILogger logger, string provider, string tokenTag);
 }
@@ -76,6 +91,11 @@ public sealed class PushRegistrationService(NotificationDbContext db, IClock clo
     public async Task<bool> RegisterAsync(Guid userId, Guid deviceId, string provider, string token, CancellationToken ct)
     {
         if (!PushProviders.IsValid(provider, token)) return false;
+        if (await db.RevokedDevices.AnyAsync(d => d.DeviceId == deviceId, ct).ConfigureAwait(false)) return false;
+        // A token belongs to one install. If another device row (an old
+        // session on this phone, or another user who signed in on it) holds
+        // it, that row goes, or its alerts would reach whoever holds the phone now.
+        await db.PushTokens.Where(t => t.Token == token && t.DeviceId != deviceId).ExecuteDeleteAsync(ct).ConfigureAwait(false);
         var row = await db.PushTokens.FirstOrDefaultAsync(t => t.DeviceId == deviceId, ct).ConfigureAwait(false);
         if (row is null)
         {
@@ -122,15 +142,18 @@ public static class DeviceAddedHandler
 /// <summary>A revoked device gets no more pushes.</summary>
 public static class DeviceRevokedHandler
 {
-    public static Task Handle(DeviceRevokedV1 message, NotificationDbContext db, CancellationToken ct)
+    public static async Task Handle(DeviceRevokedV1 message, NotificationDbContext db, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(db);
-        return db.PushTokens.Where(t => t.DeviceId == message.DeviceId).ExecuteDeleteAsync(ct);
+        await db.PushTokens.Where(t => t.DeviceId == message.DeviceId).ExecuteDeleteAsync(ct).ConfigureAwait(false);
+        // Remembered, so the device can't register a token again with a still-valid access token.
+        if (!await db.RevokedDevices.AnyAsync(d => d.DeviceId == message.DeviceId, ct).ConfigureAwait(false))
+            db.RevokedDevices.Add(new RevokedDeviceRow { DeviceId = message.DeviceId, UserId = message.UserId });
     }
 }
 
-public sealed record PurgeUserNotifications(Guid UserId);
+public sealed record PurgeUserNotifications(Guid UserId, DateTimeOffset ExecuteAfter);
 
 /// <summary>Notification's part of the account-deletion saga.</summary>
 public static class AccountDeletionHandler
@@ -142,17 +165,21 @@ public static class AccountDeletionHandler
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(bus);
         ArgumentNullException.ThrowIfNull(clock);
-        var purge = new PurgeUserNotifications(message.UserId);
+        var purge = new PurgeUserNotifications(message.UserId, message.ExecuteAfter);
         if (message.ExecuteAfter <= clock.UtcNow) await bus.PublishAsync(purge).ConfigureAwait(false);
         else await bus.ScheduleAsync(purge, message.ExecuteAfter).ConfigureAwait(false);
     }
 
-    public static async Task<UserDataPurgedV1> Handle(PurgeUserNotifications command, NotificationDbContext db, IClock clock, CancellationToken ct)
+    public static async Task<OutgoingMessages> Handle(
+        PurgeUserNotifications command, NotificationDbContext db, DeletionCancellations cancellations, IClock clock, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(cancellations);
         ArgumentNullException.ThrowIfNull(clock);
+        if (await cancellations.IsCancelledAsync(command.UserId, command.ExecuteAfter, ct).ConfigureAwait(false)) return [];
         await db.PushTokens.Where(t => t.UserId == command.UserId).ExecuteDeleteAsync(ct).ConfigureAwait(false);
-        return new UserDataPurgedV1(command.UserId, ServiceName, clock.UtcNow);
+        await db.RevokedDevices.Where(d => d.UserId == command.UserId).ExecuteDeleteAsync(ct).ConfigureAwait(false);
+        return [new UserDataPurgedV1(command.UserId, ServiceName, clock.UtcNow)];
     }
 }

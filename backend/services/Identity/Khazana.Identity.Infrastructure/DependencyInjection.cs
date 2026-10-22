@@ -26,7 +26,7 @@ public sealed class IdentityOptions
     /// <summary>App and Services IDs for Sign in with Apple. Empty disables Apple.</summary>
     public IReadOnlyList<string> AppleClientIds { get; set; } = [];
 
-    /// <summary>Refuse ID tokens without a nonce bound to the device key.</summary>
+    /// <summary>Refuse ID tokens without a nonce bound to the device key. Mandatory outside Development.</summary>
     public bool RequireNonce { get; set; }
 
     public PasskeyOptions Passkeys { get; set; } = new();
@@ -82,6 +82,12 @@ public static class DependencyInjection
                     "Identity:DevSignIn is allowed only in Development: it lets anyone sign in as anyone.");
             services.AddSingleton<IExternalIdentityVerifier, DevIdTokenVerifier>();
         }
+        // A Google or Apple ID token without a nonce bound to the device key can
+        // be replayed from any device for its lifetime. Outside Development the
+        // binding is mandatory.
+        if ((options.GoogleClientIds.Count > 0 || options.AppleClientIds.Count > 0) && !options.RequireNonce && !environment.IsDevelopment())
+            throw new InvalidOperationException(
+                "Identity:RequireNonce must be true outside Development: an unbound ID token can be replayed from another device.");
         if (options.GoogleClientIds.Count > 0)
         {
             services.AddSingleton<IExternalIdentityVerifier>(sp =>

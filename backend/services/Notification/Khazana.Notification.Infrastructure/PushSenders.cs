@@ -14,7 +14,8 @@ namespace Khazana.Notification.Infrastructure;
 /// <summary>
 /// Development stand-in for every provider (decision D15): records what would
 /// have been sent, sends nothing. Tokens starting with <c>dead-</c> answer
-/// "invalid", so the cleanup path can be exercised without a real provider.
+/// "invalid" and tokens starting with <c>boom-</c> throw, so the cleanup and
+/// failure paths can be exercised without a real provider.
 /// Refused in Production at startup.
 /// </summary>
 public sealed class LogPushSender(string provider, PushLog log) : IPushSender
@@ -25,6 +26,8 @@ public sealed class LogPushSender(string provider, PushLog log) : IPushSender
     {
         ArgumentNullException.ThrowIfNull(token);
         if (token.StartsWith("dead-", StringComparison.Ordinal)) return Task.FromResult(PushOutcome.TokenInvalid);
+        // For tests of the dispatcher: a provider that blows up.
+        if (token.StartsWith("boom-", StringComparison.Ordinal)) throw new HttpRequestException("Provider unreachable.");
         log.Record(provider, token, message);
         return Task.FromResult(PushOutcome.Delivered);
     }
@@ -83,12 +86,34 @@ public sealed class FcmPushSender(HttpClient http, FcmOptions options, TimeProvi
         using var response = await http.SendAsync(request, ct).ConfigureAwait(false);
         if (response.IsSuccessStatusCode) return PushOutcome.Delivered;
 
-        // 404 with UNREGISTERED: the app was uninstalled or the token rotated.
-        // 400 INVALID_ARGUMENT on the token field: it was never valid.
+        // Only FCM's own verdict on the token deletes it: UNREGISTERED (the app
+        // was uninstalled or the token rotated), or INVALID_ARGUMENT naming the
+        // token field. A bare 404 can also mean a wrong project id or URL, which
+        // would otherwise delete every token in the database.
         var error = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-        return response.StatusCode == HttpStatusCode.NotFound || error.Contains("UNREGISTERED", StringComparison.Ordinal)
-            ? PushOutcome.TokenInvalid
-            : PushOutcome.Failed;
+        return FcmSaysTokenIsDead(error) ? PushOutcome.TokenInvalid : PushOutcome.Failed;
+    }
+
+    /// <summary>Reads FCM's error body (<c>error.details[].errorCode</c>, and field violations on <c>message.token</c>).</summary>
+    public static bool FcmSaysTokenIsDead(string errorBody)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(errorBody);
+            if (!doc.RootElement.TryGetProperty("error", out var error) || !error.TryGetProperty("details", out var details)) return false;
+            foreach (var detail in details.EnumerateArray())
+            {
+                if (detail.TryGetProperty("errorCode", out var code) && code.GetString() == "UNREGISTERED") return true;
+                if (detail.TryGetProperty("fieldViolations", out var violations) &&
+                    violations.EnumerateArray().Any(v => v.TryGetProperty("field", out var f) && f.GetString() == "message.token"))
+                    return true;
+            }
+            return false;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 
     public void Dispose() => _tokenLock.Dispose();
