@@ -21,7 +21,8 @@ var rabbitMq = builder.Configuration.GetConnectionString("rabbitmq")
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddDevicesInfrastructure();
 // Tokens are checked here with Identity's public keys (Auth:MetadataAddress).
-builder.Services.AddKhazanaAuthentication(builder.Configuration);
+builder.Services.AddKhazanaAuthentication(builder.Configuration, replayDatabase: database);
+builder.Services.AddDeletionCancellations(database);
 builder.Services.AddDbContextWithWolverineIntegration<DevicesDbContext>(o => o.UseNpgsql(database));
 builder.Services.AddScoped<DeviceKeyService>();
 builder.Services.AddHostedService<DatabaseMigrator>();
@@ -32,6 +33,7 @@ builder.Host.UseWolverine(opts =>
     opts.UseKhazanaMessaging("devices", rabbitMq, database);
     opts.UseEntityFrameworkCoreTransactions();
     opts.Discovery.IncludeAssembly(typeof(AccountDeletionHandler).Assembly);
+    opts.ListenForDeletionCancellations();
 });
 
 var app = builder.Build();

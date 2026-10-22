@@ -95,7 +95,15 @@ public sealed class DeviceKeyService(IDbContextOutbox<DevicesDbContext> outbox, 
             device.AppVersion = appVersion;
             device.LastSeenAt = now;
         }
-        await outbox.SaveChangesAndFlushMessagesAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await outbox.SaveChangesAndFlushMessagesAsync(ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateException)
+        {
+            // Two first registrations at once: the primary key let the other one win.
+            throw new DevicesException(DevicesError.Conflict, $"Device {caller.DeviceId} registered concurrently; retry.");
+        }
         return await StatusAsync(caller, ct).ConfigureAwait(false);
     }
 
@@ -124,17 +132,28 @@ public sealed class DeviceKeyService(IDbContextOutbox<DevicesDbContext> outbox, 
     public async Task RevokeAsync(Caller caller, Guid deviceId, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(caller);
-        var device = await Db.Devices.FirstOrDefaultAsync(d => d.Id == deviceId && d.UserId == caller.UserId, ct).ConfigureAwait(false)
-            ?? throw new DevicesException(DevicesError.NotFound, "No such device for this user.");
-        if (device.RevokedAt is not null) return;
+        if (!await RevokeDeviceAsync(caller.UserId, deviceId, ct).ConfigureAwait(false))
+            throw new DevicesException(DevicesError.NotFound, "No such device for this user.");
+    }
+
+    /// <summary>
+    /// Revokes a device of a user: envelope gone, pairing ended, <see cref="DeviceRevokedV1"/>
+    /// announced. Already revoked: nothing to do. False when the user has no such device.
+    /// </summary>
+    public async Task<bool> RevokeDeviceAsync(Guid userId, Guid deviceId, CancellationToken ct)
+    {
+        var device = await Db.Devices.FirstOrDefaultAsync(d => d.Id == deviceId && d.UserId == userId, ct).ConfigureAwait(false);
+        if (device is null) return false;
+        if (device.RevokedAt is not null) return true;
 
         var now = clock.UtcNow;
         device.RevokedAt = now;
         Db.KeyEnvelopes.RemoveRange(await Db.KeyEnvelopes.Where(e => e.DeviceId == deviceId).ToListAsync(ct).ConfigureAwait(false));
         foreach (var session in await Db.PairingSessions.Where(p => p.NewDeviceId == deviceId && p.CompletedAt == null).ToListAsync(ct).ConfigureAwait(false))
             session.CompletedAt = now;
-        await outbox.PublishAsync(new DeviceRevokedV1(caller.UserId, deviceId, now)).ConfigureAwait(false);
+        await outbox.PublishAsync(new DeviceRevokedV1(userId, deviceId, now)).ConfigureAwait(false);
         await outbox.SaveChangesAndFlushMessagesAsync(ct).ConfigureAwait(false);
+        return true;
     }
 
     /// <summary>
@@ -229,7 +248,7 @@ public sealed class DeviceKeyService(IDbContextOutbox<DevicesDbContext> outbox, 
         if (await Db.KeyEnvelopes.AnyAsync(e => e.DeviceId == caller.DeviceId && e.KeyVersion == envelope.KeyVersion, ct).ConfigureAwait(false))
             throw new DevicesException(DevicesError.Conflict, "This device already has an envelope for that key.");
         Db.KeyEnvelopes.Add(NewEnvelope(caller.UserId, caller.DeviceId, envelope, clock.UtcNow));
-        await Db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await SaveOrConflictAsync("This device already has an envelope for that key.", ct).ConfigureAwait(false);
     }
 
     /// <summary>A new recovery phrase. Needs a device that holds the key and proves it.</summary>
@@ -318,18 +337,34 @@ public sealed class DeviceKeyService(IDbContextOutbox<DevicesDbContext> outbox, 
         var target = await Db.Devices.SingleAsync(d => d.Id == session.NewDeviceId, ct).ConfigureAwait(false);
         if (target.RevokedAt is not null) throw new DevicesException(DevicesError.Conflict, "The new device was revoked.");
 
-        // Claim the session: each code approves exactly once.
+        // Claim the session and store the envelope in one transaction: a code
+        // approves exactly once, and never without leaving the envelope behind.
         var now = clock.UtcNow;
+        await using var tx = await Db.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
         var claimed = await Db.PairingSessions
             .Where(p => p.Id == pairingId && p.CompletedAt == null && p.ExpiresAt > now)
             .ExecuteUpdateAsync(s => s.SetProperty(p => p.CompletedAt, now), ct).ConfigureAwait(false);
         if (claimed != 1) throw new DevicesException(DevicesError.NotFound, "Pairing session already used or expired.");
 
         Db.KeyEnvelopes.Add(NewEnvelope(caller.UserId, target.Id, envelope, now));
-        await Db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await SaveOrConflictAsync("The new device already holds that key.", ct).ConfigureAwait(false);
+        await tx.CommitAsync(ct).ConfigureAwait(false);
     }
 
     // --- helpers ------------------------------------------------------------------
+
+    /// <summary>A unique-key race (two requests doing the same thing at once) is a 409, not a 500.</summary>
+    private async Task SaveOrConflictAsync(string conflictMessage, CancellationToken ct)
+    {
+        try
+        {
+            await Db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateException)
+        {
+            throw new DevicesException(DevicesError.Conflict, conflictMessage);
+        }
+    }
 
     private async Task<PairingSessionRow> OpenSessionAsync(Guid userId, Guid pairingId, CancellationToken ct)
     {

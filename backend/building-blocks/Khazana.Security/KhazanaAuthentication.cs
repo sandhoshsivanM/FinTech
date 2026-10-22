@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 
 namespace Khazana.Security;
 
@@ -70,12 +71,23 @@ public static class KhazanaAuthentication
     /// (its keys are local); every other service fetches Identity's keys from
     /// <see cref="KhazanaAuthOptions.MetadataAddress"/>.
     /// </remarks>
-    public static IServiceCollection AddKhazanaAuthentication(this IServiceCollection services, IConfiguration configuration)
+    /// <param name="replayDatabase">
+    /// The service's own database, for the shared DPoP replay cache. Null means
+    /// an in-process cache, correct only while the service runs one instance.
+    /// </param>
+    public static IServiceCollection AddKhazanaAuthentication(
+        this IServiceCollection services, IConfiguration configuration, string? replayDatabase = null)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         services.Configure<KhazanaAuthOptions>(configuration.GetSection(KhazanaAuthOptions.Section));
         services.AddMemoryCache();
         services.TryAddSingleton(TimeProvider.System);
+        if (replayDatabase is not null)
+        {
+            services.TryAddSingleton(_ => NpgsqlDataSource.Create(replayDatabase));
+            services.TryAddSingleton<IDpopReplayCache, PostgresDpopReplayCache>();
+            services.AddHostedService<ReplayCacheSchema>();
+        }
         services.TryAddSingleton<IDpopReplayCache, MemoryDpopReplayCache>();
         services.TryAddSingleton<DpopProofValidator>();
         services.TryAddSingleton<IConfigurationManager<OpenIdConnectConfiguration>>(sp =>
@@ -151,6 +163,14 @@ public static class KhazanaAuthentication
     private static async Task RequireBoundProof(TokenValidatedContext context)
     {
         var request = context.Request;
+        // Endpoints parse these as Guids; a token without them must stop here
+        // as a 401, never reach an endpoint and throw.
+        if (!Guid.TryParse(context.Principal?.FindFirstValue(KhazanaClaims.Subject), out _) ||
+            !Guid.TryParse(context.Principal?.FindFirstValue(KhazanaClaims.Device), out _))
+        {
+            context.Fail("Token has no valid sub or did.");
+            return;
+        }
         var jkt = BoundKey(context.Principal);
         if (jkt is null)
         {
@@ -197,4 +217,17 @@ public static class KhazanaAuthentication
             return null;
         }
     }
+}
+
+/// <summary>Creates the replay-cache table at startup (idempotent), before any request arrives.</summary>
+internal sealed class ReplayCacheSchema(NpgsqlDataSource dataSource) : Microsoft.Extensions.Hosting.IHostedService
+{
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        await using var conn = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var cmd = new NpgsqlCommand(PostgresDpopReplayCache.CreateSql, conn);
+        await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

@@ -16,13 +16,13 @@ namespace Khazana.Identity.Api;
 /// <param name="IdToken">The provider's ID token (google, apple, dev).</param>
 /// <param name="ChallengeId">From <c>/passkeys/assert/options</c> (passkey).</param>
 /// <param name="Assertion">The authenticator's response, as the platform API returns it (passkey).</param>
-public sealed record TokenRequest(string Provider, string Platform, string? IdToken, Guid? ChallengeId, JsonElement? Assertion);
+public sealed record TokenRequest(string Provider, string Platform, string? IdToken = null, Guid? ChallengeId = null, JsonElement? Assertion = null);
 
 public sealed record RefreshRequest(string RefreshToken);
 
 public sealed record LogoutRequest(bool Everywhere);
 
-public sealed record PasskeyRegistration(Guid ChallengeId, JsonElement Attestation);
+public sealed record PasskeyRegistration(Guid ChallengeId, JsonElement? Attestation = null);
 
 public sealed record TokenResponse(
     string AccessToken, string TokenType, int ExpiresIn, string RefreshToken, Guid UserId, Guid DeviceId);
@@ -41,11 +41,16 @@ public static class IdentityEndpoints
         auth.MapPost("/token", Token);
         auth.MapPost("/refresh", Refresh);
         auth.MapPost("/logout", Logout).RequireAuthorization();
-        auth.MapPost("/passkeys/register/options", BeginPasskeyRegistration).RequireAuthorization();
-        auth.MapPost("/passkeys/register", CompletePasskeyRegistration).RequireAuthorization();
+        // Adding a passkey adds a way into the account: it needs a live session
+        // from a sign-in in the last few minutes, not just an unexpired token.
+        auth.MapPost("/passkeys/register/options", BeginPasskeyRegistration).RequireAuthorization()
+            .AddEndpointFilter(RequireLiveSession(SessionService.FreshSignIn));
+        auth.MapPost("/passkeys/register", CompletePasskeyRegistration).RequireAuthorization()
+            .AddEndpointFilter(RequireLiveSession(SessionService.FreshSignIn));
         auth.MapPost("/passkeys/assert/options", BeginPasskeyAssertion);
 
-        app.MapDelete("/v1/account", RequestDeletion).RequireAuthorization();
+        app.MapDelete("/v1/account", RequestDeletion).RequireAuthorization().AddEndpointFilter(RequireLiveSession(null));
+        app.MapPost("/v1/account/restore", Restore);
 
         // Internal only: the gateway does not route /.well-known. Services fetch
         // Identity's public keys from here to check tokens themselves.
@@ -54,14 +59,34 @@ public static class IdentityEndpoints
     }
 
     /// <summary>Signs in with Google, Apple, a passkey or (Development) a dev token.</summary>
-    private static async Task<IResult> Token(
+    private static Task<IResult> Token(
         TokenRequest body, HttpContext http, DpopProofValidator dpop, IOptions<KhazanaAuthOptions> authOptions,
         IEnumerable<IExternalIdentityVerifier> verifiers, SessionService sessions, PasskeyService passkeys,
-        ILogger<TokenRequest> log, CancellationToken ct)
+        ILogger<TokenRequest> log, CancellationToken ct) =>
+        SignInAsync(body, http, dpop, authOptions, verifiers, passkeys, log, "Sign-in",
+            (identity, jkt) => sessions.SignInExternalAsync(identity, jkt, body.Platform, ct),
+            (userId, jkt) => sessions.SignInPasskeyAsync(userId, jkt, body.Platform, ct), ct);
+
+    /// <summary>
+    /// Changes one's mind during the cooling-off: prove who you are again
+    /// (the same body as <c>/v1/auth/token</c>) and the deletion is cancelled.
+    /// </summary>
+    private static Task<IResult> Restore(
+        TokenRequest body, HttpContext http, DpopProofValidator dpop, IOptions<KhazanaAuthOptions> authOptions,
+        IEnumerable<IExternalIdentityVerifier> verifiers, SessionService sessions, PasskeyService passkeys,
+        ILogger<TokenRequest> log, CancellationToken ct) =>
+        SignInAsync(body, http, dpop, authOptions, verifiers, passkeys, log, "Restore",
+            (identity, jkt) => sessions.RestoreExternalAsync(identity, jkt, body.Platform, ct),
+            (userId, jkt) => sessions.RestorePasskeyAsync(userId, jkt, body.Platform, ct), ct);
+
+    private static async Task<IResult> SignInAsync(
+        TokenRequest body, HttpContext http, DpopProofValidator dpop, IOptions<KhazanaAuthOptions> authOptions,
+        IEnumerable<IExternalIdentityVerifier> verifiers, PasskeyService passkeys, ILogger log, string action,
+        Func<ExternalIdentity, string, Task<TokenPair>> external, Func<Guid, string, Task<TokenPair>> passkey, CancellationToken ct)
     {
         var proof = await CheckProofAsync(http, dpop, authOptions.Value, log).ConfigureAwait(false);
         if (proof is null) return InvalidProof(http);
-        if (!Platforms.IsKnown(body.Platform)) return Error(AuthError.InvalidRequest);
+        if (body is null || !Platforms.IsKnown(body.Platform)) return Error(AuthError.InvalidRequest);
 
         try
         {
@@ -71,9 +96,9 @@ public static class IdentityEndpoints
                 if (body.ChallengeId is not { } challengeId || body.Assertion is not { } assertion)
                     return Error(AuthError.InvalidRequest);
                 var response = DeserializeFido<AuthenticatorAssertionRawResponse>(assertion);
-                if (response is null) return Error(AuthError.InvalidRequest);
+                if (response?.Response is null) return Error(AuthError.InvalidRequest);
                 var userId = await passkeys.CompleteAssertionAsync(challengeId, response, ct).ConfigureAwait(false);
-                pair = await sessions.SignInPasskeyAsync(userId, proof.Jkt, body.Platform, ct).ConfigureAwait(false);
+                pair = await passkey(userId, proof.Jkt).ConfigureAwait(false);
             }
             else
             {
@@ -81,18 +106,18 @@ public static class IdentityEndpoints
                 if (verifier is null) return Error(AuthError.UnsupportedProvider);
                 if (string.IsNullOrEmpty(body.IdToken)) return Error(AuthError.InvalidRequest);
                 var identity = await verifier.VerifyAsync(body.IdToken, proof.Jkt, ct).ConfigureAwait(false);
-                pair = await sessions.SignInExternalAsync(identity, proof.Jkt, body.Platform, ct).ConfigureAwait(false);
+                pair = await external(identity, proof.Jkt).ConfigureAwait(false);
             }
             return Tokens(http, pair);
         }
         catch (ExternalTokenRejectedException e)
         {
-            Log.Refused(log, "Sign-in", e.Message);
+            Log.Refused(log, action, e.Message);
             return Error(AuthError.InvalidGrant);
         }
         catch (AuthFailedException e)
         {
-            Log.Refused(log, "Sign-in", e.Message);
+            Log.Refused(log, action, e.Message);
             return Error(e.Error);
         }
     }
@@ -106,7 +131,7 @@ public static class IdentityEndpoints
         if (proof is null) return InvalidProof(http);
         try
         {
-            return Tokens(http, await sessions.RefreshAsync(body.RefreshToken, proof.Jkt, ct).ConfigureAwait(false));
+            return Tokens(http, await sessions.RefreshAsync(body?.RefreshToken ?? string.Empty, proof.Jkt, ct).ConfigureAwait(false));
         }
         catch (AuthFailedException e)
         {
@@ -117,7 +142,7 @@ public static class IdentityEndpoints
 
     private static async Task<IResult> Logout(LogoutRequest body, HttpContext http, SessionService sessions, CancellationToken ct)
     {
-        await sessions.LogoutAsync(http.User.UserId(), http.User.DeviceId(), body.Everywhere, ct).ConfigureAwait(false);
+        await sessions.LogoutAsync(http.User.UserId(), http.User.DeviceId(), body?.Everywhere ?? false, ct).ConfigureAwait(false);
         return Results.NoContent();
     }
 
@@ -127,8 +152,9 @@ public static class IdentityEndpoints
     private static async Task<IResult> CompletePasskeyRegistration(
         PasskeyRegistration body, HttpContext http, PasskeyService passkeys, ILogger<PasskeyRegistration> log, CancellationToken ct)
     {
-        var response = DeserializeFido<AuthenticatorAttestationRawResponse>(body.Attestation);
-        if (response is null) return Error(AuthError.InvalidRequest);
+        if (body?.Attestation is not { ValueKind: JsonValueKind.Object } attestation) return Error(AuthError.InvalidRequest);
+        var response = DeserializeFido<AuthenticatorAttestationRawResponse>(attestation);
+        if (response?.Response is null) return Error(AuthError.InvalidRequest);
         try
         {
             await passkeys.CompleteRegistrationAsync(http.User.UserId(), body.ChallengeId, response, ct).ConfigureAwait(false);
@@ -197,7 +223,7 @@ public static class IdentityEndpoints
         {
             return element.Deserialize<T>();
         }
-        catch (JsonException)
+        catch (Exception e) when (e is JsonException or InvalidOperationException or NotSupportedException)
         {
             return null;
         }
@@ -223,13 +249,38 @@ public static class IdentityEndpoints
         return Results.Json(new ErrorResponse("invalid_dpop_proof"), statusCode: StatusCodes.Status401Unauthorized);
     }
 
-    private static IResult Error(AuthError error) => Results.BadRequest(new ErrorResponse(error switch
+    private static IResult Error(AuthError error) => error switch
     {
-        AuthError.InvalidGrant => "invalid_grant",
-        AuthError.UnsupportedProvider => "unsupported_provider",
-        AuthError.AccountDeletionPending => "account_deletion_pending",
-        _ => "invalid_request",
-    }));
+        AuthError.SessionRevoked => Results.Json(new ErrorResponse("invalid_token"), statusCode: StatusCodes.Status401Unauthorized),
+        AuthError.ReauthenticationRequired => Results.Json(new ErrorResponse("reauthentication_required"), statusCode: StatusCodes.Status403Forbidden),
+        _ => Results.BadRequest(new ErrorResponse(error switch
+        {
+            AuthError.InvalidGrant => "invalid_grant",
+            AuthError.UnsupportedProvider => "unsupported_provider",
+            // The app offers "Restore my account" on this answer (POST /v1/account/restore).
+            AuthError.AccountDeletionPending => "account_deletion_pending",
+            AuthError.DeletionTooLate => "deletion_in_progress",
+            _ => "invalid_request",
+        })),
+    };
+
+    /// <summary>Refuses a token whose session ended, whose account is being deleted, or (with a max age) whose sign-in is stale.</summary>
+    private static Func<EndpointFilterInvocationContext, EndpointFilterDelegate, ValueTask<object?>> RequireLiveSession(TimeSpan? maxAge) =>
+        async (context, next) =>
+        {
+            var http = context.HttpContext;
+            try
+            {
+                await http.RequestServices.GetRequiredService<SessionService>()
+                    .RequireLiveSessionAsync(http.User.UserId(), http.User.DeviceId(), maxAge, http.RequestAborted).ConfigureAwait(false);
+            }
+            catch (AuthFailedException e)
+            {
+                Log.Refused(http.RequestServices.GetRequiredService<ILogger<SessionService>>(), "Session check", e.Message);
+                return Error(e.Error);
+            }
+            return await next(context).ConfigureAwait(false);
+        };
 }
 
 /// <summary>Refusals are logged with the reason only: never a token, proof or ID token.</summary>

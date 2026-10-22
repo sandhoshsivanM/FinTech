@@ -102,6 +102,16 @@ public sealed class Device(SyncHost host, Guid userId) : IDisposable
         return await _client.SendAsync(request, TestContext.Current.CancellationToken);
     }
 
+    public async Task<HttpResponseMessage> SendBytes(HttpMethod method, string path, byte[] body)
+    {
+        var token = host.Issuer.Mint(UserId, DeviceId, _key);
+        using var request = new HttpRequestMessage(method, path);
+        request.Headers.Authorization = new AuthenticationHeaderValue("DPoP", token);
+        request.Headers.Add("DPoP", _key.Proof(method.Method, "http://localhost" + path.Split('?')[0], token));
+        request.Content = new ByteArrayContent(body);
+        return await _client.SendAsync(request, TestContext.Current.CancellationToken);
+    }
+
     public Task<HttpResponseMessage> Push(params object[] records) => Send(HttpMethod.Post, "/v1/sync/push", new { records });
 
     public async Task<JsonElement> PushOk(params object[] records)
@@ -111,9 +121,9 @@ public sealed class Device(SyncHost host, Guid userId) : IDisposable
         return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
     }
 
-    public async Task<JsonElement> Pull(long since = 0, int limit = 500)
+    public async Task<JsonElement> Pull(long since = 0, int limit = 500, long epoch = 0)
     {
-        var response = await Send(HttpMethod.Get, $"/v1/sync/pull?since={since}&limit={limit}");
+        var response = await Send(HttpMethod.Get, $"/v1/sync/pull?since={since}&limit={limit}&epoch={epoch}");
         response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
         return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
     }
@@ -303,6 +313,110 @@ public sealed class SyncFlowTests(SyncHost host)
     }
 }
 
+[Collection(nameof(SyncTestGroup))]
+public sealed class SyncReviewFixTests(SyncHost host)
+{
+    private static readonly DateTimeOffset T0 = DateTimeOffset.UtcNow.AddHours(-1);
+
+    private async Task PurgeAsOf(TimeSpan later)
+    {
+        host.Clock.Offset = later;
+        try
+        {
+            await host.Host.InvokeMessageAndWaitAsync(new PurgeTombstones());
+        }
+        finally
+        {
+            host.Clock.Offset = TimeSpan.Zero;
+        }
+    }
+
+    [Fact]
+    public async Task A_full_resync_after_a_purge_pages_to_the_end_without_being_told_to_reset_again()
+    {
+        using var phone = new Device(host, Guid.CreateVersion7());
+        // More than one page of live records, then a tombstone above them.
+        for (var batch = 0; batch < 2; batch++)
+            await phone.PushOk([.. Enumerable.Range(0, 300).Select(i => Device.Record($"r{batch}-{i}", T0, new byte[28]))]);
+        await phone.PushOk(Device.Record("gone", T0.AddMinutes(1), deleted: true));
+        await PurgeAsOf(SyncRules.TombstoneRetention + TimeSpan.FromDays(1));
+
+        (await phone.Pull(since: 5)).GetProperty("reset_required").GetBoolean().ShouldBeTrue("an old cursor from before the purge");
+
+        long cursor = 0, epoch = 0;
+        var seen = 0;
+        for (var page = 0; page < 10; page++)
+        {
+            var result = await phone.Pull(cursor, limit: 500, epoch: epoch);
+            result.GetProperty("reset_required").GetBoolean().ShouldBeFalse($"page {page} of the resync");
+            seen += result.GetProperty("records").GetArrayLength();
+            cursor = result.GetProperty("last_seq").GetInt64();
+            epoch = result.GetProperty("epoch").GetInt64();
+            if (!result.GetProperty("more").GetBoolean()) break;
+        }
+        seen.ShouldBe(600, "every live record, and the purged tombstone gone");
+    }
+
+    [Fact]
+    public async Task A_timestamp_with_an_Indian_offset_is_accepted()
+    {
+        using var phone = new Device(host, Guid.CreateVersion7());
+        var ist = new DateTimeOffset(DateTime.UtcNow.AddHours(-1).Ticks + TimeSpan.FromHours(5.5).Ticks, TimeSpan.FromHours(5.5));
+        (await phone.Push(Device.Record("ist", ist))).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task A_null_record_in_a_batch_is_a_400_not_a_crash()
+    {
+        using var phone = new Device(host, Guid.CreateVersion7());
+        (await phone.Send(HttpMethod.Post, "/v1/sync/push", new { records = new object?[] { null } })).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task A_cancelled_deletion_purges_nothing()
+    {
+        var user = Guid.CreateVersion7();
+        using var phone = new Device(host, user);
+        await phone.PushOk(Device.Record("keep-me", T0));
+        var executeAfter = DateTimeOffset.UtcNow.AddSeconds(-1);
+        await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(30))
+            .PublishMessageAndWaitAsync(new AccountDeletionCancelledV1(user, executeAfter));
+        var tracked = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .PublishMessageAndWaitAsync(new AccountDeletionRequestedV1(user, executeAfter));
+        tracked.Sent.MessagesOf<UserDataPurgedV1>().ShouldBeEmpty();
+        (await phone.Pull()).GetProperty("records").GetArrayLength().ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Attachments_round_trip_stay_private_and_go_with_the_account()
+    {
+        var user = Guid.CreateVersion7();
+        using var phone = new Device(host, user);
+        using var stranger = new Device(host, Guid.CreateVersion7());
+        var bytes = RandomNumberGenerator.GetBytes(300_000);
+        const string id = "receipt-00000001";
+
+        (await phone.SendBytes(HttpMethod.Put, $"/v1/sync/attachments/{id}", bytes)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        var back = await phone.Send(HttpMethod.Get, $"/v1/sync/attachments/{id}");
+        back.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await back.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken)).ShouldBe(bytes);
+        (await stranger.Send(HttpMethod.Get, $"/v1/sync/attachments/{id}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await phone.SendBytes(HttpMethod.Put, "/v1/sync/attachments/..%2Fescape", bytes)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .PublishMessageAndWaitAsync(new AccountDeletionRequestedV1(user, DateTimeOffset.UtcNow.AddSeconds(-2)));
+        (await phone.Send(HttpMethod.Get, $"/v1/sync/attachments/{id}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task An_attachment_over_the_limit_is_refused()
+    {
+        using var phone = new Device(host, Guid.CreateVersion7());
+        var tooBig = new byte[AttachmentRules.MaxBytes + 1];
+        (await phone.SendBytes(HttpMethod.Put, "/v1/sync/attachments/huge-0000001", tooBig)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+}
+
 public class SyncRulesTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 22, 12, 0, 0, TimeSpan.Zero);
@@ -337,10 +451,11 @@ public class SyncRulesTests
     }
 
     [Theory]
-    [InlineData(0, 10, false)]
-    [InlineData(5, 10, true)]
-    [InlineData(10, 10, false)]
-    [InlineData(12, 10, false)]
-    public void Reset_is_needed_only_for_a_cursor_behind_purged_tombstones(long since, long purged, bool expected) =>
-        SyncRules.NeedsReset(since, purged).ShouldBe(expected);
+    [InlineData(0, 0, 1, 10, false)]
+    [InlineData(5, 0, 1, 10, true)]
+    [InlineData(5, 1, 1, 10, false)]
+    [InlineData(10, 0, 1, 10, false)]
+    [InlineData(12, 0, 1, 10, false)]
+    public void Reset_is_needed_only_for_an_old_epoch_cursor_behind_purged_tombstones(long since, long epoch, long current, long purged, bool expected) =>
+        SyncRules.NeedsReset(since, epoch, current, purged).ShouldBe(expected);
 }

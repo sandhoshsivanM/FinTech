@@ -1,3 +1,4 @@
+using Khazana.Messaging;
 using Khazana.Messaging.Contracts;
 using Khazana.Sync.Application.Persistence;
 using Khazana.Sync.Domain;
@@ -101,7 +102,7 @@ public static class DeviceRevokedHandler
 }
 
 /// <summary>Delete everything Sync holds for a user. Internal command.</summary>
-public sealed record PurgeUserSync(Guid UserId);
+public sealed record PurgeUserSync(Guid UserId, DateTimeOffset ExecuteAfter);
 
 /// <summary>Sync's part of the account-deletion saga.</summary>
 public static class AccountDeletionHandler
@@ -113,21 +114,26 @@ public static class AccountDeletionHandler
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(bus);
         ArgumentNullException.ThrowIfNull(clock);
-        var purge = new PurgeUserSync(message.UserId);
+        var purge = new PurgeUserSync(message.UserId, message.ExecuteAfter);
         if (message.ExecuteAfter <= clock.UtcNow) await bus.PublishAsync(purge).ConfigureAwait(false);
         else await bus.ScheduleAsync(purge, message.ExecuteAfter).ConfigureAwait(false);
     }
 
-    public static async Task<UserDataPurgedV1> Handle(PurgeUserSync command, SyncDbContext db, IClock clock, CancellationToken ct)
+    public static async Task<OutgoingMessages> Handle(
+        PurgeUserSync command, SyncDbContext db, DeletionCancellations cancellations, IAttachmentStore attachments, IClock clock, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(cancellations);
         ArgumentNullException.ThrowIfNull(clock);
+        // The user changed their mind during the cooling-off: delete nothing.
+        if (await cancellations.IsCancelledAsync(command.UserId, command.ExecuteAfter, ct).ConfigureAwait(false)) return [];
         // A user's records can be many; delete in the database, inside this transaction.
         await db.Records.Where(r => r.UserId == command.UserId).ExecuteDeleteAsync(ct).ConfigureAwait(false);
         await db.Users.Where(u => u.UserId == command.UserId).ExecuteDeleteAsync(ct).ConfigureAwait(false);
         await db.RevokedDevices.Where(d => d.UserId == command.UserId).ExecuteDeleteAsync(ct).ConfigureAwait(false);
-        return new UserDataPurgedV1(command.UserId, ServiceName, clock.UtcNow);
+        await AttachmentPurge.PurgeUserAsync(db, attachments, command.UserId, ct).ConfigureAwait(false);
+        return [new UserDataPurgedV1(command.UserId, ServiceName, clock.UtcNow)];
     }
 }
 
@@ -136,22 +142,40 @@ public sealed record PurgeTombstones;
 
 public static class PurgeTombstonesHandler
 {
-    // Deletes old tombstones and, per user, remembers the newest seq removed:
-    // a device whose cursor is behind it may have missed a deletion.
-    private const string Sql = """
-        WITH gone AS (
-            DELETE FROM sync.sync_records WHERE deleted AND stored_at < @cutoff
-            RETURNING user_id, seq
-        )
-        UPDATE sync.sync_users u SET purged_through_seq = GREATEST(u.purged_through_seq, g.max_seq)
-        FROM (SELECT user_id, max(seq) AS max_seq FROM gone GROUP BY user_id) g
-        WHERE u.user_id = g.user_id
+    // Users with tombstones past retention.
+    private const string DueUsers = """
+        SELECT DISTINCT user_id AS "Value" FROM sync.sync_records WHERE deleted AND stored_at < @cutoff
         """;
 
-    public static Task Handle(PurgeTombstones command, SyncDbContext db, IClock clock, CancellationToken ct)
+    // Per user, in the same lock order as a push (the user row, then its
+    // records), so a push and a purge can't deadlock. Records the newest seq
+    // removed and moves the user to a new epoch, so cursors from before the
+    // purge are told to resync and cursors from after it are not.
+    private const string PurgeUser = """
+        WITH locked AS (
+            SELECT user_id FROM sync.sync_users WHERE user_id = @user FOR UPDATE
+        ),
+        gone AS (
+            DELETE FROM sync.sync_records r USING locked
+            WHERE r.user_id = locked.user_id AND r.deleted AND r.stored_at < @cutoff
+            RETURNING r.seq
+        )
+        UPDATE sync.sync_users u
+        SET purged_through_seq = GREATEST(u.purged_through_seq, (SELECT max(seq) FROM gone)),
+            reset_epoch = u.reset_epoch + 1
+        WHERE u.user_id = @user AND EXISTS (SELECT 1 FROM gone)
+        """;
+
+    public static async Task Handle(PurgeTombstones command, SyncDbContext db, IClock clock, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(db);
         ArgumentNullException.ThrowIfNull(clock);
-        return db.Database.ExecuteSqlRawAsync(Sql, [new NpgsqlParameter("cutoff", clock.UtcNow - SyncRules.TombstoneRetention)], ct);
+        var cutoff = clock.UtcNow - SyncRules.TombstoneRetention;
+        var users = await db.Database.SqlQueryRaw<Guid>(DueUsers, new NpgsqlParameter("cutoff", cutoff)).ToListAsync(ct).ConfigureAwait(false);
+        foreach (var user in users)
+        {
+            await db.Database.ExecuteSqlRawAsync(PurgeUser,
+                [new NpgsqlParameter("user", user), new NpgsqlParameter("cutoff", cutoff)], ct).ConfigureAwait(false);
+        }
     }
 }

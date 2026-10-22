@@ -170,6 +170,77 @@ public sealed class ApnsPushSenderTests : IDisposable
     public void Dispose() => _key.Dispose();
 }
 
+public sealed class WebPushTests
+{
+    // RFC 8291 Appendix A, the published example.
+    private const string Plaintext = "When I grow up, I want to be a watermelon";
+    private const string AsPrivate = "yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw";
+    private const string AsPublic = "BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8";
+    private const string UaPrivate = "q1dXpw3UpT5VOmu_cf_v6ih07Aems3njxI-JWgLcM94";
+    private const string UaPublic = "BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcxaOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4";
+    private const string AuthSecret = "BTBZMqHH6r4Tts7J_aSIgg";
+    private const string Salt = "DGv6ra1nlYgDCS1FRnbzlw";
+    private const string Expected = "DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A_yl95bQpu6cVPTpK4Mqgkf1CXztLVBSt2Ks3oZwbuwXPXLWyouBWLVWGNWQexSgSxsj_Qulcy4a-fN";
+
+    private static ECDiffieHellman Key(string priv, string pub)
+    {
+        var q = Base64UrlEncoder.DecodeBytes(pub);
+        return ECDiffieHellman.Create(new ECParameters
+        {
+            Curve = ECCurve.NamedCurves.nistP256,
+            D = Base64UrlEncoder.DecodeBytes(priv),
+            Q = new ECPoint { X = q[1..33], Y = q[33..65] },
+        });
+    }
+
+    [Fact]
+    public void Encryption_matches_the_RFC_8291_example_byte_for_byte()
+    {
+        using var sender = Key(AsPrivate, AsPublic);
+        var body = WebPushEncryption.Encrypt(Encoding.UTF8.GetBytes(Plaintext), Base64UrlEncoder.DecodeBytes(UaPublic),
+            Base64UrlEncoder.DecodeBytes(AuthSecret), sender, Base64UrlEncoder.DecodeBytes(Salt));
+        Base64UrlEncoder.Encode(body).ShouldBe(Expected);
+    }
+
+    [Fact]
+    public async Task A_push_carries_VAPID_and_aes128gcm_and_a_gone_subscription_is_dropped()
+    {
+        using var vapid = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var options = new WebPushOptions { PrivateKeyPem = vapid.ExportPkcs8PrivateKeyPem(), Subject = "mailto:security@khazana.app" };
+        var subscription = JsonSerializer.Serialize(new
+        {
+            endpoint = "https://updates.push.services.mozilla.com/wpush/v2/abc",
+            keys = new { p256dh = UaPublic, auth = AuthSecret },
+        });
+
+        var fake = new FakeHttp((_, _) => new HttpResponseMessage(HttpStatusCode.Created));
+        var sender = new WebPushSender(new HttpClient(fake), options, TimeProvider.System);
+        (await sender.SendAsync(subscription, PushContent.SyncNudge, TestContext.Current.CancellationToken)).ShouldBe(PushOutcome.Delivered);
+        var request = fake.Calls.Single().Request;
+        request.Content!.Headers.ContentEncoding.ShouldBe(["aes128gcm"]);
+        var auth = request.Headers.GetValues("Authorization").Single();
+        auth.ShouldStartWith("vapid t=");
+        var jwt = new JsonWebToken(auth["vapid t=".Length..auth.IndexOf(',', StringComparison.Ordinal)]);
+        jwt.Audiences.Single().ShouldBe("https://updates.push.services.mozilla.com");
+
+        var gone = new WebPushSender(new HttpClient(new FakeHttp((_, _) => new HttpResponseMessage(HttpStatusCode.Gone))), options, TimeProvider.System);
+        (await gone.SendAsync(subscription, PushContent.SyncNudge, TestContext.Current.CancellationToken)).ShouldBe(PushOutcome.TokenInvalid);
+        (await sender.SendAsync("""{"endpoint":"http://plain.example","keys":{}}""", PushContent.SyncNudge, TestContext.Current.CancellationToken))
+            .ShouldBe(PushOutcome.TokenInvalid, "only https subscriptions with real keys are used");
+    }
+}
+
+public class FcmErrorTests
+{
+    [Theory]
+    [InlineData("""{"error":{"code":404,"status":"NOT_FOUND","details":[{"@type":"type.googleapis.com/google.firebase.fcm.v1.FcmError","errorCode":"UNREGISTERED"}]}}""", true)]
+    [InlineData("""{"error":{"code":400,"status":"INVALID_ARGUMENT","details":[{"@type":"type.googleapis.com/google.rpc.BadRequest","fieldViolations":[{"field":"message.token","description":"Invalid registration token"}]}]}}""", true)]
+    [InlineData("""{"error":{"code":404,"status":"NOT_FOUND","message":"Requested entity was not found."}}""", false)]
+    [InlineData("<html>404</html>", false)]
+    public void Only_FCMs_own_verdict_on_the_token_deletes_it(string body, bool dead) =>
+        FcmPushSender.FcmSaysTokenIsDead(body).ShouldBe(dead);
+}
+
 public class PushStartupGuardTests
 {
     [Fact]
@@ -323,11 +394,61 @@ public sealed class NotificationFlowTests(NotificationHost host)
     }
 
     [Fact]
+    public async Task One_provider_blowing_up_does_not_stop_the_others_or_the_cleanup()
+    {
+        var user = Guid.CreateVersion7();
+        var pusher = await Register(user);
+        var exploding = await Register(user, token: "boom-" + Guid.NewGuid().ToString("N"));
+        var dead = await Register(user, token: "dead-" + Guid.NewGuid().ToString("N"));
+        var healthy = await Register(user, "apns");
+
+        await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .PublishMessageAndWaitAsync(new RecordsPushedV1(user, pusher.Device, 9));
+
+        SentTo(healthy.Token).ShouldHaveSingleItem();
+        await using var scope = host.Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
+        (await db.PushTokens.AnyAsync(t => t.DeviceId == dead.Device, TestContext.Current.CancellationToken)).ShouldBeFalse("cleanup still saved");
+        (await db.PushTokens.AnyAsync(t => t.DeviceId == exploding.Device, TestContext.Current.CancellationToken)).ShouldBeTrue("a failure is not a dead token");
+    }
+
+    [Fact]
+    public async Task A_token_registered_by_another_device_moves_and_its_old_owner_stops_getting_alerts()
+    {
+        var shared = $"tok-{Guid.NewGuid():N}";
+        var alice = Guid.CreateVersion7();
+        var first = await Register(alice, token: shared);
+        var bob = Guid.CreateVersion7();
+        await Register(bob, token: shared);
+
+        await using var scope = host.Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
+        (await db.PushTokens.AnyAsync(t => t.DeviceId == first.Device, TestContext.Current.CancellationToken)).ShouldBeFalse();
+        (await db.PushTokens.CountAsync(t => t.Token == shared, TestContext.Current.CancellationToken)).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_cancelled_deletion_purges_nothing()
+    {
+        var user = Guid.CreateVersion7();
+        var device = await Register(user);
+        var executeAfter = DateTimeOffset.UtcNow.AddSeconds(-1);
+        await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(30))
+            .PublishMessageAndWaitAsync(new AccountDeletionCancelledV1(user, executeAfter));
+        var tracked = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .PublishMessageAndWaitAsync(new AccountDeletionRequestedV1(user, executeAfter));
+        tracked.Sent.MessagesOf<UserDataPurgedV1>().ShouldBeEmpty();
+        await using var scope = host.Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
+        (await db.PushTokens.AnyAsync(t => t.DeviceId == device.Device, TestContext.Current.CancellationToken)).ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Malformed_registrations_are_refused()
     {
         using var key = new DeviceKey();
         using var client = host.Factory.CreateClient();
-        foreach (var (provider, token) in new[] { ("carrier-pigeon", "t"), ("fcm", ""), ("fcm", "line\nbreak"), ("fcm", new string('x', 5000)) })
+        foreach (var (provider, token) in new[] { ("carrier-pigeon", "t"), ("fcm", ""), ("fcm", "line\nbreak"), ("fcm", new string('x', 3000)) })
         {
             var access = host.Issuer.Mint(Guid.CreateVersion7(), Guid.CreateVersion7(), key);
             using var request = new HttpRequestMessage(HttpMethod.Post, "/v1/push/register")

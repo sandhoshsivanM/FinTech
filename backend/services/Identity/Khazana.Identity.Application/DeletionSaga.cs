@@ -17,11 +17,14 @@ public sealed record DeletionSettings(IReadOnlyList<string> Services);
 /// Identity deletes the user last and announces <see cref="AccountDeletedV1"/>.
 /// </summary>
 /// <remarks>
-/// Deleting last means the user can still be told what is happening (and the
-/// request can't be "lost") until every copy of their data is gone. Duplicate
-/// or late confirmations are harmless. A service that never answers leaves the
-/// saga open; <c>DeletionOverdueCheck</c> reports it so a person can act within
-/// the DPDP deadline.
+/// The services all purge at the same moment, so their confirmations arrive
+/// together. Each handler first locks the deletion request row: confirmations
+/// for one user are then counted one at a time, the last one sees all the
+/// others, and the guarded completion lets exactly one handler delete the user
+/// and announce it. (Without the lock, two concurrent last confirmations could
+/// each miss the other's row and the deletion would never finish.) Duplicate,
+/// late or cancelled confirmations change nothing. A service that never
+/// answers leaves the saga open; <c>DeletionOverdueCheck</c> reports it.
 /// </remarks>
 public static class UserDataPurgedHandler
 {
@@ -33,26 +36,31 @@ public static class UserDataPurgedHandler
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(clock);
 
-        var request = await db.DeletionRequests.FirstOrDefaultAsync(r => r.UserId == message.UserId, ct).ConfigureAwait(false);
-        // No request (stray message) or already finished: nothing to do.
+        var request = (await db.DeletionRequests
+            .FromSql($"SELECT * FROM identity.deletion_requests WHERE user_id = {message.UserId} FOR UPDATE")
+            .ToListAsync(ct).ConfigureAwait(false)).SingleOrDefault();
+        // No request (stray or cancelled) or already finished: nothing to do.
         if (request is null || request.CompletedAt is not null) return [];
 
-        if (!await db.DeletionConfirmations.AnyAsync(c => c.UserId == message.UserId && c.Service == message.Service, ct).ConfigureAwait(false))
-        {
-            db.DeletionConfirmations.Add(new DeletionConfirmationRow { UserId = message.UserId, Service = message.Service, ConfirmedAt = message.At });
-            await db.SaveChangesAsync(ct).ConfigureAwait(false);
-        }
+        await db.Database.ExecuteSqlAsync($"""
+            INSERT INTO identity.deletion_confirmations (user_id, service, confirmed_at)
+            VALUES ({message.UserId}, {message.Service}, {message.At})
+            ON CONFLICT DO NOTHING
+            """, ct).ConfigureAwait(false);
 
         var confirmed = await db.DeletionConfirmations.Where(c => c.UserId == message.UserId)
             .Select(c => c.Service).ToListAsync(ct).ConfigureAwait(false);
         if (settings.Services.Except(confirmed, StringComparer.Ordinal).Any()) return [];
 
-        // Every service is done. Identity goes last: the user row cascades to
-        // identities, passkeys and refresh tokens.
+        // Every service is done. Complete once, then Identity goes last: the
+        // user row cascades to logins, passkeys, sessions and refresh tokens.
         var now = clock.UtcNow;
+        var completed = await db.DeletionRequests
+            .Where(r => r.UserId == message.UserId && r.CompletedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.CompletedAt, now), ct).ConfigureAwait(false);
+        if (completed != 1) return [];
         await db.Users.Where(u => u.Id == message.UserId && u.Status == AccountStatus.DeletionRequested)
             .ExecuteDeleteAsync(ct).ConfigureAwait(false);
-        request.CompletedAt = now;
         return [new AccountDeletedV1(message.UserId, now)];
     }
 }

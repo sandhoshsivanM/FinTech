@@ -1,7 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Nothing external yet: attachments (S3) will be the first adapter. Kept
-       so every service has the same five folders. -->
+  <!-- The attachment store: local disk in development, S3 in the cloud. -->
   <ItemGroup>
     <ProjectReference Include="..\Khazana.Sync.Application\Khazana.Sync.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" />
   </ItemGroup>
 </Project>

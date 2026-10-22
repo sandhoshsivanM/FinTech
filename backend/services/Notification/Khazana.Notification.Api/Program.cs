@@ -20,7 +20,8 @@ var rabbitMq = builder.Configuration.GetConnectionString("rabbitmq")
 
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddNotificationInfrastructure(builder.Configuration, builder.Environment);
-builder.Services.AddKhazanaAuthentication(builder.Configuration);
+builder.Services.AddKhazanaAuthentication(builder.Configuration, replayDatabase: database);
+builder.Services.AddDeletionCancellations(database);
 builder.Services.AddDbContextWithWolverineIntegration<NotificationDbContext>(o => o.UseNpgsql(database));
 builder.Services.AddScoped<PushDispatcher>();
 builder.Services.AddScoped<PushRegistrationService>();
@@ -32,6 +33,7 @@ builder.Host.UseWolverine(opts =>
     opts.UseKhazanaMessaging("notification", rabbitMq, database);
     opts.UseEntityFrameworkCoreTransactions();
     opts.Discovery.IncludeAssembly(typeof(PushDispatcher).Assembly);
+    opts.ListenForDeletionCancellations();
 });
 
 var app = builder.Build();

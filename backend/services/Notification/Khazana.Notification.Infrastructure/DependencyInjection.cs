@@ -54,6 +54,18 @@ public static class DependencyInjection
                     services.AddSingleton<IPushSender>(sp => new ApnsPushSender(
                         sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(ApnsPushSender)), apns, sp.GetRequiredService<TimeProvider>()));
                 }
+                var vapidKey = configuration["Push:WebPush:VapidKeyPath"];
+                if (!string.IsNullOrEmpty(vapidKey))
+                {
+                    var webPush = new WebPushOptions
+                    {
+                        PrivateKeyPem = File.ReadAllText(vapidKey),
+                        Subject = configuration["Push:WebPush:Subject"] ?? throw new InvalidOperationException("Push:WebPush:Subject is not set."),
+                    };
+                    services.AddHttpClient(nameof(WebPushSender));
+                    services.AddSingleton<IPushSender>(sp => new WebPushSender(
+                        sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(WebPushSender)), webPush, sp.GetRequiredService<TimeProvider>()));
+                }
                 break;
             default:
                 throw new InvalidOperationException($"Unknown Providers:Push '{mode}'. Use Log or Real.");
