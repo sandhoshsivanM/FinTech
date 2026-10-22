@@ -1,0 +1,57 @@
+@page "/users"
+@attribute [Authorize(Policy = AdminRoles.SupportPolicy)]
+@inject ReportingClient Reporting
+
+<h1>Users</h1>
+@if (_error is not null)
+{
+    <p class="error">@_error</p>
+}
+else if (_page is not null)
+{
+    <table>
+        <thead><tr><th>User id</th><th>Registered</th><th>Last active</th><th>Platforms</th><th class="num">Devices</th><th>Status</th></tr></thead>
+        <tbody>
+            @foreach (var u in _page.Items)
+            {
+                <tr>
+                    <td><a href="/users/@u.UserId">@u.UserId.ToString()[..8]…</a></td>
+                    <td>@Fmt(u.RegisteredAt)</td>
+                    <td>@Fmt(u.LastActiveAt)</td>
+                    <td>@string.Join(", ", u.Platforms)</td>
+                    <td class="num">@u.DeviceCount</td>
+                    <td>@u.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p class="pager">
+        @if (_page.Page > 1) { <a href="/users?page=@(_page.Page - 1)">Previous</a> }
+        <span>Page @_page.Page of @Math.Max(1, (int)Math.Ceiling(_page.Total / (double)_page.PageSize))</span>
+        @if (_page.Page * _page.PageSize < _page.Total) { <a href="/users?page=@(_page.Page + 1)">Next</a> }
+    </p>
+}
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> Auth { get; set; } = null!;
+    [CascadingParameter] private HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery] private int? Page { get; set; }
+    private Paged<DirectoryEntry>? _page;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _page = await Reporting.UsersAsync((await Auth).User, Math.Max(1, Page ?? 1), CancellationToken.None);
+        }
+        catch (AuditUnavailableException)
+        {
+            _error = "The audit log is unavailable, so nothing is shown.";
+            if (Http is not null) Http.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+        }
+    }
+
+    internal static string Fmt(DateTimeOffset t) =>
+        Khazana.Admin.Ist.Format(t);
+}

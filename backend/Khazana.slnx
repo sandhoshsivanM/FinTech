@@ -5,6 +5,17 @@
     <Project Path="building-blocks/Khazana.SharedKernel/Khazana.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/services/" />
+  <Folder Name="/services/Admin/">
+    <Project Path="services/Admin/Khazana.Admin.Tests/Khazana.Admin.Tests.csproj" />
+    <Project Path="services/Admin/Khazana.Admin/Khazana.Admin.csproj" />
+  </Folder>
+  <Folder Name="/services/AuditReporting/">
+    <Project Path="services/AuditReporting/Khazana.AuditReporting.Api/Khazana.AuditReporting.Api.csproj" />
+    <Project Path="services/AuditReporting/Khazana.AuditReporting.Application/Khazana.AuditReporting.Application.csproj" />
+    <Project Path="services/AuditReporting/Khazana.AuditReporting.Domain/Khazana.AuditReporting.Domain.csproj" />
+    <Project Path="services/AuditReporting/Khazana.AuditReporting.Infrastructure/Khazana.AuditReporting.Infrastructure.csproj" />
+    <Project Path="services/AuditReporting/Khazana.AuditReporting.Tests/Khazana.AuditReporting.Tests.csproj" />
+  </Folder>
   <Folder Name="/services/Devices/">
     <Project Path="services/Devices/Khazana.Devices.Api/Khazana.Devices.Api.csproj" />
     <Project Path="services/Devices/Khazana.Devices.Application/Khazana.Devices.Application.csproj" />

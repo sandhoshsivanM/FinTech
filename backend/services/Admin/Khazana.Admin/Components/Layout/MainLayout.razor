@@ -1,0 +1,25 @@
+@inherits LayoutComponentBase
+
+<header class="bar">
+    <strong>Khazana admin</strong>
+    <AuthorizeView>
+        <Authorized>
+            <nav>
+                <a href="/">Dashboard</a>
+                <a href="/users">Users</a>
+                <AuthorizeView Policy="@AdminRoles.SecurityPolicy" Context="security">
+                    <a href="/audit">Audit log</a>
+                </AuthorizeView>
+            </nav>
+            <form method="post" action="/logout" class="logout">
+                <AntiforgeryToken />
+                <span>@context.User.FindFirstValue(ClaimTypes.Email)</span>
+                <button type="submit">Sign out</button>
+            </form>
+        </Authorized>
+    </AuthorizeView>
+</header>
+<main>
+    <p class="notice">This panel shows ids, counts and times only. Names, emails, balances and transactions never reach it.</p>
+    @Body
+</main>

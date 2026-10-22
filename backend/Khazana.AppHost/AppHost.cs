@@ -12,6 +12,7 @@ var identityDb = postgres.AddDatabase("identity");
 var devicesDb = postgres.AddDatabase("devices");
 var syncDb = postgres.AddDatabase("sync");
 var notificationDb = postgres.AddDatabase("notification");
+var reportingDb = postgres.AddDatabase("reporting");
 
 var rabbitMq = builder.AddRabbitMQ("rabbitmq").WithManagementPlugin();
 
@@ -60,6 +61,20 @@ var notification = builder.AddProject<Projects.Khazana_Notification_Api>("notifi
     .WaitFor(identity)
     .WithEnvironment("Auth__MetadataAddress", identityMetadata)
     .WithEnvironment("Providers__Push", "Log");
+
+// Audit & Reporting and the admin panel: internal only, never behind the public
+// gateway. They share a generated service key (client credentials + mTLS later).
+var reportingKey = builder.AddParameter("reporting-internal-key",
+    new GenerateParameterDefault { MinLength = 48, Special = false }, secret: true, persist: true);
+
+var reporting = builder.AddProject<Projects.Khazana_AuditReporting_Api>("reporting-api")
+    .WithReference(reportingDb).WaitFor(reportingDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WithEnvironment("Reporting__InternalKey", reportingKey);
+
+builder.AddProject<Projects.Khazana_Admin>("admin")
+    .WithReference(reporting).WaitFor(reporting)
+    .WithEnvironment("Admin__ReportingKey", reportingKey);
 
 var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(marketData).WaitFor(marketData)
