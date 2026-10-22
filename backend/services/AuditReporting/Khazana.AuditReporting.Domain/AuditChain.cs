@@ -30,10 +30,21 @@ public static class AuditChain
         ArgumentNullException.ThrowIfNull(entry);
         var canonical = JsonSerializer.SerializeToUtf8Bytes(new object?[]
         {
-            "v1", entry.At.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+            "v1", ToStoredPrecision(entry.At).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
             entry.Actor, entry.Action, entry.Target, entry.Reason,
         });
         return SHA256.HashData([.. previous, .. canonical]);
+    }
+
+    /// <summary>
+    /// Postgres keeps timestamps to the microsecond; .NET clocks on Linux tick
+    /// every 100 ns. The hash must cover what is stored, or every record read
+    /// back would fail verification (it did, on the Linux CI runners).
+    /// </summary>
+    public static DateTimeOffset ToStoredPrecision(DateTimeOffset at)
+    {
+        var ticks = at.UtcTicks;
+        return new DateTimeOffset(ticks - (ticks % 10), TimeSpan.Zero);
     }
 
     /// <summary>The position of the first record whose hash doesn't follow from the one before it, or null if the chain holds.</summary>
