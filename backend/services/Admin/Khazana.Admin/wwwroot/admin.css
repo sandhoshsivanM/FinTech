@@ -1,0 +1,26 @@
+:root { color-scheme: light dark; --bg: #f2f2f2; --surface: #f8f8f8; --text: #111214; --muted: #5c5c61; --line: #e6e6e8; --bad: #d61f69; --ok: #0b8a1e; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0e0e10; --surface: #1c1c20; --text: #f5f5f7; --muted: #a1a1a8; --line: #34343a; --bad: #ff4f9a; --ok: #34c759; } }
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.5 system-ui, sans-serif; background: var(--bg); color: var(--text); }
+.bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.bar nav { display: flex; gap: 14px; flex: 1; }
+.bar a { color: var(--text); }
+.logout { display: flex; gap: 10px; align-items: center; color: var(--muted); }
+main { max-width: 1100px; margin: 0 auto; padding: 16px 20px 48px; }
+.notice { color: var(--muted); font-size: 13px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.cards div { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; }
+.cards span { color: var(--muted); font-size: 13px; }
+.cards b { font-size: 28px; }
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
+table { width: 100%; border-collapse: collapse; background: var(--surface); }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.bar-cell meter { width: 100%; }
+.error { color: var(--bad); font-weight: 600; }
+.ok { color: var(--ok); font-weight: 600; }
+.muted { color: var(--muted); }
+.pager { display: flex; gap: 14px; }
+button { font: inherit; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+dt { color: var(--muted); }

@@ -1,0 +1,103 @@
+@page "/offers"
+@attribute [Authorize(Policy = AdminRoles.OpsPolicy)]
+@inject CatalogClient Catalog
+@inject NavigationManager Nav
+
+<h1>Card offers</h1>
+<p class="muted">Savings on cards people already hold. Never referrals. Changes go live when you publish.</p>
+<p>
+    <a href="/offers/new">Add an offer</a>
+</p>
+<form method="post" @formname="publish" @onsubmit="Publish">
+    <AntiforgeryToken />
+    <button type="submit">Publish the catalog</button>
+</form>
+@if (_message is not null)
+{
+    <p class="ok">@_message</p>
+}
+@if (_error is not null)
+{
+    <p class="error">@_error</p>
+}
+else if (_offers is not null)
+{
+    <table>
+        <thead><tr><th>Id</th><th>Who</th><th>Merchant</th><th>Benefit</th><th>Valid</th><th>Source</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var o in _offers)
+            {
+                <tr>
+                    <td><a href="/offers/@o.Id">@o.Id</a></td>
+                    <td>@(o.Issuer ?? o.Network ?? o.Product)</td>
+                    <td>@o.Merchant</td>
+                    <td>@o.Benefit @o.Value@(o.Cap is { } cap ? $" (cap {cap})" : "")</td>
+                    <td>@o.ValidFrom.ToString("dd MMM", System.Globalization.CultureInfo.InvariantCulture) to @o.ValidTo.ToString("dd MMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</td>
+                    <td><a href="@o.Source" rel="noopener noreferrer">link</a></td>
+                    <td>
+                        <form method="post" @formname="@($"delete-{o.Id}")" @onsubmit="() => Delete(o.Id)">
+                            <AntiforgeryToken />
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> Auth { get; set; } = null!;
+    [CascadingParameter] private HttpContext? Http { get; set; }
+    private IReadOnlyList<OfferDto>? _offers;
+    private string? _error;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpMethods.IsPost(Http?.Request.Method ?? "")) return; // the form handler runs and redirects
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _offers = await Catalog.OffersAsync((await Auth).User, CancellationToken.None);
+        }
+        catch (AuditUnavailableException)
+        {
+            _error = "The audit log is unavailable, so nothing is shown or changed.";
+            if (Http is not null) Http.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+        }
+    }
+
+    private async Task Publish()
+    {
+        try
+        {
+            var result = await Catalog.PublishAsync((await Auth).User, CancellationToken.None);
+            _message = result.Changed ? $"Published version {result.Version}." : $"Nothing changed; still version {result.Version}.";
+        }
+        catch (AuditUnavailableException)
+        {
+            _error = "The audit log is unavailable, so nothing was published.";
+            return;
+        }
+        await LoadAsync();
+    }
+
+    private async Task Delete(string id)
+    {
+        try
+        {
+            await Catalog.DeleteAsync((await Auth).User, id, CancellationToken.None);
+        }
+        catch (AuditUnavailableException)
+        {
+            _error = "The audit log is unavailable, so nothing was deleted.";
+            return;
+        }
+        Nav.NavigateTo("/offers");
+    }
+}

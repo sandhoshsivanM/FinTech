@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Offers, parser templates, the canonical signed snapshot; no framework. -->
+</Project>

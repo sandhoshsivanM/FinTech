@@ -25,6 +25,7 @@ public sealed class GatewayTests : IDisposable
         b.UseSetting("services:devices-api:http:0", "http://127.0.0.1:9");
         b.UseSetting("services:sync-api:http:0", "http://127.0.0.1:9");
         b.UseSetting("services:notification-api:http:0", "http://127.0.0.1:9");
+        b.UseSetting("services:catalog-api:http:0", "http://127.0.0.1:9");
     });
 
     public void Dispose() => _factory.Dispose();
@@ -69,6 +70,8 @@ public sealed class GatewayTests : IDisposable
     [InlineData("/v1/admin")]
     [InlineData("/.well-known/jwks.json")]
     [InlineData("/.well-known/openid-configuration")]
+    [InlineData("/internal/catalog/publish")]
+    [InlineData("/internal/admin/metrics")]
     public async Task Nothing_outside_the_public_routes_is_exposed(string path)
     {
         using var client = _factory.CreateClient();
@@ -116,6 +119,8 @@ public sealed class GatewayTests : IDisposable
     [InlineData("DELETE", "/v1/devices/0198f0a0-0000-7000-8000-000000000000")]
     [InlineData("PUT", "/v1/keys/envelopes/recovery")]
     [InlineData("POST", "/v1/push/register")]
+    [InlineData("GET", "/v1/catalog")]
+    [InlineData("GET", "/v1/catalog/keys")]
     public async Task Device_and_key_routes_are_forwarded(string method, string path)
     {
         using var client = _factory.CreateClient();

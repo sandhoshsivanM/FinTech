@@ -22,6 +22,13 @@ public sealed record UserSignedInV1(Guid UserId, Guid DeviceId, string Platform,
 public sealed record AccountDeletionRequestedV1(Guid UserId, DateTimeOffset ExecuteAfter);
 
 /// <summary>
+/// The account is gone: every service confirmed its purge and Identity deleted
+/// the user last. Reporting drops the directory entry; nothing else remains.
+/// </summary>
+[MessageIdentity("khazana.identity.account-deleted.v1")]
+public sealed record AccountDeletedV1(Guid UserId, DateTimeOffset At);
+
+/// <summary>
 /// The user changed their mind during the cooling-off. Every service drops the
 /// purge it scheduled for <paramref name="ExecuteAfter"/>.
 /// </summary>

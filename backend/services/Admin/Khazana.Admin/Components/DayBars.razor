@@ -1,0 +1,23 @@
+@* A bar per day, drawn with widths only (no script, no inline style tags beyond width). *@
+@if (Days.Count == 0)
+{
+    <p class="muted">Nothing yet.</p>
+}
+else
+{
+    var max = Math.Max(1, Days.Max(d => d.Count));
+    <table class="bars">
+        @foreach (var d in Days)
+        {
+            <tr>
+                <td>@d.Day.ToString("dd MMM", System.Globalization.CultureInfo.InvariantCulture)</td>
+                <td class="bar-cell"><meter min="0" max="@max" value="@d.Count">@d.Count</meter></td>
+                <td class="num">@d.Count</td>
+            </tr>
+        }
+    </table>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<DayCount> Days { get; set; } = [];
+}

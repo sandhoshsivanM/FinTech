@@ -12,6 +12,8 @@ var identityDb = postgres.AddDatabase("identity");
 var devicesDb = postgres.AddDatabase("devices");
 var syncDb = postgres.AddDatabase("sync");
 var notificationDb = postgres.AddDatabase("notification");
+var reportingDb = postgres.AddDatabase("reporting");
+var catalogDb = postgres.AddDatabase("catalog");
 
 var rabbitMq = builder.AddRabbitMQ("rabbitmq").WithManagementPlugin();
 
@@ -61,12 +63,43 @@ var notification = builder.AddProject<Projects.Khazana_Notification_Api>("notifi
     .WithEnvironment("Auth__MetadataAddress", identityMetadata)
     .WithEnvironment("Providers__Push", "Log");
 
+// Audit & Reporting and the admin panel: internal only, never behind the public
+// gateway. They share a generated service key (client credentials + mTLS later).
+var reportingKey = builder.AddParameter("reporting-internal-key",
+    new GenerateParameterDefault { MinLength = 48, Special = false }, secret: true, persist: true);
+
+// The audit chain's MAC key: never in the database it protects.
+var auditKey = builder.AddParameter("reporting-audit-key",
+    new GenerateParameterDefault { MinLength = 48, Special = false }, secret: true, persist: true);
+
+var reporting = builder.AddProject<Projects.Khazana_AuditReporting_Api>("reporting-api")
+    .WithReference(reportingDb).WaitFor(reportingDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WithEnvironment("Reporting__InternalKey", reportingKey)
+    .WithEnvironment("Reporting__AuditKey", auditKey);
+
+var admin = builder.AddProject<Projects.Khazana_Admin>("admin")
+    .WithReference(reporting).WaitFor(reporting)
+    .WithEnvironment("Admin__ReportingKey", reportingKey);
+
+// Public, signed data. Locally the signing key is a throwaway (Development only).
+var catalogKey = builder.AddParameter("catalog-internal-key",
+    new GenerateParameterDefault { MinLength = 48, Special = false }, secret: true, persist: true);
+var catalog = builder.AddProject<Projects.Khazana_Catalog_Api>("catalog-api")
+    .WithReference(catalogDb).WaitFor(catalogDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WithEnvironment("Catalog__InternalKey", catalogKey);
+
+// The admin's offer editors use Catalog's internal API with its own key.
+admin.WithReference(catalog).WaitFor(catalog).WithEnvironment("Admin__CatalogKey", catalogKey);
+
 var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(marketData).WaitFor(marketData)
     .WithReference(identity).WaitFor(identity)
     .WithReference(devices).WaitFor(devices)
     .WithReference(sync).WaitFor(sync)
     .WithReference(notification).WaitFor(notification)
+    .WithReference(catalog).WaitFor(catalog)
     .WithExternalHttpEndpoints();
 
 // DPoP proofs name the URL the app called, which is the gateway's.
