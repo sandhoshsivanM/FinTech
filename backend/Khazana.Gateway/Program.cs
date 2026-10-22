@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Khazana.Gateway;
+using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
@@ -25,6 +26,15 @@ builder.Services.AddRateLimiter(o =>
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment()) app.UseHsts();
+// Sync pushes are the one large body (up to 500 encrypted records); the limit
+// is raised for that path alone, before anything reads the body.
+app.Use((context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/v1/sync/push") &&
+        context.Features.Get<IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } body)
+        body.MaxRequestBodySize = 4 * 1024 * 1024;
+    return next(context);
+});
 app.UseMiddleware<SecurityHeaders>();
 app.UseRateLimiter();
 app.MapDefaultEndpoints();

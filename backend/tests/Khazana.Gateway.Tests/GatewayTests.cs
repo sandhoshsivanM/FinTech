@@ -22,6 +22,7 @@ public sealed class GatewayTests : IDisposable
         b.UseSetting("services:marketdata-api:http:0", "http://127.0.0.1:9");
         b.UseSetting("services:identity-api:http:0", "http://127.0.0.1:9");
         b.UseSetting("services:devices-api:http:0", "http://127.0.0.1:9");
+        b.UseSetting("services:sync-api:http:0", "http://127.0.0.1:9");
     });
 
     public void Dispose() => _factory.Dispose();
@@ -110,5 +111,17 @@ public sealed class GatewayTests : IDisposable
         using var request = new HttpRequestMessage(new HttpMethod(method), path);
         using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
         ((int)response.StatusCode).ShouldBeGreaterThanOrEqualTo(500, "forwarded to the (absent) Devices service");
+    }
+
+    [Fact]
+    public async Task A_sync_push_with_a_large_body_is_forwarded()
+    {
+        using var client = _factory.CreateClient();
+        var big = new string('x', 200 * 1024);
+        using var push = await client.PostAsync(new Uri("/v1/sync/push", UriKind.Relative),
+            new StringContent(big), TestContext.Current.CancellationToken);
+        ((int)push.StatusCode).ShouldBeGreaterThanOrEqualTo(500, "forwarded: 200 KB is within the sync limit");
+        // The 64 KB default for every other route is a Kestrel limit, which the
+        // in-memory test server does not enforce; it was checked against a live run.
     }
 }

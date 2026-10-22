@@ -10,6 +10,7 @@ var postgres = builder.AddPostgres("postgres").WithDataVolume("khazana-postgres"
 var marketDb = postgres.AddDatabase("marketdata");
 var identityDb = postgres.AddDatabase("identity");
 var devicesDb = postgres.AddDatabase("devices");
+var syncDb = postgres.AddDatabase("sync");
 
 var rabbitMq = builder.AddRabbitMQ("rabbitmq").WithManagementPlugin();
 
@@ -45,14 +46,21 @@ var devices = builder.AddProject<Projects.Khazana_Devices_Api>("devices-api")
     .WaitFor(identity)
     .WithEnvironment("Auth__MetadataAddress", identityMetadata);
 
+var sync = builder.AddProject<Projects.Khazana_Sync_Api>("sync-api")
+    .WithReference(syncDb).WaitFor(syncDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WaitFor(identity)
+    .WithEnvironment("Auth__MetadataAddress", identityMetadata);
+
 var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(marketData).WaitFor(marketData)
     .WithReference(identity).WaitFor(identity)
     .WithReference(devices).WaitFor(devices)
+    .WithReference(sync).WaitFor(sync)
     .WithExternalHttpEndpoints();
 
 // DPoP proofs name the URL the app called, which is the gateway's.
-foreach (var service in new[] { identity, devices })
+foreach (var service in new[] { identity, devices, sync })
     service.WithEnvironment("Auth__PublicOrigins__0", gateway.GetEndpoint("http"));
 
 builder.Build().Run();
