@@ -38,8 +38,8 @@ namespace Khazana.Notification.Application.Persistence.Migrations
 
                     b.Property<string>("Token")
                         .IsRequired()
-                        .HasMaxLength(4096)
-                        .HasColumnType("character varying(4096)")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
                         .HasColumnName("token");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
@@ -52,9 +52,30 @@ namespace Khazana.Notification.Application.Persistence.Migrations
 
                     b.HasKey("DeviceId");
 
+                    b.HasIndex("Token")
+                        .IsUnique();
+
                     b.HasIndex("UserId");
 
                     b.ToTable("push_tokens", "notification");
+                });
+
+            modelBuilder.Entity("Khazana.Notification.Application.Persistence.RevokedDeviceRow", b =>
+                {
+                    b.Property<Guid>("DeviceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("device_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("DeviceId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("revoked_devices", "notification");
                 });
 #pragma warning restore 612, 618
         }

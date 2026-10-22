@@ -50,8 +50,8 @@ public static class PushProviders
 
     public static readonly IReadOnlySet<string> Known = new HashSet<string>(StringComparer.Ordinal) { Fcm, Apns, WebPush };
 
-    /// <summary>FCM tokens run to ~200 characters, APNs to 64 hex, Web Push subscriptions to ~500.</summary>
-    public const int MaxTokenLength = 4096;
+    /// <summary>FCM tokens run to ~200 characters, APNs to 64 hex, Web Push subscriptions to ~500. Kept under the Postgres index limit.</summary>
+    public const int MaxTokenLength = 2048;
 
     public static bool IsValid(string? provider, string? token) =>
         provider is not null && Known.Contains(provider) &&
