@@ -43,6 +43,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Khazana.ArchitectureTests/Khazana.ArchitectureTests.csproj" />
     <Project Path="tests/Khazana.Gateway.Tests/Khazana.Gateway.Tests.csproj" />
+    <Project Path="tests/Khazana.Messaging.Tests/Khazana.Messaging.Tests.csproj" />
     <Project Path="tests/Khazana.Security.Tests/Khazana.Security.Tests.csproj" />
     <Project Path="tests/Khazana.TestKit/Khazana.TestKit.csproj" />
   </Folder>
