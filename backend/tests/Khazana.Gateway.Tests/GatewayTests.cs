@@ -18,7 +18,9 @@ public sealed class GatewayTests : IDisposable
         b.UseSetting("RateLimits:Public:PermitLimit", "3");
         b.UseSetting("RateLimits:Public:WindowSeconds", "60");
         // Service discovery resolves the cluster name to a closed local port.
+        b.UseSetting("RateLimits:Auth:PermitLimit", "2");
         b.UseSetting("services:marketdata-api:http:0", "http://127.0.0.1:9");
+        b.UseSetting("services:identity-api:http:0", "http://127.0.0.1:9");
     });
 
     public void Dispose() => _factory.Dispose();
@@ -61,10 +63,39 @@ public sealed class GatewayTests : IDisposable
     [InlineData("/internal/market/nav/ingest")]
     [InlineData("/health")]
     [InlineData("/v1/admin")]
+    [InlineData("/.well-known/jwks.json")]
+    [InlineData("/.well-known/openid-configuration")]
     public async Task Nothing_outside_the_public_routes_is_exposed(string path)
     {
         using var client = _factory.CreateClient();
         using var response = await client.GetAsync(new Uri(path, UriKind.Relative), TestContext.Current.CancellationToken);
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Sign_in_is_forwarded_but_only_as_POST()
+    {
+        using var client = _factory.CreateClient();
+        using var post = await client.PostAsync(new Uri("/v1/auth/token", UriKind.Relative), content: null, TestContext.Current.CancellationToken);
+        ((int)post.StatusCode).ShouldBeGreaterThanOrEqualTo(500, "forwarded to the (absent) Identity service");
+        using var get = await client.GetAsync(new Uri("/v1/auth/token", UriKind.Relative), TestContext.Current.CancellationToken);
+        get.StatusCode.ShouldBe(HttpStatusCode.MethodNotAllowed);
+    }
+
+    [Fact]
+    public async Task Sign_in_has_its_own_tighter_limit()
+    {
+        using var client = _factory.CreateClient();
+        for (var i = 0; i < 2; i++)
+        {
+            using var allowed = await client.PostAsync(new Uri("/v1/auth/refresh", UriKind.Relative), content: null, TestContext.Current.CancellationToken);
+            allowed.StatusCode.ShouldNotBe(HttpStatusCode.TooManyRequests);
+        }
+        using var limited = await client.PostAsync(new Uri("/v1/auth/token", UriKind.Relative), content: null, TestContext.Current.CancellationToken);
+        limited.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+
+        // Market data has a separate bucket, unaffected.
+        using var market = await client.GetAsync(new Uri("/v1/market/nav/latest", UriKind.Relative), TestContext.Current.CancellationToken);
+        market.StatusCode.ShouldNotBe(HttpStatusCode.TooManyRequests);
     }
 }

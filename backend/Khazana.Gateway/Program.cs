@@ -4,7 +4,8 @@ using Khazana.Gateway;
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
-// GET-only API today; a body has no business arriving here.
+// Bodies are small: sign-in requests and, later, sync batches arrive through
+// their own size limits; nothing legitimate here is larger.
 builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = 64 * 1024);
 
 builder.Services.AddReverseProxy()
@@ -16,21 +17,8 @@ builder.Services.AddReverseProxy()
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    // "public": per client address, fixed window. Partitioned by the
-    // connection's remote IP; behind a load balancer this must switch to the
-    // forwarded client IP (ForwardedHeaders), or every user shares one bucket.
-    o.AddPolicy(GatewayPolicies.Public, ctx =>
-    {
-        var limits = ctx.RequestServices.GetRequiredService<IConfiguration>().GetSection("RateLimits:Public");
-        return RateLimitPartition.GetFixedWindowLimiter(
-            ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = limits.GetValue("PermitLimit", 60),
-                Window = TimeSpan.FromSeconds(limits.GetValue("WindowSeconds", 60)),
-                QueueLimit = 0,
-            });
-    });
+    o.AddPolicy(GatewayPolicies.Public, ctx => PerClientWindow(ctx, "RateLimits:Public", 60));
+    o.AddPolicy(GatewayPolicies.Auth, ctx => PerClientWindow(ctx, "RateLimits:Auth", 20));
 });
 
 var app = builder.Build();
@@ -41,6 +29,22 @@ app.UseRateLimiter();
 app.MapDefaultEndpoints();
 app.MapReverseProxy();
 app.Run();
+
+// Per client address, fixed window. Partitioned by the connection's remote IP;
+// behind a load balancer this must switch to the forwarded client IP
+// (ForwardedHeaders), or every user shares one bucket.
+static RateLimitPartition<string> PerClientWindow(HttpContext ctx, string section, int defaultLimit)
+{
+    var limits = ctx.RequestServices.GetRequiredService<IConfiguration>().GetSection(section);
+    return RateLimitPartition.GetFixedWindowLimiter(
+        $"{section}:{ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown"}",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = limits.GetValue("PermitLimit", defaultLimit),
+            Window = TimeSpan.FromSeconds(limits.GetValue("WindowSeconds", 60)),
+            QueueLimit = 0,
+        });
+}
 
 /// <summary>Exposed for WebApplicationFactory in the gateway tests.</summary>
 public partial class Program;

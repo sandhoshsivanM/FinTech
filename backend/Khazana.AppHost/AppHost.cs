@@ -8,6 +8,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres("postgres").WithDataVolume("khazana-postgres");
 var marketDb = postgres.AddDatabase("marketdata");
+var identityDb = postgres.AddDatabase("identity");
 
 var rabbitMq = builder.AddRabbitMQ("rabbitmq").WithManagementPlugin();
 
@@ -22,8 +23,23 @@ var marketData = builder.AddProject<Projects.Khazana_MarketData_Api>("marketdata
     .WithEnvironment("Providers__Nav", "Fixture")
     .WithEnvironment("Providers__NavFixturePath", fixture);
 
-builder.AddProject<Projects.Khazana_Gateway>("gateway")
+// The key for Identity's encrypted fields: generated once, kept in this
+// machine's user secrets, never in the repo. The cloud reads it from AWS
+// Secrets Manager instead.
+var fieldKey = builder.AddParameter("identity-field-key",
+    new GenerateParameterDefault { MinLength = 48, Special = false }, secret: true, persist: true);
+
+var identity = builder.AddProject<Projects.Khazana_Identity_Api>("identity-api")
+    .WithReference(identityDb).WaitFor(identityDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WithEnvironment("Identity__Secrets__FieldKey", fieldKey);
+
+var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(marketData).WaitFor(marketData)
+    .WithReference(identity).WaitFor(identity)
     .WithExternalHttpEndpoints();
+
+// DPoP proofs name the URL the app called, which is the gateway's.
+identity.WithEnvironment("Auth__PublicOrigins__0", gateway.GetEndpoint("http"));
 
 builder.Build().Run();

@@ -10,44 +10,74 @@ namespace Khazana.ArchitectureTests;
 /// </summary>
 public class BoundaryTests
 {
-    private static readonly Assembly Domain = typeof(Khazana.MarketData.Domain.NavQuote).Assembly;
-    private static readonly Assembly Application = typeof(Khazana.MarketData.Application.INavSource).Assembly;
-    private static readonly Assembly Infrastructure = typeof(Khazana.MarketData.Infrastructure.AmfiNavSource).Assembly;
-    private static readonly Assembly Api = typeof(Khazana.MarketData.Api.NavEndpoints).Assembly;
     private static readonly Assembly Messaging = typeof(Khazana.Messaging.KhazanaMessaging).Assembly;
 
-    [Fact]
-    public void Domain_depends_on_no_framework()
+    /// <summary>Each service's four layers. A new service adds one line here and gets every rule.</summary>
+    private static readonly ServiceLayers[] Services =
+    [
+        new("MarketData",
+            typeof(Khazana.MarketData.Domain.NavQuote).Assembly,
+            typeof(Khazana.MarketData.Application.INavSource).Assembly,
+            typeof(Khazana.MarketData.Infrastructure.AmfiNavSource).Assembly,
+            typeof(Khazana.MarketData.Api.NavEndpoints).Assembly),
+        new("Identity",
+            typeof(Khazana.Identity.Domain.RefreshTokenRules).Assembly,
+            typeof(Khazana.Identity.Application.SessionService).Assembly,
+            typeof(Khazana.Identity.Infrastructure.AesGcmFieldProtector).Assembly,
+            typeof(Khazana.Identity.Api.IdentityEndpoints).Assembly),
+    ];
+
+    private static readonly string[] AllServiceNamespaces =
+    [
+        "Khazana.Gateway", "Khazana.Identity", "Khazana.MarketData", "Khazana.Sync", "Khazana.Devices",
+        "Khazana.AccountAggregator", "Khazana.Credit", "Khazana.Catalog", "Khazana.Notification", "Khazana.AuditReporting",
+    ];
+
+    public static TheoryData<string> ServiceNames => [.. Services.Select(s => s.Name)];
+
+    private static ServiceLayers Service(string name) => Services.Single(s => s.Name == name);
+
+    [Theory]
+    [MemberData(nameof(ServiceNames))]
+    public void Domain_depends_on_no_framework(string service)
     {
-        Assert(Types.InAssembly(Domain).ShouldNot().HaveDependencyOnAny(
+        var s = Service(service);
+        Assert(Types.InAssembly(s.Domain).ShouldNot().HaveDependencyOnAny(
             "Microsoft.EntityFrameworkCore", "Microsoft.AspNetCore", "Wolverine", "Npgsql",
-            "System.Net.Http", "Khazana.MarketData.Application", "Khazana.MarketData.Infrastructure"));
+            "System.Net.Http", $"Khazana.{service}.Application", $"Khazana.{service}.Infrastructure"));
     }
 
-    [Fact]
-    public void Application_does_not_know_about_the_web_or_the_adapters()
+    [Theory]
+    [MemberData(nameof(ServiceNames))]
+    public void Application_does_not_know_about_the_web_or_the_adapters(string service)
     {
-        Assert(Types.InAssembly(Application).ShouldNot().HaveDependencyOnAny(
-            "Microsoft.AspNetCore", "Khazana.MarketData.Infrastructure", "Khazana.MarketData.Api"));
+        var s = Service(service);
+        Assert(Types.InAssembly(s.Application).ShouldNot().HaveDependencyOnAny(
+            "Microsoft.AspNetCore", $"Khazana.{service}.Infrastructure", $"Khazana.{service}.Api"));
     }
 
-    [Fact]
-    public void Infrastructure_does_not_depend_on_the_api()
+    [Theory]
+    [MemberData(nameof(ServiceNames))]
+    public void Infrastructure_does_not_depend_on_the_api(string service)
     {
-        Assert(Types.InAssembly(Infrastructure).ShouldNot().HaveDependencyOn("Khazana.MarketData.Api"));
+        Assert(Types.InAssembly(Service(service).Infrastructure).ShouldNot().HaveDependencyOn($"Khazana.{service}.Api"));
     }
 
-    [Fact]
-    public void A_service_never_references_another_service_or_the_gateway()
+    [Theory]
+    [MemberData(nameof(ServiceNames))]
+    public void A_service_never_references_another_service_or_the_gateway(string service)
     {
         // Services talk through events and APIs, never each other's code.
-        foreach (var assembly in new[] { Domain, Application, Infrastructure, Api })
-        {
-            Assert(Types.InAssembly(assembly).ShouldNot().HaveDependencyOnAny(
-                "Khazana.Gateway", "Khazana.Identity", "Khazana.Sync", "Khazana.Devices",
-                "Khazana.AccountAggregator", "Khazana.Credit", "Khazana.Catalog",
-                "Khazana.Notification", "Khazana.AuditReporting"));
-        }
+        var others = AllServiceNamespaces.Where(n => n != $"Khazana.{service}").ToArray();
+        foreach (var assembly in Service(service).All)
+            Assert(Types.InAssembly(assembly).ShouldNot().HaveDependencyOnAny(others));
+    }
+
+    [Fact]
+    public void The_security_building_block_knows_no_service()
+    {
+        Assert(Types.InAssembly(typeof(Khazana.Security.KhazanaAuthentication).Assembly).ShouldNot().HaveDependencyOnAny(
+            [.. Services.Select(s => $"Khazana.{s.Name}")]));
     }
 
     [Fact]
@@ -78,4 +108,9 @@ public class BoundaryTests
         result.IsSuccessful.ShouldBeTrue(
             "Boundary broken by: " + string.Join(", ", result.FailingTypeNames ?? []));
     }
+}
+
+internal sealed record ServiceLayers(string Name, Assembly Domain, Assembly Application, Assembly Infrastructure, Assembly Api)
+{
+    public Assembly[] All => [Domain, Application, Infrastructure, Api];
 }

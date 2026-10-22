@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Use cases, ports and the EF Core DbContext (here, like Market Data's, so
+       Wolverine can commit a change and its event in one transaction). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.Identity.Domain\Khazana.Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\Khazana.SharedKernel\Khazana.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\Khazana.Messaging\Khazana.Messaging.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Fido2" />
+  </ItemGroup>
+</Project>
