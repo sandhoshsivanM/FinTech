@@ -1,0 +1,1440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Khazana v2 — Technical Design (HLD &amp; LLD)</title>
+<style>
+@page {
+  size: A4;
+  margin: 20mm 16mm 18mm 16mm;
+  @top-left { content: string(section); font-family: "Helvetica Neue", Arial, sans-serif; font-size: 7.5pt; letter-spacing: .08em; text-transform: uppercase; color: #8A8F9E; }
+  @top-right { content: "Khazana v2 · Technical Design · Draft 0.3"; font-family: "Helvetica Neue", Arial, sans-serif; font-size: 7.5pt; color: #A8ACB8; }
+  @bottom-right { content: counter(page) " / " counter(pages); font-family: "Helvetica Neue", Arial, sans-serif; font-size: 8pt; color: #8A8F9E; }
+  @bottom-left { content: "Personal project · Sandhoshsivan M"; font-family: "Helvetica Neue", Arial, sans-serif; font-size: 7.5pt; color: #A8ACB8; }
+}
+@page cover { margin: 0; @top-left { content: none; } @top-right { content: none; } @bottom-right { content: none; } @bottom-left { content: none; } }
+
+:root { --ink:#1B2340; --ink2:#3A415C; --ink3:#6C7285; --line:#DFDACF; --line2:#EEEAE2; --accent:#3D4A8C; --signal:#E8A33D; --good:#2E7D5B; --bad:#A8402F; --soft:#F4F2EC; }
+html { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 9.6pt; line-height: 1.45; color: var(--ink); }
+body { margin: 0; }
+h1 { string-set: section attr(data-t); font-size: 19pt; margin: 0 0 4mm; padding-top: 1mm; color: var(--ink); page-break-before: always; letter-spacing: -.01em; }
+h1 .num { color: var(--signal); margin-right: 3mm; }
+h2 { font-size: 12.5pt; margin: 6mm 0 2mm; color: var(--ink); page-break-after: avoid; }
+h3 { font-size: 10.5pt; margin: 4.5mm 0 1.5mm; color: var(--accent); page-break-after: avoid; }
+p { margin: 0 0 2.4mm; }
+.lead { font-size: 11pt; color: var(--ink2); margin-bottom: 4mm; }
+ul, ol { margin: 0 0 2.6mm; padding-left: 5mm; }
+li { margin-bottom: 1mm; }
+code, .mono { font-family: Menlo, "SF Mono", monospace; font-size: 8.2pt; background: var(--soft); padding: 0 1mm; border-radius: 1mm; }
+pre { font-family: Menlo, monospace; font-size: 7.8pt; background: var(--soft); border: 0.3mm solid var(--line); border-radius: 1.5mm; padding: 3mm; white-space: pre-wrap; page-break-inside: avoid; margin: 0 0 3mm; }
+table { width: 100%; border-collapse: collapse; margin: 1mm 0 4mm; font-size: 8.4pt; page-break-inside: auto; }
+thead { display: table-header-group; }
+tr { page-break-inside: avoid; }
+th { text-align: left; background: var(--ink); color: #fff; font-weight: 600; padding: 1.6mm 2mm; vertical-align: bottom; }
+td { padding: 1.5mm 2mm; border-bottom: 0.25mm solid var(--line); vertical-align: top; }
+tr:nth-child(even) td { background: #FAF8F4; }
+td.n, th.n { text-align: right; white-space: nowrap; }
+tr.total td { font-weight: 700; border-top: 0.5mm solid var(--ink); background: #EFEDE6; }
+.callout { border-left: 1.2mm solid var(--signal); background: #FDF6EA; padding: 2.5mm 3.5mm; margin: 2mm 0 4mm; page-break-inside: avoid; }
+.callout.blue { border-left-color: var(--accent); background: #EEF0F8; }
+.callout.red { border-left-color: var(--bad); background: #F8ECE9; }
+.callout b:first-child { color: var(--ink); }
+.tag { display: inline-block; font-size: 7pt; font-weight: 700; padding: 0.3mm 1.5mm; border-radius: 1mm; letter-spacing: .03em; }
+.t-new { background: #E3F1EA; color: var(--good); }
+.t-ext { background: #EEF0F8; color: var(--accent); }
+.t-reuse { background: #F1EEE6; color: #7A6A44; }
+.figure { margin: 2mm 0 4mm; page-break-inside: avoid; }
+.figure svg { width: 100%; height: auto; }
+.caption { font-size: 8pt; color: var(--ink3); margin-top: 1mm; }
+.grid2 { display: flex; gap: 5mm; }
+.grid2 > div { flex: 1; }
+.kpis { display: flex; gap: 3mm; margin: 3mm 0 5mm; }
+.kpi { flex: 1; border: 0.3mm solid var(--line); border-radius: 2mm; padding: 3mm; background: #FAF8F4; }
+.kpi .v { font-size: 14pt; font-weight: 700; color: var(--ink); }
+.kpi .l { font-size: 7.8pt; color: var(--ink3); }
+.small { font-size: 8pt; color: var(--ink3); }
+.toc { list-style: none; padding: 0; columns: 2; column-gap: 8mm; }
+.toc li { margin-bottom: 1.4mm; }
+.toc a { color: var(--ink); text-decoration: none; }
+.toc a::after { content: leader('.') target-counter(attr(href), page); color: var(--ink3); }
+a { color: var(--accent); text-decoration: none; }
+
+/* cover */
+.cover { page: cover; height: 297mm; background: #1B2340; color: #fff; position: relative; }
+.cover .inner { position: absolute; left: 22mm; right: 22mm; top: 60mm; }
+.cover .eyebrow { font-size: 9pt; letter-spacing: .25em; text-transform: uppercase; color: #E8A33D; margin-bottom: 8mm; }
+.cover .title { font-size: 36pt; font-weight: 700; line-height: 1.08; margin-bottom: 6mm; }
+.cover .sub { font-size: 14pt; color: #C9CDE0; line-height: 1.35; max-width: 140mm; }
+.cover .meta { position: absolute; left: 22mm; right: 22mm; bottom: 28mm; font-size: 9.5pt; color: #C9CDE0; border-top: 0.3mm solid #3A4466; padding-top: 5mm; }
+.cover .meta b { color: #fff; }
+.cover .bar { position: absolute; left: 22mm; top: 48mm; width: 18mm; height: 1.6mm; background: #E8A33D; }
+</style>
+</head>
+<body>
+
+<!-- ============================== COVER ============================== -->
+<section class="cover">
+  <div class="bar"></div>
+  <div class="inner">
+    <div class="eyebrow">Technical design · HLD &amp; LLD</div>
+    <div class="title">Khazana v2<br>Online &amp; Automated</div>
+    <div class="sub">Architecture, modules, login, data storage, external APIs and costs for adding automatic, multi-device money tracking to the offline-first Khazana core.</div>
+  </div>
+  <div class="meta">
+    <b>Status:</b> Draft 0.3: solo build plan, .NET microservices, Phase 1 built<br>
+    <b>Date:</b> 18 October 2026 &nbsp;·&nbsp; <b>Prepared by:</b> Sandhoshsivan M<br>
+    <b>Audience:</b> Sandhoshsivan M as solo developer, plus future reviewers and collaborators
+  </div>
+</section>
+
+<!-- ============================== CONTENTS ============================== -->
+<h1 id="toc" data-t="Contents" style="page-break-before: always;">Contents</h1>
+<ul class="toc">
+  <li><a href="#s1">1. Summary</a></li>
+  <li><a href="#s2">2. Goals, non-goals and principles</a></li>
+  <li><a href="#s3">3. What v1 already gives us</a></li>
+  <li><a href="#s4">4. HLD: system architecture</a></li>
+  <li><a href="#s5">5. HLD: frontend and app sections</a></li>
+  <li><a href="#s6">6. Login, identity and encryption keys</a></li>
+  <li><a href="#s7">7. HLD: backend</a></li>
+  <li><a href="#s8">8. LLD: backend</a></li>
+  <li><a href="#s9">9. LLD: automatic capture engine (device)</a></li>
+  <li><a href="#s10">10. Data storage</a></li>
+  <li><a href="#s11">11. Module-by-module implementation</a></li>
+  <li><a href="#s12">12. External APIs and their cost</a></li>
+  <li><a href="#s13">13. Cost: what you will actually spend</a></li>
+  <li><a href="#s14">14. Security architecture and compliance</a></li>
+  <li><a href="#s15">15. Solo build plan: roadmap, learning, folders</a></li>
+  <li><a href="#s16">16. Decisions</a></li>
+  <li><a href="#s17">17. Risks</a></li>
+  <li><a href="#sa">Appendix A. Glossary</a></li>
+  <li><a href="#sb">Appendix B. Sources</a></li>
+</ul>
+
+<div class="callout blue"><b>How to use this document.</b> Sections 1–3 explain what we're building and why. Sections 4–10 are the design: read 4–6 for the big picture, then the part you own. Sections 11–14 cover scope, cost and security. <b>Section 15 is the step-by-step solo build plan:</b> dated phases, what to learn when, and the full folder structure. Section 16 lists the open decisions. Every cost is an estimate unless a source is linked; get vendor quotes before committing.</div>
+
+<!-- ============================== 1 ============================== -->
+<h1 id="s1" data-t="1 · Summary"><span class="num">1</span>Summary</h1>
+<p class="lead">Khazana v2 adds automatic data capture and multi-device sync to the existing offline-first app. The phone stays the source of truth, and the server is a thin, encrypted relay that never stores readable financial data.</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">30–42</div><div class="l">person-months of work (estimate)</div></div>
+  <div class="kpi"><div class="v">~27 months</div><div class="l">solo, part-time, AI-assisted (Oct 2026 – Dec 2028)</div></div>
+  <div class="kpi"><div class="v">₹8–28 L</div><div class="l">cash spend before the v2 launch (your time not counted)</div></div>
+  <div class="kpi"><div class="v">7</div><div class="l">phases, each one shippable</div></div>
+</div>
+
+<h2>What v2 does</h2>
+<ul>
+  <li><b>Captures transactions automatically</b> from bank SMS (Android), bank-app notifications (Android, already in v1), card alert emails (Gmail), receipts and screenshots (on-device OCR), and bank data through the RBI Account Aggregator (AA) framework.</li>
+  <li><b>Posts confident entries straight to the ledger</b> with a notification and Undo. Doubtful entries go to a <b>Review inbox</b> where the user approves, edits the amount (for example ₹1,000 → ₹10,000) or rejects. Pending entries never change a balance.</li>
+  <li><b>Covers the whole financial picture:</b> bank accounts, credit and debit cards, FD/RD, mutual funds, ETFs, NSE/BSE stocks, bonds, NPS, EPF/EPS/PPF, insurance, plus credit report and card-offer savings.</li>
+  <li><b>Syncs every device</b> (Android, iOS, macOS, web) with end-to-end encryption.</li>
+  <li><b>Keeps every v1 screen</b> and the existing theme, with smoother motion, prototyped before implementation.</li>
+</ul>
+
+<h2>Key design choices</h2>
+<table>
+  <thead><tr><th style="width:30%">Area</th><th>Recommendation</th></tr></thead>
+  <tbody>
+    <tr><td>Clients</td><td>Keep <b>Flutter</b> as the primary app (Android, iOS, macOS) and the <b>Next.js web app + Tauri</b> for web and desktop. No rewrite.</td></tr>
+    <tr><td>Backend</td><td><b>Ten .NET 10 microservices</b> behind a <b>YARP gateway</b>, talking through <b>RabbitMQ</b> events, run locally with <b>.NET Aspire</b> and in AWS Mumbai on <b>ECS Fargate</b>. A database per service (decision D1: chosen to learn microservices).</td></tr>
+    <tr><td>Login</td><td><b>Passkeys (preferred), Google and Apple sign-in</b>, with device-bound short-lived tokens and rotating refresh tokens. The existing PIN/biometric vault lock stays. No phone-OTP login.</td></tr>
+    <tr><td>Privacy</td><td>End-to-end encrypted sync. SMS, notifications, Gmail and OCR are processed <b>on the device</b>. AA and credit data are processed on the server only in memory, then sealed to the user's key and deleted once delivered.</td></tr>
+    <tr><td>Security</td><td><b>Top-tier baseline (§14):</b> OWASP MASVS L2 + Resilience and ASVS L3, passkeys, device-bound tokens, step-up biometrics, app attestation, HSM-held keys, CERT-In VAPT, ISO 27001 target. Card numbers, CVV, UPI PIN and bank passwords are never stored.</td></tr>
+    <tr><td>Automation</td><td>One capture pipeline (filter → parse → match account → dedupe → score → route) feeding the existing double-entry ledger.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout blue"><b>Phase 1 is built.</b> Automatic capture on Android — parser v2, routing with confidence scores, the review inbox with approve, edit, reject and Undo, and bank SMS in a <code>sideload</code> build — is in PR #28 with CI green. §3 lists what was built and where it differs from the original plan. What remains for Phase 1 is a test on a real phone, the Cards prototype (Slice 1.7) and the PRD update.</div>
+
+<div class="callout"><b>Biggest dependencies.</b> (1) Account Aggregator and credit reports both need a <b>regulated partner and a registered company</b>. (2) Reading SMS on Android needs <b>Google Play's SMS permission approval</b>. (3) Reading Gmail needs Google's <b>restricted-scope verification</b>, including a yearly security assessment. These set the timeline more than the code does.</div>
+
+<!-- ============================== 2 ============================== -->
+<h1 id="s2" data-t="2 · Goals, non-goals and principles"><span class="num">2</span>Goals, non-goals and principles</h1>
+<p class="lead">The main purpose is to cut manual data entry to near zero without giving up the privacy that defines Khazana.</p>
+
+<div class="grid2">
+<div>
+<h3>Goals</h3>
+<ul>
+  <li><b>G1 Automatic capture.</b> Most transactions arrive with no typing.</li>
+  <li><b>G2 One app, every device.</b> Same data on phone, laptop and web.</li>
+  <li><b>G3 Complete net worth.</b> Banks, cards, deposits, market investments, retirement schemes and insurance.</li>
+  <li><b>G4 Card intelligence.</b> Credit report, card due dates, and "you can save ₹X with the cards you already have".</li>
+  <li><b>G5 Smooth UI.</b> Existing theme with better motion and transitions.</li>
+</ul>
+</div>
+<div>
+<h3>Non-goals</h3>
+<ul>
+  <li>Lending, selling cards or loans, ads, or selling user data.</li>
+  <li>Locking any feature that's free today. How v2 earns money is open decision D13.</li>
+  <li>Trading or placing orders. We show holdings, not a broker.</li>
+  <li>Tick-by-tick live prices. End-of-day prices are enough.</li>
+  <li>A separate online-only app. v2 is the same app with an online layer.</li>
+</ul>
+</div>
+</div>
+
+<h3>Principles</h3>
+<table>
+  <thead><tr><th style="width:6%">#</th><th style="width:28%">Principle</th><th>What it means in practice</th></tr></thead>
+  <tbody>
+    <tr><td>P1</td><td>Offline-first</td><td>The device database is the source of truth. Every screen works offline, and the server holds an encrypted copy. If the server shuts down, the app keeps working.</td></tr>
+    <tr><td>P2</td><td>No readable financial data stored on the server</td><td>Sync records are encrypted on the device. AA and credit payloads exist in plaintext only in server memory while they're processed.</td></tr>
+    <tr><td>P3</td><td>Balances come only from posted entries</td><td>Pending or flagged captures never change a balance.</td></tr>
+    <tr><td>P4</td><td>Every automation can be undone</td><td>Auto-posted entries can be undone, which creates reversing postings rather than deleting anything. User edits keep the original parsed value.</td></tr>
+    <tr><td>P5</td><td>Reuse v1</td><td>Reuse the domain logic, the Dart ↔ TypeScript parity tests, the Decimal money type, the encryption and the sync merge. Extend them, don't rewrite them.</td></tr>
+    <tr><td>P6</td><td>Least data</td><td>Raw SMS and email text is discarded right after parsing (as v1 already does). Only the extracted fields are kept.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout red"><b>Deliberate policy change from v1.</b> v1 never saves a capture without review (<code>capture_pipeline.dart</code>: "Nothing is ever auto-committed"). v2 auto-posts high-confidence captures, always with a notification and Undo. An <b>"Always review captured transactions"</b> setting keeps the v1 behaviour for users who want it. The PRD needs updating to match.</div>
+
+<!-- ============================== 3 ============================== -->
+<h1 id="s3" data-t="3 · What v1 already gives us"><span class="num">3</span>What v1 already gives us</h1>
+<p class="lead">Much of the hardest groundwork already exists, which reduces the v2 effort. Paths refer to the <code>feature/safety-net-and-hardening</code> branch.</p>
+<table>
+  <thead><tr><th style="width:24%">Capability</th><th style="width:40%">Where it lives today</th><th>Use in v2</th></tr></thead>
+  <tbody>
+    <tr><td>Flutter app</td><td>Riverpod, go_router, Drift over SQLCipher (AES-256), 22 tables, schema v6</td><td><span class="tag t-reuse">REUSE</span> Primary client. Add Drift migration v7.</td></tr>
+    <tr><td>Web + desktop app</td><td><code>webapp/</code>: Next.js 16, React 19, Zustand, Dexie + WebCrypto, framer-motion, Tauri 2</td><td><span class="tag t-reuse">REUSE</span> Web client, which gets sync and read-mostly views.</td></tr>
+    <tr><td>Notification capture</td><td><code>android/…/KhazanaNotificationListener.kt</code>, <code>CaptureBus.kt</code>, <code>capture_channel.dart</code></td><td><span class="tag t-ext">EXTEND</span> Add an SMS receiver on the same bus.</td></tr>
+    <tr><td>Capture pipeline and review inbox</td><td><code>capture_pipeline.dart</code>, <code>pending_capture</code> entity and DAO, <code>capture_inbox_screen.dart</code>, <code>review_queue_banner.dart</code></td><td><span class="tag t-ext">EXTEND</span> Add confidence scoring, account matching, edit-and-approve and auto-post.</td></tr>
+    <tr><td>Message parser</td><td><code>notification_parser.dart</code> / <code>notificationParser.ts</code> with bank profiles, balance stripping and shared test fixtures</td><td><span class="tag t-ext">EXTEND</span> Extract account last-4, UTR and available balance. Templates become server-updatable.</td></tr>
+    <tr><td>Duplicate detection</td><td><code>bank_fingerprint.dart</code> (SHA-256 fingerprint), <code>idempotency.ts</code></td><td><span class="tag t-ext">EXTEND</span> Cross-source matching (UTR, amount and time window).</td></tr>
+    <tr><td>Double-entry ledger</td><td>Postings since schema v3, <code>ledger_writer.dart</code>, <code>account_ledger.dart</code></td><td><span class="tag t-reuse">REUSE</span> Auto-posts and reversals go through the same writer.</td></tr>
+    <tr><td>Sync merge</td><td><code>sync_merge.dart</code> / <code>syncMerge.ts</code>: last-write-wins on <code>updatedAt</code>, 90-day tombstones, symmetric</td><td><span class="tag t-reuse">REUSE</span> Runs on the client over encrypted records relayed by the server.</td></tr>
+    <tr><td>Encryption</td><td>PBKDF2-HMAC-SHA256 600k, SQLCipher, AES-256-GCM backups, biometric gate</td><td><span class="tag t-reuse">REUSE</span> Base of the key hierarchy (§6).</td></tr>
+    <tr><td>Investments</td><td>Lot-level instruments, trades, prices and dividends. <code>amfi_nav_provider.dart</code>, XIRR, broker and lot CSV import</td><td><span class="tag t-ext">EXTEND</span> Holdings from AA, FD/RD, NPS, EPF/EPS/PPF.</td></tr>
+    <tr><td>Market quotes</td><td><code>webapp/netlify/functions/quote.ts</code> (ticker symbols only)</td><td><span class="tag t-ext">EXTEND</span> Moves into the backend's market-data module.</td></tr>
+    <tr><td>Insurance, goals, liabilities, budgets, reports, health score, safety net</td><td>Their feature folders under <code>lib/features/</code></td><td><span class="tag t-reuse">REUSE</span> Unchanged, now fed by automatic data.</td></tr>
+  </tbody>
+</table>
+
+<h2>Phase 1 as built (PR #28)</h2>
+<p>Built on <code>feat/phase1-auto-capture</code>; 55 new Flutter tests, Dart and TypeScript parsers pinned by one shared fixture. Where the build differs from the earlier plan, the build wins and this document now follows it.</p>
+<table>
+  <thead><tr><th style="width:24%">Piece</th><th style="width:44%">What it does</th><th>Code</th></tr></thead>
+  <tbody>
+    <tr><td>Parser v2</td><td>Reference/UTR, account last-4, available balance, instrument, kind (refund and card bill are not income). Rejects OTPs, promotions, declined and failed transactions. Fingerprint uses reference + direction, or the balance, so two identical purchases stay two.</td><td><code>lib/domain/services/notification_parser.dart</code>, <code>webapp/src/domain/notificationParser.ts</code>, <code>test/fixtures/parser_cases.json</code></td></tr>
+    <tr><td>Database v7</td><td>Captures keep a status after a decision (v1 deleted them, so a re-delivered alert came back as a new draft); routing fields; <code>CaptureAccountLinks</code>; indexed dedupe lookup. Migration guarded per column.</td><td><code>lib/data/models/tables.dart</code>, <code>app_database.dart</code></td></tr>
+    <tr><td>Router</td><td>0–100 score plus forced-review rules; auto-post at 80 or more (§9.3).</td><td><code>lib/domain/services/capture_router.dart</code></td></tr>
+    <tr><td>Pipeline and review</td><td>Auto-post, approve, edit-and-approve, reject, undo back to the inbox; learns merchant → category and suffix → account. Messages processed one at a time.</td><td><code>lib/features/capture/services/capture_pipeline.dart</code></td></tr>
+    <tr><td>Review inbox</td><td>"To review" with reasons, editable amount, category and account; "Recently added" with Undo; app-wide "Added · Undo" snackbar; "Always review" switch.</td><td><code>lib/features/capture/screens/capture_inbox_screen.dart</code></td></tr>
+    <tr><td>Android SMS</td><td><code>play</code> and <code>sideload</code> flavors. Sideload reads bank SMS (live, catch-up on unlock, 90-day import); personal senders dropped natively. The Play build has no SMS permission and no SMS code.</td><td><code>android/app/src/sideload/</code>, <code>sms_catch_up.dart</code></td></tr>
+  </tbody>
+</table>
+<div class="callout red"><b>Two findings from building it.</b> (1) <b>Security:</b> v1's balance regex backtracked on long runs of spaces in notification text, which any app can post — 147 ms at 1,000 spaces and no length limit. Input is now length-capped and whitespace-collapsed before any pattern runs. (2) <b>Play policy:</b> v1's comments said Play forbids reading bank SMS; Play's policy actually lists an "SMS-based money management" exception, granted after review. Until Khazana is approved, SMS lives only in the <code>sideload</code> build.</div>
+
+<!-- ============================== 4 ============================== -->
+<h1 id="s4" data-t="4 · HLD: system architecture"><span class="num">4</span>HLD: system architecture</h1>
+<p class="lead">Devices do the processing. In the cloud, ten small .NET services behind one gateway handle login, encrypted sync and the connectors that legally must run on a server (Account Aggregator, credit bureau).</p>
+
+<div class="figure">
+<svg viewBox="0 0 680 520" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue, Arial, sans-serif">
+  <!-- devices container -->
+  <rect x="10" y="10" width="660" height="132" rx="8" fill="#EEF0F8" stroke="#3D4A8C" stroke-width="1.2"/>
+  <text x="24" y="30" font-size="11" font-weight="700" fill="#1B2340">Devices: source of truth, encrypted at rest</text>
+  <rect x="24" y="42" width="200" height="88" rx="6" fill="#fff" stroke="#3D4A8C"/>
+  <text x="124" y="62" font-size="10.5" font-weight="700" fill="#1B2340" text-anchor="middle">Flutter app</text>
+  <text x="124" y="78" font-size="8.5" fill="#3A415C" text-anchor="middle">Android · iOS · macOS</text>
+  <text x="124" y="92" font-size="8.5" fill="#3A415C" text-anchor="middle">Riverpod · go_router</text>
+  <text x="124" y="106" font-size="8.5" fill="#3A415C" text-anchor="middle">Drift + SQLCipher</text>
+  <text x="124" y="120" font-size="8.5" fill="#3A415C" text-anchor="middle">PIN / biometric vault</text>
+  <rect x="240" y="42" width="200" height="88" rx="6" fill="#fff" stroke="#3D4A8C"/>
+  <text x="340" y="62" font-size="10.5" font-weight="700" fill="#1B2340" text-anchor="middle">Web app + desktop</text>
+  <text x="340" y="78" font-size="8.5" fill="#3A415C" text-anchor="middle">Next.js 16 · React 19</text>
+  <text x="340" y="92" font-size="8.5" fill="#3A415C" text-anchor="middle">Tauri 2 desktop shell</text>
+  <text x="340" y="106" font-size="8.5" fill="#3A415C" text-anchor="middle">Zustand · Dexie + WebCrypto</text>
+  <text x="340" y="120" font-size="8.5" fill="#3A415C" text-anchor="middle">framer-motion</text>
+  <rect x="456" y="42" width="200" height="88" rx="6" fill="#FDF6EA" stroke="#E8A33D"/>
+  <text x="556" y="62" font-size="10.5" font-weight="700" fill="#1B2340" text-anchor="middle">On-device engines</text>
+  <text x="556" y="78" font-size="8.5" fill="#3A415C" text-anchor="middle">SMS + notification capture</text>
+  <text x="556" y="92" font-size="8.5" fill="#3A415C" text-anchor="middle">Gmail card alerts (direct)</text>
+  <text x="556" y="106" font-size="8.5" fill="#3A415C" text-anchor="middle">OCR (ML Kit / Vision)</text>
+  <text x="556" y="120" font-size="8.5" fill="#3A415C" text-anchor="middle">Scoring · offers matching</text>
+  <!-- arrow devices <-> backend -->
+  <line x1="340" y1="142" x2="340" y2="178" stroke="#6C7285" stroke-width="1.3"/>
+  <polygon points="335,172 340,180 345,172" fill="#6C7285"/>
+  <polygon points="335,150 340,142 345,150" fill="#6C7285"/>
+  <text x="350" y="166" font-size="8.5" fill="#6C7285">HTTPS · JWT · end-to-end encrypted records</text>
+  <!-- backend container -->
+  <rect x="10" y="180" width="660" height="210" rx="8" fill="#FAF8F4" stroke="#1B2340" stroke-width="1.2"/>
+  <text x="24" y="200" font-size="11" font-weight="700" fill="#1B2340">Khazana Cloud: AWS Mumbai (ap-south-1) · ten .NET microservices on ECS Fargate</text>
+  <rect x="24" y="208" width="632" height="26" rx="5" fill="#1B2340"/>
+  <text x="340" y="225" font-size="9" font-weight="700" fill="#fff" text-anchor="middle">YARP gateway · TLS · JWT + DPoP check · attestation · rate limits</text>
+  <g font-size="8.6" fill="#1B2340" text-anchor="middle" font-weight="700">
+    <rect x="24" y="242" width="120" height="32" rx="5" fill="#fff" stroke="#6C7285"/><text x="84" y="262">Identity</text>
+    <rect x="152" y="242" width="120" height="32" rx="5" fill="#fff" stroke="#6C7285"/><text x="212" y="262">Devices &amp; Keys</text>
+    <rect x="280" y="242" width="120" height="32" rx="5" fill="#fff" stroke="#6C7285"/><text x="340" y="262">Sync</text>
+    <rect x="408" y="242" width="120" height="32" rx="5" fill="#EEF0F8" stroke="#3D4A8C"/><text x="468" y="262">Account Aggregator</text>
+    <rect x="536" y="242" width="120" height="32" rx="5" fill="#EEF0F8" stroke="#3D4A8C"/><text x="596" y="262">Credit</text>
+    <rect x="24" y="280" width="120" height="32" rx="5" fill="#fff" stroke="#6C7285"/><text x="84" y="300">Market Data</text>
+    <rect x="152" y="280" width="120" height="32" rx="5" fill="#fff" stroke="#6C7285"/><text x="212" y="300">Catalog</text>
+    <rect x="280" y="280" width="120" height="32" rx="5" fill="#fff" stroke="#6C7285"/><text x="340" y="300">Notification</text>
+    <rect x="408" y="280" width="120" height="32" rx="5" fill="#fff" stroke="#6C7285"/><text x="468" y="300">Audit &amp; Reporting</text>
+    <rect x="536" y="280" width="120" height="32" rx="5" fill="#FDF6EA" stroke="#E8A33D"/><text x="596" y="300">Admin (Blazor)</text>
+  </g>
+  <rect x="24" y="318" width="632" height="22" rx="5" fill="#E3F1EA" stroke="#2E7D5B"/>
+  <text x="340" y="333" font-size="8.6" fill="#1B2340" text-anchor="middle">RabbitMQ — events between services · outbox on every publisher · idempotent consumers</text>
+  <g font-size="8.4" fill="#1B2340" text-anchor="middle">
+    <rect x="24" y="346" width="152" height="34" rx="5" fill="#EFEDE6" stroke="#6C7285"/><text x="100" y="360" font-weight="700">PostgreSQL 16</text><text x="100" y="373" font-size="7.6" fill="#6C7285">one database per service</text>
+    <rect x="184" y="346" width="152" height="34" rx="5" fill="#EFEDE6" stroke="#6C7285"/><text x="260" y="360" font-weight="700">S3</text><text x="260" y="373" font-size="7.6" fill="#6C7285">encrypted blobs · backups</text>
+    <rect x="344" y="346" width="152" height="34" rx="5" fill="#EFEDE6" stroke="#6C7285"/><text x="420" y="360" font-weight="700">KMS · Secrets</text><text x="420" y="373" font-size="7.6" fill="#6C7285">FIU keys · service creds</text>
+    <rect x="504" y="346" width="152" height="34" rx="5" fill="#EFEDE6" stroke="#6C7285"/><text x="580" y="360" font-weight="700">Redis (later)</text><text x="580" y="373" font-size="7.6" fill="#6C7285">cache · rate limits</text>
+  </g>
+  <!-- arrow backend -> external -->
+  <line x1="340" y1="390" x2="340" y2="420" stroke="#6C7285" stroke-width="1.3"/>
+  <polygon points="335,414 340,422 345,414" fill="#6C7285"/>
+  <text x="350" y="410" font-size="8.5" fill="#6C7285">partner APIs · webhooks (allow-listed)</text>
+  <!-- external -->
+  <rect x="10" y="422" width="660" height="90" rx="8" fill="#fff" stroke="#6C7285" stroke-dasharray="4 3"/>
+  <text x="24" y="440" font-size="11" font-weight="700" fill="#1B2340">External services</text>
+  <g font-size="8.4" fill="#1B2340" text-anchor="middle">
+    <rect x="24" y="450" width="120" height="52" rx="5" fill="#EEF0F8" stroke="#3D4A8C"/><text x="84" y="470" font-weight="700">Account Aggregator</text><text x="84" y="484" font-size="7.6" fill="#3A415C">via TSP + regulated</text><text x="84" y="495" font-size="7.6" fill="#3A415C">FIU partner</text>
+    <rect x="154" y="450" width="120" height="52" rx="5" fill="#EEF0F8" stroke="#3D4A8C"/><text x="214" y="470" font-weight="700">Credit bureau</text><text x="214" y="484" font-size="7.6" fill="#3A415C">via licensed</text><text x="214" y="495" font-size="7.6" fill="#3A415C">aggregator</text>
+    <rect x="284" y="450" width="120" height="52" rx="5" fill="#EEF0F8" stroke="#3D4A8C"/><text x="344" y="470" font-weight="700">Market data</text><text x="344" y="484" font-size="7.6" fill="#3A415C">AMFI NAV (free)</text><text x="344" y="495" font-size="7.6" fill="#3A415C">EOD price vendor</text>
+    <rect x="414" y="450" width="120" height="52" rx="5" fill="#EEF0F8" stroke="#3D4A8C"/><text x="474" y="470" font-weight="700">Google · Apple</text><text x="474" y="484" font-size="7.6" fill="#3A415C">sign-in · Gmail API</text><text x="474" y="495" font-size="7.6" fill="#3A415C">(Gmail from device)</text>
+    <rect x="544" y="450" width="112" height="52" rx="5" fill="#EEF0F8" stroke="#3D4A8C"/><text x="600" y="470" font-weight="700">Messaging</text><text x="600" y="484" font-size="7.6" fill="#3A415C">FCM · APNs</text><text x="600" y="495" font-size="7.6" fill="#3A415C">SES email</text>
+  </g>
+</svg>
+<div class="caption">Figure 1. System context. Solid boxes are ours, dashed are third parties. The cloud is ten .NET services behind one gateway; they reach each other only through RabbitMQ events, never each other's databases. Gmail is called directly from the device, so emails never pass through our servers.</div>
+</div>
+
+<h2>Where each kind of data is processed</h2>
+<table>
+  <thead><tr><th style="width:22%">Data</th><th style="width:18%">Processed on</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Bank SMS, app notifications</td><td>Device</td><td>Available only on the phone. Raw text is discarded right after parsing.</td></tr>
+    <tr><td>Card alert emails (Gmail)</td><td>Device</td><td>The device calls the Gmail API with the user's own OAuth token, so we never hold mailbox access on a server.</td></tr>
+    <tr><td>Receipts, screenshots</td><td>Device</td><td>ML Kit (Android) and Apple Vision (iOS) do OCR offline at no cost.</td></tr>
+    <tr><td>Account Aggregator data</td><td>Server, in memory only</td><td>The AA protocol delivers data to the FIU's server key. We decrypt, normalise, seal to the user's device key, deliver, then delete.</td></tr>
+    <tr><td>Credit report</td><td>Server, in memory only</td><td>Bureau APIs need server credentials. Same seal-and-deliver pattern.</td></tr>
+    <tr><td>Card offers, prices, parser rules</td><td>Server (public data)</td><td>Contain no user data. Matching against the user's cards and spending happens on the device.</td></tr>
+    <tr><td>Everything synced between devices</td><td>Device (encrypt) → server (store) → device (decrypt)</td><td>End-to-end encrypted. The server stores ciphertext and version numbers only.</td></tr>
+  </tbody>
+</table>
+
+<h2>Deployment</h2>
+<ul>
+  <li><b>Region:</b> AWS ap-south-1 (Mumbai), keeping data in India. <b>One ECS Fargate service per microservice</b> (two small tasks each in production), plus the gateway.</li>
+  <li><b>Managed data services:</b> RDS PostgreSQL (Multi-AZ in production) holding <b>one database and one login per service</b> — separate instances only when load demands it; Amazon MQ for RabbitMQ (or self-hosted on Fargate to save cost early); S3 with versioning; KMS and Secrets Manager. Redis only when caching needs it.</li>
+  <li><b>While building:</b> nothing in the cloud. <code>.NET Aspire</code> runs every service, Postgres and RabbitMQ on the laptop with one command, at ₹0.</li>
+  <li><b>Edge:</b> CloudFront plus WAF in front of the API, with rate limits per IP and per user.</li>
+  <li><b>Environments:</b> <code>dev</code>, <code>staging</code> (wired to the AA and bureau sandboxes) and <code>prod</code>, all defined in infrastructure-as-code (Terraform or CDK).</li>
+  <li><b>CI/CD:</b> extend the existing GitHub Actions (<code>.github/workflows/ci.yml</code>) with <b>one backend job per service</b>, triggered only by changes under its folder (build, tests, contract tests, container image, deploy to staging on merge, manual promotion to prod).</li>
+  <li><b>Web hosting:</b> the web app keeps its static Netlify deploy. The Netlify quote function moves into the backend.</li>
+</ul>
+
+<!-- ============================== 5 ============================== -->
+<h1 id="s5" data-t="5 · HLD: frontend and app sections"><span class="num">5</span>HLD: frontend and app sections</h1>
+<p class="lead">Flutter remains the main app, and the web app follows. Both keep the existing layered design and theme. v2 adds three new areas (Accounts, Cards, Connections) and upgrades the Review inbox.</p>
+
+<h2>Frontend stack</h2>
+<table>
+  <thead><tr><th style="width:20%">Concern</th><th style="width:40%">Flutter app (primary)</th><th>Web app (Next.js + Tauri)</th></tr></thead>
+  <tbody>
+    <tr><td>State</td><td>Riverpod 2 (existing)</td><td>Zustand (existing)</td></tr>
+    <tr><td>Navigation</td><td>go_router (existing)</td><td>Next.js App Router (existing)</td></tr>
+    <tr><td>Local data</td><td>Drift + SQLCipher (existing), migration v7</td><td>Dexie encrypted blobs (existing)</td></tr>
+    <tr><td>API client</td><td><span class="tag t-new">NEW</span> <code>data/remote/</code>: typed client generated from OpenAPI, retry with backoff, idempotency keys</td><td><span class="tag t-new">NEW</span> Same OpenAPI-generated TypeScript client</td></tr>
+    <tr><td>Sync engine</td><td><span class="tag t-new">NEW</span> <code>core/sync/</code>: push/pull loop over existing <code>sync_merge.dart</code></td><td><span class="tag t-new">NEW</span> Same, over <code>syncMerge.ts</code></td></tr>
+    <tr><td>Motion</td><td>Flutter's built-in animation APIs (implicit animations, <code>AnimationController</code>, Hero, page transitions). Add Rive only if design delivers Rive files.</td><td>framer-motion (existing)</td></tr>
+    <tr><td>Charts</td><td>Custom painters in <code>presentation/charts/</code> (existing, no chart package)</td><td>SVG components with pixel parity (existing)</td></tr>
+    <tr><td>Native Android</td><td><span class="tag t-reuse">BUILT</span> Kotlin <code>SmsReceiver</code> and inbox catch-up in the <code>sideload</code> flavor, on the existing <code>CaptureBus</code></td><td>n/a</td></tr>
+    <tr><td>OCR</td><td><span class="tag t-new">NEW</span> Google ML Kit text recognition (Android), Apple Vision (iOS), on-device</td><td>Not in scope for web</td></tr>
+    <tr><td>Gmail</td><td><span class="tag t-new">NEW</span> Google Sign-In with the <code>gmail.readonly</code> scope, Gmail REST queries filtered to bank senders</td><td>Not in scope for web</td></tr>
+    <tr><td>Push</td><td><span class="tag t-new">NEW</span> FCM (Android), APNs (iOS). Local notifications stay as they are.</td><td>Web Push (optional)</td></tr>
+  </tbody>
+</table>
+
+<h3>Theme and motion</h3>
+<p>We keep the existing design tokens (<code>app_tokens.dart</code>, <code>khazana_colors.dart</code>, <code>globals.css</code>) and the Zentra kit. Reference apps (such as Fold's card stack and tab transitions) inform <b>motion only</b>, not colours or components. Before any screen changes, design produces a <b>clickable prototype</b> for review. Motion budget: 150–300 ms transitions, spring curves for cards, and no animation that delays data.</p>
+
+<h2>App sections</h2>
+<table>
+  <thead><tr><th style="width:15%">Section</th><th style="width:30%">Screens</th><th style="width:28%">v2 changes</th><th>Data source</th></tr></thead>
+  <tbody>
+    <tr><td><b>Home</b></td><td>Dashboard, balance hero, wallet stack, insights, latest transactions</td><td>Linked-account strip, review badge, sync status, card due-date cards</td><td>Ledger (all sources)</td></tr>
+    <tr><td><b>Money</b></td><td>Transactions, add, search, budget, calendar, recurring</td><td>Source chip on each row (SMS, email, AA, scan, manual), edit history</td><td>Ledger</td></tr>
+    <tr><td><b>Accounts</b> <span class="tag t-new">NEW</span></td><td>Bank accounts list, account detail, link-account flow</td><td>AA linking, last sync time, consent status, balance-drift warning</td><td>AA plus SMS plus manual</td></tr>
+    <tr><td><b>Cards</b> <span class="tag t-new">NEW</span></td><td>My cards (credit and debit), card detail, Credit report, Offers and savings</td><td>Limit, utilisation, statement and due dates, savings insights</td><td>Gmail, SMS, bureau, offers catalog</td></tr>
+    <tr><td><b>Invest</b></td><td>Holdings, analytics, add lot, import</td><td>MF, ETF, stocks and bonds from AA. FD/RD, NPS. EPF, EPS and PPF (manual or passbook PDF)</td><td>AA plus prices plus manual</td></tr>
+    <tr><td><b>Protect</b></td><td>Insurance, Safety net</td><td>Policies from AA where available, policy PDF upload</td><td>AA plus manual</td></tr>
+    <tr><td><b>Plan</b></td><td>Goals, liabilities, reports, tax, forecast</td><td>Fed by automatic data, no structural change</td><td>Ledger</td></tr>
+    <tr><td><b>Health</b></td><td>Score</td><td>Unchanged</td><td>Ledger</td></tr>
+    <tr><td><b>Review inbox</b> <span class="tag t-ext">UPGRADE</span></td><td>Pending list, item detail, bulk actions</td><td>Approve, edit-and-approve, reject, confidence reasons, Undo history</td><td>Capture engine</td></tr>
+    <tr><td><b>Connections</b> <span class="tag t-new">NEW</span></td><td>SMS access, notification access, Gmail link, AA consents, devices</td><td>Grant and revoke each source, see last activity</td><td>Device plus server</td></tr>
+    <tr><td><b>Account and security</b> <span class="tag t-new">NEW</span></td><td>Sign-in, devices, recovery key, export, delete account</td><td>Device pairing by QR, remote logout</td><td>Server plus device</td></tr>
+  </tbody>
+</table>
+
+<h3>Navigation (mobile)</h3>
+<p>Bottom bar: <b>Home · Money · Cards · Invest · More</b>. "More" holds Accounts, Protect, Plan, Health, Review inbox, Connections and Settings. Each section uses top tabs for its sub-screens, the pattern in the reference app (for example Cards → My cards · Credit report · Offers). Desktop and web keep the sidebar.</p>
+
+<h3>Offline behaviour</h3>
+<ul>
+  <li>Reading, adding, editing, reviewing and capturing all work offline.</li>
+  <li>Linking an account, "fetch now", credit report and offers refresh need the network. They queue and show a clear "waiting for connection" state.</li>
+  <li>Users who never sign in get v1 behaviour: local only, no account.</li>
+</ul>
+
+<!-- ============================== 6 ============================== -->
+<h1 id="s6" data-t="6 · Login, identity and encryption keys"><span class="num">6</span>Login, identity and encryption keys</h1>
+<p class="lead">There are two separate locks. The online account proves who you are to the server, and the existing vault PIN unlocks your data on the device. The server can never read data even with a valid login.</p>
+
+<h2>Sign-in methods</h2>
+<table>
+  <thead><tr><th style="width:24%">Method</th><th style="width:12%">When</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><b>Sign in with Google</b></td><td>Launch</td><td>Most Android users have it. The app verifies Google's ID token, and the backend issues our own tokens.</td></tr>
+    <tr><td><b>Sign in with Apple</b></td><td>Launch (iOS)</td><td>Apple requires it (or an equivalent) when an iOS app offers third-party sign-in.</td></tr>
+    <tr><td><b>Email magic link</b></td><td>Launch</td><td>Fallback for users without Google or Apple. Sent via SES.</td></tr>
+    <tr><td><b>Passkeys</b></td><td>Launch (preferred)</td><td>Phishing-resistant, no passwords to leak. Offered first wherever the device supports it.</td></tr>
+    <tr><td>Phone OTP</td><td><b>Not used</b></td><td>Every SMS costs money, and SIM-swap fraud is a known attack on Indian finance apps.</td></tr>
+  </tbody>
+</table>
+<p class="small">Recommendation: issue tokens ourselves (verifying Google and Apple ID tokens is a small amount of code with no per-user fees) rather than using a paid identity service. Decision D3.</p>
+
+<h2>Tokens and sessions</h2>
+<ul>
+  <li><b>Access token:</b> JWT signed with ES256, valid 15 minutes, carrying <code>sub</code> (user), <code>did</code> (device) and <code>scope</code>.</li>
+  <li><b>Refresh token:</b> random 256-bit, valid 30 days, <b>rotated on every use</b> with reuse detection (a reused token revokes the whole device session). Stored hashed on the server.</li>
+  <li><b>Storage on the client:</b> Keychain / Keystore through <code>flutter_secure_storage</code> on the app. Web uses an httpOnly, Secure, SameSite=strict cookie.</li>
+  <li><b>Devices:</b> each device is registered with a name, platform and public key. Users see their devices and can log one out remotely.</li>
+  <li><b>Device-bound tokens (DPoP):</b> each device holds a signing key in its secure chip (Secure Enclave / StrongBox, non-exportable). Every API request carries a fresh signature with that key, and the server rejects tokens presented without it. <b>A stolen token can't be used from any other device.</b></li>
+  <li><b>Step-up:</b> sensitive actions (new device, consents, credit pull, export, deletion, bulk delete) need a fresh biometric or PIN check (§14.3).</li>
+  <li><b>Attestation:</b> sign-in and sensitive calls include a Play Integrity or App Attest verdict, so only the genuine app gets tokens.</li>
+</ul>
+
+<h2>Encryption key hierarchy</h2>
+<table>
+  <thead><tr><th style="width:22%">Key</th><th style="width:28%">Where it lives</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><b>Vault key</b> (existing)</td><td>Derived from the PIN (PBKDF2 600k), memory only</td><td>Unlocks the local SQLCipher database. Unchanged from v1.</td></tr>
+    <tr><td><b>User Data Key (DEK)</b></td><td>Created on the first device. Only ever stored wrapped.</td><td>AES-256-GCM key that encrypts every sync record and attachment.</td></tr>
+    <tr><td><b>Device key pair</b></td><td>X25519 per device, private key in Keychain / Keystore</td><td>Each device holds the DEK wrapped to its own public key. The server stores the wrapped copies.</td></tr>
+    <tr><td><b>Recovery key</b></td><td>Shown once (24 words), kept by the user</td><td>Derives a key that wraps the DEK for account recovery. If it's lost along with all devices, the data cannot be recovered. That's by design.</td></tr>
+    <tr><td><b>User delivery public key</b></td><td>Published to the server</td><td>The server seals AA and credit payloads to it, so it can write data for the user but can't read it back afterwards.</td></tr>
+    <tr><td><b>FIU key pair</b> (server)</td><td>KMS / HSM</td><td>Required by the AA protocol to receive financial data. Never leaves KMS.</td></tr>
+  </tbody>
+</table>
+
+<h2>Flows</h2>
+<h3>First sign-in (new user)</h3>
+<ol>
+  <li>User taps Google or Apple. The app receives an ID token.</li>
+  <li><code>POST /v1/auth/token</code> with the ID token and device info. The server verifies it, creates the user, identity and device, and returns access and refresh tokens.</li>
+  <li>The app generates the DEK and device key pair, wraps the DEK to the device key and to the recovery key, and uploads both envelopes (<code>POST /v1/keys/envelopes</code>).</li>
+  <li>The app shows the recovery key once and asks the user to confirm it was saved.</li>
+  <li>The first sync push uploads existing local data, encrypted.</li>
+</ol>
+<h3>Adding a second device</h3>
+<ol>
+  <li>The new device signs in and registers its public key, but has no DEK yet.</li>
+  <li>The user scans a QR code on the new device with an existing device, or enters the recovery key.</li>
+  <li>The existing device wraps the DEK to the new device's public key and uploads the envelope. The new device unwraps it and pulls the sync history.</li>
+</ol>
+<h3>Account deletion</h3>
+<p>The user can delete their account from the app. All server rows and S3 objects are deleted within 30 days (backups expire on their own schedule), AA consents are revoked, and an audit event is kept without any financial values. Local data stays on the device unless the user also wipes it.</p>
+
+<!-- ============================== 7 ============================== -->
+<h1 id="s7" data-t="7 · HLD: backend"><span class="num">7</span>HLD: backend</h1>
+<p class="lead">Ten small .NET services behind one gateway, each with its own database, talking to each other through RabbitMQ events. Chosen deliberately so the project teaches microservices; every service stays coarse-grained so one person can build and run them.</p>
+
+<div class="callout blue"><b>Why microservices (D1).</b> The goal is hands-on microservice experience, not scale — at 10,000 users one API would cope. The cost is real and accepted: about 3–4 more months of work, more moving parts, and hosting of ₹5–12 L/yr instead of ₹3–8 L. Four things keep it manageable alone: <b>.NET Aspire</b> runs the whole system locally with one command; services are split by business capability, never per table; shared <b>building blocks</b> (messaging, outbox, crypto) are written once; and every service starts as one database on one shared RDS instance.</div>
+
+<h2>7.1 Stack</h2>
+<table>
+  <thead><tr><th style="width:22%">Concern</th><th style="width:44%">Choice</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td>Architecture</td><td>10 microservices + gateway; each its own deployable, database and pipeline</td><td>Split by capability (§7.2)</td></tr>
+    <tr><td>Language</td><td>C#, ASP.NET Core on .NET 10 (LTS), minimal APIs; Clean Architecture inside each service</td><td>Your strongest skill</td></tr>
+    <tr><td>Local orchestration</td><td><b>.NET Aspire</b> AppHost: every service, Postgres and RabbitMQ with one command, plus a dashboard for logs, traces and metrics</td><td>Free</td></tr>
+    <tr><td>Gateway</td><td><b>YARP</b> (Microsoft's reverse proxy)</td><td>Routing, TLS, JWT + DPoP validation, attestation, rate limits</td></tr>
+    <tr><td>Messaging</td><td><b>RabbitMQ</b> with <b>Wolverine</b> (MIT) or <b>MassTransit v8</b> (D14)</td><td>MassTransit v9 moved to a commercial licence in 2025</td></tr>
+    <tr><td>Reliability</td><td>Transactional <b>outbox</b> in every publisher; <b>idempotent consumers</b> (a processed-messages table)</td><td>No event lost, none applied twice</td></tr>
+    <tr><td>Workflows</td><td><b>Sagas</b> (Wolverine or MassTransit state machines) for the AA fetch and account deletion</td><td>§8.5</td></tr>
+    <tr><td>Data</td><td>PostgreSQL 16, one database and one login per service; EF Core + Npgsql; one RDS instance at first</td><td>No service can read another's tables</td></tr>
+    <tr><td>Service-to-service</td><td>Short-lived client-credentials tokens from Identity, plus mTLS inside the cluster</td><td>§14.2</td></tr>
+    <tr><td>Observability</td><td>OpenTelemetry traces across every hop (one correlation id per request), metrics, structured logs with PII scrubbing; Aspire dashboard locally, Grafana or CloudWatch in the cloud</td><td>A distributed bug is unfindable without traces</td></tr>
+    <tr><td>Admin</td><td>Blazor Server app that reads only the Audit &amp; Reporting service</td><td>§8.10</td></tr>
+    <tr><td>Hosting</td><td>Docker images on AWS ECS Fargate</td><td>Simpler and cheaper than Kubernetes for one person</td></tr>
+  </tbody>
+</table>
+
+<h2>7.2 Services</h2>
+<table>
+  <thead><tr><th style="width:15%">Service</th><th style="width:22%">Owns (its database)</th><th style="width:19%">Public API (via gateway)</th><th style="width:22%">Publishes</th><th>Consumes</th></tr></thead>
+  <tbody>
+    <tr><td><b>Gateway</b> (YARP)</td><td>nothing</td><td>every public route</td><td>none</td><td>none</td></tr>
+    <tr><td><b>Identity</b></td><td>users, identities, passkeys, refresh tokens</td><td><code>/v1/auth/*</code></td><td>UserRegistered, UserSignedIn, AccountDeletionRequested</td><td>none</td></tr>
+    <tr><td><b>Devices &amp; Keys</b></td><td>devices, key envelopes, pairing sessions</td><td><code>/v1/devices</code>, <code>/v1/keys</code></td><td>DeviceAdded, DeviceRevoked</td><td>AccountDeletionRequested</td></tr>
+    <tr><td><b>Sync</b></td><td>encrypted sync records, attachment refs</td><td><code>/v1/sync/*</code></td><td>RecordsPushed</td><td>DeviceRevoked, AccountDeletionRequested</td></tr>
+    <tr><td><b>Account Aggregator</b></td><td>consents, fetch sessions, sealed payloads, saga state</td><td><code>/v1/aa/*</code>, AA webhooks, AA inbox</td><td>ConsentActivated, PayloadSealed, ConsentRevoked</td><td>AccountDeletionRequested</td></tr>
+    <tr><td><b>Credit</b></td><td>pull records (never report contents), sealed payloads</td><td><code>/v1/credit/*</code></td><td>CreditReportReady</td><td>AccountDeletionRequested</td></tr>
+    <tr><td><b>Market Data</b></td><td>instruments, NAV, EOD prices (public)</td><td><code>/v1/market/*</code></td><td>PricesPublished</td><td>none</td></tr>
+    <tr><td><b>Catalog</b></td><td>card products, offers, parser templates (public, signed)</td><td><code>/v1/offers</code>, <code>/v1/templates</code></td><td>CatalogPublished</td><td>none</td></tr>
+    <tr><td><b>Notification</b></td><td>push tokens, email outbox</td><td><code>/v1/push/register</code></td><td>none</td><td>RecordsPushed, PayloadSealed, CreditReportReady, DeviceAdded, UserSignedIn</td></tr>
+    <tr><td><b>Audit &amp; Reporting</b></td><td>write-once audit, sign-in history, metrics and directory projections</td><td>internal (admin only)</td><td>none</td><td>every event</td></tr>
+    <tr><td><b>Admin</b> (Blazor)</td><td>nothing of its own</td><td>internal</td><td>none</td><td>reads Audit &amp; Reporting</td></tr>
+  </tbody>
+</table>
+
+<h2>7.3 Cross-cutting rules</h2>
+<ul>
+  <li><b>No shared databases.</b> A service changes another service's data only by sending it a message or calling its API.</li>
+  <li><b>One synchronous hop at most.</b> Gateway → service is fine; service → service → service chains are replaced by events, so one slow service can't stall a request.</li>
+  <li><b>Outbox + idempotent consumers:</b> an event is written in the same transaction as the change it announces, and a consumer that sees a message id twice ignores the second copy.</li>
+  <li><b>Events are versioned</b> (<code>RecordsPushed.v1</code>) and change only additively; a breaking change is a new version consumed side by side.</li>
+  <li><b>Correlation id</b> on every request and message, so one trace follows a request through every service.</li>
+  <li><b>Idempotency keys</b> on mutating POSTs; <b>FluentValidation</b> at every edge, unknown fields rejected; <b>rate limits</b> at the gateway, tighter for AA and credit calls because each costs money.</li>
+  <li><b>Time and money:</b> UTC timestamps; money as decimal strings, never floats (same rule as v1).</li>
+</ul>
+
+<!-- ============================== 8 ============================== -->
+<h1 id="s8" data-t="8 · LLD: backend"><span class="num">8</span>LLD: backend</h1>
+
+<h2>8.1 Databases, one per service</h2>
+<p class="small">Key columns only. Every table has <code>created_at</code> and <code>updated_at</code>; <code>uuid</code> keys unless stated. <b>Every database</b> also has <code>outbox_messages</code> (id, type, payload, occurred_at, published_at) and <code>processed_messages</code> (message_id, consumer, processed_at) for reliable, idempotent messaging.</p>
+<table>
+  <thead><tr><th style="width:18%">Database</th><th>Tables</th></tr></thead>
+  <tbody>
+    <tr><td><code>identity</code></td><td><b>users</b> (id, status, delete_requested_at, display_name_enc, email_enc, email_hash) · <b>identities</b> (user_id, provider google | apple | email, subject; unique(provider, subject)) · <b>passkeys</b> (user_id, credential_id, public_key, sign_count) · <b>refresh_tokens</b> (device_id, token_hash, family_id, expires_at, used_at, revoked_at)</td></tr>
+    <tr><td><code>devices</code></td><td><b>devices</b> (user_id, name, platform, app_version, public_key, dpop_jkt, last_seen_at, revoked_at) · <b>key_envelopes</b> (user_id, device_id or null = recovery, wrapped_dek, alg, key_version) · <b>pairing_sessions</b> (code_hash, expires_at)</td></tr>
+    <tr><td><code>sync</code></td><td><b>sync_records</b> (user_id, record_id, collection, seq per user, client_updated_at, deleted, ciphertext ≤ 64 KB or s3_key, key_version; PK(user_id, record_id), index(user_id, seq))</td></tr>
+    <tr><td><code>aa</code></td><td><b>aa_consents</b> (user_id, partner, consent_handle, status, fi_types[], frequency, expires_at) · <b>aa_fetch_sagas</b> (consent_id, state, attempt, next_retry_at, error_code, cost_units) · <b>inbox_payloads</b> (user_id, sealed_payload or s3_key, expires_at, delivered_at)</td></tr>
+    <tr><td><code>credit</code></td><td><b>credit_pulls</b> (user_id, provider, status, consent_text_version, requested_at — <b>no report contents</b>) · <b>inbox_payloads</b></td></tr>
+    <tr><td><code>market</code></td><td><b>instruments</b> (isin, symbol, exchange) · <b>prices_eod</b> (isin, date, close) · <b>mf_nav</b> (scheme_code, date, nav)</td></tr>
+    <tr><td><code>catalog</code></td><td><b>card_products</b> · <b>offers</b> (product or issuer or network, merchant, category, benefit, value, cap, valid_from/to, source, verified_at) · <b>catalog_versions</b> (version, checksum, signature) · <b>parser_templates</b> (bank, channel, sender_patterns[], rule_json, version, signature)</td></tr>
+    <tr><td><code>notification</code></td><td><b>push_tokens</b> (device_id, provider fcm | apns | webpush, token) · <b>email_outbox</b></td></tr>
+    <tr><td><code>reporting</code></td><td><b>audit_events</b> (actor, action, target, at, reason; exported nightly to S3 Object Lock) · <b>signin_events</b> (user_id, device_id, platform, result, ip_hash) · <b>admin_metrics_daily</b> · <b>user_directory</b> projection (id, masked email, last active, platforms, source flags) — all built from events only</td></tr>
+  </tbody>
+</table>
+
+<h2>8.2 API endpoints (through the gateway)</h2>
+<table>
+  <thead><tr><th style="width:9%">Method</th><th style="width:33%">Path</th><th style="width:16%">Service</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td>POST</td><td><code>/v1/auth/token</code> · <code>/refresh</code> · <code>/logout</code></td><td>Identity</td><td>Sign in (Google, Apple, passkey, magic link), rotate, revoke</td></tr>
+    <tr><td>GET · DELETE</td><td><code>/v1/devices</code> · <code>/v1/devices/{id}</code></td><td>Devices &amp; Keys</td><td>List devices, log one out remotely</td></tr>
+    <tr><td>POST · GET</td><td><code>/v1/keys/envelopes</code> · <code>/v1/devices/pairing</code></td><td>Devices &amp; Keys</td><td>Wrapped DEKs; QR pairing</td></tr>
+    <tr><td>POST · GET</td><td><code>/v1/sync/push</code> · <code>/v1/sync/pull?since=</code> · <code>/v1/sync/attachments</code></td><td>Sync</td><td>Encrypted records in and out; presigned attachment URLs</td></tr>
+    <tr><td>POST · GET · DELETE</td><td><code>/v1/aa/consents</code> · <code>/v1/aa/fetch</code> · <code>/v1/webhooks/aa</code></td><td>Account Aggregator</td><td>Consent lifecycle, fetch now, signed partner callbacks</td></tr>
+    <tr><td>POST</td><td><code>/v1/credit/report</code></td><td>Credit</td><td>Pull with explicit consent (one per 30 days)</td></tr>
+    <tr><td>GET · POST</td><td><code>/v1/inbox</code> · <code>/v1/inbox/{id}/ack</code></td><td>gateway fans out to AA and Credit</td><td>Fetch sealed payloads; ack deletes them</td></tr>
+    <tr><td>GET</td><td><code>/v1/market/nav/{date}</code> · <code>/v1/market/eod/{date}</code></td><td>Market Data</td><td>Whole-day price files (so holdings are never revealed)</td></tr>
+    <tr><td>GET</td><td><code>/v1/offers/catalog?since=</code> · <code>/v1/templates?since=</code></td><td>Catalog</td><td>Signed deltas (public)</td></tr>
+    <tr><td>POST</td><td><code>/v1/push/register</code></td><td>Notification</td><td>FCM, APNs or Web Push token</td></tr>
+    <tr><td>DELETE</td><td><code>/v1/account</code></td><td>Identity</td><td>Starts the account-deletion saga (24-hour cooling-off)</td></tr>
+  </tbody>
+</table>
+
+<h2>8.3 Events catalog</h2>
+<p class="small">Events carry ids and timestamps only — never amounts, merchants, balances or names. Anything a consumer needs beyond that, it asks the owning service for.</p>
+<table>
+  <thead><tr><th style="width:24%">Event</th><th style="width:18%">Publisher</th><th style="width:28%">Consumers</th><th>Payload</th></tr></thead>
+  <tbody>
+    <tr><td>UserRegistered.v1 · UserSignedIn.v1</td><td>Identity</td><td>Reporting, Notification (new-device alert)</td><td>user_id, device_id, platform, at</td></tr>
+    <tr><td>AccountDeletionRequested.v1</td><td>Identity</td><td>Devices, Sync, AA, Credit, Reporting</td><td>user_id, execute_after</td></tr>
+    <tr><td>DeviceAdded.v1 · DeviceRevoked.v1</td><td>Devices &amp; Keys</td><td>Sync, Notification, Reporting</td><td>user_id, device_id</td></tr>
+    <tr><td>RecordsPushed.v1</td><td>Sync</td><td>Notification (data-free push to other devices)</td><td>user_id, from_device_id, seq</td></tr>
+    <tr><td>ConsentActivated.v1 · ConsentRevoked.v1</td><td>Account Aggregator</td><td>Reporting</td><td>user_id, consent_id, status</td></tr>
+    <tr><td>PayloadSealed.v1</td><td>Account Aggregator</td><td>Notification</td><td>user_id, payload_id, kind</td></tr>
+    <tr><td>CreditReportReady.v1</td><td>Credit</td><td>Notification, Reporting</td><td>user_id, payload_id</td></tr>
+    <tr><td>PricesPublished.v1 · CatalogPublished.v1</td><td>Market Data · Catalog</td><td>none yet (clients poll)</td><td>date or version</td></tr>
+  </tbody>
+</table>
+
+<h2>8.4 Sync protocol (Sync service)</h2>
+<ul>
+  <li><b>Record format (before encryption):</b> <code>{id, collection, updatedAt, deleted, data}</code>, the shape <code>sync_merge.dart</code> already merges; AES-256-GCM under the DEK with <code>record_id</code> and <code>collection</code> as associated data.</li>
+  <li><b>Push:</b> up to 500 records; the service stores them as-is, assigns <code>seq</code> = per-user counter + 1 and publishes <code>RecordsPushed</code>. It never merges — it can't read the data.</li>
+  <li><b>Pull:</b> records with <code>seq &gt; cursor</code>; the client decrypts, runs the existing last-write-wins merge and advances its cursor.</li>
+  <li><b>Conflicts:</b> resolved on the client by <code>updatedAt</code>; postings are immutable once posted, so edits are new reversing and replacing postings.</li>
+  <li><b>Tombstones</b> kept 90 days; <b>key rotation</b> through <code>key_version</code>.</li>
+</ul>
+
+<h2>8.5 Account Aggregator fetch saga</h2>
+<p>Each consent's fetch runs as a saga in the AA service: a persisted state machine that survives restarts and knows how to undo or give up at every step.</p>
+<table>
+  <thead><tr><th style="width:18%">State</th><th style="width:44%">What happens</th><th>On failure (compensation)</th></tr></thead>
+  <tbody>
+    <tr><td>Requested</td><td>Consent request created with the partner (Finvu sandbox first); user redirected to approve</td><td>User rejects or 24 h pass: Revoked</td></tr>
+    <tr><td>Active</td><td>Partner webhook: consent approved; publish ConsentActivated; schedule first fetch</td><td>Consent expires or is revoked: Revoked, payloads deleted</td></tr>
+    <tr><td>Fetching</td><td>FI data requested for the date range</td><td>Retry with backoff, 3 attempts, then Failed and tell the user</td></tr>
+    <tr><td>DataReady</td><td>Partner webhook; encrypted FI data fetched and decrypted <b>in memory</b> with the FIU key (KMS)</td><td>Decrypt error: Failed, audit, no retry storm</td></tr>
+    <tr><td>Sealed</td><td>Normalised to Khazana DTOs, sealed to the user's delivery key, stored in <code>inbox_payloads</code>; plaintext wiped; publish PayloadSealed</td><td>none needed (nothing readable kept)</td></tr>
+    <tr><td>Delivered</td><td>App pulls, unseals, imports (AA entries score 1.0 once linked), acks; payload deleted</td><td>Not collected in 14 days: payload deleted</td></tr>
+  </tbody>
+</table>
+<p class="small">Schedule: weekly per consent, plus on app open when the last fetch is over 24 h old; skipped for users inactive 30 days. Regulatory model unchanged: a regulated partner acts as FIU, Khazana as its technology service provider (D4).</p>
+
+<h2>8.6 Credit report (Credit service)</h2>
+<ol>
+  <li>Consent screen (bureau, purpose, validity); the consent text version is stored.</li>
+  <li><code>POST /v1/credit/report</code> calls the bureau aggregator (sandbox until production); PAN and mobile are used for this call only, not kept.</li>
+  <li>Report sealed to the user's key and placed in the inbox; <code>credit_pulls</code> records only that a pull happened; CreditReportReady published.</li>
+  <li>The app stores the report in the vault; quarterly refresh by default.</li>
+</ol>
+
+<h2>8.7 Catalog: offers and parser templates</h2>
+<ul>
+  <li><b>Offers:</b> curated in the admin app with sources and expiry; each catalog version is signed (Ed25519) and served as a delta. Matching against the user's cards and spending happens <b>on the device</b> — the server never sees spending. "Use the cards you have better" only, not new-card referrals (D8).</li>
+  <li><b>Parser templates:</b> sender patterns and rules as JSON, signed and versioned, pulled by devices daily; the device rejects unsigned or downgraded sets. Every change ships with fixture messages and must pass the shared parser suite (<code>test/fixtures/parser_cases.json</code>) in CI.</li>
+</ul>
+
+<h2>8.8 Market Data service</h2>
+<ul>
+  <li><b>Mutual funds:</b> daily job downloads AMFI's public NAV file (logic from v1's <code>amfi_nav_provider.dart</code>); the client keeps a direct fallback.</li>
+  <li><b>Stocks, ETFs, bonds:</b> end-of-day prices from a licensed vendor once there are users; public end-of-day files for personal use while testing (free-first, §13.3).</li>
+  <li><b>Delivery:</b> one compressed file per day, downloaded whole by every device, so holdings are never revealed by the query.</li>
+</ul>
+
+<h2>8.9 Background jobs</h2>
+<table>
+  <thead><tr><th style="width:30%">Job</th><th style="width:20%">Service</th><th style="width:22%">Schedule</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>AA scheduled fetch</td><td>Account Aggregator</td><td>Weekly per consent, on-open if over 24 h</td><td>Starts a fetch saga; skips inactive users</td></tr>
+    <tr><td>Consent expiry reminder</td><td>Account Aggregator</td><td>Daily</td><td>7 days before expiry</td></tr>
+    <tr><td>NAV and EOD ingest</td><td>Market Data</td><td>Daily / trading days</td><td>Alert if missing by midnight</td></tr>
+    <tr><td>Outbox relay</td><td>every publisher</td><td>Continuous</td><td>Publishes committed events to RabbitMQ</td></tr>
+    <tr><td>Inbox payload expiry</td><td>AA, Credit</td><td>Hourly</td><td>Delete undelivered payloads after 14 days</td></tr>
+    <tr><td>Tombstone compaction</td><td>Sync</td><td>Weekly</td><td>Remove deletion markers older than 90 days</td></tr>
+    <tr><td>Account deletion saga</td><td>Identity (orchestrator)</td><td>After 24 h cooling-off</td><td>Every service deletes and confirms; Identity deletes last</td></tr>
+    <tr><td>Offers expiry</td><td>Catalog</td><td>Daily</td><td>Unpublish and republish the catalog</td></tr>
+  </tbody>
+</table>
+
+<h2>8.10 Admin panel</h2>
+<p>The admin panel shows <b>who uses Khazana and how much</b>: user counts, names, sign-ins, devices and system health. It can never show anyone's financial data. That rule is <b>enforced by the architecture, not by trust</b>. Financial data is end-to-end encrypted, so no server can decrypt it, and the admin side has no route to the services that hold it.</p>
+
+<h3>What admins can and can't see</h3>
+<table>
+  <thead><tr><th style="width:50%">Visible (by role)</th><th>Never visible to anyone at Khazana</th></tr></thead>
+  <tbody>
+    <tr><td>Total users, new sign-ups, daily, weekly and monthly active users, retention</td><td>Transactions, balances, amounts, merchants</td></tr>
+    <tr><td>User's display name and masked email (r****@gmail.com), sign-up date, last active, account status</td><td>Bank accounts, card details, holdings, deposits, NPS/EPF/PPF</td></tr>
+    <tr><td>Sign-in history: time, platform, success or failure</td><td>Credit report, credit score</td></tr>
+    <tr><td>Devices: platform, model, app version, last seen</td><td>SMS, emails, notifications, receipts</td></tr>
+    <tr><td>Feature adoption as <b>yes/no flags</b> (AA linked, SMS capture on, Gmail linked), never values</td><td>Account Aggregator data, budgets, goals, insurance</td></tr>
+    <tr><td>System health: API errors, sync failures, latency, partner call counts and spend</td><td>Location, contacts, IP addresses (only salted hashes are stored)</td></tr>
+  </tbody>
+</table>
+
+<h3>How "can't see financial data" is enforced</h3>
+<ol>
+  <li><b>Encryption:</b> sync records and payloads are end-to-end encrypted with keys only the user's devices hold (§6). There is nothing readable to leak.</li>
+  <li><b>Separate service, separate data:</b> the admin app reads only the Audit &amp; Reporting service, whose database is filled solely from events (UserSignedIn, DeviceAdded…). Events carry no financial values (§8.3).</li>
+  <li><b>No route to financial services:</b> the admin app and Reporting have no credentials or network path to the Sync, AA, Credit or Devices &amp; Keys databases. An architecture test fails the build if one is ever added.</li>
+  <li><b>No impersonation:</b> there is no "log in as user" feature, ever.</li>
+  <li><b>No third-party analytics SDKs</b> (no Firebase Analytics, Mixpanel or similar). Metrics come from server events we already have (sign-ins, token refreshes, device registrations, consent status), so nothing is shared with any outside company.</li>
+</ol>
+
+<h3>Roles (least privilege)</h3>
+<table>
+  <thead><tr><th style="width:18%">Role</th><th style="width:46%">Can see / do</th><th>Typical holder</th></tr></thead>
+  <tbody>
+    <tr><td><b>Analyst</b></td><td>Dashboards and aggregate counts only, with no names. Groups smaller than 5 users are hidden so no one can be singled out.</td><td>Founder, sponsor reporting</td></tr>
+    <tr><td><b>Support</b></td><td>User directory (name, masked email, devices, sign-in history, status). Actions: force logout, suspend, resend sign-in link. Seeing a full email needs a typed reason and is logged.</td><td>Support staff</td></tr>
+    <tr><td><b>Operations</b></td><td>Offers catalog, parser templates, partner cost dashboards</td><td>Ops person</td></tr>
+    <tr><td><b>Security admin</b></td><td>Audit log, admin access reviews, incident tools. Can't edit or delete audit records.</td><td>Security lead</td></tr>
+    <tr><td><b>Super admin</b></td><td>Manages admin accounts and roles. Every change needs a second super admin to approve.</td><td>2 people at most</td></tr>
+  </tbody>
+</table>
+
+<div class="callout"><b>While you're the only admin.</b> Rules that assume two people (two-person approval, separate roles) become a <b>24-hour delay plus an alert to your second device</b> for role changes, exports and key operations, so a stolen admin session can't act instantly. Your daily account uses the Analyst role, and you switch to Super admin only with a security-key tap. Split the roles properly as soon as a second person joins. The same applies to §14: "24×7 on-call" means alerts to your phone, with managed AWS services chosen to keep operations small.</div>
+
+<h3>Screens</h3>
+<table>
+  <thead><tr><th style="width:20%">Screen</th><th>Contents</th></tr></thead>
+  <tbody>
+    <tr><td>Overview</td><td>Total users, sign-ups today, week and month, DAU/WAU/MAU trend, platform split (Android, iOS, web, macOS), app-version spread, retention cohorts</td></tr>
+    <tr><td>Users</td><td>Paginated directory: name, masked email, sign-up date, last active, platform, status. Search by exact email (matched by hash).</td></tr>
+    <tr><td>User detail</td><td>Identity (masked), devices, sign-in history, enabled sources as yes/no, status, support actions. No financial fields exist on this page.</td></tr>
+    <tr><td>Sign-in activity</td><td>Live feed of sign-ins and failures (name, platform, time), alerts for unusual patterns</td></tr>
+    <tr><td>System health</td><td>API error rate and latency, sync failures, job queue depth, webhook failures</td></tr>
+    <tr><td>Partner usage</td><td>AA fetch count, credit pulls, monthly spend against budget (totals, not per-user data)</td></tr>
+    <tr><td>Content</td><td>Offers catalog and parser template editors (§8.7)</td></tr>
+    <tr><td>Audit log</td><td>Every admin action: who, what, when, reason. Security admin only.</td></tr>
+    <tr><td>Admin accounts</td><td>Admins, roles, last access, quarterly access review</td></tr>
+  </tbody>
+</table>
+
+<h3>Security of the panel itself</h3>
+<ul>
+  <li><b>Not on the public internet:</b> a separate subdomain reachable only through zero-trust access (AWS Verified Access or a VPN) plus an IP allow-list.</li>
+  <li><b>Sign-in:</b> company SSO with <b>hardware security keys (FIDO2) required</b>. Passwords alone are never enough. Sessions time out after 15 minutes idle and 8 hours maximum.</li>
+  <li><b>Every request</b> is authorised on the server against the admin's role. The UI hiding a button is never the only check.</li>
+  <li><b>Re-authentication</b> (security key tap) before revealing a full email, suspending a user, or changing roles.</li>
+  <li><b>No bulk export</b> of the user list. Any export needs two-person approval, is watermarked and logged.</li>
+  <li><b>Audit trail</b> of every view and action in write-once storage (S3 Object Lock), kept 180 days or more, reviewed monthly.</li>
+  <li><b>Transparency to users:</b> the app's Security screen shows when support accessed the user's account record and why.</li>
+  <li>Same assurance as the product: included in every VAPT scope, strict CSP, no third-party scripts.</li>
+</ul>
+
+<h3>Data added for the panel</h3>
+<table>
+  <thead><tr><th style="width:24%">Table / view</th><th>Columns and notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>users</code> (extend)</td><td>display_name_enc, email_enc: <b>field-level encrypted</b> with a KMS key only the admin and auth services can use. email_hash for lookup. Apple "Hide My Email" users show their relay address.</td></tr>
+    <tr><td><code>signin_events</code></td><td>user_id, device_id, at, platform, result (ok | failed | blocked), ip_hash (salted). Kept 180 days.</td></tr>
+    <tr><td><code>admin_metrics_daily</code></td><td>date, signups, dau, wau, mau, by_platform, by_version, feature-adoption counts: pre-computed aggregates</td></tr>
+    <tr><td><code>user_directory</code> (projection in Reporting)</td><td>id, display name and masked email (decrypted only for the Support role), created_at, last_active_at, platforms, status, source flags</td></tr>
+    <tr><td><code>admin_accounts</code>, <code>admin_audit</code></td><td>Admins, roles, security-key ids. Append-only audit with reason codes.</td></tr>
+  </tbody>
+</table>
+<p class="small">Names and emails are personal data under the DPDP Act, so they stay encrypted at rest, are shown only to the Support role, and are deleted with the account.</p>
+
+<!-- ============================== 9 ============================== -->
+<h1 id="s9" data-t="9 · LLD: automatic capture engine (device)"><span class="num">9</span>LLD: automatic capture engine (device)</h1>
+<p class="lead">Every source feeds one pipeline. Confident results post to the ledger with a notification and Undo. Anything doubtful waits in the Review inbox and does not affect balances.</p>
+
+<div class="figure">
+<svg viewBox="0 0 680 230" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue, Arial, sans-serif">
+  <g font-size="8.6" text-anchor="middle" fill="#1B2340">
+    <rect x="4" y="14" width="84" height="64" rx="6" fill="#FDF6EA" stroke="#E8A33D"/>
+    <text x="46" y="32" font-weight="700">Sources</text><text x="46" y="45" font-size="7.4">SMS · notification</text><text x="46" y="56" font-size="7.4">Gmail · OCR</text><text x="46" y="67" font-size="7.4">AA inbox · manual</text>
+    <rect x="100" y="24" width="80" height="44" rx="6" fill="#fff" stroke="#3D4A8C"/><text x="140" y="42" font-weight="700">Filter</text><text x="140" y="55" font-size="7.4">drop OTP, promo</text>
+    <rect x="192" y="24" width="80" height="44" rx="6" fill="#fff" stroke="#3D4A8C"/><text x="232" y="42" font-weight="700">Parse</text><text x="232" y="55" font-size="7.4">templates + fallback</text>
+    <rect x="284" y="24" width="84" height="44" rx="6" fill="#fff" stroke="#3D4A8C"/><text x="326" y="42" font-weight="700">Match account</text><text x="326" y="55" font-size="7.4">last-4 → account</text>
+    <rect x="380" y="24" width="80" height="44" rx="6" fill="#fff" stroke="#3D4A8C"/><text x="420" y="42" font-weight="700">Dedupe</text><text x="420" y="55" font-size="7.4">UTR · amount+time</text>
+    <rect x="472" y="24" width="80" height="44" rx="6" fill="#fff" stroke="#3D4A8C"/><text x="512" y="42" font-weight="700">Score</text><text x="512" y="55" font-size="7.4">0 – 100</text>
+    <rect x="564" y="24" width="112" height="44" rx="6" fill="#1B2340" stroke="#1B2340"/><text x="620" y="42" font-weight="700" fill="#fff">Route</text><text x="620" y="55" font-size="7.4" fill="#C9CDE0">policy + setting</text>
+  </g>
+  <g stroke="#6C7285" stroke-width="1.2">
+    <line x1="88" y1="46" x2="98" y2="46"/><line x1="180" y1="46" x2="190" y2="46"/><line x1="272" y1="46" x2="282" y2="46"/><line x1="368" y1="46" x2="378" y2="46"/><line x1="460" y1="46" x2="470" y2="46"/><line x1="552" y1="46" x2="562" y2="46"/>
+  </g>
+  <g fill="#6C7285">
+    <polygon points="95,43 100,46 95,49"/><polygon points="187,43 192,46 187,49"/><polygon points="279,43 284,46 279,49"/><polygon points="375,43 380,46 375,49"/><polygon points="467,43 472,46 467,49"/><polygon points="559,43 564,46 559,49"/>
+  </g>
+  <!-- outcomes -->
+  <line x1="600" y1="68" x2="600" y2="110" stroke="#2E7D5B" stroke-width="1.3"/><polygon points="596,104 600,112 604,104" fill="#2E7D5B"/>
+  <line x1="640" y1="68" x2="640" y2="170" stroke="#A8402F" stroke-width="1.3"/>
+  <line x1="640" y1="170" x2="452" y2="170" stroke="#A8402F" stroke-width="1.3"/><polygon points="458,166 450,170 458,174" fill="#A8402F"/>
+  <line x1="420" y1="68" x2="420" y2="92" stroke="#6C7285" stroke-width="1" stroke-dasharray="3 2"/>
+  <text x="426" y="88" font-size="7.6" fill="#6C7285">duplicate → link, no change</text>
+  <rect x="300" y="112" width="370" height="40" rx="6" fill="#E3F1EA" stroke="#2E7D5B"/>
+  <text x="485" y="129" font-size="9" font-weight="700" fill="#1B2340" text-anchor="middle">High confidence → Ledger (posted), balance updates</text>
+  <text x="485" y="143" font-size="7.8" fill="#3A415C" text-anchor="middle">notification: "₹1,000 debited · HDFC ••1234 · tap to undo"</text>
+  <rect x="80" y="150" width="370" height="40" rx="6" fill="#F8ECE9" stroke="#A8402F"/>
+  <text x="265" y="167" font-size="9" font-weight="700" fill="#1B2340" text-anchor="middle">Low confidence / mismatch → Review inbox (pending)</text>
+  <text x="265" y="181" font-size="7.8" fill="#3A415C" text-anchor="middle">balance not affected · approve · edit &amp; approve · reject</text>
+  <text x="340" y="215" font-size="8" fill="#6C7285" text-anchor="middle">"Always review" setting sends everything to the inbox (v1 behaviour)</text>
+</svg>
+<div class="caption">Figure 2. The capture pipeline. One path for every source. AA data arrives through the server inbox and usually scores high.</div>
+</div>
+
+<h2>9.1 Capture channels</h2>
+<table>
+  <thead><tr><th style="width:18%">Channel</th><th style="width:12%">Platform</th><th style="width:42%">Implementation</th><th>Gate</th></tr></thead>
+  <tbody>
+    <tr><td>SMS (live) <span class="tag t-reuse">BUILT</span></td><td>Android</td><td><code>SmsReceiver</code> on <code>SMS_RECEIVED</code> (protected by <code>BROADCAST_SMS</code>), joins multipart messages, drops phone-number senders, posts to <code>CaptureBus</code></td><td><code>sideload</code> flavor now; Play build after its SMS declaration is approved</td></tr>
+    <tr><td>SMS (catch-up) <span class="tag t-reuse">BUILT</span></td><td>Android</td><td>On every unlock, reads the SMS inbox since the last scan (1-hour overlap; dedupe absorbs repeats) — the inbox is the durable queue, so nothing is lost while the app is closed. Opt-in 90-day import. Routed like any capture.</td><td>READ_SMS (<code>sideload</code>)</td></tr>
+    <tr><td>Notifications</td><td>Android</td><td>Existing <code>KhazanaNotificationListener</code>. Fallback when SMS permission is refused.</td><td>Notification access (exists)</td></tr>
+    <tr><td>Card emails</td><td>Android, iOS</td><td>Gmail API from the device: <code>messages.list</code> with a sender query, incremental via <code>historyId</code>, parse body, discard</td><td>Google restricted-scope verification + yearly CASA</td></tr>
+    <tr><td>Receipts, screenshots</td><td>Android, iOS</td><td>Share-sheet or camera → ML Kit / Vision OCR → field extraction (amount, date, merchant, UTR)</td><td>None</td></tr>
+    <tr><td>iPhone SMS</td><td>iOS</td><td>No API. Optional Shortcuts personal automation that forwards matching messages to an App Intent. Prototype first (unverified).</td><td>User sets it up</td></tr>
+    <tr><td>Bank data</td><td>All</td><td>AA payloads from the server inbox (§8.5)</td><td>Consent</td></tr>
+  </tbody>
+</table>
+
+<h2>9.2 Parser output (as built)</h2>
+<pre>ParsedNotification {
+  timestamp: 'YYYY-MM-DD'     // embedded date, else arrival day
+  amount: Decimal             // always positive; currency token required,
+                              // or SBI's "debited by 120.0" form
+  type: expense | income
+  kind: spend | income | refund | cardBillPayment
+  instrument: account | creditCard | debitCard | upi | unknown
+  merchant: string            // '' when none; e.g. "swiggy@icici"
+  utr?: string                // after a keyword only — never a bare 12-digit run
+  accountLast4?: string       // "XX1234" -> "1234" (3 digits when that's all)
+  availableBalance?: Decimal  // never a credit-card "Avl Lmt"
+  profileId?: string          // sender wins over a bank named in the body
+  fingerprintInput            // 'utr|REF|direction', else
+                              // 'date|amount|merchant|last4|balance'
+}</pre>
+<p class="small">Input is rejected above 2,000 characters and whitespace is collapsed before any pattern runs, keeping every regex linear on attacker-controlled text.</p>
+
+<h2>9.3 Confidence scoring (as built)</h2>
+<table>
+  <thead><tr><th style="width:56%">Signal</th><th class="n" style="width:12%">Points</th><th>If missing</th></tr></thead>
+  <tbody>
+    <tr><td>Sender recognised as a bank</td><td class="n">30</td><td>Soft reason: "Sender not recognised as a bank"</td></tr>
+    <tr><td>Account linked (bank + last-4 + instrument family)</td><td class="n">25</td><td><b>Forced review</b>: "Which account is this?"</td></tr>
+    <tr><td>Category learned for this merchant</td><td class="n">15</td><td><b>Forced review</b>: no category yet</td></tr>
+    <tr><td>Merchant present</td><td class="n">10</td><td>Soft reason</td></tr>
+    <tr><td>Reference number present</td><td class="n">10</td><td>none</td></tr>
+    <tr><td>Balance chain holds (previous alert's balance ∓ amount = this one)</td><td class="n">10</td><td>Broken chain: <b>forced review</b></td></tr>
+    <tr class="total"><td>Auto-post threshold</td><td class="n">80</td><td>Bank + account + category + merchant reach it exactly</td></tr>
+  </tbody>
+</table>
+<p class="small">Also forced, whatever the score: refund, card-bill payment, the other leg of a transfer (same reference, opposite direction), an amount over 3× the account's 90-day 95th percentile (with at least 5 entries of history), a hand-typed entry of the same amount within ±2 days, and the "Always review" switch. A forced reason always wins over the score. The threshold is 80, not the 85 first planned: at 85 a normal card SMS without a reference number could never post itself.</p>
+
+<h2>9.4 Capture lifecycle</h2>
+<div class="figure">
+<svg viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue, Arial, sans-serif">
+  <g font-size="8.6" font-weight="700" text-anchor="middle" fill="#1B2340">
+    <rect x="10" y="118" width="110" height="34" rx="6" fill="#fff" stroke="#3D4A8C"/><text x="65" y="139">RECEIVED</text>
+    <rect x="170" y="118" width="110" height="34" rx="6" fill="#fff" stroke="#3D4A8C"/><text x="225" y="139">PARSED</text>
+    <rect x="170" y="20" width="110" height="34" rx="6" fill="#EFEDE6" stroke="#6C7285"/><text x="225" y="41">IGNORED</text>
+    <rect x="335" y="20" width="130" height="34" rx="6" fill="#EFEDE6" stroke="#6C7285"/><text x="400" y="41">DUPLICATE</text>
+    <rect x="335" y="118" width="130" height="34" rx="6" fill="#E3F1EA" stroke="#2E7D5B"/><text x="400" y="139">AUTO_POSTED</text>
+    <rect x="335" y="216" width="130" height="34" rx="6" fill="#F8ECE9" stroke="#A8402F"/><text x="400" y="237">PENDING_REVIEW</text>
+    <rect x="525" y="118" width="145" height="34" rx="6" fill="#EFEDE6" stroke="#6C7285"/><text x="597" y="139">UNDO → back to review</text>
+    <rect x="525" y="176" width="145" height="30" rx="6" fill="#E3F1EA" stroke="#2E7D5B"/><text x="597" y="195">APPROVED</text>
+    <rect x="525" y="216" width="145" height="30" rx="6" fill="#E3F1EA" stroke="#2E7D5B"/><text x="597" y="235">EDITED_APPROVED</text>
+    <rect x="525" y="256" width="145" height="30" rx="6" fill="#EFEDE6" stroke="#6C7285"/><text x="597" y="275">REJECTED</text>
+  </g>
+  <g stroke="#6C7285" stroke-width="1.2" fill="none">
+    <line x1="120" y1="135" x2="168" y2="135"/>
+    <path d="M65 118 V37 H168"/>
+    <path d="M225 118 V90 H400 V56"/>
+    <line x1="280" y1="135" x2="333" y2="135"/>
+    <path d="M280 145 H305 V233 H333"/>
+    <line x1="465" y1="135" x2="523" y2="135"/>
+    <path d="M465 228 H495 V191 H523"/>
+    <line x1="465" y1="233" x2="523" y2="231"/>
+    <path d="M465 240 H495 V271 H523"/>
+  </g>
+  <g fill="#6C7285">
+    <polygon points="162,131 170,135 162,139"/><polygon points="162,33 170,37 162,41"/><polygon points="396,62 400,54 404,62"/>
+    <polygon points="327,131 335,135 327,139"/><polygon points="327,229 335,233 327,237"/><polygon points="517,131 525,135 517,139"/>
+    <polygon points="517,187 525,191 517,195"/><polygon points="517,227 525,231 517,235"/><polygon points="517,267 525,271 517,275"/>
+  </g>
+  <g font-size="7.6" fill="#6C7285">
+    <text x="72" y="30">not a transaction</text>
+    <text x="290" y="84">same UTR / match</text>
+    <text x="284" y="128">score ≥ 80</text>
+    <text x="310" y="200">low score / forced</text>
+    <text x="470" y="128">user taps Undo</text>
+  </g>
+</svg>
+<div class="caption">Figure 3. Lifecycle of one captured message (as built). Only AUTO_POSTED, APPROVED and EDITED_APPROVED have an entry in the ledger. Undo removes the entry and returns the capture to PENDING_REVIEW with the reason "You undid this"; a rejected capture can be restored the same way. Decided captures are kept 90 days as the dedupe record.</div>
+</div>
+
+<h2>9.5 Ledger rules</h2>
+<ul>
+  <li><b>Balance</b> = opening balance + Σ posted postings. Pending captures appear separately as "₹X waiting for review".</li>
+  <li><b>Edit and approve</b> stores <code>parsed_amount</code> and <code>final_amount</code>. The difference teaches the template (see 9.7).</li>
+  <li><b>Undo</b> removes the entry and its postings through <code>TransactionNotifier.remove</code> and returns the capture to the inbox; the capture row keeps the history. Approve is idempotent, so a double tap writes one entry.</li>
+  <li><b>Transfers between own accounts</b> (a debit SMS from account A and a credit from account B with the same amount within 10 minutes) are offered as a single transfer, not as expense plus income.</li>
+  <li><b>Card bill payments</b> (a bank debit to a card) are a liability payment, not spending, so totals aren't counted twice.</li>
+</ul>
+
+<h2>9.6 Cross-source dedupe</h2>
+<ol>
+  <li>Same <b>reference and same direction</b> → the same transaction. The key includes the direction so both legs of a transfer between own accounts survive — and are flagged as a transfer.</li>
+  <li>A <b>hand-typed entry</b> with the same amount and direction within ±2 days → flagged as a likely duplicate and sent to review (entries auto-capture wrote don't count).</li>
+  <li>The <b>fingerprint</b> blocks repeats in any status: a rejected capture is still the record that this alert was handled.</li>
+  <li><i>Phase 4:</i> source priority when merging with AA data: <b>AA &gt; SMS &gt; email &gt; notification &gt; OCR</b>.</li>
+</ol>
+
+<h2>9.7 Balance reconciliation and learning</h2>
+<ul>
+  <li><b>Built:</b> each alert's "Avl Bal" must follow from the previous alert's for the same account. It deliberately compares bank figures with bank figures — most people never enter an exact opening balance, so a check against Khazana's computed balance would flag everything. A break sends the capture to review. <i>Planned:</i> a "possibly missing transaction" banner with Find missing (AA fetch, Phase 4).</li>
+  <li><i>Planned:</i> repeated user edits for the same template and field raise a local "template suspect" flag. With opt-in, an anonymous signal (template id and field only, no message text) helps us fix templates centrally.</li>
+  <li>Merchant aliases and categories learned from user choices reuse the existing <code>merchant_alias</code> table.</li>
+</ul>
+
+<h2>9.8 Capture setup by platform</h2>
+<p>The app detects the platform and shows only the setup that works there. Android gets a standard permission flow. iPhone gets a guided Shortcuts setup in which every step is one tap. The web app explains that SMS capture needs the mobile app.</p>
+<table>
+  <thead><tr><th style="width:13%">Platform</th><th style="width:47%">What the user sees</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><b>Android</b></td><td>1. Card: "Track bank SMS automatically". A plain explanation: read on this phone, only amount, date, merchant and account are kept.<br>2. Tap "Turn on", which shows the system SMS permission.<br>3. Optional: "Also capture from bank-app notifications", which opens notification access.<br>4. Optional: "Import the last 90 days", which sends the results to the Review inbox.</td><td>Google Play requires the explanation screen (prominent disclosure) before the permission prompt. If SMS is refused, notification capture is offered as the fallback.</td></tr>
+    <tr><td><b>iPhone</b></td><td>1. Card: "Set up automatic SMS tracking (about 1 minute)".<br>2. <b>Add shortcut:</b> one tap opens our ready-made "Send to Khazana" shortcut, and the user taps Add.<br>3. <b>Create automation:</b> one tap opens the Shortcuts app, next to a 4-step picture guide (Automation → Message → sender contains your bank → Run Immediately) and a 30-second video. The app lists the bank sender names to use, taken from the user's accounts.<br>4. <b>Test it:</b> the app waits for the next bank message, or asks the user to forward one, and shows "Working" with a green tick.</td><td>Apple doesn't let apps create automations, so the user does step 3. The shortcut runs our App Intent in the background without opening the app. If the user skips this, AA, Gmail and screenshot sharing still work.</td></tr>
+    <tr><td><b>Web (Safari, Chrome)</b></td><td>Banner: "Automatic SMS tracking needs the Khazana mobile app", with App Store and Play links. Offers Gmail linking and screenshot import instead.</td><td>Browsers can't read SMS.</td></tr>
+    <tr><td><b>macOS / desktop</b></td><td>No SMS setup shown. Data arrives from the phone through sync.</td><td>n/a</td></tr>
+  </tbody>
+</table>
+<h3>Keeping it working</h3>
+<ul>
+  <li><b>Connections screen</b> shows each source per device: On, Off, Needs setup, and "last captured 2 h ago".</li>
+  <li><b>Health check:</b> if a source that used to capture has been silent for 14 days while bank activity shows up elsewhere (AA or email), the app nudges: "Your SMS shortcut may have stopped. Tap to check."</li>
+  <li><b>New bank detected</b> (for example a new AA-linked account): on iPhone, prompt to add that bank's sender to the automation.</li>
+  <li><b>Implementation:</b> <code>Platform.isAndroid</code> / <code>Platform.isIOS</code> in Flutter decide which card shows. On web, a user-agent check shows the banner only. The setup state lives in the device database (not synced, because it's per device).</li>
+</ul>
+
+<!-- ============================== 10 ============================== -->
+<h1 id="s10" data-t="10 · Data storage"><span class="num">10</span>Data storage</h1>
+<p class="lead">Readable financial data lives only on devices. The server keeps account metadata, consents, encrypted sync records and public catalogs.</p>
+
+<h2>10.1 Storage map</h2>
+<table>
+  <thead><tr><th style="width:18%">Store</th><th style="width:22%">Technology</th><th style="width:38%">Holds</th><th>Encryption</th></tr></thead>
+  <tbody>
+    <tr><td>App database</td><td>Drift on SQLCipher</td><td>Full ledger, accounts, cards, holdings, captures, credit report, offers cache</td><td>AES-256, vault key from PIN</td></tr>
+    <tr><td>Web database</td><td>Dexie (IndexedDB)</td><td>Same model as encrypted records</td><td>AES-256-GCM per record</td></tr>
+    <tr><td>Device secrets</td><td>Keychain / Keystore</td><td>Salt, device private key, refresh token</td><td>OS hardware-backed</td></tr>
+    <tr><td>Server databases</td><td>PostgreSQL 16, one per service</td><td>Users, devices, consents, sync records (ciphertext), catalogs, audit</td><td>RDS encryption at rest plus end-to-end for sync data</td></tr>
+    <tr><td>Blob storage</td><td>S3</td><td>Encrypted attachments, large sync records, sealed payloads over 64 KB</td><td>End-to-end plus SSE-KMS</td></tr>
+    <tr><td>Messaging and cache</td><td>RabbitMQ; Redis later</td><td>Events between services (ids and timestamps only); cache and rate limits when needed</td><td>TLS in transit, no financial data</td></tr>
+    <tr><td>Secrets</td><td>KMS, Secrets Manager</td><td>FIU private key, partner API keys, signing keys</td><td>HSM-backed</td></tr>
+  </tbody>
+</table>
+
+<h2>10.2 Device schema (Drift v7, as built)</h2>
+<p class="small">Additive and idempotent like the rest of the ladder: every v7 column is guarded, because v3 creates <code>pending_captures</code> from the current definition, and the v3 step adds the new transaction columns before its generated select runs.</p>
+<table>
+  <thead><tr><th style="width:22%">Table</th><th style="width:14%">Status</th><th>Columns</th></tr></thead>
+  <tbody>
+    <tr><td><code>pending_captures</code></td><td>extended (v7)</td><td>status (pending | auto_posted | approved | edited_approved | rejected | reversed), confidence 0–100, reason_codes, account_id, category_id, utr, account_last4, available_balance, instrument, kind, profile_id, final_amount, decided_at, posted_txn_id · indexes (vault_id, fingerprint) and (vault_id, status, captured_at)</td></tr>
+    <tr><td><code>transactions</code></td><td>extended (v7)</td><td>source (null = manual, sms, notification), capture_id</td></tr>
+    <tr><td><code>capture_account_links</code></td><td>new (v7)</td><td>id, vault_id, profile_id ('' = no bank named), last4, instrument, account_id, created_at · unique (vault, profile, last4, instrument)</td></tr>
+    <tr><td><code>cards</code>, <code>credit_reports</code>, <code>retirement_accounts</code>, <code>deposits</code>, <code>offers_cache</code>, <code>sync_state</code>, <code>parser_templates_cache</code></td><td>planned</td><td>Added by the phase that needs them (Cards in 1.7, sync in P2, AA data in P4, offers in P5), each in its own migration step</td></tr>
+  </tbody>
+</table>
+
+<h2>10.3 Retention</h2>
+<table>
+  <thead><tr><th style="width:32%">Data</th><th style="width:22%">Where</th><th>Kept for</th></tr></thead>
+  <tbody>
+    <tr><td>Raw SMS, notification and email text</td><td>Device memory</td><td>Discarded right after parsing (existing rule)</td></tr>
+    <tr><td>AA and credit plaintext</td><td>Server memory</td><td>Seconds, while processing</td></tr>
+    <tr><td>Sealed inbox payloads</td><td>Server</td><td>Until acknowledged, at most 14 days</td></tr>
+    <tr><td>Sync records</td><td>Server</td><td>While the account exists. Tombstones 90 days.</td></tr>
+    <tr><td>Logs</td><td>Server</td><td>180 days, stored in India (CERT-In), scrubbed of personal data</td></tr>
+    <tr><td>Audit events</td><td>Server</td><td>As required by partner agreements and law. No financial values.</td></tr>
+    <tr><td>Deleted account data</td><td>Server</td><td>Purged within 30 days. Backups age out within 35 days.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================== 11 ============================== -->
+<h1 id="s11" data-t="11 · Module-by-module implementation"><span class="num">11</span>Module-by-module implementation</h1>
+<p class="lead">Fourteen work modules, about 30–42 person-months in total; M3 is built, leaving about 27–38. Effort is for an experienced developer — learning adds time, AI pair-programming saves it. §15 turns this into dates.</p>
+<table>
+  <thead><tr><th style="width:17%">Module</th><th style="width:27%">Client work</th><th style="width:25%">Server work</th><th style="width:17%">External</th><th class="n">Effort</th></tr></thead>
+  <tbody>
+    <tr><td><b>M0</b> Microservice platform</td><td>None</td><td>Aspire AppHost and ServiceDefaults, YARP gateway, RabbitMQ, building blocks (messaging, outbox, idempotency, crypto), per-service CI, tracing</td><td>None (local first)</td><td class="n">3–4</td></tr>
+    <tr><td><b>M1</b> Login and keys</td><td>Sign-in screens, secure token storage, DPoP keys, key generation, QR pairing, recovery key</td><td>Identity and Devices &amp; Keys services, token rotation, passkeys, envelopes</td><td>Google, Apple sign-in, SES</td><td class="n">3–4</td></tr>
+    <tr><td><b>M2</b> Sync</td><td>Push/pull engine over the existing merge, attachments, sync status UI (Flutter and web)</td><td>Sync service, seq allocator, presigned URLs, compaction</td><td>S3</td><td class="n">2–3</td></tr>
+    <tr><td><b>M3</b> Capture engine <span class="tag t-reuse">BUILT</span></td><td>Parser v2, router, pipeline, review inbox, Undo, SMS in the sideload flavor (PR #28)</td><td>Template signing moves to Catalog (M7)</td><td>Gmail, ML Kit later (P3)</td><td class="n">3–4</td></tr>
+    <tr><td><b>M4</b> Accounts and AA</td><td>Link-account flow, consents, accounts hub, inbox import</td><td>AA service: consents, webhooks, fetch saga, normalisers, sealing</td><td>Finvu sandbox, then a regulated partner</td><td class="n">3–4</td></tr>
+    <tr><td><b>M5</b> Cards</td><td>My cards, statement and due dates, utilisation (Slice 1.7, prototype first)</td><td>None beyond sync</td><td>None</td><td class="n">1–1.5</td></tr>
+    <tr><td><b>M6</b> Credit report</td><td>Consent, viewer, refresh rules</td><td>Credit service, aggregator client, sealing</td><td>Bureau aggregator sandbox</td><td class="n">1–1.5</td></tr>
+    <tr><td><b>M7</b> Offers and templates</td><td>Catalog sync, on-device matcher, savings insights</td><td>Catalog service, signing, admin editors</td><td>Manual curation</td><td class="n">2–3</td></tr>
+    <tr><td><b>M8</b> Investments</td><td>AA holdings, FD/RD, NPS, EPF/EPS/PPF, passbook PDF import</td><td>Market Data service: NAV and EOD ingest, price files</td><td>AMFI, EOD source</td><td class="n">2–3</td></tr>
+    <tr><td><b>M9</b> Insurance</td><td>Policies from AA, policy PDF upload</td><td>Insurance normaliser in the AA service</td><td>AA</td><td class="n">0.5–1</td></tr>
+    <tr><td><b>M10</b> UI and motion</td><td>Prototype, motion system, navigation, refresh of key screens</td><td>None</td><td>None</td><td class="n">2.5–3</td></tr>
+    <tr><td><b>M11</b> Admin and operations</td><td>Blazor admin: dashboards, directory, sign-in feed, editors, audit</td><td>Audit &amp; Reporting service, projections, RBAC, zero-trust access</td><td>SSO + FIDO2</td><td class="n">2–2.5</td></tr>
+    <tr><td><b>M12</b> Quality and compliance</td><td>Fixture suites, integration and E2E tests, accessibility</td><td>Contract tests between services, load tests, DPDP processes</td><td>Play and Google verifications</td><td class="n">2–3</td></tr>
+    <tr><td><b>M13</b> Security hardening</td><td>DPoP signing, step-up, attestation, root detection, screen protection, pinning</td><td>DPoP verification at the gateway, risk engine, mTLS, SIEM, runbooks, HSM ceremonies</td><td>CERT-In auditor, crypto reviewer</td><td class="n">3–4</td></tr>
+    <tr class="total"><td colspan="4">Total (M3 built: about 27–38 remaining)</td><td class="n">30–42</td></tr>
+  </tbody>
+</table>
+
+<h2>Definition of done (every module)</h2>
+<ul>
+  <li>Domain logic in both Dart and TypeScript where both clients need it, with mirrored tests and shared fixtures (the parity rule).</li>
+  <li><b>Per service:</b> its own tests and container build in CI, an OpenAPI spec, contract tests for every event it publishes or consumes, outbox for publishing, idempotent consumers, traces carrying the correlation id.</li>
+  <li>No financial values in logs, events, analytics or crash reports, checked by a test.</li>
+  <li>Works offline where the section says it should; online-only actions queue.</li>
+  <li>Design sign-off against the prototype, in light and dark themes.</li>
+</ul>
+
+<!-- ============================== 12 ============================== -->
+<h1 id="s12" data-t="12 · External APIs and their cost"><span class="num">12</span>External APIs and their cost</h1>
+<p class="lead">AA fees and credit report pulls are the two costs that grow with users. Everything else is cheap or free. Verify every figure with the vendor; sources are in Appendix B.</p>
+<table>
+  <thead><tr><th style="width:19%">Service</th><th style="width:20%">Used for</th><th style="width:20%">Provider options</th><th style="width:21%">Cost (estimate)</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><b>Account Aggregator</b></td><td>Bank accounts, FD/RD, MF, stocks, ETF, NPS, insurance</td><td>Setu, Finvu, OneMoney, Anumati (through a regulated FIU partner)</td><td>₹0.30–₹9.90 per account per fetch (older OneMoney rate card). Data API tiers ₹1–₹60 per account.</td><td>Needs a regulated FIU, sandbox testing and certification. EPF and PPF not yet live on AA.</td></tr>
+    <tr><td><b>Credit bureau</b></td><td>Credit score and report</td><td>Through aggregators (Surepass, Decentro, Signzy, Perfios) or direct</td><td>About ₹5–₹50 per pull (third-party range, unverified)</td><td>Eligibility criteria apply. Quarterly refresh by default.</td></tr>
+    <tr><td><b>Gmail API</b></td><td>Credit card alert emails</td><td>Google</td><td>API free. Yearly security assessment (CASA) for restricted scopes: roughly ₹0.5–4 L/yr</td><td>OAuth verification takes weeks. Plan early.</td></tr>
+    <tr><td><b>On-device OCR</b></td><td>Receipts, screenshots</td><td>Google ML Kit, Apple Vision</td><td>Free</td><td>Runs offline</td></tr>
+    <tr><td><b>Mutual fund NAV</b></td><td>MF valuations</td><td>AMFI daily file</td><td>Free</td><td>Already used in v1</td></tr>
+    <tr><td><b>Stock / ETF prices</b></td><td>EOD valuations</td><td>Licensed vendor (Global Datafeeds, TrueData and others) or exchange licence</td><td>Vendor feeds from about ₹27,000/yr per segment. A redistribution licence costs more: budget ₹1–5 L+/yr.</td><td>End-of-day only. Real-time is far more expensive.</td></tr>
+    <tr><td><b>Sign-in</b></td><td>Google, Apple</td><td>Google Identity, Sign in with Apple</td><td>Free</td><td>Apple Developer Program $99/yr. Play one-time $25.</td></tr>
+    <tr><td><b>Push</b></td><td>"New data" pings</td><td>FCM, APNs</td><td>Free</td><td>No amounts in payloads</td></tr>
+    <tr><td><b>Email</b></td><td>Magic links, alerts</td><td>Amazon SES</td><td>About $0.10 per 1,000 emails</td><td>Negligible</td></tr>
+    <tr><td><b>Error tracking</b></td><td>Crashes, errors</td><td>Sentry (SaaS) or GlitchTip (self-hosted)</td><td>Free to about ₹30k/yr</td><td>Scrubbing mandatory</td></tr>
+    <tr><td><b>Card offers data</b></td><td>Offers catalog</td><td>Manual curation from bank and network sites</td><td>Staff time (see §13)</td><td>No reliable public API</td></tr>
+  </tbody>
+</table>
+
+<h3>Why fetch frequency matters (AA)</h3>
+<table>
+  <thead><tr><th>10,000 users × 3 accounts</th><th class="n">At ₹0.30 / account-fetch</th><th class="n">At ₹1.00 / account-fetch</th></tr></thead>
+  <tbody>
+    <tr><td>Daily fetch</td><td class="n">≈ ₹33 L / yr</td><td class="n">≈ ₹1.1 Cr / yr</td></tr>
+    <tr><td>Weekly fetch (recommended, plus SMS and email for real-time)</td><td class="n">≈ ₹4.7 L / yr</td><td class="n">≈ ₹15.6 L / yr</td></tr>
+    <tr><td>Weekly + on-open when stale, skipping inactive users</td><td class="n">≈ ₹3–6 L / yr</td><td class="n">≈ ₹10–20 L / yr</td></tr>
+  </tbody>
+</table>
+<p class="small">SMS and email give real-time updates at no per-use cost, so AA's job is completeness and catching missed entries, not speed. That design choice cuts AA cost by about 80%.</p>
+
+<!-- ============================== 13 ============================== -->
+<h1 id="s13" data-t="13 · Cost: what you will actually spend"><span class="num">13</span>Cost: what you will actually spend</h1>
+<p class="lead">Building alone, your time isn't a cash cost: about ₹8–28 lakh goes out before launch, mostly on security assurance. Everything runs locally on free tools while you build; paid services switch on one by one only when testing proves the need.</p>
+
+<h2>13.1 Before the v2 launch (Oct 2026 – Dec 2028)</h2>
+<table>
+  <thead><tr><th style="width:40%">Item</th><th class="n" style="width:20%">Cost</th><th>When</th></tr></thead>
+  <tbody>
+    <tr><td>Local development (Aspire, Docker, Postgres, RabbitMQ, MinIO)</td><td class="n">₹0</td><td>Throughout</td></tr>
+    <tr><td>AWS staging for the microservices</td><td class="n">₹0.5–2 L / yr</td><td>From late P2. New-account credits ($100–200, 6 months on the Free plan) cover the start — open the account only when staging is needed.</td></tr>
+    <tr><td>AI coding assistant subscription</td><td class="n">₹0.2–0.5 L / yr</td><td>Throughout</td></tr>
+    <tr><td>Domain, email, certificates</td><td class="n">≈ ₹0.05 L / yr</td><td>P1</td></tr>
+    <tr><td>Google Play developer account</td><td class="n">$25 once</td><td>If not already registered</td></tr>
+    <tr><td>Apple Developer Program</td><td class="n">$99 / yr</td><td>P3 (iOS)</td></tr>
+    <tr><td>Test devices (mid-range Android, older iPhone)</td><td class="n">₹0.3–0.6 L once</td><td>P1, P3</td></tr>
+    <tr><td>Company registration + accountant</td><td class="n">₹0.3–1 L + ₹0.2–0.5 L / yr</td><td>Before partners and paid features</td></tr>
+    <tr><td>Legal drafting: privacy policy, terms, consent texts</td><td class="n">₹0.5–2 L</td><td>Before other people's data is held</td></tr>
+    <tr><td>Independent cryptography and architecture review</td><td class="n">₹2–6 L</td><td>Before the P2 release</td></tr>
+    <tr><td>CERT-In-empanelled VAPT (web, API, mobile)</td><td class="n">₹2–8 L</td><td>Before the P2 release; re-test before launch</td></tr>
+    <tr><td>Google OAuth verification + first CASA</td><td class="n">₹0.5–4 L</td><td>When Gmail goes past 100 test users (self-scan is free)</td></tr>
+    <tr><td>AA partner onboarding and certification</td><td class="n">Quote needed</td><td>Before production bank data</td></tr>
+    <tr class="total"><td>Total before launch</td><td class="n">≈ ₹8–28 L</td><td>Mostly security assurance in P2–P3</td></tr>
+  </tbody>
+</table>
+
+<h2>13.2 After launch: yearly cash costs</h2>
+<table>
+  <thead><tr><th style="width:38%">Item</th><th class="n" style="width:15%">~1,000 users</th><th class="n" style="width:17%">~10,000 users</th><th>Driver</th></tr></thead>
+  <tbody>
+    <tr><td>Cloud: 10 services × 2 small Fargate tasks, gateway, RDS, broker, S3, CDN, monitoring, backups</td><td class="n">₹4–8 L</td><td class="n">₹5–12 L</td><td>Mostly fixed (one task per service runs all the time)</td></tr>
+    <tr><td>Account Aggregator fees</td><td class="n">₹0.5–3 L</td><td class="n">₹5–33 L</td><td>Fetch frequency (§12)</td></tr>
+    <tr><td>Credit report pulls</td><td class="n">₹0.6–6 L</td><td class="n">₹6–60 L</td><td>Price per pull × refresh rate</td></tr>
+    <tr><td>Stock price data licence</td><td class="n">₹1–5 L</td><td class="n">₹1–5 L</td><td>Needed once others see the prices</td></tr>
+    <tr><td>Google CASA (yearly)</td><td class="n">₹0.5–4 L</td><td class="n">₹0.5–4 L</td><td>Assessment tier</td></tr>
+    <tr><td>CERT-In VAPT (yearly)</td><td class="n">₹2–8 L</td><td class="n">₹2–8 L</td><td>Scope</td></tr>
+    <tr><td>Bug bounty</td><td class="n">₹0–5 L</td><td class="n">₹2–10 L</td><td>Rewards paid</td></tr>
+    <tr><td>Email, push, store fees, error tracking, security monitoring</td><td class="n">₹1–3 L</td><td class="n">₹1.5–5 L</td><td>Small</td></tr>
+    <tr><td>Legal, accountant, compliance</td><td class="n">₹1–3 L</td><td class="n">₹1–3 L</td><td>Fixed</td></tr>
+    <tr><td>Commercial app shielding (optional, D11)</td><td class="n">₹0</td><td class="n">₹0–8 L</td><td>Only if the pentest needs it</td></tr>
+    <tr class="total"><td>Cash total per year</td><td class="n">≈ ₹11–45 L</td><td class="n">≈ ₹24 L–1.5 Cr</td><td>Fixed costs dominate at 1,000 users</td></tr>
+  </tbody>
+</table>
+
+<h3>Help to hire when revenue allows</h3>
+<table>
+  <thead><tr><th style="width:45%">Role</th><th class="n" style="width:20%">Per year</th><th>When it becomes necessary</th></tr></thead>
+  <tbody>
+    <tr><td>Maintenance developer</td><td class="n">₹12–30 L</td><td>Around 10,000 users, or when templates break faster than you can fix them</td></tr>
+    <tr><td>Security engineer (part-time or consultant)</td><td class="n">₹6–15 L</td><td>Before production AA — partners will ask who owns security</td></tr>
+    <tr><td>Support person</td><td class="n">₹2–6 L</td><td>When support takes more than 5 hours a week</td></tr>
+    <tr><td>Offers curation</td><td class="n">₹2–4 L</td><td>P5 onwards</td></tr>
+  </tbody>
+</table>
+
+<h2>13.3 Free first, paid later (adapters)</h2>
+<p>Every paid dependency sits behind an interface chosen by configuration (<code>Providers:*</code>), so moving from the free option to the paid one is a new adapter plus one config line — no other code changes. A startup guard refuses any Mock adapter in Production, and one contract-test suite runs against every adapter.</p>
+<table>
+  <thead><tr><th style="width:20%">Capability</th><th style="width:20%">Interface</th><th style="width:30%">Free now</th><th>Paid later</th></tr></thead>
+  <tbody>
+    <tr><td>Bank data</td><td><code>IBankDataProvider</code></td><td>Sample data, then the <b>Finvu sandbox</b> (free; token renews every 6 months)</td><td>Finvu or Setu production through a regulated partner (quoted per fetch)</td></tr>
+    <tr><td>Credit report</td><td><code>ICreditReportProvider</code></td><td>Sample report / aggregator sandbox</td><td>Bureau aggregator (per pull)</td></tr>
+    <tr><td>Prices</td><td><code>IPriceProvider</code></td><td>AMFI NAV (free) + public end-of-day files for personal use</td><td>Licensed EOD vendor</td></tr>
+    <tr><td>Card emails</td><td>Gmail reader</td><td>Google "testing mode" (≤ 100 test users, no verification)</td><td>Verified app + yearly CASA</td></tr>
+    <tr><td>Email</td><td><code>IEmailSender</code></td><td>Console / free tier</td><td>Amazon SES</td></tr>
+    <tr><td>Files and keys</td><td><code>IBlobStore</code>, <code>IKeyVault</code></td><td>MinIO, local dev keys</td><td>S3, KMS</td></tr>
+    <tr><td>Database, broker</td><td>connection strings</td><td>Docker locally; Neon free tier, CloudAMQP "Little Lemur" (1 M messages/month) for a friend's test</td><td>RDS, Amazon MQ</td></tr>
+    <tr><td>Monitoring</td><td>OpenTelemetry</td><td>Aspire dashboard; Grafana Cloud free (10k series, 50 GB logs); Sentry free (5k errors)</td><td>Paid tiers</td></tr>
+  </tbody>
+</table>
+<p class="small">Free-tier limits change — two of these changed during 2026 alone. Keep the current numbers in <code>docs/free-tier-limits.md</code>, and put a budget alarm on every account that has a card attached. An <code>IEntitlements</code> hook (all features on) is built from the start in case a premium plan is chosen (D13).</p>
+
+<h3>Cost levers</h3>
+<ul>
+  <li><b>Fetch AA weekly</b> and rely on SMS and email for real-time — the biggest saving.</li>
+  <li><b>Refresh credit reports quarterly</b>; skip AA fetches for users inactive 30 days.</li>
+  <li><b>End-of-day prices only.</b></li>
+  <li><b>Smallest Fargate size per service</b>, one task each until load says otherwise; services with no traffic overnight can scale to zero.</li>
+  <li><b>Switch on paid partner features only when revenue covers them.</b></li>
+</ul>
+<div class="callout blue"><b>Monetisation (open decision D13).</b> Options that keep today's free features free: a B2B version; a paid online tier covering server and partner costs, with the offline app staying fully free; or a sponsor. Decide before AA and credit reports go live in production.</div>
+
+<!-- ============================== 14 ============================== -->
+<h1 id="s14" data-t="14 · Security architecture and compliance"><span class="num">14</span>Security architecture and compliance</h1>
+<p class="lead">Khazana v2 handles real bank data, so security is a release blocker, never a trade-off. The baseline is defence in depth: no single failure (a stolen token, a breached server, a lost phone or a rogue insider) can expose a user's financial data.</p>
+
+<h2>14.1 Standards we build and test against</h2>
+<table>
+  <thead><tr><th style="width:30%">Standard</th><th style="width:20%">Applies to</th><th>Target</th></tr></thead>
+  <tbody>
+    <tr><td>OWASP MASVS (mobile app security)</td><td>Flutter apps</td><td><b>Level 2 + Resilience</b>, the level used for banking apps, verified by an external mobile pentest</td></tr>
+    <tr><td>OWASP ASVS (application security)</td><td>Backend, API, admin</td><td><b>Level 3</b>, the highest, for critical applications</td></tr>
+    <tr><td>OWASP API Security Top 10</td><td>All APIs</td><td>Every item covered by a test or control</td></tr>
+    <tr><td>NIST SP 800-63B (authentication)</td><td>Login and sessions</td><td>Phishing-resistant authenticators (passkeys) and device-bound sessions</td></tr>
+    <tr><td>CERT-In Directions (2022)</td><td>Whole service</td><td>Report incidents within 6 hours. Keep logs for 180 days, stored in India.</td></tr>
+    <tr><td>DPDP Act 2023</td><td>Personal data</td><td>Consent, safeguards, breach notification, deletion on request</td></tr>
+    <tr><td>ISO/IEC 27001</td><td>Organisation</td><td>Certification within 12–18 months of launch. Partners and B2B customers will ask for it.</td></tr>
+    <tr><td>PCI DSS</td><td>Card data</td><td><b>Out of scope by design:</b> we never touch card numbers or CVV (see 14.2)</td></tr>
+  </tbody>
+</table>
+
+<div class="callout red"><b>Never stored, anywhere, ever:</b> full card numbers, CVV, card expiry, UPI PIN or MPIN, net-banking usernames or passwords, OTPs, raw SMS or email text, Account Aggregator plaintext, and PAN (tax ID) beyond the single credit-report request. Masked last-4 digits are the most we keep. A CI test fails the build if any of these patterns appears in logs, analytics or crash reports.</div>
+
+<h2>14.2 Defence in depth</h2>
+<table>
+  <thead><tr><th style="width:17%">Layer</th><th>Controls</th></tr></thead>
+  <tbody>
+    <tr><td><b>Identity</b></td><td><b>Passkeys</b> as the preferred sign-in, plus Google or Apple. No passwords, no SMS OTP (immune to SIM swap). <b>Device-bound tokens (DPoP)</b>: every request is signed by a private key in the phone's secure chip (Secure Enclave / StrongBox, non-exportable), so a stolen token is useless on any other device. 15-minute access tokens, rotating refresh tokens with reuse detection, step-up biometrics for sensitive actions (14.3), new-device alerts, login history, and "log out everywhere". Risk signals (new country, impossible travel, failed attestation) trigger step-up or a block.</td></tr>
+    <tr><td><b>App integrity</b></td><td>Google Play Integrity and Apple App Attest checked at sign-in and on every sensitive call, so only the genuine, unmodified app is served. Root, jailbreak, hooking and debugger detection disables sensitive features. Flutter obfuscation with separate debug symbols. Signature and tamper checks. Commercial app shielding (RASP) if the pentest finds gaps (D11).</td></tr>
+    <tr><td><b>Data on the device</b></td><td>SQLCipher AES-256 database (existing). Keys in the hardware keystore. PIN never stored. PBKDF2 600k for the vault (existing) and Argon2id for the new recovery key. Auto-lock (existing). Screen-capture blocking on sensitive screens (FLAG_SECURE on Android, a protected view on iOS). App-switcher blur. <b>Lock-screen notifications hide amounts by default</b> ("New transaction to review"). Clipboard auto-clear. Optional wipe after 10 wrong PINs.</td></tr>
+    <tr><td><b>Cryptography</b></td><td>Vetted libraries only (libsodium, platform crypto): no home-made cryptography. AES-256-GCM, X25519, Ed25519, HKDF-SHA-256, Argon2id. <code>key_version</code> on everything so keys can rotate. <b>Hybrid post-quantum key exchange</b> (X25519 + ML-KEM-768) planned for long-lived sync keys once library support is stable on all platforms, because financial history must stay private for decades. An independent cryptography review of the key hierarchy before launch.</td></tr>
+    <tr><td><b>Network</b></td><td>TLS 1.3 only, HSTS preload. <b>Certificate pinning</b> with two backup pins and a remote kill-switch. mTLS plus IP allow-lists for partner connections. Signed webhooks with a replay window.</td></tr>
+    <tr><td><b>Cloud</b></td><td>Separate AWS accounts per environment, with organisation-wide guardrail policies. Private subnets, no public database. WAF and DDoS protection. Least-privilege IAM, no long-lived access keys. <b>FIU and signing keys in FIPS-validated HSMs</b> (KMS; dedicated CloudHSM only if a partner requires it). Encryption at rest everywhere. Signed container images. Immutable infrastructure. Audit logs in write-once storage (S3 Object Lock).</td></tr>
+    <tr><td><b>Between services</b></td><td>Every service-to-service call carries a short-lived client-credentials token from Identity, scoped to that call, plus mTLS inside the cluster. RabbitMQ over TLS with one user per service, allowed to publish and consume only its own exchanges and queues. One database login per service, with rights on its own database only. Events carry ids, never financial values. Audit &amp; Reporting has no route to the Sync, AA, Credit or Devices &amp; Keys databases (§8.10).</td></tr>
+    <tr><td><b>People and access</b></td><td>No standing production access: just-in-time access with approval and session recording. <b>Hardware security keys (FIDO2) for every admin.</b> Two-person approval for production deploys and key operations. Background checks for staff with infrastructure access. By design, staff can't read user financial data (end-to-end encryption).</td></tr>
+    <tr><td><b>Monitoring and response</b></td><td>CloudTrail, GuardDuty and Security Hub feeding a central SIEM. Alerts on sign-in anomalies, mass deletes, partner-cost spikes and unusual key use. 24×7 on-call. Written incident-response plan: CERT-In report within 6 hours, DPDP breach notice to the Board and affected users. Scrubbed logs kept 180 days in India. Quarterly tabletop drills.</td></tr>
+    <tr><td><b>Secure development</b></td><td>Threat model for every feature (extending <code>docs/THREAT-MODEL.md</code>). SAST (CodeQL, Semgrep), dependency scanning with an SBOM, secret scanning, DAST against staging. Mandatory review with a security checklist. Signed commits and release builds. Pinned dependencies.</td></tr>
+    <tr><td><b>Assurance</b></td><td><b>CERT-In-empanelled VAPT</b> (web, API, mobile) before every phase that adds server surface, and yearly after that. Mobile pentest against MASVS L2+R. Independent cryptography review. Private bug bounty from launch, public later. ISO 27001 certification.</td></tr>
+    <tr><td><b>Resilience</b></td><td>Encrypted backups, point-in-time recovery, and a disaster-recovery copy in AWS Hyderabad (ap-south-2), so data stays in India. Recovery point 15 minutes or less, recovery time 4 hours or less. Restore drills every quarter.</td></tr>
+  </tbody>
+</table>
+
+<h2>14.3 Sensitive actions need step-up</h2>
+<p>A valid session isn't enough for these. Each one needs a fresh biometric or PIN check on the device, signed with the device key.</p>
+<table>
+  <thead><tr><th style="width:38%">Action</th><th>Extra protection</th></tr></thead>
+  <tbody>
+    <tr><td>Sign in on a new device</td><td>Approval from an existing device or the recovery key, plus push and email alerts to every device</td></tr>
+    <tr><td>Add or remove a device, "log out everywhere"</td><td>Biometric or PIN on a trusted device</td></tr>
+    <tr><td>Link or revoke a bank (AA) consent</td><td>Biometric or PIN, plus the AA's own OTP</td></tr>
+    <tr><td>Pull a credit report</td><td>Biometric or PIN, plus explicit consent screen</td></tr>
+    <tr><td>Export all data, change the recovery key</td><td>Biometric or PIN, plus an alert to the other devices</td></tr>
+    <tr><td>Delete the account</td><td>Biometric or PIN, then a 24-hour cooling-off period that can be cancelled from any device</td></tr>
+    <tr><td>Bulk delete (more than 50 records)</td><td>Biometric or PIN. The server keeps previous versions for 30 days so it can be undone.</td></tr>
+    <tr><td>Turn off a security feature (for example, showing amounts on the lock screen)</td><td>Biometric or PIN</td></tr>
+  </tbody>
+</table>
+
+<h2>14.4 What happens if something is stolen</h2>
+<table>
+  <thead><tr><th style="width:28%">If an attacker gets…</th><th>Result</th></tr></thead>
+  <tbody>
+    <tr><td>An access token</td><td><b>Useless.</b> Requests must be signed by the device's secure-chip key, which can't be copied. Expires in 15 minutes anyway.</td></tr>
+    <tr><td>A refresh token</td><td><b>Useless</b> for the same reason. Reuse detection also logs out that device's session.</td></tr>
+    <tr><td>A locked phone</td><td>Data is encrypted under the vault PIN and keys sit in secure hardware. The user logs the phone out remotely from another device.</td></tr>
+    <tr><td>An unlocked phone</td><td>The app still needs PIN or biometric. Sensitive actions need step-up. The device can be logged out remotely.</td></tr>
+    <tr><td>Our whole server database</td><td>Only ciphertext and metadata. No AA or credit plaintext is ever stored, and HSM-held keys can't be exported.</td></tr>
+    <tr><td>An insider with cloud access</td><td>Same as above, plus just-in-time access, two-person approval and recorded, write-once audit logs.</td></tr>
+    <tr><td>The user's password (phishing)</td><td>There are no passwords. Passkeys can't be phished.</td></tr>
+    <tr><td>The user's SIM (SIM swap)</td><td>Nothing. SMS OTP is never used for sign-in or recovery.</td></tr>
+    <tr><td>A tampered parser template</td><td>Rejected. Templates are Ed25519-signed and version-pinned.</td></tr>
+    <tr><td>A fake bank SMS</td><td>Sender allow-list, balance-consistency check and unusual-amount rule send it to the Review inbox, not the ledger.</td></tr>
+  </tbody>
+</table>
+
+<h2>14.5 Approvals and certifications</h2>
+<table>
+  <thead><tr><th style="width:26%">Item</th><th style="width:26%">Owner</th><th>What's needed</th></tr></thead>
+  <tbody>
+    <tr><td>Google Play SMS permissions</td><td>Mobile lead</td><td>Permissions Declaration Form under the SMS-based money management exception, a demo video and a prominent disclosure screen. Approval isn't guaranteed. Notification capture is the fallback.</td></tr>
+    <tr><td>Google restricted scope (Gmail)</td><td>Mobile lead + security</td><td>OAuth app verification, privacy policy, limited-use declaration, yearly CASA security assessment</td></tr>
+    <tr><td>Apple App Store</td><td>Mobile lead</td><td>Sign in with Apple, privacy nutrition labels, account deletion in the app, App Attest</td></tr>
+    <tr><td>Account Aggregator</td><td>Backend lead + business</td><td>Regulated FIU partner agreement, sandbox integration, certification by a Sahamati-empanelled certifier, and the partner's own security audit</td></tr>
+    <tr><td>Credit bureau</td><td>Business</td><td>Aggregator agreement, eligibility checks, consent records</td></tr>
+    <tr><td>CERT-In VAPT certificate</td><td>Security lead</td><td>From an empanelled auditor, before launch and yearly. Regulated partners usually ask for it.</td></tr>
+    <tr><td>DPDP Act</td><td>Project lead</td><td>Notice and consent, purpose limitation, security safeguards, breach process, deletion on request, grievance contact</td></tr>
+  </tbody>
+</table>
+
+<h2>14.6 Privacy commitments (user-facing)</h2>
+<ul>
+  <li>Messages and emails are read on the phone. Only the amount, date, merchant and account are kept.</li>
+  <li>Your synced data is locked with your key, and Khazana's servers and staff cannot read it.</li>
+  <li>We never ask for or store your card number, CVV, UPI PIN or bank password.</li>
+  <li>Every source can be switched off in Connections, and every consent can be revoked.</li>
+  <li>A Security screen shows your devices, sign-in history and alerts, with "log out everywhere".</li>
+  <li>No ads, no selling data, no loan offers.</li>
+</ul>
+
+<!-- ============================== 15 ============================== -->
+<h1 id="s15" data-t="15 · Solo build plan"><span class="num">15</span>Solo build plan: roadmap, learning path and folder structure</h1>
+<p class="lead">About 27 months alone, learning as you go. Phase 1 is already built; the rest front-loads learning, ships something real every few months, and starts paperwork early so it never blocks the code.</p>
+
+<div class="callout blue"><b>Assumptions.</b> About 25–30 hours a week alongside your job, with AI pair-programming for code, reviews and tests. Microservices add about 3–4 months over a single backend — accepted, because learning them is a goal. At about 15 hours a week, plan for roughly 40 months, or move P5 to a later v2.1. Every phase ends with something shipped, so the project stays useful and resume-worthy if the schedule slips.</div>
+
+<h2>15.1 Roadmap</h2>
+<div class="figure">
+<svg viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue, Arial, sans-serif">
+<line x1="176.0" y1="40" x2="176.0" y2="258" stroke="#EEEAE2" stroke-width="1"/>
+<text x="176.0" y="32" font-size="8" fill="#6C7285" text-anchor="middle">Oct 26</text>
+<line x1="229.7" y1="40" x2="229.7" y2="258" stroke="#EEEAE2" stroke-width="1"/>
+<text x="229.7" y="32" font-size="8" fill="#6C7285" text-anchor="middle">Jan 27</text>
+<line x1="283.4" y1="40" x2="283.4" y2="258" stroke="#EEEAE2" stroke-width="1"/>
+<text x="283.4" y="32" font-size="8" fill="#6C7285" text-anchor="middle">Apr 27</text>
+<line x1="337.1" y1="40" x2="337.1" y2="258" stroke="#EEEAE2" stroke-width="1"/>
+<text x="337.1" y="32" font-size="8" fill="#6C7285" text-anchor="middle">Jul 27</text>
+<line x1="390.8" y1="40" x2="390.8" y2="258" stroke="#EEEAE2" stroke-width="1"/>
+<text x="390.8" y="32" font-size="8" fill="#6C7285" text-anchor="middle">Oct 27</text>
+<line x1="444.5" y1="40" x2="444.5" y2="258" stroke="#EEEAE2" stroke-width="1"/>
+<text x="444.5" y="32" font-size="8" fill="#6C7285" text-anchor="middle">Jan 28</text>
+<line x1="498.2" y1="40" x2="498.2" y2="258" stroke="#EEEAE2" stroke-width="1"/>
+<text x="498.2" y="32" font-size="8" fill="#6C7285" text-anchor="middle">Apr 28</text>
+<line x1="551.9" y1="40" x2="551.9" y2="258" stroke="#EEEAE2" stroke-width="1"/>
+<text x="551.9" y="32" font-size="8" fill="#6C7285" text-anchor="middle">Jul 28</text>
+<line x1="605.6" y1="40" x2="605.6" y2="258" stroke="#EEEAE2" stroke-width="1"/>
+<text x="605.6" y="32" font-size="8" fill="#6C7285" text-anchor="middle">Oct 28</text>
+<line x1="659.3" y1="40" x2="659.3" y2="258" stroke="#EEEAE2" stroke-width="1"/>
+<text x="659.3" y="32" font-size="8" fill="#6C7285" text-anchor="end">Jan 29</text>
+<text x="6" y="61" font-size="8.6" font-weight="600" fill="#1B2340">P0  Foundations + learning</text>
+<rect x="186.7" y="50" width="60.9" height="16" rx="4" fill="#3D4A8C"/>
+<text x="217.2" y="61" font-size="7.6" fill="#fff" text-anchor="middle" font-weight="600">15 wk</text>
+<text x="6" y="86" font-size="8.6" font-weight="600" fill="#1B2340">P1  Capture (built) + Cards</text>
+<rect x="186.7" y="75" width="60.9" height="16" rx="4" fill="#2E7D5B"/>
+<text x="217.2" y="86" font-size="7.6" fill="#fff" text-anchor="middle" font-weight="600">built</text>
+<text x="6" y="111" font-size="8.6" font-weight="600" fill="#1B2340">P2  Microservices, login, sync</text>
+<rect x="247.6" y="100" width="143.2" height="16" rx="4" fill="#3D4A8C"/>
+<text x="319.2" y="111" font-size="7.6" fill="#fff" text-anchor="middle" font-weight="600">32 wk</text>
+<text x="6" y="136" font-size="8.6" font-weight="600" fill="#1B2340">P3  Gmail, OCR, iOS</text>
+<rect x="390.8" y="125" width="53.7" height="16" rx="4" fill="#3D4A8C"/>
+<text x="417.6" y="136" font-size="7.6" fill="#fff" text-anchor="middle" font-weight="600">13 wk</text>
+<text x="6" y="161" font-size="8.6" font-weight="600" fill="#1B2340">P4  Bank data (AA), invest</text>
+<rect x="444.5" y="150" width="107.4" height="16" rx="4" fill="#3D4A8C"/>
+<text x="498.2" y="161" font-size="7.6" fill="#fff" text-anchor="middle" font-weight="600">26 wk</text>
+<text x="6" y="186" font-size="8.6" font-weight="600" fill="#1B2340">P5  Cards intel, credit, admin</text>
+<rect x="551.9" y="175" width="53.7" height="16" rx="4" fill="#3D4A8C"/>
+<text x="578.8" y="186" font-size="7.6" fill="#fff" text-anchor="middle" font-weight="600">13 wk</text>
+<text x="6" y="211" font-size="8.6" font-weight="600" fill="#1B2340">P6  Polish, security, launch</text>
+<rect x="605.6" y="200" width="53.7" height="16" rx="4" fill="#E8A33D"/>
+<text x="632.4" y="211" font-size="7.6" fill="#fff" text-anchor="middle" font-weight="600">13 wk</text>
+<line x1="186.7" y1="40" x2="186.7" y2="258" stroke="#A8402F" stroke-width="1" stroke-dasharray="3 2"/>
+<text x="189.7" y="46" font-size="7.6" fill="#A8402F">today</text>
+<text x="6" y="248" font-size="8.6" font-weight="600" fill="#1B2340">Releases</text>
+<polygon points="247.6,238 254.6,245 247.6,252 240.6,245" fill="#1B2340"/>
+<text x="247.6" y="265" font-size="7.6" fill="#3A415C" text-anchor="middle">Capture + Cards</text>
+<polygon points="390.8,238 397.8,245 390.8,252 383.8,245" fill="#1B2340"/>
+<text x="390.8" y="265" font-size="7.6" fill="#3A415C" text-anchor="middle">Sync beta</text>
+<polygon points="444.5,238 451.5,245 444.5,252 437.5,245" fill="#1B2340"/>
+<text x="444.5" y="265" font-size="7.6" fill="#3A415C" text-anchor="middle">Gmail + iOS</text>
+<polygon points="551.9,238 558.9,245 551.9,252 544.9,245" fill="#1B2340"/>
+<text x="551.9" y="265" font-size="7.6" fill="#3A415C" text-anchor="middle">Bank data</text>
+<polygon points="605.6,238 612.6,245 605.6,252 598.6,245" fill="#1B2340"/>
+<text x="605.6" y="265" font-size="7.6" fill="#3A415C" text-anchor="middle">Cards intel</text>
+<polygon points="659.3,238 666.3,245 659.3,252 652.3,245" fill="#1B2340"/>
+<text x="666.3" y="233" font-size="7.6" font-weight="700" fill="#E8A33D" text-anchor="end">v2 launch</text>
+</svg>
+<div class="caption">Figure 4. Phase timeline, 19 October 2026 to December 2028. Green is Phase 1 (core built in October 2026, PR #28); amber is the v2 launch.</div>
+</div>
+
+<h2>15.2 Phases in detail</h2>
+<table>
+  <thead><tr><th style="width:14%">Phase and dates</th><th style="width:38%">What you build</th><th style="width:21%">What you learn</th><th>Ships, and the resume line</th></tr></thead>
+  <tbody>
+    <tr><td><b>P0</b> Foundations<br>Oct 2026 – Jan 2027</td><td>Dart and Flutter basics through the Phase 1 code; ADRs for D1–D15 in <code>docs/adr/</code>; <code>backend/</code>, <code>contracts/</code>, <code>infra/</code> folders; an Aspire "hello" with two services and RabbitMQ; clickable prototype of Accounts, Cards and Connections.</td><td>Dart, Flutter, Riverpod, Drift; Aspire, Docker, RabbitMQ basics</td><td>Internal. "Learned Flutter by extending a production app with 237 Dart files and 600+ tests."</td></tr>
+    <tr><td><b>P1</b> Android capture<br>core built Oct 2026; finish by Jan 2027</td><td><b>Built (PR #28):</b> parser v2, Drift v7, router, pipeline, review inbox, Undo, SMS in the sideload flavor. <b>Left:</b> test on a real phone and merge; Slice 1.7 Cards (prototype first); PRD §13 update; Play SMS declaration only when publishing SMS on Play.</td><td>Kotlin basics, Android permissions, Play policy</td><td>Tester build. "Built an on-device engine that parses 25+ Indian bank SMS formats and auto-posts with confidence scoring, with a ReDoS fix."</td></tr>
+    <tr><td><b>P2</b> Microservices, login, sync<br>Feb – Sep 2027</td><td>In order: platform skeleton (Aspire, YARP, RabbitMQ, outbox) + <b>Market Data</b> as the first service (4 wk) · <b>Identity</b> with passkeys and DPoP (4) · <b>Notification</b>, the first pure consumer (1) · <b>Devices &amp; Keys</b> (2) · <b>Sync</b> (4) · <b>Audit &amp; Reporting</b> + Blazor admin v1 (3) · <b>Catalog</b> (2) · Flutter and web sync clients (4) · Terraform and per-service CI (4) · crypto review and VAPT (4).</td><td>YARP, Wolverine or MassTransit, outbox and idempotency, OAuth/OIDC, DPoP, WebAuthn, libsodium, AWS, Terraform</td><td>Multi-device beta. "Built a .NET microservices platform: YARP gateway, RabbitMQ messaging with outbox, end-to-end encrypted sync, device-bound tokens."</td></tr>
+    <tr><td><b>P3</b> Gmail, OCR, iOS<br>Oct – Dec 2027</td><td>Gmail reader on device (testing mode first), ML Kit / Vision OCR, share-sheet import, iOS App Intent with the Shortcuts guide.</td><td>Gmail API, ML Kit, Swift and App Intents</td><td>Android and iOS update. "Shipped privacy-first email and receipt capture with on-device OCR."</td></tr>
+    <tr><td><b>P4</b> Bank data and investments<br>Jan – Jun 2028</td><td><b>Account Aggregator</b> service with the fetch saga against the Finvu sandbox (5 wk); accounts hub; holdings, FD/RD, NPS, insurance from AA; EPF/EPS/PPF manual and passbook PDF; production partner talks.</td><td>AA (ReBIT/Sahamati) specs, sagas, webhook security, KMS</td><td>Automatic bank data. "Integrated India's Account Aggregator framework with a saga-orchestrated fetch."</td></tr>
+    <tr><td><b>P5</b> Cards intelligence<br>Jul – Sep 2028</td><td><b>Credit</b> service (2 wk, sandbox first); offers catalog with the on-device matcher; full admin roles.</td><td>Blazor, RBAC</td><td>Cards section complete. "Built a privacy-preserving card-savings engine."</td></tr>
+    <tr><td><b>P6</b> Polish and launch<br>Oct – Dec 2028</td><td>Motion refresh, accessibility, performance; full VAPT re-test and MASVS pentest; bug bounty; store listings; launch.</td><td>MASVS testing, Flutter DevTools</td><td>v2 public launch and an updated case study.</td></tr>
+  </tbody>
+</table>
+
+<h2>15.3 Paperwork track (start early)</h2>
+<table>
+  <thead><tr><th style="width:46%">Item</th><th style="width:20%">Start</th><th>Needed by</th></tr></thead>
+  <tbody>
+    <tr><td>Company registration (Pvt Ltd or LLP)</td><td>Feb 2027</td><td>Organisation store accounts and partners</td></tr>
+    <tr><td>Privacy policy, terms, consent texts</td><td>Mar 2027</td><td>Before friends' real data is held</td></tr>
+    <tr><td>Book the crypto review and VAPT</td><td>Jun 2027</td><td>P2 release (Sep 2027)</td></tr>
+    <tr><td>Google OAuth verification + CASA</td><td>Aug 2027</td><td>Gmail beyond 100 test users</td></tr>
+    <tr><td>Finvu sandbox token</td><td>Nov 2027 (renew every 6 months)</td><td>P4 start (Jan 2028)</td></tr>
+    <tr><td>Monetisation decision (D13)</td><td>By Dec 2027</td><td>Before paid partner features</td></tr>
+    <tr><td>Regulated AA partner (Finvu or Setu production)</td><td>Jan 2028</td><td>Production bank data</td></tr>
+    <tr><td>Credit bureau aggregator</td><td>Apr 2028</td><td>P5 (Jul 2028)</td></tr>
+    <tr><td>Play SMS permission declaration</td><td>When publishing SMS on Play</td><td>A Play build with SMS</td></tr>
+  </tbody>
+</table>
+
+<h2>15.4 Learning path</h2>
+<table>
+  <thead><tr><th style="width:24%">Skill</th><th style="width:13%">When</th><th style="width:23%">Why you need it</th><th>Where to learn</th></tr></thead>
+  <tbody>
+    <tr><td>Dart and Flutter</td><td>P0</td><td>Every screen; reading Phase 1</td><td>dart.dev tour, docs.flutter.dev codelabs; then read <code>lib/features/capture</code></td></tr>
+    <tr><td>Riverpod, Drift</td><td>P0</td><td>State and the device database</td><td>riverpod.dev, Drift docs; trace <code>capture_providers.dart</code></td></tr>
+    <tr><td>Docker and .NET Aspire</td><td>P0</td><td>Running ten services locally</td><td>Microsoft Learn (Aspire), Docker docs</td></tr>
+    <tr><td>RabbitMQ + Wolverine or MassTransit</td><td>P0–P2</td><td>Events, outbox, idempotent consumers, sagas</td><td>RabbitMQ tutorials; the library's docs</td></tr>
+    <tr><td>YARP</td><td>P2</td><td>The gateway</td><td>Microsoft docs</td></tr>
+    <tr><td>OAuth 2 / OIDC, JWT, DPoP, WebAuthn</td><td>P2</td><td>Login and sessions</td><td>Microsoft identity docs, RFC 9449, webauthn.guide, Fido2NetLib</td></tr>
+    <tr><td>Applied cryptography</td><td>P2</td><td>End-to-end sync, sealing</td><td>libsodium and NSec docs — never write your own primitives</td></tr>
+    <tr><td>AWS + Terraform</td><td>P2</td><td>Hosting as code</td><td>AWS Skill Builder (free), HashiCorp tutorials</td></tr>
+    <tr><td>Kotlin, Swift + App Intents</td><td>P1, P3</td><td>Native capture</td><td>kotlinlang.org; developer.apple.com</td></tr>
+    <tr><td>OWASP ASVS and MASVS</td><td>P2, P6</td><td>The security baseline (§14)</td><td>owasp.org</td></tr>
+    <tr><td>Blazor Server</td><td>P2, P5</td><td>Admin app</td><td>Microsoft docs</td></tr>
+  </tbody>
+</table>
+
+<h2>15.5 How you work each week</h2>
+<ul>
+  <li><b>Time:</b> weekday evenings of 2–2.5 hours, 6–8 hours across the weekend; roughly 70% building, 20% learning, 10% writing.</li>
+  <li><b>Every task:</b> GitHub issue → branch in a git worktree → tests first for domain logic → code → self-review plus AI review → PR into <code>feature/safety-net-and-hardening</code> (the trunk accepts PRs only) → CI green → merge.</li>
+  <li><b>Every month:</b> a tester build; update the case study, resume bullets and this roadmap.</li>
+  <li><b>Every phase end:</b> a short retro, the §14 security checklist, an update to this document.</li>
+</ul>
+
+<h3>You wear every hat</h3>
+<table>
+  <thead><tr><th style="width:20%">Hat</th><th>How you cover it</th></tr></thead>
+  <tbody>
+    <tr><td>Architect</td><td>This document plus ADRs in <code>docs/adr/</code></td></tr>
+    <tr><td>Developer</td><td>You, with AI pair-programming</td></tr>
+    <tr><td>QA</td><td>Automated tests, the shared parser fixtures, contract tests, 10–20 friendly testers</td></tr>
+    <tr><td>Designer</td><td>The existing Zentra kit, reference apps for motion, a clickable prototype before each new section</td></tr>
+    <tr><td>Security</td><td>The §14 baseline plus paid external checks</td></tr>
+    <tr><td>Operations</td><td>Managed AWS services, traces in one dashboard, alerts to your phone, a status page</td></tr>
+    <tr><td>Buy, don't build</td><td>VAPT, cryptography review, legal drafting, accounting</td></tr>
+  </tbody>
+</table>
+
+<h2>15.6 Folder structure</h2>
+<p>One repository. The Flutter and web apps stay where they are; the backend is a single .NET solution with one folder per service. <b>NEW</b> marks what v2 adds; Phase 1 files are already in place.</p>
+<pre style="page-break-inside: auto;">khazana/                                  repository root
+├── lib/                                  Flutter app
+│   ├── core/  auth/ crypto/ sync/   NEW  sign-in + DPoP, keys + sealing, sync engine
+│   ├── data/  database/ remote/          Drift v7 (built) · NEW generated API client
+│   ├── domain/services/                  notification_parser, capture_router,
+│   │                                     capture_account_matcher (built)
+│   └── features/  capture/               built · NEW accounts/ cards/ connections/ security/
+├── android/app/src/
+│   ├── main/kotlin/.../                  MainActivity, CaptureBus, SmsCapture (built)
+│   ├── play/                             inert SmsCaptureImpl — no SMS code (built)
+│   └── sideload/                         SmsReceiver, SmsCaptureImpl, manifest (built)
+├── ios/Runner/Intents/              NEW  SendToKhazanaIntent.swift (P3)
+├── webapp/                               Next.js + Tauri · NEW src/lib/api, src/lib/sync
+├── backend/                         NEW  .NET 10 microservices
+│   ├── Khazana.sln
+│   ├── Khazana.AppHost/                  .NET Aspire: runs everything locally
+│   ├── Khazana.ServiceDefaults/          OpenTelemetry, health checks, resilience
+│   ├── Khazana.Gateway/                  YARP: routes, JWT + DPoP, rate limits
+│   ├── services/
+│   │   ├── Identity/                     each service has the same five folders:
+│   │   │   ├── Khazana.Identity.Api/            minimal API endpoints, DI
+│   │   │   ├── Khazana.Identity.Domain/         entities, rules (no framework)
+│   │   │   ├── Khazana.Identity.Application/    handlers, validators
+│   │   │   ├── Khazana.Identity.Infrastructure/ EF Core, outbox, adapters
+│   │   │   └── Khazana.Identity.Tests/          unit + Testcontainers + contracts
+│   │   ├── DevicesKeys/  Sync/  AccountAggregator/  Credit/
+│   │   ├── MarketData/   Catalog/  Notification/  AuditReporting/
+│   │   └── Admin/                        Blazor Server app (reads AuditReporting)
+│   └── building-blocks/
+│       ├── Khazana.Messaging/            event contracts (versioned), bus setup
+│       ├── Khazana.Outbox/               outbox relay + processed-messages
+│       ├── Khazana.Crypto/               sealing, signing (NSec), KMS wrappers
+│       └── Khazana.SharedKernel/         money (decimal), clock, results, errors
+├── contracts/                       NEW  openapi/ per service · events/ schemas
+│                                         fixtures/ shared parser cases
+├── infra/                           NEW  Terraform: modules/ (network, rds, ecs,
+│                                         mq, s3, kms, waf) · envs/ (dev, staging, prod)
+├── docs/  adr/  v2-design/               ADRs (NEW) · source of this document
+└── .github/workflows/                    ci.yml · NEW one backend job per service</pre>
+
+<h2>15.7 Testing strategy</h2>
+<ul>
+  <li><b>Parser fixtures:</b> <code>test/fixtures/parser_cases.json</code> (built) runs against the Dart and TypeScript parsers, and later the C# templates; grow it with anonymised real alerts toward the top 25 banks.</li>
+  <li><b>Domain parity:</b> mirrored tests continue for scoring, dedupe and ledger rules.</li>
+  <li><b>Per service:</b> xUnit unit tests; integration tests against real Postgres and RabbitMQ (Testcontainers); <b>contract tests</b> for every event and API between services; saga tests that replay each failure path; architecture tests for boundaries.</li>
+  <li><b>Sync:</b> property tests for merge convergence; two-device integration tests.</li>
+  <li><b>End-to-end:</b> Flutter <code>integration_test</code> and Playwright for sign-in, capture, review, undo and sync, run against the Aspire stack.</li>
+  <li><b>Load and security:</b> sync and webhook bursts at 10× expected peak; dependency and secret scanning; external VAPT before each phase that adds server surface.</li>
+</ul>
+
+<!-- ============================== 16 ============================== -->
+<h1 id="s16" data-t="16 · Decisions"><span class="num">16</span>Decisions</h1>
+<p class="lead">Decide these by the end of Phase 0, except D13, which can wait until late 2027. Each has a recommendation; D1 and D15 are decided.</p>
+<table>
+  <thead><tr><th style="width:6%">#</th><th style="width:28%">Decision</th><th style="width:30%">Recommendation</th><th>Why / alternative</th></tr></thead>
+  <tbody>
+    <tr><td>D1</td><td>Backend language and architecture</td><td><b>Decided:</b> C# / .NET 10, as ten microservices behind a YARP gateway (§7.2)</td><td>Your strongest language, and microservices are a learning goal. Costs accepted: about 3–4 more months and higher hosting.</td></tr>
+    <tr><td>D2</td><td>Cloud provider</td><td>AWS Mumbai</td><td>Mature managed services, KMS, India region. Azure or GCP India are equal alternatives.</td></tr>
+    <tr><td>D3</td><td>Identity</td><td>Issue our own tokens after verifying Google and Apple ID tokens</td><td>No per-user fees, full control. Firebase Auth is faster to start but adds a dependency.</td></tr>
+    <tr><td>D4</td><td>AA partner and regulatory model</td><td>Regulated partner as FIU, Khazana as TSP (model A)</td><td>The only realistic path without our own licence. Compare Setu, Finvu and OneMoney quotes.</td></tr>
+    <tr><td>D5</td><td>Gmail reading</td><td>On the device</td><td>The server never holds mailbox access. Trade-off: syncs only when the app runs or background fetch fires.</td></tr>
+    <tr><td>D6</td><td>Auto-post default</td><td><b>Built:</b> on for score ≥ 80, with an "Always review" switch</td><td>Meets the "reduce manual work" goal; every automatic add is announced with Undo.</td></tr>
+    <tr><td>D7</td><td>iOS automation</td><td>Gmail + OCR + AA at launch, Shortcuts SMS as a later experiment</td><td>iOS has no SMS API</td></tr>
+    <tr><td>D8</td><td>Card recommendations</td><td>Savings on existing cards only</td><td>Recommending new cards is a referral or upsell, against the non-goals</td></tr>
+    <tr><td>D9</td><td>Web scope in v2</td><td>Sync and read-mostly views first. Full parity later.</td><td>Capture happens on phones. Focus effort there.</td></tr>
+    <tr><td>D10</td><td>Price data</td><td>End-of-day only</td><td>Real-time licences cost many times more for little user value</td></tr>
+    <tr><td>D11</td><td>Commercial app shielding (RASP)</td><td>Start with built-in hardening and attestation. Add a commercial RASP if the mobile pentest finds gaps.</td><td>Keeps cost down without lowering the bar. The pentest decides.</td></tr>
+    <tr><td>D12</td><td>Post-quantum encryption</td><td>Design for it now (<code>key_version</code>), switch on hybrid X25519 + ML-KEM once libraries are stable on all platforms</td><td>Financial history must stay private for decades</td></tr>
+    <tr><td>D13</td><td>Monetisation model</td><td>Open. Options: B2B version, a paid online tier covering server and partner costs (offline app stays free), or a sponsor.</td><td>Decide before AA and credit reports go live, because those cost money per user</td></tr>
+    <tr><td>D14</td><td>Messaging library</td><td>Wolverine (MIT) — or MassTransit v8 if you prefer its maturity</td><td>Both do outbox and sagas on RabbitMQ; avoid MassTransit v9 (commercial licence since 2025)</td></tr>
+    <tr><td>D15</td><td>Paid services</td><td><b>Decided:</b> free first, behind adapters (§13.3)</td><td>Find the real issues on free tiers and sandboxes before paying for anything</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================== 17 ============================== -->
+<h1 id="s17" data-t="17 · Risks"><span class="num">17</span>Risks</h1>
+<table>
+  <thead><tr><th style="width:30%">Risk</th><th class="n" style="width:12%">Likelihood</th><th class="n" style="width:10%">Impact</th><th>Mitigation</th></tr></thead>
+  <tbody>
+    <tr><td>Play rejects the SMS permission</td><td class="n">Medium</td><td class="n">High</td><td>Notification capture already works. Gmail and AA cover the rest. Submit early in Phase 1.</td></tr>
+    <tr><td>No regulated FIU partner on workable terms</td><td class="n">Medium</td><td class="n">High</td><td>Phases 1–2 don't depend on it. Approach several partners in parallel from Phase 0.</td></tr>
+    <tr><td>Partner costs higher than estimated</td><td class="n">Medium</td><td class="n">Medium</td><td>Weekly fetch, inactive-user skip, quarterly credit refresh, budget alarms</td></tr>
+    <tr><td>Bank SMS and email formats change</td><td class="n">High</td><td class="n">Medium</td><td>Server-updatable signed templates, fixture library, balance drift detection</td></tr>
+    <tr><td>Wrong auto-posted amounts erode trust</td><td class="n">Medium</td><td class="n">High</td><td>Conservative threshold, forced-review rules, Undo, edit tracking for tuning</td></tr>
+    <tr><td>Google CASA or verification delays</td><td class="n">Medium</td><td class="n">Medium</td><td>Start verification at Phase 0. Ship SMS and OCR first.</td></tr>
+    <tr><td>Key loss (user loses devices and recovery key)</td><td class="n">Low</td><td class="n">High</td><td>Clear setup flow, recovery key reminders, encrypted local export</td></tr>
+    <tr><td>Distributed complexity for one person (microservices)</td><td class="n">Medium</td><td class="n">Medium</td><td>Aspire for one-command local runs; traces with a correlation id across every hop; coarse services; shared building blocks; contract tests; build in the order of §15.2 so the platform is proven on a simple service first</td></tr>
+    <tr><td>Solo burnout, or the project depends on one person</td><td class="n">Medium</td><td class="n">High</td><td>Phases that ship on their own, a sustainable weekly rhythm, ADRs and docs so a collaborator can join, the 36-month fallback plan</td></tr>
+    <tr><td>Security incident or breach</td><td class="n">Low</td><td class="n">Critical</td><td>§14 baseline: end-to-end encryption, device-bound tokens, HSM keys, VAPT, bug bounty, 6-hour CERT-In response plan, quarterly drills</td></tr>
+    <tr><td>Funding stops</td><td class="n">Medium</td><td class="n">High</td><td>Offline-first means the app keeps working. Written shutdown plan: 90 days' notice and export.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================== APPENDIX A ============================== -->
+<h1 id="sa" data-t="A · Glossary"><span class="num">A</span>Glossary</h1>
+<table>
+  <thead><tr><th style="width:18%">Term</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>AA</td><td>Account Aggregator: RBI-licensed entities that move financial data between institutions with the user's consent</td></tr>
+    <tr><td>FIP / FIU</td><td>Financial Information Provider (for example a bank) / Financial Information User (the regulated receiver of data)</td></tr>
+    <tr><td>TSP</td><td>Technology Service Provider: integrates AA on behalf of an FIU</td></tr>
+    <tr><td>UTR</td><td>Unique Transaction Reference: the 12-digit UPI or bank reference number</td></tr>
+    <tr><td>DEK / KEK</td><td>Data Encryption Key / Key Encryption Key (wraps the DEK)</td></tr>
+    <tr><td>Sealing</td><td>Encrypting a payload to a recipient's public key so only they can open it</td></tr>
+    <tr><td>LWW</td><td>Last-write-wins merge, the existing sync rule</td></tr>
+    <tr><td>CASA</td><td>Cloud Application Security Assessment: Google's required security review for restricted scopes</td></tr>
+    <tr><td>DPDP</td><td>India's Digital Personal Data Protection Act, 2023</td></tr>
+    <tr><td>NAV / EOD</td><td>Net Asset Value (mutual funds) / End-of-day price</td></tr>
+    <tr><td>Microservice</td><td>A small service with its own code, database and deployment, talking to others only through APIs or messages</td></tr>
+    <tr><td>YARP</td><td>Microsoft's reverse-proxy library, used as Khazana's API gateway</td></tr>
+    <tr><td>.NET Aspire</td><td>Microsoft's tooling to run and observe a multi-service app locally with one command</td></tr>
+    <tr><td>Outbox</td><td>Writing an event in the same database transaction as the change it announces, then publishing it — so no event is lost if a crash comes between</td></tr>
+    <tr><td>Idempotent consumer</td><td>A message handler that ignores a message it has already processed, so a redelivery can't apply twice</td></tr>
+    <tr><td>Saga</td><td>A long-running workflow across steps or services, saved as a state machine, with a compensating action for each step that can fail</td></tr>
+    <tr><td>DPoP</td><td>Demonstrating Proof of Possession: tokens bound to a device key, so a stolen token is useless elsewhere</td></tr>
+    <tr><td>MASVS / ASVS</td><td>OWASP's verification standards for mobile apps and for web applications and APIs</td></tr>
+    <tr><td>RASP</td><td>Runtime Application Self-Protection: in-app defence against tampering, hooking and debugging</td></tr>
+    <tr><td>HSM</td><td>Hardware Security Module: tamper-resistant hardware that holds keys and never lets them out</td></tr>
+    <tr><td>VAPT</td><td>Vulnerability Assessment and Penetration Testing</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================== APPENDIX B ============================== -->
+<h1 id="sb" data-t="B · Sources"><span class="num">B</span>Sources</h1>
+<p class="small">Checked in October 2026. Prices from third-party or older documents are marked as estimates in the text. Get current quotes before budgeting.</p>
+<ul class="small">
+  <li>Fold: how credit card data is fetched (Gmail) — https://help.fold.money/hc/en-us/articles/17257827045138</li>
+  <li>Fold: credit card known issues — https://help.fold.money/hc/en-us/articles/17396989046162</li>
+  <li>Fold: introduction to AA — https://docs.fold.money/introduction-to-aa</li>
+  <li>Sahamati: data types available on AA — https://sahamati.org.in/data-fi-types-available-on-aa/</li>
+  <li>Signzy: Account Aggregator APIs (eligibility, sandbox, certification) — https://docs.signzy.com/api-marketplace/why-use-the-aa-framework</li>
+  <li>Federal Bank: Account Aggregator (FIU definition) — https://federal.bank.in/account-aggregator</li>
+  <li>Hyperverge: AA framework guide and AA selection guide — https://hyperverge.co/blog/account-aggregator-framework-rbi/</li>
+  <li>OneMoney business summary (per-account pricing, older document) — https://www.onemoney.in/docs/resources/FinTech%20Group%20Very%20Brief%20Business%20Summary.pdf</li>
+  <li>Setu: Account Aggregator API — https://setu.co/credit-infrastructure/credit-intelligence/account-aggregator-api</li>
+  <li>Bajaj Broking: RBI AA interoperability rules — https://www.bajajbroking.in/share-market-news/rbi-account-aggregator-rules-what-interoperability-means-for-your-finances</li>
+  <li>Productgrowth: Experian India and CIBIL pricing range — https://productgrowth.in/tools/kyc-identity/experian-india/</li>
+  <li>FinBox: credit bureau API providers in India — https://research.finbox.in/blog/best-credit-bureau-data-api-providers-india/</li>
+  <li>Decentro: credit bureau API — https://decentro.tech/resources/credit-bureau-api</li>
+  <li>Marketcalls: NSE datafeed vendor pricing — https://www.marketcalls.in/?p=12086</li>
+  <li>Google Play Console Help: Use of SMS or Call Log permission groups ("SMS-based money management" exception) — https://support.google.com/googleplay/android-developer/answer/10208820</li>
+  <li>AWS Free Tier changes for new accounts (credits, 6-month Free plan) — https://spot.rackspace.com/blog/aws-free-tier</li>
+  <li>Neon pricing (free plan) — https://neon.com/pricing</li>
+  <li>CloudAMQP plans (Little Lemur free tier) — https://cloudamqp.com/pricing</li>
+  <li>Grafana Cloud free tier — https://grafana.com/products/cloud/free-tier/</li>
+  <li>Finvu sandbox — https://finvu.github.io/sandbox/</li>
+  <li>Setu Account Aggregator quickstart — https://docs.setu.co/data/account-aggregator/quickstart</li>
+  <li>Khazana v1 repository: docs/ARCHITECTURE.md, docs/APP-INVENTORY.md and the files cited in §3</li>
+</ul>
+
+</body>
+</html>
