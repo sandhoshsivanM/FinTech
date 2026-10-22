@@ -94,6 +94,9 @@ by [`marketing/`](marketing/README.md).
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs   # Drift/json codegen
 flutter run            # or: flutter test
+# Android has two flavors and needs one named:
+#   flutter run --flavor sideload   # reads bank SMS (direct install / testers)
+#   flutter run --flavor play       # the Google Play build, no SMS permission
 ```
 
 **Web app**

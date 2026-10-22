@@ -1,8 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:khazana/domain/entities/transaction.dart';
 import 'package:khazana/domain/services/notification_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-// Parity fixtures shared with webapp/src/domain/notificationParser.test.ts.
+// Twin of webapp/src/domain/notificationParser.test.ts. The fixture-driven group
+// loads test/fixtures/parser_cases.json, which both suites must agree on.
 // `now` is pinned to local noon so the fallback timestamp is deterministic.
 void main() {
   const parser = NotificationParser();
@@ -20,7 +24,10 @@ void main() {
     expect(p.timestamp, '2026-01-05');
     expect(p.uncategorized, isFalse);
     expect(p.profileId, isNull);
-    expect(p.fingerprintInput, '2026-01-05|1234.56|amazon');
+    expect(p.accountLast4, '1234');
+    expect(p.availableBalance.toString(), '45000');
+    // No reference number, so the balance is what keeps this key unique.
+    expect(p.fingerprintInput, '2026-01-05|1234.56|amazon|1234|45000');
   });
 
   test('credit SMS: income, sender-matched bank profile, fallback timestamp', () {
@@ -58,5 +65,92 @@ void main() {
   test('non-financial message → null', () {
     final p = parser.parse('OTP 123456 for your login. Do not share.', now: now);
     expect(p, isNull);
+  });
+
+  group('hostile input', () {
+    // The notification listener sees every app's notifications, so this text
+    // is attacker-controlled. Each probe would take seconds to minutes against
+    // a pattern with adjacent `\s*` groups; collapsing whitespace first keeps
+    // every pattern linear.
+    final probes = <String, String>{
+      'spaces after a balance keyword': 'debited balance${' ' * 1900}x',
+      'spaces after an account keyword': 'debited a/c${' ' * 1900}x',
+      'spaces after a reference keyword': 'debited rs 5 ref${' ' * 1900}x',
+      'many merchant keywords, no terminator':
+          'debited rs 5 ${'to a ' * 390}',
+    };
+    for (final e in probes.entries) {
+      test('${e.key} parses in linear time', () {
+        final sw = Stopwatch()..start();
+        parser.parse(e.value, now: now);
+        expect(sw.elapsedMilliseconds, lessThan(200));
+      });
+    }
+
+    test('anything longer than a bank alert is rejected outright', () {
+      final long = 'Rs 100 debited from a/c XX1234. ${'x' * NotificationParser.maxLength}';
+      expect(parser.parse(long, now: now), isNull);
+    });
+  });
+
+  group('shared fixture', () {
+    late Map<String, dynamic> fixture;
+
+    setUpAll(() {
+      fixture = jsonDecode(File('test/fixtures/parser_cases.json').readAsStringSync())
+          as Map<String, dynamic>;
+    });
+
+    test('the two copies of the fixture are byte-identical', () {
+      // Vitest cannot import from outside webapp/, so the file is duplicated
+      // rather than symlinked. Duplicated files drift; this is what stops it.
+      // If this fails, copy test/fixtures/parser_cases.json over
+      // webapp/src/domain/__fixtures__/parser_cases.json.
+      final dart = File('test/fixtures/parser_cases.json').readAsBytesSync();
+      final web =
+          File('webapp/src/domain/__fixtures__/parser_cases.json').readAsBytesSync();
+      expect(web, dart,
+          reason: 'the Dart and TypeScript suites are no longer asserting '
+              'against the same cases, so the parity contract is not being '
+              'checked');
+    });
+
+    test('every case', () {
+      final fixedNow = DateTime.parse(fixture['now'] as String);
+      final failures = <String>[];
+      for (final c in (fixture['cases'] as List).cast<Map<String, dynamic>>()) {
+        final name = c['name'] as String;
+        final p = parser.parse(c['text'] as String,
+            now: fixedNow, sender: c['sender'] as String?);
+        final expected = c['expect'] as Map<String, dynamic>?;
+        if (expected == null) {
+          if (p != null) failures.add('$name: expected null, got a parse');
+          continue;
+        }
+        if (p == null) {
+          failures.add('$name: expected a parse, got null');
+          continue;
+        }
+        final actual = <String, Object?>{
+          'type': p.type.name,
+          'kind': p.kind.key,
+          'amount': p.amount.toString(),
+          'merchant': p.merchant,
+          'timestamp': p.timestamp,
+          'utr': p.utr,
+          'accountLast4': p.accountLast4,
+          'availableBalance': p.availableBalance?.toString(),
+          'instrument': p.instrument.key,
+          'profileId': p.profileId,
+          'fingerprint': p.fingerprintInput,
+        };
+        for (final e in expected.entries) {
+          if (actual[e.key] != e.value) {
+            failures.add('$name: ${e.key} expected ${e.value}, got ${actual[e.key]}');
+          }
+        }
+      }
+      expect(failures, isEmpty, reason: failures.join('\n'));
+    });
   });
 }

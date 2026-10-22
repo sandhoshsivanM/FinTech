@@ -104,6 +104,12 @@ final pendingCaptureRepositoryProvider =
       ref.watch(databaseProvider).pendingCaptureDao);
 });
 
+final captureAccountLinkRepositoryProvider =
+    Provider<ICaptureAccountLinkRepository>((ref) {
+  return DriftCaptureAccountLinkRepository(
+      ref.watch(databaseProvider).pendingCaptureDao);
+});
+
 /// The id of the currently unlocked vault (PRD multi-vault; single 'default' in v1).
 final currentVaultIdProvider = Provider<String>((ref) {
   final vault = ref.watch(vaultUnlockProvider);

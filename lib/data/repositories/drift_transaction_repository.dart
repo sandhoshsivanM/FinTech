@@ -59,6 +59,8 @@ class DriftTransactionRepository implements ITransactionRepository {
         createdAt: DateTime.fromMillisecondsSinceEpoch(r.createdAt),
         accountId: r.accountId,
         attachmentRef: r.attachmentRef,
+        source: r.source,
+        captureId: r.captureId,
       );
 
   static TransactionsCompanion _toCompanion(Txn t) => TransactionsCompanion(
@@ -73,5 +75,7 @@ class DriftTransactionRepository implements ITransactionRepository {
         createdAt: Value(t.createdAt.millisecondsSinceEpoch),
         accountId: Value(t.accountId),
         attachmentRef: Value(t.attachmentRef),
+        source: Value(t.source),
+        captureId: Value(t.captureId),
       );
 }

@@ -38,6 +38,13 @@ class Transactions extends Table {
   /// Receipt attachment — sandbox file path (PRD §11 local media).
   TextColumn get attachmentRef => text().nullable()();
 
+  /// Where the entry came from (v7): null/manual, sms or notification. Lets the
+  /// list show an "auto" chip and lets Undo find what auto-capture wrote.
+  TextColumn get source => text().nullable()();
+
+  /// The [PendingCaptures] row this entry was created from, if any (v7).
+  TextColumn get captureId => text().nullable()();
+
   /// Transaction date and creation time (Unix ms).
   IntColumn get date => integer()();
   IntColumn get createdAt => integer()();
@@ -269,13 +276,20 @@ class Postings extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// Auto-captured transaction drafts from the SMS / notification parser, awaiting
-/// review. Stores extracted values only — never the raw message text (PRD §11
+/// Every transaction the SMS / notification parser has seen, and what became of
+/// it. Stores extracted values only — never the raw message text (PRD §11
 /// zero-telemetry privacy boundary).
+///
+/// Rows are kept after a decision (v7) rather than deleted: the row *is* the
+/// dedupe record, and deleting it on approve/dismiss is what let a re-delivered
+/// alert come back as a fresh draft. Decided rows are purged after 90 days.
 @DataClassName('PendingCaptureRow')
 class PendingCaptures extends Table {
   TextColumn get id => text()();
   TextColumn get vaultId => text()();
+
+  /// The amount as parsed. A user correction goes to [finalAmount], so the
+  /// parser's mistakes stay visible for tuning.
   TextColumn get amount => text().map(const DecimalConverter())();
   TextColumn get type => text()(); // expense | income
   TextColumn get merchant => text().nullable()();
@@ -285,8 +299,57 @@ class PendingCaptures extends Table {
   TextColumn get fingerprint => text()();
   IntColumn get capturedAt => integer()();
 
+  // ---- v7: routing and review ----
+  /// pending | auto_posted | approved | edited_approved | rejected | reversed
+  TextColumn get status => text().withDefault(const Constant('pending'))();
+
+  /// Router confidence, 0–100. Null for rows captured before v7.
+  IntColumn get confidence => integer().nullable()();
+
+  /// Comma-separated [ReviewReason] keys explaining a review decision.
+  TextColumn get reasonCodes => text().nullable()();
+  TextColumn get accountId => text().nullable()(); // matched money account
+  TextColumn get categoryId => text().nullable()(); // suggested category
+  TextColumn get utr => text().nullable()();
+  TextColumn get accountLast4 => text().nullable()();
+  TextColumn get availableBalance =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get instrument => text().nullable()();
+  TextColumn get kind => text().nullable()();
+  TextColumn get profileId => text().nullable()();
+  TextColumn get finalAmount =>
+      text().map(const DecimalConverter()).nullable()();
+  IntColumn get decidedAt => integer().nullable()(); // Unix ms
+  TextColumn get postedTxnId => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
+}
+
+/// "HDFC ••1234 is my HDFC Savings account" — the user's answer, remembered so
+/// the next alert from that account lands on it without asking (v7). Holds a
+/// masked suffix, never a full account number.
+@DataClassName('CaptureAccountLinkRow')
+class CaptureAccountLinks extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+
+  /// Matched bank profile id, or '' when the alert named no bank.
+  TextColumn get profileId => text().withDefault(const Constant(''))();
+  TextColumn get last4 => text()();
+
+  /// A [CaptureInstrument] key. A card and an account can share digits.
+  TextColumn get instrument => text()();
+  TextColumn get accountId => text()();
+  IntColumn get createdAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+        {vaultId, profileId, last4, instrument},
+      ];
 }
 
 // ---------------------------------------------------------------------------

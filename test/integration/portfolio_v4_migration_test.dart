@@ -62,6 +62,38 @@ void main() {
           liabilities TEXT NOT NULL
         );
       ''');
+      // Same reason, for v7: a real v3 database has `transactions` (since v1)
+      // and `pending_captures` (created by the v3 step itself), and the v7 step
+      // adds columns to both. Shapes are as of v3.
+      await db.customStatement('''
+        CREATE TABLE transactions (
+          id TEXT NOT NULL PRIMARY KEY,
+          vault_id TEXT NOT NULL,
+          amount TEXT NOT NULL,
+          type TEXT NOT NULL,
+          category_id TEXT NOT NULL,
+          merchant TEXT NULL,
+          note TEXT NULL,
+          account_id TEXT NULL,
+          attachment_ref TEXT NULL,
+          date INTEGER NOT NULL,
+          created_at INTEGER NOT NULL
+        );
+      ''');
+      await db.customStatement('''
+        CREATE TABLE pending_captures (
+          id TEXT NOT NULL PRIMARY KEY,
+          vault_id TEXT NOT NULL,
+          amount TEXT NOT NULL,
+          type TEXT NOT NULL,
+          merchant TEXT NULL,
+          occurred_at INTEGER NOT NULL,
+          source TEXT NOT NULL,
+          uncategorized INTEGER NOT NULL DEFAULT 1,
+          fingerprint TEXT NOT NULL,
+          captured_at INTEGER NOT NULL
+        );
+      ''');
       for (final stmt in holdingInserts) {
         await db.customStatement(stmt);
       }

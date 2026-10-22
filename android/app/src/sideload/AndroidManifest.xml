@@ -1,0 +1,25 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sideload build only. Merged over src/main/AndroidManifest.xml, which
+         declares neither permission, so the Play build never carries them.
+
+         Google Play's SMS/Call Log policy lists "SMS-based money management —
+         apps that track and manage budget" as a permitted exception for
+         READ_SMS and RECEIVE_SMS, granted after a Permissions Declaration
+         review. Until Khazana has that approval these live here, not in main. -->
+    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+    <uses-permission android:name="android.permission.READ_SMS"/>
+
+    <application>
+        <!-- Exported because the system delivers SMS_RECEIVED to it. The
+             BROADCAST_SMS permission means only the OS's telephony stack can
+             send it this intent — another app cannot spoof an SMS into it. -->
+        <receiver
+            android:name=".SmsReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

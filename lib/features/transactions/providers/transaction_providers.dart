@@ -49,7 +49,12 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
   final LedgerWriter? _ledger;
   late final StreamSubscription<List<Txn>> _sub;
 
-  Future<void> add({
+  /// Records a transaction and its postings. Returns the new entry's id.
+  ///
+  /// [accountId] is the money account it moves; manual entries leave it null
+  /// and land on the vault's cash account. Auto-capture passes the account it
+  /// matched, plus [source] and [captureId] so Undo can find what it wrote.
+  Future<String> add({
     required Decimal amount,
     required TxnType type,
     required String categoryId,
@@ -58,6 +63,9 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     String? note,
     String? categoryName,
     String? attachmentRef,
+    String? accountId,
+    String? source,
+    String? captureId,
   }) async {
     final now = DateTime.now();
     final txn = Txn(
@@ -70,11 +78,14 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       merchant: merchant,
       note: note,
       createdAt: now,
-      accountId: _ledger?.defaultCashId,
+      accountId: accountId ?? _ledger?.defaultCashId,
       attachmentRef: attachmentRef,
+      source: source,
+      captureId: captureId,
     );
     await _repo.save(txn);
     await _ledger?.writeEntry(txn, categoryName: categoryName);
+    return txn.id;
   }
 
   Future<void> update(Txn txn, {String? categoryName}) async {
