@@ -78,7 +78,22 @@ public sealed class PasskeyService(IdentityDbContext db, IFido2 fido2, IClock cl
             AaGuid = credential.AaGuid,
             CreatedAt = now,
         });
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateException)
+        {
+            // The same authenticator registered twice at once: the unique credential id keeps one.
+            throw new AuthFailedException(AuthError.InvalidGrant, "Passkey already registered.");
+        }
+    }
+
+    /// <summary>Deletes challenges that expired more than an hour ago. Returns how many.</summary>
+    public Task<int> DeleteExpiredChallengesAsync(CancellationToken ct)
+    {
+        var cutoff = clock.UtcNow - TimeSpan.FromHours(1);
+        return db.WebAuthnChallenges.Where(x => x.ExpiresAt < cutoff).ExecuteDeleteAsync(ct);
     }
 
     /// <summary>Options for signing in with any passkey on the device (no username).</summary>

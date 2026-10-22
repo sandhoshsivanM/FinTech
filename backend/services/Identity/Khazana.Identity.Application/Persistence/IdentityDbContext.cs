@@ -15,6 +15,7 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     public DbSet<PasskeyRow> Passkeys => Set<PasskeyRow>();
     public DbSet<RefreshTokenRow> RefreshTokens => Set<RefreshTokenRow>();
     public DbSet<WebAuthnChallengeRow> WebAuthnChallenges => Set<WebAuthnChallengeRow>();
+    public DbSet<SessionRow> Sessions => Set<SessionRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -84,6 +85,20 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             e.HasIndex(x => x.TokenHash).IsUnique();
             e.HasIndex(x => x.FamilyId);
             e.HasIndex(x => x.UserId);
+            e.HasOne<UserRow>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SessionRow>(e =>
+        {
+            e.ToTable("sessions");
+            e.HasKey(x => x.FamilyId);
+            e.Property(x => x.FamilyId).HasColumnName("family_id");
+            e.Property(x => x.UserId).HasColumnName("user_id");
+            e.Property(x => x.DeviceId).HasColumnName("device_id");
+            e.Property(x => x.CreatedAt).HasColumnName("created_at");
+            e.Property(x => x.RevokedAt).HasColumnName("revoked_at");
+            e.HasIndex(x => x.UserId);
+            e.HasIndex(x => x.DeviceId);
             e.HasOne<UserRow>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -172,4 +187,18 @@ public sealed class WebAuthnChallengeRow
     public required string OptionsJson { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
     public DateTimeOffset? UsedAt { get; set; }
+}
+
+/// <summary>
+/// One sign-in on one device: the lock that keeps a refresh and a logout from
+/// passing each other. A refresh holds this row (FOR UPDATE) while it rotates;
+/// a logout revokes it, waiting for any refresh in flight to finish first.
+/// </summary>
+public sealed class SessionRow
+{
+    public Guid FamilyId { get; set; }
+    public Guid UserId { get; set; }
+    public Guid DeviceId { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? RevokedAt { get; set; }
 }

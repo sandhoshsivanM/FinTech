@@ -349,6 +349,85 @@ public sealed class DevicesFlowTests(DevicesHost host)
 }
 
 [Collection(nameof(DevicesTestGroup))]
+public sealed class ReviewFixTests(DevicesHost host)
+{
+    private static readonly byte[] KeyCheck = RandomNumberGenerator.GetBytes(32);
+
+    private async Task<Phone> Bootstrapped(Guid user)
+    {
+        var phone = new Phone(host, user);
+        await phone.Register();
+        (await phone.Send(HttpMethod.Post, "/v1/keys/bootstrap", new
+        {
+            device = Json.Envelope(RandomNumberGenerator.GetBytes(80)),
+            recovery = Json.Envelope(RandomNumberGenerator.GetBytes(80), recovery: true),
+            key_check = KeyCheck,
+        })).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        return phone;
+    }
+
+    [Fact]
+    public async Task A_logout_in_Identity_revokes_the_device_here_and_tells_everyone()
+    {
+        using var phone = await Bootstrapped(Guid.CreateVersion7());
+        var tracked = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .PublishMessageAndWaitAsync(new SessionEndedV1(phone.UserId, phone.DeviceId, DateTimeOffset.UtcNow));
+        tracked.Sent.SingleMessage<DeviceRevokedV1>().DeviceId.ShouldBe(phone.DeviceId);
+        (await phone.Send(HttpMethod.Get, "/v1/keys/envelopes/self")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        var again = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(30))
+            .PublishMessageAndWaitAsync(new SessionEndedV1(phone.UserId, phone.DeviceId, DateTimeOffset.UtcNow));
+        again.Sent.MessagesOf<DeviceRevokedV1>().ShouldBeEmpty("already revoked: nothing new to announce");
+    }
+
+    [Fact]
+    public async Task A_cancelled_deletion_purges_nothing_when_its_purge_fires()
+    {
+        using var phone = await Bootstrapped(Guid.CreateVersion7());
+        var executeAfter = DateTimeOffset.UtcNow.AddSeconds(-1);
+        await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(30))
+            .PublishMessageAndWaitAsync(new AccountDeletionCancelledV1(phone.UserId, executeAfter));
+        var tracked = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .PublishMessageAndWaitAsync(new AccountDeletionRequestedV1(phone.UserId, executeAfter));
+
+        tracked.Sent.MessagesOf<UserDataPurgedV1>().ShouldBeEmpty();
+        await using var scope = host.Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<DevicesDbContext>();
+        (await db.Devices.AnyAsync(d => d.UserId == phone.UserId, TestContext.Current.CancellationToken)).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Approving_for_a_device_that_already_holds_the_key_is_a_409_and_keeps_the_code_usable()
+    {
+        var user = Guid.CreateVersion7();
+        using var old = await Bootstrapped(user);
+        using var fresh = new Phone(host, user);
+        await fresh.Register();
+        var start = await fresh.Ok(HttpMethod.Post, "/v1/devices/pairing");
+        // Meanwhile the new device recovers with the phrase and stores its own envelope.
+        (await fresh.Send(HttpMethod.Post, "/v1/keys/envelopes/self",
+            new { envelope = Json.Envelope(RandomNumberGenerator.GetBytes(80)), key_check = KeyCheck })).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        var approve = await old.Send(HttpMethod.Post, $"/v1/devices/pairing/{start.GetProperty("pairing_id").GetGuid()}/approve",
+            new { code = start.GetProperty("code").GetString(), envelope = Json.Envelope(RandomNumberGenerator.GetBytes(80)) });
+        approve.StatusCode.ShouldBe(HttpStatusCode.Conflict, "a clear refusal, not a 500 with the session silently burnt");
+
+        await using var scope = host.Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<DevicesDbContext>();
+        (await db.PairingSessions.SingleAsync(p => p.Id == start.GetProperty("pairing_id").GetGuid(), TestContext.Current.CancellationToken))
+            .CompletedAt.ShouldBeNull("the claim was rolled back with the failed insert");
+    }
+
+    [Fact]
+    public async Task A_body_missing_a_required_field_is_a_400_not_a_crash()
+    {
+        using var phone = await Bootstrapped(Guid.CreateVersion7());
+        (await phone.Send(HttpMethod.Post, $"/v1/devices/pairing/{Guid.NewGuid()}/approve", new { code = "x" }))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+}
+
+[Collection(nameof(DevicesTestGroup))]
 public sealed class CoolingOffTests(DevicesHost host)
 {
     [Fact]

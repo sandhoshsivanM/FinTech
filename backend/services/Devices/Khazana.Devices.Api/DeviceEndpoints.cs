@@ -5,7 +5,7 @@ namespace Khazana.Devices.Api;
 
 // Bodies are snake_case; byte arrays travel as standard base64.
 
-public sealed record RegisterDevice(string? Name, string Platform, string? AppVersion, byte[] PublicKey);
+public sealed record RegisterDevice(string Platform, byte[] PublicKey, string? Name = null, string? AppVersion = null);
 
 public sealed record EnvelopeDto(byte[] WrappedDek, string Alg, int KeyVersion)
 {
