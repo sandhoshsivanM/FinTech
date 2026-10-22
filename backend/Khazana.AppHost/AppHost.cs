@@ -100,7 +100,9 @@ var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(sync).WaitFor(sync)
     .WithReference(notification).WaitFor(notification)
     .WithReference(catalog).WaitFor(catalog)
-    .WithExternalHttpEndpoints();
+    .WithExternalHttpEndpoints()
+    // Khazana Online's web app in development (webapp-online/: npm run dev).
+    .WithEnvironment("Gateway__AllowedOrigins__0", "http://localhost:3100");
 
 // DPoP proofs name the URL the app called, which is the gateway's.
 foreach (var service in new[] { identity, devices, sync, notification })

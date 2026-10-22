@@ -1,0 +1,6 @@
+@import "tailwindcss";
+/* Design tokens: the same ones the offline app uses, from packages/domain-ts (ADR 0007). */
+@import "../../../packages/domain-ts/tokens.css";
+
+html, body { margin: 0; background: var(--canvas); color: var(--ink); }
+body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
