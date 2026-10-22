@@ -170,6 +170,38 @@ namespace Khazana.Identity.Application.Persistence.Migrations
                     b.ToTable("refresh_tokens", "identity");
                 });
 
+            modelBuilder.Entity("Khazana.Identity.Application.Persistence.SessionRow", b =>
+                {
+                    b.Property<Guid>("FamilyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("family_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("device_id");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("FamilyId");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("sessions", "identity");
+                });
+
             modelBuilder.Entity("Khazana.Identity.Application.Persistence.UserRow", b =>
                 {
                     b.Property<Guid>("Id")
@@ -268,6 +300,15 @@ namespace Khazana.Identity.Application.Persistence.Migrations
                 });
 
             modelBuilder.Entity("Khazana.Identity.Application.Persistence.RefreshTokenRow", b =>
+                {
+                    b.HasOne("Khazana.Identity.Application.Persistence.UserRow", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Khazana.Identity.Application.Persistence.SessionRow", b =>
                 {
                     b.HasOne("Khazana.Identity.Application.Persistence.UserRow", null)
                         .WithMany()

@@ -8,7 +8,7 @@ namespace Khazana.Sync.Api;
 public sealed record PushRecord(
     string RecordId, string Collection, DateTimeOffset ClientUpdatedAt, bool Deleted, byte[]? Ciphertext, int KeyVersion);
 
-public sealed record PushRequest(IReadOnlyList<PushRecord> Records);
+public sealed record PushRequest(IReadOnlyList<PushRecord?>? Records);
 
 public sealed record ErrorResponse(string Error);
 
@@ -19,13 +19,18 @@ public static class SyncEndpoints
         var sync = app.MapGroup("/v1/sync").RequireAuthorization().AddEndpointFilter(RequireActiveDevice);
         sync.MapPost("/push", Push).WithMetadata(new RequestSizeLimitMetadata(SyncRules.MaxPushBodyBytes));
         sync.MapGet("/pull", Pull);
+        sync.MapPut("/attachments/{id}", PutAttachment).WithMetadata(new RequestSizeLimitMetadata(AttachmentRules.MaxBytes));
+        sync.MapGet("/attachments/{id}", GetAttachment);
+        sync.MapDelete("/attachments/{id}", DeleteAttachment);
     }
 
     /// <summary>Encrypted records in. The server stores them as they are; it can't read or merge them.</summary>
     private static async Task<IResult> Push(PushRequest body, HttpContext http, IMessageBus bus, CancellationToken ct)
     {
-        var records = (body.Records ?? []).Select(r => new IncomingRecord(
-            r.RecordId, r.Collection, r.ClientUpdatedAt, r.Deleted, r.Ciphertext ?? [], r.KeyVersion)).ToList();
+        // Null entries are passed on so validation reports them (400) instead of
+        // throwing; times are converted to UTC, as Postgres timestamptz arrays require.
+        var records = (body?.Records ?? []).Select(r => r is null ? null! : new IncomingRecord(
+            r.RecordId, r.Collection, r.ClientUpdatedAt.ToUniversalTime(), r.Deleted, r.Ciphertext ?? [], r.KeyVersion)).ToList();
         if (SyncRules.Validate(records, DateTimeOffset.UtcNow) is not null)
             return Results.BadRequest(new ErrorResponse("invalid_request"));
         var result = await bus.InvokeAsync<PushResult>(
@@ -34,8 +39,27 @@ public static class SyncEndpoints
     }
 
     /// <summary>Records after the cursor, oldest first. The device decrypts and merges them.</summary>
-    private static async Task<IResult> Pull(long? since, int? limit, HttpContext http, SyncService sync, CancellationToken ct) =>
-        Results.Ok(await sync.PullAsync(http.User.UserId(), since ?? 0, limit ?? SyncRules.MaxPage, ct).ConfigureAwait(false));
+    /// <param name="epoch">The <c>epoch</c> from the previous page; 0 for a first pull.</param>
+    private static async Task<IResult> Pull(long? since, long? epoch, int? limit, HttpContext http, SyncService sync, CancellationToken ct) =>
+        Results.Ok(await sync.PullAsync(http.User.UserId(), since ?? 0, epoch ?? 0, limit ?? SyncRules.MaxPage, ct).ConfigureAwait(false));
+
+    /// <summary>An encrypted file (up to 25 MB), streamed to the attachment store.</summary>
+    private static async Task<IResult> PutAttachment(string id, HttpContext http, AttachmentService attachments, CancellationToken ct)
+    {
+        await attachments.PutAsync(http.User.UserId(), id, http.Request.Body, http.Request.ContentLength, ct).ConfigureAwait(false);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> GetAttachment(string id, HttpContext http, AttachmentService attachments, CancellationToken ct) =>
+        await attachments.GetAsync(http.User.UserId(), id, ct).ConfigureAwait(false) is { } stream
+            ? Results.Stream(stream, "application/octet-stream")
+            : Results.NotFound(new ErrorResponse("not_found"));
+
+    private static async Task<IResult> DeleteAttachment(string id, HttpContext http, AttachmentService attachments, CancellationToken ct)
+    {
+        await attachments.DeleteAsync(http.User.UserId(), id, ct).ConfigureAwait(false);
+        return Results.NoContent();
+    }
 
     private static async ValueTask<object?> RequireActiveDevice(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
@@ -45,6 +69,11 @@ public static class SyncEndpoints
             await http.RequestServices.GetRequiredService<SyncService>()
                 .RequireActiveAsync(http.User.DeviceId(), http.RequestAborted).ConfigureAwait(false);
             return await next(context).ConfigureAwait(false);
+        }
+        catch (BadHttpRequestException)
+        {
+            // Over Kestrel's body limit for this endpoint.
+            return Results.BadRequest(new ErrorResponse("too_large"));
         }
         catch (SyncException e)
         {

@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace Khazana.Gateway.Tests;
@@ -126,4 +127,91 @@ public sealed class GatewayTests : IDisposable
         // The 64 KB default for every other route is a Kestrel limit, which the
         // in-memory test server does not enforce; it was checked against a live run.
     }
+    [Fact]
+    public async Task A_forged_forwarded_address_from_an_untrusted_peer_does_not_buy_a_new_bucket()
+    {
+        // The in-memory server has no peer address, and ASP.NET trusts the header
+        // when there is none; a real connection always has one, so give it one.
+        using var factory = _factory.WithWebHostBuilder(b => b.ConfigureServices(s =>
+            s.AddSingleton<Microsoft.AspNetCore.Hosting.IStartupFilter, FakePeer>()));
+        using var client = factory.CreateClient();
+        for (var i = 0; i < 3; i++)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/v1/market/nav/latest");
+            request.Headers.Add("X-Forwarded-For", $"203.0.113.{i}");
+            (await client.SendAsync(request, TestContext.Current.CancellationToken)).StatusCode.ShouldNotBe(HttpStatusCode.TooManyRequests);
+        }
+        using var fourth = new HttpRequestMessage(HttpMethod.Get, "/v1/market/nav/latest");
+        fourth.Headers.Add("X-Forwarded-For", "198.51.100.77");
+        (await client.SendAsync(fourth, TestContext.Current.CancellationToken)).StatusCode
+            .ShouldBe(HttpStatusCode.TooManyRequests, "no trusted proxies are configured, so the header is ignored");
+    }
+}
+
+public sealed class UserBucketTests
+{
+    private static string TokenFor(string jkt) => new Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler().CreateToken(
+        new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor
+        {
+            Claims = new Dictionary<string, object> { ["cnf"] = new Dictionary<string, object> { ["jkt"] = jkt } },
+        });
+
+    [Fact]
+    public async Task Two_users_behind_one_address_each_get_their_own_limit()
+    {
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
+        {
+            b.UseEnvironment("Production");
+            b.UseSetting("RateLimits:User:PermitLimit", "1");
+            b.UseSetting("services:devices-api:http:0", "http://127.0.0.1:9");
+        });
+        using var client = factory.CreateClient();
+        async Task<HttpStatusCode> Get(string jkt)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/v1/devices/");
+            request.Headers.TryAddWithoutValidation("Authorization", $"DPoP {TokenFor(jkt)}");
+            return (await client.SendAsync(request, TestContext.Current.CancellationToken)).StatusCode;
+        }
+        (await Get("alice-key")).ShouldNotBe(HttpStatusCode.TooManyRequests);
+        (await Get("bob-key")).ShouldNotBe(HttpStatusCode.TooManyRequests, "bob is not alice");
+        (await Get("alice-key")).ShouldBe(HttpStatusCode.TooManyRequests, "alice's own limit is 1");
+    }
+}
+
+public sealed class TrustedProxyTests
+{
+    [Fact]
+    public async Task Behind_a_trusted_proxy_each_client_address_gets_its_own_bucket()
+    {
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
+        {
+            b.UseEnvironment("Production");
+            b.UseSetting("RateLimits:Public:PermitLimit", "1");
+            b.UseSetting("Gateway:TrustedProxies:0", "10.20.30.0/24");
+            b.UseSetting("services:marketdata-api:http:0", "http://127.0.0.1:9");
+            b.ConfigureServices(s => s.AddSingleton<Microsoft.AspNetCore.Hosting.IStartupFilter, FakePeer>());
+        });
+        using var client = factory.CreateClient();
+        foreach (var address in new[] { "203.0.113.1", "203.0.113.2" })
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/v1/market/nav/latest");
+            request.Headers.Add("X-Forwarded-For", address);
+            (await client.SendAsync(request, TestContext.Current.CancellationToken)).StatusCode
+                .ShouldNotBe(HttpStatusCode.TooManyRequests, "two users behind one balancer don't share a bucket");
+        }
+    }
+}
+
+/// <summary>Gives every test request a peer address, as a real connection has.</summary>
+internal sealed class FakePeer : Microsoft.AspNetCore.Hosting.IStartupFilter
+{
+    public Action<Microsoft.AspNetCore.Builder.IApplicationBuilder> Configure(Action<Microsoft.AspNetCore.Builder.IApplicationBuilder> next) => app =>
+    {
+        app.Use(nextMiddleware => ctx =>
+        {
+            ctx.Connection.RemoteIpAddress = System.Net.IPAddress.Parse("10.20.30.40");
+            return nextMiddleware(ctx);
+        });
+        next(app);
+    };
 }

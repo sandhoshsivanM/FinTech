@@ -24,9 +24,10 @@ public sealed record PulledRecord(
     string RecordId, string Collection, long Seq, DateTimeOffset ClientUpdatedAt, bool Deleted, byte[] Ciphertext, int KeyVersion);
 
 /// <param name="LastSeq">The cursor to send next time.</param>
+/// <param name="Epoch">Send it back with the cursor (see <see cref="SyncRules.NeedsReset"/>).</param>
 /// <param name="More">Another page is waiting.</param>
 /// <param name="ResetRequired">The cursor is older than purged tombstones: resync from zero.</param>
-public sealed record PullPage(IReadOnlyList<PulledRecord> Records, long LastSeq, bool More, bool ResetRequired);
+public sealed record PullPage(IReadOnlyList<PulledRecord> Records, long LastSeq, long Epoch, bool More, bool ResetRequired);
 
 /// <summary>Reads for the sync endpoints. Writes go through <see cref="PushRecordsHandler"/>.</summary>
 public sealed class SyncService(SyncDbContext db)
@@ -38,14 +39,18 @@ public sealed class SyncService(SyncDbContext db)
             throw new SyncException(SyncError.Forbidden, $"Device {deviceId} is revoked.");
     }
 
-    public async Task<PullPage> PullAsync(Guid userId, long since, int limit, CancellationToken ct)
+    public async Task<PullPage> PullAsync(Guid userId, long since, long epoch, int limit, CancellationToken ct)
     {
         if (since < 0) throw new SyncException(SyncError.BadRequest, "Negative cursor.");
         limit = Math.Clamp(limit, 1, SyncRules.MaxPage);
 
+        // One snapshot for both reads: a purge committing between them could
+        // otherwise delete a tombstone this page skips past without a reset.
+        await using var tx = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead, ct).ConfigureAwait(false);
         var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId, ct).ConfigureAwait(false);
-        if (user is not null && SyncRules.NeedsReset(since, user.PurgedThroughSeq))
-            return new PullPage([], 0, More: false, ResetRequired: true);
+        var currentEpoch = user?.ResetEpoch ?? 0;
+        if (user is not null && SyncRules.NeedsReset(since, epoch, currentEpoch, user.PurgedThroughSeq))
+            return new PullPage([], 0, currentEpoch, More: false, ResetRequired: true);
 
         var rows = await db.Records.AsNoTracking()
             .Where(r => r.UserId == userId && r.Seq > since)
@@ -56,6 +61,7 @@ public sealed class SyncService(SyncDbContext db)
 
         var more = rows.Count > limit;
         if (more) rows.RemoveAt(rows.Count - 1);
-        return new PullPage(rows, rows.Count > 0 ? rows[^1].Seq : since, more, ResetRequired: false);
+        await tx.CommitAsync(ct).ConfigureAwait(false);
+        return new PullPage(rows, rows.Count > 0 ? rows[^1].Seq : since, currentEpoch, more, ResetRequired: false);
     }
 }

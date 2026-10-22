@@ -16,5 +16,8 @@ public static class KhazanaJson
         {
             o.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
             o.SerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
+            // A null or missing required field is a 400, not a NullReferenceException later.
+            o.SerializerOptions.RespectNullableAnnotations = true;
+            o.SerializerOptions.RespectRequiredConstructorParameters = true;
         });
 }

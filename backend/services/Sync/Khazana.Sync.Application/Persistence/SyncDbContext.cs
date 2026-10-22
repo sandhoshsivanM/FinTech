@@ -9,6 +9,7 @@ public sealed class SyncDbContext(DbContextOptions<SyncDbContext> options) : DbC
     public DbSet<SyncUserRow> Users => Set<SyncUserRow>();
     public DbSet<SyncRecordRow> Records => Set<SyncRecordRow>();
     public DbSet<RevokedDeviceRow> RevokedDevices => Set<RevokedDeviceRow>();
+    public DbSet<AttachmentRow> Attachments => Set<AttachmentRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -22,6 +23,7 @@ public sealed class SyncDbContext(DbContextOptions<SyncDbContext> options) : DbC
             e.Property(x => x.UserId).HasColumnName("user_id");
             e.Property(x => x.LastSeq).HasColumnName("last_seq");
             e.Property(x => x.PurgedThroughSeq).HasColumnName("purged_through_seq");
+            e.Property(x => x.ResetEpoch).HasColumnName("reset_epoch");
         });
 
         modelBuilder.Entity<SyncRecordRow>(e =>
@@ -44,6 +46,16 @@ public sealed class SyncDbContext(DbContextOptions<SyncDbContext> options) : DbC
             e.HasIndex(x => x.StoredAt).HasFilter("deleted");
         });
 
+        modelBuilder.Entity<AttachmentRow>(e =>
+        {
+            e.ToTable("attachments");
+            e.HasKey(x => new { x.UserId, x.AttachmentId });
+            e.Property(x => x.UserId).HasColumnName("user_id");
+            e.Property(x => x.AttachmentId).HasColumnName("attachment_id").HasMaxLength(64);
+            e.Property(x => x.Size).HasColumnName("size");
+            e.Property(x => x.StoredAt).HasColumnName("stored_at");
+        });
+
         modelBuilder.Entity<RevokedDeviceRow>(e =>
         {
             e.ToTable("revoked_devices");
@@ -62,6 +74,9 @@ public sealed class SyncUserRow
     public Guid UserId { get; set; }
     public long LastSeq { get; set; }
     public long PurgedThroughSeq { get; set; }
+
+    /// <summary>Goes up by one at every tombstone purge that touched this user; cursors carry it.</summary>
+    public long ResetEpoch { get; set; }
 }
 
 public sealed class SyncRecordRow
@@ -77,6 +92,15 @@ public sealed class SyncRecordRow
 #pragma warning restore CA1819
     public int KeyVersion { get; set; }
     public Guid FromDeviceId { get; set; }
+    public DateTimeOffset StoredAt { get; set; }
+}
+
+/// <summary>An attachment's bookkeeping; the ciphertext itself is in the attachment store.</summary>
+public sealed class AttachmentRow
+{
+    public Guid UserId { get; set; }
+    public required string AttachmentId { get; set; }
+    public long Size { get; set; }
     public DateTimeOffset StoredAt { get; set; }
 }
 

@@ -23,6 +23,30 @@ namespace Khazana.Sync.Application.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Khazana.Sync.Application.Persistence.AttachmentRow", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("AttachmentId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("attachment_id");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint")
+                        .HasColumnName("size");
+
+                    b.Property<DateTimeOffset>("StoredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("stored_at");
+
+                    b.HasKey("UserId", "AttachmentId");
+
+                    b.ToTable("attachments", "sync");
+                });
+
             modelBuilder.Entity("Khazana.Sync.Application.Persistence.RevokedDeviceRow", b =>
                 {
                     b.Property<Guid>("DeviceId")
@@ -115,6 +139,10 @@ namespace Khazana.Sync.Application.Persistence.Migrations
                     b.Property<long>("PurgedThroughSeq")
                         .HasColumnType("bigint")
                         .HasColumnName("purged_through_seq");
+
+                    b.Property<long>("ResetEpoch")
+                        .HasColumnType("bigint")
+                        .HasColumnName("reset_epoch");
 
                     b.HasKey("UserId");
 
