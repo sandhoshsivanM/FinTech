@@ -133,6 +133,9 @@ public sealed class SessionService(
             user.Status = AccountStatus.Active;
             user.DeleteRequestedAt = null;
             user.UpdatedAt = clock.UtcNow;
+            // The saga forgets the request; a stray confirmation later finds nothing to count.
+            await Db.DeletionConfirmations.Where(c => c.UserId == user.Id).ExecuteDeleteAsync(ct).ConfigureAwait(false);
+            await Db.DeletionRequests.Where(r => r.UserId == user.Id).ExecuteDeleteAsync(ct).ConfigureAwait(false);
             await outbox.PublishAsync(new AccountDeletionCancelledV1(user.Id, executeAfter)).ConfigureAwait(false);
         }
         return await StartSessionAsync(user, registered: false, jkt, platform, ct).ConfigureAwait(false);

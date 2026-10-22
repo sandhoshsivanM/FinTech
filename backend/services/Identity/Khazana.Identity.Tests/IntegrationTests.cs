@@ -461,6 +461,56 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
     }
 
     [Fact]
+    public async Task Four_confirmations_arriving_together_delete_the_user_exactly_once()
+    {
+        for (var round = 0; round < 3; round++)
+        {
+            var tokens = await SignIn(_phone, $"dev:{Unique()}");
+            var userId = tokens.GetProperty("user_id").GetGuid();
+            var access = tokens.GetProperty("access_token").GetString()!;
+            using (var delete = new HttpRequestMessage(HttpMethod.Delete, "/v1/account"))
+            {
+                Authorize(delete, access, _phone.Proof("DELETE", Url("/v1/account"), access));
+                (await _client.SendAsync(delete, Ct)).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+            }
+
+            var tracked = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+                .ExecuteAndWaitAsync((Func<IMessageContext, Task>)(async bus =>
+                {
+                    foreach (var service in AllServices)
+                        await bus.PublishAsync(new UserDataPurgedV1(userId, service, DateTimeOffset.UtcNow));
+                }));
+
+            tracked.Sent.MessagesOf<AccountDeletedV1>().Count().ShouldBe(1, $"round {round}");
+            await UserStillExists(userId, false);
+        }
+    }
+
+    [Fact]
+    public async Task Restoring_clears_the_saga_so_later_confirmations_delete_nothing()
+    {
+        var subject = $"dev:{Unique()}";
+        var tokens = await SignIn(_phone, subject);
+        var userId = tokens.GetProperty("user_id").GetGuid();
+        var access = tokens.GetProperty("access_token").GetString()!;
+        using (var delete = new HttpRequestMessage(HttpMethod.Delete, "/v1/account"))
+        {
+            Authorize(delete, access, _phone.Proof("DELETE", Url("/v1/account"), access));
+            await _client.SendAsync(delete, Ct);
+        }
+        (await _client.SendAsync(RestoreRequest(_phone, subject), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var tracked = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .ExecuteAndWaitAsync((Func<IMessageContext, Task>)(async bus =>
+            {
+                foreach (var service in AllServices)
+                    await bus.PublishAsync(new UserDataPurgedV1(userId, service, DateTimeOffset.UtcNow));
+            }));
+        tracked.Sent.MessagesOf<AccountDeletedV1>().ShouldBeEmpty();
+        await UserStillExists(userId, true);
+    }
+
+    [Fact]
     public async Task A_deletion_a_service_never_confirms_is_reported_as_overdue()
     {
         var tokens = await SignIn(_phone, $"dev:{Unique()}");
@@ -554,6 +604,8 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
     }
 
     // --- helpers --------------------------------------------------------------
+
+    private static readonly string[] AllServices = ["devices", "sync", "notification", "reporting"];
 
     private static string Unique() => Guid.NewGuid().ToString("N")[..12];
 
