@@ -133,6 +133,36 @@ public sealed class GatewayTests : IDisposable
     }
 }
 
+public sealed class UserBucketTests
+{
+    private static string TokenFor(string jkt) => new Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler().CreateToken(
+        new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor
+        {
+            Claims = new Dictionary<string, object> { ["cnf"] = new Dictionary<string, object> { ["jkt"] = jkt } },
+        });
+
+    [Fact]
+    public async Task Two_users_behind_one_address_each_get_their_own_limit()
+    {
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
+        {
+            b.UseEnvironment("Production");
+            b.UseSetting("RateLimits:User:PermitLimit", "1");
+            b.UseSetting("services:devices-api:http:0", "http://127.0.0.1:9");
+        });
+        using var client = factory.CreateClient();
+        async Task<HttpStatusCode> Get(string jkt)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/v1/devices/");
+            request.Headers.TryAddWithoutValidation("Authorization", $"DPoP {TokenFor(jkt)}");
+            return (await client.SendAsync(request, TestContext.Current.CancellationToken)).StatusCode;
+        }
+        (await Get("alice-key")).ShouldNotBe(HttpStatusCode.TooManyRequests);
+        (await Get("bob-key")).ShouldNotBe(HttpStatusCode.TooManyRequests, "bob is not alice");
+        (await Get("alice-key")).ShouldBe(HttpStatusCode.TooManyRequests, "alice's own limit is 1");
+    }
+}
+
 public sealed class TrustedProxyTests
 {
     [Fact]
