@@ -16,6 +16,13 @@
     <Project Path="services/AuditReporting/Khazana.AuditReporting.Infrastructure/Khazana.AuditReporting.Infrastructure.csproj" />
     <Project Path="services/AuditReporting/Khazana.AuditReporting.Tests/Khazana.AuditReporting.Tests.csproj" />
   </Folder>
+  <Folder Name="/services/Catalog/">
+    <Project Path="services/Catalog/Khazana.Catalog.Api/Khazana.Catalog.Api.csproj" />
+    <Project Path="services/Catalog/Khazana.Catalog.Application/Khazana.Catalog.Application.csproj" />
+    <Project Path="services/Catalog/Khazana.Catalog.Domain/Khazana.Catalog.Domain.csproj" />
+    <Project Path="services/Catalog/Khazana.Catalog.Infrastructure/Khazana.Catalog.Infrastructure.csproj" />
+    <Project Path="services/Catalog/Khazana.Catalog.Tests/Khazana.Catalog.Tests.csproj" />
+  </Folder>
   <Folder Name="/services/Devices/">
     <Project Path="services/Devices/Khazana.Devices.Api/Khazana.Devices.Api.csproj" />
     <Project Path="services/Devices/Khazana.Devices.Application/Khazana.Devices.Application.csproj" />

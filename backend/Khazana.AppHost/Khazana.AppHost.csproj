@@ -22,6 +22,7 @@
     <ProjectReference Include="..\services\Notification\Khazana.Notification.Api\Khazana.Notification.Api.csproj" />
     <ProjectReference Include="..\services\AuditReporting\Khazana.AuditReporting.Api\Khazana.AuditReporting.Api.csproj" />
     <ProjectReference Include="..\services\Admin\Khazana.Admin\Khazana.Admin.csproj" />
+    <ProjectReference Include="..\services\Catalog\Khazana.Catalog.Api\Khazana.Catalog.Api.csproj" />
     <ProjectReference Include="..\Khazana.Gateway\Khazana.Gateway.csproj" />
   </ItemGroup>
 </Project>
