@@ -1,0 +1,57 @@
+@page "/users/{Id:guid}"
+@attribute [Authorize(Policy = AdminRoles.SupportPolicy)]
+@inject ReportingClient Reporting
+
+<h1>User @Id.ToString()[..8]…</h1>
+@if (_error is not null)
+{
+    <p class="error">@_error</p>
+}
+else if (_notFound)
+{
+    <p>No such user (or the account was deleted).</p>
+}
+else if (_user is not null)
+{
+    <dl>
+        <dt>User id</dt><dd><code>@_user.Entry.UserId</code></dd>
+        <dt>Registered</dt><dd>@Ist.Format(_user.Entry.RegisteredAt)</dd>
+        <dt>Last active</dt><dd>@Ist.Format(_user.Entry.LastActiveAt)</dd>
+        <dt>Platforms</dt><dd>@string.Join(", ", _user.Entry.Platforms)</dd>
+        <dt>Devices</dt><dd>@_user.Entry.DeviceCount</dd>
+        <dt>Status</dt><dd>@_user.Entry.Status</dd>
+    </dl>
+    <h2>Recent sign-ins</h2>
+    <table>
+        <thead><tr><th>When (IST)</th><th>Platform</th><th>Device id</th></tr></thead>
+        <tbody>
+            @foreach (var s in _user.RecentSignins)
+            {
+                <tr><td>@Ist.Format(s.At)</td><td>@s.Platform</td><td><code>@s.DeviceId.ToString()[..8]…</code></td></tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> Auth { get; set; } = null!;
+    [CascadingParameter] private HttpContext? Http { get; set; }
+    private UserDetail? _user;
+    private bool _notFound;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _user = await Reporting.UserAsync((await Auth).User, Id, CancellationToken.None);
+            _notFound = _user is null;
+        }
+        catch (AuditUnavailableException)
+        {
+            _error = "The audit log is unavailable, so nothing is shown.";
+            if (Http is not null) Http.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+        }
+    }
+}

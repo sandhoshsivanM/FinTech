@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Ed25519 signer (libsodium via NSec). The key comes from the secret
+       store; KMS-held signing replaces it in the cloud. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.Catalog.Application\Khazana.Catalog.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NSec.Cryptography" />
+  </ItemGroup>
+</Project>

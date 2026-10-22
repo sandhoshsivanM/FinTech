@@ -1,0 +1,3 @@
+# EF Core writes these files; analyzers treat them as generated code.
+[*.cs]
+generated_code = true

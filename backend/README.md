@@ -9,6 +9,10 @@
 | Identity | 2.2 | Sign-in (Google, Apple, passkeys), DPoP-bound tokens, refresh rotation, logout, deletion request (ADR 0004) |
 | Devices & Keys | 2.3 | Device registry, end-to-end key envelopes (ciphertext only), QR pairing, recovery, remote logout (ADR 0005) |
 | Sync | 2.4 | Encrypted records in and out by per-user sequence; never merges, never reads (ADR 0006) |
+| Notification | 2.5 | Push tokens; data-free sync nudges and new-device alerts over FCM / APNs (log-only in development) |
+| Audit & Reporting | 2.6 | Directory, sign-ins and a hash-chained, append-only audit log, built only from events (no PII) |
+| Catalog | 2.7 | Card offers and parser templates, published as an Ed25519-signed snapshot (libsodium) |
+| Admin (Blazor) | 2.6 | Internal panel: dashboard, directory, audit log; reads only Audit & Reporting; every view audited |
 
 ## Run it locally
 
@@ -60,7 +64,8 @@ Postgres and RabbitMQ containers (needs Docker running).
 | `building-blocks/Khazana.SharedKernel/` | Clock, IST time |
 | `building-blocks/Khazana.Security/` | DPoP proof checks and `AddKhazanaAuthentication` for every service that serves a signed-in user |
 | `services/MarketData/` | Domain → Application → Infrastructure → Api, plus Tests |
-| `services/Identity/`, `services/Devices/`, `services/Sync/` | The same five folders |
+| `services/Identity/`, `Devices/`, `Sync/`, `Notification/`, `AuditReporting/`, `Catalog/` | The same five folders |
+| `services/Admin/` | The admin panel (Blazor, static server rendering), http://localhost:5090 locally |
 | `tests/` | Architecture rules, gateway tests, DPoP tests, and the shared TestKit |
 
 ## Rules worth knowing
@@ -77,6 +82,11 @@ Postgres and RabbitMQ containers (needs Docker running).
 - **DPoP, never Bearer.** Signed-in endpoints call `RequireAuthorization()`
   after `AddKhazanaAuthentication`. A token without a fresh proof from its
   device key is refused (ADR 0004).
+- **Pub/sub, one queue per service per event.** Every service that handles an
+  event has its own queue `<service>.<event>` bound to the event's exchange,
+  so each gets every event (`tests/Khazana.Messaging.Tests` proves it across
+  hosts). Transient database conflicts are retried three times, then
+  dead-lettered.
 - **Before production: pre-generate Wolverine's handler code.** Today
   handlers are compiled at startup (`WolverineFx.RuntimeCompilation`). For the
   cloud, add `JasperFx` command support to each service, run
