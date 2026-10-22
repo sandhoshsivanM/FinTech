@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Nothing external yet: attachments (S3) will be the first adapter. Kept
+       so every service has the same five folders. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.Sync.Application\Khazana.Sync.Application.csproj" />
+  </ItemGroup>
+</Project>
