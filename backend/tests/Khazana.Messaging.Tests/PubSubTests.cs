@@ -94,6 +94,17 @@ public sealed class PubSubTests : IAsyncLifetime
     }
 
     [Fact]
+    public void Only_transient_database_conflicts_are_retried()
+    {
+        static PostgresException Pg(string state) => new("conflict", "ERROR", "ERROR", state);
+        KhazanaMessaging.IsTransientDatabaseConflict(new InvalidOperationException("wrapped", Pg(PostgresErrorCodes.UniqueViolation))).ShouldBeTrue();
+        KhazanaMessaging.IsTransientDatabaseConflict(Pg(PostgresErrorCodes.DeadlockDetected)).ShouldBeTrue();
+        KhazanaMessaging.IsTransientDatabaseConflict(Pg(PostgresErrorCodes.SerializationFailure)).ShouldBeTrue();
+        KhazanaMessaging.IsTransientDatabaseConflict(Pg(PostgresErrorCodes.UndefinedTable)).ShouldBeFalse();
+        KhazanaMessaging.IsTransientDatabaseConflict(new InvalidOperationException("bug")).ShouldBeFalse();
+    }
+
+    [Fact]
     public void Each_service_gets_its_own_queue_name() =>
         KhazanaMessaging.QueueName("sync", typeof(UserRegisteredV1))
             .ShouldNotBe(KhazanaMessaging.QueueName("identity", typeof(UserRegisteredV1)));
