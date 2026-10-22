@@ -27,7 +27,7 @@ public sealed class AuditWriter(ReportingDbContext db)
             .Select(a => a.Hash).FirstOrDefaultAsync(ct).ConfigureAwait(false) ?? AuditChain.Genesis;
         db.AuditEvents.Add(new AuditEventRow
         {
-            At = entry.At,
+            At = AuditChain.ToStoredPrecision(entry.At),
             Actor = entry.Actor,
             Action = entry.Action,
             Target = entry.Target,

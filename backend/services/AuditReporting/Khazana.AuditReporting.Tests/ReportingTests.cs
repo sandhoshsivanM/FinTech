@@ -60,6 +60,15 @@ public class AuditChainTests
     }
 
     [Fact]
+    public void A_time_with_sub_microsecond_ticks_hashes_like_the_value_the_database_stores()
+    {
+        // Linux clocks tick every 100 ns; Postgres keeps microseconds.
+        var precise = A with { At = new DateTimeOffset(2026, 10, 22, 9, 0, 0, TimeSpan.Zero).AddTicks(1234567) };
+        var stored = A with { At = new DateTimeOffset(2026, 10, 22, 9, 0, 0, TimeSpan.Zero).AddTicks(1234560) };
+        AuditChain.Hash(AuditChain.Genesis, precise).ShouldBe(AuditChain.Hash(AuditChain.Genesis, stored));
+    }
+
+    [Fact]
     public void Field_boundaries_are_unambiguous() =>
         AuditChain.Hash(AuditChain.Genesis, A with { Target = "ab", Reason = "c" })
             .ShouldNotBe(AuditChain.Hash(AuditChain.Genesis, A with { Target = "a", Reason = "bc" }));
