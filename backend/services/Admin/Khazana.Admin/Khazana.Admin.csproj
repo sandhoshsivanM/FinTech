@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- The admin panel (design doc §8.10): Blazor with static server rendering.
+       It reads only Audit & Reporting, so it can't show what isn't there. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Khazana.ServiceDefaults\Khazana.ServiceDefaults.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
+  </ItemGroup>
+</Project>

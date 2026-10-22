@@ -5,6 +5,24 @@
     <Project Path="building-blocks/Khazana.SharedKernel/Khazana.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/services/" />
+  <Folder Name="/services/Admin/">
+    <Project Path="services/Admin/Khazana.Admin.Tests/Khazana.Admin.Tests.csproj" />
+    <Project Path="services/Admin/Khazana.Admin/Khazana.Admin.csproj" />
+  </Folder>
+  <Folder Name="/services/AuditReporting/">
+    <Project Path="services/AuditReporting/Khazana.AuditReporting.Api/Khazana.AuditReporting.Api.csproj" />
+    <Project Path="services/AuditReporting/Khazana.AuditReporting.Application/Khazana.AuditReporting.Application.csproj" />
+    <Project Path="services/AuditReporting/Khazana.AuditReporting.Domain/Khazana.AuditReporting.Domain.csproj" />
+    <Project Path="services/AuditReporting/Khazana.AuditReporting.Infrastructure/Khazana.AuditReporting.Infrastructure.csproj" />
+    <Project Path="services/AuditReporting/Khazana.AuditReporting.Tests/Khazana.AuditReporting.Tests.csproj" />
+  </Folder>
+  <Folder Name="/services/Catalog/">
+    <Project Path="services/Catalog/Khazana.Catalog.Api/Khazana.Catalog.Api.csproj" />
+    <Project Path="services/Catalog/Khazana.Catalog.Application/Khazana.Catalog.Application.csproj" />
+    <Project Path="services/Catalog/Khazana.Catalog.Domain/Khazana.Catalog.Domain.csproj" />
+    <Project Path="services/Catalog/Khazana.Catalog.Infrastructure/Khazana.Catalog.Infrastructure.csproj" />
+    <Project Path="services/Catalog/Khazana.Catalog.Tests/Khazana.Catalog.Tests.csproj" />
+  </Folder>
   <Folder Name="/services/Devices/">
     <Project Path="services/Devices/Khazana.Devices.Api/Khazana.Devices.Api.csproj" />
     <Project Path="services/Devices/Khazana.Devices.Application/Khazana.Devices.Application.csproj" />
@@ -25,6 +43,13 @@
     <Project Path="services/MarketData/Khazana.MarketData.Domain/Khazana.MarketData.Domain.csproj" />
     <Project Path="services/MarketData/Khazana.MarketData.Infrastructure/Khazana.MarketData.Infrastructure.csproj" />
     <Project Path="services/MarketData/Khazana.MarketData.Tests/Khazana.MarketData.Tests.csproj" />
+  </Folder>
+  <Folder Name="/services/Notification/">
+    <Project Path="services/Notification/Khazana.Notification.Api/Khazana.Notification.Api.csproj" />
+    <Project Path="services/Notification/Khazana.Notification.Application/Khazana.Notification.Application.csproj" />
+    <Project Path="services/Notification/Khazana.Notification.Domain/Khazana.Notification.Domain.csproj" />
+    <Project Path="services/Notification/Khazana.Notification.Infrastructure/Khazana.Notification.Infrastructure.csproj" />
+    <Project Path="services/Notification/Khazana.Notification.Tests/Khazana.Notification.Tests.csproj" />
   </Folder>
   <Folder Name="/services/Sync/">
     <Project Path="services/Sync/Khazana.Sync.Api/Khazana.Sync.Api.csproj" />

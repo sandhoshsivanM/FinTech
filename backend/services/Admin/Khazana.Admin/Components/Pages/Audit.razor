@@ -1,0 +1,60 @@
+@page "/audit"
+@attribute [Authorize(Policy = AdminRoles.SecurityPolicy)]
+@inject ReportingClient Reporting
+
+<h1>Audit log</h1>
+<p><a href="/audit?verify=true">Check the log's integrity</a></p>
+@if (_error is not null)
+{
+    <p class="error">@_error</p>
+}
+else if (_page is not null)
+{
+    @if (_chain is not null)
+    {
+        @if (_chain.Intact)
+        {
+            <p class="ok">Intact: all @_chain.Records records chain correctly.</p>
+        }
+        else
+        {
+            <p class="error">Broken at record @_chain.FirstBrokenId. A record was changed, removed or reordered. Start the incident runbook.</p>
+        }
+    }
+    <table>
+        <thead><tr><th>#</th><th>When (IST)</th><th>Actor</th><th>Action</th><th>Target</th><th>Reason</th></tr></thead>
+        <tbody>
+            @foreach (var a in _page.Items)
+            {
+                <tr><td class="num">@a.Id</td><td>@Ist.Format(a.At)</td><td>@a.Actor</td><td>@a.Action</td><td>@a.Target</td><td>@a.Reason</td></tr>
+            }
+        </tbody>
+    </table>
+    <p class="pager">
+        @if (_page.Page > 1) { <a href="/audit?page=@(_page.Page - 1)">Newer</a> }
+        @if (_page.Page * _page.PageSize < _page.Total) { <a href="/audit?page=@(_page.Page + 1)">Older</a> }
+    </p>
+}
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> Auth { get; set; } = null!;
+    [CascadingParameter] private HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery] private int? Page { get; set; }
+    [SupplyParameterFromQuery] private bool? Verify { get; set; }
+    private Paged<AuditView>? _page;
+    private ChainStatus? _chain;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            (_page, _chain) = await Reporting.AuditLogAsync((await Auth).User, Math.Max(1, Page ?? 1), Verify == true, CancellationToken.None);
+        }
+        catch (AuditUnavailableException)
+        {
+            _error = "The audit log is unavailable.";
+            if (Http is not null) Http.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+        }
+    }
+}

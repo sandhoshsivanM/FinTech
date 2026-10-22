@@ -33,9 +33,13 @@ builder.Services.AddKhazanaAuthentication(builder.Configuration, replayDatabase:
 
 builder.Services.AddDbContextWithWolverineIntegration<IdentityDbContext>(o => o.UseNpgsql(database));
 builder.Services.AddSingleton<TokenIssuer>();
+// Every service that keeps user data, which must confirm before the user is deleted.
+builder.Services.AddSingleton(new DeletionSettings(
+    builder.Configuration.GetSection("Identity:Deletion:Services").Get<string[]>() ?? ["devices", "sync", "notification", "reporting"]));
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<PasskeyService>();
 builder.Services.AddHostedService<DatabaseMigrator>();
+builder.Services.AddHostedService<DeletionOverdueCheck>();
 builder.Services.AddHostedService<ChallengeCleanup>();
 
 builder.Services.AddKhazanaJson();
