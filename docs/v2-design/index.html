@@ -115,7 +115,8 @@ a { color: var(--accent); text-decoration: none; }
 
 <!-- ============================== 1 ============================== -->
 <h1 id="s1" data-t="1 · Summary"><span class="num">1</span>Summary</h1>
-<p class="lead">Khazana v2 adds automatic data capture and multi-device sync to the existing offline-first app. The phone stays the source of truth, and the server is a thin, encrypted relay that never stores readable financial data.</p>
+<div class="callout blue"><b>Two products (ADR 0007, 22 October 2026).</b> Khazana ships as two separate apps on every platform. <b>Khazana</b> (offline: <code>webapp/</code> and the Flutter app at the repo root) never has an account, a login, sync or calls to our servers. <b>Khazana Online</b> (<code>webapp-online/</code> and <code>mobile-online/</code>) is a separate app built around an account and end-to-end encrypted sync, and is the only client of the backend. They share domain code and design tokens at build time only; data moves between them by backup file. Where this document says "the app" gains sign-in, sync or a server feature, read "Khazana Online".</div>
+<p class="lead">Khazana v2 adds automatic data capture, and a separate online app with multi-device sync, alongside the existing offline-first app. The phone stays the source of truth, and the server is a thin, encrypted relay that never stores readable financial data.</p>
 
 <div class="kpis">
   <div class="kpi"><div class="v">30–42</div><div class="l">person-months of work (estimate)</div></div>
@@ -159,7 +160,7 @@ a { color: var(--accent); text-decoration: none; }
 <h3>Goals</h3>
 <ul>
   <li><b>G1 Automatic capture.</b> Most transactions arrive with no typing.</li>
-  <li><b>G2 One app, every device.</b> Same data on phone, laptop and web.</li>
+  <li><b>G2 Online: every device.</b> In Khazana Online, the same data on phone, laptop and web. The offline app stays local only.</li>
   <li><b>G3 Complete net worth.</b> Banks, cards, deposits, market investments, retirement schemes and insurance.</li>
   <li><b>G4 Card intelligence.</b> Credit report, card due dates, and "you can save ₹X with the cards you already have".</li>
   <li><b>G5 Smooth UI.</b> Existing theme with better motion and transitions.</li>
@@ -172,7 +173,7 @@ a { color: var(--accent); text-decoration: none; }
   <li>Locking any feature that's free today. How v2 earns money is open decision D13.</li>
   <li>Trading or placing orders. We show holdings, not a broker.</li>
   <li>Tick-by-tick live prices. End-of-day prices are enough.</li>
-  <li>A separate online-only app. v2 is the same app with an online layer.</li>
+  <li>An account, a login or a server in the offline app. Online features live in the separate Khazana Online app (ADR 0007).</li>
 </ul>
 </div>
 </div>
@@ -198,8 +199,8 @@ a { color: var(--accent); text-decoration: none; }
 <table>
   <thead><tr><th style="width:24%">Capability</th><th style="width:40%">Where it lives today</th><th>Use in v2</th></tr></thead>
   <tbody>
-    <tr><td>Flutter app</td><td>Riverpod, go_router, Drift over SQLCipher (AES-256), 22 tables, schema v6</td><td><span class="tag t-reuse">REUSE</span> Primary client. Add Drift migration v7.</td></tr>
-    <tr><td>Web + desktop app</td><td><code>webapp/</code>: Next.js 16, React 19, Zustand, Dexie + WebCrypto, framer-motion, Tauri 2</td><td><span class="tag t-reuse">REUSE</span> Web client, which gets sync and read-mostly views.</td></tr>
+    <tr><td>Flutter app</td><td>Riverpod, go_router, Drift over SQLCipher (AES-256), 22 tables, schema v6</td><td><span class="tag t-reuse">REUSE</span> Stays the offline mobile app (Drift v7 for capture). Gains no sign-in or sync. Khazana Online is a new app in <code>mobile-online/</code>.</td></tr>
+    <tr><td>Web + desktop app</td><td><code>webapp/</code>: Next.js 16, React 19, Zustand, Dexie + WebCrypto, framer-motion, Tauri 2</td><td><span class="tag t-reuse">REUSE</span> Stays the offline web app, unchanged in scope. The online web client is a new app in <code>webapp-online/</code>.</td></tr>
     <tr><td>Notification capture</td><td><code>android/…/KhazanaNotificationListener.kt</code>, <code>CaptureBus.kt</code>, <code>capture_channel.dart</code></td><td><span class="tag t-ext">EXTEND</span> Add an SMS receiver on the same bus.</td></tr>
     <tr><td>Capture pipeline and review inbox</td><td><code>capture_pipeline.dart</code>, <code>pending_capture</code> entity and DAO, <code>capture_inbox_screen.dart</code>, <code>review_queue_banner.dart</code></td><td><span class="tag t-ext">EXTEND</span> Add confidence scoring, account matching, edit-and-approve and auto-post.</td></tr>
     <tr><td>Message parser</td><td><code>notification_parser.dart</code> / <code>notificationParser.ts</code> with bank profiles, balance stripping and shared test fixtures</td><td><span class="tag t-ext">EXTEND</span> Extract account last-4, UTR and available balance. Templates become server-updatable.</td></tr>
@@ -330,7 +331,7 @@ a { color: var(--accent); text-decoration: none; }
 
 <!-- ============================== 5 ============================== -->
 <h1 id="s5" data-t="5 · HLD: frontend and app sections"><span class="num">5</span>HLD: frontend and app sections</h1>
-<p class="lead">Flutter remains the main app, and the web app follows. Both keep the existing layered design and theme. v2 adds three new areas (Accounts, Cards, Connections) and upgrades the Review inbox.</p>
+<p class="lead">Khazana Online is built as its own Flutter app (<code>mobile-online/</code>) and its own web app (<code>webapp-online/</code>), mobile first. They reuse the offline apps' theme and domain logic through shared packages, not their screens. Khazana Online adds three areas (Accounts, Cards, Connections). Which on-device features (capture, the Review inbox, OCR) it also gets is decided phase by phase (ADR 0007, open items).</p>
 
 <h2>Frontend stack</h2>
 <table>
@@ -378,7 +379,7 @@ a { color: var(--accent); text-decoration: none; }
 <ul>
   <li>Reading, adding, editing, reviewing and capturing all work offline.</li>
   <li>Linking an account, "fetch now", credit report and offers refresh need the network. They queue and show a clear "waiting for connection" state.</li>
-  <li>Users who never sign in get v1 behaviour: local only, no account.</li>
+  <li>There is no signed-out mode in Khazana Online. Anyone who wants local only, no account, uses the offline app.</li>
 </ul>
 
 <!-- ============================== 6 ============================== -->
@@ -1285,20 +1286,28 @@ a { color: var(--accent); text-decoration: none; }
 </table>
 
 <h2>15.6 Folder structure</h2>
-<p>One repository. The Flutter and web apps stay where they are; the backend is a single .NET solution with one folder per service. <b>NEW</b> marks what v2 adds; Phase 1 files are already in place.</p>
+<p>One repository, four apps (ADR 0007). The offline Flutter and web apps stay where they are and gain no online code; Khazana Online gets its own two apps; shared code lives in <code>packages/</code>; the backend is a single .NET solution with one folder per service. <b>NEW</b> marks what v2 adds; Phase 1 files are already in place.</p>
 <pre style="page-break-inside: auto;">khazana/                                  repository root
-├── lib/                                  Flutter app
-│   ├── core/  auth/ crypto/ sync/   NEW  sign-in + DPoP, keys + sealing, sync engine
-│   ├── data/  database/ remote/          Drift v7 (built) · NEW generated API client
+├── lib/                                  Khazana (offline) Flutter app · no sign-in, no sync
+│   ├── data/  database/                  Drift v7 (built)
 │   ├── domain/services/                  notification_parser, capture_router,
 │   │                                     capture_account_matcher (built)
-│   └── features/  capture/               built · NEW accounts/ cards/ connections/ security/
+│   └── features/  capture/               built
 ├── android/app/src/
 │   ├── main/kotlin/.../                  MainActivity, CaptureBus, SmsCapture (built)
 │   ├── play/                             inert SmsCaptureImpl — no SMS code (built)
 │   └── sideload/                         SmsReceiver, SmsCaptureImpl, manifest (built)
 ├── ios/Runner/Intents/              NEW  SendToKhazanaIntent.swift (P3)
-├── webapp/                               Next.js + Tauri · NEW src/lib/api, src/lib/sync
+├── webapp/                               Khazana (offline) web + desktop · Next.js + Tauri
+├── packages/                        NEW  build-time shared code only
+│   ├── khazana_domain/                   Dart domain logic (moved from lib/domain)
+│   └── domain-ts/                        TypeScript domain logic + design tokens
+├── mobile-online/                   NEW  Khazana Online Flutter app · com.khazana.online
+│   ├── lib/core/  auth/ crypto/ sync/    sign-in + DPoP, keys + sealing, sync engine
+│   ├── lib/data/  database/ remote/      own Drift database · generated API client
+│   └── lib/features/                     accounts/ cards/ connections/ security/
+├── webapp-online/                   NEW  Khazana Online web app · own Netlify site
+│   └── src/lib/  api/ sync/              API client, sync engine
 ├── backend/                         NEW  .NET 10 microservices
 │   ├── Khazana.sln
 │   ├── Khazana.AppHost/                  .NET Aspire: runs everything locally
@@ -1350,7 +1359,7 @@ a { color: var(--accent); text-decoration: none; }
     <tr><td>D6</td><td>Auto-post default</td><td><b>Built:</b> on for score ≥ 80, with an "Always review" switch</td><td>Meets the "reduce manual work" goal; every automatic add is announced with Undo.</td></tr>
     <tr><td>D7</td><td>iOS automation</td><td>Gmail + OCR + AA at launch, Shortcuts SMS as a later experiment</td><td>iOS has no SMS API</td></tr>
     <tr><td>D8</td><td>Card recommendations</td><td>Savings on existing cards only</td><td>Recommending new cards is a referral or upsell, against the non-goals</td></tr>
-    <tr><td>D9</td><td>Web scope in v2</td><td>Sync and read-mostly views first. Full parity later.</td><td>Capture happens on phones. Focus effort there.</td></tr>
+    <tr><td>D9</td><td>Web scope in v2</td><td>Two separate web apps (ADR 0007). <code>webapp-online/</code> starts with sync and read-mostly views; <code>webapp/</code> stays the offline web app.</td><td>Capture happens on phones. Focus online effort there.</td></tr>
     <tr><td>D10</td><td>Price data</td><td>End-of-day only</td><td>Real-time licences cost many times more for little user value</td></tr>
     <tr><td>D11</td><td>Commercial app shielding (RASP)</td><td>Start with built-in hardening and attestation. Add a commercial RASP if the mobile pentest finds gaps.</td><td>Keeps cost down without lowering the bar. The pentest decides.</td></tr>
     <tr><td>D12</td><td>Post-quantum encryption</td><td>Design for it now (<code>key_version</code>), switch on hybrid X25519 + ML-KEM once libraries are stable on all platforms</td><td>Financial history must stay private for decades</td></tr>

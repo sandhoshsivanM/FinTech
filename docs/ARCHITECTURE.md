@@ -4,6 +4,19 @@ Khazana is **one product shipped as two client apps** over a shared mental
 model. There is **no server**: every app is a self-contained, offline-first
 client that encrypts its own data at rest.
 
+## Two products
+
+This document describes **Khazana**, the offline product: the Flutter app at
+the repo root and `webapp/`. It never has an account, a login, sync or calls
+to our servers, and guard tests keep it that way.
+
+**Khazana Online** is a separate product with its own apps (`mobile-online/`,
+`webapp-online/`). It is built around an account and end-to-end encrypted
+sync, and is the only client of `backend/`. The two share domain code and
+design tokens through `packages/` at build time only; data moves between them
+by backup file. See [ADR 0007](adr/0007-separate-offline-and-online-apps.md)
+and the [v2 design](v2-design/index.html).
+
 ## Layered design (both apps)
 
 Dependencies point **inward**; the domain layer imports no framework.

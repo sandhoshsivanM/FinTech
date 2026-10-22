@@ -38,7 +38,8 @@ able to read it, and without letting someone who stole a Google login get it.
 - Losing every device and the recovery phrase loses the data. This is by
   design (§6).
 - The app does the cryptography (libsodium; Argon2id for the phrase). The
-  Flutter client slice implements it, and the independent cryptography review
+  Khazana Online client slices (`mobile-online/`, `webapp-online/`) implement
+  it (ADR 0007), and the independent cryptography review
   covers it.
 - **Open items:**
   - Biometric step-up before approving a pairing or revoking a device is
