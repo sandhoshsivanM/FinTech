@@ -23,6 +23,50 @@ namespace Khazana.Identity.Application.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Khazana.Identity.Application.Persistence.DeletionConfirmationRow", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Service")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("service");
+
+                    b.Property<DateTimeOffset>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmed_at");
+
+                    b.HasKey("UserId", "Service");
+
+                    b.ToTable("deletion_confirmations", "identity");
+                });
+
+            modelBuilder.Entity("Khazana.Identity.Application.Persistence.DeletionRequestRow", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<DateTimeOffset>("ExecuteAfter")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("execute_after");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("deletion_requests", "identity");
+                });
+
             modelBuilder.Entity("Khazana.Identity.Application.Persistence.ExternalLoginRow", b =>
                 {
                     b.Property<Guid>("Id")

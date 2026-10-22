@@ -63,6 +63,7 @@ public static class IdentityEventProbe
     public static void Handle(UserRegisteredV1 m) => ArgumentNullException.ThrowIfNull(m);
     public static void Handle(UserSignedInV1 m) => ArgumentNullException.ThrowIfNull(m);
     public static void Handle(AccountDeletionRequestedV1 m) => ArgumentNullException.ThrowIfNull(m);
+    public static void Handle(AccountDeletedV1 m) => ArgumentNullException.ThrowIfNull(m);
 }
 
 [CollectionDefinition(nameof(IdentityTestGroup))]
@@ -263,6 +264,70 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
             .PublishMessageAndWaitAsync(new DeviceRevokedV1(
                 tokens.GetProperty("user_id").GetGuid(), tokens.GetProperty("device_id").GetGuid(), DateTimeOffset.UtcNow));
         (await Error(await Refresh(_phone, tokens.GetProperty("refresh_token").GetString()!))).ShouldBe("invalid_grant");
+    }
+
+    [Fact]
+    public async Task The_user_is_deleted_last_only_after_every_service_confirms_its_purge()
+    {
+        var tokens = await SignIn(_phone, $"dev:{Unique()}");
+        var userId = tokens.GetProperty("user_id").GetGuid();
+        var access = tokens.GetProperty("access_token").GetString()!;
+        using (var delete = new HttpRequestMessage(HttpMethod.Delete, "/v1/account"))
+        {
+            Authorize(delete, access, _phone.Proof("DELETE", Url("/v1/account"), access));
+            (await _client.SendAsync(delete, Ct)).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        }
+
+        async Task<ITrackedSession> Purged(string service) =>
+            await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+                .PublishMessageAndWaitAsync(new UserDataPurgedV1(userId, service, DateTimeOffset.UtcNow));
+
+        (await Purged("devices")).Sent.MessagesOf<AccountDeletedV1>().ShouldBeEmpty();
+        (await Purged("devices")).Sent.MessagesOf<AccountDeletedV1>().ShouldBeEmpty("a duplicate confirmation counts once");
+        (await Purged("sync")).Sent.MessagesOf<AccountDeletedV1>().ShouldBeEmpty();
+        await UserStillExists(userId, true);
+
+        var last = await Purged("notification");
+        last.Sent.SingleMessage<AccountDeletedV1>().UserId.ShouldBe(userId);
+        await UserStillExists(userId, false);
+
+        (await Purged("sync")).Sent.MessagesOf<AccountDeletedV1>().ShouldBeEmpty("a late confirmation changes nothing");
+    }
+
+    [Fact]
+    public async Task A_deletion_a_service_never_confirms_is_reported_as_overdue()
+    {
+        var tokens = await SignIn(_phone, $"dev:{Unique()}");
+        var userId = tokens.GetProperty("user_id").GetGuid();
+        var access = tokens.GetProperty("access_token").GetString()!;
+        using (var delete = new HttpRequestMessage(HttpMethod.Delete, "/v1/account"))
+        {
+            Authorize(delete, access, _phone.Proof("DELETE", Url("/v1/account"), access));
+            await _client.SendAsync(delete, Ct);
+        }
+        await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .PublishMessageAndWaitAsync(new UserDataPurgedV1(userId, "devices", DateTimeOffset.UtcNow));
+
+        await using var scope = host.Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+        var settings = scope.ServiceProvider.GetRequiredService<Khazana.Identity.Application.DeletionSettings>();
+        var later = DateTimeOffset.UtcNow + Khazana.Identity.Domain.AccountDeletion.CoolingOff + Khazana.Identity.Api.DeletionOverdueCheck.Grace + TimeSpan.FromHours(1);
+        var overdue = await Khazana.Identity.Api.DeletionOverdueCheck.FindOverdueAsync(db, settings, later, Ct);
+        overdue.Single(o => o.UserId == userId).Missing.ShouldBe(["sync", "notification"]);
+        (await Khazana.Identity.Api.DeletionOverdueCheck.FindOverdueAsync(db, settings, DateTimeOffset.UtcNow, Ct))
+            .ShouldNotContain(o => o.UserId == userId, "not overdue during the cooling-off");
+    }
+
+    private async Task UserStillExists(Guid userId, bool expected)
+    {
+        await using var scope = host.Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+        (await db.Users.AnyAsync(u => u.Id == userId, Ct)).ShouldBe(expected);
+        if (!expected)
+        {
+            (await db.ExternalLogins.AnyAsync(l => l.UserId == userId, Ct)).ShouldBeFalse();
+            (await db.RefreshTokens.AnyAsync(t => t.UserId == userId, Ct)).ShouldBeFalse();
+        }
     }
 
     // --- passkeys -------------------------------------------------------------

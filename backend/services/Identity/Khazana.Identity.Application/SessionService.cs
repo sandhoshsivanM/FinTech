@@ -225,6 +225,7 @@ public sealed class SessionService(
             token.RevokedAt = now;
         }
 
+        Db.DeletionRequests.Add(new DeletionRequestRow { UserId = userId, RequestedAt = now, ExecuteAfter = executeAfter });
         await outbox.PublishAsync(new AccountDeletionRequestedV1(userId, executeAfter)).ConfigureAwait(false);
         await outbox.SaveChangesAndFlushMessagesAsync(ct).ConfigureAwait(false);
         return executeAfter;

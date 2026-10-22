@@ -15,6 +15,8 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     public DbSet<PasskeyRow> Passkeys => Set<PasskeyRow>();
     public DbSet<RefreshTokenRow> RefreshTokens => Set<RefreshTokenRow>();
     public DbSet<WebAuthnChallengeRow> WebAuthnChallenges => Set<WebAuthnChallengeRow>();
+    public DbSet<DeletionRequestRow> DeletionRequests => Set<DeletionRequestRow>();
+    public DbSet<DeletionConfirmationRow> DeletionConfirmations => Set<DeletionConfirmationRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -85,6 +87,27 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             e.HasIndex(x => x.FamilyId);
             e.HasIndex(x => x.UserId);
             e.HasOne<UserRow>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Deliberately no foreign key to users: these rows outlive the user they
+        // describe, as the record that the deletion happened and when.
+        modelBuilder.Entity<DeletionRequestRow>(e =>
+        {
+            e.ToTable("deletion_requests");
+            e.HasKey(x => x.UserId);
+            e.Property(x => x.UserId).HasColumnName("user_id");
+            e.Property(x => x.RequestedAt).HasColumnName("requested_at");
+            e.Property(x => x.ExecuteAfter).HasColumnName("execute_after");
+            e.Property(x => x.CompletedAt).HasColumnName("completed_at");
+        });
+
+        modelBuilder.Entity<DeletionConfirmationRow>(e =>
+        {
+            e.ToTable("deletion_confirmations");
+            e.HasKey(x => new { x.UserId, x.Service });
+            e.Property(x => x.UserId).HasColumnName("user_id");
+            e.Property(x => x.Service).HasColumnName("service").HasMaxLength(32);
+            e.Property(x => x.ConfirmedAt).HasColumnName("confirmed_at");
         });
 
         modelBuilder.Entity<WebAuthnChallengeRow>(e =>
@@ -172,4 +195,21 @@ public sealed class WebAuthnChallengeRow
     public required string OptionsJson { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
     public DateTimeOffset? UsedAt { get; set; }
+}
+
+/// <summary>An account deletion in progress (or done): the saga's state.</summary>
+public sealed class DeletionRequestRow
+{
+    public Guid UserId { get; set; }
+    public DateTimeOffset RequestedAt { get; set; }
+    public DateTimeOffset ExecuteAfter { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
+}
+
+/// <summary>One service has deleted its part.</summary>
+public sealed class DeletionConfirmationRow
+{
+    public Guid UserId { get; set; }
+    public required string Service { get; set; }
+    public DateTimeOffset ConfirmedAt { get; set; }
 }
