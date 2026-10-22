@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { D } from '@/lib/money';
-import type { Category, Goal, NetWorthSnapshot, Txn } from '@/lib/types';
-import { forMonth } from './period';
+import { D } from '@khazana/domain/money';
+import type { Category, Goal, NetWorthSnapshot, Txn } from '@khazana/domain/types';
+import { forMonth } from '@khazana/domain/period';
 import {
   dailySpend, goalProgress, incomeBySource, monthElapsed, monthEndSeries, monthlyFlow, paceStatus,
-} from './dashboardCharts';
+} from '@khazana/domain/dashboardCharts';
 
 const at = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h).getTime();
 const txn = (id: string, date: number, type: Txn['type'], amount: string, categoryId = 'c'): Txn =>

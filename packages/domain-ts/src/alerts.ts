@@ -18,12 +18,12 @@
  * cannot be tested without a database.
  */
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from './money';
 import {
   ALERT_TYPE_OF,
   type Alert, type AlertState, type AlertType,
   type Budget, type Category, type Holding, type Insurance, type Txn,
-} from '@/lib/types';
+} from './types';
 import { spentForCategory } from './finance';
 import { currentMonth } from './period';
 

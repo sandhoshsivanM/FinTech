@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   WIDGETS, allowedSizes, defaultLayout, moveWidget, packSpans, nudgeWidget, resolveLayout, setWidgetHidden, setWidgetSize,
-} from './dashboardLayout';
+} from '@khazana/domain/dashboardLayout';
 
 const ids = (l: { id: string }[]) => l.map((x) => x.id);
 

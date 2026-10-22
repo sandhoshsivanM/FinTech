@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
-import { liquidBalance, moneyAccounts } from '@/domain/accountLedger';
+import { liquidBalance, moneyAccounts } from '@khazana/domain/accountLedger';
 import { AnimatedNumber, motion, tap } from '../motion';
 import { SectionInfo } from '../Hint';
 

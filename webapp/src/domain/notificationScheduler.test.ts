@@ -21,7 +21,7 @@ import {
   type NotificationPlanInput,
   type NotifyPrefs,
   type PlannedNotification,
-} from './notificationScheduler';
+} from '@khazana/domain/notificationScheduler';
 
 const FIXTURE_PATH = resolve(__dirname, '__fixtures__/notification_cases.json');
 const fixture = JSON.parse(readFileSync(FIXTURE_PATH, 'utf8'));

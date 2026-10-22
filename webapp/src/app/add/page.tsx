@@ -8,18 +8,18 @@ import {
 } from 'lucide-react';
 import { CatIcon } from '@/components/CategoryIcon';
 import { useApp, uid, cashAcctId, lsGet, lsSet, LAST_ACCOUNT_KEY } from '@/lib/store';
-import { D } from '@/lib/money';
+import { D } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
-import { STORE, type TxnType } from '@/lib/types';
-import { moneyAccounts } from '@/domain/accountLedger';
-import { parseQuickAdd } from '@/domain/nlp';
+import { STORE, type TxnType } from '@khazana/domain/types';
+import { moneyAccounts } from '@khazana/domain/accountLedger';
+import { parseQuickAdd } from '@khazana/domain/nlp';
 import {
   GlassCard, PageIntro, Button, Segmented, Field, Input, Select,
 } from '@/components/ui';
 import { DateInput } from '@/components/DateInput';
 import { useConfirm } from '@/components/Confirm';
 import { formatDate } from '@/lib/dateFormat';
-import { startOfDay } from '@/domain/period';
+import { startOfDay } from '@khazana/domain/period';
 import { NumberInput } from '@/components/NumberInput';
 import { SectionInfo } from '@/components/Hint';
 

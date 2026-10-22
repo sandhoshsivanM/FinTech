@@ -7,8 +7,8 @@
  * so a chart cannot draw one period and be captioned with another.
  */
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import { isSpending, type Category, type Goal, type NetWorthSnapshot, type Txn } from '@/lib/types';
+import { D, ZERO } from './money';
+import { isSpending, type Category, type Goal, type NetWorthSnapshot, type Txn } from './types';
 import { contains, shiftMonths, startOfDay, type DateRange } from './period';
 import type { BudgetProgress } from './finance';
 

@@ -5,7 +5,7 @@
  * a quote is allowed to overwrite — is testable without a network, and reads in
  * one place.
  */
-import type { Holding } from '@/lib/types';
+import type { Holding } from '@khazana/domain/types';
 import { yahooTicker, type Quote } from './yahoo';
 
 export interface AppliedQuotes {

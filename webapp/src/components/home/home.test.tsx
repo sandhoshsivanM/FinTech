@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
-import type { Account, Txn } from '@/lib/types';
+import type { Account, Txn } from '@khazana/domain/types';
 import { WalletStack, walletAccounts } from './WalletStack';
 import { LatestTransactions } from './LatestTransactions';
 import { BalanceHero } from './BalanceHero';
@@ -10,7 +10,7 @@ import { WeekFlowCard } from './WeekFlowCard';
 import { InsightCard } from './InsightCard';
 import { MonthTiles } from './MonthTiles';
 import { BudgetRingCard } from './BudgetRingCard';
-import { shiftMonths } from '@/domain/period';
+import { shiftMonths } from '@khazana/domain/period';
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...rest }: { children: React.ReactNode; href: string }) => (

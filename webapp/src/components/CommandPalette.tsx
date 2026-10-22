@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Search, CornerDownLeft } from 'lucide-react';
 import { useApp } from '@/lib/store';
-import { D } from '@/lib/money';
+import { D } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
 import { NAV_GROUPS } from './navConfig';
 import { DUR, EASE } from './motion';

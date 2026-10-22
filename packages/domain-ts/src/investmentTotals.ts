@@ -5,8 +5,8 @@
 // type on both platforms, and the shared fixture in health.test.ts asserts they
 // produce identical numbers from it.
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { Holding } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { Holding } from './types';
 import { ASSET_GROUP_OF, holdingView, type AssetGroup } from './portfolio';
 
 /**
@@ -125,7 +125,7 @@ export function investmentTotals(holdings: Holding[]): InvestmentTotals {
 
 /** Convenience for tests and fixtures: totals from plain per-asset-type amounts. */
 export function totalsOf(
-  byType: Partial<Record<import('@/lib/types').AssetType, number>>,
+  byType: Partial<Record<import('./types').AssetType, number>>,
   opts: { costBasis?: number; unpricedCount?: number; indicativeValue?: number } = {},
 ): InvestmentTotals {
   const byGroup: Partial<Record<AssetGroup, Decimal>> = {};
@@ -133,7 +133,7 @@ export function totalsOf(
   let count = 0;
   for (const [type, amount] of Object.entries(byType)) {
     if (amount == null) continue;
-    const g = ASSET_GROUP_OF[type as import('@/lib/types').AssetType];
+    const g = ASSET_GROUP_OF[type as import('./types').AssetType];
     const v = D(amount);
     byGroup[g] = (byGroup[g] ?? ZERO).plus(v);
     total = total.plus(v);

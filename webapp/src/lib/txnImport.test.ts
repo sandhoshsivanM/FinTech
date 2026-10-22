@@ -4,7 +4,7 @@ import { detectDayFirst, parseDateCell } from './dateParse';
 import {
   dividendKindOf, guessCategory, matchHolding, parseTxnRows, planTxnImport, txnFingerprint,
 } from './txnImport';
-import type { Txn } from './types';
+import type { Txn } from '@khazana/domain/types';
 
 const grid = (text: string) => parseDelimited(text);
 

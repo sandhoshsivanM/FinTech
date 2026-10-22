@@ -5,7 +5,7 @@ import { Gauge } from './Gauge';
 import { AreaChart } from './AreaChart';
 import { Sunburst, type SunburstNode } from './Sunburst';
 import { Donut, type DonutSeg } from './Donut';
-import { groupShades, MAX_GROUP_SHADES, ASSET_GROUP_META, ASSET_GROUP_ORDER } from '@/domain/portfolio';
+import { groupShades, MAX_GROUP_SHADES, ASSET_GROUP_META, ASSET_GROUP_ORDER } from '@khazana/domain/portfolio';
 
 beforeEach(cleanup);
 
@@ -255,7 +255,7 @@ describe('sector overrides reach the allocation', () => {
   // then classified on the bundled master alone, so an edited holding stayed
   // "Unclassified" no matter what was typed.
   test('a holding sector overrides the master, and blank falls back to it', async () => {
-    const { classifyHolding } = await import('@/domain/instrumentMaster');
+    const { classifyHolding } = await import('@khazana/domain/instrumentMaster');
     const master = {
       schemaVersion: 1,
       bySymbol: new Map([['INFY', { symbol: 'INFY', sector: 'Information Technology', industry: 'IT Services', cap: 'large' as const }]]),

@@ -4,8 +4,8 @@
  * where a number belongs, or quietly presenting an unbalanced ledger as sound.
  */
 import { describe, expect, it } from 'vitest';
-import type { Account, Category, Holding, Posting, Transfer, Txn } from '@/lib/types';
-import { custom } from '@/domain/period';
+import type { Account, Category, Holding, Posting, Transfer, Txn } from '@khazana/domain/types';
+import { custom } from '@khazana/domain/period';
 import { buildReport, safeSheetName, type ReportInput } from './model';
 import { buildXlsx, reportFilename } from './xlsx';
 

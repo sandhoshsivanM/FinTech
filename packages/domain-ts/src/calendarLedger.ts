@@ -3,8 +3,8 @@
 // never drift by a rounding cent. Date-key convention: the transaction's local
 // calendar day, formatted 'YYYY-MM-DD'.
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { Txn } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { Txn } from './types';
 
 export interface DayLedger {
   date: string; // 'YYYY-MM-DD'

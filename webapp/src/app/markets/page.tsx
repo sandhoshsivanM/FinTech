@@ -10,7 +10,7 @@ import { useMemo } from 'react';
 import { CandlestickChart, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
-import { D } from '@/lib/money';
+import { D } from '@khazana/domain/money';
 import { PageIntro, GlassCard, EmptyState, Delta } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';

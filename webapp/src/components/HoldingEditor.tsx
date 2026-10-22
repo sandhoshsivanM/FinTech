@@ -9,15 +9,15 @@
 import { useMemo, useRef, useState } from 'react';
 import { CheckCircle2, Upload, X, Trash2 } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
-import { STORE, type AssetType, type Holding } from '@/lib/types';
-import { ASSET_META } from '@/domain/portfolio';
-import { MARKET_CAP_LABEL, SECTOR_SUGGESTIONS } from '@/domain/instrumentMaster';
+import { STORE, type AssetType, type Holding } from '@khazana/domain/types';
+import { ASSET_META } from '@khazana/domain/portfolio';
+import { MARKET_CAP_LABEL, SECTOR_SUGGESTIONS } from '@khazana/domain/instrumentMaster';
 import { parseHoldingsCsv, planImport, importCounts, type CsvHolding } from '@/lib/holdingsCsv';
 import { Button, Field, Input, Select, GlassCard, Chip } from './ui';
 import { DateInput } from './DateInput';
 import { NumberInput } from './NumberInput';
-import { isFixedIncome, PAYOUT_LABEL } from '@/domain/fixedIncome';
-import { CURRENCIES } from '@/domain/currency';
+import { isFixedIncome, PAYOUT_LABEL } from '@khazana/domain/fixedIncome';
+import { CURRENCIES } from '@khazana/domain/currency';
 import { Combobox } from './Combobox';
 import { useConfirm } from './Confirm';
 

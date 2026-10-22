@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { useApp } from '@/lib/store';
 import { ConfirmProvider } from '@/components/Confirm';
 import { NAV_GROUPS } from '@/components/navConfig';
-import type { Txn } from '@/lib/types';
+import type { Txn } from '@khazana/domain/types';
 import TaxPage from './tax/page';
 import AnalyticsPage from './analytics/page';
 import ForecastPage from './forecast/page';

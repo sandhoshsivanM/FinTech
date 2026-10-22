@@ -33,7 +33,7 @@
  * It holds no data and keeps no log, so "no server holds your data" stays true.
  */
 import { isTauri } from '@/lib/notify';
-import type { AssetType, Holding } from '@/lib/types';
+import type { AssetType, Holding } from '@khazana/domain/types';
 
 import { CHART_ENDPOINT } from './proxy';
 

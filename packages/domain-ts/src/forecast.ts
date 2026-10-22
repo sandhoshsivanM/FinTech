@@ -13,8 +13,8 @@
  * allowance, because the user will spend against it.
  */
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { Liability, RecurringRule, Txn } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { Liability, RecurringRule, Txn } from './types';
 import { advance } from './recurrence';
 import { emi, windowSummary } from './finance';
 import {

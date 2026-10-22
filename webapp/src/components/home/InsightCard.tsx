@@ -5,10 +5,10 @@ import clsx from 'clsx';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { useNow } from '@/lib/useNow';
-import { D, ZERO } from '@/lib/money';
-import { dailyFlow, describeChange } from '@/domain/dailyFlow';
-import { currentMonth, monthName, type DateRange } from '@/domain/period';
-import { budgetRollover, evaluateBudget, spentForCategory } from '@/domain/finance';
+import { D, ZERO } from '@khazana/domain/money';
+import { dailyFlow, describeChange } from '@khazana/domain/dailyFlow';
+import { currentMonth, monthName, type DateRange } from '@khazana/domain/period';
+import { budgetRollover, evaluateBudget, spentForCategory } from '@khazana/domain/finance';
 import { SectionInfo } from '../Hint';
 
 interface Insight { figure: string; title: string; detail: string }

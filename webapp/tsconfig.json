@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@khazana/domain/*": ["../packages/domain-ts/src/*"],
+      "decimal.js": ["./node_modules/decimal.js"]
     }
   },
   "include": [

@@ -2,9 +2,9 @@
 // per-lot split that replaced it, and the invariant that keeps lots and the
 // position they describe from drifting apart.
 import { describe, expect, test } from 'vitest';
-import { D } from '@/lib/money';
-import { allocateFifo, gainsForSale, hasRealLots, lotsFor, reconcileLots } from './lots';
-import type { Holding, HoldingLot } from '@/lib/types';
+import { D } from '@khazana/domain/money';
+import { allocateFifo, gainsForSale, hasRealLots, lotsFor, reconcileLots } from '@khazana/domain/lots';
+import type { Holding, HoldingLot } from '@khazana/domain/types';
 
 // Chosen so the two lots genuinely fall either side of the 12-month line:
 // Mar 2024 → Jan 2026 is 22 months (long); Nov 2025 → Jan 2026 is 2 (short).

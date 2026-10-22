@@ -6,10 +6,10 @@
  * one of those failures.
  */
 import { describe, expect, test } from 'vitest';
-import { evaluateAlerts, nextState, stateOf, triggered } from './alerts';
+import { evaluateAlerts, nextState, stateOf, triggered } from '@khazana/domain/alerts';
 import type {
   Alert, AlertKind, Budget, Category, Holding, Insurance, Txn,
-} from '@/lib/types';
+} from '@khazana/domain/types';
 
 const NOW = new Date(2026, 7, 9, 12, 0).getTime();
 const DAY = 86_400_000;

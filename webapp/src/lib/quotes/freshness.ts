@@ -13,7 +13,7 @@
  * measured against — and only considers holdings that carry a previous close.
  * This one speaks for the whole book.
  */
-import type { Holding } from '@/lib/types';
+import type { Holding } from '@khazana/domain/types';
 import { formatDayMonth } from '@/lib/dateFormat';
 
 /** Newest `priceAsOf` across the book, or null when nothing records one. */

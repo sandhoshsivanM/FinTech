@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { PiggyBank, Landmark, ArrowRight } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
-import { safetyNet, type SafetyComponent } from '@/domain/safetyNet';
-import { investmentTotals } from '@/domain/investmentTotals';
-import { ASSET_META } from '@/domain/portfolio';
-import { D } from '@/lib/money';
+import { safetyNet, type SafetyComponent } from '@khazana/domain/safetyNet';
+import { investmentTotals } from '@khazana/domain/investmentTotals';
+import { ASSET_META } from '@khazana/domain/portfolio';
+import { D } from '@khazana/domain/money';
 import {
   PageIntro, GlassCard, SectionHeader, StatStrip, Ring, ProgressBar, EmptyState, Button,
 } from '@/components/ui';

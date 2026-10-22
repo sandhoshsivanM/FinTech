@@ -25,8 +25,8 @@ import {
   ChevronDown, Filter, ArrowUpRight, ArrowDownRight, Info,
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
-import { usesSeedRate } from '@/domain/currency';
-import { D, ZERO } from '@/lib/money';
+import { usesSeedRate } from '@khazana/domain/currency';
+import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
 import { useDarkMode } from '@/lib/useDarkMode';
 import { useNow } from '@/lib/useNow';
@@ -34,9 +34,9 @@ import { short, pct as fmtPct } from '@/lib/format';
 import {
   portfolioSummary, allocationByGroup, rollup, holdingView,
   ASSET_META, ASSET_GROUP_META, ASSET_GROUP_OF, UNCLASSIFIED_KEY, type AssetGroup,
-} from '@/domain/portfolio';
-import { investmentTotals, concentration } from '@/domain/investmentTotals';
-import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
+} from '@khazana/domain/portfolio';
+import { investmentTotals, concentration } from '@khazana/domain/investmentTotals';
+import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@khazana/domain/instrumentMaster';
 import { dayChange, hasRealClose, priceAsOfLabel, rowDayPct } from '@/domain/dayChange';
 import { PageIntro, Button, Chip, Delta, Donut, Gauge, EmptyState, GlassCard, type DonutSeg } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';

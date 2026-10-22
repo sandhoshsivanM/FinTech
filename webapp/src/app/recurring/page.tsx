@@ -6,11 +6,11 @@ import {
 import clsx from 'clsx';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { useApp, uid } from '@/lib/store';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
-import { STORE, type TxnType, type Frequency, type RecurringRule } from '@/lib/types';
-import { FREQ_LABEL } from '@/domain/recurrence';
-import { moneyAccounts } from '@/domain/accountLedger';
+import { STORE, type TxnType, type Frequency, type RecurringRule } from '@khazana/domain/types';
+import { FREQ_LABEL } from '@khazana/domain/recurrence';
+import { moneyAccounts } from '@khazana/domain/accountLedger';
 import {
   PageIntro, GlassCard, Button, Segmented, Field, Input, Select, EmptyState, StatStrip,
 } from '@/components/ui';

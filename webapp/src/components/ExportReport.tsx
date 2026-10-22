@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { FileSpreadsheet, Printer } from 'lucide-react';
 import { useApp, APP_VERSION } from '@/lib/store';
-import type { DateRange } from '@/domain/period';
+import type { DateRange } from '@khazana/domain/period';
 import { buildReport, type ReportInput } from '@/lib/reports/model';
 import { downloadXlsx } from '@/lib/reports/xlsx';
 import { downloadPdf } from '@/lib/reports/pdf';

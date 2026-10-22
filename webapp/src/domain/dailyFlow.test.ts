@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Txn } from '@/lib/types';
-import { dailyFlow } from './dailyFlow';
+import type { Txn } from '@khazana/domain/types';
+import { dailyFlow } from '@khazana/domain/dailyFlow';
 
 const at = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h).getTime();
 const txn = (id: string, date: number, type: Txn['type'], amount: string): Txn =>
@@ -48,7 +48,7 @@ describe('dailyFlow', () => {
 });
 
 import Decimal from 'decimal.js';
-import { describeChange } from './dailyFlow';
+import { describeChange } from '@khazana/domain/dailyFlow';
 
 describe('describeChange', () => {
   const d = (n: number) => new Decimal(n);

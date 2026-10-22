@@ -1,7 +1,7 @@
 // Smarter local insights (no network, no LLM). Pure functions over the ledger.
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { RecurringRule, Txn } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { RecurringRule, Txn } from './types';
 import { advance } from './recurrence';
 import { contains, currentMonth, shiftMonths } from './period';
 

@@ -7,7 +7,7 @@
  * to a second machine should not drag the first machine's notification settings
  * along with it.
  */
-import { DEFAULT_NOTIFY_PREFS, NOTIFY_CATEGORIES, type NotifyCategory, type NotifyPrefs } from '@/domain/notificationScheduler';
+import { DEFAULT_NOTIFY_PREFS, NOTIFY_CATEGORIES, type NotifyCategory, type NotifyPrefs } from '@khazana/domain/notificationScheduler';
 import { lsGet, lsSet } from './store';
 
 export const NOTIFY_PREFS_KEY = 'khazana-notify-prefs';

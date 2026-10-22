@@ -9,10 +9,10 @@
  */
 import {
   postingsForEntry, postingsForTransfer,
-} from '@/domain/accountLedger';
+} from '@khazana/domain/accountLedger';
 import type {
   Account, Budget, Holding, HoldingLot, Posting, Transfer, Txn, Category,
-} from '@/lib/types';
+} from '@khazana/domain/types';
 
 const VAULT = 'v';
 const PROFILE = 'p1';

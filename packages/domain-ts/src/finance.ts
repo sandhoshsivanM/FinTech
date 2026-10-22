@@ -4,8 +4,8 @@
 // rather than a window token or a pair of loose numbers, so a caller cannot
 // query one span and caption the screen with another.
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import { isSpending, type Budget, type Liability, type Txn } from '@/lib/types';
+import { D, ZERO } from './money';
+import { isSpending, type Budget, type Liability, type Txn } from './types';
 import { contains, shiftMonths, startOfDay, type DateRange } from './period';
 
 /**

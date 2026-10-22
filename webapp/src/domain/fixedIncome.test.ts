@@ -1,9 +1,9 @@
 // A bond or FD used to value at cost for its entire life and report exactly ₹0
 // return. These pin the accrual that replaced that.
 import { describe, expect, test } from 'vitest';
-import { accrue, annualIncome, canAccrue, isFixedIncome } from './fixedIncome';
-import { holdingView } from './portfolio';
-import type { AssetType, Holding } from '@/lib/types';
+import { accrue, annualIncome, canAccrue, isFixedIncome } from '@khazana/domain/fixedIncome';
+import { holdingView } from '@khazana/domain/portfolio';
+import type { AssetType, Holding } from '@khazana/domain/types';
 
 const DAY = 86_400_000;
 const START = new Date(2026, 2, 15).getTime(); // 15 Mar 2026

@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { dayChange, hasRealClose, priceAsOfLabel, rowDayPct } from './dayChange';
 import { parseHoldingsCsv, planImport, importCounts } from '@/lib/holdingsCsv';
-import type { Holding } from '@/lib/types';
+import type { Holding } from '@khazana/domain/types';
 
 const h = (over: Partial<Holding>): Holding => ({
   id: over.symbol ?? 'x', vaultId: 'v', symbol: over.symbol ?? 'X', exchange: 'NSE',

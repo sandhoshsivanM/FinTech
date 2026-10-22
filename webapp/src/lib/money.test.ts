@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { D, ZERO } from './money';
+import { D, ZERO } from '@khazana/domain/money';
 
 describe('D — tolerant money parsing', () => {
   test('clean values are unchanged', () => {

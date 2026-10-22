@@ -1,5 +1,5 @@
-import { D, ZERO } from '@/lib/money';
-import type { Holding } from '@/lib/types';
+import { D, ZERO } from '@khazana/domain/money';
+import type { Holding } from '@khazana/domain/types';
 import { demoDayChangePct, dayKey } from '@/lib/demo/marketFeed';
 import { formatDayMonth } from '@/lib/dateFormat';
 

@@ -8,8 +8,8 @@
 // input can come from any app's notification, and adjacent `\s*` groups over a
 // long run of spaces backtrack polynomially (ReDoS).
 import Decimal from 'decimal.js';
-import { D } from '@/lib/money';
-import type { TxnType } from '@/lib/types';
+import { D } from './money';
+import type { TxnType } from './types';
 
 export interface BankProfile {
   id: string;

@@ -4,10 +4,10 @@ import { CreditCard, Landmark, Trash2, Plus, AlertTriangle, Pencil } from 'lucid
 import { Hint } from '@/components/Hint';
 import type { TermKey } from '@/lib/glossary';
 import { useApp, uid } from '@/lib/store';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
-import { STORE, type LiabilityKind } from '@/lib/types';
-import { emi, simulatePayoff, type PayoffStrategy } from '@/domain/finance';
+import { STORE, type LiabilityKind } from '@khazana/domain/types';
+import { emi, simulatePayoff, type PayoffStrategy } from '@khazana/domain/finance';
 import {
   PageIntro, GlassCard, SectionHeader, EmptyState,
   Button, Field, Input, Select, Segmented, ProgressBar,

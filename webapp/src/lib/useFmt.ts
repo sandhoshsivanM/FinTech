@@ -4,7 +4,7 @@
 // currency). Use these instead of formatMoney/formatSigned directly in screens.
 import type Decimal from 'decimal.js';
 import { useApp } from './store';
-import { findCurrency, formatIn, fromInr } from '@/domain/currency';
+import { findCurrency, formatIn, fromInr } from '@khazana/domain/currency';
 
 export interface Fmt {
   /** Format an INR-denominated amount in the active display currency. */

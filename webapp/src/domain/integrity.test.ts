@@ -12,16 +12,16 @@
  * to balance by construction and would prove nothing.
  */
 import { describe, expect, test } from 'vitest';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import {
   accountBalances, allEntriesBalanced, holdingMarketValue, isBalanced,
   netWorthFromAccounts, openingDebitSigned,
-} from './accountLedger';
-import { balanceSheet, cashFlow } from './statements';
-import { budgetRollover, evaluateBudget, spentForCategory, windowSummary } from './finance';
-import { contains, currentMonth, custom, monthsBack, monthsIn, trailingDays } from './period';
-import { runDiagnostics } from './diagnostics';
-import { reconcileLots } from './lots';
+} from '@khazana/domain/accountLedger';
+import { balanceSheet, cashFlow } from '@khazana/domain/statements';
+import { budgetRollover, evaluateBudget, spentForCategory, windowSummary } from '@khazana/domain/finance';
+import { contains, currentMonth, custom, monthsBack, monthsIn, trailingDays } from '@khazana/domain/period';
+import { runDiagnostics } from '@khazana/domain/diagnostics';
+import { reconcileLots } from '@khazana/domain/lots';
 import { ACCT, CAT, buildVault } from '@/test/fixtures/vault';
 
 // Fixed instant: 9 Aug 2026, 12:00 local. Nothing here reads the wall clock.

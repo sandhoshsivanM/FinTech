@@ -7,11 +7,11 @@
  * than none, because it will be spent against.
  */
 import { describe, expect, test } from 'vitest';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import {
   cashFlowForecast, committedBefore, monthlyReview, netWorthProjection, safeToSpend, whatIf,
-} from './forecast';
-import type { Liability, RecurringRule, Txn } from '@/lib/types';
+} from '@khazana/domain/forecast';
+import type { Liability, RecurringRule, Txn } from '@khazana/domain/types';
 
 const NOW = new Date(2026, 7, 9, 12, 0).getTime(); // 9 Aug 2026, 22 days left
 const DAY = 86_400_000;

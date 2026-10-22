@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest';
 import {
   contains, currentMonth, custom, daysIn, endOfDay, financialYearToDate, forMonth,
   monthsBack, monthsIn, nextMonth, previousMonth, startOfDay, trailingDays,
-} from './period';
+} from '@khazana/domain/period';
 
 // 9 Aug 2026, 14:30 local.
 const AUG = new Date(2026, 7, 9, 14, 30).getTime();

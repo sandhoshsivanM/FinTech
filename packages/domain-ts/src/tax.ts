@@ -11,8 +11,8 @@
  * yet, and every estimate can name the rule-set version behind it.
  */
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { AssetType } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { AssetType } from './types';
 
 export interface Rule {
   stcgRate: number | null; // null = 'slab'

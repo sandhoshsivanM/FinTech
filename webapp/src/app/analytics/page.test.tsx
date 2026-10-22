@@ -8,7 +8,7 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import { useApp } from '@/lib/store';
-import type { Holding } from '@/lib/types';
+import type { Holding } from '@khazana/domain/types';
 import AnalyticsPage from './page';
 
 vi.mock('next/link', () => ({

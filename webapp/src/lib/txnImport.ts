@@ -18,7 +18,7 @@
  * a statement is worse than importing none, because the user would reconcile
  * against a total that was never complete.
  */
-import type { DividendKind, Txn, TxnType } from './types';
+import type { DividendKind, Txn, TxnType } from '@khazana/domain/types';
 import { findHeaderRow, headerIndex, num } from './sheet';
 import { detectDayFirst, parseDateCell } from './dateParse';
 

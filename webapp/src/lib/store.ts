@@ -8,7 +8,7 @@ import {
   clearVault, listRecords, listRecordIds, getRecord, putRecord, deleteRecord, applyMutations,
   type Mutation, type ReadFailure,
 } from './repo';
-import { D, ZERO } from './money';
+import { D, ZERO } from '@khazana/domain/money';
 import {
   STORE, PROFILE_SCOPED, isSpending,
   type Budget, type Category, type Goal, type Holding, type Liability,
@@ -16,13 +16,13 @@ import {
   type ImportBatch, type HoldingLot,
   type Account, type Posting, type Transfer, type PendingCapture,
   type WatchItem, type Dividend, type Alert, type FxRate,
-} from './types';
-import { materialize, advance } from '@/domain/recurrence';
-import { postingsForEntry, postingsForTransfer, accountBalances, liquidBalance } from '@/domain/accountLedger';
+} from '@khazana/domain/types';
+import { materialize, advance } from '@khazana/domain/recurrence';
+import { postingsForEntry, postingsForTransfer, accountBalances, liquidBalance } from '@khazana/domain/accountLedger';
 import Decimal from 'decimal.js';
-import { healthScore } from '@/domain/health';
-import { investmentTotals } from '@/domain/investmentTotals';
-import { runDiagnostics, restoreBlockers } from '@/domain/diagnostics';
+import { healthScore } from '@khazana/domain/health';
+import { investmentTotals } from '@khazana/domain/investmentTotals';
+import { runDiagnostics, restoreBlockers } from '@khazana/domain/diagnostics';
 
 const VAULT_ID = 'default';
 

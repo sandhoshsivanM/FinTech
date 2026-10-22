@@ -18,7 +18,7 @@
  *     permanent for the origin until the user digs into site settings, so it is
  *     asked for once, from the Settings toggle, and never on load.
  */
-import type { PlannedNotification } from '@/domain/notificationScheduler';
+import type { PlannedNotification } from '@khazana/domain/notificationScheduler';
 
 export type NotifyPermission = NotificationPermission | 'unsupported';
 

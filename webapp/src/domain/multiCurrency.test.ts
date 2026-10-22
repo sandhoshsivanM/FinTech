@@ -2,9 +2,9 @@
 // genuinely priced in dollars, and storing its cost as rupees baked in an
 // error that compounded silently.
 import { describe, expect, test } from 'vitest';
-import { holdingView, fxRates, hasApproximateFx, portfolioSummary } from './portfolio';
-import { findCurrency, isRateStale, rateAsOf, usesSeedRate } from './currency';
-import type { FxRate, Holding } from '@/lib/types';
+import { holdingView, fxRates, hasApproximateFx, portfolioSummary } from '@khazana/domain/portfolio';
+import { findCurrency, isRateStale, rateAsOf, usesSeedRate } from '@khazana/domain/currency';
+import type { FxRate, Holding } from '@khazana/domain/types';
 
 const USD = findCurrency('USD').rateToInr; // 83.3
 

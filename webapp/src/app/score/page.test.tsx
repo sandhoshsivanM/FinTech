@@ -3,7 +3,7 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { useApp } from '@/lib/store';
-import type { Insurance, Txn } from '@/lib/types';
+import type { Insurance, Txn } from '@khazana/domain/types';
 import ScorePage from './page';
 
 vi.mock('next/link', () => ({

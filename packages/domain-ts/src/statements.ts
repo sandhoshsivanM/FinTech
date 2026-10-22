@@ -10,8 +10,8 @@
  * No new data: this is a different question asked of the same ledger.
  */
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { Account, AccountType, Posting } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { Account, AccountType, Posting } from './types';
 import { accountBalances, openingDebitSigned } from './accountLedger';
 
 export interface StatementLine {

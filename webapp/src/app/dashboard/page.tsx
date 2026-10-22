@@ -18,23 +18,23 @@ import {
   LayoutGrid, Check, Plus, RotateCcw,
 } from 'lucide-react';
 import { useApp } from '@/lib/store';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
 import { useDarkMode } from '@/lib/useDarkMode';
 import { useNow, daysUntil } from '@/lib/useNow';
 import { short, pct as fmtPct } from '@/lib/format';
-import { healthScore } from '@/domain/health';
-import { liquidBalance, moneyAccounts } from '@/domain/accountLedger';
-import { investmentTotals } from '@/domain/investmentTotals';
-import { spendingAnomalies, safeToSpend } from '@/domain/insights';
-import { generateNarratives, NARRATIVE_DISCLAIMER, type NarrativeTone } from '@/domain/narrative';
+import { healthScore } from '@khazana/domain/health';
+import { liquidBalance, moneyAccounts } from '@khazana/domain/accountLedger';
+import { investmentTotals } from '@khazana/domain/investmentTotals';
+import { spendingAnomalies, safeToSpend } from '@khazana/domain/insights';
+import { generateNarratives, NARRATIVE_DISCLAIMER, type NarrativeTone } from '@khazana/domain/narrative';
 import {
   portfolioSummary, allocationByGroup, rollup, ASSET_GROUP_META, UNCLASSIFIED_KEY,
-} from '@/domain/portfolio';
-import { netWorthTotal, netWorthSeries, windowSummary } from '@/domain/finance';
-import { currentMonth, custom, monthName, trailingDays, type DateRange } from '@/domain/period';
+} from '@khazana/domain/portfolio';
+import { netWorthTotal, netWorthSeries, windowSummary } from '@khazana/domain/finance';
+import { currentMonth, custom, monthName, trailingDays, type DateRange } from '@khazana/domain/period';
 import { MonthNav } from '@/components/MonthNav';
-import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@/domain/instrumentMaster';
+import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@khazana/domain/instrumentMaster';
 import { dayChange, priceAsOfLabel } from '@/domain/dayChange';
 import { GlassCard, SectionHeader, Ring, ProgressBar, Segmented, Chip, Delta, Donut, scoreColor, type DonutSeg } from '@/components/ui';
 import { Kpi, KpiRow } from '@/components/Kpi';
@@ -56,7 +56,7 @@ import { LatestTransactions } from '@/components/home/LatestTransactions';
 import { InsightCard } from '@/components/home/InsightCard';
 import { MonthTiles } from '@/components/home/MonthTiles';
 import { useDashboardLayout } from '@/lib/useDashboardLayout';
-import { setWidgetHidden, widgetTitle } from '@/domain/dashboardLayout';
+import { setWidgetHidden, widgetTitle } from '@khazana/domain/dashboardLayout';
 
 /** Ranges the snapshot history can answer. */
 const RANGES = [

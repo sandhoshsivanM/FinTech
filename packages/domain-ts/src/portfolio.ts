@@ -1,10 +1,10 @@
 // Portfolio analytics (PRD §6 / WealthCare FinClean). Pure Decimal math.
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from './money';
 import { accrue } from './fixedIncome';
 import { resolveRate } from './currency';
 import { SERIES_BY_KEY } from './palette';
-import type { AssetType, FxRate, Holding } from '@/lib/types';
+import type { AssetType, FxRate, Holding } from './types';
 import {
   MARKET_CAP_LABEL,
   type InstrumentClassification,

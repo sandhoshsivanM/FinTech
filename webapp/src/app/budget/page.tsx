@@ -4,13 +4,13 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { useState, useMemo } from 'react';
 import { PiggyBank, Pencil, Trash2, Plus, Check, X } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
-import { STORE } from '@/lib/types';
+import { STORE } from '@khazana/domain/types';
 import {
   spentForCategory, evaluateBudget, budgetRollover, DEFAULT_ALERT_THRESHOLD_PCT,
-} from '@/domain/finance';
-import { currentMonth, type DateRange } from '@/domain/period';
+} from '@khazana/domain/finance';
+import { currentMonth, type DateRange } from '@khazana/domain/period';
 import { MonthNav } from '@/components/MonthNav';
 import { useNow } from '@/lib/useNow';
 import {

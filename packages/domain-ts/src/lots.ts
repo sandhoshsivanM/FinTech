@@ -17,8 +17,8 @@
  * you are not entitled to produces a return you cannot file.
  */
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { AssetType, Holding, HoldingLot } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { AssetType, Holding, HoldingLot } from './types';
 import { computeGain, type GainResult } from './tax';
 
 /**

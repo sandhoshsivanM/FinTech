@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import { useApp } from '@/lib/store';
-import { healthScore, type HealthCategory } from '@/domain/health';
-import { liquidBalance } from '@/domain/accountLedger';
-import { investmentTotals } from '@/domain/investmentTotals';
+import { healthScore, type HealthCategory } from '@khazana/domain/health';
+import { liquidBalance } from '@khazana/domain/accountLedger';
+import { investmentTotals } from '@khazana/domain/investmentTotals';
 import { PageIntro, GlassCard, SectionHeader, ProgressBar, Button, Gauge, AreaChart, scoreColor } from '@/components/ui';
 import { ScoreMethod } from '@/components/ScoreMethod';
 

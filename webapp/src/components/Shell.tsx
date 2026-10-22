@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
 import { useApp, type ThemeChoice } from '@/lib/store';
-import type { ProfileKind } from '@/lib/types';
-import { evaluateAlerts, triggered } from '@/domain/alerts';
+import type { ProfileKind } from '@khazana/domain/types';
+import { evaluateAlerts, triggered } from '@khazana/domain/alerts';
 import { marketState } from '@/lib/marketClock';
 import { useNow } from '@/lib/useNow';
 import { useNotificationDriver } from '@/lib/useNotificationDriver';

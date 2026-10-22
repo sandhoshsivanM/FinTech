@@ -11,10 +11,10 @@ import { resolve } from 'node:path';
 import {
   deltaE, contrast, worstAdjacent, worstAnyPair, hexToLinear, inGamut, DATAVIZ,
   type Vision,
-} from './colorScience';
+} from '@khazana/domain/colorScience';
 import {
   SERIES_DARK, SERIES_LIGHT, SERIES_ORDER, SERIES_BY_KEY, SURFACE, SERIES_NEUTRAL,
-} from './palette';
+} from '@khazana/domain/palette';
 
 const CVD: Vision[] = ['protanopia', 'deuteranopia', 'tritanopia'];
 const THEMES = [
@@ -160,13 +160,13 @@ describe('the two themes are steps of one palette, not two palettes', () => {
   });
 });
 
-describe('globals.css carries the same palette', () => {
+describe('the shared tokens.css carries the same palette', () => {
   // The CSS cannot import TypeScript, so --c1..--c8 are hand-written. That is
   // exactly the situation that let four copies of the old palette drift apart,
   // so this test is the guard: it reads the stylesheet and compares.
   // Resolved from the vitest root rather than import.meta.url: under the jsdom
   // environment import.meta.url is not a file: URL.
-  const css = readFileSync(resolve(process.cwd(), 'src/app/globals.css'), 'utf8');
+  const css = readFileSync(resolve(process.cwd(), '../packages/domain-ts/tokens.css'), 'utf8');
 
   /** Pulls --c1..--c8 out of the Nth `:root`-ish block that declares them. */
   const seriesBlocks = (): string[][] => {
@@ -204,7 +204,10 @@ describe('small muted text is readable', () => {
   // --muted carries the small labels everywhere (stat captions, axis ticks,
   // list sub-lines). WCAG 1.4.3 asks 4.5:1 for text that size, on every
   // surface it lands on: the card and the page, in both themes.
-  const css = readFileSync(resolve(process.cwd(), 'src/app/globals.css'), 'utf8');
+  // Tokens live in the shared tokens.css; component rules such as .tray stay in globals.css.
+  const css = ['../packages/domain-ts/tokens.css', 'src/app/globals.css']
+    .map((f) => readFileSync(resolve(process.cwd(), f), 'utf8'))
+    .join('\n');
   const lightBlock = css.slice(css.indexOf(':root {'), css.indexOf(':root[data-theme="dark"] {'));
   const darkStart = css.indexOf(':root[data-theme="dark"] {');
   const darkBlock = css.slice(darkStart, css.indexOf('}', darkStart));

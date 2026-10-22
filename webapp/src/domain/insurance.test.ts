@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
-import { coverageGaps, annualPremiumTotal } from './insurance';
-import { D } from '@/lib/money';
-import type { Insurance } from '@/lib/types';
+import { coverageGaps, annualPremiumTotal } from '@khazana/domain/insurance';
+import { D } from '@khazana/domain/money';
+import type { Insurance } from '@khazana/domain/types';
 
 const policy = (type: Insurance['type'], coverAmount: string, premium = '0'): Insurance => ({
   id: `i-${type}-${coverAmount}`, vaultId: 'v', name: type, type, coverAmount, premium,

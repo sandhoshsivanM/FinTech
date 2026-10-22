@@ -1,0 +1,9 @@
+{
+  "name": "@khazana/domain",
+  "private": true,
+  "description": "Pure TypeScript domain logic shared at build time by the Khazana web apps (ADR 0007). No React, no storage, no network.",
+  "type": "module",
+  "peerDependencies": {
+    "decimal.js": "^10.6.0"
+  }
+}

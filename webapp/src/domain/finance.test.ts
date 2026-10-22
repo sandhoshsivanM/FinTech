@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'vitest';
-import { windowSummary, signed, netWorthTotal, evaluateBudget, budgetRollover } from './finance';
-import { forMonth, trailingDays } from './period';
-import { D } from '@/lib/money';
-import type { Budget, Txn } from '@/lib/types';
+import { windowSummary, signed, netWorthTotal, evaluateBudget, budgetRollover } from '@khazana/domain/finance';
+import { forMonth, trailingDays } from '@khazana/domain/period';
+import { D } from '@khazana/domain/money';
+import type { Budget, Txn } from '@khazana/domain/types';
 
 const NOW = 1_700_000_000_000;
 const DAY = 86_400_000;

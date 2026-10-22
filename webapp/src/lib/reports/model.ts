@@ -27,12 +27,12 @@
  * whole report look broken to the accountant reading it.
  */
 import type Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import type {
   Account, Category, Holding, Posting, Transfer, Txn,
-} from '@/lib/types';
-import { balanceSheet, cashFlow } from '@/domain/statements';
-import { type DateRange, contains, monthsIn } from '@/domain/period';
+} from '@khazana/domain/types';
+import { balanceSheet, cashFlow } from '@khazana/domain/statements';
+import { type DateRange, contains, monthsIn } from '@khazana/domain/period';
 
 /* -------------------------------------------------------------------------- */
 /* Shape                                                                      */

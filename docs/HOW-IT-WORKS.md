@@ -152,7 +152,7 @@ database file* is encrypted. Same guarantee, two mechanisms.
 
 This is the part worth showing in an interview. It is **pure functions** — no
 framework, no I/O — living in `lib/domain/services/*.dart` and mirrored in
-`webapp/src/domain/*.ts`. Highlights:
+`packages/domain-ts/src/*.ts`. Highlights:
 
 | Service | What it computes |
 |---|---|
@@ -204,7 +204,7 @@ This ties every ring together. When you open **Safety Net**:
    `lib/features/safety_net/providers/`). Those came from §3d (decrypted in
    memory).
 2. **Domain** — it calls the pure `safetyNet(...)` function
-   (`webapp/src/domain/safetyNet.ts` ↔ `lib/domain/services/safety_net.dart`),
+   (`packages/domain-ts/src/safetyNet.ts` ↔ `lib/domain/services/safety_net.dart`),
    which:
    - reuses `windowSummary` to get a 3-month average monthly expense,
    - reuses `coverageGaps` / `annualPremiumTotal` for life & health cover,

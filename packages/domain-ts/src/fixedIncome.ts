@@ -20,8 +20,8 @@
  * falls back to the ordinary cost-based valuation.
  */
 import Decimal from 'decimal.js';
-import { D, ZERO } from '@/lib/money';
-import type { AssetType, Holding } from '@/lib/types';
+import { D, ZERO } from './money';
+import type { AssetType, Holding } from './types';
 
 /** Instruments valued by accrual rather than by price. */
 const FIXED_INCOME: ReadonlySet<AssetType> = new Set<AssetType>([

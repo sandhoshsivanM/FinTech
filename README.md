@@ -81,7 +81,8 @@ by [`marketing/`](marketing/README.md).
 | Path | What |
 |---|---|
 | `lib/` | Flutter app — `domain/` (pure logic), `data/` (Drift/SQLCipher), `features/`, `core/`, `presentation/` |
-| `webapp/` | Next.js web app — `src/domain/` (TS port), `src/lib/` (crypto, store, Dexie), `src/app/` (routes), `src/components/` |
+| `webapp/` | Next.js web app (offline) — `src/lib/` (crypto, store, Dexie), `src/app/` (routes), `src/components/`; domain logic in `packages/domain-ts/` |
+| `packages/` | Build-time shared code (ADR 0007): `domain-ts/` (TS domain logic + design tokens) |
 | `test/` | Flutter unit / integration / golden / benchmark tests |
 | `docs/` | Architecture and threat-model docs |
 | `.github/workflows/` | CI — tests and static build for both stacks, visual regression screenshots, icon checks, advisory lint |

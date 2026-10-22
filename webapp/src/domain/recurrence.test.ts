@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
-import { advance, materialize } from './recurrence';
-import type { RecurringRule } from '@/lib/types';
+import { advance, materialize } from '@khazana/domain/recurrence';
+import type { RecurringRule } from '@khazana/domain/types';
 
 const d = (iso: string) => new Date(iso).getTime();
 const day = (t: number) => new Date(t).getDate();

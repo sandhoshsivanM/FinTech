@@ -14,10 +14,10 @@
  *      ninety days of snapshots, dividends, a watchlist and alerts too.
  */
 import { putRecord, clearVault, userRecordCount } from './repo';
-import { STORE, type Category } from './types';
+import { STORE, type Category } from '@khazana/domain/types';
 import { useApp, uid, repairPostings } from './store';
-import { liquidBalance } from '@/domain/accountLedger';
-import { investmentTotals } from '@/domain/investmentTotals';
+import { liquidBalance } from '@khazana/domain/accountLedger';
+import { investmentTotals } from '@khazana/domain/investmentTotals';
 
 const now = Date.now();
 const DAY = 86400000;

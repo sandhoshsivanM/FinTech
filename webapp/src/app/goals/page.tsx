@@ -3,10 +3,10 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Target, Trash2, Plus, PiggyBank, Home, Car, Plane, GraduationCap, Pencil } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
-import { D, ZERO } from '@/lib/money';
+import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
-import { STORE, type GoalType } from '@/lib/types';
-import { moneyAccounts } from '@/domain/accountLedger';
+import { STORE, type GoalType } from '@khazana/domain/types';
+import { moneyAccounts } from '@khazana/domain/accountLedger';
 import {
   PageIntro, GlassCard, SectionHeader, EmptyState,
   Button, Field, Input, Select, Ring, StatStrip,

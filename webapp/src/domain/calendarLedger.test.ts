@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
-import { aggregateByDay } from './calendarLedger';
-import type { Txn, TxnType } from '@/lib/types';
+import { aggregateByDay } from '@khazana/domain/calendarLedger';
+import type { Txn, TxnType } from '@khazana/domain/types';
 
 // Parity fixtures shared with test/unit/calendar_aggregator_test.dart. Times are
 // pinned to local noon so day keys are deterministic across engines.

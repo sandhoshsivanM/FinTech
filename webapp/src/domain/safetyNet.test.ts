@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
-import { safetyNet } from './safetyNet';
-import { EMPTY_INVESTMENTS, totalsOf } from './investmentTotals';
-import type { Txn, Goal, Holding, Insurance } from '@/lib/types';
+import { safetyNet } from '@khazana/domain/safetyNet';
+import { EMPTY_INVESTMENTS, totalsOf } from '@khazana/domain/investmentTotals';
+import type { Txn, Goal, Holding, Insurance } from '@khazana/domain/types';
 
 // Fixed clock so all date windows are deterministic.
 const NOW = 1_700_000_000_000;

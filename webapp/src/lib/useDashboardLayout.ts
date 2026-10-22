@@ -9,7 +9,7 @@
  * leads with the balance.
  */
 import { useCallback, useState } from 'react';
-import { resolveLayout, defaultLayout, type Layout } from '@/domain/dashboardLayout';
+import { resolveLayout, defaultLayout, type Layout } from '@khazana/domain/dashboardLayout';
 
 const keyFor = (profileId: string) => `khazana-dashboard-layout:${profileId || 'default'}`;
 

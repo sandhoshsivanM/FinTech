@@ -24,7 +24,7 @@ import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { useDarkMode } from '@/lib/useDarkMode';
 import { useNow } from '@/lib/useNow';
-import { D } from '@/lib/money';
+import { D } from '@khazana/domain/money';
 import {
   PageIntro, Gauge, ProgressBar, GlassCard, EmptyState, Button, Segmented, Sunburst,
   type SunburstNode,
@@ -37,15 +37,15 @@ import { Section, Metric, MetricRow, LedgerLine } from '@/components/primitives'
 import {
   portfolioSummary, rollup, allocationByGroup, sunburst, zentraGroupShades,
   ZENTRA_GROUP, UNCLASSIFIED_KEY, type AssetGroup,
-} from '@/domain/portfolio';
+} from '@khazana/domain/portfolio';
 import {
   loadInstrumentMaster, classifyHolding, EMPTY_MASTER, SECTOR_SUGGESTIONS,
   type InstrumentMaster,
-} from '@/domain/instrumentMaster';
+} from '@khazana/domain/instrumentMaster';
 import {
   returnBuckets, positionWeights, riskStats, diversificationScore,
   diversificationBand, returnQualityScore, extremes, POSITION_ALERT_WEIGHT,
-} from '@/domain/analytics';
+} from '@khazana/domain/analytics';
 import { short } from '@/lib/format';
 import { CardTitle } from '@/components/Hint';
 import { formatMonthShort } from '@/lib/dateFormat';
