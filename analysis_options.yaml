@@ -14,6 +14,8 @@ analyzer:
   # code generator, not authored code.
   exclude:
     - "**.g.dart"
+    # Khazana Online is a separate app with its own analysis (ADR 0007).
+    - "mobile-online/**"
   errors:
     # Enforce the architecture boundary (PRD §3): domain/presentation must not
     # import infrastructure. Backed additionally by a CI grep in verification.

@@ -105,7 +105,10 @@ var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithEnvironment("Gateway__AllowedOrigins__0", "http://localhost:3100");
 
 // DPoP proofs name the URL the app called, which is the gateway's.
+// The Android emulator reaches this machine's gateway as 10.0.2.2, so a phone
+// app in development names that address (local development only).
 foreach (var service in new[] { identity, devices, sync, notification })
-    service.WithEnvironment("Auth__PublicOrigins__0", gateway.GetEndpoint("http"));
+    service.WithEnvironment("Auth__PublicOrigins__0", gateway.GetEndpoint("http"))
+        .WithEnvironment("Auth__PublicOrigins__1", "http://10.0.2.2:5196");
 
 builder.Build().Run();
