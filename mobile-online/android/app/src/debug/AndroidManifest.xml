@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The INTERNET permission is required for development. Specifically,
+         the Flutter tool needs it to communicate with the running application
+         to allow setting breakpoints, to provide hot reload, etc.
+    -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Debug builds only: plain http to the local Aspire gateway (10.0.2.2 is
+         the host machine as seen from the emulator). Release builds have no
+         such exception, so they are https-only. -->
+    <application android:networkSecurityConfig="@xml/network_security_config_debug"/>
+</manifest>

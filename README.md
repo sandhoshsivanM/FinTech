@@ -83,6 +83,7 @@ by [`marketing/`](marketing/README.md).
 | `lib/` | Flutter app — `domain/` (pure logic), `data/` (Drift/SQLCipher), `features/`, `core/`, `presentation/` |
 | `webapp/` | Next.js web app (offline) — `src/lib/` (crypto, store, Dexie), `src/app/` (routes), `src/components/`; domain logic in `packages/domain-ts/` |
 | `webapp-online/` | Khazana Online for the web — a separate app with an account and sync (ADR 0007); talks only to `backend/` through the gateway |
+| `mobile-online/` | Khazana Online for phones — a separate Flutter app, `com.khazana.online` (ADR 0007); talks only to `backend/` through the gateway |
 | `packages/` | Build-time shared code (ADR 0007): `domain-ts/` (TS domain logic + design tokens) |
 | `test/` | Flutter unit / integration / golden / benchmark tests |
 | `docs/` | Architecture and threat-model docs |

@@ -150,6 +150,27 @@ jobs:
           fi
           echo "All screenshots match the committed baselines."
 
+  # Khazana Online for phones: a separate Flutter app from the offline one at
+  # the repo root (ADR 0007), with its own analysis and tests.
+  mobile-online:
+    name: Online mobile app (Flutter)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile-online
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze
+        run: flutter analyze
+      # The integration test needs a device and the local backend; it runs by hand.
+      - name: Tests
+        run: flutter test
+
   flutter:
     name: Flutter app
     runs-on: ubuntu-latest
