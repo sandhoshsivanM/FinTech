@@ -46,7 +46,9 @@ public sealed class SyncHost : IAsyncLifetime
         await Task.WhenAll(_postgres.StartAsync(), _rabbitMq.StartAsync());
         Environment.SetEnvironmentVariable("ConnectionStrings__sync", _postgres.GetConnectionString());
         Environment.SetEnvironmentVariable("ConnectionStrings__rabbitmq", _rabbitMq.GetConnectionString());
-        Environment.SetEnvironmentVariable("Sync__Sweeper__Enabled", "false");
+        // The sweeper stays on: it once crashed the host by publishing before Wolverine
+        // had started, which only a host with the sweeper enabled can catch.
+        Environment.SetEnvironmentVariable("Sync__Sweeper__Enabled", "true");
         Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b
             .UseEnvironment("Development")
             .ConfigureServices(s =>
