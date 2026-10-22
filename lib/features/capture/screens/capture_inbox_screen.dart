@@ -134,21 +134,27 @@ class _AutoPostCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final autoPost = ref.watch(captureAutoPostProvider);
+    // Tiles in this file get their own transparent Material: GlassCard paints a
+    // coloured DecoratedBox, which would hide the ink splash (and trips
+    // ListTile's debug assertion in tests). Same fix as the unlock gate.
     return GlassCard(
-      child: SwitchListTile.adaptive(
-        contentPadding: EdgeInsets.zero,
-        value: autoPost,
-        onChanged: (v) => ref.read(captureAutoPostProvider.notifier).set(v),
-        title: const Text('Add confident captures automatically',
-            style: TextStyle(fontWeight: FontWeight.w500)),
-        subtitle: Text(
-          autoPost
-              ? 'Known bank, linked account and a learned category: added for you, '
-                  'with Undo. Anything doubtful waits here.'
-              : 'Every capture waits here for you to approve.',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            height: 1.4,
+      child: Material(
+        type: MaterialType.transparency,
+        child: SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          value: autoPost,
+          onChanged: (v) => ref.read(captureAutoPostProvider.notifier).set(v),
+          title: const Text('Add confident captures automatically',
+              style: TextStyle(fontWeight: FontWeight.w500)),
+          subtitle: Text(
+            autoPost
+                ? 'Known bank, linked account and a learned category: added for you, '
+                    'with Undo. Anything doubtful waits here.'
+                : 'Every capture waits here for you to approve.',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
           ),
         ),
       ),
@@ -358,13 +364,16 @@ class _ReviewCardState extends ConsumerState<_ReviewCard> {
             onChanged: (v) => setState(() => _accountId = v),
           ),
           if (c.accountLast4 != null && accountId != null && accountId != c.accountId)
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              controlAffinity: ListTileControlAffinity.leading,
-              value: _rememberAccount,
-              onChanged: (v) => setState(() => _rememberAccount = v ?? true),
-              title: Text('Remember ••${c.accountLast4} as this account'),
+            Material(
+              type: MaterialType.transparency,
+              child: CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                controlAffinity: ListTileControlAffinity.leading,
+                value: _rememberAccount,
+                onChanged: (v) => setState(() => _rememberAccount = v ?? true),
+                title: Text('Remember ••${c.accountLast4} as this account'),
+              ),
             ),
           const SizedBox(height: AppSpacing.sm),
           Row(
@@ -417,32 +426,35 @@ class _DecidedTile extends ConsumerWidget {
     final c = capture;
     final isIncome = c.type == TxnType.income;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-      title: Text(c.merchant ?? 'Unknown merchant'),
-      subtitle: Text(
-        '${DateFormat('d MMM').format(c.occurredAt)} · ${_statusLabel(c.status)}',
-        style: TextStyle(fontSize: 12, color: muted),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            Money.formatSigned(c.effectiveAmount, isIncome: isIncome),
-            style: TextStyle(
-              color: c.status == CaptureStatus.rejected
-                  ? muted
-                  : (isIncome ? context.colors.income : context.colors.expense),
-              decoration:
-                  c.status == CaptureStatus.rejected ? TextDecoration.lineThrough : null,
+    return Material(
+      type: MaterialType.transparency,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        dense: true,
+        title: Text(c.merchant ?? 'Unknown merchant'),
+        subtitle: Text(
+          '${DateFormat('d MMM').format(c.occurredAt)} · ${_statusLabel(c.status)}',
+          style: TextStyle(fontSize: 12, color: muted),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              Money.formatSigned(c.effectiveAmount, isIncome: isIncome),
+              style: TextStyle(
+                color: c.status == CaptureStatus.rejected
+                    ? muted
+                    : (isIncome ? context.colors.income : context.colors.expense),
+                decoration:
+                    c.status == CaptureStatus.rejected ? TextDecoration.lineThrough : null,
+              ),
             ),
-          ),
-          TextButton(
-            onPressed: () => ref.read(captureReviewProvider).undo(c),
-            child: Text(c.status == CaptureStatus.rejected ? 'Restore' : 'Undo'),
-          ),
-        ],
+            TextButton(
+              onPressed: () => ref.read(captureReviewProvider).undo(c),
+              child: Text(c.status == CaptureStatus.rejected ? 'Restore' : 'Undo'),
+            ),
+          ],
+        ),
       ),
     );
   }
