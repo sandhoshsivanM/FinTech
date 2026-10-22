@@ -130,7 +130,7 @@ export default function PrivacyPage() {
                 ['khazana-app.netlify.app (web only)', 'Relays the Yahoo quote request, since a browser cannot call Yahoo directly. Stores and logs nothing.', 'The ticker symbol only'],
                 ['api.twelvedata.com', 'Share and ETF quotes', 'The ticker symbol only'],
                 ['www.alphavantage.co', 'Share and ETF quotes', 'The ticker symbol only'],
-                ['www.amfiindia.com', 'Mutual-fund NAVs', 'Nothing — a public file is downloaded'],
+                ['portal.amfiindia.com', 'Mutual-fund NAVs', 'Nothing — a public file is downloaded'],
                 ['api.frankfurter.dev', 'Currency exchange rates', 'Currency codes only'],
               ].map(([host, why, what]) => (
                 <tr key={host} className="border-b border-line/60">
