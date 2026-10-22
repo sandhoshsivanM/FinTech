@@ -22,6 +22,8 @@ public sealed class GatewayTests : IDisposable
         b.UseSetting("RateLimits:Auth:PermitLimit", "2");
         b.UseSetting("services:marketdata-api:http:0", "http://127.0.0.1:9");
         b.UseSetting("services:identity-api:http:0", "http://127.0.0.1:9");
+        b.UseSetting("services:devices-api:http:0", "http://127.0.0.1:9");
+        b.UseSetting("services:sync-api:http:0", "http://127.0.0.1:9");
     });
 
     public void Dispose() => _factory.Dispose();
@@ -108,6 +110,29 @@ public sealed class GatewayTests : IDisposable
         market.StatusCode.ShouldNotBe(HttpStatusCode.TooManyRequests);
     }
 
+    [Theory]
+    [InlineData("GET", "/v1/devices/")]
+    [InlineData("DELETE", "/v1/devices/0198f0a0-0000-7000-8000-000000000000")]
+    [InlineData("PUT", "/v1/keys/envelopes/recovery")]
+    public async Task Device_and_key_routes_are_forwarded(string method, string path)
+    {
+        using var client = _factory.CreateClient();
+        using var request = new HttpRequestMessage(new HttpMethod(method), path);
+        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        ((int)response.StatusCode).ShouldBeGreaterThanOrEqualTo(500, "forwarded to the (absent) Devices service");
+    }
+
+    [Fact]
+    public async Task A_sync_push_with_a_large_body_is_forwarded()
+    {
+        using var client = _factory.CreateClient();
+        var big = new string('x', 200 * 1024);
+        using var push = await client.PostAsync(new Uri("/v1/sync/push", UriKind.Relative),
+            new StringContent(big), TestContext.Current.CancellationToken);
+        ((int)push.StatusCode).ShouldBeGreaterThanOrEqualTo(500, "forwarded: 200 KB is within the sync limit");
+        // The 64 KB default for every other route is a Kestrel limit, which the
+        // in-memory test server does not enforce; it was checked against a live run.
+    }
     [Fact]
     public async Task A_forged_forwarded_address_from_an_untrusted_peer_does_not_buy_a_new_bucket()
     {
@@ -126,6 +151,36 @@ public sealed class GatewayTests : IDisposable
         fourth.Headers.Add("X-Forwarded-For", "198.51.100.77");
         (await client.SendAsync(fourth, TestContext.Current.CancellationToken)).StatusCode
             .ShouldBe(HttpStatusCode.TooManyRequests, "no trusted proxies are configured, so the header is ignored");
+    }
+}
+
+public sealed class UserBucketTests
+{
+    private static string TokenFor(string jkt) => new Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler().CreateToken(
+        new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor
+        {
+            Claims = new Dictionary<string, object> { ["cnf"] = new Dictionary<string, object> { ["jkt"] = jkt } },
+        });
+
+    [Fact]
+    public async Task Two_users_behind_one_address_each_get_their_own_limit()
+    {
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
+        {
+            b.UseEnvironment("Production");
+            b.UseSetting("RateLimits:User:PermitLimit", "1");
+            b.UseSetting("services:devices-api:http:0", "http://127.0.0.1:9");
+        });
+        using var client = factory.CreateClient();
+        async Task<HttpStatusCode> Get(string jkt)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/v1/devices/");
+            request.Headers.TryAddWithoutValidation("Authorization", $"DPoP {TokenFor(jkt)}");
+            return (await client.SendAsync(request, TestContext.Current.CancellationToken)).StatusCode;
+        }
+        (await Get("alice-key")).ShouldNotBe(HttpStatusCode.TooManyRequests);
+        (await Get("bob-key")).ShouldNotBe(HttpStatusCode.TooManyRequests, "bob is not alice");
+        (await Get("alice-key")).ShouldBe(HttpStatusCode.TooManyRequests, "alice's own limit is 1");
     }
 }
 

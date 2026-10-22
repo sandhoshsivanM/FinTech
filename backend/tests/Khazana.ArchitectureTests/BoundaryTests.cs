@@ -25,6 +25,16 @@ public class BoundaryTests
             typeof(Khazana.Identity.Application.SessionService).Assembly,
             typeof(Khazana.Identity.Infrastructure.AesGcmFieldProtector).Assembly,
             typeof(Khazana.Identity.Api.IdentityEndpoints).Assembly),
+        new("Devices",
+            typeof(Khazana.Devices.Domain.KeyRules).Assembly,
+            typeof(Khazana.Devices.Application.DeviceKeyService).Assembly,
+            typeof(Khazana.Devices.Infrastructure.DependencyInjection).Assembly,
+            typeof(Khazana.Devices.Api.DeviceEndpoints).Assembly),
+        new("Sync",
+            typeof(Khazana.Sync.Domain.SyncRules).Assembly,
+            typeof(Khazana.Sync.Application.SyncService).Assembly,
+            typeof(Khazana.Sync.Infrastructure.DependencyInjection).Assembly,
+            typeof(Khazana.Sync.Api.SyncEndpoints).Assembly),
     ];
 
     private static readonly string[] AllServiceNamespaces =

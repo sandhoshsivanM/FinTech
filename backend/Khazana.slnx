@@ -5,6 +5,13 @@
     <Project Path="building-blocks/Khazana.SharedKernel/Khazana.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/services/" />
+  <Folder Name="/services/Devices/">
+    <Project Path="services/Devices/Khazana.Devices.Api/Khazana.Devices.Api.csproj" />
+    <Project Path="services/Devices/Khazana.Devices.Application/Khazana.Devices.Application.csproj" />
+    <Project Path="services/Devices/Khazana.Devices.Domain/Khazana.Devices.Domain.csproj" />
+    <Project Path="services/Devices/Khazana.Devices.Infrastructure/Khazana.Devices.Infrastructure.csproj" />
+    <Project Path="services/Devices/Khazana.Devices.Tests/Khazana.Devices.Tests.csproj" />
+  </Folder>
   <Folder Name="/services/Identity/">
     <Project Path="services/Identity/Khazana.Identity.Api/Khazana.Identity.Api.csproj" />
     <Project Path="services/Identity/Khazana.Identity.Application/Khazana.Identity.Application.csproj" />
@@ -18,6 +25,13 @@
     <Project Path="services/MarketData/Khazana.MarketData.Domain/Khazana.MarketData.Domain.csproj" />
     <Project Path="services/MarketData/Khazana.MarketData.Infrastructure/Khazana.MarketData.Infrastructure.csproj" />
     <Project Path="services/MarketData/Khazana.MarketData.Tests/Khazana.MarketData.Tests.csproj" />
+  </Folder>
+  <Folder Name="/services/Sync/">
+    <Project Path="services/Sync/Khazana.Sync.Api/Khazana.Sync.Api.csproj" />
+    <Project Path="services/Sync/Khazana.Sync.Application/Khazana.Sync.Application.csproj" />
+    <Project Path="services/Sync/Khazana.Sync.Domain/Khazana.Sync.Domain.csproj" />
+    <Project Path="services/Sync/Khazana.Sync.Infrastructure/Khazana.Sync.Infrastructure.csproj" />
+    <Project Path="services/Sync/Khazana.Sync.Tests/Khazana.Sync.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Khazana.ArchitectureTests/Khazana.ArchitectureTests.csproj" />

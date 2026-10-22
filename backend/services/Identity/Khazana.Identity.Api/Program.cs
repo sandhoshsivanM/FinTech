@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Khazana.Identity.Api;
 using Khazana.Identity.Application;
 using Khazana.Identity.Application.Persistence;
@@ -40,20 +38,13 @@ builder.Services.AddScoped<PasskeyService>();
 builder.Services.AddHostedService<DatabaseMigrator>();
 builder.Services.AddHostedService<ChallengeCleanup>();
 
-builder.Services.ConfigureHttpJsonOptions(o =>
-{
-    o.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
-    // An unknown field is a client bug or a probe; either way, refuse it.
-    o.SerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
-    // A null or missing required field is a 400, not a NullReferenceException later.
-    o.SerializerOptions.RespectNullableAnnotations = true;
-    o.SerializerOptions.RespectRequiredConstructorParameters = true;
-});
+builder.Services.AddKhazanaJson();
 
 builder.Host.UseWolverine(opts =>
 {
     opts.UseKhazanaMessaging("identity", rabbitMq, database);
     opts.UseEntityFrameworkCoreTransactions();
+    opts.Discovery.IncludeAssembly(typeof(SessionService).Assembly);
 });
 
 var app = builder.Build();
