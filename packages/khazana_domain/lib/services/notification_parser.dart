@@ -89,7 +89,7 @@ class ParsedNotification {
 
 /// Pure-Dart offline parser for bank transaction SMS / push notifications
 /// (PRD §3 domain/services — no Flutter/IO imports; runs entirely in memory).
-/// Mirrored in webapp/src/domain/notificationParser.ts; both are pinned by
+/// Mirrored in packages/domain-ts/src/notificationParser.ts; both are pinned by
 /// test/fixtures/parser_cases.json.
 ///
 /// Every pattern below runs on text that has been length-capped and had its

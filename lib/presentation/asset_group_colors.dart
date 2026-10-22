@@ -4,7 +4,7 @@ import 'package:khazana_domain/entities/asset_group.dart';
 
 /// The categorical palette for the seven chart groups.
 ///
-/// Mirrors `SERIES_BY_KEY` in `webapp/src/domain/palette.ts` exactly. That file
+/// Mirrors `SERIES_BY_KEY` in `packages/domain-ts/src/palette.ts` exactly. That file
 /// is the source of truth: it authors the palette in OKLCH, and
 /// `webapp/src/domain/palette.test.ts` asserts the separation and contrast
 /// figures rather than quoting them. This file previously carried two stacked

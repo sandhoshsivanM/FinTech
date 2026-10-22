@@ -1,4 +1,4 @@
-// Double-entry ledger math — mirrors lib/domain/services/account_ledger.dart.
+// Double-entry ledger math — mirrors packages/khazana_domain/lib/services/account_ledger.dart.
 // Postings are debit-signed (debit +, credit −); each entry's postings sum to
 // zero. An account's balance is its debit-signed opening balance plus the sum of
 // its postings. Net worth is the debit-signed balance of asset + liability

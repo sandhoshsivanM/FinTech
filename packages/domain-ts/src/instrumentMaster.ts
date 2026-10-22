@@ -1,7 +1,7 @@
 /**
  * Sector / industry / market-cap lookup, loaded from a bundled versioned asset.
  *
- * Mirrors `lib/domain/services/instrument_master.dart` and reads the SAME JSON
+ * Mirrors `packages/khazana_domain/lib/services/instrument_master.dart` and reads the SAME JSON
  * file, served from `/instrument_master.json`, so both clients classify a
  * holding identically.
  *

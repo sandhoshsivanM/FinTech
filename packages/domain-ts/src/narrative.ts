@@ -1,7 +1,7 @@
 // The narrative engine — the app's generated sentences, and the rule that keeps
 // them descriptive.
 //
-// The twin of `lib/domain/services/narrative_engine.dart`. Both sides share the
+// The twin of `packages/khazana_domain/lib/services/narrative_engine.dart`. Both sides share the
 // banned-phrase list below and both are tested against it.
 //
 // This exists because the Overview page previously shipped sentences like

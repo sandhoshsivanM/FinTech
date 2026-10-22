@@ -1,7 +1,7 @@
 // The Financial Health Score, and its parity contract with Dart.
 //
 // This file did not exist before. `health.ts` claimed to mirror
-// `lib/domain/services/financial_health.dart` and was checked by nobody — while
+// `packages/khazana_domain/lib/services/financial_health.dart` and was checked by nobody — while
 // the two portfolio models, under exactly that arrangement, had already drifted
 // far enough to show different net worths on different screens.
 //
@@ -252,7 +252,7 @@ describe('metrics', () => {
   });
 });
 
-describe('shared fixture (parity with lib/domain/services/financial_health.dart)', () => {
+describe('shared fixture (parity with packages/khazana_domain/lib/services/financial_health.dart)', () => {
   test('the fixture pins the same "now" both suites use', () => {
     expect(Date.parse(fixture.now)).toBe(NOW);
   });

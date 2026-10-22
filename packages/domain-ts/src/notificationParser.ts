@@ -1,5 +1,5 @@
 // Offline SMS / push-notification transaction parser — mirrors
-// lib/domain/services/notification_parser.dart. Pure, in-memory: the raw message
+// packages/khazana_domain/lib/services/notification_parser.dart. Pure, in-memory: the raw message
 // text is never returned or stored (zero-telemetry privacy boundary). Both
 // implementations are pinned by test/fixtures/parser_cases.json.
 //

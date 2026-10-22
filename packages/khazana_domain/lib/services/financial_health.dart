@@ -86,7 +86,7 @@ class HealthCategory {
 /// The Financial Health Score.
 ///
 /// Four categories — Wealth, Protection, Efficiency, Future — renormalised over
-/// whatever is actually tracked. Mirrors `webapp/src/domain/health.ts`; the two
+/// whatever is actually tracked. Mirrors `packages/domain-ts/src/health.ts`; the two
 /// are pinned to the same numbers by a shared fixture.
 class HealthScore {
   const HealthScore({

@@ -151,7 +151,7 @@ database file* is encrypted. Same guarantee, two mechanisms.
 ## 5. The financial engine (the "domain" ring)
 
 This is the part worth showing in an interview. It is **pure functions** — no
-framework, no I/O — living in `lib/domain/services/*.dart` and mirrored in
+framework, no I/O — living in `packages/khazana_domain/lib/services/*.dart` and mirrored in
 `packages/domain-ts/src/*.ts`. Highlights:
 
 | Service | What it computes |
@@ -204,7 +204,7 @@ This ties every ring together. When you open **Safety Net**:
    `lib/features/safety_net/providers/`). Those came from §3d (decrypted in
    memory).
 2. **Domain** — it calls the pure `safetyNet(...)` function
-   (`packages/domain-ts/src/safetyNet.ts` ↔ `lib/domain/services/safety_net.dart`),
+   (`packages/domain-ts/src/safetyNet.ts` ↔ `packages/khazana_domain/lib/services/safety_net.dart`),
    which:
    - reuses `windowSummary` to get a 3-month average monthly expense,
    - reuses `coverageGaps` / `annualPremiumTotal` for life & health cover,

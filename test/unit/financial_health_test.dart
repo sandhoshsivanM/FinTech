@@ -373,7 +373,7 @@ void main() {
     });
   });
 
-  group('shared fixture (parity with webapp/src/domain/health.ts)', () {
+  group('shared fixture (parity with packages/domain-ts/src/health.ts)', () {
     // Both suites load this file and must agree. See its _comment block: the TS
     // score had no test at all before it, and the two portfolio models had
     // already drifted under exactly that arrangement.

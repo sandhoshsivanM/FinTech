@@ -55,7 +55,7 @@ export const ASSET_GROUP_OF: Record<AssetType, AssetGroup> = {
   nps: 'retirement',
   crypto: 'crypto',
   cash: 'cash',
-  // Kept in step with AssetGroup.of in lib/domain/entities/asset_group.dart.
+  // Kept in step with AssetGroup.of in packages/khazana_domain/lib/entities/asset_group.dart.
   // A sovereign gold bond is gold exposure whatever its wrapper; SSY is an EEE
   // long-lock scheme like PPF; a ULIP's investment leg is market-linked (its
   // insurance leg is cover, tracked separately).
@@ -222,7 +222,7 @@ export function xirr(flows: CashFlow[]): number | null {
 // ---------------------------------------------------------------------------
 //
 // Mirrors `PortfolioAnalytics.rollup` in
-// lib/domain/services/portfolio_analytics.dart. The load-bearing invariant, and
+// packages/khazana_domain/lib/services/portfolio_analytics.dart. The load-bearing invariant, and
 // what the paired tests assert on both sides: a roll-up along any dimension must
 // sum exactly to the portfolio total.
 //

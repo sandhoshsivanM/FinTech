@@ -16,7 +16,7 @@ class DayFlow {
 
 /// The last [days] local days, oldest first, ending with the day of [now].
 ///
-/// The twin of `webapp/src/domain/dailyFlow.ts`. Days are built with calendar
+/// The twin of `packages/domain-ts/src/dailyFlow.ts`. Days are built with calendar
 /// arithmetic (`DateTime(y, m, d - i)`), not by subtracting 24 hours, so a DST
 /// change can never merge or skip a day.
 List<DayFlow> dailyFlow(List<Txn> txns, DateTime now, {int days = 7}) {
@@ -40,7 +40,7 @@ List<DayFlow> dailyFlow(List<Txn> txns, DateTime now, {int days = 7}) {
 /// A change between two amounts, worded the way a person reads it: a
 /// percentage up to double, a multiple beyond that ("52×" rather than
 /// "5145%"). Null when there is nothing to compare against. The twin of
-/// `describeChange` in `webapp/src/domain/dailyFlow.ts`.
+/// `describeChange` in `packages/domain-ts/src/dailyFlow.ts`.
 ({bool up, String text})? describeChange(Decimal now, Decimal before) {
   if (before == Decimal.zero) return null;
   final ratio = now.toDouble() / before.toDouble();

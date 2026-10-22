@@ -44,11 +44,11 @@ Dependencies point **inward**; the domain layer imports no framework.
 
 The domain layer was ported Dart → TypeScript and is kept aligned on purpose, so
 both apps produce identical results. Naming, weights, and algorithms match
-across `packages/khazana_domain/lib/services/*.dart` and `webapp/src/domain/*.ts`.
+across `packages/khazana_domain/lib/services/*.dart` and `packages/domain-ts/src/*.ts`.
 
 Parity is enforced by **mirrored tests**: the same fixtures and expected values
 exist on both sides. For example the Safety Net readiness score
-(`packages/khazana_domain/lib/services/safety_net.dart` ↔ `webapp/src/domain/safetyNet.ts`) is
+(`packages/khazana_domain/lib/services/safety_net.dart` ↔ `packages/domain-ts/src/safetyNet.ts`) is
 covered by `test/unit/safety_net_test.dart` and
 `webapp/src/domain/safetyNet.test.ts` — both assert the same scores (100 / 25 /
 50 / 85) for the same inputs.
