@@ -78,7 +78,7 @@ var reporting = builder.AddProject<Projects.Khazana_AuditReporting_Api>("reporti
     .WithEnvironment("Reporting__InternalKey", reportingKey)
     .WithEnvironment("Reporting__AuditKey", auditKey);
 
-builder.AddProject<Projects.Khazana_Admin>("admin")
+var admin = builder.AddProject<Projects.Khazana_Admin>("admin")
     .WithReference(reporting).WaitFor(reporting)
     .WithEnvironment("Admin__ReportingKey", reportingKey);
 
@@ -89,6 +89,9 @@ var catalog = builder.AddProject<Projects.Khazana_Catalog_Api>("catalog-api")
     .WithReference(catalogDb).WaitFor(catalogDb)
     .WithReference(rabbitMq).WaitFor(rabbitMq)
     .WithEnvironment("Catalog__InternalKey", catalogKey);
+
+// The admin's offer editors use Catalog's internal API with its own key.
+admin.WithReference(catalog).WaitFor(catalog).WithEnvironment("Admin__CatalogKey", catalogKey);
 
 var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(marketData).WaitFor(marketData)

@@ -24,6 +24,17 @@ var reportingKey = builder.Configuration["Admin:ReportingKey"];
 if (string.IsNullOrEmpty(reportingKey) || reportingKey.Length < 32)
     throw new InvalidOperationException("Admin:ReportingKey must be at least 32 characters (the Reporting internal key).");
 
+// The offer editors' key for Catalog's internal API: a separate secret, so the
+// Reporting key opens nothing in Catalog and vice versa.
+var catalogKey = builder.Configuration["Admin:CatalogKey"];
+if (string.IsNullOrEmpty(catalogKey) || catalogKey.Length < 32)
+    throw new InvalidOperationException("Admin:CatalogKey must be at least 32 characters (the Catalog internal key).");
+builder.Services.AddHttpClient<CatalogClient>(c =>
+{
+    c.BaseAddress = new Uri((builder.Configuration["Admin:CatalogUrl"] ?? "http://catalog-api").TrimEnd('/') + "/");
+    c.DefaultRequestHeaders.Add("X-Khazana-Internal-Key", catalogKey);
+});
+
 builder.Services.AddHttpClient<ReportingClient>(c =>
 {
     c.BaseAddress = new Uri(builder.Configuration["Admin:ReportingUrl"]!.TrimEnd('/') + "/");
@@ -77,7 +88,8 @@ if (!devLogin)
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(AdminRoles.SupportPolicy, p => p.RequireRole(AdminRoles.Support, AdminRoles.Security))
-    .AddPolicy(AdminRoles.SecurityPolicy, p => p.RequireRole(AdminRoles.Security));
+    .AddPolicy(AdminRoles.SecurityPolicy, p => p.RequireRole(AdminRoles.Security))
+    .AddPolicy(AdminRoles.OpsPolicy, p => p.RequireRole(AdminRoles.Ops));
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddRazorComponents();
 builder.Services.AddAntiforgery(o =>
@@ -116,7 +128,12 @@ if (devLogin)
     {
         if (!await antiforgery.IsRequestValidAsync(http).ConfigureAwait(false)) return Results.BadRequest();
         var form = await http.Request.ReadFormAsync().ConfigureAwait(false);
-        var role = form["role"].ToString() is AdminRoles.Security ? AdminRoles.Security : AdminRoles.Support;
+        var role = form["role"].ToString() switch
+        {
+            AdminRoles.Security => AdminRoles.Security,
+            AdminRoles.Ops => AdminRoles.Ops,
+            _ => AdminRoles.Support,
+        };
         var identity = new ClaimsIdentity(
             [new Claim("sub", $"dev-{role}"), new Claim(ClaimTypes.Email, $"dev-{role}@localhost"), new Claim(ClaimTypes.Role, role)],
             CookieAuthenticationDefaults.AuthenticationScheme);

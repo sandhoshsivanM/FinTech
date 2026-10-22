@@ -85,6 +85,9 @@ public static class PublishCatalogHandler
         ArgumentNullException.ThrowIfNull(db);
         ArgumentNullException.ThrowIfNull(signer);
         ArgumentNullException.ThrowIfNull(clock);
+        // One publish at a time (the daily sweep and an ops "publish" can meet):
+        // without this both read version N and both try to write N+1.
+        await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(hashtext('khazana.catalog.publish'))", ct).ConfigureAwait(false);
         var now = clock.UtcNow;
         var today = DateOnly.FromDateTime(IndiaTime.ToIst(now).DateTime);
 
@@ -118,6 +121,11 @@ public static class PublishCatalogHandler
 
 public sealed class CatalogQueries(CatalogDbContext db)
 {
+    /// <summary>Every curated offer, live or not, for the ops editor.</summary>
+    public async Task<IReadOnlyList<Offer>> AllOffersAsync(CancellationToken ct) =>
+        [.. (await db.Offers.AsNoTracking().OrderBy(o => o.Id).Select(o => o.Document).ToListAsync(ct).ConfigureAwait(false))
+            .Select(d => JsonSerializer.Deserialize<Offer>(d, Json.Options)!)];
+
     public async Task<SignedCatalog?> LatestAsync(CancellationToken ct)
     {
         var row = await db.Versions.AsNoTracking().OrderByDescending(v => v.Version).FirstOrDefaultAsync(ct).ConfigureAwait(false);

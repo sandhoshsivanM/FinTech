@@ -87,6 +87,9 @@ public sealed class ReportingClient(HttpClient http)
         return "admin:" + (safe ? sub : Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(sub)))[..32].ToLowerInvariant());
     }
 
+    /// <summary>Records an admin action; throws <see cref="AuditUnavailableException"/> if it can't, so the action must not happen.</summary>
+    public Task RecordAsync(ClaimsPrincipal admin, string action, string target, CancellationToken ct) => AuditAsync(admin, action, target, ct);
+
     private async Task AuditAsync(ClaimsPrincipal admin, string action, string target, CancellationToken ct)
     {
         try

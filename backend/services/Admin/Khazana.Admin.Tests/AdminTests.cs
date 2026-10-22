@@ -22,7 +22,8 @@ public sealed class FakeReporting : HttpMessageHandler
     {
         var path = request.RequestUri!.PathAndQuery;
         Calls.Add($"{request.Method} {path}");
-        request.Headers.GetValues("X-Khazana-Internal-Key").Single().ShouldBe(AdminHost.Key);
+        request.Headers.GetValues("X-Khazana-Internal-Key").Single()
+            .ShouldBe(path.StartsWith("/internal/catalog", StringComparison.Ordinal) ? AdminHost.CatalogKey : AdminHost.Key, "each service has its own key");
         if (request.Method == HttpMethod.Post && path.StartsWith("/internal/admin/audit", StringComparison.Ordinal))
             return Task.FromResult(new HttpResponseMessage(AuditDown ? HttpStatusCode.InternalServerError : HttpStatusCode.NoContent));
         var json = path switch
@@ -31,6 +32,8 @@ public sealed class FakeReporting : HttpMessageHandler
                 """{"total_users":4242,"active7_days":17,"active30_days":40,"pending_deletions":1,"signups_by_day":[{"day":"2026-10-21","count":3}],"signins_by_day":[],"users_by_platform":{"ios":3}}""",
             _ when path.StartsWith("/internal/admin/audit?", StringComparison.Ordinal) =>
                 """{"items":[{"id":7,"at":"2026-10-22T08:00:00Z","actor":"admin:x@y","action":"admin.view.users","target":"page:users","reason":null}],"page":1,"page_size":50,"total":1}""",
+            _ when path.StartsWith("/internal/catalog/offers", StringComparison.Ordinal) && request.Method == HttpMethod.Get =>
+                """[{"id":"hdfc-swiggy-10","issuer":"hdfc","network":"visa","product":null,"merchant":"Swiggy","category":"food","benefit":"cashback","value":10,"cap":150,"valid_from":"2026-10-01","valid_to":"2026-12-31","source":"https://www.hdfcbank.com/offers","verified_on":"2026-10-20"}]""",
             _ when path.StartsWith("/internal/admin/users?", StringComparison.Ordinal) =>
                 """{"items":[],"page":1,"page_size":25,"total":0}""",
             _ => "{}",
@@ -42,6 +45,7 @@ public sealed class FakeReporting : HttpMessageHandler
 public sealed class AdminHost : WebApplicationFactory<Program>
 {
     public const string Key = "admin-test-internal-key-0123456789abcdef";
+    public const string CatalogKey = "admin-test-catalog-key-0123456789abcdefgh";
     public FakeReporting Reporting { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -49,7 +53,13 @@ public sealed class AdminHost : WebApplicationFactory<Program>
         builder.UseEnvironment("Development");
         builder.UseSetting("Admin:ReportingKey", Key);
         builder.UseSetting("Admin:ReportingUrl", "http://reporting-api");
-        builder.ConfigureServices(s => s.AddHttpClient<ReportingClient>().ConfigurePrimaryHttpMessageHandler(() => Reporting));
+        builder.UseSetting("Admin:CatalogKey", CatalogKey);
+        builder.UseSetting("Admin:CatalogUrl", "http://catalog-api");
+        builder.ConfigureServices(s =>
+        {
+            s.AddHttpClient<ReportingClient>().ConfigurePrimaryHttpMessageHandler(() => Reporting);
+            s.AddHttpClient<CatalogClient>().ConfigurePrimaryHttpMessageHandler(() => Reporting);
+        });
     }
 
     public HttpClient Browser() => CreateClient(new WebApplicationFactoryClientOptions
@@ -172,6 +182,44 @@ public sealed partial class AdminTests : IDisposable
             [new System.Security.Claims.Claim("sub", sub)], "test")));
         if (expected is not null) actor.ShouldBe(expected);
         else actor.ShouldMatch("^admin:[0-9a-f]{32}$");
+    }
+
+    [Fact]
+    public async Task Ops_curate_offers_and_every_change_is_audited_first()
+    {
+        using var browser = _host.Browser();
+        await SignIn(browser, "ops");
+        var list = await browser.GetAsync(new Uri("/offers", UriKind.Relative), Ct);
+        list.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await list.Content.ReadAsStringAsync(Ct)).ShouldContain("hdfc-swiggy-10");
+        _host.Reporting.Calls.ShouldBe(["POST /internal/admin/audit", "GET /internal/catalog/offers"]);
+
+        var page = await (await browser.GetAsync(new Uri("/offers/new", UriKind.Relative), Ct)).Content.ReadAsStringAsync(Ct);
+        var token = Antiforgery().Match(page).Groups[1].Value;
+        _host.Reporting.Calls.Clear();
+        using var form = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["_handler"] = "offer", ["__RequestVerificationToken"] = token,
+            ["Form.Id"] = "axis-amazon-5", ["Form.Issuer"] = "axis", ["Form.Merchant"] = "Amazon", ["Form.Category"] = "shopping",
+            ["Form.Benefit"] = "cashback", ["Form.Value"] = "5", ["Form.ValidFrom"] = "2026-10-01", ["Form.ValidTo"] = "2026-12-31",
+            ["Form.Source"] = "https://www.axisbank.com/offers", ["Form.VerifiedOn"] = "2026-10-20",
+        });
+        var saved = await browser.PostAsync(new Uri("/offers/new", UriKind.Relative), form, Ct);
+        ((int)saved.StatusCode).ShouldBeLessThan(400, await saved.Content.ReadAsStringAsync(Ct));
+        _host.Reporting.Calls.ShouldBe(["POST /internal/admin/audit", "PUT /internal/catalog/offers/axis-amazon-5"]);
+    }
+
+    [Fact]
+    public async Task Support_cannot_open_the_offer_editors_and_ops_cannot_open_user_data()
+    {
+        using (var support = _host.Browser())
+        {
+            await SignIn(support, "support");
+            (await support.GetAsync(new Uri("/offers", UriKind.Relative), Ct)).Headers.Location!.ToString().ShouldContain("/denied");
+        }
+        using var ops = _host.Browser();
+        await SignIn(ops, "ops");
+        (await ops.GetAsync(new Uri("/users", UriKind.Relative), Ct)).Headers.Location!.ToString().ShouldContain("/denied");
     }
 
     [Fact]

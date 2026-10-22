@@ -9,6 +9,10 @@ public static class AdminRoles
     /// <summary>Everything Support sees, plus the audit log and its integrity check.</summary>
     public const string Security = "security";
 
+    /// <summary>Curates card offers in the catalog (design doc §8.10, Content). Sees no user data.</summary>
+    public const string Ops = "ops";
+
     public const string SupportPolicy = "admin.support";
+    public const string OpsPolicy = "admin.ops";
     public const string SecurityPolicy = "admin.security";
 }

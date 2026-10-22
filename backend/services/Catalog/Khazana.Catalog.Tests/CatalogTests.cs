@@ -65,6 +65,26 @@ public class CatalogRulesTests
     }
 }
 
+public class CatalogEdgeTests
+{
+    [Theory]
+    [InlineData("\"v3\"", true)]
+    [InlineData("W/\"v3\"", true)]
+    [InlineData("\"v1\", \"v3\"", true)]
+    [InlineData("*", true)]
+    [InlineData("\"v2\"", false)]
+    [InlineData("", false)]
+    public void If_None_Match_is_read_the_way_RFC_9110_writes_it(string header, bool matches) =>
+        Khazana.Catalog.Api.CatalogEndpoints.Matches(new Microsoft.Extensions.Primitives.StringValues(header), 3).ShouldBe(matches);
+
+    [Fact]
+    public void The_daily_republish_lands_just_after_midnight_in_India()
+    {
+        var now = new DateTimeOffset(2026, 10, 22, 18, 0, 0, TimeSpan.Zero); // 23:30 IST
+        Khazana.Catalog.Api.RepublishSweeper.UntilNextIstMidnight(now).ShouldBe(TimeSpan.FromMinutes(31));
+    }
+}
+
 public sealed class TestClock : IClock
 {
     public TimeSpan Offset { get; set; }
@@ -187,6 +207,17 @@ public sealed class CatalogFlowTests(CatalogHost host) : IDisposable
             host.Clock.Offset = TimeSpan.Zero;
         }
         (await FetchVerified()).Payload.GetProperty("offers").EnumerateArray().ShouldNotContain(o => o.GetProperty("id").GetString() == "short-lived");
+    }
+
+    [Fact]
+    public async Task Two_publishes_at_once_make_one_new_version_not_a_500()
+    {
+        var id = "race-" + Guid.NewGuid().ToString("N")[..8];
+        (await Curate(HttpMethod.Put, $"/internal/catalog/offers/{id}", CatalogRulesTests.Offer(id))).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        var results = await Task.WhenAll(Curate(HttpMethod.Post, "/internal/catalog/publish"), Curate(HttpMethod.Post, "/internal/catalog/publish"));
+        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
+        var bodies = await Task.WhenAll(results.Select(async r => JsonDocument.Parse(await r.Content.ReadAsStringAsync(Ct)).RootElement));
+        bodies.Count(b => b.GetProperty("changed").GetBoolean()).ShouldBe(1, "the second sees the first's version and finds nothing new");
     }
 
     [Fact]

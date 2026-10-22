@@ -5,8 +5,13 @@
     <AuthorizeView>
         <Authorized>
             <nav>
-                <a href="/">Dashboard</a>
-                <a href="/users">Users</a>
+                <AuthorizeView Policy="@AdminRoles.SupportPolicy" Context="support">
+                    <a href="/">Dashboard</a>
+                    <a href="/users">Users</a>
+                </AuthorizeView>
+                <AuthorizeView Policy="@AdminRoles.OpsPolicy" Context="ops">
+                    <a href="/offers">Offers</a>
+                </AuthorizeView>
                 <AuthorizeView Policy="@AdminRoles.SecurityPolicy" Context="security">
                     <a href="/audit">Audit log</a>
                 </AuthorizeView>

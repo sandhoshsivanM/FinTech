@@ -3,7 +3,11 @@ using Wolverine;
 
 namespace Khazana.Catalog.Api;
 
-/// <summary>Daily: republish, which drops offers that expired (design doc §8.9). Waits for start, never throws.</summary>
+/// <summary>
+/// Republish at startup and then just after every midnight IST, so an offer
+/// that ended yesterday leaves the catalog as the day turns (design doc §8.9).
+/// Waits for start, never throws.
+/// </summary>
 public sealed partial class RepublishSweeper(
     IServiceScopeFactory scopes, IHostApplicationLifetime lifetime, IConfiguration configuration, ILogger<RepublishSweeper> log)
     : BackgroundService
@@ -25,8 +29,7 @@ public sealed partial class RepublishSweeper(
             }
         }
 
-        using var timer = new PeriodicTimer(TimeSpan.FromDays(1));
-        do
+        while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
@@ -39,8 +42,23 @@ public sealed partial class RepublishSweeper(
             {
                 Failed(log, e);
             }
+            try
+            {
+                await Task.Delay(UntilNextIstMidnight(DateTimeOffset.UtcNow), stoppingToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
         }
-        while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
+    }
+
+    /// <summary>Time until a minute past the next midnight in India.</summary>
+    public static TimeSpan UntilNextIstMidnight(DateTimeOffset now)
+    {
+        var ist = Khazana.SharedKernel.IndiaTime.ToIst(now);
+        var next = new DateTimeOffset(ist.Date.AddDays(1).AddMinutes(1), Khazana.SharedKernel.IndiaTime.Offset);
+        return next - now;
     }
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Daily catalog republish failed.")]

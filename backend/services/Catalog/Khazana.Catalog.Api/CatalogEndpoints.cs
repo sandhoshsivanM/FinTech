@@ -25,6 +25,8 @@ public static class CatalogEndpoints
 
         // Internal curation (never routed by the gateway; service key).
         var curation = app.MapGroup("/internal/catalog").AddEndpointFilter(RequireServiceKey);
+        curation.MapGet("/offers", async (CatalogQueries queries, CancellationToken ct) =>
+            Results.Ok(await queries.AllOffersAsync(ct).ConfigureAwait(false)));
         curation.MapPut("/offers/{id}", async (string id, Offer offer, CurationService svc, CancellationToken ct) =>
             offer.Id != id ? Results.BadRequest(new ErrorResponse("id_mismatch"))
             : await svc.SaveOfferAsync(offer, ct).ConfigureAwait(false) is { } problem ? Results.BadRequest(new ErrorResponse(problem))
@@ -58,9 +60,28 @@ public static class CatalogEndpoints
         if (latest is null) return Results.NotFound(new ErrorResponse("not_published"));
         http.Response.Headers.ETag = $"\"v{latest.Version}\"";
         http.Response.Headers.CacheControl = "public, max-age=300";
-        if (since == latest.Version || http.Request.Headers.IfNoneMatch == $"\"v{latest.Version}\"")
+        if (since == latest.Version || Matches(http.Request.Headers.IfNoneMatch, latest.Version))
             return Results.StatusCode(StatusCodes.Status304NotModified);
         return Results.Ok(new CatalogResponse(latest.Version, latest.KeyId, latest.Signature, latest.Payload));
+    }
+
+    /// <summary>
+    /// If-None-Match per RFC 9110: a list, weak tags (W/"v3"), or *. The ETag
+    /// names a version whose bytes never change, so weak and strong mean the same.
+    /// </summary>
+    public static bool Matches(Microsoft.Extensions.Primitives.StringValues ifNoneMatch, long version)
+    {
+        var current = $"\"v{version}\"";
+        foreach (var header in ifNoneMatch)
+        {
+            foreach (var raw in (header ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (raw == "*") return true;
+                var tag = raw.StartsWith("W/", StringComparison.Ordinal) ? raw[2..] : raw;
+                if (tag == current) return true;
+            }
+        }
+        return false;
     }
 
     private static ValueTask<object?> RequireServiceKey(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
