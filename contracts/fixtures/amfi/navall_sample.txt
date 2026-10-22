@@ -1,0 +1,24 @@
+Scheme Code;ISIN Div Payout/ ISIN Growth;ISIN Div Reinvestment;Scheme Name;Plan;Option;Net Asset Value;Date
+ 
+Open Ended Schemes(Debt Scheme - Banking and PSU Fund)
+ 
+Aditya Birla Sun Life Mutual Fund
+ 
+119551;INF209K01157;INF209K01165;Aditya Birla Sun Life Banking & PSU Debt Fund;Direct Plan;IDCW Option;123.4567;17-Oct-2026
+119552;-;INF209K01173;Aditya Birla Sun Life Banking & PSU Debt Fund;Direct Plan;Growth Option;345.6789;17-Oct-2026
+ 
+Open Ended Schemes(Equity Scheme - Flexi Cap Fund)
+ 
+PPFAS Mutual Fund
+ 
+122639;INF879O01027;-;Parag Parikh Flexi Cap Fund;Direct Plan;Growth Option;89.1234;17-Oct-2026
+122640;INF879O01035;;Parag Parikh Flexi Cap Fund;Regular Plan;;81.5;17-Oct-2026
+ 
+Quant Mutual Fund
+ 
+120828;INF966L01689;-;quant Small Cap Fund;Direct Plan;Growth Option;265.0;16-Oct-2026
+120829;INF966L01697;-;quant Small Cap Fund;Suspended Plan;Growth Option;N.A.;17-Oct-2026
+120830;INF966L01705;-;quant Small Cap Fund;Zero NAV Plan;Growth Option;0.0000;17-Oct-2026
+120831;INF966L01713;-;quant Small Cap Fund;No Date Plan;Growth Option;10.0000;
+120832;INF966L01721;-;quant Small Cap Fund;Exponent Plan;Growth Option;1e5;17-Oct-2026
+ABC123;INF966L01739;-;Not a scheme code;Direct Plan;Growth Option;10.0000;17-Oct-2026

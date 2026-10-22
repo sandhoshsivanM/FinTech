@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Pure business rules. No framework, no packages — enforced by
+       tests/Khazana.ArchitectureTests. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Khazana.MarketData.Tests" />
+  </ItemGroup>
+</Project>

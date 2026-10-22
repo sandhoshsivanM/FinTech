@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Use cases (Wolverine handlers), ports, and the EF Core DbContext.
+       The DbContext lives here, not in Infrastructure, so Wolverine can wrap a
+       handler and its database writes in one transaction with the outbox:
+       rows saved and event published, or neither. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.MarketData.Domain\Khazana.MarketData.Domain.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\Khazana.SharedKernel\Khazana.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\Khazana.Messaging\Khazana.Messaging.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
+  </ItemGroup>
+</Project>

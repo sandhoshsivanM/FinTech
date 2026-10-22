@@ -1,0 +1,21 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.3">
+  <!-- Local orchestration: "dotnet run" in this folder
+       starts Postgres, RabbitMQ and every service, with the Aspire dashboard. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>khazana-apphost-6f1c2a7e</UserSecretsId>
+    <!-- ASPIRE010 suggests the optional Aspire CLI bundle. Plain "dotnet run"
+         starts everything (verified: Postgres, RabbitMQ, both services and the
+         dashboard), so the bundle is not required for this repo. -->
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\services\MarketData\Khazana.MarketData.Api\Khazana.MarketData.Api.csproj" />
+    <ProjectReference Include="..\Khazana.Gateway\Khazana.Gateway.csproj" />
+  </ItemGroup>
+</Project>
