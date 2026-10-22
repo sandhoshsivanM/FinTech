@@ -45,6 +45,11 @@ public class BoundaryTests
             typeof(Khazana.AuditReporting.Application.AdminQueries).Assembly,
             typeof(Khazana.AuditReporting.Infrastructure.DependencyInjection).Assembly,
             typeof(Khazana.AuditReporting.Api.AdminEndpoints).Assembly),
+        new("Catalog",
+            typeof(Khazana.Catalog.Domain.CatalogRules).Assembly,
+            typeof(Khazana.Catalog.Application.CurationService).Assembly,
+            typeof(Khazana.Catalog.Infrastructure.Ed25519CatalogSigner).Assembly,
+            typeof(Khazana.Catalog.Api.CatalogEndpoints).Assembly),
     ];
 
     private static readonly string[] AllServiceNamespaces =

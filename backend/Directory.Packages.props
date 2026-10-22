@@ -44,6 +44,8 @@
     <!-- Passkeys (WebAuthn), MIT. -->
     <PackageVersion Include="Fido2" Version="4.3.1" />
     <PackageVersion Include="Fido2.Models" Version="4.3.1" />
+    <!-- Ed25519 catalog signatures through libsodium (design doc §14.2: vetted libraries only). -->
+    <PackageVersion Include="NSec.Cryptography" Version="26.4.0" />
     <!-- Data -->
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageVersion Include="Npgsql" Version="10.0.3" />

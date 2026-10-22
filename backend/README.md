@@ -11,6 +11,7 @@
 | Sync | 2.4 | Encrypted records in and out by per-user sequence; never merges, never reads (ADR 0006) |
 | Notification | 2.5 | Push tokens; data-free sync nudges and new-device alerts over FCM / APNs (log-only in development) |
 | Audit & Reporting | 2.6 | Directory, sign-ins and a hash-chained, append-only audit log, built only from events (no PII) |
+| Catalog | 2.7 | Card offers and parser templates, published as an Ed25519-signed snapshot (libsodium) |
 | Admin (Blazor) | 2.6 | Internal panel: dashboard, directory, audit log; reads only Audit & Reporting; every view audited |
 
 ## Run it locally
@@ -63,7 +64,7 @@ Postgres and RabbitMQ containers (needs Docker running).
 | `building-blocks/Khazana.SharedKernel/` | Clock, IST time |
 | `building-blocks/Khazana.Security/` | DPoP proof checks and `AddKhazanaAuthentication` for every service that serves a signed-in user |
 | `services/MarketData/` | Domain → Application → Infrastructure → Api, plus Tests |
-| `services/Identity/`, `Devices/`, `Sync/`, `Notification/`, `AuditReporting/` | The same five folders |
+| `services/Identity/`, `Devices/`, `Sync/`, `Notification/`, `AuditReporting/`, `Catalog/` | The same five folders |
 | `services/Admin/` | The admin panel (Blazor, static server rendering), http://localhost:5090 locally |
 | `tests/` | Architecture rules, gateway tests, DPoP tests, and the shared TestKit |
 
