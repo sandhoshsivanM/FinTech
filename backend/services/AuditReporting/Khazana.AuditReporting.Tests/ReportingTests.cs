@@ -23,14 +23,16 @@ public class AuditChainTests
 {
     private static readonly DateTimeOffset T = new(2026, 10, 22, 9, 0, 0, TimeSpan.Zero);
 
-    private static List<(byte[], byte[], AuditEntry)> Chain(params AuditEntry[] entries)
+    private static readonly byte[] Key = new AuditKey(new string('k', 48)).Bytes;
+
+    private static List<(byte[], byte[], AuditEntry, int)> Chain(params AuditEntry[] entries)
     {
-        var list = new List<(byte[], byte[], AuditEntry)>();
+        var list = new List<(byte[], byte[], AuditEntry, int)>();
         var previous = AuditChain.Genesis;
         foreach (var e in entries)
         {
-            var hash = AuditChain.Hash(previous, e);
-            list.Add((previous, hash, e));
+            var hash = AuditChain.Hash(previous, e, Key);
+            list.Add((previous, hash, e, 2));
             previous = hash;
         }
         return list;
@@ -41,22 +43,22 @@ public class AuditChainTests
     private static readonly AuditEntry C = new(T.AddMinutes(2), "user:1", "device.revoked", "device:2", null);
 
     [Fact]
-    public void An_untouched_chain_verifies() => AuditChain.FirstBrokenLink(Chain(A, B, C)).ShouldBeNull();
+    public void An_untouched_chain_verifies() => AuditChain.FirstBrokenLink(Chain(A, B, C), Key).ShouldBeNull();
 
     [Fact]
     public void Editing_a_record_breaks_the_chain_at_that_record()
     {
         var chain = Chain(A, B, C);
-        chain[1] = (chain[1].Item1, chain[1].Item2, B with { Action = "account.nothing_happened" });
-        AuditChain.FirstBrokenLink(chain).ShouldBe(1);
+        chain[1] = (chain[1].Item1, chain[1].Item2, B with { Action = "account.nothing_happened" }, 2);
+        AuditChain.FirstBrokenLink(chain, Key).ShouldBe(1);
     }
 
     [Fact]
     public void Deleting_or_reordering_records_breaks_the_chain()
     {
         var chain = Chain(A, B, C);
-        AuditChain.FirstBrokenLink([chain[0], chain[2]]).ShouldBe(1);
-        AuditChain.FirstBrokenLink([chain[1], chain[0], chain[2]]).ShouldBe(0);
+        AuditChain.FirstBrokenLink([chain[0], chain[2]], Key).ShouldBe(1);
+        AuditChain.FirstBrokenLink([chain[1], chain[0], chain[2]], Key).ShouldBe(0);
     }
 
     [Fact]
@@ -65,13 +67,38 @@ public class AuditChainTests
         // Linux clocks tick every 100 ns; Postgres keeps microseconds.
         var precise = A with { At = new DateTimeOffset(2026, 10, 22, 9, 0, 0, TimeSpan.Zero).AddTicks(1234567) };
         var stored = A with { At = new DateTimeOffset(2026, 10, 22, 9, 0, 0, TimeSpan.Zero).AddTicks(1234560) };
-        AuditChain.Hash(AuditChain.Genesis, precise).ShouldBe(AuditChain.Hash(AuditChain.Genesis, stored));
+        AuditChain.Hash(AuditChain.Genesis, precise, Key).ShouldBe(AuditChain.Hash(AuditChain.Genesis, stored, Key));
     }
 
     [Fact]
     public void Field_boundaries_are_unambiguous() =>
-        AuditChain.Hash(AuditChain.Genesis, A with { Target = "ab", Reason = "c" })
-            .ShouldNotBe(AuditChain.Hash(AuditChain.Genesis, A with { Target = "a", Reason = "bc" }));
+        AuditChain.Hash(AuditChain.Genesis, A with { Target = "ab", Reason = "c" }, Key)
+            .ShouldNotBe(AuditChain.Hash(AuditChain.Genesis, A with { Target = "a", Reason = "bc" }, Key));
+
+    [Fact]
+    public void Without_the_key_a_rewritten_chain_cannot_be_made_to_verify()
+    {
+        // Someone with database access rewrites B and recomputes every link,
+        // but without the secret key: with plain hashes this would pass.
+        var forgedKey = new AuditKey(new string('x', 48)).Bytes;
+        var chain = Chain(A);
+        var forgedB = B with { Action = "account.nothing_happened" };
+        var forgedHash = AuditChain.Hash(chain[0].Item2, forgedB, forgedKey);
+        chain.Add((chain[0].Item2, forgedHash, forgedB, 2));
+        AuditChain.FirstBrokenLink(chain, Key).ShouldBe(1);
+
+        // Nor by passing a rewritten row off as an old, unkeyed one.
+        var v1 = AuditChain.HashV1(chain[0].Item2, forgedB);
+        AuditChain.FirstBrokenLink([chain[0], (chain[0].Item2, v1, forgedB, 1)], Key).ShouldBe(1);
+    }
+
+    [Fact]
+    public void Old_unkeyed_rows_still_verify_before_the_keyed_ones()
+    {
+        var v1 = AuditChain.HashV1(AuditChain.Genesis, A);
+        var v2 = AuditChain.Hash(v1, B, Key);
+        AuditChain.FirstBrokenLink([(AuditChain.Genesis, v1, A, 1), (v1, v2, B, 2)], Key).ShouldBeNull();
+    }
 
     [Theory]
     [InlineData("root", "admin.view.users", "page:users")]
@@ -97,6 +124,7 @@ public sealed class ReportingHost : IAsyncLifetime
         Environment.SetEnvironmentVariable("ConnectionStrings__reporting", _postgres.GetConnectionString());
         Environment.SetEnvironmentVariable("ConnectionStrings__rabbitmq", _rabbitMq.GetConnectionString());
         Environment.SetEnvironmentVariable("Reporting__InternalKey", Key);
+        Environment.SetEnvironmentVariable("Reporting__AuditKey", "reporting-test-audit-key-0123456789abcdefghij");
         Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b
             .UseEnvironment("Development")
             .ConfigureServices(s => s.ConfigureWolverine(o => o.Discovery.IncludeType(typeof(PurgedProbe)))));
@@ -305,6 +333,61 @@ public sealed class ReportingFlowTests(ReportingHost host) : IDisposable
         (await db.SigninEvents.AnyAsync(s => s.UserId == user, Ct)).ShouldBeFalse();
         (await db.AuditEvents.AnyAsync(a => a.Action == "account.deletion_requested" && a.Target == $"user:{user}", Ct))
             .ShouldBeTrue("the audit trail keeps the fact, with ids only");
+    }
+
+    [Fact]
+    public async Task Removing_records_from_the_end_is_noticed()
+    {
+        await Admin(HttpMethod.Post, "/internal/admin/audit", new { actor = "admin:ops-1", action = "admin.view.users", target = "page:users" });
+        await Admin(HttpMethod.Post, "/internal/admin/audit", new { actor = "admin:ops-1", action = "admin.view.audit", target = "page:audit" });
+        await using var conn = new NpgsqlConnection(host.ConnectionString);
+        await conn.OpenAsync(Ct);
+        long last;
+        await using (var max = new NpgsqlCommand("SELECT max(id) FROM reporting.audit_events", conn)) last = (long)(await max.ExecuteScalarAsync(Ct))!;
+        await using (var tamper = new NpgsqlCommand("""
+            ALTER TABLE reporting.audit_events DISABLE TRIGGER audit_events_no_change;
+            CREATE TEMP TABLE kept AS SELECT * FROM reporting.audit_events WHERE id = @id;
+            DELETE FROM reporting.audit_events WHERE id = @id;
+            """, conn))
+        {
+            tamper.Parameters.AddWithValue("id", last);
+            await tamper.ExecuteNonQueryAsync(Ct);
+        }
+        try
+        {
+            (await AdminJson("/internal/admin/audit/verify")).GetProperty("intact").GetBoolean().ShouldBeFalse("the head still names the deleted record");
+        }
+        finally
+        {
+            await using var restore = new NpgsqlCommand("""
+                INSERT INTO reporting.audit_events OVERRIDING SYSTEM VALUE SELECT * FROM kept;
+                ALTER TABLE reporting.audit_events ENABLE TRIGGER audit_events_no_change;
+                """, conn);
+            await restore.ExecuteNonQueryAsync(Ct);
+        }
+        (await AdminJson("/internal/admin/audit/verify")).GetProperty("intact").GetBoolean().ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task A_cancelled_deletion_keeps_the_user_and_records_the_reversal()
+    {
+        var user = Guid.CreateVersion7();
+        var device = Guid.CreateVersion7();
+        await Publish(new UserRegisteredV1(user, device, "ios", DateTimeOffset.UtcNow));
+        await Publish(new UserSignedInV1(user, device, "ios", DateTimeOffset.UtcNow));
+        var executeAfter = DateTimeOffset.UtcNow.AddSeconds(-1);
+        await Publish(new AccountDeletionCancelledV1(user, executeAfter));
+        var tracked = await Publish(new AccountDeletionRequestedV1(user, executeAfter));
+        tracked.Sent.MessagesOf<UserDataPurgedV1>().ShouldNotContain(p => p.UserId == user);
+        (await AdminJson($"/internal/admin/users/{user}")).GetProperty("recent_signins").GetArrayLength().ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Absurd_paging_and_empty_bodies_are_handled_not_crashed()
+    {
+        (await Admin(HttpMethod.Get, $"/internal/admin/users?page={int.MaxValue}")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Admin(HttpMethod.Get, $"/internal/admin/audit?page={int.MaxValue}")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Admin(HttpMethod.Post, "/internal/admin/audit", new { action = "admin.view.users" })).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]

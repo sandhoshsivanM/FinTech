@@ -67,10 +67,15 @@ var notification = builder.AddProject<Projects.Khazana_Notification_Api>("notifi
 var reportingKey = builder.AddParameter("reporting-internal-key",
     new GenerateParameterDefault { MinLength = 48, Special = false }, secret: true, persist: true);
 
+// The audit chain's MAC key: never in the database it protects.
+var auditKey = builder.AddParameter("reporting-audit-key",
+    new GenerateParameterDefault { MinLength = 48, Special = false }, secret: true, persist: true);
+
 var reporting = builder.AddProject<Projects.Khazana_AuditReporting_Api>("reporting-api")
     .WithReference(reportingDb).WaitFor(reportingDb)
     .WithReference(rabbitMq).WaitFor(rabbitMq)
-    .WithEnvironment("Reporting__InternalKey", reportingKey);
+    .WithEnvironment("Reporting__InternalKey", reportingKey)
+    .WithEnvironment("Reporting__AuditKey", auditKey);
 
 builder.AddProject<Projects.Khazana_Admin>("admin")
     .WithReference(reporting).WaitFor(reporting)

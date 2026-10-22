@@ -6,7 +6,7 @@ using Khazana.SharedKernel;
 
 namespace Khazana.AuditReporting.Api;
 
-public sealed record AdminAction(string Actor, string Action, string Target, string? Reason);
+public sealed record AdminAction(string Actor, string Action, string Target, string? Reason = null);
 
 /// <summary>
 /// The admin app's only door into any data (design doc §8.10). Never routed
@@ -36,6 +36,7 @@ public static class AdminEndpoints
     private static async Task<IResult> RecordAdminAction(
         AdminAction body, Application.Persistence.ReportingDbContext db, AuditWriter audit, IClock clock, CancellationToken ct)
     {
+        if (body?.Actor is null || body.Action is null || body.Target is null) return Results.BadRequest();
         var entry = new AuditEntry(clock.UtcNow, body.Actor, body.Action, body.Target, body.Reason);
         if (!entry.Actor.StartsWith("admin:", StringComparison.Ordinal) || !ReportingRules.IsValid(entry))
             return Results.BadRequest();

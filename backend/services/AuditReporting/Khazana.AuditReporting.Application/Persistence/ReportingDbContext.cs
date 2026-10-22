@@ -11,6 +11,7 @@ namespace Khazana.AuditReporting.Application.Persistence;
 public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> options) : DbContext(options)
 {
     public DbSet<AuditEventRow> AuditEvents => Set<AuditEventRow>();
+    public DbSet<AuditHeadRow> AuditHead => Set<AuditHeadRow>();
     public DbSet<SigninEventRow> SigninEvents => Set<SigninEventRow>();
     public DbSet<DirectoryRow> Directory => Set<DirectoryRow>();
     public DbSet<DeletedUserRow> DeletedUsers => Set<DeletedUserRow>();
@@ -32,6 +33,16 @@ public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> opti
             e.Property(x => x.Reason).HasColumnName("reason").HasMaxLength(280);
             e.Property(x => x.PreviousHash).HasColumnName("previous_hash");
             e.Property(x => x.Hash).HasColumnName("hash");
+            e.Property(x => x.HashVersion).HasColumnName("hash_version").HasDefaultValue(1);
+        });
+
+        modelBuilder.Entity<AuditHeadRow>(e =>
+        {
+            e.ToTable("audit_head");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
+            e.Property(x => x.LastId).HasColumnName("last_id");
+            e.Property(x => x.LastHash).HasColumnName("last_hash");
         });
 
         modelBuilder.Entity<SigninEventRow>(e =>
@@ -81,6 +92,22 @@ public sealed class AuditEventRow
 #pragma warning disable CA1819 // byte[] columns are how EF maps bytea
     public required byte[] PreviousHash { get; set; }
     public required byte[] Hash { get; set; }
+#pragma warning restore CA1819
+    public int HashVersion { get; set; }
+}
+
+/// <summary>
+/// The newest record's id and MAC, written in the same transaction as the
+/// record. Verification compares the chain's end with it, so records removed
+/// from the end are noticed. (Someone who can also rewrite this row could hide
+/// that; the nightly export to write-once storage in the cloud closes it.)
+/// </summary>
+public sealed class AuditHeadRow
+{
+    public int Id { get; set; }
+    public long LastId { get; set; }
+#pragma warning disable CA1819
+    public required byte[] LastHash { get; set; }
 #pragma warning restore CA1819
 }
 

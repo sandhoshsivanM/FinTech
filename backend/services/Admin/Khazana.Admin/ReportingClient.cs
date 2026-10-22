@@ -73,13 +73,26 @@ public sealed class ReportingClient(HttpClient http)
         return (items, chain);
     }
 
+    /// <summary>
+    /// <c>admin:&lt;sub&gt;</c>: the provider's stable subject, which every
+    /// provider sends and which never changes. Emails can contain characters the
+    /// audit format refuses (that locked an admin out), and can change hands.
+    /// A subject that doesn't fit the format is recorded as a short hash.
+    /// </summary>
+    public static string Actor(ClaimsPrincipal admin)
+    {
+        ArgumentNullException.ThrowIfNull(admin);
+        var sub = admin.FindFirstValue("sub") ?? throw new AuditUnavailableException("Signed-in admin has no subject.");
+        var safe = sub.Length <= 128 && sub.All(c => char.IsAsciiLetterOrDigit(c) || c is '@' or '.' or '_' or '+' or '-');
+        return "admin:" + (safe ? sub : Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(sub)))[..32].ToLowerInvariant());
+    }
+
     private async Task AuditAsync(ClaimsPrincipal admin, string action, string target, CancellationToken ct)
     {
-        var email = admin.FindFirstValue(ClaimTypes.Email) ?? admin.FindFirstValue("email") ?? "unknown";
         try
         {
             using var response = await http.PostAsJsonAsync("internal/admin/audit",
-                new { Actor = $"admin:{email}", Action = action, Target = target }, Json, ct).ConfigureAwait(false);
+                new { Actor = Actor(admin), Action = action, Target = target }, Json, ct).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode) throw new AuditUnavailableException($"Audit refused: {(int)response.StatusCode}.");
         }
         catch (HttpRequestException e)

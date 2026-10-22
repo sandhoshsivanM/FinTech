@@ -41,7 +41,10 @@ var auth = builder.Services.AddAuthentication(o =>
     o.AccessDeniedPath = "/denied";
     o.Cookie.Name = CookieName("khazana-admin");
     o.Cookie.HttpOnly = true;
-    o.Cookie.SameSite = SameSiteMode.Strict;
+    // Lax, not Strict: the sign-in comes back from the identity provider, a
+    // cross-site navigation, and a Strict cookie isn't sent on it, so every
+    // sign-in would loop. Forms are protected by antiforgery tokens instead.
+    o.Cookie.SameSite = SameSiteMode.Lax;
     o.Cookie.SecurePolicy = cookiePolicy;
     // Short sessions: an unattended admin screen closes itself.
     o.ExpireTimeSpan = TimeSpan.FromMinutes(15);
@@ -62,6 +65,13 @@ if (!devLogin)
         o.Scope.Add("email");
         o.TokenValidationParameters.RoleClaimType = "roles";
         o.TokenValidationParameters.NameClaimType = "email";
+        // The audit log names staff by the provider's stable subject, so a
+        // sign-in without one is refused.
+        o.Events.OnTokenValidated = ctx =>
+        {
+            if (string.IsNullOrEmpty(ctx.Principal?.FindFirst("sub")?.Value)) ctx.Fail("The identity provider sent no subject.");
+            return Task.CompletedTask;
+        };
     });
 }
 
@@ -108,7 +118,7 @@ if (devLogin)
         var form = await http.Request.ReadFormAsync().ConfigureAwait(false);
         var role = form["role"].ToString() is AdminRoles.Security ? AdminRoles.Security : AdminRoles.Support;
         var identity = new ClaimsIdentity(
-            [new Claim(ClaimTypes.Email, $"dev-{role}@localhost"), new Claim(ClaimTypes.Role, role)],
+            [new Claim("sub", $"dev-{role}"), new Claim(ClaimTypes.Email, $"dev-{role}@localhost"), new Claim(ClaimTypes.Role, role)],
             CookieAuthenticationDefaults.AuthenticationScheme);
         await http.SignInAsync(new ClaimsPrincipal(identity)).ConfigureAwait(false);
         return Results.LocalRedirect("/");

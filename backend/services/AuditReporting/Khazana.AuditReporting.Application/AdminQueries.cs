@@ -25,7 +25,7 @@ public sealed record Paged<T>(IReadOnlyList<T> Items, int Page, int PageSize, in
 public sealed record ChainStatus(bool Intact, long Records, long? FirstBrokenId);
 
 /// <summary>What the admin app may ask. Every answer is ids, counts and times.</summary>
-public sealed class AdminQueries(ReportingDbContext db, IClock clock)
+public sealed class AdminQueries(ReportingDbContext db, AuditKey key, IClock clock)
 {
     public const int MaxPageSize = 100;
 
@@ -53,7 +53,7 @@ public sealed class AdminQueries(ReportingDbContext db, IClock clock)
 
     public async Task<Paged<DirectoryEntry>> UsersAsync(int page, int pageSize, CancellationToken ct)
     {
-        page = Math.Max(page, 1);
+        page = Math.Clamp(page, 1, 1_000_000);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
         var total = await db.Directory.CountAsync(ct).ConfigureAwait(false);
         var rows = await db.Directory.AsNoTracking().OrderByDescending(d => d.RegisteredAt)
@@ -73,7 +73,7 @@ public sealed class AdminQueries(ReportingDbContext db, IClock clock)
 
     public async Task<Paged<AuditView>> AuditAsync(int page, int pageSize, CancellationToken ct)
     {
-        page = Math.Max(page, 1);
+        page = Math.Clamp(page, 1, 1_000_000);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
         var total = await db.AuditEvents.CountAsync(ct).ConfigureAwait(false);
         var rows = await db.AuditEvents.AsNoTracking().OrderByDescending(a => a.Id)
@@ -87,8 +87,14 @@ public sealed class AdminQueries(ReportingDbContext db, IClock clock)
     {
         var rows = await db.AuditEvents.AsNoTracking().OrderBy(a => a.Id).ToListAsync(ct).ConfigureAwait(false);
         var broken = AuditChain.FirstBrokenLink([.. rows.Select(r =>
-            (r.PreviousHash, r.Hash, new AuditEntry(r.At, r.Actor, r.Action, r.Target, r.Reason)))]);
-        return new ChainStatus(broken is null, rows.Count, broken is { } i ? rows[i].Id : null);
+            (r.PreviousHash, r.Hash, new AuditEntry(r.At, r.Actor, r.Action, r.Target, r.Reason), r.HashVersion))], key.Bytes);
+        if (broken is { } i) return new ChainStatus(false, rows.Count, rows[i].Id);
+
+        // The chain holds; does it still end where the head says it does?
+        var head = await db.AuditHead.AsNoTracking().FirstOrDefaultAsync(ct).ConfigureAwait(false);
+        if (head is not null && (rows.Count == 0 || rows[^1].Id != head.LastId || !rows[^1].Hash.AsSpan().SequenceEqual(head.LastHash)))
+            return new ChainStatus(false, rows.Count, head.LastId);
+        return new ChainStatus(true, rows.Count, null);
     }
 
     private static DirectoryEntry ToEntry(DirectoryRow d) =>

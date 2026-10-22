@@ -1,5 +1,6 @@
 using Khazana.AuditReporting.Application.Persistence;
 using Khazana.AuditReporting.Domain;
+using Khazana.Messaging;
 using Khazana.Messaging.Contracts;
 using Khazana.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,7 @@ using Wolverine;
 namespace Khazana.AuditReporting.Application;
 
 /// <summary>Appends to the hash-chained audit log.</summary>
-public sealed class AuditWriter(ReportingDbContext db)
+public sealed class AuditWriter(ReportingDbContext db, AuditKey key)
 {
     /// <summary>
     /// Must run inside a transaction. A transaction-scoped advisory lock makes
@@ -25,7 +26,7 @@ public sealed class AuditWriter(ReportingDbContext db)
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(hashtext('khazana.audit_chain'))", ct).ConfigureAwait(false);
         var previous = await db.AuditEvents.AsNoTracking().OrderByDescending(a => a.Id)
             .Select(a => a.Hash).FirstOrDefaultAsync(ct).ConfigureAwait(false) ?? AuditChain.Genesis;
-        db.AuditEvents.Add(new AuditEventRow
+        var row = new AuditEventRow
         {
             At = AuditChain.ToStoredPrecision(entry.At),
             Actor = entry.Actor,
@@ -33,9 +34,15 @@ public sealed class AuditWriter(ReportingDbContext db)
             Target = entry.Target,
             Reason = entry.Reason,
             PreviousHash = previous,
-            Hash = AuditChain.Hash(previous, entry),
-        });
+            Hash = AuditChain.Hash(previous, entry, key.Bytes),
+            HashVersion = AuditChain.CurrentVersion,
+        };
+        db.AuditEvents.Add(row);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await db.Database.ExecuteSqlAsync($"""
+            INSERT INTO reporting.audit_head (id, last_id, last_hash) VALUES (1, {row.Id}, {row.Hash})
+            ON CONFLICT (id) DO UPDATE SET last_id = EXCLUDED.last_id, last_hash = EXCLUDED.last_hash
+            """, ct).ConfigureAwait(false);
     }
 }
 
@@ -129,9 +136,22 @@ public static class ProjectionHandler
         await audit.AppendAsync(new AuditEntry(clock.UtcNow, $"user:{m.UserId}", "account.deletion_requested", $"user:{m.UserId}", null), ct).ConfigureAwait(false);
 
         // Reporting holds sign-in history: it purges too, after the cooling-off.
-        var purge = new PurgeUserReporting(m.UserId);
+        var purge = new PurgeUserReporting(m.UserId, m.ExecuteAfter);
         if (m.ExecuteAfter <= clock.UtcNow) await bus.PublishAsync(purge).ConfigureAwait(false);
         else await bus.ScheduleAsync(purge, m.ExecuteAfter).ConfigureAwait(false);
+    }
+
+    /// <summary>The user changed their mind: back to active, and the reversal is on the record.</summary>
+    public static async Task Handle(AccountDeletionCancelledV1 m, ReportingDbContext db, AuditWriter audit, IClock clock, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(m);
+        ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(audit);
+        ArgumentNullException.ThrowIfNull(clock);
+        await db.Database.ExecuteSqlRawAsync(
+            "UPDATE reporting.user_directory SET status = 'active' WHERE user_id = @user",
+            [new NpgsqlParameter("user", m.UserId)], ct).ConfigureAwait(false);
+        await audit.AppendAsync(new AuditEntry(clock.UtcNow, $"user:{m.UserId}", "account.deletion_cancelled", $"user:{m.UserId}", null), ct).ConfigureAwait(false);
     }
 
     public static Task Handle(UserDataPurgedV1 m, AuditWriter audit)
@@ -154,24 +174,27 @@ public static class ProjectionHandler
         [new("user", user), new("at", at), new("platform", platform)];
 }
 
-public sealed record PurgeUserReporting(Guid UserId);
+public sealed record PurgeUserReporting(Guid UserId, DateTimeOffset ExecuteAfter);
 
 /// <summary>Reporting's part of the account-deletion saga: sign-ins and the directory entry go; audit records (ids only) stay.</summary>
 public static class PurgeUserReportingHandler
 {
     public const string ServiceName = "reporting";
 
-    public static async Task<UserDataPurgedV1> Handle(PurgeUserReporting command, ReportingDbContext db, IClock clock, CancellationToken ct)
+    public static async Task<OutgoingMessages> Handle(
+        PurgeUserReporting command, ReportingDbContext db, DeletionCancellations cancellations, IClock clock, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(cancellations);
         ArgumentNullException.ThrowIfNull(clock);
+        if (await cancellations.IsCancelledAsync(command.UserId, command.ExecuteAfter, ct).ConfigureAwait(false)) return [];
         await db.SigninEvents.Where(s => s.UserId == command.UserId).ExecuteDeleteAsync(ct).ConfigureAwait(false);
         await db.Directory.Where(d => d.UserId == command.UserId).ExecuteDeleteAsync(ct).ConfigureAwait(false);
         await db.Database.ExecuteSqlRawAsync(
             "INSERT INTO reporting.deleted_users (user_id) VALUES (@user) ON CONFLICT DO NOTHING",
             [new NpgsqlParameter("user", command.UserId)], ct).ConfigureAwait(false);
-        return new UserDataPurgedV1(command.UserId, ServiceName, clock.UtcNow);
+        return [new UserDataPurgedV1(command.UserId, ServiceName, clock.UtcNow)];
     }
 }
 

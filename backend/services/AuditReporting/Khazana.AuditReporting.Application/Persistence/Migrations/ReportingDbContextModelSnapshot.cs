@@ -53,6 +53,12 @@ namespace Khazana.AuditReporting.Application.Persistence.Migrations
                         .HasColumnType("bytea")
                         .HasColumnName("hash");
 
+                    b.Property<int>("HashVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("hash_version");
+
                     b.Property<byte[]>("PreviousHash")
                         .IsRequired()
                         .HasColumnType("bytea")
@@ -72,6 +78,26 @@ namespace Khazana.AuditReporting.Application.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("audit_events", "reporting");
+                });
+
+            modelBuilder.Entity("Khazana.AuditReporting.Application.Persistence.AuditHeadRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    b.Property<byte[]>("LastHash")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("last_hash");
+
+                    b.Property<long>("LastId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("last_id");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("audit_head", "reporting");
                 });
 
             modelBuilder.Entity("Khazana.AuditReporting.Application.Persistence.DeletedUserRow", b =>

@@ -19,6 +19,8 @@ var rabbitMq = builder.Configuration.GetConnectionString("rabbitmq")
 
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddSingleton(new InternalKey(builder.Configuration["Reporting:InternalKey"]));
+builder.Services.AddSingleton(new Khazana.AuditReporting.Domain.AuditKey(builder.Configuration["Reporting:AuditKey"]));
+builder.Services.AddDeletionCancellations(database);
 builder.Services.AddReportingInfrastructure();
 builder.Services.AddDbContextWithWolverineIntegration<ReportingDbContext>(o => o.UseNpgsql(database));
 builder.Services.AddScoped<AuditWriter>();
@@ -32,6 +34,7 @@ builder.Host.UseWolverine(opts =>
     opts.UseKhazanaMessaging("reporting", rabbitMq, database);
     opts.UseEntityFrameworkCoreTransactions();
     opts.Discovery.IncludeAssembly(typeof(ProjectionHandler).Assembly);
+    opts.ListenForDeletionCancellations();
 });
 
 var app = builder.Build();

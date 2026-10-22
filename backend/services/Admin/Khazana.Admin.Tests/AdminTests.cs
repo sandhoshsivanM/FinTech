@@ -159,8 +159,19 @@ public sealed partial class AdminTests : IDisposable
             cookie.Name!.ShouldStartWith("__Host-");
             cookie.SecurePolicy.ShouldBe(CookieSecurePolicy.Always);
         }
-        session.SameSite.ShouldBe(SameSiteMode.Strict);
+        session.SameSite.ShouldBe(SameSiteMode.Lax, "Strict would drop the cookie on the identity provider's return trip and loop the sign-in");
         session.HttpOnly.ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData("1234567890", "admin:1234567890")]
+    [InlineData("o'brien@example.com", null)]
+    public void Admins_are_recorded_by_their_subject_hashed_if_it_does_not_fit(string sub, string? expected)
+    {
+        var actor = ReportingClient.Actor(new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(
+            [new System.Security.Claims.Claim("sub", sub)], "test")));
+        if (expected is not null) actor.ShouldBe(expected);
+        else actor.ShouldMatch("^admin:[0-9a-f]{32}$");
     }
 
     [Fact]

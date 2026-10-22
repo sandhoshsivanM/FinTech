@@ -11,29 +11,46 @@ namespace Khazana.AuditReporting.Domain;
 public sealed record AuditEntry(DateTimeOffset At, string Actor, string Action, string Target, string? Reason);
 
 /// <summary>
-/// Tamper evidence for the audit log. Each record's hash covers the previous
-/// record's hash, so editing, deleting or reordering any record breaks every
-/// hash after it. The database also refuses UPDATE and DELETE on the table;
-/// the chain catches what a privileged insider could still do around that.
+/// Tamper evidence for the audit log. Each record's MAC covers the previous
+/// record's, so editing, deleting or reordering any record breaks every MAC
+/// after it. The database also refuses UPDATE and DELETE on the table.
 /// </summary>
+/// <remarks>
+/// Version 2 is HMAC-SHA-256 under a key from the secret store, which the
+/// database never holds: someone who can write rows (a leaked database login,
+/// a superuser) can't recompute the chain after rewriting it. Version 1, plain
+/// SHA-256, could be recomputed by anyone; it is still verified for the rows
+/// written before the key existed.
+/// </remarks>
 public static class AuditChain
 {
     public static readonly byte[] Genesis = new byte[32];
 
-    /// <summary>
-    /// SHA-256 over the previous hash and a canonical JSON array of the fields.
-    /// JSON keeps field boundaries unambiguous ("ab"+"c" never equals "a"+"bc").
-    /// </summary>
-    public static byte[] Hash(byte[] previous, AuditEntry entry)
+    public const int CurrentVersion = 2;
+
+    /// <summary>JSON keeps field boundaries unambiguous ("ab"+"c" never equals "a"+"bc").</summary>
+    private static byte[] Canonical(AuditEntry entry, string version) => JsonSerializer.SerializeToUtf8Bytes(new object?[]
+    {
+        version, ToStoredPrecision(entry.At).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+        entry.Actor, entry.Action, entry.Target, entry.Reason,
+    });
+
+    /// <summary>The current (keyed) link.</summary>
+    public static byte[] Hash(byte[] previous, AuditEntry entry, byte[] key)
     {
         ArgumentNullException.ThrowIfNull(previous);
         ArgumentNullException.ThrowIfNull(entry);
-        var canonical = JsonSerializer.SerializeToUtf8Bytes(new object?[]
-        {
-            "v1", ToStoredPrecision(entry.At).ToString("O", System.Globalization.CultureInfo.InvariantCulture),
-            entry.Actor, entry.Action, entry.Target, entry.Reason,
-        });
-        return SHA256.HashData([.. previous, .. canonical]);
+        ArgumentNullException.ThrowIfNull(key);
+        byte[] message = [.. previous, .. Canonical(entry, "v2")];
+        return HMACSHA256.HashData(key, message);
+    }
+
+    /// <summary>The original, unkeyed link, for verifying old rows only.</summary>
+    public static byte[] HashV1(byte[] previous, AuditEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(previous);
+        ArgumentNullException.ThrowIfNull(entry);
+        return SHA256.HashData([.. previous, .. Canonical(entry, "v1")]);
     }
 
     /// <summary>
@@ -48,18 +65,38 @@ public static class AuditChain
     }
 
     /// <summary>The position of the first record whose hash doesn't follow from the one before it, or null if the chain holds.</summary>
-    public static int? FirstBrokenLink(IReadOnlyList<(byte[] PreviousHash, byte[] Hash, AuditEntry Entry)> chain)
+    public static int? FirstBrokenLink(IReadOnlyList<(byte[] PreviousHash, byte[] Hash, AuditEntry Entry, int Version)> chain, byte[] key)
     {
         ArgumentNullException.ThrowIfNull(chain);
         var expectedPrevious = Genesis;
+        var seenV2 = false;
         for (var i = 0; i < chain.Count; i++)
         {
-            var (prev, hash, entry) = chain[i];
-            if (!prev.AsSpan().SequenceEqual(expectedPrevious) || !hash.AsSpan().SequenceEqual(Hash(prev, entry))) return i;
+            var (prev, hash, entry, version) = chain[i];
+            // Once keyed links start, an unkeyed one is a forgery, not an old row.
+            if (version == 1 && seenV2) return i;
+            seenV2 |= version == 2;
+            var expected = version == 2 ? Hash(prev, entry, key) : HashV1(prev, entry);
+            if (!prev.AsSpan().SequenceEqual(expectedPrevious) || !CryptographicOperations.FixedTimeEquals(hash, expected)) return i;
             expectedPrevious = hash;
         }
         return null;
     }
+}
+
+/// <summary>The audit MAC key, derived from <c>Reporting:AuditKey</c> (secret store).</summary>
+public sealed class AuditKey
+{
+    public const int MinSecretLength = 32;
+
+    public AuditKey(string? secret)
+    {
+        if (string.IsNullOrEmpty(secret) || secret.Length < MinSecretLength)
+            throw new InvalidOperationException($"Reporting:AuditKey must be at least {MinSecretLength} characters of random data.");
+        Bytes = HKDF.DeriveKey(HashAlgorithmName.SHA256, System.Text.Encoding.UTF8.GetBytes(secret), 32, info: "khazana.audit-chain.v2"u8.ToArray());
+    }
+
+    public byte[] Bytes { get; }
 }
 
 public static partial class ReportingRules
