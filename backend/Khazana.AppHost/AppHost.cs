@@ -9,6 +9,8 @@ var builder = DistributedApplication.CreateBuilder(args);
 var postgres = builder.AddPostgres("postgres").WithDataVolume("khazana-postgres");
 var marketDb = postgres.AddDatabase("marketdata");
 var identityDb = postgres.AddDatabase("identity");
+var devicesDb = postgres.AddDatabase("devices");
+var syncDb = postgres.AddDatabase("sync");
 
 var rabbitMq = builder.AddRabbitMQ("rabbitmq").WithManagementPlugin();
 
@@ -34,12 +36,31 @@ var identity = builder.AddProject<Projects.Khazana_Identity_Api>("identity-api")
     .WithReference(rabbitMq).WaitFor(rabbitMq)
     .WithEnvironment("Identity__Secrets__FieldKey", fieldKey);
 
+// Every other service checks tokens itself, with Identity's public keys.
+var identityMetadata = ReferenceExpression.Create(
+    $"{identity.GetEndpoint("http")}/.well-known/openid-configuration");
+
+var devices = builder.AddProject<Projects.Khazana_Devices_Api>("devices-api")
+    .WithReference(devicesDb).WaitFor(devicesDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WaitFor(identity)
+    .WithEnvironment("Auth__MetadataAddress", identityMetadata);
+
+var sync = builder.AddProject<Projects.Khazana_Sync_Api>("sync-api")
+    .WithReference(syncDb).WaitFor(syncDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WaitFor(identity)
+    .WithEnvironment("Auth__MetadataAddress", identityMetadata);
+
 var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(marketData).WaitFor(marketData)
     .WithReference(identity).WaitFor(identity)
+    .WithReference(devices).WaitFor(devices)
+    .WithReference(sync).WaitFor(sync)
     .WithExternalHttpEndpoints();
 
 // DPoP proofs name the URL the app called, which is the gateway's.
-identity.WithEnvironment("Auth__PublicOrigins__0", gateway.GetEndpoint("http"));
+foreach (var service in new[] { identity, devices, sync })
+    service.WithEnvironment("Auth__PublicOrigins__0", gateway.GetEndpoint("http"));
 
 builder.Build().Run();
