@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/entities/transaction.dart';
-import '../../../domain/services/calendar_aggregator.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/calendar_aggregator.dart';
 import '../../transactions/providers/transaction_providers.dart';
 
 final calendarAggregatorProvider =

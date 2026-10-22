@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import '../../domain/entities/holding.dart';
-import '../../domain/entities/portfolio.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
 import '../database/app_database.dart';
 import '../database/portfolio_dao.dart';
 

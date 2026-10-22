@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:khazana/domain/services/market_data.dart';
+import 'package:khazana_domain/services/market_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _FakeProvider implements MarketDataProvider {

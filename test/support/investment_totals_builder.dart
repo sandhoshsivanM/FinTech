@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
-import 'package:khazana/domain/entities/asset_group.dart';
-import 'package:khazana/domain/entities/holding.dart';
-import 'package:khazana/domain/entities/investment_totals.dart';
+import 'package:khazana_domain/entities/asset_group.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/investment_totals.dart';
 
 /// Builds an [InvestmentTotals] for tests from plain asset-type amounts.
 ///

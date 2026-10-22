@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:khazana/domain/services/net_worth_calculator.dart';
+import 'package:khazana_domain/services/net_worth_calculator.dart';
 
 /// The definition of net worth, and the one thing every surface that shows it
 /// has to agree on.

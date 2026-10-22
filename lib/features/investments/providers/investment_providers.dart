@@ -6,9 +6,9 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/di/data_providers.dart';
-import '../../../domain/services/market_data.dart';
-import '../../../domain/services/portfolio_diff.dart';
-import '../../../domain/services/tax_rule_engine.dart';
+import 'package:khazana_domain/services/market_data.dart';
+import 'package:khazana_domain/services/portfolio_diff.dart';
+import 'package:khazana_domain/services/tax_rule_engine.dart';
 import '../data/price_providers.dart';
 import '../../../core/security/secure_storage.dart';
 import 'portfolio_providers.dart';

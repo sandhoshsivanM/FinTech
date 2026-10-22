@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:khazana/domain/entities/asset_group.dart';
+import 'package:khazana_domain/entities/asset_group.dart';
 import 'package:khazana/presentation/asset_group_colors.dart';
 import 'package:khazana/presentation/charts/area_chart.dart';
 import 'package:khazana/presentation/charts/donut_chart.dart';

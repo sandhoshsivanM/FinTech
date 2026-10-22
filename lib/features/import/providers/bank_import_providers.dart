@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
-import '../../../domain/entities/transaction.dart';
-import '../../../domain/services/bank_fingerprint.dart';
-import '../../../domain/services/bank_statement.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/bank_fingerprint.dart';
+import 'package:khazana_domain/services/bank_statement.dart';
 import '../../accounts/providers/account_providers.dart';
 import '../bank_parsers.dart';
 

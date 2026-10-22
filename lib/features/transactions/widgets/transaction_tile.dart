@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/semantic_colors.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/entities/category.dart';
-import '../../../domain/entities/transaction.dart';
+import 'package:khazana_domain/entities/category.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 import '../../home/widgets/category_tint.dart';
 import '../screens/transactions_screen.dart';
 

@@ -18,7 +18,7 @@ import '../../features/reports/screens/dashboard_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
 import '../../features/safety_net/screens/safety_net_screen.dart';
 import '../../features/score/screens/score_screen.dart';
-import '../../domain/entities/transaction.dart' show TxnType;
+import 'package:khazana_domain/entities/transaction.dart' show TxnType;
 import '../../features/transactions/screens/add_transaction_screen.dart';
 import '../../features/accounts/screens/accounts_screen.dart';
 import '../../features/transactions/screens/recurring_screen.dart';

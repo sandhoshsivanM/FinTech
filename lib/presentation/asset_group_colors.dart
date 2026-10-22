@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../domain/entities/asset_group.dart';
+import 'package:khazana_domain/entities/asset_group.dart';
 
 /// The categorical palette for the seven chart groups.
 ///

@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import '../../domain/entities/goal.dart';
-import '../../domain/repositories/goal_repository.dart';
+import 'package:khazana_domain/entities/goal.dart';
+import 'package:khazana_domain/repositories/goal_repository.dart';
 import '../database/app_database.dart';
 import '../database/goal_dao.dart';
 

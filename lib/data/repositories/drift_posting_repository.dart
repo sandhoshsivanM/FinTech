@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import '../../domain/entities/posting.dart';
-import '../../domain/repositories/posting_repository.dart';
+import 'package:khazana_domain/entities/posting.dart';
+import 'package:khazana_domain/repositories/posting_repository.dart';
 import '../database/app_database.dart';
 import '../database/posting_dao.dart';
 

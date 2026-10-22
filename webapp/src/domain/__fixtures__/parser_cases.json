@@ -1,6 +1,6 @@
 {
   "_comment": [
-    "Shared cases for lib/domain/services/notification_parser.dart and",
+    "Shared cases for packages/khazana_domain/lib/services/notification_parser.dart and",
     "webapp/src/domain/notificationParser.ts. Both suites load this file and",
     "must agree on every value.",
     "",

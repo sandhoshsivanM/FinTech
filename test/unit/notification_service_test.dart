@@ -9,7 +9,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khazana/core/services/notification_service.dart';
-import 'package:khazana/domain/services/notification_scheduler.dart';
+import 'package:khazana_domain/services/notification_scheduler.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:timezone/timezone.dart' as tz;
 

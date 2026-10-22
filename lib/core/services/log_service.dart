@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 
 import '../../data/database/logs_database.dart';
-import '../../domain/services/log_sanitizer.dart';
+import 'package:khazana_domain/services/log_sanitizer.dart';
 
 /// Log severity (PRD §5A ENUM).
 enum LogLevel { debug, info, warn, error, fatal }

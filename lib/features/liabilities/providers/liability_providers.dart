@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
-import '../../../domain/entities/liability.dart';
-import '../../../domain/services/debt_calculator.dart';
+import 'package:khazana_domain/entities/liability.dart';
+import 'package:khazana_domain/services/debt_calculator.dart';
 
 const _uuid = Uuid();
 

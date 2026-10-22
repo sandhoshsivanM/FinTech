@@ -1,11 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/account.dart';
-import '../../domain/entities/liability.dart';
-import '../../domain/entities/transaction.dart';
-import '../../domain/services/budget_calculator.dart';
-import '../../domain/services/daily_flow.dart';
+import 'package:khazana_domain/entities/account.dart';
+import 'package:khazana_domain/entities/liability.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/budget_calculator.dart';
+import 'package:khazana_domain/services/daily_flow.dart';
 import '../accounts/providers/account_providers.dart';
 import '../budget/providers/budget_providers.dart';
 import '../liabilities/providers/liability_providers.dart';

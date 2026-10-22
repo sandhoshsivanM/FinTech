@@ -43,7 +43,7 @@ void main() {
     ];
     expect(offenders, isEmpty);
     expect(Directory('lib/features/pro').existsSync(), isFalse);
-    expect(Directory('lib/domain/entitlement').existsSync(), isFalse);
+    expect(Directory('packages/khazana_domain/lib/entitlement').existsSync(), isFalse);
   });
 
   test('the app ships no billing library', () {

@@ -6,8 +6,8 @@ import 'package:decimal/decimal.dart';
 import 'package:excel/excel.dart';
 
 import '../../core/errors/app_error.dart';
-import '../../domain/entities/holding.dart';
-import '../../domain/services/portfolio_diff.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/services/portfolio_diff.dart';
 
 /// Parses a broker portfolio file into [StagedHolding]s (PRD §14).
 abstract interface class IBrokerParser {

@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:khazana/domain/entities/transaction.dart';
-import 'package:khazana/domain/services/daily_flow.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/daily_flow.dart';
 
 /// The twin of `webapp/src/domain/dailyFlow.test.ts`.
 void main() {

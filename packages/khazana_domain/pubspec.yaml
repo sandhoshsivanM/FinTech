@@ -1,0 +1,17 @@
+name: khazana_domain
+description: >-
+  Pure Dart domain logic shared at build time by the Khazana apps (ADR 0007):
+  entities, repository interfaces and services. No Flutter, no storage, no
+  network.
+publish_to: none
+version: 1.0.0
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  cryptography: ^2.9.0
+  decimal: ^3.2.4
+
+dev_dependencies:
+  lints: ^6.1.0

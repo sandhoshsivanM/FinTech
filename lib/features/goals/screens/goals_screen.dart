@@ -8,8 +8,8 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/entities/goal.dart';
-import '../../../domain/services/goal_projector.dart';
+import 'package:khazana_domain/entities/goal.dart';
+import 'package:khazana_domain/services/goal_projector.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
 import '../../../presentation/zentra_kit.dart';

@@ -6,10 +6,10 @@ import '../../../core/di/data_providers.dart';
 import '../../../core/services/notification_providers.dart';
 import '../../../core/services/notification_sync_service.dart';
 import '../../accounts/providers/account_providers.dart';
-import '../../../domain/entities/recurring_rule.dart';
-import '../../../domain/entities/transaction.dart';
-import '../../../domain/services/notification_scheduler.dart';
-import '../../../domain/services/recurrence_calculator.dart';
+import 'package:khazana_domain/entities/recurring_rule.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/notification_scheduler.dart';
+import 'package:khazana_domain/services/recurrence_calculator.dart';
 
 const _uuid = Uuid();
 

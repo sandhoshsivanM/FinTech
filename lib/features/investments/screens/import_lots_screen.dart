@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../core/di/data_providers.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/entities/portfolio.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
 import '../../import/lot_csv_parser.dart';

@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import '../../domain/entities/net_worth_snapshot.dart';
-import '../../domain/repositories/net_worth_snapshot_repository.dart';
+import 'package:khazana_domain/entities/net_worth_snapshot.dart';
+import 'package:khazana_domain/repositories/net_worth_snapshot_repository.dart';
 import '../database/app_database.dart';
 import '../database/snapshot_dao.dart';
 

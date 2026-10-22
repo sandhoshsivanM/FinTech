@@ -5,7 +5,7 @@ import 'package:csv/csv.dart';
 import 'package:decimal/decimal.dart';
 
 import '../../core/errors/app_error.dart';
-import '../../domain/services/bank_statement.dart';
+import 'package:khazana_domain/services/bank_statement.dart';
 
 /// Decodes CSV bytes to string rows.
 List<List<String?>> decodeCsv(Uint8List bytes) {

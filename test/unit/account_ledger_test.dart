@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
-import 'package:khazana/domain/entities/account.dart';
-import 'package:khazana/domain/entities/posting.dart';
-import 'package:khazana/domain/entities/transaction.dart';
-import 'package:khazana/domain/services/account_ledger.dart';
+import 'package:khazana_domain/entities/account.dart';
+import 'package:khazana_domain/entities/posting.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/account_ledger.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Parity fixtures shared with webapp/src/domain/accountLedger.test.ts — same

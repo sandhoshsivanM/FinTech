@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
-import 'package:khazana/domain/services/bank_fingerprint.dart';
-import 'package:khazana/domain/services/bank_statement.dart';
+import 'package:khazana_domain/services/bank_fingerprint.dart';
+import 'package:khazana_domain/services/bank_statement.dart';
 import 'package:khazana/features/import/bank_parsers.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -7,8 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_tokens.dart';
-import '../../../domain/services/financial_health.dart';
-import '../../../domain/services/narrative_engine.dart';
+import 'package:khazana_domain/services/financial_health.dart';
+import 'package:khazana_domain/services/narrative_engine.dart';
 import '../../../presentation/charts/area_chart.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';

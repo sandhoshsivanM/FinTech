@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:khazana/domain/entities/transaction.dart';
-import 'package:khazana/domain/services/notification_parser.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/notification_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Twin of webapp/src/domain/notificationParser.test.ts. The fixture-driven group

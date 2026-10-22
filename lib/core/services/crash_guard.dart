@@ -4,7 +4,7 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../domain/services/log_sanitizer.dart';
+import 'package:khazana_domain/services/log_sanitizer.dart';
 
 /// One captured crash, already scrubbed of anything that could identify a
 /// merchant or an amount.

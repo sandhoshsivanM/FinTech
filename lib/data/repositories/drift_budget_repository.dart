@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import '../../domain/entities/budget.dart';
-import '../../domain/repositories/budget_repository.dart';
+import 'package:khazana_domain/entities/budget.dart';
+import 'package:khazana_domain/repositories/budget_repository.dart';
 import '../database/app_database.dart';
 import '../database/budget_dao.dart';
 

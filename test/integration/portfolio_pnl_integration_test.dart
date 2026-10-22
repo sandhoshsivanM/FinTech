@@ -6,10 +6,10 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khazana/data/database/app_database.dart';
 import 'package:khazana/data/repositories/drift_portfolio_repository.dart';
-import 'package:khazana/domain/entities/holding.dart';
-import 'package:khazana/domain/entities/portfolio.dart';
-import 'package:khazana/domain/services/instrument_master.dart';
-import 'package:khazana/domain/services/portfolio_analytics.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
+import 'package:khazana_domain/services/instrument_master.dart';
+import 'package:khazana_domain/services/portfolio_analytics.dart';
 
 /// End-to-end test of the sector-wise P&L stack on a real (in-memory) encrypted
 /// schema: repository writes -> Drift rows -> repository reads -> analytics ->

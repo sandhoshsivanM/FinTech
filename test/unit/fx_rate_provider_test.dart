@@ -2,7 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:khazana/domain/services/currency_converter.dart';
+import 'package:khazana_domain/services/currency_converter.dart';
 import 'package:khazana/features/settings/data/fx_rate_provider.dart';
 
 /// The live FX source, and the direction rates point in.

@@ -36,6 +36,8 @@ dependencies:
 
   # Money — package:decimal; double is BANNED for monetary values (PRD §2).
   decimal: ^3.2.4
+  khazana_domain:                # pure domain logic, shared with Khazana Online (ADR 0007)
+    path: packages/khazana_domain
 
   # No chart package. Every chart is a CustomPainter in lib/presentation/charts/,
   # because each one needs a pixel-comparable React SVG twin in the web client —

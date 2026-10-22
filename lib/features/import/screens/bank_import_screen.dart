@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/services/bank_statement.dart';
+import 'package:khazana_domain/services/bank_statement.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/empty_state.dart';
 import '../../../presentation/glass_card.dart';

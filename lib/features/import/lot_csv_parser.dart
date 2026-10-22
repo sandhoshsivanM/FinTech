@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:csv/csv.dart';
 import 'package:decimal/decimal.dart';
 
-import '../../domain/entities/holding.dart';
-import '../../domain/entities/portfolio.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
 
 /// A trade parsed from a broker CSV, before it is reconciled with the database.
 class StagedLot {

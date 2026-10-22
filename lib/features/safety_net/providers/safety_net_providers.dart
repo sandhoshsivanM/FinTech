@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/entities/transaction.dart';
-import '../../../domain/services/safety_net.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/safety_net.dart';
 import '../../goals/providers/goal_providers.dart';
 import '../../insurance/providers/insurance_providers.dart';
-import '../../../domain/entities/investment_totals.dart';
+import 'package:khazana_domain/entities/investment_totals.dart';
 import '../../investments/providers/portfolio_providers.dart';
 import '../../transactions/providers/transaction_providers.dart';
 

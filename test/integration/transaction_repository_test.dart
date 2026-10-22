@@ -2,7 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/native.dart';
 import 'package:khazana/data/database/app_database.dart';
 import 'package:khazana/data/repositories/drift_transaction_repository.dart';
-import 'package:khazana/domain/entities/transaction.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Repository integration tests on an in-memory Drift DB (PRD §4A: drift

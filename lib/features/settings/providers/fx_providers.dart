@@ -5,8 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../data/database/app_database.dart';
-import '../../../domain/entities/fx_rate.dart';
-import '../../../domain/services/currency_converter.dart';
+import 'package:khazana_domain/entities/fx_rate.dart';
+import 'package:khazana_domain/services/currency_converter.dart';
 import '../data/fx_rate_provider.dart';
 
 /// The currency every total is reported in. Defaults to INR.

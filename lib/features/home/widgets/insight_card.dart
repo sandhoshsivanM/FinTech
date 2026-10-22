@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/money_format.dart';
-import '../../../domain/entities/transaction.dart';
-import '../../../domain/services/daily_flow.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/daily_flow.dart';
 import '../../reports/providers/dashboard_providers.dart';
 import '../../transactions/providers/category_providers.dart';
 import '../../transactions/providers/transaction_providers.dart';

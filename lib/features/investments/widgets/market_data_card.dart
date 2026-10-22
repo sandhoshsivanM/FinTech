@@ -5,8 +5,8 @@ import '../../../core/theme/semantic_colors.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/entities/portfolio.dart';
-import '../../../domain/services/portfolio_analytics.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
+import 'package:khazana_domain/services/portfolio_analytics.dart';
 import '../../../presentation/glass_card.dart';
 
 /// Where every price in the portfolio came from, and when.

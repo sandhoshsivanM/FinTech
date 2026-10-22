@@ -137,6 +137,11 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      # Shared domain package (ADR 0007): resolve it so the analyzer can read
+      # its own analysis_options, then analyze it on its own too.
+      - name: Shared domain package
+        working-directory: packages/khazana_domain
+        run: dart pub get && dart analyze --fatal-infos
       # Drift / json codegen must run before analyze & test.
       - name: Codegen (build_runner)
         run: dart run build_runner build --delete-conflicting-outputs

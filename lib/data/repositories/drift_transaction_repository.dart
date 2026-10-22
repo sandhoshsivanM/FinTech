@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import '../../domain/entities/transaction.dart';
-import '../../domain/repositories/transaction_repository.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/repositories/transaction_repository.dart';
 import '../database/app_database.dart';
 import '../database/transaction_dao.dart';
 

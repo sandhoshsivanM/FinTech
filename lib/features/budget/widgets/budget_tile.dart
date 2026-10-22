@@ -4,7 +4,7 @@ import '../../../core/theme/semantic_colors.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/services/budget_calculator.dart';
+import 'package:khazana_domain/services/budget_calculator.dart';
 import '../../../presentation/glass_card.dart';
 import '../../../presentation/zentra_kit.dart';
 import '../../home/widgets/depth.dart';

@@ -9,7 +9,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:khazana/core/di/data_providers.dart';
 import 'package:khazana/data/database/app_database.dart';
 import 'package:khazana/data/database/encrypted_executor.dart';
-import 'package:khazana/domain/entities/pending_capture.dart';
+import 'package:khazana_domain/entities/pending_capture.dart';
 import 'package:khazana/features/capture/providers/capture_providers.dart';
 import 'package:khazana/features/capture/services/capture_channel.dart';
 

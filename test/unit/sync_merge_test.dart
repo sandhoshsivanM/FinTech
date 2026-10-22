@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:khazana/domain/services/sync_merge.dart';
+import 'package:khazana_domain/services/sync_merge.dart';
 
 const now = 1700000000000;
 

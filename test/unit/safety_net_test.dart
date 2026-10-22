@@ -1,11 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:khazana/domain/entities/goal.dart';
-import 'package:khazana/domain/entities/holding.dart';
-import 'package:khazana/domain/entities/insurance.dart';
-import 'package:khazana/domain/entities/transaction.dart';
-import 'package:khazana/domain/services/safety_net.dart';
+import 'package:khazana_domain/entities/goal.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/insurance.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/safety_net.dart';
 
 import '../support/investment_totals_builder.dart';
 

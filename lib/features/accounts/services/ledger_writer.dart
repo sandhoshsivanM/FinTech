@@ -1,8 +1,8 @@
-import '../../../domain/entities/account.dart';
-import '../../../domain/entities/transaction.dart';
-import '../../../domain/repositories/account_repository.dart';
-import '../../../domain/repositories/posting_repository.dart';
-import '../../../domain/services/account_ledger.dart';
+import 'package:khazana_domain/entities/account.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/repositories/account_repository.dart';
+import 'package:khazana_domain/repositories/posting_repository.dart';
+import 'package:khazana_domain/services/account_ledger.dart';
 
 /// Keeps the double-entry ledger in step with the transaction header: on every
 /// save it ensures the chart of accounts exists and (re)writes the entry's

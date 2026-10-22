@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:khazana/domain/entities/budget.dart';
-import 'package:khazana/domain/entities/category.dart';
-import 'package:khazana/domain/entities/pending_capture.dart';
-import 'package:khazana/domain/entities/transaction.dart';
+import 'package:khazana_domain/entities/budget.dart';
+import 'package:khazana_domain/entities/category.dart';
+import 'package:khazana_domain/entities/pending_capture.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 import 'package:khazana/features/budget/providers/budget_providers.dart';
 import 'package:khazana/features/capture/providers/capture_providers.dart';
 import 'package:khazana/features/transactions/providers/category_providers.dart';
