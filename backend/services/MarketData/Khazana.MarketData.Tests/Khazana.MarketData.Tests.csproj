@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <!-- Test names read as sentences; CA1707 (no underscores) fights that. -->
+    <NoWarn>$(NoWarn);CA1707;CA2007</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.RabbitMq" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.MarketData.Api\Khazana.MarketData.Api.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\contracts\fixtures\amfi\navall_sample.txt" Link="Fixtures\navall_sample.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\..\..\contracts\fixtures\amfi\navall_legacy_sample.txt" Link="Fixtures\navall_legacy_sample.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

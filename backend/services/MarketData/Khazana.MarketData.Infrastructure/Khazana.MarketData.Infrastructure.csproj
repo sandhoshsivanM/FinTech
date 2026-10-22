@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Adapters to the outside world: the AMFI download and the fixture source. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.MarketData.Application\Khazana.MarketData.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>

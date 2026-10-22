@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Plain C# shared by every service: no framework, no packages. -->
+</Project>

@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/building-blocks/">
+    <Project Path="building-blocks/Khazana.Messaging/Khazana.Messaging.csproj" />
+    <Project Path="building-blocks/Khazana.SharedKernel/Khazana.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/services/" />
+  <Folder Name="/services/MarketData/">
+    <Project Path="services/MarketData/Khazana.MarketData.Api/Khazana.MarketData.Api.csproj" />
+    <Project Path="services/MarketData/Khazana.MarketData.Application/Khazana.MarketData.Application.csproj" />
+    <Project Path="services/MarketData/Khazana.MarketData.Domain/Khazana.MarketData.Domain.csproj" />
+    <Project Path="services/MarketData/Khazana.MarketData.Infrastructure/Khazana.MarketData.Infrastructure.csproj" />
+    <Project Path="services/MarketData/Khazana.MarketData.Tests/Khazana.MarketData.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Khazana.ArchitectureTests/Khazana.ArchitectureTests.csproj" />
+    <Project Path="tests/Khazana.Gateway.Tests/Khazana.Gateway.Tests.csproj" />
+  </Folder>
+  <Project Path="Khazana.AppHost/Khazana.AppHost.csproj" />
+  <Project Path="Khazana.Gateway/Khazana.Gateway.csproj" />
+  <Project Path="Khazana.ServiceDefaults/Khazana.ServiceDefaults.csproj" />
+</Solution>

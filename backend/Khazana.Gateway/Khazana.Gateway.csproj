@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- The only public entry point. Routes to services by name (service
+       discovery), and applies the edge rules: methods, rate limits, headers. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.ServiceDefaults\Khazana.ServiceDefaults.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Yarp.ReverseProxy" />
+    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" />
+  </ItemGroup>
+</Project>
