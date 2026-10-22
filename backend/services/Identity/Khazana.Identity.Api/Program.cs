@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Khazana.Identity.Api;
 using Khazana.Identity.Application;
 using Khazana.Identity.Application.Persistence;
@@ -39,17 +37,13 @@ builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<PasskeyService>();
 builder.Services.AddHostedService<DatabaseMigrator>();
 
-builder.Services.ConfigureHttpJsonOptions(o =>
-{
-    o.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
-    // An unknown field is a client bug or a probe; either way, refuse it.
-    o.SerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
-});
+builder.Services.AddKhazanaJson();
 
 builder.Host.UseWolverine(opts =>
 {
     opts.UseKhazanaMessaging("identity", rabbitMq, database);
     opts.UseEntityFrameworkCoreTransactions();
+    opts.Discovery.IncludeAssembly(typeof(SessionService).Assembly);
 });
 
 var app = builder.Build();

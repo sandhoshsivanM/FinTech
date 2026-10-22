@@ -51,6 +51,10 @@ public static class KhazanaClaims
 
     public static Guid DeviceId(this ClaimsPrincipal user) =>
         Guid.Parse(user?.FindFirstValue(Device) ?? throw new InvalidOperationException("Not signed in."));
+
+    /// <summary>The thumbprint of the device key the token is bound to (<c>cnf.jkt</c>).</summary>
+    public static string DeviceKeyThumbprint(this ClaimsPrincipal user) =>
+        KhazanaAuthentication.BoundKey(user) ?? throw new InvalidOperationException("Not signed in.");
 }
 
 public static class KhazanaAuthentication
@@ -177,7 +181,7 @@ public static class KhazanaAuthentication
         }
     }
 
-    private static string? BoundKey(ClaimsPrincipal? principal)
+    internal static string? BoundKey(ClaimsPrincipal? principal)
     {
         var cnf = principal?.FindFirstValue(KhazanaClaims.Confirmation);
         if (string.IsNullOrEmpty(cnf)) return null;

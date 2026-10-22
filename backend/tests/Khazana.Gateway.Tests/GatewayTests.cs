@@ -21,6 +21,7 @@ public sealed class GatewayTests : IDisposable
         b.UseSetting("RateLimits:Auth:PermitLimit", "2");
         b.UseSetting("services:marketdata-api:http:0", "http://127.0.0.1:9");
         b.UseSetting("services:identity-api:http:0", "http://127.0.0.1:9");
+        b.UseSetting("services:devices-api:http:0", "http://127.0.0.1:9");
     });
 
     public void Dispose() => _factory.Dispose();
@@ -97,5 +98,17 @@ public sealed class GatewayTests : IDisposable
         // Market data has a separate bucket, unaffected.
         using var market = await client.GetAsync(new Uri("/v1/market/nav/latest", UriKind.Relative), TestContext.Current.CancellationToken);
         market.StatusCode.ShouldNotBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [Theory]
+    [InlineData("GET", "/v1/devices/")]
+    [InlineData("DELETE", "/v1/devices/0198f0a0-0000-7000-8000-000000000000")]
+    [InlineData("PUT", "/v1/keys/envelopes/recovery")]
+    public async Task Device_and_key_routes_are_forwarded(string method, string path)
+    {
+        using var client = _factory.CreateClient();
+        using var request = new HttpRequestMessage(new HttpMethod(method), path);
+        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        ((int)response.StatusCode).ShouldBeGreaterThanOrEqualTo(500, "forwarded to the (absent) Devices service");
     }
 }

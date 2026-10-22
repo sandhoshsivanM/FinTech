@@ -255,6 +255,16 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
         (await Error(await _client.SendAsync(TokenRequest(_phone, subject), Ct))).ShouldBe("account_deletion_pending");
     }
 
+    [Fact]
+    public async Task A_device_revoked_in_Devices_and_Keys_loses_its_session_here()
+    {
+        var tokens = await SignIn(_phone, $"dev:{Unique()}");
+        await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .PublishMessageAndWaitAsync(new DeviceRevokedV1(
+                tokens.GetProperty("user_id").GetGuid(), tokens.GetProperty("device_id").GetGuid(), DateTimeOffset.UtcNow));
+        (await Error(await Refresh(_phone, tokens.GetProperty("refresh_token").GetString()!))).ShouldBe("invalid_grant");
+    }
+
     // --- passkeys -------------------------------------------------------------
 
     [Fact]

@@ -6,6 +6,9 @@ public static class GatewayPolicies
 
     /// <summary>Sign-in, refresh and account deletion: tighter, as each attempt is worth guessing.</summary>
     public const string Auth = "auth";
+
+    /// <summary>A signed-in user's own data (devices, keys, sync): generous, still bounded.</summary>
+    public const string User = "user";
 }
 
 /// <summary>

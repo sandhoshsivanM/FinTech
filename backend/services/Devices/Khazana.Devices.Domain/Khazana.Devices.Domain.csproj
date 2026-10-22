@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Rules for devices, key envelopes and pairing, with no framework. -->
+</Project>

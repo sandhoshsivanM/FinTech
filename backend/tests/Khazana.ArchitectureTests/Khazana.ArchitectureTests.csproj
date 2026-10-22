@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\services\MarketData\Khazana.MarketData.Api\Khazana.MarketData.Api.csproj" />
     <ProjectReference Include="..\..\services\Identity\Khazana.Identity.Api\Khazana.Identity.Api.csproj" />
+    <ProjectReference Include="..\..\services\Devices\Khazana.Devices.Api\Khazana.Devices.Api.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />

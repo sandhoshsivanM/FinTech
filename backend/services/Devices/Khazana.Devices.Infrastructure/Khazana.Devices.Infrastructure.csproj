@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Nothing external yet: Devices & Keys stores opaque ciphertext and needs
+       no adapter. Kept so every service has the same five folders. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.Devices.Application\Khazana.Devices.Application.csproj" />
+  </ItemGroup>
+</Project>
