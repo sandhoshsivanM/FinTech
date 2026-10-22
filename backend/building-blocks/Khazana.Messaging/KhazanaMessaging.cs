@@ -1,6 +1,7 @@
 using Wolverine;
 using Wolverine.Postgresql;
 using Wolverine.RabbitMQ;
+using Wolverine.Util;
 
 namespace Khazana.Messaging;
 
@@ -25,15 +26,27 @@ public static class KhazanaMessaging
 
         opts.ServiceName = serviceName;
 
-        // Exchanges and queues are named from each message's identity, so a
-        // publisher and a consumer agree on routing without sharing config.
+        // Publish/subscribe, one exchange per event and one queue per service:
+        //   publisher  -> fanout exchange named by the event's identity
+        //   each service that handles it -> its own queue "<service>.<identity>",
+        //   bound to that exchange.
+        // Every interested service gets every event. (Wolverine's default names
+        // the queue after the event alone, so all services would share one queue
+        // and RabbitMQ would hand each event to just one of them.)
+        //
         // Only the versioned contracts in Khazana.Messaging.Contracts cross the
         // broker. A service's internal commands (IngestNav and the like) stay on
         // its own durable local queues: put on RabbitMQ, anything with broker
         // access could trigger them, and their C# names would become a contract.
         opts.UseRabbitMq(new Uri(rabbitMqConnectionString))
             .AutoProvision()
-            .UseConventionalRouting(routing => routing.IncludeTypes(IsContract));
+            .UseConventionalRouting(routing =>
+            {
+                routing.IncludeTypes(IsContract);
+                routing.QueueNameForListener(type => QueueName(serviceName, type));
+                routing.ConfigureListeners((listener, context) =>
+                    listener.BindToExchange(ExchangeType.Fanout, context.MessageType.ToMessageTypeName(), bindingKey: string.Empty));
+            });
 
         // Outbox and inbox tables live in the service's own database, in a
         // schema of their own, next to the data they protect.
@@ -54,6 +67,10 @@ public static class KhazanaMessaging
 
         return opts;
     }
+
+    /// <summary>This service's own queue for an event: never shared with another service.</summary>
+    public static string QueueName(string serviceName, Type messageType) =>
+        $"{serviceName}.{(messageType ?? throw new ArgumentNullException(nameof(messageType))).ToMessageTypeName()}";
 
     /// <summary>A message type that may travel between services.</summary>
     public static bool IsContract(Type type) =>
