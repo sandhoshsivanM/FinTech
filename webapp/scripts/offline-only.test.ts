@@ -38,10 +38,13 @@ test('the gateway prefixes were found (the guard is not empty)', () => {
   assert.ok(gatewayPrefixes().includes('/v1/sync'));
 });
 
-test('no backend routes, tokens, sign-in or online-app imports in src/', () => {
-  const hits = sourceFiles(join(webapp, 'src')).flatMap((file) => {
+// The shared domain package is compiled into this app, so it is held to the
+// same rule (Khazana Online keeps its online code in its own app).
+test('no backend routes, tokens, sign-in or online-app imports in src/ or the shared package', () => {
+  const roots = [join(webapp, 'src'), join(repo, 'packages/domain-ts/src')];
+  const hits = roots.flatMap(sourceFiles).flatMap((file) => {
     const text = readFileSync(file, 'utf8');
-    return banned.filter((word) => text.includes(word)).map((word) => `${file.slice(webapp.length + 1)}: ${word}`);
+    return banned.filter((word) => text.includes(word)).map((word) => `${file.slice(repo.length + 1)}: ${word}`);
   });
   assert.deepEqual(hits, [], 'Online code belongs in webapp-online/ (ADR 0007)');
 });

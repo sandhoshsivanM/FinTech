@@ -1,5 +1,5 @@
 // Per-day calendar aggregation — mirrors
-// lib/domain/services/calendar_aggregator.dart. Money stays Decimal so totals
+// packages/khazana_domain/lib/services/calendar_aggregator.dart. Money stays Decimal so totals
 // never drift by a rounding cent. Date-key convention: the transaction's local
 // calendar day, formatted 'YYYY-MM-DD'.
 import Decimal from 'decimal.js';

@@ -792,7 +792,7 @@ notes under each. **7.9, 7.11 and 7.12 still stand.**
 **Impact:** the Investments screen shows "No holdings yet" while the Dashboard
 shows a large investments figure, in the same vault.
 
-**Fixed.** `InvestmentTotals` (`lib/domain/entities/investment_totals.dart`) is
+**Fixed.** `InvestmentTotals` (`packages/khazana_domain/lib/entities/investment_totals.dart`) is
 now the single derivation every consumer outside the Investments feature reads,
 exposed as `investmentTotalsProvider`. The legacy repository, DAO and providers
 are deleted, so there is no second path left to drift. Sample data writes the

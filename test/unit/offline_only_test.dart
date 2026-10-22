@@ -32,12 +32,15 @@ void main() {
     expect(gatewayPrefixes(), containsAll(['/v1/auth', '/v1/sync']));
   });
 
-  test('no backend routes, tokens, sign-in or online-app imports in lib/', () {
+  // The shared domain package is compiled into this app, so it is held to the
+  // same rule (Khazana Online keeps its online code in its own app).
+  test('no backend routes, tokens, sign-in or online-app imports in lib/ or the shared package', () {
     final hits = [
-      for (final f in Directory('lib').listSync(recursive: true).whereType<File>())
-        if (f.path.endsWith('.dart'))
-          for (final word in banned)
-            if (f.readAsStringSync().contains(word)) '${f.path}: $word',
+      for (final dir in ['lib', 'packages/khazana_domain/lib'])
+        for (final f in Directory(dir).listSync(recursive: true).whereType<File>())
+          if (f.path.endsWith('.dart'))
+            for (final word in banned)
+              if (f.readAsStringSync().contains(word)) '${f.path}: $word',
     ];
     expect(hits, isEmpty, reason: 'Online code belongs in mobile-online/ (ADR 0007)');
   });

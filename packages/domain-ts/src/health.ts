@@ -1,6 +1,6 @@
 // The Financial Health Score — four categories, honest about what it cannot see.
 //
-// The twin of `lib/domain/services/financial_health.dart`. The two are pinned
+// The twin of `packages/khazana_domain/lib/services/financial_health.dart`. The two are pinned
 // to the same numbers by `__fixtures__/health_cases.json`, which is a
 // byte-identical copy of `test/fixtures/health_cases.json` on the Flutter side.
 // That fixture exists because this file previously had no test at all while

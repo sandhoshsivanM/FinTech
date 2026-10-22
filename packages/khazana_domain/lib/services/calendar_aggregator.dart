@@ -23,7 +23,7 @@ class DayLedger {
 }
 
 /// Pure-Dart per-day aggregation for the calendar ledger (PRD §3 domain/services
-/// — no Flutter imports). Mirrored in webapp/src/domain/calendarLedger.ts.
+/// — no Flutter imports). Mirrored in packages/domain-ts/src/calendarLedger.ts.
 ///
 /// Date-key convention: the transaction's *local* calendar day, formatted
 /// 'YYYY-MM-DD'. The web mirror reads epoch-ms with local components, so both

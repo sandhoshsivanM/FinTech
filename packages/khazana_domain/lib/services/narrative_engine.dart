@@ -89,7 +89,7 @@ const kNarrativeDisclaimer = 'Informational only — not investment advice.';
 /// This is the actual compliance mechanism. A style guide is a hope; a test
 /// that runs every rule against a matrix of vaults and greps its output is a
 /// guarantee. See `test/unit/narrative_engine_test.dart`, and the mirrored list
-/// in `webapp/src/domain/narrative.ts`.
+/// in `packages/domain-ts/src/narrative.ts`.
 ///
 /// The line is between description and direction. "HDFC Flexi Cap is 31% of
 /// your equity" describes a fact about the user's own portfolio. "Consider

@@ -1,7 +1,7 @@
 {
   "_comment": [
     "Shared cases for packages/khazana_domain/lib/services/notification_scheduler.dart and",
-    "webapp/src/domain/notificationScheduler.ts. Both suites load this file and",
+    "packages/domain-ts/src/notificationScheduler.ts. Both suites load this file and",
     "must agree on every value.",
     "",
     "Why a fixture rather than two hand-written suites: the same arrangement was",

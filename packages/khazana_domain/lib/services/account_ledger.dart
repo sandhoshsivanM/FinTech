@@ -5,7 +5,7 @@ import '../entities/posting.dart';
 import '../entities/transaction.dart';
 
 /// Pure-Dart double-entry ledger math (PRD §3 domain/services — no Flutter
-/// imports; mirrored in webapp/src/domain/accountLedger.ts for parity).
+/// imports; mirrored in packages/domain-ts/src/accountLedger.ts for parity).
 ///
 /// Sign convention: postings are *debit-signed* (debit +, credit −) and every
 /// entry's postings sum to zero. An account's balance is its debit-signed

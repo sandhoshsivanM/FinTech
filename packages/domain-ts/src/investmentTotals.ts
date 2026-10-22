@@ -1,6 +1,6 @@
 // The single seam between the portfolio and everything that consumes its value.
 //
-// Mirrors `lib/domain/entities/investment_totals.dart`. Keep the two in step:
+// Mirrors `packages/khazana_domain/lib/entities/investment_totals.dart`. Keep the two in step:
 // the health score, the safety net and the net-worth snapshot all take this
 // type on both platforms, and the shared fixture in health.test.ts asserts they
 // produce identical numbers from it.

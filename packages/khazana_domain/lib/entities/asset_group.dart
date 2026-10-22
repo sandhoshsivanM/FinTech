@@ -6,7 +6,7 @@ import 'holding.dart';
 /// so charts colour by *group*, never by asset type. Asset type still drives
 /// labelled chips and tax rules, where the text always accompanies the colour.
 ///
-/// Mirrors `AssetGroup` / `ASSET_GROUP_OF` in `webapp/src/domain/portfolio.ts` —
+/// Mirrors `AssetGroup` / `ASSET_GROUP_OF` in `packages/domain-ts/src/portfolio.ts` —
 /// keep the two in sync.
 enum AssetGroup {
   equity('Equity'),
