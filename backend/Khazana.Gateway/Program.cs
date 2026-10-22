@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Khazana.Gateway;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -61,6 +62,17 @@ var app = builder.Build();
 
 if (trustedProxies.Length > 0) app.UseForwardedHeaders();
 if (!app.Environment.IsDevelopment()) app.UseHsts();
+// Sync pushes are the one large body (up to 500 encrypted records); the limit
+// is raised for that path alone, before anything reads the body.
+app.Use((context, next) =>
+{
+    if (context.Features.Get<IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } body)
+    {
+        if (context.Request.Path.StartsWithSegments("/v1/sync/push")) body.MaxRequestBodySize = 4 * 1024 * 1024;
+        else if (context.Request.Path.StartsWithSegments("/v1/sync/attachments")) body.MaxRequestBodySize = 25 * 1024 * 1024;
+    }
+    return next(context);
+});
 app.UseMiddleware<SecurityHeaders>();
 app.UseRateLimiter();
 app.MapDefaultEndpoints();
