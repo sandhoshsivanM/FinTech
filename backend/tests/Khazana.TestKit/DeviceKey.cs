@@ -28,7 +28,8 @@ public sealed class DeviceKey : IDisposable
         string? jti = null,
         string alg = SecurityAlgorithms.EcdsaSha256,
         string type = "dpop+jwt",
-        bool leakPrivateKey = false)
+        bool leakPrivateKey = false,
+        long? rawIat = null)
     {
         var jwk = new Dictionary<string, object>
         {
@@ -42,7 +43,7 @@ public sealed class DeviceKey : IDisposable
             ["jti"] = jti ?? Guid.NewGuid().ToString("N"),
             ["htm"] = method,
             ["htu"] = url,
-            ["iat"] = (issuedAt ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds(),
+            ["iat"] = rawIat ?? (issuedAt ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds(),
         };
         if (accessToken is not null)
             claims["ath"] = Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(accessToken)));

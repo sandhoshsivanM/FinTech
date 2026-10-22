@@ -75,6 +75,18 @@ Postgres and RabbitMQ containers (needs Docker running).
 - **DPoP, never Bearer.** Signed-in endpoints call `RequireAuthorization()`
   after `AddKhazanaAuthentication`. A token without a fresh proof from its
   device key is refused (ADR 0004).
+- **Before production: pre-generate Wolverine's handler code.** Today
+  handlers are compiled at startup (`WolverineFx.RuntimeCompilation`). For the
+  cloud, add `JasperFx` command support to each service, run
+  `dotnet run -- codegen write` in CI, and set
+  `opts.CodeGeneration.TypeLoadMode = TypeLoadMode.Static` outside
+  Development: faster starts and no compiler in the container.
+- **Shared replay cache.** DPoP proofs are remembered in each service's own
+  Postgres (`security.dpop_replay`), so a proof can't be replayed on another
+  instance.
+- **Rate limits behind a balancer.** Set `Gateway:TrustedProxies` (IPs or
+  CIDRs) to the load balancer; only then is `X-Forwarded-For` honoured. A
+  global per-address ceiling (`RateLimits:Global`) sits on top of every route.
 - **No secrets in the repo.** Aspire generates Identity's field-encryption key
   into the AppHost's user secrets. Production reads it, and the PEM signing
   key, from the secret store; startup refuses the development stand-ins.

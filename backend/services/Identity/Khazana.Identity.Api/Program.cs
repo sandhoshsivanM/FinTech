@@ -31,19 +31,23 @@ builder.Services.AddIdentityInfrastructure(builder.Configuration, builder.Enviro
 
 // Identity checks its own tokens with its own keys (no HTTP to itself).
 builder.Services.AddSingleton<IConfigurationManager<OpenIdConnectConfiguration>, LocalKeysConfigurationManager>();
-builder.Services.AddKhazanaAuthentication(builder.Configuration);
+builder.Services.AddKhazanaAuthentication(builder.Configuration, replayDatabase: database);
 
 builder.Services.AddDbContextWithWolverineIntegration<IdentityDbContext>(o => o.UseNpgsql(database));
 builder.Services.AddSingleton<TokenIssuer>();
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<PasskeyService>();
 builder.Services.AddHostedService<DatabaseMigrator>();
+builder.Services.AddHostedService<ChallengeCleanup>();
 
 builder.Services.ConfigureHttpJsonOptions(o =>
 {
     o.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
     // An unknown field is a client bug or a probe; either way, refuse it.
     o.SerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
+    // A null or missing required field is a 400, not a NullReferenceException later.
+    o.SerializerOptions.RespectNullableAnnotations = true;
+    o.SerializerOptions.RespectRequiredConstructorParameters = true;
 });
 
 builder.Host.UseWolverine(opts =>
