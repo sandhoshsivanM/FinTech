@@ -1,9 +1,17 @@
 <Solution>
   <Folder Name="/building-blocks/">
     <Project Path="building-blocks/Khazana.Messaging/Khazana.Messaging.csproj" />
+    <Project Path="building-blocks/Khazana.Security/Khazana.Security.csproj" />
     <Project Path="building-blocks/Khazana.SharedKernel/Khazana.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/services/" />
+  <Folder Name="/services/Identity/">
+    <Project Path="services/Identity/Khazana.Identity.Api/Khazana.Identity.Api.csproj" />
+    <Project Path="services/Identity/Khazana.Identity.Application/Khazana.Identity.Application.csproj" />
+    <Project Path="services/Identity/Khazana.Identity.Domain/Khazana.Identity.Domain.csproj" />
+    <Project Path="services/Identity/Khazana.Identity.Infrastructure/Khazana.Identity.Infrastructure.csproj" />
+    <Project Path="services/Identity/Khazana.Identity.Tests/Khazana.Identity.Tests.csproj" />
+  </Folder>
   <Folder Name="/services/MarketData/">
     <Project Path="services/MarketData/Khazana.MarketData.Api/Khazana.MarketData.Api.csproj" />
     <Project Path="services/MarketData/Khazana.MarketData.Application/Khazana.MarketData.Application.csproj" />
@@ -14,6 +22,9 @@
   <Folder Name="/tests/">
     <Project Path="tests/Khazana.ArchitectureTests/Khazana.ArchitectureTests.csproj" />
     <Project Path="tests/Khazana.Gateway.Tests/Khazana.Gateway.Tests.csproj" />
+    <Project Path="tests/Khazana.Messaging.Tests/Khazana.Messaging.Tests.csproj" />
+    <Project Path="tests/Khazana.Security.Tests/Khazana.Security.Tests.csproj" />
+    <Project Path="tests/Khazana.TestKit/Khazana.TestKit.csproj" />
   </Folder>
   <Project Path="Khazana.AppHost/Khazana.AppHost.csproj" />
   <Project Path="Khazana.Gateway/Khazana.Gateway.csproj" />

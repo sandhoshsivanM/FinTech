@@ -1,8 +1,12 @@
 # Khazana backend (v2, online)
 
-.NET 10 microservices behind one gateway. Phase 2, Slice 2.1: the platform
-itself, proven on the first service, **Market Data** (public mutual-fund NAVs —
-no user data). Design: `docs/Khazana_v2_Technical_Design.pdf` §7–§8.
+.NET 10 microservices behind one gateway. Design:
+`docs/Khazana_v2_Technical_Design.pdf` §7–§8.
+
+| Service | Slice | What it does |
+|---|---|---|
+| Market Data | 2.1 | Public mutual-fund NAVs as whole-day files (no user data) |
+| Identity | 2.2 | Sign-in (Google, Apple, passkeys), DPoP-bound tokens, refresh rotation, logout, deletion request (ADR 0004) |
 
 ## Run it locally
 
@@ -22,6 +26,12 @@ no user data). Design: `docs/Khazana_v2_Technical_Design.pdf` §7–§8.
    curl -X POST http://localhost:5081/internal/market/nav/ingest   # service, dev only
    curl -s --compressed http://localhost:5196/v1/market/nav/latest  # gateway
    ```
+
+4. Sign in through the gateway. Every call needs a DPoP proof signed by a
+   device key, so `curl` alone can't do it. The integration tests and
+   `tests/Khazana.TestKit` (`DeviceKey`, `SoftwareAuthenticator`) show the
+   exact requests. In Development the `dev` provider accepts
+   `id_token: "dev:<anyone>[:<email>]"` in place of Google or Apple.
 
 Local runs read `contracts/fixtures/amfi/navall_sample.txt`, never AMFI. To try
 the real file, set `Providers__Nav=Amfi` on `marketdata-api` in
@@ -46,8 +56,10 @@ Postgres and RabbitMQ containers (needs Docker running).
 | `Khazana.Gateway/` | YARP: the only public entry point (routes, GET-only, rate limits, security headers) |
 | `building-blocks/Khazana.Messaging/` | Versioned event contracts + the one place messaging is configured |
 | `building-blocks/Khazana.SharedKernel/` | Clock, IST time |
+| `building-blocks/Khazana.Security/` | DPoP proof checks and `AddKhazanaAuthentication` for every service that serves a signed-in user |
 | `services/MarketData/` | Domain → Application → Infrastructure → Api, plus Tests |
-| `tests/` | Architecture rules and gateway tests |
+| `services/Identity/` | The same five folders |
+| `tests/` | Architecture rules, gateway tests, DPoP tests, and the shared TestKit |
 
 ## Rules worth knowing
 
@@ -60,15 +72,31 @@ Postgres and RabbitMQ containers (needs Docker running).
   in one transaction; `IngestNav` refuses to run outside one.
 - **Free first** (ADR 0003): paid or external services sit behind interfaces
   chosen by `Providers:*`; sample data is refused in Production.
-- **No auth yet** — Market Data is public data. JWT + DPoP arrive with the
-  Identity service (next slice), before any user data exists.
+- **DPoP, never Bearer.** Signed-in endpoints call `RequireAuthorization()`
+  after `AddKhazanaAuthentication`. A token without a fresh proof from its
+  device key is refused (ADR 0004).
+- **Before production: pre-generate Wolverine's handler code.** Today
+  handlers are compiled at startup (`WolverineFx.RuntimeCompilation`). For the
+  cloud, add `JasperFx` command support to each service, run
+  `dotnet run -- codegen write` in CI, and set
+  `opts.CodeGeneration.TypeLoadMode = TypeLoadMode.Static` outside
+  Development: faster starts and no compiler in the container.
+- **Shared replay cache.** DPoP proofs are remembered in each service's own
+  Postgres (`security.dpop_replay`), so a proof can't be replayed on another
+  instance.
+- **Rate limits behind a balancer.** Set `Gateway:TrustedProxies` (IPs or
+  CIDRs) to the load balancer; only then is `X-Forwarded-For` honoured. A
+  global per-address ceiling (`RateLimits:Global`) sits on top of every route.
+- **No secrets in the repo.** Aspire generates Identity's field-encryption key
+  into the AppHost's user secrets. Production reads it, and the PEM signing
+  key, from the secret store; startup refuses the development stand-ins.
 
 ## Migrations
 
 ```bash
 cd backend
-dotnet ef migrations add <Name> --project services/MarketData/Khazana.MarketData.Application \
-  --startup-project services/MarketData/Khazana.MarketData.Api --output-dir Persistence/Migrations
+dotnet ef migrations add <Name> --project services/<Service>/Khazana.<Service>.Application \
+  --startup-project services/<Service>/Khazana.<Service>.Api --output-dir Persistence/Migrations
 ```
 
 `dotnet-ef` is a repo-local tool (`dotnet tool restore`). Migrations run at

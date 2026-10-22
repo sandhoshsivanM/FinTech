@@ -3,6 +3,9 @@ namespace Khazana.Gateway;
 public static class GatewayPolicies
 {
     public const string Public = "public";
+
+    /// <summary>Sign-in, refresh and account deletion: tighter, as each attempt is worth guessing.</summary>
+    public const string Auth = "auth";
 }
 
 /// <summary>

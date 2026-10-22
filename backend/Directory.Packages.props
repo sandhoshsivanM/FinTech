@@ -33,8 +33,19 @@
     <!-- Compiles handler code at startup. Fine locally; production should
          switch to pre-generated static code (no Roslyn in the image). -->
     <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.51.2" />
+    <!-- Identity and tokens. The IdentityModel packages move together: a
+         mismatch between them fails at runtime, not at build. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.23.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
+    <!-- Passkeys (WebAuthn), MIT. -->
+    <PackageVersion Include="Fido2" Version="4.3.1" />
+    <PackageVersion Include="Fido2.Models" Version="4.3.1" />
     <!-- Data -->
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageVersion Include="Npgsql" Version="10.0.3" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13" />
@@ -47,5 +58,7 @@
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
     <PackageVersion Include="Testcontainers.RabbitMq" Version="4.16.0" />
     <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
+    <!-- Builds WebAuthn messages for the software authenticator in the tests. -->
+    <PackageVersion Include="System.Formats.Cbor" Version="10.0.13" />
   </ItemGroup>
 </Project>

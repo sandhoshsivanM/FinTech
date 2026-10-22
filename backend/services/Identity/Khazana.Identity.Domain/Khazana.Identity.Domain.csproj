@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Identity's rules, with no framework: refresh-token rotation and reuse
+       detection, account states, platforms. -->
+</Project>

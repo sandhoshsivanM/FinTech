@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Adapters: field encryption, signing keys, Google / Apple / dev ID-token
+       verifiers, and the passkey library's configuration. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.Identity.Application\Khazana.Identity.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+  </ItemGroup>
+</Project>
