@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/di/data_providers.dart';
-import '../../../domain/entities/account.dart';
-import '../../../domain/entities/posting.dart';
-import '../../../domain/services/account_ledger.dart';
+import 'package:khazana_domain/entities/account.dart';
+import 'package:khazana_domain/entities/posting.dart';
+import 'package:khazana_domain/services/account_ledger.dart';
 import '../services/ledger_writer.dart';
 
 final accountLedgerProvider = Provider<AccountLedger>(

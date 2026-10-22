@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/notification_providers.dart';
 import '../../../core/services/notification_sync_service.dart';
-import '../../../domain/services/notification_scheduler.dart';
+import 'package:khazana_domain/services/notification_scheduler.dart';
 
 /// Notification settings.
 ///

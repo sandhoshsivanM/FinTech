@@ -8,11 +8,11 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../data/repositories/drift_portfolio_repository.dart';
-import '../../../domain/entities/holding.dart';
-import '../../../domain/entities/investment_totals.dart';
-import '../../../domain/entities/portfolio.dart';
-import '../../../domain/services/instrument_master.dart';
-import '../../../domain/services/portfolio_analytics.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/investment_totals.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
+import 'package:khazana_domain/services/instrument_master.dart';
+import 'package:khazana_domain/services/portfolio_analytics.dart';
 import '../data/amfi_nav_provider.dart';
 import '../services/price_refresh_service.dart';
 import '../../settings/providers/fx_providers.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/di/data_providers.dart';
-import '../../../domain/entities/transaction.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 
 /// Current search query text.
 final searchQueryProvider = StateProvider<String>((ref) => '');

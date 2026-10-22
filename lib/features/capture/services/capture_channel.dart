@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import '../../../domain/entities/pending_capture.dart';
+import 'package:khazana_domain/entities/pending_capture.dart';
 
 /// A raw message handed up from the Android capture services. Carries only the
 /// text needed for parsing; it is consumed immediately and never persisted.

@@ -8,8 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/entities/recurring_rule.dart';
-import '../../../domain/entities/transaction.dart';
+import 'package:khazana_domain/entities/recurring_rule.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/empty_state.dart';
 import '../../../presentation/glass_card.dart';

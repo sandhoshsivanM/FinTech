@@ -1,5 +1,5 @@
-import '../../../domain/entities/holding.dart';
-import '../../../domain/entities/portfolio.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
 import '../../import/lot_csv_parser.dart';
 import '../providers/portfolio_providers.dart';
 

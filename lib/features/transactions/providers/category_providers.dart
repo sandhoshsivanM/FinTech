@@ -3,8 +3,8 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/constants/default_categories.dart';
 import '../../../core/di/data_providers.dart';
-import '../../../domain/entities/category.dart';
-import '../../../domain/repositories/category_repository.dart';
+import 'package:khazana_domain/entities/category.dart';
+import 'package:khazana_domain/repositories/category_repository.dart';
 
 const _uuid = Uuid();
 

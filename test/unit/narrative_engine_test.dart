@@ -1,11 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:khazana/domain/entities/holding.dart';
-import 'package:khazana/domain/entities/net_worth_snapshot.dart';
-import 'package:khazana/domain/services/financial_health.dart';
-import 'package:khazana/domain/services/insights_engine.dart';
-import 'package:khazana/domain/services/narrative_engine.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/net_worth_snapshot.dart';
+import 'package:khazana_domain/services/financial_health.dart';
+import 'package:khazana_domain/services/insights_engine.dart';
+import 'package:khazana_domain/services/narrative_engine.dart';
 
 import '../support/investment_totals_builder.dart';
 

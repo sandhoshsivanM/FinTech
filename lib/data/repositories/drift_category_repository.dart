@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import '../../domain/entities/category.dart';
-import '../../domain/repositories/category_repository.dart';
+import 'package:khazana_domain/entities/category.dart';
+import 'package:khazana_domain/repositories/category_repository.dart';
 import '../database/app_database.dart';
 import '../database/category_dao.dart';
 

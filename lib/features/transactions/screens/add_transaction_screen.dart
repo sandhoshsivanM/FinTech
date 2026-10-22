@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/category_icons.dart';
 import '../../../core/theme/app_tokens.dart';
-import '../../../domain/entities/transaction.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
 import '../../attachments/providers/attachment_providers.dart';

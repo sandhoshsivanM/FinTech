@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-import '../../domain/entities/portfolio.dart' show PriceQuality, PriceSource;
+import 'package:khazana_domain/entities/portfolio.dart' show PriceQuality, PriceSource;
 import '../models/tables.dart';
 import 'app_database.dart';
 

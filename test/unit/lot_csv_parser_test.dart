@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:khazana/domain/entities/portfolio.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
 import 'package:khazana/features/import/lot_csv_parser.dart';
 
 void main() {

@@ -4,9 +4,9 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../core/services/notification_sync_service.dart';
-import '../../../domain/entities/insurance.dart';
-import '../../../domain/entities/transaction.dart';
-import '../../../domain/services/insurance_advisor.dart';
+import 'package:khazana_domain/entities/insurance.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/insurance_advisor.dart';
 import '../../transactions/providers/transaction_providers.dart';
 
 const _uuid = Uuid();

@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
-import '../../../domain/entities/transaction.dart';
-import '../../../domain/repositories/transaction_repository.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/repositories/transaction_repository.dart';
 import '../../accounts/providers/account_providers.dart';
 import '../../accounts/services/ledger_writer.dart';
 

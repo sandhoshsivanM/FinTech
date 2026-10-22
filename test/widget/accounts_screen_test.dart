@@ -6,10 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:khazana/core/di/data_providers.dart';
 import 'package:khazana/data/database/app_database.dart';
-import 'package:khazana/domain/entities/account.dart';
-import 'package:khazana/domain/entities/liability.dart';
-import 'package:khazana/domain/entities/posting.dart';
-import 'package:khazana/domain/repositories/account_repository.dart';
+import 'package:khazana_domain/entities/account.dart';
+import 'package:khazana_domain/entities/liability.dart';
+import 'package:khazana_domain/entities/posting.dart';
+import 'package:khazana_domain/repositories/account_repository.dart';
 import 'package:khazana/features/accounts/providers/account_providers.dart';
 import 'package:khazana/features/accounts/screens/accounts_screen.dart';
 import 'package:khazana/features/liabilities/providers/liability_providers.dart';

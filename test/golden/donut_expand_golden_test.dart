@@ -3,7 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:khazana/domain/entities/asset_group.dart';
+import 'package:khazana_domain/entities/asset_group.dart';
 import 'package:khazana/presentation/asset_group_colors.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khazana/core/theme/app_theme.dart';

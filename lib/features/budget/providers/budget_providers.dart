@@ -4,10 +4,10 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../core/services/notification_providers.dart';
-import '../../../domain/entities/budget.dart';
-import '../../../domain/entities/transaction.dart';
-import '../../../domain/services/budget_calculator.dart';
-import '../../../domain/services/notification_scheduler.dart';
+import 'package:khazana_domain/entities/budget.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/budget_calculator.dart';
+import 'package:khazana_domain/services/notification_scheduler.dart';
 import '../../transactions/providers/category_providers.dart';
 import '../../transactions/providers/transaction_providers.dart';
 

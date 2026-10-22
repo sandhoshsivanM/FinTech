@@ -4,13 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:khazana/domain/entities/account.dart';
-import 'package:khazana/domain/entities/liability.dart';
+import 'package:khazana_domain/entities/account.dart';
+import 'package:khazana_domain/entities/liability.dart';
 import 'package:khazana/features/accounts/providers/account_providers.dart';
 import 'package:khazana/features/home/home_providers.dart';
 import 'package:khazana/features/home/widgets/wallet_stack.dart';
 import 'package:khazana/features/home/widgets/week_flow_card.dart';
-import 'package:khazana/domain/services/daily_flow.dart';
+import 'package:khazana_domain/services/daily_flow.dart';
 import 'package:khazana/features/liabilities/providers/liability_providers.dart';
 import 'package:khazana/features/reports/providers/dashboard_providers.dart';
 

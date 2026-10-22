@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 import 'package:http/http.dart' as http;
 
-import '../../../domain/services/market_data.dart';
+import 'package:khazana_domain/services/market_data.dart';
 
 /// Yahoo Finance (unofficial, no API key) — primary provider (PRD §9B).
 /// The request URL contains only ticker symbols — zero user data (PRD §9B).

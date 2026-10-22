@@ -1,8 +1,8 @@
 import 'package:drift/drift.dart';
 
-import '../../domain/entities/recurring_rule.dart';
-import '../../domain/entities/transaction.dart';
-import '../../domain/repositories/recurring_repository.dart';
+import 'package:khazana_domain/entities/recurring_rule.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/repositories/recurring_repository.dart';
 import '../database/app_database.dart';
 import '../database/recurring_dao.dart';
 

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/recurring_rule.dart';
-import '../../domain/services/notification_scheduler.dart';
+import 'package:khazana_domain/entities/recurring_rule.dart';
+import 'package:khazana_domain/services/notification_scheduler.dart';
 import '../di/data_providers.dart';
 import 'notification_providers.dart';
 

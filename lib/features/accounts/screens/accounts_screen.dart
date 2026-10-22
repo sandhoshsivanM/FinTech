@@ -10,8 +10,8 @@ import '../../../core/di/data_providers.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/entities/account.dart';
-import '../../../domain/entities/liability.dart';
+import 'package:khazana_domain/entities/account.dart';
+import 'package:khazana_domain/entities/liability.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/empty_state.dart';
 import '../../../presentation/glass_card.dart';

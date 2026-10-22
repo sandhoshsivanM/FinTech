@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
-import 'package:khazana/domain/entities/recurring_rule.dart';
-import 'package:khazana/domain/entities/transaction.dart';
-import 'package:khazana/domain/services/recurrence_calculator.dart';
+import 'package:khazana_domain/entities/recurring_rule.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/recurrence_calculator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

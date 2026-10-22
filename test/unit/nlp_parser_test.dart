@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
-import 'package:khazana/domain/entities/transaction.dart';
-import 'package:khazana/domain/services/nlp_parser.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/nlp_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

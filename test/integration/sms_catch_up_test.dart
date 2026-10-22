@@ -4,12 +4,12 @@ import 'package:khazana/data/database/app_database.dart';
 import 'package:khazana/data/repositories/drift_merchant_alias_repository.dart';
 import 'package:khazana/data/repositories/drift_pending_capture_repository.dart';
 import 'package:khazana/data/repositories/drift_transaction_repository.dart';
-import 'package:khazana/domain/entities/pending_capture.dart';
+import 'package:khazana_domain/entities/pending_capture.dart';
 import 'package:khazana/features/capture/services/capture_channel.dart';
 import 'package:khazana/features/capture/services/capture_pipeline.dart';
 import 'package:khazana/features/capture/services/sms_catch_up.dart';
 import 'package:decimal/decimal.dart';
-import 'package:khazana/domain/entities/transaction.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 
 /// Stands in for the Android side: an SMS inbox and a permission switch.
 class _FakeChannel extends CaptureChannel {

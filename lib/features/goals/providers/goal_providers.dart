@@ -4,7 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../core/services/notification_sync_service.dart';
-import '../../../domain/entities/goal.dart';
+import 'package:khazana_domain/entities/goal.dart';
 
 const _uuid = Uuid();
 

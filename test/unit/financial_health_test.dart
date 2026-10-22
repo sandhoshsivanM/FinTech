@@ -4,14 +4,14 @@ import 'dart:io';
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:khazana/domain/entities/budget.dart';
-import 'package:khazana/domain/entities/goal.dart';
-import 'package:khazana/domain/entities/holding.dart';
-import 'package:khazana/domain/entities/insurance.dart';
-import 'package:khazana/domain/entities/liability.dart';
-import 'package:khazana/domain/entities/net_worth_snapshot.dart';
-import 'package:khazana/domain/entities/transaction.dart';
-import 'package:khazana/domain/services/financial_health.dart';
+import 'package:khazana_domain/entities/budget.dart';
+import 'package:khazana_domain/entities/goal.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/insurance.dart';
+import 'package:khazana_domain/entities/liability.dart';
+import 'package:khazana_domain/entities/net_worth_snapshot.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/financial_health.dart';
 
 import '../support/investment_totals_builder.dart';
 

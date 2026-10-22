@@ -4,14 +4,14 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/constants/default_categories.dart';
 import '../../../core/di/data_providers.dart';
-import '../../../domain/entities/budget.dart';
-import '../../../domain/entities/category.dart';
-import '../../../domain/entities/goal.dart';
-import '../../../domain/entities/holding.dart';
-import '../../../domain/entities/portfolio.dart';
-import '../../../domain/entities/liability.dart';
-import '../../../domain/entities/recurring_rule.dart';
-import '../../../domain/entities/transaction.dart';
+import 'package:khazana_domain/entities/budget.dart';
+import 'package:khazana_domain/entities/category.dart';
+import 'package:khazana_domain/entities/goal.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
+import 'package:khazana_domain/entities/liability.dart';
+import 'package:khazana_domain/entities/recurring_rule.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 import '../../accounts/providers/account_providers.dart';
 import '../../investments/providers/portfolio_providers.dart';
 

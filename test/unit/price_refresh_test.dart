@@ -5,9 +5,9 @@ import 'package:http/http.dart' as http;
 
 import 'package:khazana/data/database/app_database.dart';
 import 'package:khazana/data/repositories/drift_portfolio_repository.dart';
-import 'package:khazana/domain/entities/holding.dart';
-import 'package:khazana/domain/entities/portfolio.dart';
-import 'package:khazana/domain/services/market_data.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
+import 'package:khazana_domain/services/market_data.dart';
 import 'package:khazana/features/investments/data/amfi_nav_provider.dart';
 import 'package:khazana/features/investments/services/price_refresh_service.dart';
 

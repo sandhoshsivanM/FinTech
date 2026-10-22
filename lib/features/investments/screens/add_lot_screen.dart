@@ -8,8 +8,8 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/di/data_providers.dart';
 import '../../../core/theme/app_tokens.dart';
-import '../../../domain/entities/holding.dart';
-import '../../../domain/entities/portfolio.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
 import '../providers/portfolio_providers.dart';

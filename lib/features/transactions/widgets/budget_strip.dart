@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/services/budget_calculator.dart';
+import 'package:khazana_domain/services/budget_calculator.dart';
 import '../../../presentation/glass_card.dart';
 import '../../budget/providers/budget_providers.dart';
 import '../providers/category_providers.dart';

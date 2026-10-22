@@ -1,14 +1,14 @@
 import 'package:decimal/decimal.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../domain/entities/pending_capture.dart';
-import '../../../domain/entities/transaction.dart';
-import '../../../domain/repositories/merchant_alias_repository.dart';
-import '../../../domain/repositories/pending_capture_repository.dart';
-import '../../../domain/repositories/transaction_repository.dart';
-import '../../../domain/services/capture_account_matcher.dart';
-import '../../../domain/services/capture_router.dart';
-import '../../../domain/services/notification_parser.dart';
+import 'package:khazana_domain/entities/pending_capture.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/repositories/merchant_alias_repository.dart';
+import 'package:khazana_domain/repositories/pending_capture_repository.dart';
+import 'package:khazana_domain/repositories/transaction_repository.dart';
+import 'package:khazana_domain/services/capture_account_matcher.dart';
+import 'package:khazana_domain/services/capture_router.dart';
+import 'package:khazana_domain/services/notification_parser.dart';
 import 'capture_channel.dart';
 
 /// Writes and removes ledger entries on the pipeline's behalf. A port, so the

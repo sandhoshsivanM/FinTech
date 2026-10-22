@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:khazana/domain/entities/asset_group.dart';
-import 'package:khazana/domain/entities/holding.dart';
-import 'package:khazana/domain/services/tax_rule_engine.dart';
+import 'package:khazana_domain/entities/asset_group.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/services/tax_rule_engine.dart';
 
 /// Guards the three couplings that make [AssetType] load-bearing. Each of these
 /// used to be able to break silently.

@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/di/data_providers.dart';
-import '../../../domain/entities/category.dart';
-import '../../../domain/services/nlp_parser.dart';
+import 'package:khazana_domain/entities/category.dart';
+import 'package:khazana_domain/services/nlp_parser.dart';
 
 final nlpParserProvider = Provider<NlpParser>((ref) => const NlpParser());
 

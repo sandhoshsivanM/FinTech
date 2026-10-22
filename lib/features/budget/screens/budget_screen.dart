@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/help/info_hint.dart';
 import '../../../core/theme/app_tokens.dart';
-import '../../../domain/entities/category.dart';
+import 'package:khazana_domain/entities/category.dart';
 import '../../../presentation/data_gate.dart';
 import '../../transactions/providers/category_providers.dart';
 import '../providers/budget_providers.dart';

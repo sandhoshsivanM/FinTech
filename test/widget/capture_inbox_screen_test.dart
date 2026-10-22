@@ -7,10 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:khazana/core/di/data_providers.dart';
 import 'package:khazana/data/database/app_database.dart';
-import 'package:khazana/domain/entities/account.dart';
-import 'package:khazana/domain/entities/category.dart';
-import 'package:khazana/domain/entities/pending_capture.dart';
-import 'package:khazana/domain/entities/transaction.dart';
+import 'package:khazana_domain/entities/account.dart';
+import 'package:khazana_domain/entities/category.dart';
+import 'package:khazana_domain/entities/pending_capture.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 import 'package:khazana/features/accounts/providers/account_providers.dart';
 import 'package:khazana/features/capture/providers/capture_providers.dart';
 import 'package:khazana/features/capture/screens/capture_inbox_screen.dart';

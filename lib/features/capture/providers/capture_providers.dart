@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/di/data_providers.dart';
-import '../../../domain/entities/pending_capture.dart';
-import '../../../domain/entities/transaction.dart';
+import 'package:khazana_domain/entities/pending_capture.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 import '../../transactions/providers/transaction_providers.dart';
 import '../services/capture_channel.dart';
 import '../services/capture_pipeline.dart';

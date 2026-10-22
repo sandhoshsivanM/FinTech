@@ -4,7 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khazana/data/database/app_database.dart';
 import 'package:khazana/data/repositories/drift_pending_capture_repository.dart';
-import 'package:khazana/domain/entities/pending_capture.dart';
+import 'package:khazana_domain/entities/pending_capture.dart';
 import 'package:sqlite3/sqlite3.dart' as sql;
 
 /// The v6 → v7 upgrade on a real file, the way a user's vault takes it.

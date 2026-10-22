@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/services/portfolio_analytics.dart';
+import 'package:khazana_domain/services/portfolio_analytics.dart';
 import '../../../presentation/charts/bar_chart.dart';
 import '../../../presentation/charts/diverging_bar_chart.dart';
 import '../../../presentation/charts/donut_chart.dart';

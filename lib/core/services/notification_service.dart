@@ -4,7 +4,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
-import '../../domain/services/notification_scheduler.dart';
+import 'package:khazana_domain/services/notification_scheduler.dart';
 
 /// Delivery. What to say and when is [planNotifications]' job; this file only
 /// carries it to the OS.

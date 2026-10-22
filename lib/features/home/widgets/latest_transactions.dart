@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/entities/transaction.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 import '../home_palette.dart';
 import '../../reports/providers/dashboard_providers.dart';
 import '../../transactions/providers/category_providers.dart';

@@ -1,10 +1,10 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:khazana/domain/entities/capture_types.dart';
-import 'package:khazana/domain/entities/transaction.dart';
-import 'package:khazana/domain/repositories/pending_capture_repository.dart';
-import 'package:khazana/domain/services/capture_account_matcher.dart';
-import 'package:khazana/domain/services/capture_router.dart';
+import 'package:khazana_domain/entities/capture_types.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/repositories/pending_capture_repository.dart';
+import 'package:khazana_domain/services/capture_account_matcher.dart';
+import 'package:khazana_domain/services/capture_router.dart';
 
 Decimal d(String s) => Decimal.parse(s);
 final _at = DateTime(2026, 1, 15, 10);

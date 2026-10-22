@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:khazana/domain/services/notification_scheduler.dart';
+import 'package:khazana_domain/services/notification_scheduler.dart';
 
 const _fixturePath = 'test/fixtures/notification_cases.json';
 const _webFixturePath = 'webapp/src/domain/__fixtures__/notification_cases.json';

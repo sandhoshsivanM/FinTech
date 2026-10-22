@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:khazana/domain/entities/insurance.dart';
-import 'package:khazana/domain/services/insurance_advisor.dart';
+import 'package:khazana_domain/entities/insurance.dart';
+import 'package:khazana_domain/services/insurance_advisor.dart';
 
 Decimal d(int v) => Decimal.fromInt(v);
 

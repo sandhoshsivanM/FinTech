@@ -5,7 +5,7 @@ import 'package:decimal/decimal.dart';
 
 import 'package:khazana/data/database/app_database.dart';
 import 'package:khazana/data/repositories/drift_portfolio_repository.dart';
-import 'package:khazana/domain/entities/portfolio.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
 
 /// Which of an instrument's recorded prices is "the" current one.
 ///

@@ -66,3 +66,6 @@ app.*.map.json
 # strip. The landing page beside it (site/index.html) IS committed; only this
 # generated subdirectory is not.
 /site/case-study/
+
+# Shared packages are libraries: the apps' lockfiles pin their versions.
+packages/*/pubspec.lock

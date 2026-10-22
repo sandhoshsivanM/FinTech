@@ -9,8 +9,8 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/entities/asset_group.dart';
-import '../../../domain/services/portfolio_analytics.dart';
+import 'package:khazana_domain/entities/asset_group.dart';
+import 'package:khazana_domain/services/portfolio_analytics.dart';
 import '../../../presentation/asset_group_colors.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/charts/donut_chart.dart';

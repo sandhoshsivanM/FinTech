@@ -1,4 +1,4 @@
-import 'package:khazana/domain/services/log_sanitizer.dart';
+import 'package:khazana_domain/services/log_sanitizer.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

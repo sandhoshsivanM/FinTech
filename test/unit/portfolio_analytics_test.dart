@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:khazana/domain/entities/asset_group.dart';
-import 'package:khazana/domain/entities/holding.dart';
-import 'package:khazana/domain/entities/portfolio.dart';
-import 'package:khazana/domain/services/portfolio_analytics.dart';
+import 'package:khazana_domain/entities/asset_group.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
+import 'package:khazana_domain/services/portfolio_analytics.dart';
 
 /// Tests for lot-level P&L.
 ///

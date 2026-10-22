@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/database/app_database.dart';
-import '../../domain/services/notification_scheduler.dart';
+import 'package:khazana_domain/services/notification_scheduler.dart';
 import '../di/data_providers.dart';
 import 'notification_service.dart';
 

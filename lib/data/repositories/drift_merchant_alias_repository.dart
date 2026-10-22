@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-import '../../domain/repositories/merchant_alias_repository.dart';
+import 'package:khazana_domain/repositories/merchant_alias_repository.dart';
 import '../database/app_database.dart';
 import '../database/merchant_alias_dao.dart';
 

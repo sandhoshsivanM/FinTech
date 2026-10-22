@@ -7,8 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
-import '../../../domain/entities/insurance.dart';
-import '../../../domain/services/insurance_advisor.dart';
+import 'package:khazana_domain/entities/insurance.dart';
+import 'package:khazana_domain/services/insurance_advisor.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/empty_state.dart';
 import '../../../presentation/glass_card.dart';

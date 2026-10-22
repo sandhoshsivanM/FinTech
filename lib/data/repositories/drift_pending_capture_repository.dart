@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
 
-import '../../domain/entities/pending_capture.dart';
-import '../../domain/entities/transaction.dart';
-import '../../domain/repositories/pending_capture_repository.dart';
+import 'package:khazana_domain/entities/pending_capture.dart';
+import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/repositories/pending_capture_repository.dart';
 import '../database/app_database.dart';
 import '../database/pending_capture_dao.dart';
 

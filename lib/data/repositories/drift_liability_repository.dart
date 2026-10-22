@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import '../../domain/entities/liability.dart';
-import '../../domain/repositories/liability_repository.dart';
+import 'package:khazana_domain/entities/liability.dart';
+import 'package:khazana_domain/repositories/liability_repository.dart';
 import '../database/app_database.dart';
 import '../database/liability_dao.dart';
 

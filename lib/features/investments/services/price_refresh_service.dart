@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 
-import '../../../domain/entities/holding.dart';
-import '../../../domain/entities/portfolio.dart';
-import '../../../domain/services/market_data.dart';
+import 'package:khazana_domain/entities/holding.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
+import 'package:khazana_domain/services/market_data.dart';
 import '../../../data/repositories/drift_portfolio_repository.dart';
 import '../data/amfi_nav_provider.dart';
 
