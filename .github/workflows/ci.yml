@@ -55,6 +55,29 @@ jobs:
   # exact Ubuntu image rather than ubuntu-latest: system fonts and the
   # rasteriser come from the image, and a silent image bump would shift every
   # baseline at once.
+  # Khazana Online for the web: a separate app from webapp/ (ADR 0007), with
+  # its own lockfile, tests and build.
+  webapp-online:
+    name: Online web app (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webapp-online
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: webapp-online/package-lock.json
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Tests
+        run: npm run test
+      - name: Static export build
+        run: npm run build
+
   visual:
     name: Visual regression
     runs-on: ubuntu-24.04

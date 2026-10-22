@@ -1,0 +1,11 @@
+# Khazana Online for the web: its own Netlify site, separate from the offline
+# app's (ADR 0007). Static export into ./out; the response headers, including
+# a CSP that names the gateway, are generated into out/_headers by the build.
+# Set NEXT_PUBLIC_GATEWAY_URL in the site's environment.
+
+[build]
+  command = "npm run build"
+  publish = "out"
+
+[build.environment]
+  NODE_VERSION = "24"

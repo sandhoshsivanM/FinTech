@@ -1,0 +1,28 @@
+{
+  "name": "webapp-online",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Khazana Online for the web: a separate app from the offline webapp/ (ADR 0007).",
+  "scripts": {
+    "dev": "next dev -p 3100",
+    "build": "next build && node scripts/write-headers.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0",
+    "next": "16.2.9",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "fake-indexeddb": "^6.0.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^2.1.9"
+  }
+}

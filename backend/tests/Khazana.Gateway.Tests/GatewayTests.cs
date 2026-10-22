@@ -228,3 +228,68 @@ internal sealed class FakePeer : Microsoft.AspNetCore.Hosting.IStartupFilter
         next(app);
     };
 }
+
+/// <summary>
+/// Khazana Online's web app calls the gateway from its own origin (ADR 0007):
+/// only listed origins get CORS headers, and with none listed nobody does.
+/// </summary>
+public sealed class CorsTests
+{
+    private static WebApplicationFactory<Program> Gateway(params string[] origins) =>
+        new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
+        {
+            b.UseEnvironment("Production");
+            b.UseSetting("services:identity-api:http:0", "http://127.0.0.1:9");
+            for (var i = 0; i < origins.Length; i++) b.UseSetting($"Gateway:AllowedOrigins:{i}", origins[i]);
+        });
+
+    private static async Task<HttpResponseMessage> Preflight(HttpClient client, string origin)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Options, "/v1/auth/token");
+        request.Headers.Add("Origin", origin);
+        request.Headers.Add("Access-Control-Request-Method", "POST");
+        request.Headers.Add("Access-Control-Request-Headers", "dpop,content-type");
+        return await client.SendAsync(request, TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task A_listed_origin_may_call_with_a_DPoP_header()
+    {
+        using var factory = Gateway("https://online.khazana.test");
+        using var client = factory.CreateClient();
+        using var response = await Preflight(client, "https://online.khazana.test");
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        response.Headers.GetValues("Access-Control-Allow-Origin").ShouldBe(["https://online.khazana.test"]);
+        response.Headers.GetValues("Access-Control-Allow-Headers").Single().ToUpperInvariant().ShouldContain("DPOP");
+        response.Headers.Contains("Access-Control-Allow-Credentials").ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Any_other_origin_gets_no_CORS_headers()
+    {
+        using var factory = Gateway("https://online.khazana.test");
+        using var client = factory.CreateClient();
+        using var response = await Preflight(client, "https://evil.test");
+        response.Headers.Contains("Access-Control-Allow-Origin").ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task With_no_origins_listed_nobody_gets_CORS_headers()
+    {
+        using var factory = Gateway();
+        using var client = factory.CreateClient();
+        using var response = await Preflight(client, "https://online.khazana.test");
+        response.Headers.Contains("Access-Control-Allow-Origin").ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData("*")]
+    [InlineData("https://online.khazana.test/")]
+    [InlineData("https://online.khazana.test/app")]
+    [InlineData("ftp://online.khazana.test")]
+    public void A_wildcard_or_malformed_origin_stops_startup(string origin)
+    {
+        using var factory = Gateway(origin);
+        Should.Throw<InvalidOperationException>(() => factory.CreateClient());
+    }
+}

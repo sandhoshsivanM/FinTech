@@ -36,6 +36,25 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
     }
 });
 
+// Khazana Online's web app (webapp-online/, ADR 0007) runs on its own origin
+// and calls the gateway from the browser. Only origins listed in
+// Gateway:AllowedOrigins may; with none listed, no cross-origin request is
+// allowed. Tokens travel in headers, never cookies, so credentials stay off,
+// and "*" is refused: an allow-list is the point.
+var allowedOrigins = builder.Configuration.GetSection("Gateway:AllowedOrigins").Get<string[]>() ?? [];
+foreach (var origin in allowedOrigins)
+{
+    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http") ||
+        uri.AbsolutePath != "/" || origin.EndsWith('/'))
+        throw new InvalidOperationException($"Gateway:AllowedOrigins entry '{origin}' must be a bare origin like https://online.example.");
+}
+builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
+    .WithOrigins(allowedOrigins)
+    .WithMethods("GET", "POST", "PUT", "DELETE")
+    .WithHeaders("Authorization", "DPoP", "Content-Type", "If-None-Match")
+    .WithExposedHeaders("ETag", "Retry-After")
+    .SetPreflightMaxAge(TimeSpan.FromHours(1))));
+
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -74,6 +93,8 @@ app.Use((context, next) =>
     return next(context);
 });
 app.UseMiddleware<SecurityHeaders>();
+// Before the limiter, so a browser's preflight is answered here and costs no permits.
+app.UseCors();
 app.UseRateLimiter();
 app.MapDefaultEndpoints();
 app.MapReverseProxy();
