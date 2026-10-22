@@ -158,6 +158,30 @@ public sealed class ReportingFlowTests(ReportingHost host) : IDisposable
     }
 
     [Fact]
+    public async Task Events_for_one_user_arriving_at_the_same_moment_all_land()
+    {
+        // Live, a sign-up produces UserRegistered, UserSignedIn and DeviceAdded within
+        // milliseconds, on three queues, handled in parallel.
+        for (var round = 0; round < 5; round++)
+        {
+            var user = Guid.CreateVersion7();
+            var device = Guid.CreateVersion7();
+            var at = DateTimeOffset.UtcNow;
+            await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+                .ExecuteAndWaitAsync((Func<IMessageContext, Task>)(async bus =>
+                {
+                    await bus.PublishAsync(new UserRegisteredV1(user, device, "ios", at));
+                    await bus.PublishAsync(new UserSignedInV1(user, device, "ios", at));
+                    await bus.PublishAsync(new DeviceAddedV1(user, device, "ios", at));
+                }));
+            var entry = (await AdminJson($"/internal/admin/users/{user}"));
+            entry.GetProperty("entry").GetProperty("platforms").EnumerateArray().Select(p => p.GetString()).ShouldBe(["ios"], $"round {round}");
+            entry.GetProperty("entry").GetProperty("device_count").GetInt32().ShouldBe(1, $"round {round}");
+            entry.GetProperty("recent_signins").GetArrayLength().ShouldBe(1, $"round {round}");
+        }
+    }
+
+    [Fact]
     public async Task A_sign_in_that_arrives_before_the_registration_still_lands()
     {
         var user = Guid.CreateVersion7();
