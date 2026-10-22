@@ -1,0 +1,98 @@
+@page "/offers/new"
+@page "/offers/{Id}"
+@attribute [Authorize(Policy = AdminRoles.OpsPolicy)]
+@inject CatalogClient Catalog
+@inject NavigationManager Nav
+
+<h1>@(Id is null ? "Add an offer" : $"Edit {Id}")</h1>
+@if (_error is not null)
+{
+    <p class="error">@_error</p>
+}
+<EditForm Model="Form!" FormName="offer" OnValidSubmit="Save" method="post">
+    <dl>
+        <dt><label for="id">Id</label></dt><dd><InputText id="id" @bind-Value="Form!.Id" /></dd>
+        <dt><label for="issuer">Issuer</label></dt><dd><InputText id="issuer" @bind-Value="Form!.Issuer" /></dd>
+        <dt><label for="network">Network</label></dt><dd><InputText id="network" @bind-Value="Form!.Network" /></dd>
+        <dt><label for="product">Product</label></dt><dd><InputText id="product" @bind-Value="Form!.Product" /></dd>
+        <dt><label for="merchant">Merchant</label></dt><dd><InputText id="merchant" @bind-Value="Form!.Merchant" /></dd>
+        <dt><label for="category">Category</label></dt><dd><InputText id="category" @bind-Value="Form!.Category" /></dd>
+        <dt><label for="benefit">Benefit</label></dt><dd><InputText id="benefit" @bind-Value="Form!.Benefit" /></dd>
+        <dt><label for="value">Value</label></dt><dd><InputNumber id="value" @bind-Value="Form!.Value" /></dd>
+        <dt><label for="cap">Cap</label></dt><dd><InputNumber id="cap" @bind-Value="Form!.Cap" /></dd>
+        <dt><label for="from">Valid from</label></dt><dd><InputDate id="from" @bind-Value="Form!.ValidFrom" /></dd>
+        <dt><label for="to">Valid to</label></dt><dd><InputDate id="to" @bind-Value="Form!.ValidTo" /></dd>
+        <dt><label for="source">Source (https)</label></dt><dd><InputText id="source" @bind-Value="Form!.Source" /></dd>
+        <dt><label for="verified">Verified on</label></dt><dd><InputDate id="verified" @bind-Value="Form!.VerifiedOn" /></dd>
+    </dl>
+    <button type="submit">Save</button>
+</EditForm>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> Auth { get; set; } = null!;
+    [SupplyParameterFromForm(FormName = "offer")] private OfferForm? Form { get; set; }
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Form ??= new OfferForm();
+        if (Id is null || !string.IsNullOrEmpty(Form.Id)) return;
+        try
+        {
+            var existing = (await Catalog.OffersAsync((await Auth).User, CancellationToken.None)).FirstOrDefault(o => o.Id == Id);
+            if (existing is not null) Form = OfferForm.From(existing);
+        }
+        catch (AuditUnavailableException)
+        {
+            _error = "The audit log is unavailable, so nothing is shown.";
+        }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            await Catalog.SaveAsync((await Auth).User, Form!.ToDto(), CancellationToken.None);
+        }
+        catch (CatalogRefusedException e)
+        {
+            _error = $"Catalog refused it: {e.Message}";
+            return;
+        }
+        catch (AuditUnavailableException)
+        {
+            _error = "The audit log is unavailable, so nothing was saved.";
+            return;
+        }
+        Nav.NavigateTo("/offers");
+    }
+
+    public sealed class OfferForm
+    {
+        public string Id { get; set; } = "";
+        public string? Issuer { get; set; }
+        public string? Network { get; set; }
+        public string? Product { get; set; }
+        public string Merchant { get; set; } = "";
+        public string Category { get; set; } = "";
+        public string Benefit { get; set; } = "cashback";
+        public decimal Value { get; set; }
+        public decimal? Cap { get; set; }
+        public DateOnly ValidFrom { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+        public DateOnly ValidTo { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1));
+        public string Source { get; set; } = "https://";
+        public DateOnly VerifiedOn { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        private static string? Blank(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
+        public OfferDto ToDto() => new(Id.Trim(), Blank(Issuer), Blank(Network), Blank(Product), Merchant.Trim(), Category.Trim(),
+            Benefit.Trim(), Value, Cap, ValidFrom, ValidTo, Source.Trim(), VerifiedOn);
+
+        public static OfferForm From(OfferDto o) => new()
+        {
+            Id = o.Id, Issuer = o.Issuer, Network = o.Network, Product = o.Product, Merchant = o.Merchant, Category = o.Category,
+            Benefit = o.Benefit, Value = o.Value, Cap = o.Cap, ValidFrom = o.ValidFrom, ValidTo = o.ValidTo, Source = o.Source, VerifiedOn = o.VerifiedOn,
+        };
+    }
+}

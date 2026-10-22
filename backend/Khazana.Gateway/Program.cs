@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Khazana.Gateway;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,12 +55,24 @@ builder.Services.AddRateLimiter(o =>
     });
     o.AddPolicy(GatewayPolicies.Public, ctx => PerClientWindow(ctx, "RateLimits:Public", 60));
     o.AddPolicy(GatewayPolicies.Auth, ctx => PerClientWindow(ctx, "RateLimits:Auth", 20));
+    o.AddPolicy(GatewayPolicies.User, ctx => PerClientWindow(ctx, "RateLimits:User", 120, UserBucket(ctx)));
 });
 
 var app = builder.Build();
 
 if (trustedProxies.Length > 0) app.UseForwardedHeaders();
 if (!app.Environment.IsDevelopment()) app.UseHsts();
+// Sync pushes are the one large body (up to 500 encrypted records); the limit
+// is raised for that path alone, before anything reads the body.
+app.Use((context, next) =>
+{
+    if (context.Features.Get<IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } body)
+    {
+        if (context.Request.Path.StartsWithSegments("/v1/sync/push")) body.MaxRequestBodySize = 4 * 1024 * 1024;
+        else if (context.Request.Path.StartsWithSegments("/v1/sync/attachments")) body.MaxRequestBodySize = 25 * 1024 * 1024;
+    }
+    return next(context);
+});
 app.UseMiddleware<SecurityHeaders>();
 app.UseRateLimiter();
 app.MapDefaultEndpoints();
@@ -68,17 +81,41 @@ app.Run();
 
 // Per client address, fixed window. The address is the forwarded client IP when
 // the request came through a trusted proxy (UseForwardedHeaders above).
-static RateLimitPartition<string> PerClientWindow(HttpContext ctx, string section, int defaultLimit)
+static RateLimitPartition<string> PerClientWindow(HttpContext ctx, string section, int defaultLimit, string? bucket = null)
 {
     var limits = ctx.RequestServices.GetRequiredService<IConfiguration>().GetSection(section);
     return RateLimitPartition.GetFixedWindowLimiter(
-        $"{section}:{ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown"}",
+        $"{section}:{bucket ?? ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown"}",
         _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = limits.GetValue("PermitLimit", defaultLimit),
             Window = TimeSpan.FromSeconds(limits.GetValue("WindowSeconds", 60)),
             QueueLimit = 0,
         });
+}
+
+// A signed-in user's own bucket: the device key their token is bound to
+// (cnf.jkt), so thousands of phones behind one carrier address don't share a
+// limit. Read without validating: it only picks a bucket, the services check
+// the token, and the global per-address limit caps anyone who forges keys to
+// get more buckets.
+static string? UserBucket(HttpContext ctx)
+{
+    var header = ctx.Request.Headers.Authorization.ToString();
+    if (!header.StartsWith("DPoP ", StringComparison.Ordinal) || header.Length > 8192) return null;
+    try
+    {
+        var token = new Microsoft.IdentityModel.JsonWebTokens.JsonWebToken(header["DPoP ".Length..].Trim());
+        return token.TryGetPayloadValue<System.Text.Json.JsonElement>("cnf", out var cnf) &&
+               cnf.ValueKind == System.Text.Json.JsonValueKind.Object &&
+               cnf.TryGetProperty("jkt", out var jkt) && jkt.GetString() is { Length: > 0 and <= 64 } key
+            ? $"jkt:{key}"
+            : null;
+    }
+    catch (ArgumentException)
+    {
+        return null;
+    }
 }
 
 /// <summary>Exposed for WebApplicationFactory in the gateway tests.</summary>

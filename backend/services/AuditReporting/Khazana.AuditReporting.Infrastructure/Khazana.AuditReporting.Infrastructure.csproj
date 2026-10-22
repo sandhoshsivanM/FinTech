@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Nothing external yet: the nightly S3 Object Lock export will be the first. Kept
+       so every service has the same five folders. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.AuditReporting.Application\Khazana.AuditReporting.Application.csproj" />
+  </ItemGroup>
+</Project>

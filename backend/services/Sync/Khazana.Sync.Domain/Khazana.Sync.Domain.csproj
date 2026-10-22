@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Sync rules (record shape, batch limits, tombstones), with no framework. -->
+</Project>

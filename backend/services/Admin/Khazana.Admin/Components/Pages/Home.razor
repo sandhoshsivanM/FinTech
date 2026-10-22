@@ -1,0 +1,57 @@
+@page "/"
+@attribute [Authorize(Policy = AdminRoles.SupportPolicy)]
+@inject ReportingClient Reporting
+
+<h1>Dashboard</h1>
+@if (_error is not null)
+{
+    <p class="error">@_error</p>
+}
+else if (_m is not null)
+{
+    <section class="cards">
+        <div><span>Users</span><b>@_m.TotalUsers</b></div>
+        <div><span>Active, 7 days</span><b>@_m.Active7Days</b></div>
+        <div><span>Active, 30 days</span><b>@_m.Active30Days</b></div>
+        <div><span>Deletions pending</span><b>@_m.PendingDeletions</b></div>
+    </section>
+    <section class="split">
+        <div>
+            <h2>Sign-ups, last 30 days</h2>
+            <DayBars Days="_m.SignupsByDay" />
+        </div>
+        <div>
+            <h2>Sign-ins, last 30 days</h2>
+            <DayBars Days="_m.SigninsByDay" />
+        </div>
+        <div>
+            <h2>Users by platform</h2>
+            <table>
+                @foreach (var (platform, count) in _m.UsersByPlatform.OrderByDescending(p => p.Value))
+                {
+                    <tr><td>@platform</td><td class="num">@count</td></tr>
+                }
+            </table>
+        </div>
+    </section>
+}
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> Auth { get; set; } = null!;
+    [CascadingParameter] private HttpContext? Http { get; set; }
+    private Metrics? _m;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _m = await Reporting.MetricsAsync((await Auth).User, CancellationToken.None);
+        }
+        catch (AuditUnavailableException)
+        {
+            _error = "The audit log is unavailable, so nothing is shown. Every view must be recorded first.";
+            if (Http is not null) Http.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+        }
+    }
+}
