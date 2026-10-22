@@ -26,6 +26,13 @@
     <Project Path="services/MarketData/Khazana.MarketData.Infrastructure/Khazana.MarketData.Infrastructure.csproj" />
     <Project Path="services/MarketData/Khazana.MarketData.Tests/Khazana.MarketData.Tests.csproj" />
   </Folder>
+  <Folder Name="/services/Notification/">
+    <Project Path="services/Notification/Khazana.Notification.Api/Khazana.Notification.Api.csproj" />
+    <Project Path="services/Notification/Khazana.Notification.Application/Khazana.Notification.Application.csproj" />
+    <Project Path="services/Notification/Khazana.Notification.Domain/Khazana.Notification.Domain.csproj" />
+    <Project Path="services/Notification/Khazana.Notification.Infrastructure/Khazana.Notification.Infrastructure.csproj" />
+    <Project Path="services/Notification/Khazana.Notification.Tests/Khazana.Notification.Tests.csproj" />
+  </Folder>
   <Folder Name="/services/Sync/">
     <Project Path="services/Sync/Khazana.Sync.Api/Khazana.Sync.Api.csproj" />
     <Project Path="services/Sync/Khazana.Sync.Application/Khazana.Sync.Application.csproj" />

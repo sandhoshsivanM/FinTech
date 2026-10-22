@@ -9,6 +9,7 @@
 | Identity | 2.2 | Sign-in (Google, Apple, passkeys), DPoP-bound tokens, refresh rotation, logout, deletion request (ADR 0004) |
 | Devices & Keys | 2.3 | Device registry, end-to-end key envelopes (ciphertext only), QR pairing, recovery, remote logout (ADR 0005) |
 | Sync | 2.4 | Encrypted records in and out by per-user sequence; never merges, never reads (ADR 0006) |
+| Notification | 2.5 | Push tokens; data-free sync nudges and new-device alerts over FCM / APNs (log-only in development) |
 
 ## Run it locally
 
@@ -60,7 +61,7 @@ Postgres and RabbitMQ containers (needs Docker running).
 | `building-blocks/Khazana.SharedKernel/` | Clock, IST time |
 | `building-blocks/Khazana.Security/` | DPoP proof checks and `AddKhazanaAuthentication` for every service that serves a signed-in user |
 | `services/MarketData/` | Domain → Application → Infrastructure → Api, plus Tests |
-| `services/Identity/`, `services/Devices/`, `services/Sync/` | The same five folders |
+| `services/Identity/`, `Devices/`, `Sync/`, `Notification/` | The same five folders |
 | `tests/` | Architecture rules, gateway tests, DPoP tests, and the shared TestKit |
 
 ## Rules worth knowing

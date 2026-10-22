@@ -11,6 +11,7 @@ var marketDb = postgres.AddDatabase("marketdata");
 var identityDb = postgres.AddDatabase("identity");
 var devicesDb = postgres.AddDatabase("devices");
 var syncDb = postgres.AddDatabase("sync");
+var notificationDb = postgres.AddDatabase("notification");
 
 var rabbitMq = builder.AddRabbitMQ("rabbitmq").WithManagementPlugin();
 
@@ -52,15 +53,24 @@ var sync = builder.AddProject<Projects.Khazana_Sync_Api>("sync-api")
     .WaitFor(identity)
     .WithEnvironment("Auth__MetadataAddress", identityMetadata);
 
+// Pushes are logged, not sent, until FCM and APNs keys exist (decision D15).
+var notification = builder.AddProject<Projects.Khazana_Notification_Api>("notification-api")
+    .WithReference(notificationDb).WaitFor(notificationDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WaitFor(identity)
+    .WithEnvironment("Auth__MetadataAddress", identityMetadata)
+    .WithEnvironment("Providers__Push", "Log");
+
 var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(marketData).WaitFor(marketData)
     .WithReference(identity).WaitFor(identity)
     .WithReference(devices).WaitFor(devices)
     .WithReference(sync).WaitFor(sync)
+    .WithReference(notification).WaitFor(notification)
     .WithExternalHttpEndpoints();
 
 // DPoP proofs name the URL the app called, which is the gateway's.
-foreach (var service in new[] { identity, devices, sync })
+foreach (var service in new[] { identity, devices, sync, notification })
     service.WithEnvironment("Auth__PublicOrigins__0", gateway.GetEndpoint("http"));
 
 builder.Build().Run();

@@ -35,6 +35,11 @@ public class BoundaryTests
             typeof(Khazana.Sync.Application.SyncService).Assembly,
             typeof(Khazana.Sync.Infrastructure.DependencyInjection).Assembly,
             typeof(Khazana.Sync.Api.SyncEndpoints).Assembly),
+        new("Notification",
+            typeof(Khazana.Notification.Domain.PushContent).Assembly,
+            typeof(Khazana.Notification.Application.PushDispatcher).Assembly,
+            typeof(Khazana.Notification.Infrastructure.FcmPushSender).Assembly,
+            typeof(Khazana.Notification.Api.PushEndpoints).Assembly),
     ];
 
     private static readonly string[] AllServiceNamespaces =

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Push providers: FCM (Android, web), APNs (iOS), and a log-only sender
+       for development. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.Notification.Application\Khazana.Notification.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+  </ItemGroup>
+</Project>
