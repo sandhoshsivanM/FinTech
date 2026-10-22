@@ -90,6 +90,14 @@ public sealed class GatewayTests : IDisposable
     }
 
     [Fact]
+    public async Task Account_restore_is_forwarded_as_POST()
+    {
+        using var client = _factory.CreateClient();
+        using var post = await client.PostAsync(new Uri("/v1/account/restore", UriKind.Relative), content: null, TestContext.Current.CancellationToken);
+        ((int)post.StatusCode).ShouldBeGreaterThanOrEqualTo(500, "forwarded to the (absent) Identity service");
+    }
+
+    [Fact]
     public async Task Sign_in_has_its_own_tighter_limit()
     {
         using var client = _factory.CreateClient();
