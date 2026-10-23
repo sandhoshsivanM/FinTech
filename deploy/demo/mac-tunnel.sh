@@ -53,7 +53,8 @@ echo "Backend up: $url"
 if [[ "${1:-}" != "--no-web" ]]; then
   # --no-build: upload exactly this build. Without it the Netlify CLI runs the
   # build again from netlify.toml, without this address, and the app calls localhost.
-  (cd webapp-online && export NEXT_PUBLIC_GATEWAY_URL="$url" && npm ci --silent && npm run build >/dev/null &&
+  google=$(grep '^GOOGLE_CLIENT_ID=' "$env_file" | cut -d= -f2 || true)
+  (cd webapp-online && export NEXT_PUBLIC_GATEWAY_URL="$url" NEXT_PUBLIC_GOOGLE_CLIENT_ID="$google" && npm ci --silent && npm run build >/dev/null &&
     grep -rqF "$url" out/_next/static && npx --yes netlify-cli deploy --prod --no-build --dir=out --site "$NETLIFY_SITE" >/dev/null)
   echo "Web app deployed: https://khazana-online.netlify.app (talks to $url)"
 fi

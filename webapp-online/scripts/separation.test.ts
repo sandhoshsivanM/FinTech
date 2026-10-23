@@ -34,6 +34,16 @@ test('the CSP allows this site and the gateway only', () => {
   expect(csp).not.toMatch(/'unsafe-eval'/);
 });
 
+test('Google sign-in adds only Google\'s GIS origins, and only when configured', () => {
+  const csp = (google: boolean) => /Content-Security-Policy: (.+)/.exec(headersFile('https://api.khazana.example', { google }))![1];
+  expect(csp(false)).not.toContain('accounts.google.com');
+  const on = csp(true);
+  expect(on).toContain("script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client");
+  expect(on).toContain('frame-src https://accounts.google.com/gsi/');
+  expect(on.split('; ').find((d) => d.startsWith('connect-src'))).toBe("connect-src 'self' https://api.khazana.example https://accounts.google.com/gsi/");
+  expect(on).not.toMatch(/'unsafe-eval'/);
+});
+
 test('a plain-http gateway is refused unless it is localhost', () => {
   expect(gatewayOrigin('http://localhost:5196')).toBe('http://localhost:5196');
   expect(() => gatewayOrigin('http://api.khazana.example')).toThrow(/https/);

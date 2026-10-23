@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { gateway } from '@/lib/api';
+import { googleClientId, renderGoogleButton } from '@/lib/google';
 import { passkeysSupported } from '@/lib/passkey';
 import { Button, Card, ErrorText, Muted, Page, describe } from '@/components/ui';
 
@@ -31,6 +32,19 @@ export default function SignIn() {
 
   const supported = typeof window === 'undefined' || passkeysSupported();
 
+  // Google's button, bound to this device's key (the token's nonce).
+  const googleButton = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!googleClientId || !googleButton.current) return;
+    const el = googleButton.current;
+    gateway()
+      .dpopThumbprint()
+      .then((nonce) => renderGoogleButton(el, nonce, (idToken) => void run('google', () => gateway().signInWithGoogle(idToken))))
+      .catch((err) => setError(describe(err)));
+    // run is stable enough for a one-time render; re-rendering the button would reset Google's state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Page
       title="Khazana Online"
@@ -43,6 +57,12 @@ export default function SignIn() {
         <Button kind="quiet" disabled={!!busy || !supported} onClick={() => run('sign-in', () => gateway().signInWithPasskey())}>
           {busy === 'sign-in' ? 'Waiting for your passkey…' : 'Sign in with a passkey'}
         </Button>
+        {googleClientId && (
+          <>
+            <div className="flex justify-center" ref={googleButton} data-testid="google-button" />
+            {busy === 'google' && <Muted>Signing in with Google…</Muted>}
+          </>
+        )}
         <Muted>
           {supported
             ? 'A passkey is Face ID, Touch ID or your device PIN. No password, no email.'

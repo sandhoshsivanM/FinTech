@@ -43,6 +43,14 @@ Then point the web app at it: build `webapp-online/` with
 `NEXT_PUBLIC_GATEWAY_URL=https://<host>` and deploy (see
 `webapp-online/README.md`).
 
+## Google sign-in (optional)
+
+Create an OAuth **Web** client in Google Cloud Console (free; consent screen in
+Testing, with your account as a test user) whose authorised JavaScript origins
+include `https://khazana-online.netlify.app`. Put its client ID in `.env` as
+`GOOGLE_CLIENT_ID=…` and run `up.sh` or `mac-tunnel.sh` again: Identity accepts
+it (nonce bound to the device's DPoP key) and the web app shows the button.
+
 ## Updating
 
 ```bash

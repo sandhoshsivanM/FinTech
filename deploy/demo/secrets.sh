@@ -30,6 +30,8 @@ cat > .env <<ENV
 API_HOST=${host}
 WEB_ORIGIN=https://khazana-online.netlify.app
 WEB_RP_ID=khazana-online.netlify.app
+# Google sign-in (optional): the OAuth Web client ID from Google Cloud Console.
+GOOGLE_CLIENT_ID=
 POSTGRES_PASSWORD=$(rand 40)
 RABBITMQ_PASSWORD=$(rand 40)
 FIELD_KEY=$(rand 64)

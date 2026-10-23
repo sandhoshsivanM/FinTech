@@ -1,7 +1,7 @@
 // The gateway client. Every request is DPoP-signed with this device's key; the
 // access token is kept in memory and refreshed (rotating the refresh token)
 // when it expires or the server says it is no longer valid.
-import { createDeviceKey, createProof, type DeviceKey } from './dpop';
+import { createDeviceKey, createProof, thumbprint, type DeviceKey } from './dpop';
 import { createPasskey, getPasskey } from './passkey';
 import * as vault from './vault';
 
@@ -95,6 +95,21 @@ export class GatewayClient {
     const { challenge_id, options } = await this.challenge('/v1/auth/passkeys/assert/options');
     const assertion = await getPasskey(options);
     return this.tokenWith({ provider: 'passkey', challenge_id, assertion });
+  }
+
+  /**
+   * This device's DPoP key thumbprint (RFC 7638). Google sign-in puts it in the
+   * ID token as the nonce, and Identity refuses a token whose nonce isn't the
+   * key that signs the request, so a token lifted from this page is useless
+   * to any other device.
+   */
+  async dpopThumbprint(): Promise<string> {
+    return thumbprint((await this.deviceKey()).publicJwk);
+  }
+
+  /** Signs in (or creates the account) with a Google ID token minted for this device's key. */
+  async signInWithGoogle(idToken: string): Promise<TokenResponse> {
+    return this.tokenWith({ provider: 'google', id_token: idToken });
   }
 
   async isSignedIn(): Promise<boolean> {
