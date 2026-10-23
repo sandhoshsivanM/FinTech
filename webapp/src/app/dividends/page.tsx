@@ -12,18 +12,18 @@ import { useApp, uid } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { D, ZERO } from '@khazana/domain/money';
 import { STORE, type Dividend } from '@khazana/domain/types';
-import { PageIntro, Button, Chip, Field, Input, Select, EmptyState, GlassCard } from '@/components/ui';
-import { Kpi, KpiRow } from '@/components/Kpi';
+import { PageIntro, Button, Chip, Field, Input, Select, EmptyState, GlassCard } from '@khazana/ui/ui';
+import { Kpi, KpiRow } from '@khazana/ui/Kpi';
 import { DataGrid, type Column } from '@/components/DataGrid';
-import { ColumnChart } from '@/components/charts/ColumnChart';
-import { Stagger, StaggerItem } from '@/components/motion';
+import { ColumnChart } from '@khazana/ui/charts/ColumnChart';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
 import { portfolioSummary } from '@khazana/domain/portfolio';
 import { short } from '@/lib/format';
 import { DateInput } from '@/components/DateInput';
 import { formatDate, formatMonthShort } from '@/lib/dateFormat';
 import { contains, monthsBack, monthsIn } from '@khazana/domain/period';
 import { NumberInput } from '@/components/NumberInput';
-import { CardTitle } from '@/components/Hint';
+import { CardTitle } from '@khazana/ui/Hint';
 
 const KIND_LABEL: Record<string, string> = { dividend: 'Dividend', interest: 'Interest', bonus: 'Bonus', buyback: 'Buyback' };
 

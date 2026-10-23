@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { gatewayOrigin, headersFile } from './headers.mjs';
 
 const app = join(__dirname, '..');
+const repo = join(app, '..');
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -16,10 +17,12 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
+// The shared UI package is compiled into this app, so it is checked too.
 test('nothing imports the offline web app or opens its database', () => {
   const offline = [/from\s+['"][^'"]*\/webapp\//, /import\s*\(\s*['"][^'"]*\/webapp\//, /['"]fintech_os['"]/, /@import\s+["'][^"']*\/webapp\//];
-  const hits = [...sourceFiles(join(app, 'src')), join(app, 'next.config.ts'), join(app, 'tsconfig.json')].flatMap((file) =>
-    offline.filter((re) => re.test(readFileSync(file, 'utf8'))).map((re) => `${file.slice(app.length + 1)}: ${re}`),
+  const files = [...sourceFiles(join(app, 'src')), ...sourceFiles(join(repo, 'packages/ui-ts')), join(app, 'next.config.ts'), join(app, 'tsconfig.json')];
+  const hits = files.flatMap((file) =>
+    offline.filter((re) => re.test(readFileSync(file, 'utf8'))).map((re) => `${file.slice(repo.length + 1)}: ${re}`),
   );
   expect(hits).toEqual([]);
 });

@@ -11,8 +11,8 @@ import {
   UploadCloud, FileWarning, CheckCircle2,
   CandlestickChart, Globe, Vault, Layers, Landmark,
 } from 'lucide-react';
-import { GlassCard } from '@/components/ui';
-import { CardTitle } from '@/components/Hint';
+import { GlassCard } from '@khazana/ui/ui';
+import { CardTitle } from '@khazana/ui/Hint';
 import { ACCEPTED_EXTENSIONS } from '@/lib/sheet';
 import type { Institution } from '@/lib/institutions';
 

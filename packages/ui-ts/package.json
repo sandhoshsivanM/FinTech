@@ -1,0 +1,13 @@
+{
+  "name": "@khazana/ui",
+  "private": true,
+  "description": "Zentra React components (charts, cards, motion, hints) and their stylesheet, shared at build time by the Khazana web apps (ADR 0007). Props and tokens in, markup out: no store, no storage, no network.",
+  "type": "module",
+  "peerDependencies": {
+    "clsx": "^2.1.1",
+    "framer-motion": "^13.0.0",
+    "lucide-react": "^1.21.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  }
+}

@@ -3,7 +3,7 @@
 // the Tauri/wry webview (it returns false, so confirm-gated deletes silently
 // fail in the desktop app). Works everywhere and matches the app's look.
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
-import { Button, GlassCard } from './ui';
+import { Button, GlassCard } from '@khazana/ui/ui';
 
 export interface ConfirmOptions {
   title: string;

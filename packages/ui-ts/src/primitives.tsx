@@ -18,7 +18,7 @@
  */
 import type { ReactNode } from 'react';
 import { Hint, SectionInfo } from './Hint';
-import type { SectionKey, TermKey } from '@/lib/glossary';
+import type { SectionKey, TermKey } from './glossary';
 import clsx from 'clsx';
 
 /* -------------------------------------------------------------------------- */

@@ -24,13 +24,13 @@ import { STORE, type Account } from '@khazana/domain/types';
 import { accountBalances, moneyAccounts, liquidBalance } from '@khazana/domain/accountLedger';
 import {
   PageIntro, GlassCard, EmptyState, Button, Field, Input, Select, Segmented, Chip,
-} from '@/components/ui';
-import { Stagger, StaggerItem, useReducedMotion } from '@/components/motion';
+} from '@khazana/ui/ui';
+import { Stagger, StaggerItem, useReducedMotion } from '@khazana/ui/motion';
 import { WalletCard } from '@/components/home/WalletStack';
 import { useConfirm } from '@/components/Confirm';
 import { NumberInput } from '@/components/NumberInput';
-import { CardTitle } from '@/components/Hint';
-import type { SectionKey } from '@/lib/glossary';
+import { CardTitle } from '@khazana/ui/Hint';
+import type { SectionKey } from '@khazana/ui/glossary';
 
 type MoneySubtype = 'bank' | 'cash';
 

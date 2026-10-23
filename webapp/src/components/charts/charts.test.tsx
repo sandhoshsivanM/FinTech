@@ -1,10 +1,10 @@
 // Chart-kit guards. The web twins of test/widget/charts_test.dart.
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, within } from '@testing-library/react';
-import { Gauge } from './Gauge';
-import { AreaChart } from './AreaChart';
-import { Sunburst, type SunburstNode } from './Sunburst';
-import { Donut, type DonutSeg } from './Donut';
+import { Gauge } from '@khazana/ui/charts/Gauge';
+import { AreaChart } from '@khazana/ui/charts/AreaChart';
+import { Sunburst, type SunburstNode } from '@khazana/ui/charts/Sunburst';
+import { Donut, type DonutSeg } from '@khazana/ui/charts/Donut';
 import { groupShades, MAX_GROUP_SHADES, ASSET_GROUP_META, ASSET_GROUP_ORDER } from '@khazana/domain/portfolio';
 
 beforeEach(cleanup);
@@ -280,7 +280,7 @@ describe('hover readouts', () => {
   // A `title` attribute is an OS tooltip: delayed, platform-styled, and absent
   // entirely on touch. Every chart has to state its figure itself.
   test('ColumnChart names the hovered period and its value', async () => {
-    const { ColumnChart } = await import('./ColumnChart');
+    const { ColumnChart } = await import('@khazana/ui/charts/ColumnChart');
     const { container } = render(
       <ColumnChart columns={[{ label: 'Jul 26', value: 22 }, { label: 'Aug 26', value: 232 }]}
         format={(n) => `₹${n}`} />,
@@ -295,7 +295,7 @@ describe('hover readouts', () => {
   });
 
   test('Bars names the hovered group and every series in it', async () => {
-    const { Bars } = await import('../ui');
+    const { Bars } = await import('@khazana/ui/ui');
     const { container } = render(
       <Bars
         groups={[
@@ -322,7 +322,7 @@ describe('hover readouts', () => {
   // it describes. jsdom does no layout, so the containment is what's assertable
   // and it is also the thing that was actually wrong.
   test('the Bars readout renders inside the hovered group, not the chart', async () => {
-    const { Bars } = await import('../ui');
+    const { Bars } = await import('@khazana/ui/ui');
     const { container } = render(
       <Bars
         groups={[
@@ -346,7 +346,7 @@ describe('hover readouts', () => {
   });
 
   test('AreaChart reports the nearest point as the pointer moves', async () => {
-    const { AreaChart } = await import('./AreaChart');
+    const { AreaChart } = await import('@khazana/ui/charts/AreaChart');
     const { container } = render(
       <AreaChart values={[10, 20, 30, 40]} format={(n) => `₹${n}`} />,
     );

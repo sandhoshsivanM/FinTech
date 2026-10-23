@@ -9,8 +9,8 @@ import { useFmt } from '@/lib/useFmt';
 import { accountBalances, MONEY_SUBTYPES } from '@khazana/domain/accountLedger';
 import { ZERO } from '@khazana/domain/money';
 import type { Account } from '@khazana/domain/types';
-import { motion, SPRING_SOFT } from '../motion';
-import { CardTitle } from '../Hint';
+import { motion, SPRING_SOFT } from '@khazana/ui/motion';
+import { CardTitle } from '@khazana/ui/Hint';
 
 /**
  * Per account type: a label and a card finish. The card is dark in both

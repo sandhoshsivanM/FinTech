@@ -7,8 +7,8 @@
  */
 import Link from 'next/link';
 import { HelpCircle, ShieldCheck, Command, Download, Compass, FlaskConical, ChevronDown } from 'lucide-react';
-import { PageIntro, Button, GlassCard, Chip } from '@/components/ui';
-import { Stagger, StaggerItem } from '@/components/motion';
+import { PageIntro, Button, GlassCard, Chip } from '@khazana/ui/ui';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
 import { TOUR_EVENT } from '@/components/Tour';
 import { SendFeedbackLink } from '@/components/Feedback';
 

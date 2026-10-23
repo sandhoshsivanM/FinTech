@@ -7,12 +7,12 @@ import { useFmt } from '@/lib/useFmt';
 import { aggregateByDay } from '@khazana/domain/calendarLedger';
 import { spentForCategory, evaluateBudget, budgetRollover } from '@khazana/domain/finance';
 import { forMonth } from '@khazana/domain/period';
-import { PageIntro, GlassCard, ProgressBar } from '@/components/ui';
-import { CategoryIcon } from '@/components/CategoryIcon';
+import { PageIntro, GlassCard, ProgressBar } from '@khazana/ui/ui';
+import { CategoryIcon } from '@khazana/ui/CategoryIcon';
 import type { Txn } from '@khazana/domain/types';
 import { formatLongDate } from '@/lib/dateFormat';
 import { short } from '@/lib/format';
-import { CardTitle, SectionInfo } from '@/components/Hint';
+import { CardTitle, SectionInfo } from '@khazana/ui/Hint';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const dayKey = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;

@@ -7,7 +7,7 @@ import { useApp } from '@/lib/store';
 import { healthScore, type HealthCategory } from '@khazana/domain/health';
 import { liquidBalance } from '@khazana/domain/accountLedger';
 import { investmentTotals } from '@khazana/domain/investmentTotals';
-import { PageIntro, GlassCard, SectionHeader, ProgressBar, Button, Gauge, AreaChart, scoreColor } from '@/components/ui';
+import { PageIntro, GlassCard, SectionHeader, ProgressBar, Button, Gauge, AreaChart, scoreColor } from '@khazana/ui/ui';
 import { ScoreMethod } from '@/components/ScoreMethod';
 
 /** Where each category's data comes from, so an untracked card can point somewhere. */

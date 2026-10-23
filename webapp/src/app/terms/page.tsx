@@ -18,8 +18,8 @@ import Link from 'next/link';
 import {
   FileText, KeyRound, TriangleAlert, Scale, Ban, BookOpen,
 } from 'lucide-react';
-import { PageIntro, GlassCard } from '@/components/ui';
-import { Stagger, StaggerItem } from '@/components/motion';
+import { PageIntro, GlassCard } from '@khazana/ui/ui';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
 
 /** Kept in step with `src/app/privacy/page.tsx` and the root LICENSE file. */
 const EFFECTIVE = '21 August 2026';

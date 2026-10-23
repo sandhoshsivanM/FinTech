@@ -1,8 +1,8 @@
 'use client';
 import { useState, useMemo } from 'react';
 import { CreditCard, Landmark, Trash2, Plus, AlertTriangle, Pencil } from 'lucide-react';
-import { Hint } from '@/components/Hint';
-import type { TermKey } from '@/lib/glossary';
+import { Hint } from '@khazana/ui/Hint';
+import type { TermKey } from '@khazana/ui/glossary';
 import { useApp, uid } from '@/lib/store';
 import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
@@ -11,7 +11,7 @@ import { emi, simulatePayoff, type PayoffStrategy } from '@khazana/domain/financ
 import {
   PageIntro, GlassCard, SectionHeader, EmptyState,
   Button, Field, Input, Select, Segmented, ProgressBar,
-} from '@/components/ui';
+} from '@khazana/ui/ui';
 import { useConfirm } from '@/components/Confirm';
 
 // ---- Kind badge ----

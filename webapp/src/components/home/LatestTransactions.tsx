@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { formatDayMonth } from '@/lib/dateFormat';
-import { GlassCard } from '../ui';
-import { CardTitle } from '../Hint';
-import { CategoryIcon } from '../CategoryIcon';
-import { motion, fadeUp, stagger } from '../motion';
+import { GlassCard } from '@khazana/ui/ui';
+import { CardTitle } from '@khazana/ui/Hint';
+import { CategoryIcon } from '@khazana/ui/CategoryIcon';
+import { motion, fadeUp, stagger } from '@khazana/ui/motion';
 
 const SHOWN = 5;
 

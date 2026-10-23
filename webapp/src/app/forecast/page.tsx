@@ -30,14 +30,14 @@ import {
 } from '@khazana/domain/forecast';
 import {
   PageIntro, GlassCard, SectionHeader, EmptyState, Button, Chip,
-} from '@/components/ui';
-import { Kpi, KpiRow } from '@/components/Kpi';
-import { LineChart } from '@/components/charts/LineChart';
+} from '@khazana/ui/ui';
+import { Kpi, KpiRow } from '@khazana/ui/Kpi';
+import { LineChart } from '@khazana/ui/charts/LineChart';
 import { NumberInput } from '@/components/NumberInput';
-import { Stagger, StaggerItem } from '@/components/motion';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
 import { short } from '@/lib/format';
 import { formatDate } from '@/lib/dateFormat';
-import { CardTitle } from '@/components/Hint';
+import { CardTitle } from '@khazana/ui/Hint';
 
 export default function ForecastPage() {
   const txns = useApp((s) => s.txns);

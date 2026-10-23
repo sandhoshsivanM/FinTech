@@ -1,6 +1,6 @@
 'use client';
 import clsx from 'clsx';
-import { CategoryIcon } from '@/components/CategoryIcon';
+import { CategoryIcon } from '@khazana/ui/CategoryIcon';
 import { useState, useMemo } from 'react';
 import { PiggyBank, Pencil, Trash2, Plus, Check, X } from 'lucide-react';
 import { useApp, uid } from '@/lib/store';
@@ -16,7 +16,7 @@ import { useNow } from '@/lib/useNow';
 import {
   PageIntro, GlassCard, SectionHeader, EmptyState, Donut,
   Button, Field, Input, Select, ProgressBar, StatStrip,
-} from '@/components/ui';
+} from '@khazana/ui/ui';
 import { useConfirm } from '@/components/Confirm';
 
 // ---- Status pill ----

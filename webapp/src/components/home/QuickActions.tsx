@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import clsx from 'clsx';
 import { Minus, Plus, ArrowLeftRight, FileDown, type LucideIcon } from 'lucide-react';
-import { motion, popIn, stagger, tap } from '../motion';
+import { motion, popIn, stagger, tap } from '@khazana/ui/motion';
 
 const ACTIONS: { href: string; label: string; icon: LucideIcon; primary?: boolean }[] = [
   { href: '/add', label: 'Expense', icon: Minus, primary: true },

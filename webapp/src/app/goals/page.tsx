@@ -10,7 +10,7 @@ import { moneyAccounts } from '@khazana/domain/accountLedger';
 import {
   PageIntro, GlassCard, SectionHeader, EmptyState,
   Button, Field, Input, Select, Ring, StatStrip,
-} from '@/components/ui';
+} from '@khazana/ui/ui';
 import { useConfirm } from '@/components/Confirm';
 import { DateInput } from '@/components/DateInput';
 import { formatDate } from '@/lib/dateFormat';

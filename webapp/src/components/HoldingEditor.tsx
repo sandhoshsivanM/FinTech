@@ -13,7 +13,7 @@ import { STORE, type AssetType, type Holding } from '@khazana/domain/types';
 import { ASSET_META } from '@khazana/domain/portfolio';
 import { MARKET_CAP_LABEL, SECTOR_SUGGESTIONS } from '@khazana/domain/instrumentMaster';
 import { parseHoldingsCsv, planImport, importCounts, type CsvHolding } from '@/lib/holdingsCsv';
-import { Button, Field, Input, Select, GlassCard, Chip } from './ui';
+import { Button, Field, Input, Select, GlassCard, Chip } from '@khazana/ui/ui';
 import { DateInput } from './DateInput';
 import { NumberInput } from './NumberInput';
 import { isFixedIncome, PAYOUT_LABEL } from '@khazana/domain/fixedIncome';

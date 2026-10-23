@@ -6,8 +6,8 @@ import { useFmt } from '@/lib/useFmt';
 import { useNow } from '@/lib/useNow';
 import { ZERO } from '@khazana/domain/money';
 import { dailyFlow, describeChange, type DayFlow } from '@khazana/domain/dailyFlow';
-import { GlassCard } from '../ui';
-import { CardTitle } from '../Hint';
+import { GlassCard } from '@khazana/ui/ui';
+import { CardTitle } from '@khazana/ui/Hint';
 
 /* Chart geometry, in px. The midline sits 58% down: money in rises above it,
    money out hangs below. */

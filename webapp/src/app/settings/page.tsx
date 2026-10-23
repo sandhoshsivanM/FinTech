@@ -15,7 +15,7 @@ import { saveFile } from '@/lib/saveFile';
 import {
   CURRENCIES, findCurrency, isRateStale, rateAsOf, resolveRate,
 } from '@khazana/domain/currency';
-import { GlassCard, SectionHeader, Button, Field, Select, PageIntro, Input, Segmented } from '@/components/ui';
+import { GlassCard, SectionHeader, Button, Field, Select, PageIntro, Input, Segmented } from '@khazana/ui/ui';
 import { useDemoData } from '@/components/DemoBadge';
 import { useLivePrices } from '@/lib/quotes/useLivePrices';
 import { useConfirm } from '@/components/Confirm';

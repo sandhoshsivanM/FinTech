@@ -13,16 +13,16 @@ import { useApp, uid } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { D } from '@khazana/domain/money';
 import { ALERT_TYPE_OF, STORE, type Alert, type AlertKind } from '@khazana/domain/types';
-import { PageIntro, Button, Chip, Field, Input, Select, EmptyState, GlassCard, Toggle } from '@/components/ui';
-import { Kpi, KpiRow } from '@/components/Kpi';
-import { Stagger, StaggerItem } from '@/components/motion';
+import { PageIntro, Button, Chip, Field, Input, Select, EmptyState, GlassCard, Toggle } from '@khazana/ui/ui';
+import { Kpi, KpiRow } from '@khazana/ui/Kpi';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
 import { useConfirm } from '@/components/Confirm';
 import { portfolioSummary } from '@khazana/domain/portfolio';
 import { evaluateAlerts, stateOf } from '@khazana/domain/alerts';
 import { useNow } from '@/lib/useNow';
 import { formatDate } from '@/lib/dateFormat';
 import { NumberInput } from '@/components/NumberInput';
-import { CardTitle } from '@/components/Hint';
+import { CardTitle } from '@khazana/ui/Hint';
 
 const KIND_LABEL: Record<AlertKind, string> = {
   price_above: 'Price rises above',

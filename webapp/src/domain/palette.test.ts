@@ -204,8 +204,9 @@ describe('small muted text is readable', () => {
   // --muted carries the small labels everywhere (stat captions, axis ticks,
   // list sub-lines). WCAG 1.4.3 asks 4.5:1 for text that size, on every
   // surface it lands on: the card and the page, in both themes.
-  // Tokens live in the shared tokens.css; component rules such as .tray stay in globals.css.
-  const css = ['../packages/domain-ts/tokens.css', 'src/app/globals.css']
+  // Tokens live in the shared tokens.css; component rules such as .tray live in
+  // the shared component stylesheet, app chrome in globals.css.
+  const css = ['../packages/domain-ts/tokens.css', '../packages/ui-ts/styles.css', 'src/app/globals.css']
     .map((f) => readFileSync(resolve(process.cwd(), f), 'utf8'))
     .join('\n');
   const lightBlock = css.slice(css.indexOf(':root {'), css.indexOf(':root[data-theme="dark"] {'));

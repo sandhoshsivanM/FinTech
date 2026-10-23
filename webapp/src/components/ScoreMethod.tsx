@@ -16,7 +16,7 @@
 import { useState } from 'react';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 import clsx from 'clsx';
-import { GlassCard } from '@/components/ui';
+import { GlassCard } from '@khazana/ui/ui';
 import { CATEGORY_WEIGHTS, MIN_GRADABLE_WEIGHT } from '@khazana/domain/health';
 
 const AREA_LABEL: Record<keyof typeof CATEGORY_WEIGHTS, string> = {

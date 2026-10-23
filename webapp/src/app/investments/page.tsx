@@ -38,17 +38,17 @@ import {
 import { investmentTotals, concentration } from '@khazana/domain/investmentTotals';
 import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@khazana/domain/instrumentMaster';
 import { dayChange, hasRealClose, priceAsOfLabel, rowDayPct } from '@/domain/dayChange';
-import { PageIntro, Button, Chip, Delta, Donut, Gauge, EmptyState, GlassCard, type DonutSeg } from '@/components/ui';
-import { Kpi, KpiRow } from '@/components/Kpi';
-import { ColumnChart } from '@/components/charts/ColumnChart';
-import { MiniSparkline, RankBars } from '@/components/charts/MiniSparkline';
+import { PageIntro, Button, Chip, Delta, Donut, Gauge, EmptyState, GlassCard, type DonutSeg } from '@khazana/ui/ui';
+import { Kpi, KpiRow } from '@khazana/ui/Kpi';
+import { ColumnChart } from '@khazana/ui/charts/ColumnChart';
+import { MiniSparkline, RankBars } from '@khazana/ui/charts/MiniSparkline';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
-import { Stagger, StaggerItem } from '@/components/motion';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
 import { DateInput } from '@/components/DateInput';
-import { AssetMark } from '@/components/primitives';
-import { CardTitle } from '@/components/Hint';
-import type { SectionKey } from '@/lib/glossary';
+import { AssetMark } from '@khazana/ui/primitives';
+import { CardTitle } from '@khazana/ui/Hint';
+import type { SectionKey } from '@khazana/ui/glossary';
 
 const SERIES = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)', 'var(--c7)', 'var(--c8)'];
 

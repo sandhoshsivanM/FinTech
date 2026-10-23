@@ -28,12 +28,12 @@ import { D } from '@khazana/domain/money';
 import {
   PageIntro, Gauge, ProgressBar, GlassCard, EmptyState, Button, Segmented, Sunburst,
   type SunburstNode,
-} from '@/components/ui';
-import { Stagger, StaggerItem } from '@/components/motion';
-import { ColumnChart } from '@/components/charts/ColumnChart';
-import { LineChart } from '@/components/charts/LineChart';
-import { Histogram } from '@/components/charts/Histogram';
-import { Section, Metric, MetricRow, LedgerLine } from '@/components/primitives';
+} from '@khazana/ui/ui';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
+import { ColumnChart } from '@khazana/ui/charts/ColumnChart';
+import { LineChart } from '@khazana/ui/charts/LineChart';
+import { Histogram } from '@khazana/ui/charts/Histogram';
+import { Section, Metric, MetricRow, LedgerLine } from '@khazana/ui/primitives';
 import {
   portfolioSummary, rollup, allocationByGroup, sunburst, zentraGroupShades,
   ZENTRA_GROUP, UNCLASSIFIED_KEY, type AssetGroup,
@@ -47,7 +47,7 @@ import {
   diversificationBand, returnQualityScore, extremes, POSITION_ALERT_WEIGHT,
 } from '@khazana/domain/analytics';
 import { short } from '@/lib/format';
-import { CardTitle } from '@/components/Hint';
+import { CardTitle } from '@khazana/ui/Hint';
 import { formatMonthShort } from '@/lib/dateFormat';
 
 /** Trailing windows the snapshot history can answer. */

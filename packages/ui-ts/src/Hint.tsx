@@ -12,7 +12,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Info } from 'lucide-react';
-import { HELP, type HelpKey, type SectionKey } from '@/lib/glossary';
+import { HELP, type HelpKey, type SectionKey } from './glossary';
 
 export function Hint({ term, className, align = 'left', size = 13, tone = 'muted' }: {
   /** A glossary term, or a `<route>.<section>` key from SECTION_HELP. */

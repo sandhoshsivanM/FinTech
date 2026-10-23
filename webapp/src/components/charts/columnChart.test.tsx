@@ -3,7 +3,7 @@
 // and a screenshot can never reach.
 import { describe, test, expect, beforeEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
-import { ColumnChart } from './ColumnChart';
+import { ColumnChart } from '@khazana/ui/charts/ColumnChart';
 
 const MONTHS = [
   { label: 'Jun 26', value: 8 },

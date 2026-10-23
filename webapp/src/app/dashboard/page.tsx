@@ -36,15 +36,15 @@ import { currentMonth, custom, monthName, trailingDays, type DateRange } from '@
 import { MonthNav } from '@/components/MonthNav';
 import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@khazana/domain/instrumentMaster';
 import { dayChange, priceAsOfLabel } from '@/domain/dayChange';
-import { GlassCard, SectionHeader, Ring, ProgressBar, Segmented, Chip, Delta, Donut, scoreColor, type DonutSeg } from '@/components/ui';
-import { Kpi, KpiRow } from '@/components/Kpi';
+import { GlassCard, SectionHeader, Ring, ProgressBar, Segmented, Chip, Delta, Donut, scoreColor, type DonutSeg } from '@khazana/ui/ui';
+import { Kpi, KpiRow } from '@khazana/ui/Kpi';
 import {
-  PageHeader, Section, Metric, MetricRow, MoneyValue, LedgerLine, AssetMark } from '@/components/primitives';
-import { LineChart } from '@/components/charts/LineChart';
+  PageHeader, Section, Metric, MetricRow, MoneyValue, LedgerLine, AssetMark } from '@khazana/ui/primitives';
+import { LineChart } from '@khazana/ui/charts/LineChart';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
 import { DashboardStarter } from '@/components/DashboardStarter';
-import { Hint, CardTitle } from '@/components/Hint';
-import { Stagger, StaggerItem } from '@/components/motion';
+import { Hint, CardTitle } from '@khazana/ui/Hint';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
 import { useChartBoardWidgets } from '@/components/home/ChartBoard';
 import { WidgetGrid } from '@/components/home/WidgetGrid';
 import { BalanceHero } from '@/components/home/BalanceHero';

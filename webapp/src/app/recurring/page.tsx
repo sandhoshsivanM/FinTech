@@ -4,7 +4,7 @@ import {
   Trash2, RefreshCw, Plus, ChevronDown, ChevronUp, Pencil,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { CategoryIcon } from '@/components/CategoryIcon';
+import { CategoryIcon } from '@khazana/ui/CategoryIcon';
 import { useApp, uid } from '@/lib/store';
 import { D, ZERO } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
@@ -13,7 +13,7 @@ import { FREQ_LABEL } from '@khazana/domain/recurrence';
 import { moneyAccounts } from '@khazana/domain/accountLedger';
 import {
   PageIntro, GlassCard, Button, Segmented, Field, Input, Select, EmptyState, StatStrip,
-} from '@/components/ui';
+} from '@khazana/ui/ui';
 import { useConfirm } from '@/components/Confirm';
 import { DateInput } from '@/components/DateInput';
 import { formatDate, toInputValue, fromInputValue } from '@/lib/dateFormat';

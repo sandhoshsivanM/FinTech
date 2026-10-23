@@ -15,8 +15,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Landmark, TrendingUp, Plus, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui';
-import { Section } from '@/components/primitives';
+import { Button } from '@khazana/ui/ui';
+import { Section } from '@khazana/ui/primitives';
 import { loadSampleData } from '@/lib/sampleData';
 
 /** The first three actions, in the order that makes the rest of the app work. */

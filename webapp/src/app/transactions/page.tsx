@@ -4,14 +4,14 @@ import Link from 'next/link';
 import {
   Shapes, Trash2, Plus, Pencil, Download, ArrowRightLeft,
 } from 'lucide-react';
-import { CategoryIcon } from '@/components/CategoryIcon';
-import { motion } from '@/components/motion';
+import { CategoryIcon } from '@khazana/ui/CategoryIcon';
+import { motion } from '@khazana/ui/motion';
 import { useApp, cashAcctId } from '@/lib/store';
 import { D } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
 import { STORE, type Transfer, type Txn, type TxnType } from '@khazana/domain/types';
 import { moneyAccounts } from '@khazana/domain/accountLedger';
-import { PageIntro, Button, Segmented, Input, Select, EmptyState, GlassCard } from '@/components/ui';
+import { PageIntro, Button, Segmented, Input, Select, EmptyState, GlassCard } from '@khazana/ui/ui';
 import { useConfirm } from '@/components/Confirm';
 import { BudgetStrip } from '@/components/BudgetStrip';
 import { formatDate, formatDayMonth, fromInputValue, toInputValue } from '@/lib/dateFormat';

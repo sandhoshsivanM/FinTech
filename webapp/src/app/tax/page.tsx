@@ -18,14 +18,14 @@ import { Landmark, Clock, TrendingUp, CircleHelp } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { D, ZERO } from '@khazana/domain/money';
-import { PageIntro, Chip, EmptyState, GlassCard, Button } from '@/components/ui';
-import { Kpi, KpiRow } from '@/components/Kpi';
+import { PageIntro, Chip, EmptyState, GlassCard, Button } from '@khazana/ui/ui';
+import { Kpi, KpiRow } from '@khazana/ui/Kpi';
 import { DataGrid, type Column } from '@/components/DataGrid';
-import { Stagger, StaggerItem } from '@/components/motion';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
 import { holdingView, ASSET_META } from '@khazana/domain/portfolio';
 import { estimatePortfolioTax, TAX_RULES } from '@khazana/domain/tax';
 import { short } from '@/lib/format';
-import { CardTitle } from '@/components/Hint';
+import { CardTitle } from '@khazana/ui/Hint';
 
 interface TaxRow {
   id: string;

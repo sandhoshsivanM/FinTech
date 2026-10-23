@@ -1,16 +1,16 @@
 // Guards for the dashboard chart board's components.
 import { describe, test, expect, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
-import { SplitBar } from './SplitBar';
-import { DotMatrix } from './DotMatrix';
-import { SplineDots } from './SplineDots';
-import { MirrorBars } from './MirrorBars';
-import { BlockStack, niceTicks } from './BlockStack';
-import { TrendTile } from './TrendTile';
-import { DotProgress } from './DotProgress';
-import { PaceBars } from './PaceBars';
-import { SpendCalendar } from './SpendCalendar';
-import { smoothPath } from './smoothPath';
+import { SplitBar } from '@khazana/ui/charts/SplitBar';
+import { DotMatrix } from '@khazana/ui/charts/DotMatrix';
+import { SplineDots } from '@khazana/ui/charts/SplineDots';
+import { MirrorBars } from '@khazana/ui/charts/MirrorBars';
+import { BlockStack, niceTicks } from '@khazana/ui/charts/BlockStack';
+import { TrendTile } from '@khazana/ui/charts/TrendTile';
+import { DotProgress } from '@khazana/ui/charts/DotProgress';
+import { PaceBars } from '@khazana/ui/charts/PaceBars';
+import { SpendCalendar } from '@khazana/ui/charts/SpendCalendar';
+import { smoothPath } from '@khazana/ui/charts/smoothPath';
 
 beforeEach(cleanup);
 const fmt = (n: number) => `₹${n}`;

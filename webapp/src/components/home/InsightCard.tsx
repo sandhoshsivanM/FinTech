@@ -9,7 +9,7 @@ import { D, ZERO } from '@khazana/domain/money';
 import { dailyFlow, describeChange } from '@khazana/domain/dailyFlow';
 import { currentMonth, monthName, type DateRange } from '@khazana/domain/period';
 import { budgetRollover, evaluateBudget, spentForCategory } from '@khazana/domain/finance';
-import { SectionInfo } from '../Hint';
+import { SectionInfo } from '@khazana/ui/Hint';
 
 interface Insight { figure: string; title: string; detail: string }
 

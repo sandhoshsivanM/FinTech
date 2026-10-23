@@ -17,7 +17,7 @@ import { recentErrors } from '@/lib/errorLog';
 import {
   feedbackMailto, problemMailto, problemReport, uaSummary, type FeedbackContext,
 } from '@/lib/feedback';
-import { GlassCard, SectionHeader, Button } from './ui';
+import { GlassCard, SectionHeader, Button } from '@khazana/ui/ui';
 
 const noopSubscribe = () => () => {};
 

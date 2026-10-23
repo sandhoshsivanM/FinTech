@@ -6,7 +6,7 @@ import { useFmt } from '@/lib/useFmt';
 import { useNow } from '@/lib/useNow';
 import { currentMonth, monthName, type DateRange } from '@khazana/domain/period';
 import { windowSummary } from '@khazana/domain/finance';
-import { GlossTile, type Hue } from './depth';
+import { GlossTile, type Hue } from '@khazana/ui/home/depth';
 
 /**
  * A month in three numbers — earned, spent, kept — each with a plain tinted icon.
