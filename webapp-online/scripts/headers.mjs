@@ -16,9 +16,11 @@ export function headersFile(gatewayUrl) {
   // the gateway, nothing else, so a decrypted record can't be sent anywhere.
   // 'unsafe-inline' for scripts: Next's static export inlines its bootstrap
   // and there is no server to mint a nonce (same trade-off as webapp/).
+  // 'wasm-unsafe-eval' lets libsodium (sealed boxes, Argon2id) compile its
+  // WebAssembly; it does not allow eval() of JavaScript.
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",

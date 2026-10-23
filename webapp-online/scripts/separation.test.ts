@@ -29,6 +29,9 @@ test('the CSP allows this site and the gateway only', () => {
   const csp = /Content-Security-Policy: (.+)/.exec(file)![1];
   expect(csp.split('; ').find((d) => d.startsWith('connect-src'))).toBe("connect-src 'self' https://api.khazana.example");
   expect(csp).toContain("frame-ancestors 'none'");
+  // WebAssembly for libsodium, but never JavaScript eval.
+  expect(csp).toContain("'wasm-unsafe-eval'");
+  expect(csp).not.toMatch(/'unsafe-eval'/);
 });
 
 test('a plain-http gateway is refused unless it is localhost', () => {

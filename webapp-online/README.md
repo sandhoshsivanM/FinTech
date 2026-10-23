@@ -12,8 +12,9 @@ tokens come from `../packages/domain-ts` at build time.
    The gateway listens on `http://localhost:5196` and allows this app's dev
    origin (`Gateway:AllowedOrigins`).
 2. In this folder: `npm ci`, then `NEXT_PUBLIC_DEV_SIGN_IN=true npm run dev`.
-3. Open http://localhost:3100 and use **Development sign-in** with any
-   `dev:` subject.
+3. Open http://localhost:3100 and **Create account with a passkey** (the
+   AppHost allows passkeys for `localhost:3100`), or use the development
+   sign-in.
 
 ## What is here (scaffold)
 
@@ -23,10 +24,13 @@ tokens come from `../packages/domain-ts` at build time.
 | `src/lib/vault.ts` | This app's IndexedDB: the device key and the refresh token |
 | `src/lib/api.ts` | Gateway client: sign-in, signed calls, refresh rotation, sign-out |
 | `src/app/` | Sign-in, and a home with empty Accounts, Cards and Connections |
+| `src/lib/passkey.ts` | Passkey ceremonies (create account, sign in) with the browser's WebAuthn JSON helpers |
+| `src/lib/crypto/` | End-to-end formats: device envelopes, recovery phrase, key check, records (pinned by `contracts/crypto/vectors.json`) |
+| `src/lib/keys.ts` | This device's key: register, unlock, create (24 words), recover, pair and approve |
+| `src/app/setup/`, `src/app/pair/` | First-device setup, linking a device (pair or phrase), approving a pairing |
 | `scripts/headers.mjs` | Generates `out/_headers`; the CSP allows this site and the gateway only |
 
-Coming next (Phase 2 client slice): device keys and pairing (ADR 0005),
-encrypted sync (ADR 0006), and the read-mostly views.
+Coming next: accounts and transactions with encrypted sync (ADR 0006).
 
 ## Build settings
 

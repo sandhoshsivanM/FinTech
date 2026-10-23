@@ -2,6 +2,7 @@
 // access token is kept in memory and refreshed (rotating the refresh token)
 // when it expires or the server says it is no longer valid.
 import { createDeviceKey, createProof, type DeviceKey } from './dpop';
+import { createPasskey, getPasskey } from './passkey';
 import * as vault from './vault';
 
 export const PLATFORM = 'web';
@@ -68,6 +69,32 @@ export class GatewayClient {
     const response = await this.send('POST', '/v1/auth/token', { provider, platform: PLATFORM, id_token: idToken });
     if (!response.ok) return GatewayClient.fail(response);
     return this.keep((await response.json()) as TokenResponse);
+  }
+
+  private async challenge(path: string): Promise<{ challenge_id: string; options: Record<string, unknown> }> {
+    const response = await this.send('POST', path, undefined);
+    if (!response.ok) return GatewayClient.fail(response);
+    return response.json();
+  }
+
+  private async tokenWith(body: Record<string, unknown>): Promise<TokenResponse> {
+    const response = await this.send('POST', '/v1/auth/token', { platform: PLATFORM, ...body });
+    if (!response.ok) return GatewayClient.fail(response);
+    return this.keep((await response.json()) as TokenResponse);
+  }
+
+  /** Creates an account with a new passkey (Face ID / Touch ID / device PIN) and signs in. */
+  async signUpWithPasskey(): Promise<TokenResponse> {
+    const { challenge_id, options } = await this.challenge('/v1/auth/passkeys/signup/options');
+    const attestation = await createPasskey(options);
+    return this.tokenWith({ provider: 'passkey_signup', challenge_id, attestation });
+  }
+
+  /** Signs in with a passkey this site already has on this device (or a nearby phone). */
+  async signInWithPasskey(): Promise<TokenResponse> {
+    const { challenge_id, options } = await this.challenge('/v1/auth/passkeys/assert/options');
+    const assertion = await getPasskey(options);
+    return this.tokenWith({ provider: 'passkey', challenge_id, assertion });
   }
 
   async isSignedIn(): Promise<boolean> {

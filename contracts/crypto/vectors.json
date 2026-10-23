@@ -1,0 +1,29 @@
+{
+  "_comment": "Pinned bytes for the formats in webapp-online/src/lib/crypto/e2e.ts (ADR 0005, 0006). Base64 unless named _hex.",
+  "dek_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+  "key_check": "2JrdBMbGFTzG71kvMKnv4/NGTz+RJQ8w3Q/XwFF/Jj8=",
+  "device": {
+    "seed_hex": "a0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+    "public_key": "Dr+YCoYN5Ryi4IBvQfUnZiTuGuTOI5/LctGwKNt+OR4=",
+    "sealed_dek": "MrJeN6lopAjgJmMxMBT0NX2uxVbN9itkTHQOHdVQQlJObYap0UGxe1qcuFA11sRq2fhrDKD2gX/NdEtQcXRkF9vTk0/fR59pV7hIKICqZUo="
+  },
+  "recovery": {
+    "entropy_hex": "7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f",
+    "words": "legal winner thank year wave sausage worth useful legal winner thank year wave sausage worth useful legal winner thank year wave sausage worth title",
+    "salt_hex": "5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a",
+    "nonce_hex": "4e4e4e4e4e4e4e4e4e4e4e4e",
+    "blob": "WlpaWlpaWlpaWlpaWlpaWk5OTk5OTk5OTk5OTjuXb8oj7cxv5O+Csk4U4JK4RP88ncuGYfuotQ0+X33KAXhhQ2wHhCvjMeclEj/Kcw=="
+  },
+  "record": {
+    "record_id": "acct-0001",
+    "collection": "accounts",
+    "key_version": 1,
+    "value": {
+      "name": "HDFC Savings",
+      "type": "savings",
+      "opening": "25000.00"
+    },
+    "nonce_hex": "4e4e4e4e4e4e4e4e4e4e4e4e",
+    "ciphertext": "Tk5OTk5OTk5OTk5O4X6X/jeEWq0pWVsS706FojLRb8PBbixuz5DFmls+HoYWWD9WjIUiKSotA9q7eXEpY/NF4PsyuGxLBvt3mwOPVyRf7hxp+76Xsf8Sfk0="
+  }
+}
