@@ -11,7 +11,17 @@ export function gatewayOrigin(url) {
   return u.origin;
 }
 
-export function headersFile(gatewayUrl) {
+// Google Identity Services, only when Google sign-in is configured
+// (https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid#content_security_policy).
+const GOOGLE = {
+  script: 'https://accounts.google.com/gsi/client',
+  style: 'https://accounts.google.com/gsi/style',
+  frame: 'https://accounts.google.com/gsi/',
+  connect: 'https://accounts.google.com/gsi/',
+};
+
+export function headersFile(gatewayUrl, { google = false } = {}) {
+  const g = (key) => (google ? ` ${GOOGLE[key]}` : '');
   // connect-src is the load-bearing line, as in the offline app: this origin and
   // the gateway, nothing else, so a decrypted record can't be sent anywhere.
   // 'unsafe-inline' for scripts: Next's static export inlines its bootstrap
@@ -20,11 +30,12 @@ export function headersFile(gatewayUrl) {
   // WebAssembly; it does not allow eval() of JavaScript.
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
-    "style-src 'self' 'unsafe-inline'",
+    `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${g('script')}`,
+    `style-src 'self' 'unsafe-inline'${g('style')}`,
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    `connect-src 'self' ${gatewayOrigin(gatewayUrl)}`,
+    `connect-src 'self' ${gatewayOrigin(gatewayUrl)}${g('connect')}`,
+    ...(google ? [`frame-src ${GOOGLE.frame}`] : []),
     "object-src 'none'",
     "base-uri 'none'",
     "form-action 'none'",

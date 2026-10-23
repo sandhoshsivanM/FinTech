@@ -73,6 +73,11 @@ services:
       Identity__Passkeys__RpId: ${WEB_RP_ID}
       Identity__Passkeys__RpName: Khazana Online
       Identity__Passkeys__Origins__0: ${WEB_ORIGIN}
+      # Google sign-in for the online web app. The token's nonce must be the
+      # device's DPoP key (RequireNonce). "unset" matches no real client, so
+      # Google stays off until GOOGLE_CLIENT_ID is in .env.
+      Identity__GoogleClientIds__0: ${GOOGLE_CLIENT_ID:-unset}
+      Identity__RequireNonce: "true"
     secrets: [identity-signing.pem]
 
   marketdata-api:

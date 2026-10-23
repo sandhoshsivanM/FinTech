@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { GatewayClient, type TokenResponse } from './api';
-import type { DeviceKey } from './dpop';
+import { thumbprint, type DeviceKey } from './dpop';
 import type { Session } from './vault';
 
 const BASE = 'http://gw.test';
@@ -52,6 +52,17 @@ describe('GatewayClient', () => {
     expect(req.headers.Authorization).toBeUndefined();
     expect(JSON.parse(req.body!)).toEqual({ provider: 'dev', platform: 'web', id_token: 'dev:me' });
     expect(h.vault.session).toEqual({ refreshToken: 'refresh-1', userId: 'u1', deviceId: 'd1' });
+  });
+
+  test('Google sign-in: the nonce Google gets is the thumbprint of the key that signs the token request', async () => {
+    const h = harness([json(tokens(1))]);
+    const nonce = await h.client.dpopThumbprint();
+    await h.client.signInWithGoogle('google-id-token');
+    const [req] = h.seen;
+    expect(JSON.parse(req.body!)).toEqual({ platform: 'web', provider: 'google', id_token: 'google-id-token' });
+    const jwk = JSON.parse(Buffer.from(req.headers.DPoP.split('.')[0], 'base64url').toString()).jwk;
+    expect(await thumbprint(jwk)).toBe(nonce);
+    expect(h.vault.session?.refreshToken).toBe('refresh-1');
   });
 
   test('a signed-in call carries the access token and a proof from the same key', async () => {
