@@ -30,7 +30,11 @@ tokens come from `../packages/domain-ts` at build time.
 | `src/app/setup/`, `src/app/pair/` | First-device setup, linking a device (pair or phrase), approving a pairing |
 | `scripts/headers.mjs` | Generates `out/_headers`; the CSP allows this site and the gateway only |
 
-Coming next: accounts and transactions with encrypted sync (ADR 0006).
+| `src/lib/sync/engine.ts` | Encrypted sync: outbox, pull pages, last write wins, tombstones, reset after a purge (ADR 0006) |
+| `src/lib/ledger.ts`, `src/lib/store.ts` | Accounts and transactions as encrypted records; live state and when sync runs |
+| `src/app/home/`, `src/app/account/`, `src/app/how/` | Accounts, transactions, and “How it works” (what the server stores vs what this device reads) |
+
+Not yet: cards, connections, device management, attachments.
 
 ## Build settings
 

@@ -11,24 +11,30 @@ import type { DeviceKey } from './dpop';
 
 export const DB_NAME = 'khazana_online';
 const STORE = 'device';
+// Version 2 adds the synced records (encrypted, exactly as the server has
+// them), the outbox of changes not yet pushed, and the sync cursor.
+const STORES = [STORE, 'records', 'outbox', 'meta'] as const;
+type StoreName = (typeof STORES)[number];
 
 export type Session = { refreshToken: string; userId: string; deviceId: string };
 
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
+    const request = indexedDB.open(DB_NAME, 2);
+    request.onupgradeneeded = () => {
+      for (const name of STORES) if (!request.result.objectStoreNames.contains(name)) request.result.createObjectStore(name);
+    };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
 
-async function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+async function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) => IDBRequest<T>, name: StoreName = STORE): Promise<T> {
   const db = await open();
   try {
     return await new Promise<T>((resolve, reject) => {
-      const tx = db.transaction(STORE, mode);
-      const request = work(tx.objectStore(STORE));
+      const tx = db.transaction(name, mode);
+      const request = work(tx.objectStore(name));
       tx.oncomplete = () => resolve(request.result);
       tx.onerror = () => reject(tx.error);
     });
@@ -62,5 +68,35 @@ export const saveWrapKey = (k: CryptoKey) => run('readwrite', (s) => s.put(k, 'x
 export const loadEnvelope = () => run<StoredEnvelope | undefined>('readonly', (s) => s.get('envelope'));
 export const saveEnvelope = (e: StoredEnvelope) => run('readwrite', (s) => s.put(e, 'envelope'));
 
-/** Sign-out: forget the session and every key on this device. */
-export const clearAll = () => run('readwrite', (s) => s.clear());
+/** Sign-out: forget the session, every key and every synced record on this device. */
+export async function clearAll(): Promise<void> {
+  for (const name of STORES) await run('readwrite', (s) => s.clear(), name);
+}
+
+// --- synced records (ADR 0006) ----------------------------------------------
+
+/** A record as stored and synced: ciphertext only, never the decrypted value. */
+export type LocalRecord = {
+  collection: string;
+  recordId: string;
+  updatedAt: string;
+  deleted: boolean;
+  ciphertext: Uint8Array | null;
+  keyVersion: number;
+};
+export type Cursor = { since: number; epoch: number };
+
+const keyOf = (r: Pick<LocalRecord, 'collection' | 'recordId'>) => `${r.collection}/${r.recordId}`;
+
+export const records = {
+  all: () => run<LocalRecord[]>('readonly', (s) => s.getAll(), 'records'),
+  get: (r: Pick<LocalRecord, 'collection' | 'recordId'>) => run<LocalRecord | undefined>('readonly', (s) => s.get(keyOf(r)), 'records'),
+  put: (r: LocalRecord) => run('readwrite', (s) => s.put(r, keyOf(r)), 'records'),
+  clear: () => run('readwrite', (s) => s.clear(), 'records'),
+  outbox: () => run<LocalRecord[]>('readonly', (s) => s.getAll(), 'outbox'),
+  queue: (r: LocalRecord) => run('readwrite', (s) => s.put(r, keyOf(r)), 'outbox'),
+  unqueue: (r: LocalRecord) => run('readwrite', (s) => s.delete(keyOf(r)), 'outbox'),
+  cursor: async (): Promise<Cursor> => (await run<Cursor | undefined>('readonly', (s) => s.get('cursor'), 'meta')) ?? { since: 0, epoch: 0 },
+  setCursor: (c: Cursor) => run('readwrite', (s) => s.put(c, 'cursor'), 'meta'),
+};
+export type RecordStore = typeof records;
