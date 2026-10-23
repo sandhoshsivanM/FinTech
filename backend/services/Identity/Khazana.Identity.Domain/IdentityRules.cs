@@ -99,4 +99,7 @@ public static class Providers
     public const string Dev = "dev";
 
     public const string Passkey = "passkey";
+
+    /// <summary>Creates an account from a passkey alone (sign-up); sign-in afterwards is <see cref="Passkey"/>.</summary>
+    public const string PasskeySignUp = "passkey_signup";
 }

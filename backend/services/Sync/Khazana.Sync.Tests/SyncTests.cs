@@ -8,10 +8,12 @@ using Khazana.SharedKernel;
 using Khazana.Sync.Application;
 using Khazana.Sync.Application.Persistence;
 using Khazana.Sync.Domain;
+using Khazana.Sync.Infrastructure;
 using Khazana.TestKit;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -80,10 +82,10 @@ public static class SyncEventProbe
 public sealed class SyncTestGroup : ICollectionFixture<SyncHost>;
 
 /// <summary>A device with a session; pushes and pulls opaque ciphertext.</summary>
-public sealed class Device(SyncHost host, Guid userId) : IDisposable
+public sealed class Device(SyncHost host, Guid userId, WebApplicationFactory<Program>? factory = null) : IDisposable
 {
     private static readonly JsonSerializerOptions Snake = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
-    private readonly HttpClient _client = host.Factory.CreateClient();
+    private readonly HttpClient _client = (factory ?? host.Factory).CreateClient();
     private readonly DeviceKey _key = new();
     public Guid UserId { get; } = userId;
     public Guid DeviceId { get; } = Guid.CreateVersion7();
@@ -409,11 +411,59 @@ public sealed class SyncReviewFixTests(SyncHost host)
     }
 
     [Fact]
+    public async Task With_attachments_disabled_records_still_sync_and_attachments_answer_503()
+    {
+        await using var disabled = host.Factory.WithWebHostBuilder(b => b.ConfigureServices(s =>
+        {
+            s.RemoveAll<IAttachmentStore>();
+            s.AddSingleton<IAttachmentStore, DisabledAttachmentStore>();
+        }));
+        using var phone = new Device(host, Guid.CreateVersion7(), disabled);
+        (await phone.Send(HttpMethod.Get, "/v1/sync/pull")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var put = await phone.SendBytes(HttpMethod.Put, "/v1/sync/attachments/receipt-00000002", new byte[1000]);
+        put.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
+        (await put.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ShouldContain("attachments_unavailable");
+        // Nothing was stored, so reading it is a plain 404 (the service checks its own rows first).
+        (await phone.Send(HttpMethod.Get, "/v1/sync/attachments/receipt-00000002")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task An_attachment_over_the_limit_is_refused()
     {
         using var phone = new Device(host, Guid.CreateVersion7());
         var tooBig = new byte[AttachmentRules.MaxBytes + 1];
         (await phone.SendBytes(HttpMethod.Put, "/v1/sync/attachments/huge-0000001", tooBig)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+}
+
+public class AttachmentProviderTests
+{
+    private static ServiceProvider Build(string provider, string environment) =>
+        new ServiceCollection().AddSyncInfrastructure(
+            new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?> { ["Providers:Attachments"] = provider }).Build(),
+            new Microsoft.Extensions.Hosting.Internal.HostingEnvironment { EnvironmentName = environment }).BuildServiceProvider();
+
+    [Fact]
+    public void Disabled_is_allowed_outside_Development()
+    {
+        Build("Disabled", "Staging").GetRequiredService<IAttachmentStore>()
+            .ShouldBeOfType<DisabledAttachmentStore>();
+    }
+
+    [Fact]
+    public void LocalDisk_is_still_refused_outside_Development()
+    {
+        Should.Throw<InvalidOperationException>(() => Build("LocalDisk", "Staging"));
+    }
+
+    [Fact]
+    public async Task The_disabled_store_refuses_files_but_lets_an_account_purge_finish()
+    {
+        var store = new DisabledAttachmentStore();
+        var e = await Should.ThrowAsync<SyncException>(() => store.PutAsync(Guid.NewGuid(), "a", Stream.Null, TestContext.Current.CancellationToken));
+        e.Error.ShouldBe(SyncError.Unavailable);
+        await store.DeleteUserAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
     }
 }
 

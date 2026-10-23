@@ -16,7 +16,7 @@ namespace Khazana.Identity.Api;
 /// <param name="IdToken">The provider's ID token (google, apple, dev).</param>
 /// <param name="ChallengeId">From <c>/passkeys/assert/options</c> (passkey).</param>
 /// <param name="Assertion">The authenticator's response, as the platform API returns it (passkey).</param>
-public sealed record TokenRequest(string Provider, string Platform, string? IdToken = null, Guid? ChallengeId = null, JsonElement? Assertion = null);
+public sealed record TokenRequest(string Provider, string Platform, string? IdToken = null, Guid? ChallengeId = null, JsonElement? Assertion = null, JsonElement? Attestation = null);
 
 public sealed record RefreshRequest(string RefreshToken);
 
@@ -48,6 +48,9 @@ public static class IdentityEndpoints
         auth.MapPost("/passkeys/register", CompletePasskeyRegistration).RequireAuthorization()
             .AddEndpointFilter(RequireLiveSession(SessionService.FreshSignIn));
         auth.MapPost("/passkeys/assert/options", BeginPasskeyAssertion);
+        // Anyone may start a sign-up (the gateway's auth rate limit applies);
+        // the account exists only once /token verifies the answer.
+        auth.MapPost("/passkeys/signup/options", BeginPasskeySignUp);
 
         app.MapDelete("/v1/account", RequestDeletion).RequireAuthorization().AddEndpointFilter(RequireLiveSession(null));
         app.MapPost("/v1/account/restore", Restore);
@@ -65,7 +68,8 @@ public static class IdentityEndpoints
         ILogger<TokenRequest> log, CancellationToken ct) =>
         SignInAsync(body, http, dpop, authOptions, verifiers, passkeys, log, "Sign-in",
             (identity, jkt) => sessions.SignInExternalAsync(identity, jkt, body.Platform, ct),
-            (userId, jkt) => sessions.SignInPasskeyAsync(userId, jkt, body.Platform, ct), ct);
+            (userId, jkt) => sessions.SignInPasskeyAsync(userId, jkt, body.Platform, ct), ct,
+            (newPasskey, jkt) => sessions.SignUpWithPasskeyAsync(newPasskey, jkt, body.Platform, ct));
 
     /// <summary>
     /// Changes one's mind during the cooling-off: prove who you are again
@@ -82,7 +86,8 @@ public static class IdentityEndpoints
     private static async Task<IResult> SignInAsync(
         TokenRequest body, HttpContext http, DpopProofValidator dpop, IOptions<KhazanaAuthOptions> authOptions,
         IEnumerable<IExternalIdentityVerifier> verifiers, PasskeyService passkeys, ILogger log, string action,
-        Func<ExternalIdentity, string, Task<TokenPair>> external, Func<Guid, string, Task<TokenPair>> passkey, CancellationToken ct)
+        Func<ExternalIdentity, string, Task<TokenPair>> external, Func<Guid, string, Task<TokenPair>> passkey, CancellationToken ct,
+        Func<NewPasskey, string, Task<TokenPair>>? signUp = null)
     {
         var proof = await CheckProofAsync(http, dpop, authOptions.Value, log).ConfigureAwait(false);
         if (proof is null) return InvalidProof(http);
@@ -91,7 +96,18 @@ public static class IdentityEndpoints
         try
         {
             TokenPair pair;
-            if (body.Provider == Providers.Passkey)
+            if (body.Provider == Providers.PasskeySignUp)
+            {
+                // Sign-up only at /token: restore is for accounts that exist.
+                if (signUp is null) return Error(AuthError.UnsupportedProvider);
+                if (body.ChallengeId is not { } challengeId || body.Attestation is not { ValueKind: JsonValueKind.Object } attestation)
+                    return Error(AuthError.InvalidRequest);
+                var response = DeserializeFido<AuthenticatorAttestationRawResponse>(attestation);
+                if (response?.Response is null) return Error(AuthError.InvalidRequest);
+                var newPasskey = await passkeys.VerifySignUpAsync(challengeId, response, ct).ConfigureAwait(false);
+                pair = await signUp(newPasskey, proof.Jkt).ConfigureAwait(false);
+            }
+            else if (body.Provider == Providers.Passkey)
             {
                 if (body.ChallengeId is not { } challengeId || body.Assertion is not { } assertion)
                     return Error(AuthError.InvalidRequest);
@@ -169,6 +185,9 @@ public static class IdentityEndpoints
 
     private static async Task<IResult> BeginPasskeyAssertion(PasskeyService passkeys, CancellationToken ct) =>
         Challenge(await passkeys.BeginAssertionAsync(ct).ConfigureAwait(false));
+
+    private static async Task<IResult> BeginPasskeySignUp(PasskeyService passkeys, CancellationToken ct) =>
+        Challenge(await passkeys.BeginSignUpAsync(ct).ConfigureAwait(false));
 
     /// <summary>
     /// Starts deletion. The access token proves who asks and the DPoP proof

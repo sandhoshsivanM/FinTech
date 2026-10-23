@@ -8,6 +8,9 @@ public enum SyncError
 {
     BadRequest,
     Forbidden,
+
+    /// <summary>This deployment stores no attachments (Providers:Attachments=Disabled).</summary>
+    Unavailable,
 }
 
 public sealed class SyncException : Exception
