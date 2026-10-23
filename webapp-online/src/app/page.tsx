@@ -4,11 +4,11 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { gateway } from '@/lib/api';
 
-/** Sends you to your home if this browser is signed in, otherwise to sign-in. */
+/** Signed in: setup decides (it goes straight home when this device is ready). Otherwise sign-in. */
 export default function Start() {
   const router = useRouter();
   useEffect(() => {
-    gateway().isSignedIn().then((yes) => router.replace(yes ? '/home/' : '/sign-in/'));
+    gateway().isSignedIn().then((yes) => router.replace(yes ? '/setup/' : '/sign-in/'));
   }, [router]);
   return null;
 }
