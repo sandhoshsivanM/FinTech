@@ -37,7 +37,10 @@ var fieldKey = builder.AddParameter("identity-field-key",
 var identity = builder.AddProject<Projects.Khazana_Identity_Api>("identity-api")
     .WithReference(identityDb).WaitFor(identityDb)
     .WithReference(rabbitMq).WaitFor(rabbitMq)
-    .WithEnvironment("Identity__Secrets__FieldKey", fieldKey);
+    .WithEnvironment("Identity__Secrets__FieldKey", fieldKey)
+    // Passkeys made by Khazana Online's web app in development (webapp-online/: npm run dev).
+    .WithEnvironment("Identity__Passkeys__RpId", "localhost")
+    .WithEnvironment("Identity__Passkeys__Origins__0", "http://localhost:3100");
 
 // Every other service checks tokens itself, with Identity's public keys.
 var identityMetadata = ReferenceExpression.Create(

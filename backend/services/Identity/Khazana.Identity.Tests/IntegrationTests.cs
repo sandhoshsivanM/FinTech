@@ -592,6 +592,85 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
         (await Error(await _client.SendAsync(PasskeyRequest(_phone, challengeId, assertion), Ct))).ShouldBe("invalid_grant");
     }
 
+    [Fact]
+    public async Task A_passkey_alone_creates_an_account_that_then_signs_in()
+    {
+        using var authenticator = new SoftwareAuthenticator("localhost", IdentityHost.Origin);
+        var created = await PasskeySignUp(_phone, authenticator);
+        created.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var tokens = await Json(created);
+        var userId = tokens.GetProperty("user_id").GetGuid();
+        tokens.GetProperty("token_type").GetString().ShouldBe("DPoP");
+
+        // The same passkey signs in later, on another device key: same account.
+        using var laptop = new DeviceKey();
+        var signedIn = await PasskeySignIn(laptop, authenticator);
+        signedIn.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Json(signedIn)).GetProperty("user_id").GetGuid().ShouldBe(userId);
+
+        // And the new account works like any other: its refresh token rotates.
+        (await Refresh(_phone, tokens.GetProperty("refresh_token").GetString()!)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task A_sign_up_challenge_answers_once()
+    {
+        using var authenticator = new SoftwareAuthenticator("localhost", IdentityHost.Origin);
+        var options = await Json(await _client.PostAsync(new Uri("/v1/auth/passkeys/signup/options", UriKind.Relative), null, Ct));
+        var challengeId = options.GetProperty("challenge_id").GetGuid();
+        var attestation = authenticator.Create(options.GetProperty("options"));
+        (await _client.SendAsync(SignUpRequest(_phone, challengeId, attestation), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        // A different authenticator answering the same challenge: only single use stops it.
+        using var other = new SoftwareAuthenticator("localhost", IdentityHost.Origin);
+        var second = other.Create(options.GetProperty("options"));
+        (await Error(await _client.SendAsync(SignUpRequest(_phone, challengeId, second), Ct))).ShouldBe("invalid_grant");
+    }
+
+    [Fact]
+    public async Task One_passkey_cannot_create_two_accounts()
+    {
+        using var authenticator = new SoftwareAuthenticator("localhost", IdentityHost.Origin);
+        (await PasskeySignUp(_phone, authenticator)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        // A second sign-up answered by the same credential: refused, no second user.
+        (await Error(await PasskeySignUp(_phone, authenticator))).ShouldBe("invalid_grant");
+    }
+
+    [Fact]
+    public async Task A_sign_up_answer_for_another_site_is_refused()
+    {
+        using var phishing = new SoftwareAuthenticator("localhost", "https://khazana.evil.test");
+        (await Error(await PasskeySignUp(_phone, phishing))).ShouldBe("invalid_grant");
+    }
+
+    [Fact]
+    public async Task Sign_up_is_not_accepted_as_a_restore()
+    {
+        using var authenticator = new SoftwareAuthenticator("localhost", IdentityHost.Origin);
+        var options = await Json(await _client.PostAsync(new Uri("/v1/auth/passkeys/signup/options", UriKind.Relative), null, Ct));
+        using var request = SignUpRequest(_phone, options.GetProperty("challenge_id").GetGuid(),
+            authenticator.Create(options.GetProperty("options")), "/v1/account/restore");
+        (await Error(await _client.SendAsync(request, Ct))).ShouldBe("unsupported_provider");
+    }
+
+    [Fact]
+    public async Task Concurrent_sign_ups_each_get_their_own_account()
+    {
+        var authenticators = Enumerable.Range(0, 4).Select(_ => new SoftwareAuthenticator("localhost", IdentityHost.Origin)).ToList();
+        try
+        {
+            var devices = authenticators.Select(_ => new DeviceKey()).ToList();
+            var responses = await Task.WhenAll(authenticators.Select((a, i) => PasskeySignUp(devices[i], a)));
+            responses.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
+            var ids = await Task.WhenAll(responses.Select(async r => (await Json(r)).GetProperty("user_id").GetGuid()));
+            ids.Distinct().Count().ShouldBe(4);
+            devices.ForEach(d => d.Dispose());
+        }
+        finally
+        {
+            authenticators.ForEach(a => a.Dispose());
+        }
+    }
+
     // --- discovery ------------------------------------------------------------
 
     [Fact]
@@ -634,6 +713,28 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
         };
         request.Headers.Add("DPoP", device.Proof("POST", Url("/v1/auth/token")));
         return request;
+    }
+
+    private static HttpRequestMessage SignUpRequest(DeviceKey device, Guid challengeId, JsonObject attestation, string path = "/v1/auth/token")
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, path)
+        {
+            Content = new StringContent(new JsonObject
+            {
+                ["provider"] = "passkey_signup", ["platform"] = "web",
+                ["challenge_id"] = challengeId.ToString(), ["attestation"] = attestation.DeepClone(),
+            }.ToJsonString(), Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("DPoP", device.Proof("POST", Url(path)));
+        return request;
+    }
+
+    private async Task<HttpResponseMessage> PasskeySignUp(DeviceKey device, SoftwareAuthenticator authenticator)
+    {
+        var options = await Json(await _client.PostAsync(new Uri("/v1/auth/passkeys/signup/options", UriKind.Relative), null, Ct));
+        var attestation = authenticator.Create(options.GetProperty("options"));
+        using var request = SignUpRequest(device, options.GetProperty("challenge_id").GetGuid(), attestation);
+        return await _client.SendAsync(request, Ct);
     }
 
     private async Task<HttpResponseMessage> PasskeySignIn(DeviceKey device, SoftwareAuthenticator authenticator)

@@ -78,9 +78,12 @@ public static class SyncEndpoints
         catch (SyncException e)
         {
             Log.Refused(http.RequestServices.GetRequiredService<ILogger<SyncService>>(), e.Message);
-            return e.Error == SyncError.Forbidden
-                ? Results.Json(new ErrorResponse("forbidden"), statusCode: StatusCodes.Status403Forbidden)
-                : Results.BadRequest(new ErrorResponse("invalid_request"));
+            return e.Error switch
+            {
+                SyncError.Forbidden => Results.Json(new ErrorResponse("forbidden"), statusCode: StatusCodes.Status403Forbidden),
+                SyncError.Unavailable => Results.Json(new ErrorResponse("attachments_unavailable"), statusCode: StatusCodes.Status503ServiceUnavailable),
+                _ => Results.BadRequest(new ErrorResponse("invalid_request")),
+            };
         }
     }
 }

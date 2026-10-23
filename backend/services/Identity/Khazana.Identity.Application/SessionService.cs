@@ -99,6 +99,43 @@ public sealed class SessionService(
     }
 
     /// <summary>
+    /// Creates an account from a passkey alone: the user, the passkey and the
+    /// first session land in one transaction, with <see cref="UserRegisteredV1"/>
+    /// and <see cref="UserSignedInV1"/>. The user id was reserved by the
+    /// single-use sign-up challenge, so a second attempt can't reuse it, and the
+    /// unique credential id stops one authenticator from making two accounts.
+    /// </summary>
+    public async Task<TokenPair> SignUpWithPasskeyAsync(NewPasskey passkey, string jkt, string platform, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(passkey);
+        await using var tx = await Db.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
+        var now = clock.UtcNow;
+        var user = new UserRow { Id = passkey.UserId, Status = AccountStatus.Active, CreatedAt = now, UpdatedAt = now };
+        Db.Users.Add(user);
+        Db.Passkeys.Add(new PasskeyRow
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = user.Id,
+            CredentialId = passkey.CredentialId,
+            PublicKey = passkey.PublicKey,
+            SignCount = passkey.SignCount,
+            AaGuid = passkey.AaGuid,
+            CreatedAt = now,
+        });
+        TokenPair pair;
+        try
+        {
+            pair = await StartSessionAsync(user, registered: true, jkt, platform, ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateException)
+        {
+            throw new AuthFailedException(AuthError.InvalidGrant, "Passkey or user already registered.");
+        }
+        await CommitIfOpenAsync(ct).ConfigureAwait(false);
+        return pair;
+    }
+
+    /// <summary>
     /// Undoes a deletion request during the cooling-off, for a user who proved
     /// who they are again (Google, Apple or passkey), and signs them in.
     /// Publishes <see cref="AccountDeletionCancelledV1"/> so every service drops

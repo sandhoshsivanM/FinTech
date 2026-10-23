@@ -102,12 +102,28 @@ public sealed class S3AttachmentStore(IAmazonS3 s3, string bucket) : IAttachment
     }
 }
 
+/// <summary>
+/// For a deployment with no object store (the free demo): records sync as
+/// usual, attachments are refused with 503, and an account purge has nothing
+/// to remove here, so deletion still completes.
+/// </summary>
+public sealed class DisabledAttachmentStore : IAttachmentStore
+{
+    private static SyncException Unavailable() => new(SyncError.Unavailable, "Attachments are disabled in this deployment.");
+
+    public Task PutAsync(Guid userId, string attachmentId, Stream content, CancellationToken ct) => throw Unavailable();
+    public Task<Stream?> GetAsync(Guid userId, string attachmentId, CancellationToken ct) => throw Unavailable();
+    public Task DeleteAsync(Guid userId, string attachmentId, CancellationToken ct) => throw Unavailable();
+    public Task DeleteUserAsync(Guid userId, CancellationToken ct) => Task.CompletedTask;
+}
+
 public static class DependencyInjection
 {
     /// <summary>
     /// <c>Providers:Attachments</c> = <c>LocalDisk</c> (Development only; refused
     /// elsewhere, where the files would sit on one container's disk) or <c>S3</c>
-    /// (<c>Attachments:Bucket</c>, credentials from the platform role).
+    /// (<c>Attachments:Bucket</c>, credentials from the platform role), or
+    /// <c>Disabled</c> (any environment: attachments refused with 503).
     /// </summary>
     public static IServiceCollection AddSyncInfrastructure(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
@@ -126,8 +142,11 @@ public static class DependencyInjection
                 services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client());
                 services.AddSingleton<IAttachmentStore>(sp => new S3AttachmentStore(sp.GetRequiredService<IAmazonS3>(), bucket));
                 break;
+            case "Disabled":
+                services.AddSingleton<IAttachmentStore, DisabledAttachmentStore>();
+                break;
             default:
-                throw new InvalidOperationException("Unknown Providers:Attachments. Use LocalDisk or S3.");
+                throw new InvalidOperationException("Unknown Providers:Attachments. Use LocalDisk, S3 or Disabled.");
         }
         return services;
     }
