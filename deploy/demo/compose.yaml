@@ -145,7 +145,8 @@ services:
     depends_on: [gateway]
     ports: ["80:80", "443:443", "443:443/udp"]
     environment:
-      API_HOST: ${API_HOST}
+      # The VM: the API host (HTTPS by Caddy). The Mac tunnel: CADDY_SITE=:80.
+      SITE_ADDRESS: ${CADDY_SITE:-${API_HOST}}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
