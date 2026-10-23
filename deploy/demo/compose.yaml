@@ -1,0 +1,168 @@
+# Khazana Online backend on one free VM (demo-grade; see README.md).
+#   docker compose -f deploy/demo/compose.yaml --env-file deploy/demo/.env up -d --build
+# Only Caddy publishes ports. Postgres, RabbitMQ and every service are
+# reachable only on the private network below.
+
+name: khazana-demo
+
+x-service: &service
+  restart: unless-stopped
+  networks: [backend]
+  mem_limit: 768m
+  depends_on:
+    postgres: { condition: service_healthy }
+    rabbitmq: { condition: service_healthy }
+
+x-env: &env
+  ASPNETCORE_ENVIRONMENT: Staging
+  Database__MigrateOnStartup: "true"
+  ConnectionStrings__rabbitmq: amqp://khazana:${RABBITMQ_PASSWORD}@rabbitmq:5672
+
+# Services that check access tokens fetch Identity's public keys over the
+# private network (plain http inside it), and accept DPoP proofs that name
+# the public API address.
+x-token-checks: &token-checks
+  Auth__MetadataAddress: http://identity-api/.well-known/openid-configuration
+  Auth__RequireHttpsMetadata: "false"
+  Auth__PublicOrigins__0: https://${API_HOST}
+
+x-build: &build
+  context: ../..
+  dockerfile: deploy/demo/Dockerfile
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    networks: [backend]
+    environment:
+      POSTGRES_USER: khazana
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "khazana"]
+      interval: 5s
+      retries: 30
+
+  rabbitmq:
+    image: rabbitmq:4-alpine
+    restart: unless-stopped
+    networks: [backend]
+    environment:
+      RABBITMQ_DEFAULT_USER: khazana
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 30
+
+  identity-api:
+    <<: *service
+    build: { <<: *build, args: { PROJECT: services/Identity/Khazana.Identity.Api, ASSEMBLY: Khazana.Identity.Api } }
+    environment:
+      <<: *env
+      ConnectionStrings__identity: Host=postgres;Database=identity;Username=khazana;Password=${POSTGRES_PASSWORD}
+      Auth__PublicOrigins__0: https://${API_HOST}
+      Identity__Secrets__FieldKey: ${FIELD_KEY}
+      Identity__SigningKey: Pem
+      Identity__SigningKeyPath: /run/secrets/identity-signing.pem
+      Identity__Passkeys__RpId: ${WEB_RP_ID}
+      Identity__Passkeys__RpName: Khazana Online
+      Identity__Passkeys__Origins__0: ${WEB_ORIGIN}
+    secrets: [identity-signing.pem]
+
+  marketdata-api:
+    <<: *service
+    build: { <<: *build, args: { PROJECT: services/MarketData/Khazana.MarketData.Api, ASSEMBLY: Khazana.MarketData.Api } }
+    environment:
+      <<: *env
+      ConnectionStrings__marketdata: Host=postgres;Database=marketdata;Username=khazana;Password=${POSTGRES_PASSWORD}
+      Providers__Nav: Amfi
+
+  devices-api:
+    <<: *service
+    build: { <<: *build, args: { PROJECT: services/Devices/Khazana.Devices.Api, ASSEMBLY: Khazana.Devices.Api } }
+    environment:
+      <<: [*env, *token-checks]
+      ConnectionStrings__devices: Host=postgres;Database=devices;Username=khazana;Password=${POSTGRES_PASSWORD}
+
+  sync-api:
+    <<: *service
+    build: { <<: *build, args: { PROJECT: services/Sync/Khazana.Sync.Api, ASSEMBLY: Khazana.Sync.Api } }
+    environment:
+      <<: [*env, *token-checks]
+      ConnectionStrings__sync: Host=postgres;Database=sync;Username=khazana;Password=${POSTGRES_PASSWORD}
+      # No object store on the demo VM: records sync, attachments answer 503.
+      Providers__Attachments: Disabled
+
+  notification-api:
+    <<: *service
+    build: { <<: *build, args: { PROJECT: services/Notification/Khazana.Notification.Api, ASSEMBLY: Khazana.Notification.Api } }
+    environment:
+      <<: [*env, *token-checks]
+      ConnectionStrings__notification: Host=postgres;Database=notification;Username=khazana;Password=${POSTGRES_PASSWORD}
+      # No push keys on the demo: pushes are logged, not sent.
+      Providers__Push: Log
+
+  reporting-api:
+    <<: *service
+    build: { <<: *build, args: { PROJECT: services/AuditReporting/Khazana.AuditReporting.Api, ASSEMBLY: Khazana.AuditReporting.Api } }
+    environment:
+      <<: *env
+      ConnectionStrings__reporting: Host=postgres;Database=reporting;Username=khazana;Password=${POSTGRES_PASSWORD}
+      Reporting__InternalKey: ${REPORTING_INTERNAL_KEY}
+      Reporting__AuditKey: ${REPORTING_AUDIT_KEY}
+
+  catalog-api:
+    <<: *service
+    build: { <<: *build, args: { PROJECT: services/Catalog/Khazana.Catalog.Api, ASSEMBLY: Khazana.Catalog.Api } }
+    environment:
+      <<: *env
+      ConnectionStrings__catalog: Host=postgres;Database=catalog;Username=khazana;Password=${POSTGRES_PASSWORD}
+      Catalog__InternalKey: ${CATALOG_INTERNAL_KEY}
+      Catalog__SigningSeed: ${CATALOG_SIGNING_SEED}
+
+  gateway:
+    <<: *service
+    build: { <<: *build, args: { PROJECT: Khazana.Gateway, ASSEMBLY: Khazana.Gateway } }
+    depends_on: [identity-api, marketdata-api, devices-api, sync-api, notification-api, catalog-api]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Staging
+      # Routes name http://identity-api and so on: the compose service names, port 80.
+      # Browsers may call from the online web app only.
+      Gateway__AllowedOrigins__0: ${WEB_ORIGIN}
+      # Caddy is on this subnet: its X-Forwarded-For gives each client its own rate-limit bucket.
+      Gateway__TrustedProxies__0: 172.30.0.0/24
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    networks: [backend]
+    depends_on: [gateway]
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      API_HOST: ${API_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+networks:
+  backend:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  caddy-data:
+  caddy-config:
+
+secrets:
+  identity-signing.pem:
+    file: ./secrets/identity-signing.pem

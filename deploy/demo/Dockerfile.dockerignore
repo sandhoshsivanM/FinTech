@@ -1,0 +1,6 @@
+# The build only needs backend/ (and never its build output).
+*
+!backend/
+backend/**/bin/
+backend/**/obj/
+backend/**/TestResults/

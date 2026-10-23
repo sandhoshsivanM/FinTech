@@ -1,0 +1,5 @@
+# The only public entrance: HTTPS (automatic, Let's Encrypt) to the gateway.
+{$API_HOST} {
+	encode zstd gzip
+	reverse_proxy gateway:80
+}
