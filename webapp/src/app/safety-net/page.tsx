@@ -10,8 +10,8 @@ import { ASSET_META } from '@khazana/domain/portfolio';
 import { D } from '@khazana/domain/money';
 import {
   PageIntro, GlassCard, SectionHeader, StatStrip, Ring, ProgressBar, EmptyState, Button,
-} from '@/components/ui';
-import { SectionInfo } from '@/components/Hint';
+} from '@khazana/ui/ui';
+import { SectionInfo } from '@khazana/ui/Hint';
 
 const RETIREMENT = new Set(['fd', 'ppf_epf', 'nps']);
 // Zentra gauge colours: blue when covered, amber when partly, pink when short.

@@ -14,7 +14,7 @@ import { useApp } from '@/lib/store';
 import { D } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
 import { NAV_GROUPS } from './navConfig';
-import { DUR, EASE } from './motion';
+import { DUR, EASE } from '@khazana/ui/motion';
 import { formatDayMonth } from '@/lib/dateFormat';
 
 interface Item {

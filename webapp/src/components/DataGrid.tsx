@@ -12,10 +12,10 @@
  */
 import { useMemo, useState, type ReactNode } from 'react';
 import clsx from 'clsx';
-import { Hint } from './Hint';
-import type { TermKey } from '@/lib/glossary';
+import { Hint } from '@khazana/ui/Hint';
+import type { TermKey } from '@khazana/ui/glossary';
 import { ArrowUpDown, ArrowUp, ArrowDown, Columns3, Download, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from './ui';
+import { Button } from '@khazana/ui/ui';
 
 export interface Column<T> {
   /** Stable key. Used for sort state, column visibility and the export header. */

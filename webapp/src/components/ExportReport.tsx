@@ -12,7 +12,7 @@ import type { DateRange } from '@khazana/domain/period';
 import { buildReport, type ReportInput } from '@/lib/reports/model';
 import { downloadXlsx } from '@/lib/reports/xlsx';
 import { downloadPdf } from '@/lib/reports/pdf';
-import { Button } from '@/components/ui';
+import { Button } from '@khazana/ui/ui';
 
 export function ExportReport({ range }: { range: DateRange }) {
   const accounts = useApp((s) => s.accounts);

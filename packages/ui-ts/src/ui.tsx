@@ -13,7 +13,7 @@ import clsx from 'clsx';
 import { Hint, SectionInfo } from './Hint';
 import { CHART } from './charts/tokens';
 import { motion, SPRING } from './motion';
-import type { SectionKey, TermKey } from '@/lib/glossary';
+import type { SectionKey, TermKey } from './glossary';
 
 /**
  * The standard card.

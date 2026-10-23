@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
-import { Button } from './ui';
+import { Button } from '@khazana/ui/ui';
 
 interface Step { sel: string; title: string; body: string }
 

@@ -19,11 +19,11 @@ import {
   Donut,
   Bars,
   Sparkline,
-} from '@/components/ui';
+} from '@khazana/ui/ui';
 import { formatMonthShort, formatDate, toInputValue, todayInputValue, fromInputValue } from '@/lib/dateFormat';
 import { balanceSheet } from '@khazana/domain/statements';
 import { ExportReport } from '@/components/ExportReport';
-import { CardTitle } from '@/components/Hint';
+import { CardTitle } from '@khazana/ui/Hint';
 import type Decimal from 'decimal.js';
 
 // ── Time window ───────────────────────────────────────────────────────────────

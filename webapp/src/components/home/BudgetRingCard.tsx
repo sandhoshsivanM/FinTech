@@ -8,10 +8,10 @@ import { useNow } from '@/lib/useNow';
 import { ZERO } from '@khazana/domain/money';
 import { currentMonth, monthName, type DateRange } from '@khazana/domain/period';
 import { budgetRollover, evaluateBudget, spentForCategory } from '@khazana/domain/finance';
-import { GlassCard } from '../ui';
-import { CardTitle } from '../Hint';
-import { Gauge, gaugeHue } from './depth';
-import { CategoryIcon } from '../CategoryIcon';
+import { GlassCard } from '@khazana/ui/ui';
+import { CardTitle } from '@khazana/ui/Hint';
+import { Gauge, gaugeHue } from '@khazana/ui/home/depth';
+import { CategoryIcon } from '@khazana/ui/CategoryIcon';
 
 /**
  * This month's budgets at a glance: one ring for the total, then the three

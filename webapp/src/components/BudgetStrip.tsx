@@ -9,7 +9,7 @@ import { D } from '@khazana/domain/money';
 import { evaluateBudget, budgetRollover, spentForCategory } from '@khazana/domain/finance';
 import { currentMonth } from '@khazana/domain/period';
 import { useNow } from '@/lib/useNow';
-import { GlassCard } from '@/components/ui';
+import { GlassCard } from '@khazana/ui/ui';
 
 const MAX_SHOWN = 3;
 

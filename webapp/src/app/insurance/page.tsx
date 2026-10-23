@@ -16,7 +16,7 @@ import {
   Select,
   ProgressBar,
   StatStrip,
-} from '@/components/ui';
+} from '@khazana/ui/ui';
 import { useConfirm } from '@/components/Confirm';
 import {
   coverageGaps,

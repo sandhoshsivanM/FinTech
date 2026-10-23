@@ -12,15 +12,15 @@ import { useApp, uid } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { D } from '@khazana/domain/money';
 import { STORE, type WatchItem } from '@khazana/domain/types';
-import { PageIntro, Button, Chip, Delta, Field, Input, EmptyState, GlassCard } from '@/components/ui';
-import { Kpi, KpiRow } from '@/components/Kpi';
+import { PageIntro, Button, Chip, Delta, Field, Input, EmptyState, GlassCard } from '@khazana/ui/ui';
+import { Kpi, KpiRow } from '@khazana/ui/Kpi';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
-import { Stagger, StaggerItem } from '@/components/motion';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
 import { useConfirm } from '@/components/Confirm';
 import { demoDayChangePct } from '@/lib/demo/marketFeed';
 import { NumberInput } from '@/components/NumberInput';
-import { AssetMark } from '@/components/primitives';
+import { AssetMark } from '@khazana/ui/primitives';
 
 export default function WatchlistPage() {
   const watchlist = useApp((s) => s.watchlist);

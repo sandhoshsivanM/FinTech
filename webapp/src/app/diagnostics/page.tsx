@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { AlertTriangle, ArrowRight, CheckCircle2, Stethoscope, XCircle } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { runDiagnostics, worstLevel, type Check } from '@khazana/domain/diagnostics';
-import { GlassCard, PageIntro, SectionHeader, Chip } from '@/components/ui';
+import { GlassCard, PageIntro, SectionHeader, Chip } from '@khazana/ui/ui';
 
 const ICON = {
   ok: <CheckCircle2 size={17} />,

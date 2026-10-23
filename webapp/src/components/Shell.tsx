@@ -18,7 +18,7 @@ import { useNow } from '@/lib/useNow';
 import { useNotificationDriver } from '@/lib/useNotificationDriver';
 import { loadSeen, markOneSeen, markSeen, unreadCount } from '@/lib/notifSeen';
 import { demoIndices, demoSeries } from '@/lib/demo/marketFeed';
-import { MiniSparkline } from './charts/MiniSparkline';
+import { MiniSparkline } from '@khazana/ui/charts/MiniSparkline';
 import { BrandMark, WordMark } from './BrandMark';
 import { useDemoData } from './DemoBadge';
 import { usePriceRefresh, refreshMessage } from '@/lib/quotes/usePriceRefresh';
@@ -27,7 +27,7 @@ import { quotesAvailable } from '@/lib/quotes/yahoo';
 import { NAV_GROUPS, BOTTOM_NAV, TITLES, isActive } from './navConfig';
 import { Tour } from './Tour';
 import { CommandPalette } from './CommandPalette';
-import { motion, PageTransition, SPRING, tap } from './motion';
+import { motion, PageTransition, SPRING, tap } from '@khazana/ui/motion';
 
 const KIND_LABEL: Record<string, string> = { self: 'Personal', spouse: 'Spouse', business: 'Business' };
 const RAIL_KEY = 'khazana-nav-collapsed';

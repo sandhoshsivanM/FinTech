@@ -13,7 +13,7 @@
  */
 import type { LucideIcon } from 'lucide-react';
 import { Hint } from './Hint';
-import type { TermKey } from '@/lib/glossary';
+import type { TermKey } from './glossary';
 import clsx from 'clsx';
 import { AnimatedNumber } from './motion';
 import { GlossTile, type Hue } from './home/depth';

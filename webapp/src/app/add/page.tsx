@@ -1,12 +1,12 @@
 'use client';
-import { motion, tap } from '@/components/motion';
+import { motion, tap } from '@khazana/ui/motion';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Sparkles, X,
 } from 'lucide-react';
-import { CatIcon } from '@/components/CategoryIcon';
+import { CatIcon } from '@khazana/ui/CategoryIcon';
 import { useApp, uid, cashAcctId, lsGet, lsSet, LAST_ACCOUNT_KEY } from '@/lib/store';
 import { D } from '@khazana/domain/money';
 import { useFmt } from '@/lib/useFmt';
@@ -15,13 +15,13 @@ import { moneyAccounts } from '@khazana/domain/accountLedger';
 import { parseQuickAdd } from '@khazana/domain/nlp';
 import {
   GlassCard, PageIntro, Button, Segmented, Field, Input, Select,
-} from '@/components/ui';
+} from '@khazana/ui/ui';
 import { DateInput } from '@/components/DateInput';
 import { useConfirm } from '@/components/Confirm';
 import { formatDate } from '@/lib/dateFormat';
 import { startOfDay } from '@khazana/domain/period';
 import { NumberInput } from '@/components/NumberInput';
-import { SectionInfo } from '@/components/Hint';
+import { SectionInfo } from '@khazana/ui/Hint';
 
 /**
  * Receipt size cap. Base64 inflates a file by a third, the result lives in one

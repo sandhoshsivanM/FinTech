@@ -10,8 +10,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "clsx": "2.1.1",
     "decimal.js": "^10.6.0",
+    "framer-motion": "13.0.0",
     "libsodium-wrappers-sumo": "0.8.4",
+    "lucide-react": "1.21.0",
     "next": "16.2.9",
     "qrcode-generator": "2.0.4",
     "react": "19.2.4",

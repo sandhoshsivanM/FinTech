@@ -1,0 +1,293 @@
+/* ============================================================================
+   KHAZANA COMPONENT STYLES
+
+   The classes the shared components in packages/ui-ts use (.card, .tray,
+   .chip, .gauge-*, .skeleton, …), plus the base and type rules they assume.
+   Both web apps import this after the tokens (ADR 0007). App-specific chrome
+   stays in each app's globals.css.
+   ========================================================================= */
+
+/* ============================================================================
+   Base
+   ========================================================================= */
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+/* iOS Safari zooms the page in whenever a focused field's text is under 16px,
+   and leaves it zoomed afterwards — the PIN field did exactly that, so the app
+   opened cropped on both sides after every unlock. 16px on touch devices only;
+   desktop keeps the compact sizes. */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea { font-size: max(16px, 1em) !important; }
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background: var(--canvas);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.006em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'cv01' 1, 'ss01' 1;
+}
+
+/* ============================================================================
+   Surfaces
+   ========================================================================= */
+
+/* The card. `.glass` is kept as an alias only because older markup still names
+   it; it is not a glass effect — see `.glass-panel` for the real one. */
+.card,
+.glass {
+  background: var(--card);
+  /* Barely there: a panel is lifted by its shadow and top highlight, the
+     way the reference separates #F8F8F8 cards from a #F2F2F2 canvas. */
+  border: 1px solid transparent;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-1);
+}
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .glass { border-color: rgba(255, 255, 255, 0.035); }
+
+/* Hover elevation, opt-in. */
+.lift {
+  transition: transform var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease),
+              border-color var(--dur) var(--ease);
+}
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-2);
+  border-color: var(--line-strong);
+}
+/* Press-down feedback for a tappable card. */
+.pressable:active { transform: scale(0.98); }
+
+/* The sticky chrome surface: topbar, bottom bar, drawers.
+ *
+ * OPAQUE, deliberately. A translucent sticky bar only works when the blur
+ * behind it destroys the detail of what scrolls under — and that bet fails in
+ * two ways at once. Firefox does not reliably apply `backdrop-filter` here, and
+ * even where it does, dense content (chart axis labels, table headers) still
+ * reads through at any usable opacity. A navigation bar you can read the page
+ * through is not glassmorphism, it is a rendering bug.
+ *
+ * The blur is kept only as an enhancement over the scrim on modal overlays,
+ * where there is nothing legible behind it to bleed. */
+.glass-panel {
+  background: var(--canvas);
+}
+
+/* ---- Depth kit (Zentra) --------------------------------------------------
+   Icon tile: PLAIN. A flat tinted circle in its own hue — no gloss, no
+   gradient, no coloured drop. Set --tile-b (the hue). */
+.gloss-tile {
+  background: color-mix(in srgb, var(--tile-b) 14%, transparent);
+  color: var(--tile-b);
+}
+/* Gauge: a thick pill in a white recessed track, the value on a chip at its
+   tip. Fine = blue, near a limit = amber, over = pink. */
+.gauge-track {
+  position: relative;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--card-2);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.10);
+  padding: 3px;
+}
+.gauge-fill {
+  height: 100%;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.40) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(90deg, color-mix(in srgb, var(--g-b) 55%, #fff), var(--g-b));
+  box-shadow: 0 6px 12px -6px var(--g-b);
+  display: flex; align-items: center; justify-content: flex-end; padding-right: 3px;
+  min-width: 46px;
+}
+.gauge-chip {
+  height: 100%;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  font-size: 10.5px; font-weight: 600; color: #fff;
+  background: rgba(255, 255, 255, 0.25);
+}
+/* Floating value pill — chart callouts. */
+.float-pill {
+  background: var(--surface);
+  border-radius: 999px;
+  box-shadow: 0 3px 8px -4px rgba(0, 0, 0, 0.2);
+}
+
+/* Touchable surfaces: the 2D/3D blend. A raised control has a lit top edge
+   and a soft drop; a tray is recessed, holding raised cards inside it. */
+.btn-raised {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 60%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 16px -8px rgba(0, 0, 0, 0.55);
+}
+.btn-soft {
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 3px 8px -4px rgba(0, 0, 0, 0.18);
+}
+:root[data-theme="dark"] .btn-soft { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 3px 8px -4px rgba(0, 0, 0, 0.6); }
+@layer components {
+  .tray {
+    background: var(--tray);
+    border-radius: 18px;
+    /* Re-point small muted text at the tray-safe grey (see --tray-muted). */
+    --muted: var(--tray-muted);
+  }
+}
+@layer components {
+/* A raised white tile inside a card (KPI tiles, inset figures). */
+.inset {
+  background: var(--card-2);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+:root[data-theme="dark"] .inset { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+/* A quiet chip: a type label, a status word. */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11.5px; line-height: 1.2; padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--card-2);
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.18);
+}
+/* Large figures: light, not bold. Paise smaller and muted. */
+.figure { font-weight: 300; letter-spacing: -0.03em; line-height: 1.05; }
+.paise { font-size: 0.5em; color: var(--muted-soft); font-weight: 400; letter-spacing: 0; }
+}
+
+/* Diagonal-stripe fill for data: texture instead of more colour. Set
+   --hatch to the series colour. */
+.hatch {
+  background:
+    repeating-linear-gradient(-45deg, var(--hatch) 0 2px, transparent 2px 5px),
+    color-mix(in srgb, var(--hatch) 18%, transparent);
+}
+
+/* Film grain over the insight gradient, so it reads as a material. */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* The single dark focal surface (net-worth hero, portfolio hero). */
+.hero-gradient,
+.ink-surface {
+  position: relative;
+  overflow: hidden;
+  background: var(--hero-bg);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-3);
+}
+/* A whisper of grid, faded out — reads as engineered rather than decorated. */
+.hero-gradient::after,
+.ink-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(120% 100% at 70% 0%, #000, transparent 70%);
+}
+.hero-gradient > *,
+.ink-surface > * { position: relative; z-index: 1; }
+
+/* ============================================================================
+   Typography
+   ========================================================================= */
+/* In `@layer base`, deliberately.
+
+   Tailwind v4 emits utilities inside a cascade layer, and UNLAYERED css beats
+   layered css no matter what the specificity is. These started life unlayered,
+   so a bare `h2 { font-size: 24px }` silently overrode `text-[11px]` on every
+   heading in the app — a utility class simply had no effect on a heading, which
+   is not a rule anyone would guess. Section labels rendered at 24px because of
+   it. Layering them restores the obvious behaviour: these are the defaults, and
+   a utility class on the element wins. */
+@layer base {
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display), var(--font-sans), sans-serif;
+    letter-spacing: -0.015em;
+    font-weight: 500;
+    text-wrap: balance;
+  }
+  h1 { font-size: var(--fs-h1); font-weight: 400; letter-spacing: -0.03em; }
+  h2 { font-size: var(--fs-h2); letter-spacing: -0.025em; }
+  h3 { font-size: var(--fs-h3); }
+}
+
+/* Section label: sentence case, never letter-spaced caps. */
+.eyebrow {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+
+/* ============================================================================
+   Utilities
+   ========================================================================= */
+.divide-hair > * + * { border-top: 1px solid var(--line); }
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--canvas), 0 0 0 4px var(--accent-line);
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+/* ============================================================================
+   Motion. Framer Motion owns component choreography; these cover the plain-CSS
+   cases (chart draw-in, bar growth) that do not need a React component.
+   ========================================================================= */
+@keyframes kz-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes kz-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes kz-grow { from { transform: scaleY(0); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@keyframes kz-pop { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.04); opacity: 1; } 100% { transform: none; } }
+@keyframes kz-shake { 0%, 100% { transform: none; } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+@keyframes kz-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes kz-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+
+/* Loading placeholder. */
+.skeleton {
+  border-radius: var(--radius-btn);
+  background: linear-gradient(90deg, var(--fill) 25%, var(--fill-strong) 50%, var(--fill) 75%);
+  background-size: 200% 100%;
+  animation: kz-shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .lift:hover { transform: none; }
+}

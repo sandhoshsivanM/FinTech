@@ -26,7 +26,7 @@ import { downloadCsv, holdingsTemplate, transactionsTemplate } from '@/lib/impor
 import { moneyAccounts } from '@khazana/domain/accountLedger';
 import {
   GlassCard, PageIntro, SectionHeader, Segmented, Button, Field, Select, Chip,
-} from '@/components/ui';
+} from '@khazana/ui/ui';
 import { useConfirm } from '@/components/Confirm';
 import {
   InstitutionGrid, ExportGuide, DropZone, ErrorNote, InfoNote, PreviewTable,

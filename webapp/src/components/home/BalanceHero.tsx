@@ -4,8 +4,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useFmt } from '@/lib/useFmt';
 import { liquidBalance, moneyAccounts } from '@khazana/domain/accountLedger';
-import { AnimatedNumber, motion, tap } from '../motion';
-import { SectionInfo } from '../Hint';
+import { AnimatedNumber, motion, tap } from '@khazana/ui/motion';
+import { SectionInfo } from '@khazana/ui/Hint';
 
 /**
  * The paise, set smaller and muted: the rupees are what a glance should read.

@@ -32,7 +32,9 @@ network, account or server dependencies without anyone deciding it should.
   Notification, Catalog, MarketData and Reporting have no offline client.
 - **Sharing is build-time only.** Pure domain logic and design tokens live in
   `packages/` (`khazana_domain` for Dart, `domain-ts` for TypeScript) and are
-  compiled into each app. There is no runtime link, no shared storage and no
+  compiled into each app. So do the Zentra web components and their
+  stylesheet (`ui-ts`, imported as `@khazana/ui`): props and tokens in, markup
+  out, with no store, storage or network. There is no runtime link, no shared storage and no
   shared origin. Each online app has its own database (`khazana_online`).
 - **Moving data between the products is a file:** export a `.ftos` backup from
   one, import it into the other. Nothing else crosses over.

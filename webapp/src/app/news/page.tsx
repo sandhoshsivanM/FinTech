@@ -9,11 +9,11 @@
 import { useMemo } from 'react';
 import { Newspaper, ExternalLink } from 'lucide-react';
 import { useApp } from '@/lib/store';
-import { PageIntro, Chip, GlassCard, EmptyState, Segmented } from '@/components/ui';
+import { PageIntro, Chip, GlassCard, EmptyState, Segmented } from '@khazana/ui/ui';
 import { DemoBadge, useDemoData } from '@/components/DemoBadge';
-import { Stagger, StaggerItem } from '@/components/motion';
-import { AssetMark } from '@/components/primitives';
-import { CardTitle } from '@/components/Hint';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
+import { AssetMark } from '@khazana/ui/primitives';
+import { CardTitle } from '@khazana/ui/Hint';
 import { demoNews, agoLabel } from '@/lib/demo/news';
 import { demoIndices, demoEarnings } from '@/lib/demo/marketFeed';
 import { pct } from '@/lib/format';

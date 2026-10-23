@@ -25,8 +25,8 @@
  */
 import Link from 'next/link';
 import { ShieldCheck, Server, Smartphone, Globe, Mail, FileText } from 'lucide-react';
-import { PageIntro, GlassCard, Chip } from '@/components/ui';
-import { Stagger, StaggerItem } from '@/components/motion';
+import { PageIntro, GlassCard, Chip } from '@khazana/ui/ui';
+import { Stagger, StaggerItem } from '@khazana/ui/motion';
 
 /** Kept in one place so the effective date cannot drift between mentions. */
 const EFFECTIVE = '21 August 2026';

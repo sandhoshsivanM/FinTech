@@ -20,7 +20,7 @@ import { DateInput } from '@/components/DateInput';
 import { NumberInput } from '@/components/NumberInput';
 import {
   GlassCard, PageIntro, SectionHeader, Field, Select, EmptyState, Chip,
-} from '@/components/ui';
+} from '@khazana/ui/ui';
 
 export default function ReconcilePage() {
   const txns = useApp((s) => s.txns);

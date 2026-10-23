@@ -25,17 +25,17 @@ import { shiftMonths, type DateRange } from '@khazana/domain/period';
 import {
   incomeBySource, monthlyFlow, dailySpend, monthElapsed, paceStatus, goalProgress, monthEndSeries, SHORT_MONTHS,
 } from '@khazana/domain/dashboardCharts';
-import { CardTitle } from '../Hint';
-import { Donut, type DonutSeg } from '../charts/Donut';
-import { SplitBar } from '../charts/SplitBar';
-import { DotMatrix } from '../charts/DotMatrix';
-import { SplineDots } from '../charts/SplineDots';
-import { MirrorBars } from '../charts/MirrorBars';
-import { BlockStack } from '../charts/BlockStack';
-import { TrendTile } from '../charts/TrendTile';
-import { DotProgress } from '../charts/DotProgress';
-import { PaceBars } from '../charts/PaceBars';
-import { SpendCalendar } from '../charts/SpendCalendar';
+import { CardTitle } from '@khazana/ui/Hint';
+import { Donut, type DonutSeg } from '@khazana/ui/charts/Donut';
+import { SplitBar } from '@khazana/ui/charts/SplitBar';
+import { DotMatrix } from '@khazana/ui/charts/DotMatrix';
+import { SplineDots } from '@khazana/ui/charts/SplineDots';
+import { MirrorBars } from '@khazana/ui/charts/MirrorBars';
+import { BlockStack } from '@khazana/ui/charts/BlockStack';
+import { TrendTile } from '@khazana/ui/charts/TrendTile';
+import { DotProgress } from '@khazana/ui/charts/DotProgress';
+import { PaceBars } from '@khazana/ui/charts/PaceBars';
+import { SpendCalendar } from '@khazana/ui/charts/SpendCalendar';
 
 const SOURCE_COLOURS = ['var(--data-blue)', 'var(--ink)', 'var(--data-green)', 'var(--data-amber)', 'var(--series-4)'];
 const GOAL_COLOURS = ['var(--data-blue)', 'var(--data-rose)', 'var(--data-green)', 'var(--data-amber)'];
