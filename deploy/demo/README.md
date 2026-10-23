@@ -65,9 +65,16 @@ curl -s -o /dev/null -w "%{http_code}\n" https://<host>/v1/catalog     # 200
 nc -zv <public-ip> 5432                                                 # must fail
 ```
 
-## If Oracle has no ARM capacity
+## No card for a cloud VM: run it on a Mac
 
-Run the same compose on a Mac with Docker, then expose Caddy with a free
-Cloudflare quick tunnel (`cloudflared tunnel --url https://localhost`). The Mac
-must stay on, and the tunnel's URL changes each run (rebuild the web app with
-the new one).
+```bash
+brew install cloudflared            # once
+deploy/demo/mac-tunnel.sh           # backend in Docker + free Cloudflare tunnel + web app deploy
+```
+
+It starts a Cloudflare quick tunnel (no account), points the backend at the
+tunnel's https address, starts everything, checks it answers, then rebuilds and
+deploys https://khazana-online.netlify.app for that address. It keeps the Mac
+awake while the window is open. The address changes every run, so run the
+script again after a restart. Caddy serves plain http on :80 here
+(`CADDY_SITE=:80`): Cloudflare does the HTTPS.
