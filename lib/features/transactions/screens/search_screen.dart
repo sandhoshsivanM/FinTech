@@ -1,3 +1,6 @@
+import 'package:go_router/go_router.dart';
+
+import '../../../core/router/app_router.dart';
 import '../../../core/help/info_hint.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,6 +59,7 @@ class _SearchBody extends ConsumerWidget {
                     itemBuilder: (context, i) => TransactionTile(
                       txn: txns[i],
                       category: byId[txns[i].categoryId],
+                      onTap: () => context.push(Routes.editTransaction, extra: txns[i]),
                     ),
                   ),
             loading: () => const Center(child: CircularProgressIndicator()),
