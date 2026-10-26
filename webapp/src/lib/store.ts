@@ -99,7 +99,7 @@ async function reclassifyInvestments(key: CryptoKey, vaultId: string): Promise<v
     await applyMutations(key, vaultId, [
       { op: 'put', type: STORE.txn, id: t.id, value: next },
       ...entryPostingMutations(vaultId, profileId, next, names, existing),
-    ]);
+    ], { preserve: true });
   }
 }
 
@@ -251,7 +251,7 @@ function structuralAccountMutations(
 async function ensureStructuralAccounts(
   key: CryptoKey, vaultId: string, profileId: string, existing: Set<string>,
 ): Promise<void> {
-  await applyMutations(key, vaultId, structuralAccountMutations(vaultId, profileId, existing));
+  await applyMutations(key, vaultId, structuralAccountMutations(vaultId, profileId, existing), { preserve: true });
 }
 
 /**
@@ -316,13 +316,13 @@ async function writeEntryPostings(
   key: CryptoKey, vaultId: string, profileId: string, t: Txn,
   categoryNames: Map<string, string>, existing: Set<string>,
 ): Promise<void> {
-  await applyMutations(key, vaultId, entryPostingMutations(vaultId, profileId, t, categoryNames, existing));
+  await applyMutations(key, vaultId, entryPostingMutations(vaultId, profileId, t, categoryNames, existing), { preserve: true });
 }
 
 async function writeTransferPostings(
   key: CryptoKey, vaultId: string, profileId: string, t: Transfer,
 ): Promise<void> {
-  await applyMutations(key, vaultId, transferPostingMutations(vaultId, profileId, t));
+  await applyMutations(key, vaultId, transferPostingMutations(vaultId, profileId, t), { preserve: true });
 }
 
 /// Lazily migrates a profile to double-entry: seeds its chart of accounts and
@@ -342,14 +342,14 @@ async function backfillDoubleEntry(
     await putRecord(key, STORE.account, vaultId, expenseAcctId(profileId, c.id), {
       id: expenseAcctId(profileId, c.id), vaultId, profileId,
       name: c.name, type: 'expense', subtype: 'expense', openingBalance: '0',
-    } satisfies Account);
+    } satisfies Account, { preserve: true });
     existing.add(expenseAcctId(profileId, c.id));
   }
   await ensureStructuralAccounts(key, vaultId, profileId, existing);
   for (const t of txns) {
     await writeEntryPostings(key, vaultId, profileId, t, names, existing);
     if (!t.accountId) {
-      await putRecord(key, STORE.txn, vaultId, t.id, { ...t, accountId: cashId, profileId: t.profileId ?? profileId });
+      await putRecord(key, STORE.txn, vaultId, t.id, { ...t, accountId: cashId, profileId: t.profileId ?? profileId }, { preserve: true });
     }
   }
 }
@@ -1512,7 +1512,11 @@ export const useApp = create<AppState>((set, get) => ({
     // a mixture. This is the webapp's equivalent of the plan's "restore to a
     // new database and swap" — there is no second database to stage into, so
     // the atomicity comes from the write itself.
-    await applyMutations(key, vaultId, mutations);
+    //
+    // Preserved stamps and no tombstones: a restore is not the user editing
+    // every record now, and must not tell other devices to delete what the
+    // backup happens not to contain.
+    await applyMutations(key, vaultId, mutations, { preserve: true });
 
     // An older backup's records are in an older shape; bring them forward
     // before anything reads them.
