@@ -401,6 +401,12 @@ export const SECTION_HELP = {
     body: "Every holding you own, with its value, cost, return and weight in the portfolio. Fixed-income holdings show their interest rate, interest earned so far and time to maturity. Filter by asset type, search, sort, export, or tap the pencil to edit.",
   },
 
+  // ---- /capture ---------------------------------------------------------------
+  "capture.page": {
+    title: "Review",
+    body: "Bank messages read into drafts, each waiting for you to approve, edit or reject it. Only the amount, merchant, date and reference are kept, never the message. A rejected message is remembered for 90 days so it is not captured again.",
+  },
+
   // ---- /watchlist -------------------------------------------------------------
   "watchlist.page": {
     title: "Watchlist",
