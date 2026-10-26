@@ -46,7 +46,11 @@ class _Body extends ConsumerWidget {
                     'goals.page',
                   ),
                 ),
-                for (final g in goals) _GoalCard(goal: g),
+                for (final g in goals)
+                  _GoalCard(
+                    goal: g,
+                    onEdit: () => _addGoal(context, ref, existing: g),
+                  ),
               ],
             ),
       floatingActionButton: FloatingActionButton.extended(
@@ -57,15 +61,26 @@ class _Body extends ConsumerWidget {
     );
   }
 
-  Future<void> _addGoal(BuildContext context, WidgetRef ref) async {
-    final name = TextEditingController();
-    final target = TextEditingController();
-    var type = GoalType.custom;
+  Future<void> _addGoal(
+    BuildContext context,
+    WidgetRef ref, {
+    Goal? existing,
+  }) async {
+    // Passing [existing] opens the same form prefilled; saving keeps its id.
+    final name = TextEditingController(text: existing?.name ?? '');
+    final target = TextEditingController(
+      text: existing?.targetAmount.toString() ?? '',
+    );
+    var type = existing?.goalType ?? GoalType.custom;
+    DateTime? targetDate = existing?.targetDate;
     await showDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: InfoHint.titled(const Text('New goal'), 'goals.form'),
+          title: InfoHint.titled(
+            Text(existing == null ? 'New goal' : 'Edit goal'),
+            'goals.form',
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -90,6 +105,32 @@ class _Body extends ConsumerWidget {
                   prefixText: '₹ ',
                 ),
               ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Target date (optional)'),
+                subtitle: Text(
+                  targetDate == null
+                      ? 'None'
+                      : DateFormat('d MMM yyyy').format(targetDate!),
+                ),
+                trailing: targetDate == null
+                    ? const Icon(Icons.event)
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        tooltip: 'Clear date',
+                        onPressed: () => setState(() => targetDate = null),
+                      ),
+                onTap: () async {
+                  final now = DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: targetDate ?? now,
+                    firstDate: DateTime(now.year - 1),
+                    lastDate: DateTime(now.year + 50),
+                  );
+                  if (picked != null) setState(() => targetDate = picked);
+                },
+              ),
             ],
           ),
           actions: [
@@ -104,12 +145,31 @@ class _Body extends ConsumerWidget {
                     ? type.label
                     : name.text.trim();
                 if (t == null || t <= Decimal.zero) return;
-                ref
-                    .read(goalActionsProvider)
-                    .add(name: n, type: type, target: t);
+                final actions = ref.read(goalActionsProvider);
+                if (existing != null) {
+                  actions.update(
+                    Goal(
+                      id: existing.id,
+                      vaultId: existing.vaultId,
+                      name: n,
+                      goalType: type,
+                      targetAmount: t,
+                      currentAmount: existing.currentAmount,
+                      targetDate: targetDate,
+                      notes: existing.notes,
+                    ),
+                  );
+                } else {
+                  actions.add(
+                    name: n,
+                    type: type,
+                    target: t,
+                    targetDate: targetDate,
+                  );
+                }
                 Navigator.pop(context);
               },
-              child: const Text('Create'),
+              child: Text(existing == null ? 'Create' : 'Save'),
             ),
           ],
         ),
@@ -119,8 +179,11 @@ class _Body extends ConsumerWidget {
 }
 
 class _GoalCard extends ConsumerWidget {
-  const _GoalCard({required this.goal});
+  const _GoalCard({required this.goal, required this.onEdit});
   final Goal goal;
+
+  /// Opens the goal for editing.
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -133,77 +196,81 @@ class _GoalCard extends ConsumerWidget {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: GlassCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                TypeChip(
-                  progress.isAchieved ? 'Achieved' : goal.goalType.label,
-                ),
-                const Spacer(),
-                if (!progress.isAchieved)
-                  IconAction(
-                    icon: Icons.add_circle_outline,
-                    tooltip: 'Add contribution',
-                    onPressed: () => _contribute(context, ref),
+      child: InkWell(
+        onTap: onEdit,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        child: GlassCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  TypeChip(
+                    progress.isAchieved ? 'Achieved' : goal.goalType.label,
                   ),
-                IconAction(
-                  icon: Icons.delete_outline,
-                  tooltip: 'Delete goal',
-                  onPressed: () =>
-                      ref.read(goalActionsProvider).delete(goal.id),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(goal.name, style: text.titleLarge),
-            const SizedBox(height: AppSpacing.md),
-            Semantics(
-              label:
-                  '${goal.name}, $pct percent funded, '
-                  '${Money.toWords(goal.currentAmount)} of ${Money.toWords(goal.targetAmount)}'
-                  '${progress.onTrack ? '' : ', ${progress.monthsBehind} months behind pace'}',
-              child: ExcludeSemantics(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      Money.format(goal.currentAmount),
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w300,
-                        letterSpacing: -0.5,
-                      ),
+                  const Spacer(),
+                  if (!progress.isAchieved)
+                    IconAction(
+                      icon: Icons.add_circle_outline,
+                      tooltip: 'Add contribution',
+                      onPressed: () => _contribute(context, ref),
                     ),
-                    Text(
-                      'of ${Money.format(goal.targetAmount)}',
-                      style: text.bodySmall?.copyWith(color: muted),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Gauge(
-                      fraction: progress.fraction,
-                      hue: progress.onTrack ? Hue.blue : Hue.amber,
-                    ),
-                    if (progress.projectedCompletion != null) ...[
-                      const SizedBox(height: AppSpacing.sm),
+                  IconAction(
+                    icon: Icons.delete_outline,
+                    tooltip: 'Delete goal',
+                    onPressed: () =>
+                        ref.read(goalActionsProvider).delete(goal.id),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(goal.name, style: text.titleLarge),
+              const SizedBox(height: AppSpacing.md),
+              Semantics(
+                label:
+                    '${goal.name}, $pct percent funded, '
+                    '${Money.toWords(goal.currentAmount)} of ${Money.toWords(goal.targetAmount)}'
+                    '${progress.onTrack ? '' : ', ${progress.monthsBehind} months behind pace'}',
+                child: ExcludeSemantics(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        progress.onTrack
-                            ? 'On track · est. ${DateFormat('MMM yyyy').format(progress.projectedCompletion!)}'
-                            : '${progress.monthsBehind} months behind pace',
-                        style: text.bodySmall?.copyWith(
-                          color: progress.onTrack
-                              ? context.colors.income
-                              : context.colors.budgetWarn,
+                        Money.format(goal.currentAmount),
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: -0.5,
                         ),
                       ),
+                      Text(
+                        'of ${Money.format(goal.targetAmount)}',
+                        style: text.bodySmall?.copyWith(color: muted),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Gauge(
+                        fraction: progress.fraction,
+                        hue: progress.onTrack ? Hue.blue : Hue.amber,
+                      ),
+                      if (progress.projectedCompletion != null) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          progress.onTrack
+                              ? 'On track · est. ${DateFormat('MMM yyyy').format(progress.projectedCompletion!)}'
+                              : '${progress.monthsBehind} months behind pace',
+                          style: text.bodySmall?.copyWith(
+                            color: progress.onTrack
+                                ? context.colors.income
+                                : context.colors.budgetWarn,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

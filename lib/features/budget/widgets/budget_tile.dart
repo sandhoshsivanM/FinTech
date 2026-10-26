@@ -15,12 +15,16 @@ class BudgetTile extends StatelessWidget {
     required this.progress,
     required this.categoryName,
     this.onDelete,
+    this.onTap,
     super.key,
   });
 
   final BudgetProgress progress;
   final String categoryName;
   final VoidCallback? onDelete;
+
+  /// Opens the budget for editing.
+  final VoidCallback? onTap;
 
   /// Takes the colours rather than reading a `const`: the budget steps differ
   /// between Vault and Ledger, and a getter has no `BuildContext`.
@@ -47,57 +51,69 @@ class BudgetTile extends StatelessWidget {
 
     return Semantics(
       label: label,
+      button: onTap != null,
+      onTap: onTap,
       child: ExcludeSemantics(
-        child: GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      categoryName,
-                      style: Theme.of(context).textTheme.titleMedium,
+        child: _tappable(
+          GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        categoryName,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                     ),
-                  ),
-                  // Status conveyed by icon + text, not color alone (§10A).
-                  Icon(
-                    progress.isOverspent
-                        ? Icons.warning_amber
-                        : Icons.check_circle_outline,
-                    size: 18,
-                    color: color,
-                  ),
-                  if (onDelete != null)
-                    IconAction(
-                      icon: Icons.delete_outline,
-                      tooltip: 'Delete budget',
-                      onPressed: onDelete,
+                    // Status conveyed by icon + text, not color alone (§10A).
+                    Icon(
+                      progress.isOverspent
+                          ? Icons.warning_amber
+                          : Icons.check_circle_outline,
+                      size: 18,
+                      color: color,
                     ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Gauge(
-                fraction: progress.fraction,
-                hue: switch (progress.status) {
-                  BudgetStatus.ok => Hue.blue,
-                  BudgetStatus.warning => Hue.amber,
-                  BudgetStatus.over => Hue.pink,
-                },
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                '${Money.format(progress.spent)} of '
-                '${Money.format(progress.budget.amountLimit)} · '
-                '${progress.isOverspent ? "over by ${Money.format(-progress.remaining)}" : "${Money.format(progress.remaining)} left"}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    if (onDelete != null)
+                      IconAction(
+                        icon: Icons.delete_outline,
+                        tooltip: 'Delete budget',
+                        onPressed: onDelete,
+                      ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.sm),
+                Gauge(
+                  fraction: progress.fraction,
+                  hue: switch (progress.status) {
+                    BudgetStatus.ok => Hue.blue,
+                    BudgetStatus.warning => Hue.amber,
+                    BudgetStatus.over => Hue.pink,
+                  },
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  '${Money.format(progress.spent)} of '
+                  '${Money.format(progress.budget.amountLimit)} · '
+                  '${progress.isOverspent ? "over by ${Money.format(-progress.remaining)}" : "${Money.format(progress.remaining)} left"}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  Widget _tappable(Widget card) => onTap == null
+      ? card
+      : InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          child: card,
+        );
 }
