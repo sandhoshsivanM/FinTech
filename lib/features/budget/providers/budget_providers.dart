@@ -61,6 +61,11 @@ class BudgetActions {
     ));
   }
 
+  /// Saves [updated] over the budget with the same id (the repository's save
+  /// is an upsert), so progress and alert history stay attached to it.
+  Future<void> update(Budget updated) =>
+      _ref.read(budgetRepositoryProvider).save(updated);
+
   Future<void> delete(String id) =>
       _ref.read(budgetRepositoryProvider).delete(id);
 

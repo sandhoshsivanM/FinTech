@@ -64,49 +64,53 @@ class _Body extends ConsumerWidget {
               for (final l in liabilities)
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                  child: GlassCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            TypeChip(
-                              l.kind == LiabilityKind.creditCard
-                                  ? 'Credit card'
-                                  : 'Loan',
-                            ),
-                            const Spacer(),
-                            IconAction(
-                              icon: Icons.delete_outline,
-                              tooltip: 'Delete',
-                              onPressed: () => ref
-                                  .read(liabilityActionsProvider)
-                                  .delete(l.id),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(l.name, style: text.titleLarge),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          'Outstanding',
-                          style: text.bodySmall?.copyWith(color: muted),
-                        ),
-                        Text(
-                          Money.format(l.principal),
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w300,
-                            letterSpacing: -0.5,
+                  child: InkWell(
+                    onTap: () => _add(context, ref, existing: l),
+                    borderRadius: BorderRadius.circular(AppRadii.card),
+                    child: GlassCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              TypeChip(
+                                l.kind == LiabilityKind.creditCard
+                                    ? 'Credit card'
+                                    : 'Loan',
+                              ),
+                              const Spacer(),
+                              IconAction(
+                                icon: Icons.delete_outline,
+                                tooltip: 'Delete',
+                                onPressed: () => ref
+                                    .read(liabilityActionsProvider)
+                                    .delete(l.id),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${l.aprPct}% APR'
-                          '${l.termMonths != null ? ' · EMI ${Money.format(calc.emi(l.principal, l.aprPct, l.termMonths!))}' : ''}',
-                          style: text.bodySmall?.copyWith(color: muted),
-                        ),
-                      ],
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(l.name, style: text.titleLarge),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            'Outstanding',
+                            style: text.bodySmall?.copyWith(color: muted),
+                          ),
+                          Text(
+                            Money.format(l.principal),
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w300,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${l.aprPct}% APR'
+                            '${l.termMonths != null ? ' · EMI ${Money.format(calc.emi(l.principal, l.aprPct, l.termMonths!))}' : ''}',
+                            style: text.bodySmall?.copyWith(color: muted),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -141,19 +145,28 @@ class _Body extends ConsumerWidget {
     );
   }
 
-  Future<void> _add(BuildContext context, WidgetRef ref) async {
-    final name = TextEditingController();
-    final principal = TextEditingController();
-    final apr = TextEditingController();
-    final term = TextEditingController();
-    var kind = LiabilityKind.creditCard;
+  Future<void> _add(
+    BuildContext context,
+    WidgetRef ref, {
+    Liability? existing,
+  }) async {
+    // Passing [existing] opens the same form prefilled; saving keeps its id.
+    final name = TextEditingController(text: existing?.name ?? '');
+    final principal = TextEditingController(
+      text: existing?.principal.toString() ?? '',
+    );
+    final apr = TextEditingController(text: existing?.aprPct.toString() ?? '');
+    final term = TextEditingController(
+      text: existing?.termMonths?.toString() ?? '',
+    );
+    var kind = existing?.kind ?? LiabilityKind.creditCard;
 
     await showDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: InfoHint.titled(
-            const Text('Add liability'),
+            Text(existing == null ? 'Add liability' : 'Edit liability'),
             'liabilities.form',
           ),
           content: SingleChildScrollView(
@@ -213,15 +226,32 @@ class _Body extends ConsumerWidget {
                 final p = Decimal.tryParse(principal.text.trim());
                 final a = Decimal.tryParse(apr.text.trim());
                 if (p == null || a == null || name.text.trim().isEmpty) return;
-                ref
-                    .read(liabilityActionsProvider)
-                    .add(
+                final actions = ref.read(liabilityActionsProvider);
+                // Only loans have a term; a card switched from loan drops it.
+                final termMonths = kind == LiabilityKind.loan
+                    ? int.tryParse(term.text.trim())
+                    : null;
+                if (existing != null) {
+                  actions.update(
+                    Liability(
+                      id: existing.id,
+                      vaultId: existing.vaultId,
                       name: name.text.trim(),
                       kind: kind,
                       principal: p,
                       aprPct: a,
-                      termMonths: int.tryParse(term.text.trim()),
-                    );
+                      termMonths: termMonths,
+                    ),
+                  );
+                } else {
+                  actions.add(
+                    name: name.text.trim(),
+                    kind: kind,
+                    principal: p,
+                    aprPct: a,
+                    termMonths: int.tryParse(term.text.trim()),
+                  );
+                }
                 Navigator.pop(context);
               },
               child: const Text('Save'),

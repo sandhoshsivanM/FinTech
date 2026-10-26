@@ -42,6 +42,10 @@ class LiabilityActions {
         ));
   }
 
+  /// Saves [updated] over the liability with the same id (an upsert).
+  Future<void> update(Liability updated) =>
+      _ref.read(liabilityRepositoryProvider).save(updated);
+
   Future<void> delete(String id) =>
       _ref.read(liabilityRepositoryProvider).delete(id);
 
