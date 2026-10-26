@@ -162,6 +162,9 @@ final lastSmsCatchUpProvider = StateProvider<SmsCatchUpResult?>((ref) => null);
 /// would be recorded twice.
 final captureListenerProvider = Provider<void>((ref) {
   if (!CaptureChannel.supported) return;
+  // The shell builds before the encrypted database has finished opening; the
+  // pipeline's repositories need it, so wait (this reruns once it is open).
+  if (!ref.watch(appDatabaseProvider).hasValue) return;
   final channel = ref.watch(captureChannelProvider);
   final pipeline = ref.watch(capturePipelineProvider);
   final catchUp = ref.watch(smsCatchUpProvider);
