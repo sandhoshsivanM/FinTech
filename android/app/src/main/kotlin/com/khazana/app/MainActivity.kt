@@ -2,7 +2,9 @@ package com.khazana.app
 
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -48,6 +50,8 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, methodChannelName)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
+                    "isNotificationCaptureAvailable" ->
+                        result.success(isNotificationListenerDeclared())
                     "isNotificationAccessGranted" ->
                         result.success(isNotificationAccessGranted())
                     "openNotificationAccessSettings" -> {
@@ -97,9 +101,42 @@ class MainActivity : FlutterActivity() {
         pendingPermissionResult = null
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Not on a restore: the share was already handled before the process died.
+        if (savedInstanceState == null) handleShare(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleShare(intent)
+    }
+
+    /**
+     * Text shared into Khazana (Messages → Share → Khazana). Treated exactly
+     * like a captured SMS: handed to the pipeline, parsed, and the text
+     * dropped. Only the share build declares the intent filter, but handling
+     * it here is harmless everywhere.
+     */
+    private fun handleShare(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_SEND || intent.type != "text/plain") return
+        val text = intent.getStringExtra(Intent.EXTRA_TEXT)?.take(MAX_SHARED_CHARS) ?: return
+        if (text.isNotBlank()) CaptureBus.emit(text, null, "sms", System.currentTimeMillis())
+        // Consumed: a rotation or a return to the app must not capture it twice.
+        intent.action = null
+    }
+
     override fun onDestroy() {
         io.shutdown()
         super.onDestroy()
+    }
+
+    /** False on the share build, whose manifest removes the listener. */
+    private fun isNotificationListenerDeclared(): Boolean = try {
+        packageManager.getServiceInfo(ComponentName(this, KhazanaNotificationListener::class.java), 0)
+        true
+    } catch (e: PackageManager.NameNotFoundException) {
+        false
     }
 
     private fun isNotificationAccessGranted(): Boolean {
@@ -111,5 +148,10 @@ class MainActivity : FlutterActivity() {
         return enabled.split(":").any {
             ComponentName.unflattenFromString(it) == target
         }
+    }
+
+    private companion object {
+        /** Longer than any bank alert; the parser refuses anything over 2,000 anyway. */
+        const val MAX_SHARED_CHARS = 4000
     }
 }

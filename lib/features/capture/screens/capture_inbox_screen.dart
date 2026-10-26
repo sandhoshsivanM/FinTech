@@ -19,6 +19,8 @@ import '../../accounts/providers/account_providers.dart';
 import '../../transactions/providers/category_providers.dart';
 import '../providers/capture_providers.dart';
 import '../providers/capture_settings.dart';
+import '../services/capture_channel.dart';
+import '../services/capture_pipeline.dart';
 import '../widgets/notification_access_disclosure.dart';
 import '../widgets/sms_access_disclosure.dart';
 
@@ -64,6 +66,8 @@ class _Body extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
         if (supported) const _PermissionCard() else const _UnsupportedCard(),
+        const SizedBox(height: AppSpacing.md),
+        const _PasteCard(),
         const SizedBox(height: AppSpacing.md),
         const _AutoPostCard(),
         const SizedBox(height: AppSpacing.lg),
@@ -506,6 +510,11 @@ class _PermissionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final channel = ref.watch(captureChannelProvider);
+    final notifications =
+        ref.watch(notificationCaptureAvailableProvider).valueOrNull ?? false;
+    final sms = ref.watch(smsAvailableProvider).valueOrNull ?? false;
+    // The share build reads nothing by itself; say how messages get in.
+    if (!notifications && !sms) return const _ShareOnlyCard();
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -537,7 +546,8 @@ class _PermissionCard extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           const _SmsControls(),
-          Wrap(
+          if (notifications)
+            Wrap(
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
@@ -636,6 +646,127 @@ class _SmsControlsState extends ConsumerState<_SmsControls> {
     );
   }
 }
+
+/// The `share` build: no SMS or notification access, so messages arrive only
+/// when the user hands one over.
+class _ShareOnlyCard extends StatelessWidget {
+  const _ShareOnlyCard();
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.ios_share, color: context.colors.accent),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              'This version reads no messages by itself. In your Messages app, '
+              'long-press a bank SMS, tap Share and choose Khazana — or copy it '
+              'and tap Paste below. Only the amount, merchant, date and '
+              'reference are kept, never the message.',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Paste a copied bank SMS (or several, separated by a blank line) into the
+/// pipeline. Works on every platform — on iPhone it is the only way in.
+class _PasteCard extends ConsumerStatefulWidget {
+  const _PasteCard();
+  @override
+  ConsumerState<_PasteCard> createState() => _PasteCardState();
+}
+
+class _PasteCardState extends ConsumerState<_PasteCard> {
+  bool _busy = false;
+
+  Future<void> _paste() async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      final text = (await Clipboard.getData(Clipboard.kTextPlain))?.text ?? '';
+      final messages = splitPastedMessages(text);
+      if (messages.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Copy a bank SMS first.')),
+        );
+        return;
+      }
+      final pipeline = ref.read(capturePipelineProvider);
+      final counts = <IngestResult, int>{};
+      for (final m in messages) {
+        final outcome = await pipeline.ingest(
+          CapturedMessage(
+            text: m,
+            source: CaptureSource.sms,
+            postedAt: DateTime.now(),
+          ),
+        );
+        counts[outcome.result] = (counts[outcome.result] ?? 0) + 1;
+      }
+      final added =
+          (counts[IngestResult.queued] ?? 0) +
+          (counts[IngestResult.autoPosted] ?? 0);
+      final dup = counts[IngestResult.duplicate] ?? 0;
+      final ignored = counts[IngestResult.ignored] ?? 0;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            [
+              if (added > 0) '$added added',
+              if (dup > 0) '$dup already captured',
+              if (ignored > 0) '$ignored not a transaction',
+            ].join(' · '),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'Copied a bank SMS? Paste it here and it waits below for your approval.',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          FilledButton.icon(
+            onPressed: _busy ? null : _paste,
+            icon: const Icon(Icons.content_paste, size: 18),
+            label: const Text('Paste'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One paste can hold several alerts; a blank line separates them. At most 50.
+@visibleForTesting
+List<String> splitPastedMessages(String text) => text
+    .split(RegExp(r'\n\s*\n'))
+    .map((m) => m.trim())
+    .where((m) => m.isNotEmpty)
+    .take(50)
+    .toList();
 
 class _UnsupportedCard extends StatelessWidget {
   const _UnsupportedCard();
