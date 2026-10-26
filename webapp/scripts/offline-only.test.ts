@@ -56,6 +56,17 @@ test('no sign-in or backend client packages', () => {
   assert.deepEqual(auth, []);
 });
 
+// Multi-device sync moves files through a folder the user owns (iCloud Drive,
+// Dropbox). It must stay that way: the moment it opens a connection it is a
+// sync server, and that is Khazana Online.
+test('sync and SMS capture make no network calls', () => {
+  const files = ['src/lib/syncFile.ts', 'src/lib/syncTransport.ts', 'src/lib/macSms.ts', 'src/lib/capture.ts',
+    'src/components/SyncSettings.tsx', 'src/components/MacSmsSettings.tsx'];
+  const network = /\bfetch\(|XMLHttpRequest|WebSocket|EventSource|RTCPeerConnection|sendBeacon|plugin-http/;
+  const hits = files.filter((f) => network.test(readFileSync(join(webapp, f), 'utf8')));
+  assert.deepEqual(hits, []);
+});
+
 test("the CSP still allows connections to this site only", () => {
   const toml = readFileSync(join(webapp, 'netlify.toml'), 'utf8');
   const csp = /Content-Security-Policy = "([^"]+)"/.exec(toml)?.[1] ?? '';

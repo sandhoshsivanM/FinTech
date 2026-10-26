@@ -36,3 +36,7 @@ tauri-plugin-dialog = "2"
 # `capabilities/default.json`, which scopes it to query1.finance.yahoo.com and
 # nothing else.
 tauri-plugin-http = "2"
+# Reads bank SMS that an iPhone forwards into the Mac's Messages database
+# (src/messages.rs). Bundled so the build does not depend on a system SQLite;
+# the database is only ever opened read-only.
+rusqlite = { version = "0.32", features = ["bundled"] }

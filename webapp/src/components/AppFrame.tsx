@@ -12,6 +12,8 @@ import { onNotificationNavigate } from '@/lib/notify';
 import { useNotificationDriver } from '@/lib/useNotificationDriver';
 import { installErrorLog } from '@/lib/errorLog';
 import { ReloadIfOutdated, UpdateBanner } from './UpdateBanner';
+import { MacSmsDriver } from './MacSmsSettings';
+import { SyncDriver } from './SyncSettings';
 
 export function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -79,6 +81,10 @@ export function AppFrame({ children }: { children: ReactNode }) {
         {/* Mounted inside the unlocked branch only: it reads decrypted records,
             which do not exist until the vault is open. */}
         <NotificationDriver />
+        {/* Mac app only, and only once switched on in Settings. */}
+        <MacSmsDriver />
+        {/* Only once sync is turned on, and only where a folder can be opened. */}
+        <SyncDriver />
         <UpdateBanner />
         <Shell>
           {/* Per-route: a screen that throws must not take the shell with it. */}

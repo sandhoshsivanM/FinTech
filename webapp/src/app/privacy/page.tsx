@@ -151,6 +151,19 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
+      <Section icon={<Server size={17} />} title="Syncing between your devices">
+        <p>
+          Optional, and off until you turn it on in Settings. Each device writes one file into a folder
+          you choose, such as iCloud Drive or Dropbox, and reads the files your other devices wrote there.
+          The file is encrypted on the device with a sync passphrase you set (PBKDF2-SHA256, 600,000
+          rounds, then AES-256-GCM), so the folder&rsquo;s provider stores data it cannot read; even
+          device names are inside the encryption. Khazana runs no sync server and makes no network
+          request for this — the folder&rsquo;s own service moves the files. The passphrase is kept
+          encrypted in this device&rsquo;s vault, never in a backup, and cannot be recovered by us.
+          Receipt images stay on the device that took them.
+        </p>
+      </Section>
+
       <Section icon={<ClipboardPaste size={17} />} title="Bank messages you paste in">
         <p>
           On the web and desktop, Review takes a bank SMS you paste, or one an iPhone Shortcut
@@ -159,6 +172,16 @@ export default function PrivacyPage() {
           A Shortcut passes the message after a <span className="font-mono">#</span> in the
           address, a part browsers never send to a server, and Khazana removes it from the
           address bar as soon as it is read. Nothing becomes a transaction until you approve it.
+        </p>
+        <p>
+          <b className="text-ink">The Mac app can read Messages</b> (optional, off until you turn it
+          on in Settings). With Text Message Forwarding, your iPhone copies its SMS to the Mac, and
+          Khazana reads them from the Messages database. macOS requires Full Disk Access for this,
+          which you grant in System Settings and can withdraw there. Khazana opens the database
+          read-only and selects only received SMS from bank sender IDs such as AX-HDFCBK; messages
+          from phone numbers or email addresses — the people you talk to — are excluded in the query
+          itself and never read. Each bank message is parsed, dropped, and waits in Review like a
+          pasted one. Nothing is transmitted.
         </p>
       </Section>
 
