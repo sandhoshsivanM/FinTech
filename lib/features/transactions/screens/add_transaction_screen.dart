@@ -446,7 +446,7 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
           const SizedBox(height: AppSpacing.md),
 
           // ── Account and merchant ──────────────────────────────────
-          _AccountPicker(
+          AccountPicker(
             value: _accountId,
             onChanged: (id) => setState(() => _accountId = id),
           ),
@@ -519,8 +519,8 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
 
 /// The money account a transaction moves: Cash, or any bank, wallet or card
 /// account that is not archived. Same choice the web form offers.
-class _AccountPicker extends ConsumerWidget {
-  const _AccountPicker({required this.value, required this.onChanged});
+class AccountPicker extends ConsumerWidget {
+  const AccountPicker({super.key, required this.value, required this.onChanged});
   final String? value;
   final ValueChanged<String?> onChanged;
 

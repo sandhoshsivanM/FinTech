@@ -5,9 +5,9 @@ import 'package:uuid/uuid.dart';
 import '../../../core/di/data_providers.dart';
 import '../../../core/services/notification_providers.dart';
 import '../../../core/services/notification_sync_service.dart';
-import '../../accounts/providers/account_providers.dart';
 import 'package:khazana_domain/entities/recurring_rule.dart';
 import 'package:khazana_domain/entities/transaction.dart';
+import 'transaction_providers.dart';
 import 'package:khazana_domain/services/notification_scheduler.dart';
 import 'package:khazana_domain/services/recurrence_calculator.dart';
 
@@ -36,6 +36,7 @@ class RecurringActions {
     required Frequency frequency,
     required DateTime firstRun,
     String? merchant,
+    String? accountId,
   }) async {
     await _ref.read(recurringRepositoryProvider).save(RecurringRule(
           id: _uuid.v4(),
@@ -44,11 +45,40 @@ class RecurringActions {
           type: type,
           categoryId: categoryId,
           merchant: merchant,
+          accountId: accountId,
           frequency: frequency,
           nextRun: firstRun,
         ));
     // The whole point of the feature: a bill added now must be handed to the OS
     // now, because the app may never be resumed again before it falls due.
+    _ref.reconcileNotifications();
+  }
+
+  /// Corrects a rule in place. It keeps its id, so only future postings read
+  /// the new figures; transactions already posted stay as they were.
+  Future<void> update({
+    required RecurringRule rule,
+    required Decimal amount,
+    required TxnType type,
+    required String categoryId,
+    required Frequency frequency,
+    required DateTime nextRun,
+    String? merchant,
+    String? accountId,
+  }) async {
+    await _ref.read(recurringRepositoryProvider).save(RecurringRule(
+          id: rule.id,
+          vaultId: rule.vaultId,
+          amount: amount,
+          type: type,
+          categoryId: categoryId,
+          merchant: merchant,
+          note: rule.note,
+          accountId: accountId,
+          frequency: frequency,
+          nextRun: nextRun,
+          active: rule.active,
+        ));
     _ref.reconcileNotifications();
   }
 
@@ -66,12 +96,10 @@ class RecurringActions {
     final repo = _ref.read(recurringRepositoryProvider);
     final calc = _ref.read(recurrenceCalculatorProvider);
     final database = _ref.read(databaseProvider);
-    final txns = _ref.read(transactionRepositoryProvider);
-    // Materialized rows are ordinary transactions and must reach the ledger the
-    // same way a hand-entered one does. Writing straight to the DAO skipped
-    // LedgerWriter, so a month of recurring bills left net worth untouched on
-    // the Accounts screen and read as a silent failure.
-    final ledger = _ref.read(ledgerWriterProvider);
+    // Materialized rows are ordinary transactions and go through the same
+    // TransactionNotifier.add as a hand-entered one, so they reach the ledger
+    // (postings, net worth, account balances) instead of bypassing it.
+    final notifier = _ref.read(transactionListProvider.notifier);
     final rules = await repo.activeRules(vaultId);
 
     // Fetched once rather than per occurrence: the name only decides the label
@@ -87,28 +115,69 @@ class RecurringActions {
       if (result.due.isEmpty) continue;
       await database.transaction(() async {
         for (final occ in result.due) {
-          final txn = Txn(
-            id: _uuid.v4(),
-            vaultId: vaultId,
+          await notifier.add(
             amount: rule.amount,
             type: rule.type,
             categoryId: rule.categoryId,
+            date: occ.date,
             merchant: rule.merchant,
             note: rule.note ?? 'Recurring',
-            date: occ.date,
-            createdAt: today,
-            accountId: ledger.defaultCashId,
+            categoryName: categoryNames[rule.categoryId],
+            accountId: rule.accountId,
           );
-          await txns.save(txn);
-          await ledger.writeEntry(txn,
-              categoryName: categoryNames[rule.categoryId]);
           created++;
         }
       });
       await repo.save(rule.copyWith(nextRun: result.newNextRun));
     }
-    if (created > 0 &&
-        _ref.read(notifyPrefsProvider).allows(NotifyCategory.bills)) {
+    if (created > 0) {
+      await _announce(created, today);
+      // Materializing advances every rule's nextRun, so every bill reminder the
+      // OS is holding now points at a date that has already passed.
+      _ref.reconcileNotifications();
+    }
+    return created;
+  }
+
+  /// Posts ONE occurrence of [rule], optionally at a different [date] or
+  /// [amount] than scheduled — a salary due on the 7th that arrived on the 10th
+  /// happened on the 10th.
+  ///
+  /// The rule advances from its SCHEDULED date, never from the date it was
+  /// posted on: stepping from a late payment would drag every future occurrence
+  /// along with it.
+  Future<void> postOnce(
+    RecurringRule rule, {
+    DateTime? date,
+    Decimal? amount,
+  }) async {
+    final calc = _ref.read(recurrenceCalculatorProvider);
+    final notifier = _ref.read(transactionListProvider.notifier);
+    final names = {
+      for (final c in await _ref
+          .read(categoryRepositoryProvider)
+          .getAll(_ref.read(currentVaultIdProvider)))
+        c.id: c.name,
+    };
+    await _ref.read(databaseProvider).transaction(() async {
+      await notifier.add(
+        amount: amount ?? rule.amount,
+        type: rule.type,
+        categoryId: rule.categoryId,
+        date: date ?? rule.nextRun,
+        merchant: rule.merchant,
+        note: rule.note ?? 'Recurring',
+        categoryName: names[rule.categoryId],
+        accountId: rule.accountId,
+      );
+      await _ref.read(recurringRepositoryProvider).save(
+          rule.copyWith(nextRun: calc.next(rule.nextRun, rule.frequency)));
+    });
+    _ref.reconcileNotifications();
+  }
+
+  Future<void> _announce(int created, DateTime today) async {
+    if (_ref.read(notifyPrefsProvider).allows(NotifyCategory.bills)) {
       // Local-only notification (PRD §2 no server push). The id was hardcoded
       // to 909001, which meant a second run the same day silently replaced the
       // first instead of reporting its own work; keying it to the day makes each
@@ -124,17 +193,5 @@ class RecurringActions {
             deepLink: '/app/transactions',
           ));
     }
-    if (created > 0) {
-      // Materializing advances every rule's nextRun, so every bill reminder the
-      // OS is holding now points at a date that has already passed.
-      _ref.reconcileNotifications();
-    }
-    return created;
   }
 }
-
-/// Runs recurring materialization once when the DB becomes available.
-final recurringProcessorProvider = FutureProvider<int>((ref) async {
-  await ref.watch(appDatabaseProvider.future);
-  return ref.read(recurringActionsProvider).processDue();
-});

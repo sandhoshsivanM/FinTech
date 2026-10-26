@@ -3548,6 +3548,12 @@ class $RecurringRulesTable extends RecurringRules
   late final GeneratedColumn<String> note = GeneratedColumn<String>(
       'note', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _accountIdMeta =
+      const VerificationMeta('accountId');
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+      'account_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _frequencyMeta =
       const VerificationMeta('frequency');
   @override
@@ -3578,6 +3584,7 @@ class $RecurringRulesTable extends RecurringRules
         categoryId,
         merchant,
         note,
+        accountId,
         frequency,
         nextRun,
         active
@@ -3626,6 +3633,10 @@ class $RecurringRulesTable extends RecurringRules
       context.handle(
           _noteMeta, note.isAcceptableOrUnknown(data['note']!, _noteMeta));
     }
+    if (data.containsKey('account_id')) {
+      context.handle(_accountIdMeta,
+          accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta));
+    }
     if (data.containsKey('frequency')) {
       context.handle(_frequencyMeta,
           frequency.isAcceptableOrUnknown(data['frequency']!, _frequencyMeta));
@@ -3666,6 +3677,8 @@ class $RecurringRulesTable extends RecurringRules
           .read(DriftSqlType.string, data['${effectivePrefix}merchant']),
       note: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}note']),
+      accountId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}account_id']),
       frequency: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}frequency'])!,
       nextRun: attachedDatabase.typeMapping
@@ -3693,6 +3706,7 @@ class RecurringRuleRow extends DataClass
   final String categoryId;
   final String? merchant;
   final String? note;
+  final String? accountId;
   final String frequency;
   final int nextRun;
   final bool active;
@@ -3704,6 +3718,7 @@ class RecurringRuleRow extends DataClass
       required this.categoryId,
       this.merchant,
       this.note,
+      this.accountId,
       required this.frequency,
       required this.nextRun,
       required this.active});
@@ -3724,6 +3739,9 @@ class RecurringRuleRow extends DataClass
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
+    if (!nullToAbsent || accountId != null) {
+      map['account_id'] = Variable<String>(accountId);
+    }
     map['frequency'] = Variable<String>(frequency);
     map['next_run'] = Variable<int>(nextRun);
     map['active'] = Variable<bool>(active);
@@ -3741,6 +3759,9 @@ class RecurringRuleRow extends DataClass
           ? const Value.absent()
           : Value(merchant),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      accountId: accountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountId),
       frequency: Value(frequency),
       nextRun: Value(nextRun),
       active: Value(active),
@@ -3758,6 +3779,7 @@ class RecurringRuleRow extends DataClass
       categoryId: serializer.fromJson<String>(json['categoryId']),
       merchant: serializer.fromJson<String?>(json['merchant']),
       note: serializer.fromJson<String?>(json['note']),
+      accountId: serializer.fromJson<String?>(json['accountId']),
       frequency: serializer.fromJson<String>(json['frequency']),
       nextRun: serializer.fromJson<int>(json['nextRun']),
       active: serializer.fromJson<bool>(json['active']),
@@ -3774,6 +3796,7 @@ class RecurringRuleRow extends DataClass
       'categoryId': serializer.toJson<String>(categoryId),
       'merchant': serializer.toJson<String?>(merchant),
       'note': serializer.toJson<String?>(note),
+      'accountId': serializer.toJson<String?>(accountId),
       'frequency': serializer.toJson<String>(frequency),
       'nextRun': serializer.toJson<int>(nextRun),
       'active': serializer.toJson<bool>(active),
@@ -3788,6 +3811,7 @@ class RecurringRuleRow extends DataClass
           String? categoryId,
           Value<String?> merchant = const Value.absent(),
           Value<String?> note = const Value.absent(),
+          Value<String?> accountId = const Value.absent(),
           String? frequency,
           int? nextRun,
           bool? active}) =>
@@ -3799,6 +3823,7 @@ class RecurringRuleRow extends DataClass
         categoryId: categoryId ?? this.categoryId,
         merchant: merchant.present ? merchant.value : this.merchant,
         note: note.present ? note.value : this.note,
+        accountId: accountId.present ? accountId.value : this.accountId,
         frequency: frequency ?? this.frequency,
         nextRun: nextRun ?? this.nextRun,
         active: active ?? this.active,
@@ -3813,6 +3838,7 @@ class RecurringRuleRow extends DataClass
           data.categoryId.present ? data.categoryId.value : this.categoryId,
       merchant: data.merchant.present ? data.merchant.value : this.merchant,
       note: data.note.present ? data.note.value : this.note,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
       frequency: data.frequency.present ? data.frequency.value : this.frequency,
       nextRun: data.nextRun.present ? data.nextRun.value : this.nextRun,
       active: data.active.present ? data.active.value : this.active,
@@ -3829,6 +3855,7 @@ class RecurringRuleRow extends DataClass
           ..write('categoryId: $categoryId, ')
           ..write('merchant: $merchant, ')
           ..write('note: $note, ')
+          ..write('accountId: $accountId, ')
           ..write('frequency: $frequency, ')
           ..write('nextRun: $nextRun, ')
           ..write('active: $active')
@@ -3838,7 +3865,7 @@ class RecurringRuleRow extends DataClass
 
   @override
   int get hashCode => Object.hash(id, vaultId, amount, type, categoryId,
-      merchant, note, frequency, nextRun, active);
+      merchant, note, accountId, frequency, nextRun, active);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3850,6 +3877,7 @@ class RecurringRuleRow extends DataClass
           other.categoryId == this.categoryId &&
           other.merchant == this.merchant &&
           other.note == this.note &&
+          other.accountId == this.accountId &&
           other.frequency == this.frequency &&
           other.nextRun == this.nextRun &&
           other.active == this.active);
@@ -3863,6 +3891,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRuleRow> {
   final Value<String> categoryId;
   final Value<String?> merchant;
   final Value<String?> note;
+  final Value<String?> accountId;
   final Value<String> frequency;
   final Value<int> nextRun;
   final Value<bool> active;
@@ -3875,6 +3904,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRuleRow> {
     this.categoryId = const Value.absent(),
     this.merchant = const Value.absent(),
     this.note = const Value.absent(),
+    this.accountId = const Value.absent(),
     this.frequency = const Value.absent(),
     this.nextRun = const Value.absent(),
     this.active = const Value.absent(),
@@ -3888,6 +3918,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRuleRow> {
     required String categoryId,
     this.merchant = const Value.absent(),
     this.note = const Value.absent(),
+    this.accountId = const Value.absent(),
     required String frequency,
     required int nextRun,
     this.active = const Value.absent(),
@@ -3907,6 +3938,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRuleRow> {
     Expression<String>? categoryId,
     Expression<String>? merchant,
     Expression<String>? note,
+    Expression<String>? accountId,
     Expression<String>? frequency,
     Expression<int>? nextRun,
     Expression<bool>? active,
@@ -3920,6 +3952,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRuleRow> {
       if (categoryId != null) 'category_id': categoryId,
       if (merchant != null) 'merchant': merchant,
       if (note != null) 'note': note,
+      if (accountId != null) 'account_id': accountId,
       if (frequency != null) 'frequency': frequency,
       if (nextRun != null) 'next_run': nextRun,
       if (active != null) 'active': active,
@@ -3935,6 +3968,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRuleRow> {
       Value<String>? categoryId,
       Value<String?>? merchant,
       Value<String?>? note,
+      Value<String?>? accountId,
       Value<String>? frequency,
       Value<int>? nextRun,
       Value<bool>? active,
@@ -3947,6 +3981,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRuleRow> {
       categoryId: categoryId ?? this.categoryId,
       merchant: merchant ?? this.merchant,
       note: note ?? this.note,
+      accountId: accountId ?? this.accountId,
       frequency: frequency ?? this.frequency,
       nextRun: nextRun ?? this.nextRun,
       active: active ?? this.active,
@@ -3979,6 +4014,9 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRuleRow> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
     if (frequency.present) {
       map['frequency'] = Variable<String>(frequency.value);
     }
@@ -4004,6 +4042,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRuleRow> {
           ..write('categoryId: $categoryId, ')
           ..write('merchant: $merchant, ')
           ..write('note: $note, ')
+          ..write('accountId: $accountId, ')
           ..write('frequency: $frequency, ')
           ..write('nextRun: $nextRun, ')
           ..write('active: $active, ')
@@ -14317,6 +14356,7 @@ typedef $$RecurringRulesTableCreateCompanionBuilder = RecurringRulesCompanion
   required String categoryId,
   Value<String?> merchant,
   Value<String?> note,
+  Value<String?> accountId,
   required String frequency,
   required int nextRun,
   Value<bool> active,
@@ -14331,6 +14371,7 @@ typedef $$RecurringRulesTableUpdateCompanionBuilder = RecurringRulesCompanion
   Value<String> categoryId,
   Value<String?> merchant,
   Value<String?> note,
+  Value<String?> accountId,
   Value<String> frequency,
   Value<int> nextRun,
   Value<bool> active,
@@ -14385,6 +14426,9 @@ class $$RecurringRulesTableFilterComposer
 
   ColumnFilters<String> get note => $composableBuilder(
       column: $table.note, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+      column: $table.accountId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get frequency => $composableBuilder(
       column: $table.frequency, builder: (column) => ColumnFilters(column));
@@ -14443,6 +14487,9 @@ class $$RecurringRulesTableOrderingComposer
   ColumnOrderings<String> get note => $composableBuilder(
       column: $table.note, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get accountId => $composableBuilder(
+      column: $table.accountId, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get frequency => $composableBuilder(
       column: $table.frequency, builder: (column) => ColumnOrderings(column));
 
@@ -14499,6 +14546,9 @@ class $$RecurringRulesTableAnnotationComposer
 
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
 
   GeneratedColumn<String> get frequency =>
       $composableBuilder(column: $table.frequency, builder: (column) => column);
@@ -14561,6 +14611,7 @@ class $$RecurringRulesTableTableManager extends RootTableManager<
             Value<String> categoryId = const Value.absent(),
             Value<String?> merchant = const Value.absent(),
             Value<String?> note = const Value.absent(),
+            Value<String?> accountId = const Value.absent(),
             Value<String> frequency = const Value.absent(),
             Value<int> nextRun = const Value.absent(),
             Value<bool> active = const Value.absent(),
@@ -14574,6 +14625,7 @@ class $$RecurringRulesTableTableManager extends RootTableManager<
             categoryId: categoryId,
             merchant: merchant,
             note: note,
+            accountId: accountId,
             frequency: frequency,
             nextRun: nextRun,
             active: active,
@@ -14587,6 +14639,7 @@ class $$RecurringRulesTableTableManager extends RootTableManager<
             required String categoryId,
             Value<String?> merchant = const Value.absent(),
             Value<String?> note = const Value.absent(),
+            Value<String?> accountId = const Value.absent(),
             required String frequency,
             required int nextRun,
             Value<bool> active = const Value.absent(),
@@ -14600,6 +14653,7 @@ class $$RecurringRulesTableTableManager extends RootTableManager<
             categoryId: categoryId,
             merchant: merchant,
             note: note,
+            accountId: accountId,
             frequency: frequency,
             nextRun: nextRun,
             active: active,
