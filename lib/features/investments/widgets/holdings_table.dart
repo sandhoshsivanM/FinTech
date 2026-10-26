@@ -9,6 +9,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
 import 'package:khazana_domain/services/portfolio_analytics.dart';
 import '../../../presentation/glass_card.dart';
+import 'position_sheet.dart';
 
 /// What a column is sorted by.
 enum _SortKey {
@@ -210,6 +211,7 @@ class _HoldingsTableState extends State<HoldingsTable> {
               child: DataTable(
                 sortColumnIndex: _SortKey.values.indexOf(_sort),
                 sortAscending: !_descending,
+                showCheckboxColumn: false,
                 headingRowHeight: 38,
                 dataRowMinHeight: 40,
                 dataRowMaxHeight: 44,
@@ -263,6 +265,7 @@ class _HoldingsTableState extends State<HoldingsTable> {
                 rows: [
                   for (final p in rows)
                     DataRow(
+                      onSelectChanged: (_) => showPositionSheet(context, p),
                       cells: [
                         DataCell(
                           ConstrainedBox(
