@@ -1012,7 +1012,7 @@ Roughly 200 lines and 12 tests are green against code no user can reach.
 | Allocation donut (validated palette) | ✅ | ✅ |
 | **Multi-profile** (self / spouse / child) | ❌ absent | ✅ |
 | **Bank statement import** | ✅ 4 banks | ❌ |
-| **SMS / notification capture** | ✅ Android | ✅ paste or iPhone Shortcut (`/capture#sms=`) → Review inbox; Mac reading planned |
+| **SMS / notification capture** | ✅ Android | ✅ paste, iPhone Shortcut (`/capture#sms=`), or Mac app reading Messages (opt-in, Full Disk Access) → Review inbox |
 | **Full-text search** | ✅ FTS5 | 🟡 substring filter |
 | **Market data / live prices** | 🟡 legacy only | ❌ |
 | **Multi-vault switching** | ✅ | ❌ single vault |

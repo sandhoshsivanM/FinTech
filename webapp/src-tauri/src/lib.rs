@@ -1,3 +1,5 @@
+mod messages;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -9,6 +11,11 @@ pub fn run() {
     // Live price refresh. Scoped to one host in capabilities/default.json —
     // registering the plugin grants nothing on its own.
     .plugin(tauri_plugin_http::init())
+    // Bank SMS from Messages, opt-in from Settings. Read-only; see messages.rs.
+    .invoke_handler(tauri::generate_handler![
+      messages::read_bank_messages,
+      messages::open_full_disk_access_settings,
+    ])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(

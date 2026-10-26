@@ -160,6 +160,16 @@ export default function PrivacyPage() {
           address, a part browsers never send to a server, and Khazana removes it from the
           address bar as soon as it is read. Nothing becomes a transaction until you approve it.
         </p>
+        <p>
+          <b className="text-ink">The Mac app can read Messages</b> (optional, off until you turn it
+          on in Settings). With Text Message Forwarding, your iPhone copies its SMS to the Mac, and
+          Khazana reads them from the Messages database. macOS requires Full Disk Access for this,
+          which you grant in System Settings and can withdraw there. Khazana opens the database
+          read-only and selects only received SMS from bank sender IDs such as AX-HDFCBK; messages
+          from phone numbers or email addresses — the people you talk to — are excluded in the query
+          itself and never read. Each bank message is parsed, dropped, and waits in Review like a
+          pasted one. Nothing is transmitted.
+        </p>
       </Section>
 
       <Section icon={<Smartphone size={17} />} title="Permissions the mobile app asks for">

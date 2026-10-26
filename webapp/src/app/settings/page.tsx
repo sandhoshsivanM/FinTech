@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
 import { TOUR_EVENT } from '@/components/Tour';
+import { MacSmsCard } from '@/components/MacSmsSettings';
 import { useApp, ACCENTS, type AccentName, type ThemeChoice } from '@/lib/store';
 import { requestPersistence } from '@/lib/db';
 import { loadSampleData } from '@/lib/sampleData';
@@ -476,6 +477,8 @@ export default function SettingsPage() {
         <SectionHeader title="Notifications" info="settings.notifications" />
         <NotificationsSection />
       </GlassCard>
+
+      <MacSmsCard />
 
       {/* Privacy & Backup */}
       <GlassCard>
