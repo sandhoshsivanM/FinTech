@@ -17,6 +17,13 @@ export interface VaultMeta {
   saltB64: string;
   verifier: Encrypted; // encrypts a known token to validate the PIN
   schemaVersion?: number; // data-shape version; drives forward migrations
+  /**
+   * This device's sync settings (`SyncConfig` in store.ts), encrypted with the
+   * vault key. Kept here rather than as a record so a backup never carries
+   * them: restoring one on another device must not clone this device's ID
+   * or hand over the sync passphrase.
+   */
+  sync?: Encrypted;
 }
 
 /// Soft-delete marker for sync (records what was deleted, and when).

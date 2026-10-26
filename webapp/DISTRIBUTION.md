@@ -41,8 +41,10 @@ Two host requirements that are easy to get wrong, both handled in `netlify.toml`
 - `sw.js` must be served `no-cache`, or a cached service worker can pin an old
   shell across deploys.
 
-**Data is per-device.** Each browser/phone keeps its own IndexedDB; nothing
-syncs between them. Use the encrypted backup file to move data across devices.
+**Data is per-device, unless you turn on sync.** Each browser/phone keeps its
+own IndexedDB. Settings → Devices & sync keeps several devices in step through
+an encrypted file per device in a folder you own (iCloud Drive, Dropbox); there
+is no server. The encrypted backup file still moves a whole vault in one go.
 
 ## 2. Install as an app (PWA)
 

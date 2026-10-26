@@ -1,4 +1,5 @@
 mod messages;
+mod sync_folder;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -15,6 +16,13 @@ pub fn run() {
     .invoke_handler(tauri::generate_handler![
       messages::read_bank_messages,
       messages::open_full_disk_access_settings,
+      // Multi-device sync through a folder the user picks; see sync_folder.rs.
+      sync_folder::sync_pick_folder,
+      sync_folder::sync_folder_path,
+      sync_folder::sync_forget_folder,
+      sync_folder::sync_list,
+      sync_folder::sync_read,
+      sync_folder::sync_write,
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

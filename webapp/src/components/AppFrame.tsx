@@ -13,6 +13,7 @@ import { useNotificationDriver } from '@/lib/useNotificationDriver';
 import { installErrorLog } from '@/lib/errorLog';
 import { ReloadIfOutdated, UpdateBanner } from './UpdateBanner';
 import { MacSmsDriver } from './MacSmsSettings';
+import { SyncDriver } from './SyncSettings';
 
 export function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -82,6 +83,8 @@ export function AppFrame({ children }: { children: ReactNode }) {
         <NotificationDriver />
         {/* Mac app only, and only once switched on in Settings. */}
         <MacSmsDriver />
+        {/* Only once sync is turned on, and only where a folder can be opened. */}
+        <SyncDriver />
         <UpdateBanner />
         <Shell>
           {/* Per-route: a screen that throws must not take the shell with it. */}

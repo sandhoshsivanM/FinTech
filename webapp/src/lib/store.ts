@@ -10,8 +10,13 @@ import {
 import { decodeBackup, encodeBackup } from './backupFormat';
 import {
   clearVault, listRecords, listRecordIds, getRecord, putRecord, deleteRecord, applyMutations,
+  applySync, listTombstones, observeStamp, userRecordCount,
   type Mutation, type ReadFailure,
 } from './repo';
+import {
+  LOCAL_ONLY_TYPES, buildBundle, decodeSyncFile, encodeSyncFile, planSync, syncFileName,
+  SyncFileError, type SyncPayload,
+} from './syncFile';
 import { D, ZERO } from '@khazana/domain/money';
 import {
   STORE, PROFILE_SCOPED, isSpending,
@@ -473,6 +478,16 @@ interface AppState extends Data {
    * see `lib/capture.ts`. Also clears decided captures past their dedup window.
    */
   addCaptures: (inputs: CaptureInput[]) => Promise<CaptureOutcome[]>;
+  /** This device's sync settings, or null when sync is off. */
+  getSyncConfig: () => Promise<SyncConfig | null>;
+  setSyncConfig: (c: SyncConfig | null) => Promise<void>;
+  /**
+   * Merges other devices' sync files into this vault and returns this
+   * device's file to write back. See `lib/syncFile.ts`.
+   */
+  syncWith: (files: { name: string; text: string }[], opts?: { confirmSeparate?: boolean }) => Promise<SyncReport>;
+  /** Records that this device's file now holds `digest`, so an unchanged vault is not rewritten. */
+  markSyncWritten: (digest: string) => Promise<void>;
   /** Writes each capture's transaction and marks it decided, in one batch. */
   approveCaptures: (items: { id: string; edits?: CaptureEdits }[]) => Promise<void>;
   rejectCapture: (id: string) => Promise<void>;
@@ -514,6 +529,41 @@ interface AppState extends Data {
 }
 
 export const uid = () => crypto.randomUUID();
+
+/** Per-device sync settings. Stored encrypted in the vault row, never in a record or a backup. */
+export interface SyncConfig {
+  /** Shared by every device; derives each sync file's key. Not the PIN. */
+  passphrase: string;
+  /** Random, and this device's file name. */
+  deviceId: string;
+  deviceName: string;
+  lastSyncAt: number | null;
+  /** SHA-256 of the last bundle written, so an unchanged vault is not rewritten. */
+  lastDigest?: string;
+}
+
+export interface SyncDevice { deviceId: string; deviceName: string; exportedAt: number }
+
+export interface SyncReport {
+  /**
+   * This device has data and has never synced, and the other devices' data
+   * shares no profile with it: two separate histories. Nothing was written;
+   * the caller asks before running again with `confirmSeparate`.
+   */
+  needsConfirm: boolean;
+  /**
+   * This device's file, or null when it has not changed since the last write.
+   * Once it is safely written, pass `digest` to `markSyncWritten`.
+   */
+  own: { name: string; text: string; digest: string } | null;
+  devices: SyncDevice[];
+  /** Files that could not be opened, by name. */
+  errors: { name: string; message: string }[];
+  /** Records written or removed here. */
+  changed: number;
+  /** Devices whose files were too old to merge safely. */
+  stale: string[];
+}
 // localStorage keys. Renamed from the old `ftos-*` prefix during the Khazana
 // rebrand. Writes always use the new key; reads fall back to the legacy key via
 // `lsGet` so an existing user keeps their currency, profile, theme and accent.
@@ -1109,6 +1159,126 @@ export const useApp = create<AppState>((set, get) => ({
    * the point — leaving them behind would keep the old account's balance moving
    * for transactions that no longer belong to it.
    */
+  getSyncConfig: async () => {
+    const { key } = get();
+    if (!key) return null;
+    const meta = await db.vaults.get(VAULT_ID);
+    if (!meta?.sync) return null;
+    try {
+      return await decryptJson<SyncConfig>(key, meta.sync);
+    } catch {
+      return null;
+    }
+  },
+
+  setSyncConfig: async (c) => {
+    const { key } = get();
+    if (!key) throw new Error('locked');
+    await db.vaults.update(VAULT_ID, { sync: c ? await encryptJson(key, c) : undefined });
+  },
+
+  syncWith: async (files, opts = {}) => {
+    const { key, vaultId } = get();
+    if (!key) throw new Error('locked');
+    const cfg = await get().getSyncConfig();
+    if (!cfg) throw new Error('Sync is not set up on this device.');
+    const now = Date.now();
+
+    // 1. Open the other devices' files. One bad file does not stop the rest.
+    const errors: SyncReport['errors'] = [];
+    const remotes: SyncPayload[] = [];
+    for (const f of files) {
+      if (f.name === syncFileName(cfg.deviceId)) continue;
+      try {
+        remotes.push(await decodeSyncFile(f.text, cfg.passphrase, SCHEMA_VERSION));
+      } catch (e) {
+        errors.push({ name: f.name, message: e instanceof SyncFileError ? e.message : 'Could not be read.' });
+      }
+    }
+    const devices = remotes.map((r) => ({ deviceId: r.deviceId, deviceName: r.deviceName, exportedAt: r.exportedAt }));
+
+    // 2. This vault as a bundle. Like export, refuse while anything is
+    //    unreadable: a record missing from our file reads as "never existed".
+    const failures: ReadFailure[] = [];
+    const records: { type: string; value: { id: string } & Record<string, unknown> }[] = [];
+    for (const type of Object.values(STORE)) {
+      if (LOCAL_ONLY_TYPES.has(type)) continue;
+      for (const value of await listRecords<{ id: string } & Record<string, unknown>>(key, type, vaultId, failures)) {
+        records.push({ type, value });
+      }
+    }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} record${failures.length === 1 ? '' : 's'} in this vault cannot be read. Open Diagnostics before syncing.`);
+    }
+    const local = buildBundle(records, await listTombstones(vaultId));
+
+    // 3. A first sync either joins (empty vault) or, if both sides have
+    //    unrelated data, asks first.
+    const firstSync = cfg.lastSyncAt == null;
+    const joining = firstSync && (await userRecordCount(vaultId)) === 0;
+    if (firstSync && !joining && !opts.confirmSeparate && remotes.length > 0) {
+      const mine = new Set(local.records.filter((r) => r.type === STORE.profile).map((r) => r.id));
+      const shared = remotes.some((r) => r.bundle.records.some((x) => x.type === STORE.profile && mine.has(x.id)));
+      if (!shared) return { needsConfirm: true, own: null, devices, errors, changed: 0, stale: [] };
+    }
+
+    const plan = planSync(local, remotes, { now, joining });
+
+    // 4. Apply, rebuilding the ledger legs of every entry that changed.
+    const merged = new Map(plan.merged.records.map((r) => [`${r.type} ${r.id}`, r.value]));
+    const mergedOf = <T,>(type: string) =>
+      plan.merged.records.filter((r) => r.type === type).map((r) => r.value as unknown as T);
+    const categoryNames = new Map(mergedOf<Category>(STORE.category).map((c) => [c.id, c.name]));
+    const accountIds = new Set(mergedOf<Account>(STORE.account).map((a) => a.id));
+    const fallbackProfile = mergedOf<Profile>(STORE.profile).sort((a, b) => a.createdAt - b.createdAt)[0]?.id ?? 'default';
+
+    const mutations: Mutation[] = [];
+    for (const u of plan.upserts) {
+      mutations.push({ op: 'put', type: u.type, id: u.id, value: u.value });
+      if (u.type === STORE.txn) {
+        const t = u.value as unknown as Txn;
+        mutations.push(...entryPostingMutations(vaultId, t.profileId ?? fallbackProfile, t, categoryNames, accountIds));
+      } else if (u.type === STORE.transfer) {
+        const t = u.value as unknown as Transfer;
+        mutations.push(...transferPostingMutations(vaultId, t.profileId ?? fallbackProfile, t));
+      }
+    }
+    for (const d of plan.deletes) {
+      mutations.push({ op: 'delete', type: d.type, id: d.id });
+      const stillEntry = merged.has(`${STORE.txn} ${d.id}`) || merged.has(`${STORE.transfer} ${d.id}`);
+      if ((d.type === STORE.txn || d.type === STORE.transfer) && !stillEntry) {
+        mutations.push(
+          { op: 'delete', type: STORE.posting, id: `${d.id}:dr` },
+          { op: 'delete', type: STORE.posting, id: `${d.id}:cr` },
+        );
+      }
+    }
+    await applySync(key, vaultId, mutations, plan.tombstones);
+    observeStamp(plan.maxRemoteStamp);
+
+    // 5. This device's file, unless nothing changed since the last write.
+    const digest = bufToB64(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(plan.merged))));
+    let own: SyncReport['own'] = null;
+    if (digest !== cfg.lastDigest || files.every((f) => f.name !== syncFileName(cfg.deviceId))) {
+      own = {
+        name: syncFileName(cfg.deviceId),
+        digest,
+        text: await encodeSyncFile({
+          deviceId: cfg.deviceId, deviceName: cfg.deviceName, exportedAt: now,
+          schemaVersion: SCHEMA_VERSION, bundle: plan.merged,
+        }, cfg.passphrase),
+      };
+    }
+    await get().setSyncConfig({ ...cfg, lastSyncAt: now });
+    if (mutations.length > 0) await get().reload();
+    return { needsConfirm: false, own, devices, errors, changed: plan.upserts.length + plan.deletes.length, stale: plan.stale };
+  },
+
+  markSyncWritten: async (digest) => {
+    const cfg = await get().getSyncConfig();
+    if (cfg) await get().setSyncConfig({ ...cfg, lastDigest: digest });
+  },
+
   addCaptures: async (inputs) => {
     const { key, vaultId } = get();
     if (!key || inputs.length === 0) return [];
