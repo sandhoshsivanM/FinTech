@@ -226,17 +226,41 @@ final snapshotCaptureProvider = FutureProvider<void>((ref) async {
   // Both stay null when the score cannot be computed. A day with nothing
   // tracked has no score, and writing 0 would put a failing grade into the
   // history chart for a day the app simply had no opinion about.
-  final health = ref.watch(financialHealthProvider);
+  //
+  // Read, never watched: the score depends on the snapshot list, so watching
+  // it here closed a loop — save, the list changes, the score recomputes,
+  // this runs and saves again — which rewrote the row and rebuilt the
+  // dashboard on every frame for as long as it was open.
+  final health = ref.read(financialHealthProvider);
+  final id = 'snap-$vault-$day';
+  final netWorth = cash + invest - liab;
+  final healthScore = health?.score;
+  final healthWeight = health?.trackedWeight.round();
+  // Nothing changed since the last write today: leave the row alone.
+  final existing = ref
+      .read(netWorthSnapshotListProvider)
+      .valueOrNull
+      ?.where((s) => s.id == id)
+      .firstOrNull;
+  if (existing != null &&
+      existing.netWorth == netWorth &&
+      existing.cash == cash &&
+      existing.investments == invest &&
+      existing.liabilities == liab &&
+      existing.healthScore == healthScore &&
+      existing.healthTrackedWeight == healthWeight) {
+    return;
+  }
   await ref.read(netWorthSnapshotRepositoryProvider).save(NetWorthSnapshot(
-        id: 'snap-$vault-$day',
+        id: id,
         vaultId: vault,
         date: now,
-        netWorth: cash + invest - liab,
+        netWorth: netWorth,
         cash: cash,
         investments: invest,
         liabilities: liab,
-        healthScore: health?.score,
-        healthTrackedWeight: health?.trackedWeight.round(),
+        healthScore: healthScore,
+        healthTrackedWeight: healthWeight,
       ));
 });
 

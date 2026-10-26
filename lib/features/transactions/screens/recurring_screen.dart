@@ -15,6 +15,7 @@ import '../../../presentation/empty_state.dart';
 import '../../../presentation/glass_card.dart';
 import '../providers/category_providers.dart';
 import '../providers/recurring_providers.dart';
+import 'add_transaction_screen.dart' show AccountPicker;
 
 class RecurringScreen extends StatelessWidget {
   const RecurringScreen({super.key});
@@ -44,7 +45,7 @@ class _Body extends ConsumerWidget {
                   'schedule. Khazana posts each one automatically on its due '
                   'date so your cash flow stays complete.',
               action: FilledButton.icon(
-                onPressed: cats.isEmpty ? null : () => _add(context, ref),
+                onPressed: cats.isEmpty ? null : () => _openForm(context, ref),
                 icon: const Icon(Icons.add),
                 label: const Text('Add your first rule'),
               ),
@@ -58,11 +59,22 @@ class _Body extends ConsumerWidget {
               ),
               children: [
                 _MonthlyTotals(rules: rules),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.sm),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _runDue(context, ref),
+                    icon: const Icon(Icons.play_arrow_rounded),
+                    label: const Text('Run due'),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
                 for (final r in rules) ...[
                   _RuleCard(
                     rule: r,
                     category: byId[r.categoryId] ?? 'Uncategorised',
+                    onPost: () => _postNow(context, ref, r),
+                    onEdit: () => _openForm(context, ref, editing: r),
                     onDelete: () =>
                         ref.read(recurringActionsProvider).delete(r.id),
                   ),
@@ -73,64 +85,184 @@ class _Body extends ConsumerWidget {
       floatingActionButton: rules.isEmpty
           ? null
           : FloatingActionButton.extended(
-              onPressed: cats.isEmpty ? null : () => _add(context, ref),
+              onPressed: cats.isEmpty ? null : () => _openForm(context, ref),
               icon: const Icon(Icons.add),
               label: const Text('Add rule'),
             ),
     );
   }
 
-  Future<void> _add(BuildContext context, WidgetRef ref) async {
-    final amount = TextEditingController();
-    final cats = ref.read(categoryListProvider).valueOrNull ?? const [];
-    String? categoryId = cats.first.id;
-    var type = TxnType.expense;
-    var freq = Frequency.monthly;
+  /// Posts every rule that is due, catching up missed runs. Nothing posts on
+  /// its own: like the web app, this is the one place a schedule becomes
+  /// transactions.
+  Future<void> _runDue(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final n = await ref.read(recurringActionsProvider).processDue();
+    messenger.showSnackBar(SnackBar(
+      content: Text(n == 0
+          ? 'No transactions due right now.'
+          : 'Posted $n transaction${n == 1 ? '' : 's'}.'),
+    ));
+  }
 
-    await showDialog<void>(
+  /// Posts ONE occurrence, at the date and amount it actually happened. The
+  /// schedule is a prediction; the posting is a record.
+  Future<void> _postNow(
+      BuildContext context, WidgetRef ref, RecurringRule rule) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final amount = TextEditingController(text: rule.amount.toString());
+    var date = rule.nextRun;
+    final ok = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('New recurring rule'),
+          title: const Text('Post this occurrence'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: amount,
-                keyboardType: TextInputType.number,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   labelText: 'Amount (₹)',
                   prefixText: '₹ ',
                 ),
               ),
-              DropdownButtonFormField<String>(
-                initialValue: categoryId,
-                decoration: const InputDecoration(labelText: 'Category'),
-                items: [
-                  for (final c in cats)
-                    DropdownMenuItem(value: c.id, child: Text(c.name)),
-                ],
-                onChanged: (v) => setState(() => categoryId = v),
-              ),
-              DropdownButtonFormField<Frequency>(
-                initialValue: freq,
-                decoration: const InputDecoration(labelText: 'Frequency'),
-                items: [
-                  for (final f in Frequency.values)
-                    DropdownMenuItem(value: f, child: Text(f.key)),
-                ],
-                onChanged: (v) => setState(() => freq = v ?? freq),
-              ),
-              SegmentedButton<TxnType>(
-                showSelectedIcon: false,
-                segments: const [
-                  ButtonSegment(value: TxnType.expense, label: Text('Expense')),
-                  ButtonSegment(value: TxnType.income, label: Text('Income')),
-                ],
-                selected: {type},
-                onSelectionChanged: (s) => setState(() => type = s.first),
+              const SizedBox(height: AppSpacing.sm),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.event_outlined),
+                title: const Text('Date'),
+                subtitle: Text(_RuleCard._date(date)),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: date,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) setState(() => date = picked);
+                },
               ),
             ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final a = Decimal.tryParse(amount.text.trim());
+                if (a == null || a <= Decimal.zero) return;
+                Navigator.pop(context, true);
+              },
+              child: const Text('Post'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    final a = Decimal.tryParse(amount.text.trim());
+    if (a == null) return;
+    await ref
+        .read(recurringActionsProvider)
+        .postOnce(rule, date: date, amount: a);
+    messenger.showSnackBar(SnackBar(
+      content: Text('Posted ${rule.merchant ?? 'rule'}. Nothing else was run.'),
+    ));
+  }
+
+  /// Add form, or edit form when [editing] is given. A bill's price changes
+  /// without the bill stopping, so the rule is corrected in place and keeps its
+  /// id and schedule.
+  Future<void> _openForm(BuildContext context, WidgetRef ref,
+      {RecurringRule? editing}) async {
+    final amount = TextEditingController(text: editing?.amount.toString());
+    final merchant = TextEditingController(text: editing?.merchant);
+    final cats = ref.read(categoryListProvider).valueOrNull ?? const [];
+    String? categoryId = editing?.categoryId ?? cats.first.id;
+    String? accountId = editing?.accountId;
+    var type = editing?.type ?? TxnType.expense;
+    var freq = editing?.frequency ?? Frequency.monthly;
+    var nextRun = editing?.nextRun ?? DateTime.now();
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(editing == null ? 'New recurring rule' : 'Edit rule'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: amount,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Amount (₹)',
+                    prefixText: '₹ ',
+                  ),
+                ),
+                TextField(
+                  controller: merchant,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Merchant (optional)',
+                  ),
+                ),
+                DropdownButtonFormField<String>(
+                  initialValue: categoryId,
+                  decoration: const InputDecoration(labelText: 'Category'),
+                  items: [
+                    for (final c in cats)
+                      DropdownMenuItem(value: c.id, child: Text(c.name)),
+                  ],
+                  onChanged: (v) => setState(() => categoryId = v),
+                ),
+                AccountPicker(
+                  value: accountId,
+                  onChanged: (id) => setState(() => accountId = id),
+                ),
+                DropdownButtonFormField<Frequency>(
+                  initialValue: freq,
+                  decoration: const InputDecoration(labelText: 'Frequency'),
+                  items: [
+                    for (final f in Frequency.values)
+                      DropdownMenuItem(value: f, child: Text(f.key)),
+                  ],
+                  onChanged: (v) => setState(() => freq = v ?? freq),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.event_outlined),
+                  title: Text(editing == null ? 'First run' : 'Next run'),
+                  subtitle: Text(_RuleCard._date(nextRun)),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: nextRun,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) setState(() => nextRun = picked);
+                  },
+                ),
+                SegmentedButton<TxnType>(
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(
+                        value: TxnType.expense, label: Text('Expense')),
+                    ButtonSegment(value: TxnType.income, label: Text('Income')),
+                  ],
+                  selected: {type},
+                  onSelectionChanged: (s) => setState(() => type = s.first),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -143,15 +275,30 @@ class _Body extends ConsumerWidget {
                 if (a == null || a <= Decimal.zero || categoryId == null) {
                   return;
                 }
-                ref
-                    .read(recurringActionsProvider)
-                    .add(
-                      amount: a,
-                      type: type,
-                      categoryId: categoryId!,
-                      frequency: freq,
-                      firstRun: DateTime.now(),
-                    );
+                final name = merchant.text.trim();
+                final actions = ref.read(recurringActionsProvider);
+                if (editing == null) {
+                  actions.add(
+                    amount: a,
+                    type: type,
+                    categoryId: categoryId!,
+                    frequency: freq,
+                    firstRun: nextRun,
+                    merchant: name.isEmpty ? null : name,
+                    accountId: accountId,
+                  );
+                } else {
+                  actions.update(
+                    rule: editing,
+                    amount: a,
+                    type: type,
+                    categoryId: categoryId!,
+                    frequency: freq,
+                    nextRun: nextRun,
+                    merchant: name.isEmpty ? null : name,
+                    accountId: accountId,
+                  );
+                }
                 Navigator.pop(context);
               },
               child: const Text('Save'),
@@ -259,11 +406,15 @@ class _RuleCard extends StatelessWidget {
   const _RuleCard({
     required this.rule,
     required this.category,
+    required this.onPost,
+    required this.onEdit,
     required this.onDelete,
   });
 
   final RecurringRule rule;
   final String category;
+  final VoidCallback onPost;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   static const _months = [
@@ -346,6 +497,16 @@ class _RuleCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: tint,
             ),
+          ),
+          IconAction(
+            icon: Icons.check_circle_outline,
+            tooltip: 'Post now',
+            onPressed: onPost,
+          ),
+          IconAction(
+            icon: Icons.edit_outlined,
+            tooltip: 'Edit rule',
+            onPressed: onEdit,
           ),
           IconAction(
             icon: Icons.delete_outline,

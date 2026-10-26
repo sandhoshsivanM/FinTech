@@ -1,6 +1,7 @@
 import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -121,6 +122,7 @@ class _Body extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: AppSpacing.md),
                     child: _PolicyCard(
                       policy: p,
+                      onEdit: () => _add(context, ref, existing: p),
                       onDelete: () =>
                           ref.read(insuranceActionsProvider).delete(p.id),
                     ),
@@ -143,18 +145,31 @@ class _Body extends ConsumerWidget {
     );
   }
 
-  Future<void> _add(BuildContext context, WidgetRef ref) async {
-    final name = TextEditingController();
-    final provider = TextEditingController();
-    final cover = TextEditingController();
-    final premium = TextEditingController();
-    var type = InsuranceType.life;
+  Future<void> _add(
+    BuildContext context,
+    WidgetRef ref, {
+    Insurance? existing,
+  }) async {
+    // Passing [existing] opens the same form prefilled; saving keeps its id.
+    final name = TextEditingController(text: existing?.name ?? '');
+    final provider = TextEditingController(text: existing?.provider ?? '');
+    final cover = TextEditingController(
+      text: existing?.coverAmount.toString() ?? '',
+    );
+    final premium = TextEditingController(
+      text: existing?.premium.toString() ?? '',
+    );
+    var type = existing?.type ?? InsuranceType.life;
+    DateTime? renewalDate = existing?.renewalDate;
 
     await showDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: InfoHint.titled(const Text('Add policy'), 'insurance.form'),
+          title: InfoHint.titled(
+            Text(existing == null ? 'Add policy' : 'Edit policy'),
+            'insurance.form',
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -195,6 +210,33 @@ class _Body extends ConsumerWidget {
                     prefixText: '₹ ',
                   ),
                 ),
+                // Kept on edit: dropping it would silently cancel the reminder.
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Renewal date (optional)'),
+                  subtitle: Text(
+                    renewalDate == null
+                        ? 'None'
+                        : DateFormat('d MMM yyyy').format(renewalDate!),
+                  ),
+                  trailing: renewalDate == null
+                      ? const Icon(Icons.event)
+                      : IconButton(
+                          icon: const Icon(Icons.clear),
+                          tooltip: 'Clear date',
+                          onPressed: () => setState(() => renewalDate = null),
+                        ),
+                  onTap: () async {
+                    final now = DateTime.now();
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: renewalDate ?? now,
+                      firstDate: DateTime(now.year - 1),
+                      lastDate: DateTime(now.year + 50),
+                    );
+                    if (picked != null) setState(() => renewalDate = picked);
+                  },
+                ),
               ],
             ),
           ),
@@ -211,6 +253,7 @@ class _Body extends ConsumerWidget {
                 ref
                     .read(insuranceActionsProvider)
                     .save(
+                      id: existing?.id,
                       name: name.text.trim(),
                       type: type,
                       provider: provider.text.trim().isEmpty
@@ -218,6 +261,7 @@ class _Body extends ConsumerWidget {
                           : provider.text.trim(),
                       coverAmount: c,
                       premium: pr ?? Decimal.zero,
+                      renewalDate: renewalDate,
                     );
                 Navigator.pop(context);
               },
@@ -231,9 +275,14 @@ class _Body extends ConsumerWidget {
 }
 
 class _PolicyCard extends StatelessWidget {
-  const _PolicyCard({required this.policy, required this.onDelete});
+  const _PolicyCard({
+    required this.policy,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final Insurance policy;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
@@ -243,41 +292,51 @@ class _PolicyCard extends StatelessWidget {
     final p = policy;
     return SizedBox(
       width: double.infinity,
-      child: GlassCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                TypeChip(_typeLabel(p.type)),
-                const Spacer(),
-                IconAction(
-                  icon: Icons.delete_outline,
-                  tooltip: 'Delete',
-                  onPressed: onDelete,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(p.name, style: text.titleLarge),
-            if (p.provider != null && p.provider!.isNotEmpty)
-              Text(p.provider!, style: text.bodySmall?.copyWith(color: muted)),
-            const SizedBox(height: AppSpacing.md),
-            Text('Sum assured', style: text.bodySmall?.copyWith(color: muted)),
-            Text(
-              Money.format(p.coverAmount),
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w300,
-                letterSpacing: -0.5,
+      child: InkWell(
+        onTap: onEdit,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        child: GlassCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  TypeChip(_typeLabel(p.type)),
+                  const Spacer(),
+                  IconAction(
+                    icon: Icons.delete_outline,
+                    tooltip: 'Delete',
+                    onPressed: onDelete,
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'Premium ${Money.format(p.premium)} a year',
-              style: text.bodySmall?.copyWith(color: muted),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.sm),
+              Text(p.name, style: text.titleLarge),
+              if (p.provider != null && p.provider!.isNotEmpty)
+                Text(
+                  p.provider!,
+                  style: text.bodySmall?.copyWith(color: muted),
+                ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'Sum assured',
+                style: text.bodySmall?.copyWith(color: muted),
+              ),
+              Text(
+                Money.format(p.coverAmount),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Premium ${Money.format(p.premium)} a year',
+                style: text.bodySmall?.copyWith(color: muted),
+              ),
+            ],
+          ),
         ),
       ),
     );

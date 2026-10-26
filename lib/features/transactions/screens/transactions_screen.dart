@@ -10,9 +10,13 @@ import 'package:intl/intl.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/money_format.dart';
+import '../../../core/di/data_providers.dart';
+import 'package:khazana_domain/entities/account.dart';
 import 'package:khazana_domain/entities/category.dart';
 import 'package:khazana_domain/entities/transaction.dart';
 import '../../../presentation/data_gate.dart';
+import '../../accounts/providers/account_providers.dart';
+import '../../accounts/services/ledger_writer.dart';
 import '../providers/category_providers.dart';
 import '../providers/transaction_providers.dart';
 import '../widgets/budget_strip.dart';
@@ -94,6 +98,118 @@ List<_Row> _groupByDay(List<Txn> txns) {
   return rows;
 }
 
+/// Which transactions the ledger shows. Null fields mean "all".
+class TxnFilter {
+  const TxnFilter({this.type, this.categoryId, this.accountId});
+  final TxnType? type;
+  final String? categoryId;
+  final String? accountId;
+
+  bool get active => type != null || categoryId != null || accountId != null;
+
+  /// [cashId] is the default cash account: entries with no account of their
+  /// own live there, so filtering on Cash must include them.
+  bool matches(Txn t, String cashId) {
+    if (type != null && t.type != type) return false;
+    if (categoryId != null && t.categoryId != categoryId) return false;
+    if (accountId != null && (t.accountId ?? cashId) != accountId) {
+      return false;
+    }
+    return true;
+  }
+}
+
+final txnFilterProvider = StateProvider.autoDispose<TxnFilter>(
+  (ref) => const TxnFilter(),
+);
+
+class _FilterBar extends ConsumerWidget {
+  const _FilterBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final f = ref.watch(txnFilterProvider);
+    final categories = [
+      ...(ref.watch(categoryListProvider).valueOrNull ?? const <Category>[]),
+    ]..sort((a, b) => a.name.compareTo(b.name));
+    final accounts = [
+      ...(ref.watch(accountListProvider).valueOrNull ?? const <Account>[])
+          .where((a) =>
+              !a.archived &&
+              (a.subtype == 'bank' ||
+                  a.subtype == 'cash' ||
+                  a.subtype == 'credit_card')),
+    ]..sort((a, b) => a.name.compareTo(b.name));
+    void set(TxnFilter n) => ref.read(txnFilterProvider.notifier).state = n;
+
+    Widget dropdown(String label, String? value,
+        List<DropdownMenuItem<String?>> items, void Function(String?) on) {
+      return Expanded(
+        child: DropdownButtonFormField<String?>(
+          key: ValueKey('$label-$value'),
+          initialValue: value,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: label,
+            isDense: true,
+            border: const OutlineInputBorder(),
+          ),
+          items: [DropdownMenuItem<String?>(value: null, child: const Text('All')), ...items],
+          onChanged: on,
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+      child: Column(
+        children: [
+          SegmentedButton<TxnType?>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(value: null, label: Text('All')),
+              ButtonSegment(value: TxnType.income, label: Text('Income')),
+              ButtonSegment(value: TxnType.expense, label: Text('Expense')),
+            ],
+            selected: {f.type},
+            onSelectionChanged: (s) => set(TxnFilter(
+                type: s.first,
+                categoryId: f.categoryId,
+                accountId: f.accountId)),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              dropdown(
+                'Category',
+                categories.any((c) => c.id == f.categoryId) ? f.categoryId : null,
+                [
+                  for (final c in categories)
+                    DropdownMenuItem<String?>(value: c.id, child: Text(c.name)),
+                ],
+                (v) => set(TxnFilter(
+                    type: f.type, categoryId: v, accountId: f.accountId)),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              dropdown(
+                'Account',
+                accounts.any((a) => a.id == f.accountId) ? f.accountId : null,
+                [
+                  for (final a in accounts)
+                    DropdownMenuItem<String?>(value: a.id, child: Text(a.name)),
+                ],
+                (v) => set(TxnFilter(
+                    type: f.type, categoryId: f.categoryId, accountId: v)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TransactionList extends ConsumerWidget {
   const _TransactionList();
 
@@ -102,6 +218,8 @@ class _TransactionList extends ConsumerWidget {
     final state = ref.watch(transactionListProvider);
     final categories = ref.watch(categoryListProvider).valueOrNull ?? const [];
     final byId = {for (final c in categories) c.id: c};
+    final filter = ref.watch(txnFilterProvider);
+    final cashId = LedgerWriter.cashId(ref.watch(currentVaultIdProvider));
 
     return switch (state) {
       TransactionLoading() => const Center(child: CircularProgressIndicator()),
@@ -132,14 +250,43 @@ class _TransactionList extends ConsumerWidget {
             ),
             child: Column(children: [ReviewQueueBanner(), BudgetStrip()]),
           ),
+          if (transactions.isNotEmpty) const _FilterBar(),
           Expanded(
             child: transactions.isEmpty
                 ? const _EmptyState()
-                : _Ledger(rows: _groupByDay(transactions), categories: byId),
+                : _filtered(transactions, filter, cashId).isEmpty
+                    ? const _NoMatches()
+                    : _Ledger(
+                        rows: _groupByDay(
+                            _filtered(transactions, filter, cashId)),
+                        categories: byId),
           ),
         ],
       ),
     };
+  }
+}
+
+List<Txn> _filtered(List<Txn> all, TxnFilter f, String cashId) =>
+    f.active ? [for (final t in all) if (f.matches(t, cashId)) t] : all;
+
+class _NoMatches extends ConsumerWidget {
+  const _NoMatches();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('No transactions match these filters.'),
+          TextButton(
+            onPressed: () =>
+                ref.read(txnFilterProvider.notifier).state = const TxnFilter(),
+            child: const Text('Clear filters'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

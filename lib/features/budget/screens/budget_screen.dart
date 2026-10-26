@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/help/info_hint.dart';
 import '../../../core/theme/app_tokens.dart';
+import 'package:khazana_domain/entities/budget.dart';
 import 'package:khazana_domain/entities/category.dart';
 import '../../../presentation/data_gate.dart';
 import '../../transactions/providers/category_providers.dart';
@@ -51,6 +52,12 @@ class _BudgetBody extends ConsumerWidget {
                         progress: p,
                         categoryName:
                             byId[p.budget.categoryId]?.name ?? 'Category',
+                        onTap: () => _showAdd(
+                          context,
+                          ref,
+                          categories,
+                          existing: p.budget,
+                        ),
                         onDelete: () =>
                             ref.read(budgetActionsProvider).delete(p.budget.id),
                       ),
@@ -88,19 +95,24 @@ class _BudgetBody extends ConsumerWidget {
   Future<void> _showAdd(
     BuildContext context,
     WidgetRef ref,
-    List<Category> categories,
-  ) async {
-    final amount = TextEditingController();
-    String? categoryId = categories.first.id;
-    var rollover = false;
-    int threshold = 90;
+    List<Category> categories, {
+    Budget? existing,
+  }) async {
+    // Passing [existing] opens the same form prefilled; saving keeps its id.
+    final editing = existing != null;
+    final amount = TextEditingController(
+      text: existing?.amountLimit.toString() ?? '',
+    );
+    String? categoryId = existing?.categoryId ?? categories.first.id;
+    var rollover = existing?.rolloverEnabled ?? false;
+    int threshold = existing?.alertThresholdPct ?? 90;
 
     await showDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: InfoHint.titled(
-            const Text('New monthly budget'),
+            Text(editing ? 'Edit monthly budget' : 'New monthly budget'),
             'budget.newBudget',
           ),
           content: Column(
@@ -113,7 +125,10 @@ class _BudgetBody extends ConsumerWidget {
                   for (final c in categories)
                     DropdownMenuItem(value: c.id, child: Text(c.name)),
                 ],
-                onChanged: (v) => setState(() => categoryId = v),
+                // A budget belongs to its category; changing it is a new budget.
+                onChanged: editing
+                    ? null
+                    : (v) => setState(() => categoryId = v),
               ),
               TextField(
                 controller: amount,
@@ -157,14 +172,27 @@ class _BudgetBody extends ConsumerWidget {
                     categoryId == null) {
                   return;
                 }
-                ref
-                    .read(budgetActionsProvider)
-                    .add(
-                      categoryId: categoryId!,
-                      limit: limit,
-                      rollover: rollover,
+                final actions = ref.read(budgetActionsProvider);
+                if (existing != null) {
+                  actions.update(
+                    Budget(
+                      id: existing.id,
+                      vaultId: existing.vaultId,
+                      categoryId: existing.categoryId,
+                      amountLimit: limit,
+                      periodType: existing.periodType,
+                      rolloverEnabled: rollover,
                       alertThresholdPct: threshold,
-                    );
+                    ),
+                  );
+                } else {
+                  actions.add(
+                    categoryId: categoryId!,
+                    limit: limit,
+                    rollover: rollover,
+                    alertThresholdPct: threshold,
+                  );
+                }
                 Navigator.pop(context);
               },
               child: const Text('Save'),

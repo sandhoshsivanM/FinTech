@@ -24,6 +24,7 @@ class RecurringRule {
     required this.categoryId,
     this.merchant,
     this.note,
+    this.accountId,
     required this.frequency,
     required this.nextRun,
     this.active = true,
@@ -36,6 +37,9 @@ class RecurringRule {
   final String categoryId;
   final String? merchant;
   final String? note;
+
+  /// The money account the posted transactions move; null means cash.
+  final String? accountId;
   final Frequency frequency;
   final DateTime nextRun;
   final bool active;
@@ -48,6 +52,7 @@ class RecurringRule {
         categoryId: categoryId,
         merchant: merchant,
         note: note,
+        accountId: accountId,
         frequency: frequency,
         nextRun: nextRun ?? this.nextRun,
         active: active ?? this.active,

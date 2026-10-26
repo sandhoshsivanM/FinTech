@@ -47,6 +47,14 @@ class GoalActions {
     _ref.reconcileNotifications();
   }
 
+  /// Saves [updated] over the goal with the same id (an upsert). Contributions
+  /// are keyed by goal id, so they stay attached.
+  Future<void> update(Goal updated) async {
+    await _ref.read(goalRepositoryProvider).saveGoal(updated);
+    // The target date may have moved.
+    _ref.reconcileNotifications();
+  }
+
   Future<void> delete(String id) async {
     await _ref.read(goalRepositoryProvider).deleteGoal(id);
     // Alarms outlive the records they describe.

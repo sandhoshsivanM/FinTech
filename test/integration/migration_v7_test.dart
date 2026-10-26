@@ -83,7 +83,7 @@ void main() {
     await db.close();
 
     final raw = sql.sqlite3.open(file.path);
-    expect(raw.select('PRAGMA user_version').first.values.first, 7);
+    expect(raw.select('PRAGMA user_version').first.values.first, 8);
     expect(columnsOf(raw, 'pending_captures'), containsAll(v7CaptureColumns));
     expect(columnsOf(raw, 'transactions'), containsAll(['source', 'capture_id']));
     expect(columnsOf(raw, 'capture_account_links'), isNotEmpty);
