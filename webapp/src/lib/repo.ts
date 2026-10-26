@@ -209,3 +209,34 @@ export async function clearVault(vaultId: string): Promise<void> {
     await db.tombstones.where('vaultId').equals(vaultId).delete();
   });
 }
+
+/**
+ * Writes a merge from another device: records keep the stamps they arrived
+ * with, and the vault's tombstones are replaced by the merged set — all in one
+ * transaction, so a sync interrupted halfway leaves the vault as it was.
+ */
+export async function applySync(
+  key: CryptoKey,
+  vaultId: string,
+  mutations: Mutation[],
+  tombstones: { id: string; type: string; deletedAt: number }[],
+): Promise<void> {
+  const puts: EncRecord[] = [];
+  const deletes: string[] = [];
+  for (const m of mutations) {
+    if (m.op === 'delete') deletes.push(recId(m.type, m.id));
+    else puts.push({ id: recId(m.type, m.id), type: m.type, vaultId, enc: await encryptJson(key, m.value) });
+  }
+  await db.transaction('rw', db.records, db.tombstones, async () => {
+    if (deletes.length > 0) await db.records.bulkDelete(deletes);
+    if (puts.length > 0) await db.records.bulkPut(puts);
+    await db.tombstones.where('vaultId').equals(vaultId).delete();
+    await db.tombstones.bulkPut(tombstones.map((t) => tombstone(t.type, t.id, vaultId, t.deletedAt)));
+  });
+}
+
+/** Tombstones for a vault, in the shape sync compares. */
+export async function listTombstones(vaultId: string): Promise<{ id: string; type: string; deletedAt: number }[]> {
+  const rows = await db.tombstones.where('vaultId').equals(vaultId).toArray();
+  return rows.map((t) => ({ id: t.recId, type: t.type, deletedAt: t.deletedAt }));
+}

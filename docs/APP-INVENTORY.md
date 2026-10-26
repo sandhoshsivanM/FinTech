@@ -27,7 +27,8 @@ inventory; it does not repeat their arguments.
 ## 1. What Khazana is
 
 An offline-first, encrypted personal finance and wealth app. There is no server,
-no account, no sync and no telemetry. All data lives in an AES-256 SQLCipher
+no account and no telemetry. Devices sync, if you choose, through encrypted files
+in a folder you own (Settings → Devices & sync); no server is involved. All data lives in an AES-256 SQLCipher
 database on the device, unlocked by a PIN that is never stored.
 
 Two clients share one design:

@@ -28,6 +28,12 @@ network, account or server dependencies without anyone deciding it should.
   backend.** They keep their direct public price feeds (the Yahoo relay, AMFI,
   FX) and their file-based backup and merge (`syncMerge`). Guard tests in each
   offline app fail the build if backend or auth code appears.
+  - *Amended 2026-10-26:* "file-based merge" includes **folder sync**. Each
+    device writes one encrypted `.khazana-sync` file into a folder the user
+    owns (iCloud Drive, Dropbox) and merges the others' with `syncMerge`.
+    There is no account, no Khazana server and no network call; the folder's
+    own service carries ciphertext only. A guard test fails the build if the
+    sync code opens a connection.
 - **The backend serves the online apps only.** Identity, Devices, Sync,
   Notification, Catalog, MarketData and Reporting have no offline client.
 - **Sharing is build-time only.** Pure domain logic and design tokens live in
