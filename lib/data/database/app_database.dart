@@ -88,7 +88,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -131,6 +131,21 @@ class AppDatabase extends _$AppDatabase {
           // nullable or defaulted, so existing rows stay valid as they are.
           if (from < 7) {
             await _migrateToAutoCapture(m);
+          }
+          // v8: which account a recurring rule posts to. Nullable, so existing
+          // rules keep landing on cash exactly as they did.
+          if (from < 8) {
+            final cols = await customSelect(
+                    'PRAGMA table_info("${recurringRules.actualTableName}")')
+                .get();
+            // A trimmed-down legacy file may lack the table altogether; create
+            // it whole (it already carries the column) rather than alter it.
+            if (cols.isEmpty) {
+              await m.createTable(recurringRules);
+            } else {
+              await _addColumnIfMissing(
+                  m, recurringRules, recurringRules.accountId);
+            }
           }
         },
       );

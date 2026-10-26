@@ -155,6 +155,8 @@ class RecurringRules extends Table {
   TextColumn get categoryId => text().references(Categories, #id)();
   TextColumn get merchant => text().nullable()();
   TextColumn get note => text().nullable()();
+  // Money account the posted transactions move; null = the vault's cash account.
+  TextColumn get accountId => text().nullable()();
   TextColumn get frequency => text()(); // daily|weekly|monthly|yearly
   IntColumn get nextRun => integer()(); // Unix ms
   BoolColumn get active => boolean().withDefault(const Constant(true))();
