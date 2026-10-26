@@ -3,6 +3,10 @@ import { create } from 'zustand';
 import { db, persistenceState, requestPersistence, type PersistenceState } from './db';
 import { deriveKey, encryptJson, decryptJson, randomBytes, bufToB64, b64ToBuf, type Encrypted } from './crypto';
 import { BackupError } from './backupError';
+import {
+  planCaptures, staleCaptureIds, approvalRecords, rejectionRecord,
+  type CaptureInput, type CaptureOutcome, type CaptureEdits,
+} from './capture';
 import { decodeBackup, encodeBackup } from './backupFormat';
 import {
   clearVault, listRecords, listRecordIds, getRecord, putRecord, deleteRecord, applyMutations,
@@ -464,6 +468,14 @@ interface AppState extends Data {
   /** Many records as one atomic batch and one reload. See `putMany` below. */
   putMany: (entries: { type: string; value: { id: string } & Record<string, unknown> }[]) => Promise<void>;
   del: (type: string, id: string) => Promise<void>;
+  /**
+   * Parses bank messages into review-inbox drafts. The text is never stored;
+   * see `lib/capture.ts`. Also clears decided captures past their dedup window.
+   */
+  addCaptures: (inputs: CaptureInput[]) => Promise<CaptureOutcome[]>;
+  /** Writes each capture's transaction and marks it decided, in one batch. */
+  approveCaptures: (items: { id: string; edits?: CaptureEdits }[]) => Promise<void>;
+  rejectCapture: (id: string) => Promise<void>;
   reassignTxnAccounts: (fromAccountId: string, toAccountId: string) => Promise<number>;
   putAttachment: (file: File) => Promise<string>;
   getAttachmentUrl: (id: string) => Promise<string | null>;
@@ -1097,6 +1109,59 @@ export const useApp = create<AppState>((set, get) => ({
    * the point — leaving them behind would keep the old account's balance moving
    * for transactions that no longer belong to it.
    */
+  addCaptures: async (inputs) => {
+    const { key, vaultId } = get();
+    if (!key || inputs.length === 0) return [];
+    const now = Date.now();
+    const state = get();
+    // Every capture, not just the active profile's: a message already captured
+    // under another profile is still a duplicate.
+    const existing = await listRecords<PendingCapture>(key, STORE.pendingCapture, vaultId);
+    const plan = await planCaptures(inputs, {
+      vaultId, now, existing, txns: state.txns, categories: state.categories, newId: uid,
+    });
+    const accounts = accountIdSet(state);
+    const mutations: Mutation[] = [
+      ...plan.captures.flatMap((c) =>
+        entryMutations(state, STORE.pendingCapture, c as unknown as PendingCapture & Record<string, unknown>, accounts)),
+      ...staleCaptureIds(existing, now).map((id): Mutation => ({ op: 'delete', type: STORE.pendingCapture, id })),
+    ];
+    if (mutations.length > 0) {
+      await applyMutations(key, vaultId, mutations);
+      await get().reload();
+    }
+    return plan.outcomes;
+  },
+
+  approveCaptures: async (items) => {
+    const { key, vaultId } = get();
+    if (!key || items.length === 0) return;
+    const now = Date.now();
+    const state = get();
+    const accounts = accountIdSet(state);
+    const mutations: Mutation[] = [];
+    for (const { id, edits } of items) {
+      const c = state.pendingCaptures.find((p) => p.id === id);
+      if (!c || (c.status ?? 'pending') !== 'pending') continue;
+      const { txn, capture } = approvalRecords(c, edits ?? {}, { now, txnId: uid() });
+      // The transaction and the decision land together: a capture marked
+      // approved with no transaction behind it would hide a real spend.
+      mutations.push(
+        ...entryMutations(state, STORE.txn, txn as unknown as Txn & Record<string, unknown>, accounts),
+        ...entryMutations(state, STORE.pendingCapture, capture as unknown as PendingCapture & Record<string, unknown>, accounts),
+      );
+    }
+    if (mutations.length === 0) return;
+    await applyMutations(key, vaultId, mutations);
+    await get().reload();
+  },
+
+  rejectCapture: async (id) => {
+    const c = get().pendingCaptures.find((p) => p.id === id);
+    if (!c) return;
+    await get().put(STORE.pendingCapture, rejectionRecord(c, Date.now()) as unknown as PendingCapture & Record<string, unknown>);
+  },
+
   reassignTxnAccounts: async (fromAccountId, toAccountId) => {
     const { key, vaultId, activeProfileId, txns, categories, accounts } = get();
     if (!key || fromAccountId === toAccountId) return 0;

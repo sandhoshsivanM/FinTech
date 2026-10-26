@@ -24,7 +24,7 @@
  * ENTITY changes here, in the store listings, and in the EULA together.
  */
 import Link from 'next/link';
-import { ShieldCheck, Server, Smartphone, Globe, Mail, FileText } from 'lucide-react';
+import { ShieldCheck, Server, Smartphone, Globe, Mail, FileText, ClipboardPaste } from 'lucide-react';
 import { PageIntro, GlassCard, Chip } from '@khazana/ui/ui';
 import { Stagger, StaggerItem } from '@khazana/ui/motion';
 
@@ -148,6 +148,17 @@ export default function PrivacyPage() {
           them — a quote request carries a symbol, which is the same request anyone looking up
           that price would make. Each provider will see your IP address, as they would for any
           web request. If you never refresh prices, the app makes no network requests at all.
+        </p>
+      </Section>
+
+      <Section icon={<ClipboardPaste size={17} />} title="Bank messages you paste in">
+        <p>
+          On the web and desktop, Review takes a bank SMS you paste, or one an iPhone Shortcut
+          opens Khazana with. The message is parsed on your device and dropped at once; only
+          the amount, merchant, date and reference number are kept, in your encrypted vault.
+          A Shortcut passes the message after a <span className="font-mono">#</span> in the
+          address, a part browsers never send to a server, and Khazana removes it from the
+          address bar as soon as it is read. Nothing becomes a transaction until you approve it.
         </p>
       </Section>
 

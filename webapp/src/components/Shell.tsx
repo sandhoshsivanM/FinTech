@@ -25,6 +25,7 @@ import { usePriceRefresh, refreshMessage } from '@/lib/quotes/usePriceRefresh';
 import { useLivePrices } from '@/lib/quotes/useLivePrices';
 import { quotesAvailable } from '@/lib/quotes/yahoo';
 import { NAV_GROUPS, BOTTOM_NAV, TITLES, isActive } from './navConfig';
+import { isPendingCapture } from '@/lib/capture';
 import { Tour } from './Tour';
 import { CommandPalette } from './CommandPalette';
 import { motion, PageTransition, SPRING, tap } from '@khazana/ui/motion';
@@ -349,6 +350,7 @@ function Nav({
 }: { path: string; rail: boolean; className?: string; onNavigate?: () => void }) {
   // Per-instance, so the sidebar and the drawer never animate a pill between them.
   const pillId = useId();
+  const toReview = useApp((s) => s.pendingCaptures.filter(isPendingCapture).length);
   return (
     <nav data-tour="nav" className={className}>
       {NAV_GROUPS.map((group, gi) => (
@@ -363,6 +365,7 @@ function Nav({
           {group.items.map((n) => {
             const active = isActive(n.href, path);
             const Icon = n.icon;
+            const badge = n.href === '/capture' ? (toReview || undefined) : n.badge;
             return (
               <Link
                 key={n.href}
@@ -394,8 +397,8 @@ function Nav({
                 )}
                 <Icon size={17.5} strokeWidth={active ? 2.2 : 1.9} className="relative shrink-0" />
                 {!rail && <span className="relative truncate">{n.label}</span>}
-                {!rail && n.badge != null && (
-                  <span className="relative ml-auto text-[10px] font-semibold px-1.5 rounded-full bg-danger text-white">{n.badge}</span>
+                {!rail && badge != null && (
+                  <span className="relative ml-auto text-[10px] font-semibold px-1.5 rounded-full bg-danger text-white">{badge}</span>
                 )}
                 {/* Always in the accessible name, so a screen reader hears
                     "Portfolio, allocation returns performance" and never has to

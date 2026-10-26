@@ -2,8 +2,9 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
-  Shapes, Trash2, Plus, Pencil, Download, ArrowRightLeft,
+  Shapes, Trash2, Plus, Pencil, Download, ArrowRightLeft, Inbox,
 } from 'lucide-react';
+import { isPendingCapture } from '@/lib/capture';
 import { CategoryIcon } from '@khazana/ui/CategoryIcon';
 import { motion } from '@khazana/ui/motion';
 import { useApp, cashAcctId } from '@/lib/store';
@@ -80,6 +81,7 @@ const presetInputRange = (key: PresetKey): [string, string] => {
 
 export default function TransactionsPage() {
   const txns = useApp((s) => s.txns);
+  const toReview = useApp((s) => s.pendingCaptures.filter(isPendingCapture).length);
   const transfers = useApp((s) => s.transfers);
   const categories = useApp((s) => s.categories);
   const accounts = useApp((s) => s.accounts);
@@ -262,11 +264,22 @@ export default function TransactionsPage() {
         }
       />
 
-      {/* Budget awareness, right where a spend is about to be logged.
-          Deliberately no review-queue banner here: browsers cannot read SMS, so
-          the web app has no capture queue at all. Rendering a greyed-out one
-          would advertise a feature this platform does not have. */}
+      {/* Budget awareness, right where a spend is about to be logged. */}
       <BudgetStrip />
+
+      {/* Shown only when something is waiting: an empty queue is not news. */}
+      {toReview > 0 && (
+        <Link
+          href="/capture"
+          className="focus-ring card flex items-center gap-3 px-4 py-3 text-[13.5px] hover:bg-fill transition-colors"
+        >
+          <Inbox size={17} className="text-ink-soft shrink-0" />
+          <span className="text-ink">
+            {toReview} bank message{toReview === 1 ? '' : 's'} to review
+          </span>
+          <span className="ml-auto text-ink-soft font-semibold">Review</span>
+        </Link>
+      )}
 
       {/* Search + filter */}
       <div className="flex flex-col sm:flex-row gap-3">

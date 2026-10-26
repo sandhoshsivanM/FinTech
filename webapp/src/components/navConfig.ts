@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, LineChart, BarChart3, TrendingUp, Table2, Star, CandlestickChart,
   Coins, Landmark, Wallet, Receipt, CalendarDays, CalendarClock, PieChart, Repeat, Flag, CreditCard,
-  Shield, ShieldCheck, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle, Upload, Stethoscope, Scale,
+  Shield, ShieldCheck, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle, Upload, Stethoscope, Scale, Inbox,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -72,6 +72,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/accounts', label: 'Accounts', icon: Wallet, description: 'Where your money sits' },
       { href: '/transactions', label: 'Transactions', icon: Receipt, description: 'Everything in and out' },
+      { href: '/capture', label: 'Review', icon: Inbox, description: 'Bank SMS waiting for a yes or no' },
       { href: '/calendar', label: 'Calendar', icon: CalendarDays, description: 'The same money, by date' },
       { href: '/budget', label: 'Budget', icon: PieChart, description: 'Limits per category' },
       { href: '/recurring', label: 'Recurring', icon: Repeat, description: 'Bills and income that repeat' },

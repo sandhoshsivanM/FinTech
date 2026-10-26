@@ -51,6 +51,7 @@ const ALL_ROUTES = [
   // Web-only, added with the platform redesign.
   '/analytics', '/holdings', '/watchlist', '/markets', '/dividends', '/tax',
   '/news', '/alerts', '/help', '/import', '/diagnostics', '/reconcile',
+  '/capture',
 ];
 
 /** Reached from within a parent screen, so they get no nav row of their own. */

@@ -529,11 +529,18 @@ export interface Transfer {
 
 // ---- Auto-capture drafts (SMS / notification parser, parsed values only) ----
 export type CaptureSource = 'sms' | 'notification';
+/**
+ * Where a capture is in its life. Same wire keys as Dart's `CaptureStatus`, so
+ * a backup moves between clients without reinterpreting a decision. Absent on
+ * records written before the review inbox existed, which means `pending`.
+ */
+export type CaptureStatus =
+  | 'pending' | 'auto_posted' | 'approved' | 'edited_approved' | 'rejected' | 'reversed';
 export interface PendingCapture {
   id: string;
   vaultId: string;
   profileId?: string;
-  amount: string;
+  amount: string; // as parsed; a user correction goes in `finalAmount`
   type: TxnType;
   merchant?: string | null;
   occurredAt: number; // epoch ms
@@ -541,6 +548,20 @@ export interface PendingCapture {
   uncategorized: boolean;
   fingerprint: string; // SHA-256 dedup key
   capturedAt: number;
+  status?: CaptureStatus;
+  /** `ReviewReason` wire keys (Dart) — why this is waiting for the user. */
+  reasons?: string[];
+  /** Suggested on capture, then whatever the user approved with. */
+  categoryId?: string | null;
+  accountId?: string | null;
+  utr?: string | null;
+  accountLast4?: string | null;
+  instrument?: string;
+  kind?: string;
+  finalAmount?: string | null;
+  decidedAt?: number | null;
+  /** The transaction written for this capture, once approved. */
+  postedTxnId?: string | null;
 }
 
 // ---- Net-worth history snapshot (real, not derived) ----
