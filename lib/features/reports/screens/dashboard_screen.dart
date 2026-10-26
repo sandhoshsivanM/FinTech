@@ -76,6 +76,8 @@ class _DashboardBody extends ConsumerStatefulWidget {
 class _DashboardBodyState extends ConsumerState<_DashboardBody> {
   @override
   Widget build(BuildContext context) {
+    // Materialize any due recurring transactions once the DB is ready (PRD §14).
+    ref.watch(recurringProcessorProvider);
     // Capture today's net-worth snapshot for real trend history.
     ref.watch(snapshotCaptureProvider);
 

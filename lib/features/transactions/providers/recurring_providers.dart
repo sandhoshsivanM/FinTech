@@ -195,3 +195,13 @@ class RecurringActions {
     }
   }
 }
+
+/// Runs recurring materialization once when the DB becomes available.
+///
+/// Kept on mobile although the web app posts only from "Run due": phone users
+/// already rely on bills and salary appearing by themselves, and taking that
+/// away would read as data going missing. Run due and Post now are extras.
+final recurringProcessorProvider = FutureProvider<int>((ref) async {
+  await ref.watch(appDatabaseProvider.future);
+  return ref.read(recurringActionsProvider).processDue();
+});
