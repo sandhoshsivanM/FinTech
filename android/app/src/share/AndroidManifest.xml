@@ -1,0 +1,24 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Share build: the APK handed to people directly (WhatsApp, Drive).
+
+         Android's enhanced fraud protection (India and other markets) blocks a
+         directly-installed app that asks for SMS or notification-listener
+         access, with no "install anyway". So this build asks for neither: the
+         notification listener declared in src/main is removed here, and no SMS
+         permission is added. Bank messages come in only when the user hands
+         one over — Share → Khazana from the Messages app, or Paste in Review. -->
+    <application>
+        <service
+            android:name=".KhazanaNotificationListener"
+            tools:node="remove" />
+
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

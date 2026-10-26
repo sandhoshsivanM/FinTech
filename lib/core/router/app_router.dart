@@ -18,7 +18,7 @@ import '../../features/reports/screens/dashboard_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
 import '../../features/safety_net/screens/safety_net_screen.dart';
 import '../../features/score/screens/score_screen.dart';
-import 'package:khazana_domain/entities/transaction.dart' show TxnType;
+import 'package:khazana_domain/entities/transaction.dart' show Txn, TxnType;
 import '../../features/transactions/screens/add_transaction_screen.dart';
 import '../../features/accounts/screens/accounts_screen.dart';
 import '../../features/transactions/screens/recurring_screen.dart';
@@ -40,6 +40,7 @@ abstract final class Routes {
   static const dashboard = '/app/dashboard';
   static const transactions = '/app/transactions';
   static const addTransaction = '/app/transactions/add';
+  static const editTransaction = '/app/transactions/edit';
   static const search = '/app/search';
   static const budget = '/app/budget';
   static const investments = '/app/investments';
@@ -181,6 +182,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                   initialType: state.uri.queryParameters['type'] == 'income'
                       ? TxnType.income
                       : TxnType.expense,
+                ),
+              ),
+              // Opened by tapping a transaction; the entry travels as `extra`.
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) => AddTransactionScreen(
+                  editing: state.extra is Txn ? state.extra as Txn : null,
                 ),
               ),
             ],

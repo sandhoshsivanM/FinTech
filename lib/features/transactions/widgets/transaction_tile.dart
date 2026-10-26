@@ -9,19 +9,23 @@ import '../../home/widgets/category_tint.dart';
 import '../screens/transactions_screen.dart';
 
 /// A single ledger row: a 40px category avatar, the merchant over its category
-/// and date, and a signed amount. Delete is a swipe (with a confirm), not an
-/// always-visible icon. The sign is conveyed by text, never colour alone.
+/// and date, and a signed amount. Tap opens it for editing (with Delete in the
+/// edit screen's bar); swiping left also deletes, with a confirm. The sign is conveyed by text, never colour alone.
 class TransactionTile extends StatelessWidget {
   const TransactionTile({
     required this.txn,
     required this.category,
     this.onDelete,
+    this.onTap,
     super.key,
   });
 
   final Txn txn;
   final Category? category;
   final VoidCallback? onDelete;
+
+  /// Opens the entry for editing.
+  final VoidCallback? onTap;
 
   Future<bool> _confirm(BuildContext context) async {
     final ok = await showDialog<bool>(
@@ -107,9 +111,12 @@ class TransactionTile extends StatelessWidget {
       ),
     );
 
+    // Tap to edit — the row itself is the target, as on the web ledger.
+    final tappable = onTap == null ? row : InkWell(onTap: onTap, child: row);
+
     return Semantics(
       label: label,
-      button: false,
+      button: onTap != null,
       customSemanticsActions: {
         if (onDelete != null)
           const CustomSemanticsAction(label: 'Delete transaction'): () async {
@@ -117,7 +124,7 @@ class TransactionTile extends StatelessWidget {
           },
       },
       child: onDelete == null
-          ? row
+          ? tappable
           : Dismissible(
               key: ValueKey('txn-${txn.id}'),
               direction: DismissDirection.endToStart,
@@ -132,7 +139,7 @@ class TransactionTile extends StatelessWidget {
                   color: context.colors.expense,
                 ),
               ),
-              child: row,
+              child: tappable,
             ),
     );
   }

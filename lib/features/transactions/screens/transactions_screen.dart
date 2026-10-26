@@ -163,6 +163,7 @@ class _Ledger extends ConsumerWidget {
             category: categories[txn.categoryId],
             onDelete: () =>
                 ref.read(transactionListProvider.notifier).remove(txn.id),
+            onTap: () => context.push(Routes.editTransaction, extra: txn),
           ),
         };
       },

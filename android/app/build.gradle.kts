@@ -67,6 +67,16 @@ android {
             applicationIdSuffix = ".sideload"
             manifestPlaceholders["appLabel"] = "Khazana SMS"
         }
+        // share — the APK to hand to friends over WhatsApp or Drive. No SMS and
+        //         no notification-listener access, because Android blocks a
+        //         directly-installed app that asks for either. Bank SMS come in
+        //         by Share → Khazana or Paste. Build it with:
+        //           flutter build apk --release --flavor share
+        create("share") {
+            dimension = "distribution"
+            applicationIdSuffix = ".share"
+            manifestPlaceholders["appLabel"] = "Khazana"
+        }
     }
 
     signingConfigs {

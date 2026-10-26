@@ -54,6 +54,19 @@ class CaptureChannel {
         .map((e) => CapturedMessage.fromMap(e as Map));
   }
 
+  /// Whether this build has the notification listener at all. The `share`
+  /// build removes it, so its users are not sent to a settings screen where
+  /// Khazana is not listed.
+  Future<bool> isNotificationCaptureAvailable() async {
+    if (!supported) return false;
+    try {
+      return (await _method.invokeMethod<bool>('isNotificationCaptureAvailable')) ??
+          true;
+    } on MissingPluginException {
+      return true;
+    }
+  }
+
   Future<bool> isNotificationAccessGranted() async {
     if (!supported) return false;
     return (await _method.invokeMethod<bool>('isNotificationAccessGranted')) ??

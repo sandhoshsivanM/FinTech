@@ -18,6 +18,7 @@ import '../../../presentation/glass_card.dart';
 import '../../../presentation/stat_tile.dart';
 import '../../liabilities/providers/liability_providers.dart';
 import '../providers/account_providers.dart';
+import '../services/ledger_writer.dart';
 
 /// Where the money actually sits: bank accounts, cash and card/loan balances.
 ///
@@ -385,7 +386,136 @@ class _GroupCard extends StatelessWidget {
   }
 }
 
-class _AccountRow extends StatelessWidget {
+/// Tap an account: edit it, or remove it. Mirrors the web Accounts page — an
+/// account with ledger entries is archived rather than deleted, because
+/// deleting it would orphan those entries and change every balance they touch.
+Future<void> _showAccountActions(BuildContext context, WidgetRef ref, Account a) async {
+  final action = await showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.edit_outlined),
+            title: const Text('Edit account'),
+            onTap: () => Navigator.pop(context, 'edit'),
+          ),
+          ListTile(
+            leading: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+            title: Text('Delete account', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            onTap: () => Navigator.pop(context, 'delete'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (!context.mounted || action == null) return;
+  if (action == 'edit') return _showEditAccount(context, ref, a);
+  await _removeAccount(context, ref, a);
+}
+
+Future<void> _removeAccount(BuildContext context, WidgetRef ref, Account a) async {
+  final repo = ref.read(accountRepositoryProvider);
+  if (a.id == LedgerWriter.cashId(ref.read(currentVaultIdProvider))) {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cash stays'),
+        content: const Text(
+          'Cash is where entries without an account land, so it cannot be '
+          'removed. Its balance only moves when you record cash spending.',
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+      ),
+    );
+    return;
+  }
+  final postings = ref.read(postingListProvider).valueOrNull ?? const [];
+  final used = postings.where((p) => p.accountId == a.id).length;
+  final archive = used > 0;
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(archive ? 'Archive ${a.name}?' : 'Delete ${a.name}?'),
+      content: Text(archive
+          ? '$used ledger entr${used == 1 ? 'y' : 'ies'} use this account, so deleting it '
+              'would rewrite your history. Archiving hides it from lists and pickers '
+              'but keeps past transactions correct.'
+          : 'Nothing has been recorded against this account yet, so it can be '
+              'removed cleanly.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(archive ? 'Archive' : 'Delete'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true) return;
+  if (archive) {
+    await repo.save(a.copyWith(archived: true));
+  } else {
+    await repo.delete(a.id);
+  }
+}
+
+Future<void> _showEditAccount(BuildContext context, WidgetRef ref, Account a) async {
+  final name = TextEditingController(text: a.name);
+  final balance = TextEditingController(text: a.openingBalance.toString());
+  var error = false;
+  await showDialog<void>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: const Text('Edit account'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: name,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: balance,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: 'Opening balance',
+                prefixText: '₹ ',
+                helperText: 'What it held before your first recorded transaction',
+                errorText: error ? 'Enter a number' : null,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () async {
+              final label = name.text.trim();
+              final opening = Decimal.tryParse(balance.text.trim().replaceAll(',', ''));
+              if (label.isEmpty || opening == null) {
+                setState(() => error = opening == null);
+                return;
+              }
+              await ref
+                  .read(accountRepositoryProvider)
+                  .save(a.copyWith(name: label, openingBalance: opening.abs()));
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _AccountRow extends ConsumerWidget {
   const _AccountRow({
     required this.account,
     required this.balance,
@@ -397,7 +527,7 @@ class _AccountRow extends StatelessWidget {
   final Decimal groupTotal;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Share of the group, so a list of balances reads as a distribution rather
     // than as numbers to be compared digit by digit. Guarded: a group summing
     // to zero (or to a net credit) has no meaningful share to draw.
@@ -413,7 +543,12 @@ class _AccountRow extends StatelessWidget {
     };
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.sm),
-      child: Container(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _showAccountActions(context, ref, account),
+        child: Ink(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
@@ -481,6 +616,8 @@ class _AccountRow extends StatelessWidget {
                 ),
               ),
           ],
+        ),
+        ),
         ),
       ),
     );

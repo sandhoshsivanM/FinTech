@@ -9,7 +9,11 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/category_icons.dart';
 import '../../../core/theme/app_tokens.dart';
+import 'package:khazana_domain/entities/account.dart';
 import 'package:khazana_domain/entities/transaction.dart';
+import '../../../core/di/data_providers.dart';
+import '../../accounts/providers/account_providers.dart';
+import '../../accounts/services/ledger_writer.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
 import '../../attachments/providers/attachment_providers.dart';
@@ -22,24 +26,61 @@ import '../providers/transaction_providers.dart';
 // Screen root
 // ---------------------------------------------------------------------------
 
-class AddTransactionScreen extends StatelessWidget {
-  const AddTransactionScreen({this.initialType = TxnType.expense, super.key});
+class AddTransactionScreen extends ConsumerWidget {
+  const AddTransactionScreen({
+    this.initialType = TxnType.expense,
+    this.editing,
+    super.key,
+  });
 
   /// Which side the form opens on.
   final TxnType initialType;
 
+  /// The transaction being edited; null when adding a new one.
+  final Txn? editing;
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete transaction?'),
+        content: const Text('This removes it from your ledger and every balance it moved.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await ref.read(transactionListProvider.notifier).remove(editing!.id);
+    if (context.mounted) context.pop();
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: InfoHint.titled(const Text('Add Transaction'), 'add.page'),
+        title: InfoHint.titled(
+          Text(editing == null ? 'Add Transaction' : 'Edit Transaction'),
+          'add.page',
+        ),
+        actions: [
+          if (editing != null)
+            IconButton(
+              tooltip: 'Delete transaction',
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () => _delete(context, ref),
+            ),
+        ],
       ),
       body: SafeArea(
-        child: DataGate(child: _AddTransactionForm(initialType: initialType)),
+        child: DataGate(
+          child: _AddTransactionForm(initialType: initialType, editing: editing),
+        ),
       ),
     );
   }
@@ -50,8 +91,9 @@ class AddTransactionScreen extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _AddTransactionForm extends ConsumerStatefulWidget {
-  const _AddTransactionForm({required this.initialType});
+  const _AddTransactionForm({required this.initialType, this.editing});
   final TxnType initialType;
+  final Txn? editing;
 
   @override
   ConsumerState<_AddTransactionForm> createState() => _FormState();
@@ -70,6 +112,24 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
   bool _showCategoryError = false;
   String? _attachmentRef;
   bool _attaching = false;
+
+  /// The money account this moves. Null means the built-in Cash account.
+  String? _accountId;
+
+  @override
+  void initState() {
+    super.initState();
+    final t = widget.editing;
+    if (t == null) return;
+    _type = t.type;
+    _amount.text = t.amount.toString();
+    _merchant.text = t.merchant ?? '';
+    _note.text = t.note ?? '';
+    _categoryId = t.categoryId;
+    _date = t.date;
+    _attachmentRef = t.attachmentRef;
+    _accountId = t.accountId;
+  }
 
   @override
   void dispose() {
@@ -130,20 +190,44 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
         break;
       }
     }
-    await ref
-        .read(transactionListProvider.notifier)
-        .add(
+    final merchantText = _merchant.text.trim().isEmpty ? null : _merchant.text.trim();
+    final noteText = _note.text.trim().isEmpty ? null : _note.text.trim();
+    final notifier = ref.read(transactionListProvider.notifier);
+    final editing = widget.editing;
+    if (editing != null) {
+      // Built in full rather than copyWith, so a cleared merchant or note is
+      // actually cleared. The ledger legs are rewritten by update().
+      await notifier.update(
+        Txn(
+          id: editing.id,
+          vaultId: editing.vaultId,
           amount: amount,
           type: _type,
           categoryId: _categoryId!,
           date: _date,
-          merchant: _merchant.text.trim().isEmpty
-              ? null
-              : _merchant.text.trim(),
-          note: _note.text.trim().isEmpty ? null : _note.text.trim(),
-          categoryName: categoryName,
+          merchant: merchantText,
+          note: noteText,
+          createdAt: editing.createdAt,
+          accountId: _accountId ?? ref.read(ledgerWriterProvider).defaultCashId,
           attachmentRef: _attachmentRef,
-        );
+          source: editing.source,
+          captureId: editing.captureId,
+        ),
+        categoryName: categoryName,
+      );
+    } else {
+      await notifier.add(
+        amount: amount,
+        type: _type,
+        categoryId: _categoryId!,
+        date: _date,
+        merchant: merchantText,
+        note: noteText,
+        categoryName: categoryName,
+        attachmentRef: _attachmentRef,
+        accountId: _accountId,
+      );
+    }
 
     // Learn merchant → category association for future quick entries.
     final merchant = _merchant.text.trim();
@@ -361,6 +445,23 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
           ),
           const SizedBox(height: AppSpacing.md),
 
+          // ── Account and merchant ──────────────────────────────────
+          _AccountPicker(
+            value: _accountId,
+            onChanged: (id) => setState(() => _accountId = id),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextFormField(
+            controller: _merchant,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(
+              labelText: 'Merchant (optional)',
+              hintText: 'e.g. BigBasket',
+              prefixIcon: Icon(Icons.storefront_outlined),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
           // ── Note (optional) ───────────────────────────────────────
           TextFormField(
             controller: _note,
@@ -406,12 +507,51 @@ class _FormState extends ConsumerState<_AddTransactionForm> {
             child: FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.check),
-              label: const Text('Save Transaction'),
+              label: Text(widget.editing == null ? 'Save Transaction' : 'Save changes'),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
         ],
       ),
+    );
+  }
+}
+
+/// The money account a transaction moves: Cash, or any bank, wallet or card
+/// account that is not archived. Same choice the web form offers.
+class _AccountPicker extends ConsumerWidget {
+  const _AccountPicker({required this.value, required this.onChanged});
+  final String? value;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cashId = LedgerWriter.cashId(ref.watch(currentVaultIdProvider));
+    final all = ref.watch(accountListProvider).valueOrNull ?? const <Account>[];
+    final money = all
+        .where((a) =>
+            !a.archived &&
+            a.id != cashId &&
+            (a.subtype == 'bank' || a.subtype == 'cash' || a.subtype == 'credit_card'))
+        .toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+    // An archived or deleted account still shows as the current value.
+    final current = value == null || value == cashId || money.any((a) => a.id == value)
+        ? (value == cashId ? null : value)
+        : null;
+    return DropdownButtonFormField<String?>(
+      initialValue: current,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        labelText: 'Account',
+        prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+      ),
+      items: [
+        const DropdownMenuItem<String?>(value: null, child: Text('Cash')),
+        for (final a in money)
+          DropdownMenuItem<String?>(value: a.id, child: Text(a.name, overflow: TextOverflow.ellipsis)),
+      ],
+      onChanged: onChanged,
     );
   }
 }

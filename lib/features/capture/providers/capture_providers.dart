@@ -108,6 +108,11 @@ final lastAutoPostedCaptureProvider =
 /// Whether the device can auto-capture (Android only).
 final captureSupportedProvider = Provider<bool>((ref) => CaptureChannel.supported);
 
+/// Whether this build has the notification listener (false on the `share`
+/// build and off Android).
+final notificationCaptureAvailableProvider = FutureProvider<bool>(
+    (ref) => ref.watch(captureChannelProvider).isNotificationCaptureAvailable());
+
 /// Whether this build reads SMS (the `sideload` flavor) — false on Play builds
 /// and off Android.
 final smsAvailableProvider = FutureProvider<bool>(
