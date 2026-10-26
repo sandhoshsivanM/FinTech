@@ -13,6 +13,8 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.Executors
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
 
 /**
  * Hosts the capture channels. [KhazanaNotificationListener] (every build) and
@@ -30,6 +32,7 @@ class MainActivity : FlutterActivity() {
 
     private val sms: SmsCapture = SmsCaptureImpl
     private val io = Executors.newSingleThreadExecutor()
+    private val kdf = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
     private var pendingPermissionResult: MethodChannel.Result? = null
 
@@ -46,6 +49,34 @@ class MainActivity : FlutterActivity() {
                     CaptureBus.attach(null)
                 }
             })
+
+        // PIN → vault key. javax.crypto's PBKDF2 is native code; the Dart
+        // side checks it against its own implementation before trusting it.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "khazana/kdf")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "pbkdf2") return@setMethodCallHandler result.notImplemented()
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                    return@setMethodCallHandler result.error("unsupported", null, null)
+                }
+                val pin = call.argument<String>("pin") ?: return@setMethodCallHandler result.error("args", null, null)
+                val salt = call.argument<ByteArray>("salt") ?: return@setMethodCallHandler result.error("args", null, null)
+                val iterations = call.argument<Int>("iterations") ?: 0
+                val keyLength = call.argument<Int>("keyLength") ?: 0
+                kdf.execute {
+                    val chars = pin.toCharArray()
+                    val spec = PBEKeySpec(chars, salt, iterations, keyLength * 8)
+                    try {
+                        val key = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+                            .generateSecret(spec).encoded
+                        main.post { result.success(key) }
+                    } catch (e: Exception) {
+                        main.post { result.error("kdf", e.message, null) }
+                    } finally {
+                        spec.clearPassword()
+                        chars.fill('\u0000')
+                    }
+                }
+            }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, methodChannelName)
             .setMethodCallHandler { call, result ->
@@ -128,6 +159,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         io.shutdown()
+        kdf.shutdown()
         super.onDestroy()
     }
 

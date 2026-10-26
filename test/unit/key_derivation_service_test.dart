@@ -43,3 +43,4 @@ void main() {
     expect(RegExp(r'^[0-9a-f]+$').hasMatch(hex), isTrue);
   });
 }
+

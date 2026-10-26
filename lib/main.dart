@@ -1,3 +1,4 @@
+import 'core/security/native_pbkdf2.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart'
@@ -40,6 +41,9 @@ Future<void> _bootstrap() async {
 
   // Before anything else can throw.
   CrashGuard.install();
+
+  // Unlock speed: native PBKDF2 on Android, verified against Dart first.
+  installNativePbkdf2();
 
   // Eager, and before runApp, for one reason: a notification tapped from a cold
   // start is waiting in getNotificationAppLaunchDetails(), and nothing reads it
