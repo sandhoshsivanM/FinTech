@@ -17,7 +17,12 @@ cleanup() { docker rm -f "$pg" "$mq" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
 docker run -d --name "$pg" -e POSTGRES_PASSWORD=openapi -p 127.0.0.1::5432 postgres:17-alpine >/dev/null
-docker run -d --name "$mq" -e RABBITMQ_DEFAULT_USER=openapi -e RABBITMQ_DEFAULT_PASS=openapi -p 127.0.0.1::5672 rabbitmq:4-alpine >/dev/null
+# Same image the Testcontainers tests use in CI. The cookie is passed on the
+# command line: without it RabbitMQ reads /var/lib/rabbitmq/.erlang.cookie,
+# which fails with eacces on the GitHub runner and crashes the broker.
+docker run -d --name "$mq" -e RABBITMQ_DEFAULT_USER=openapi -e RABBITMQ_DEFAULT_PASS=openapi \
+  -e RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS="-setcookie openapi-generation-only" \
+  -p 127.0.0.1::5672 rabbitmq:4-management-alpine >/dev/null
 pg_port=$(docker port "$pg" 5432/tcp | head -1 | sed 's/.*://')
 mq_port=$(docker port "$mq" 5672/tcp | head -1 | sed 's/.*://')
 # Bounded waits: a container that never comes up must fail the job, not hang it.
@@ -30,7 +35,7 @@ wait_for() { # <what> <seconds> <command...>
   done
 }
 wait_for "$pg" 90 docker exec "$pg" pg_isready -U postgres
-wait_for "$mq" 180 docker exec "$mq" rabbitmq-diagnostics -q ping
+wait_for "$mq" 180 docker exec "$mq" rabbitmq-diagnostics --erlang-cookie openapi-generation-only -q ping
 sleep 2 # postgres restarts once after initdb; pg_isready can answer during that
 
 export ASPNETCORE_ENVIRONMENT=Development
