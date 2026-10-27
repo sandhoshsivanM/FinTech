@@ -175,6 +175,40 @@
         }
       }
     },
+    "/v1/auth/step-up/options": {
+      "post": {
+        "tags": [
+          "IdentityEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/auth/step-up": {
+      "post": {
+        "tags": [
+          "IdentityEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepUpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/v1/auth/passkeys/signup/options": {
       "post": {
         "tags": [
@@ -225,6 +259,20 @@
           "refresh_token": {
             "type": "string"
           }
+        },
+        "additionalProperties": false
+      },
+      "StepUpRequest": {
+        "required": [
+          "challenge_id"
+        ],
+        "type": "object",
+        "properties": {
+          "challenge_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assertion": { }
         },
         "additionalProperties": false
       },
