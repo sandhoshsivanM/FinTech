@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.aa.consent-revoked.v1.json",
+  "title": "ConsentRevokedV1",
+  "description": " A consent ended: revoked by the user (here or at their AA), expired, rejected or never approved, or ended by account deletion. Every payload fetched under it is already deleted. ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "consentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "consentId",
+    "status",
+    "at"
+  ],
+  "additionalProperties": false
+}

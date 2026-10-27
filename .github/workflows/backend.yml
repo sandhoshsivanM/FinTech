@@ -46,3 +46,11 @@ jobs:
           global-json-file: backend/global.json
       - name: Regenerate specs and diff
         run: backend/tools/check-openapi.sh
+      # On drift, hand back what the generator produced, so the specs can be
+      # committed from the artifact without Docker on the developer's machine.
+      - name: Upload regenerated specs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-specs
+          path: contracts/openapi/

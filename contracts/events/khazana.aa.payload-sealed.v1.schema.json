@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.aa.payload-sealed.v1.json",
+  "title": "PayloadSealedV1",
+  "description": " Bank data was sealed to the user's delivery key and is waiting in the AA inbox. Notification sends a data-free nudge; the app pulls and acks it. ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "payloadId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "payloadId",
+    "kind",
+    "at"
+  ],
+  "additionalProperties": false
+}

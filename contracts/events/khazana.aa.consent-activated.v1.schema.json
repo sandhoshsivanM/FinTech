@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.aa.consent-activated.v1.json",
+  "title": "ConsentActivatedV1",
+  "description": " The user approved a consent at their Account Aggregator; scheduled fetches may run. ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "consentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "consentId",
+    "status",
+    "at"
+  ],
+  "additionalProperties": false
+}

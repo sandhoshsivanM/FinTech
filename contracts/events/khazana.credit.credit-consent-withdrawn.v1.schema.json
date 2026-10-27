@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.credit.credit-consent-withdrawn.v1.json",
+  "title": "CreditConsentWithdrawnV1",
+  "description": " The user withdrew their credit-report consent: every undelivered report is deleted. A new pull needs a fresh consent anyway. ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "at"
+  ],
+  "additionalProperties": false
+}
