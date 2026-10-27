@@ -11,31 +11,41 @@ import type { LocalRecord, RecordStore } from './vault';
 
 export const ACCOUNTS = 'accounts';
 export const TRANSACTIONS = 'transactions';
+export const CARDS = 'cards';
 
 /** The offline app's subtypes, so a later import from a backup maps one to one. */
 export type AccountKind = 'bank' | 'cash' | 'credit_card';
 export type AccountValue = { name: string; subtype: AccountKind; openingBalance: string };
-export type TxnValue = { accountId: string; type: Extract<TxnType, 'expense' | 'income'>; amount: string; date: string; note: string; category: string };
+export type TxnValue = { accountId: string; type: Extract<TxnType, 'expense' | 'income'>; amount: string; date: string; note: string; category: string;
+  /** Last 4 digits of the card or account the bank alert named. Optional; this is what Cards matches on, on this device. */
+  last4?: string };
+
+export type CardNetwork = 'Visa' | 'Mastercard' | 'RuPay' | 'Amex';
+/** A credit card. Never the full number, expiry or CVV: only the last 4 digits, to match bank alerts. */
+export type CardValue = { name: string; network: CardNetwork; last4: string; limit: string; statementDay: number; dueDay: number };
+export type CreditCard = CardValue & { id: string; updatedAt: string };
 
 export type Account = AccountValue & { id: string; updatedAt: string };
 export type Txn = TxnValue & { id: string; updatedAt: string };
-export type Ledger = { accounts: Account[]; transactions: Txn[] };
+export type Ledger = { accounts: Account[]; transactions: Txn[]; cards: CreditCard[] };
 
-export const EMPTY: Ledger = { accounts: [], transactions: [] };
+export const EMPTY: Ledger = { accounts: [], transactions: [], cards: [] };
 
 /** Decrypts every live record. A record this key can't open is skipped, not fatal. */
 export async function readLedger(dek: Uint8Array, records: LocalRecord[]): Promise<Ledger> {
-  const ledger: Ledger = { accounts: [], transactions: [] };
+  const ledger: Ledger = { accounts: [], transactions: [], cards: [] };
   for (const r of records) {
     if (r.deleted || !r.ciphertext) continue;
     const id = { recordId: r.recordId, collection: r.collection, keyVersion: r.keyVersion };
     try {
       if (r.collection === ACCOUNTS) ledger.accounts.push({ ...(await decryptRecord<AccountValue>(dek, id, r.ciphertext)), id: r.recordId, updatedAt: r.updatedAt });
       if (r.collection === TRANSACTIONS) ledger.transactions.push({ ...(await decryptRecord<TxnValue>(dek, id, r.ciphertext)), id: r.recordId, updatedAt: r.updatedAt });
+      if (r.collection === CARDS) ledger.cards.push({ ...(await decryptRecord<CardValue>(dek, id, r.ciphertext)), id: r.recordId, updatedAt: r.updatedAt });
     } catch {
       // Written under another key version, or damaged: leave it out.
     }
   }
+  ledger.cards.sort((a, b) => a.name.localeCompare(b.name));
   ledger.accounts.sort((a, b) => a.name.localeCompare(b.name));
   ledger.transactions.sort((a, b) => b.date.localeCompare(a.date) || b.updatedAt.localeCompare(a.updatedAt));
   return ledger;
@@ -87,6 +97,9 @@ export class LedgerWriter {
     const { id: _id, updatedAt: _at, ...current } = t;
     return this.write(TRANSACTIONS, t.id, { ...current, ...v });
   };
+  addCard = (v: CardValue) => this.write(CARDS, crypto.randomUUID(), v);
+  updateCard = (c: CreditCard, v: CardValue) => this.write(CARDS, c.id, v);
+  deleteCard = (c: CreditCard) => this.write(CARDS, c.id, null);
   deleteTxn = (t: Txn) => this.write(TRANSACTIONS, t.id, null);
 
   /** Deletes the account and its transactions (each a tombstone). */
