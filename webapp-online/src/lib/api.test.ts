@@ -1,7 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { GatewayClient, type TokenResponse } from './api';
 import { thumbprint, type DeviceKey } from './dpop';
 import type { Session } from './vault';
+
+vi.mock('./passkey', () => ({ getPasskey: vi.fn(async () => ({ id: 'cred', response: {} })), createPasskey: vi.fn() }));
 
 const BASE = 'http://gw.test';
 
@@ -105,5 +107,37 @@ describe('GatewayClient', () => {
     await h.client.signIn('dev', 'dev:me');
     await expect(h.client.signOut()).rejects.toThrow('network');
     expect(h.vault.session).toBeUndefined();
+  });
+
+  test('a step-up call asks for a passkey, then sends the request with the two-minute token (not the session token)', async () => {
+    const h = harness([
+      json(tokens(1)),
+      json({ challenge_id: 'c1', options: { challenge: 'abc' } }),
+      json({ access_token: 'step-up-token', token_type: 'DPoP', expires_in: 120 }),
+      () => new Response(null, { status: 204 }),
+    ]);
+    await h.client.signIn('dev', 'dev:me');
+    await expect(h.client.callWithStepUp('DELETE', '/v1/devices/d2')).resolves.toBeUndefined();
+
+    const [, options, answer, remove] = h.seen;
+    expect(options.url).toBe(`${BASE}/v1/auth/step-up/options`);
+    expect(options.headers.Authorization).toBe('DPoP access-1');
+    expect(answer.url).toBe(`${BASE}/v1/auth/step-up`);
+    expect(JSON.parse(answer.body!)).toEqual({ challenge_id: 'c1', assertion: { id: 'cred', response: {} } });
+    expect(remove.method).toBe('DELETE');
+    expect(remove.headers.Authorization).toBe('DPoP step-up-token');
+    // The step-up token is single-purpose: it never replaces the session's token.
+    expect(h.vault.session?.refreshToken).toBe('refresh-1');
+  });
+
+  test('a refused step-up (wrong passkey) stops before anything is removed', async () => {
+    const h = harness([
+      json(tokens(1)),
+      json({ challenge_id: 'c1', options: {} }),
+      json({ error: 'invalid_grant' }, 400),
+    ]);
+    await h.client.signIn('dev', 'dev:me');
+    await expect(h.client.callWithStepUp('DELETE', '/v1/devices/d2')).rejects.toMatchObject({ status: 400, code: 'invalid_grant' });
+    expect(h.seen.some((r) => r.method === 'DELETE')).toBe(false);
   });
 });

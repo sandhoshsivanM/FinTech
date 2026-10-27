@@ -50,7 +50,7 @@ foreach (var origin in allowedOrigins)
 }
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .WithOrigins(allowedOrigins)
-    .WithMethods("GET", "POST", "PUT", "DELETE")
+    .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE")
     .WithHeaders("Authorization", "DPoP", "Content-Type", "If-None-Match")
     .WithExposedHeaders("ETag", "Retry-After")
     .SetPreflightMaxAge(TimeSpan.FromHours(1))));
