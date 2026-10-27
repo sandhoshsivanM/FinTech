@@ -5,7 +5,7 @@ import { APP_VERSION, useApp } from '@/lib/store';
 import { VaultGate } from './VaultGate';
 import { Shell } from './Shell';
 import { AutoLock } from './AutoLock';
-import { ConfirmProvider } from './Confirm';
+import { ConfirmProvider } from '@khazana/screens/components/Confirm';
 import { usePathname, useRouter } from 'next/navigation';
 import { ErrorBoundary } from './ErrorBoundary';
 import { onNotificationNavigate } from '@/lib/notify';

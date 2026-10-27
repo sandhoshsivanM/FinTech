@@ -5,8 +5,8 @@ import { describe, test, expect, beforeEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { NumberInput, sanitizeNumeric } from './NumberInput';
-import { filterDateChars } from './DateInput';
+import { NumberInput, sanitizeNumeric } from '@khazana/screens/components/NumberInput';
+import { filterDateChars } from '@khazana/screens/components/DateInput';
 
 beforeEach(cleanup);
 

@@ -1,7 +1,7 @@
 // The statement controls: a date window and paging. Both exist so a long book
 // can be reconciled against a spreadsheet rather than scrolled.
 import { describe, test, expect } from 'vitest';
-import { fromInputValue, toInputValue } from '@/lib/dateFormat';
+import { fromInputValue, toInputValue } from '@khazana/screens/lib/dateFormat';
 
 /** Mirrors the page's window maths, including the inclusive end-of-day. */
 const windowOf = (from: string, to: string) => ({

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Anek_Latin } from 'next/font/google';
 import './globals.css';
 import { AppFrame } from '@/components/AppFrame';
+import { ScreensProvider } from '@/components/ScreensProvider';
 import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE, APP_TITLE } from '@/lib/brand';
 
 // Anek Latin, by the Indian foundry Ek Type: a ₹ drawn as part of the face
@@ -89,7 +90,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               "(function(){try{var g=function(k){return localStorage.getItem('khazana-'+k)||localStorage.getItem('ftos-'+k);};var t=g('theme')||'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme:dark)').matches);var r=document.documentElement;r.dataset.theme=d?'dark':'light';try{if(localStorage.getItem('khazana-accent-zentra')!=='1'){localStorage.setItem('khazana-accent','default');localStorage.setItem('khazana-accent-zentra','1');}}catch(e){}var A={emerald:{l:['#136344','#0D4C33','#1B7F52'],d:['#3FD99A','#1F8A5B','#7BE9BC']},blue:{l:['#2F4C9C','#243B7A','#4F7CFF'],d:['#6E93FF','#4A6FE0','#A9C1FF']},violet:{l:['#584796','#443873','#8E7CC3'],d:['#A492DC','#7E6CB8','#C9BDEE']},amber:{l:['#8E4E20','#703D19','#C2610F'],d:['#D98A4E','#B4642A','#F0B183']},rose:{l:['#8C2F38','#6E252C','#C0392F'],d:['#E0707C','#B84B58','#F2A6AE']},lime:{l:['#4D6B00','#3A5200','#8DB31F','#FFFFFF'],d:['#C5F23A','#8DB31F','#DDFF7A','#0B0F0D']}};var p=A[g('accent')];if(p){var v=d?p.d:p.l;r.style.setProperty('--accent',v[0]);r.style.setProperty('--accent-deep',v[1]);r.style.setProperty('--accent-glow',v[2]);if(v[3])r.style.setProperty('--accent-on',v[3]);}}catch(e){}})();",
           }}
         />
-        <AppFrame>{children}</AppFrame>
+        <ScreensProvider>
+          <AppFrame>{children}</AppFrame>
+        </ScreensProvider>
       </body>
     </html>
   );

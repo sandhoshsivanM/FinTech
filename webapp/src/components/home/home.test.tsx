@@ -3,13 +3,13 @@ import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
 import type { Account, Txn } from '@khazana/domain/types';
-import { WalletStack, walletAccounts } from './WalletStack';
-import { LatestTransactions } from './LatestTransactions';
-import { BalanceHero } from './BalanceHero';
-import { WeekFlowCard } from './WeekFlowCard';
-import { InsightCard } from './InsightCard';
-import { MonthTiles } from './MonthTiles';
-import { BudgetRingCard } from './BudgetRingCard';
+import { WalletStack, walletAccounts } from '@khazana/screens/components/home/WalletStack';
+import { LatestTransactions } from '@khazana/screens/components/home/LatestTransactions';
+import { BalanceHero } from '@khazana/screens/components/home/BalanceHero';
+import { WeekFlowCard } from '@khazana/screens/components/home/WeekFlowCard';
+import { InsightCard } from '@khazana/screens/components/home/InsightCard';
+import { MonthTiles } from '@khazana/screens/components/home/MonthTiles';
+import { BudgetRingCard } from '@khazana/screens/components/home/BudgetRingCard';
 import { shiftMonths } from '@khazana/domain/period';
 
 vi.mock('next/link', () => ({

@@ -12,18 +12,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Inbox, Check, X, Pencil, ClipboardPaste } from 'lucide-react';
 import { useApp } from '@/lib/store';
-import { useFmt } from '@/lib/useFmt';
+import { useFmt } from '@khazana/screens/lib/useFmt';
 import { moneyAccounts } from '@khazana/domain/accountLedger';
 import type { PendingCapture, TxnType } from '@khazana/domain/types';
 import { PageIntro, Button, Chip, Field, Input, Select, Segmented, EmptyState, GlassCard } from '@khazana/ui/ui';
 import { Stagger, StaggerItem } from '@khazana/ui/motion';
-import { NumberInput } from '@/components/NumberInput';
-import { DateInput } from '@/components/DateInput';
-import { formatDate, fromInputValue, toInputValue } from '@/lib/dateFormat';
+import { NumberInput } from '@khazana/screens/components/NumberInput';
+import { DateInput } from '@khazana/screens/components/DateInput';
+import { formatDate, fromInputValue, toInputValue } from '@khazana/screens/lib/dateFormat';
 import {
   REVIEW_REASON_LABELS, isPendingCapture, splitMessages,
   type CaptureEdits, type CaptureOutcome,
-} from '@/lib/capture';
+} from '@khazana/screens/lib/capture';
 
 const TYPE_OPTIONS: { value: TxnType; label: string }[] = [
   { value: 'expense', label: 'Expense' },

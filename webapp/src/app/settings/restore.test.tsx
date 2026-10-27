@@ -7,7 +7,7 @@ import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
 import { BackupError } from '@/lib/backupError';
-import { ConfirmProvider } from '@/components/Confirm';
+import { ConfirmProvider } from '@khazana/screens/components/Confirm';
 import SettingsPage from './page';
 
 vi.mock('next/link', () => ({

@@ -3,7 +3,7 @@ import type { Category, PendingCapture, Txn } from '@khazana/domain/types';
 import {
   DECIDED_TTL_MS, approvalRecords, isPendingCapture, planCaptures, rejectionRecord,
   splitMessages, staleCaptureIds, suggestCategory,
-} from './capture';
+} from '@khazana/screens/lib/capture';
 
 const NOW = new Date(2026, 9, 26, 15, 30).getTime(); // local 26 Oct 2026, 15:30
 const HDFC = 'Rs.1,234.56 debited from a/c XX1234 at AMAZON on 05-Jan-2026. Avl Bal Rs.45,000.00';

@@ -41,12 +41,22 @@ test('the gateway prefixes were found (the guard is not empty)', () => {
 // The shared packages are compiled into this app, so they are held to the
 // same rule (Khazana Online keeps its online code in its own app).
 test('no backend routes, tokens, sign-in or online-app imports in src/ or the shared packages', () => {
-  const roots = [join(webapp, 'src'), join(repo, 'packages/domain-ts/src'), join(repo, 'packages/ui-ts/src')];
+  const roots = [join(webapp, 'src'), join(repo, 'packages/domain-ts/src'), join(repo, 'packages/ui-ts/src'), join(repo, 'packages/screens-ts/src')];
   const hits = roots.flatMap(sourceFiles).flatMap((file) => {
     const text = readFileSync(file, 'utf8');
     return banned.filter((word) => text.includes(word)).map((word) => `${file.slice(repo.length + 1)}: ${word}`);
   });
   assert.deepEqual(hits, [], 'Online code belongs in webapp-online/ (ADR 0007)');
+});
+
+// @khazana/screens is shared with the online app (ADR 0007, amended
+// 2026-10-27), so it must hold no storage or network of its own: the offline
+// app injects its encrypted store, and nothing here can reach a server.
+test('the shared screens package has no storage, network or Tauri code', () => {
+  const bad = /from\s+['"](dexie|@tauri-apps\/[^'"]*)['"]|new\s+Dexie|\bindexedDB\.|\bfetch\s*\(|XMLHttpRequest|new\s+WebSocket|EventSource|sendBeacon|plugin-http|fintech_os|from\s+['"][^'"]*\/webapp(-online)?\//;
+  const root = join(repo, 'packages/screens-ts/src');
+  const hits = sourceFiles(root).filter((f) => bad.test(readFileSync(f, 'utf8'))).map((f) => f.slice(repo.length + 1));
+  assert.deepEqual(hits, []);
 });
 
 test('no sign-in or backend client packages', () => {
@@ -60,10 +70,10 @@ test('no sign-in or backend client packages', () => {
 // Dropbox). It must stay that way: the moment it opens a connection it is a
 // sync server, and that is Khazana Online.
 test('sync and SMS capture make no network calls', () => {
-  const files = ['src/lib/syncFile.ts', 'src/lib/syncTransport.ts', 'src/lib/macSms.ts', 'src/lib/capture.ts',
-    'src/components/SyncSettings.tsx', 'src/components/MacSmsSettings.tsx'];
+  const files = ['webapp/src/lib/syncFile.ts', 'webapp/src/lib/syncTransport.ts', 'webapp/src/lib/macSms.ts',
+    'packages/screens-ts/src/lib/capture.ts', 'webapp/src/components/SyncSettings.tsx', 'webapp/src/components/MacSmsSettings.tsx'];
   const network = /\bfetch\(|XMLHttpRequest|WebSocket|EventSource|RTCPeerConnection|sendBeacon|plugin-http/;
-  const hits = files.filter((f) => network.test(readFileSync(join(webapp, f), 'utf8')));
+  const hits = files.filter((f) => network.test(readFileSync(join(repo, f), 'utf8')));
   assert.deepEqual(hits, []);
 });
 

@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { D } from '@khazana/domain/money';
 import { useApp } from '@/lib/store';
-import { useNow } from '@/lib/useNow';
+import { useNow } from '@khazana/screens/lib/useNow';
 import {
   planNotifications,
   type DueEvent,

@@ -6,8 +6,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Account, Category, Holding, Posting, Transfer, Txn } from '@khazana/domain/types';
 import { custom } from '@khazana/domain/period';
-import { buildReport, safeSheetName, type ReportInput } from './model';
-import { buildXlsx, reportFilename } from './xlsx';
+import { buildReport, safeSheetName, type ReportInput } from '@khazana/screens/lib/reports/model';
+import { buildXlsx, reportFilename } from '@khazana/screens/lib/reports/xlsx';
 
 const VAULT = 'v1';
 const day = (y: number, m: number, d: number) => new Date(y, m - 1, d, 12).getTime();
