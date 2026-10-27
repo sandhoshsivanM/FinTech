@@ -12,6 +12,8 @@
 | Notification | 2.5 | Push tokens; data-free sync nudges and new-device alerts over FCM / APNs (log-only in development) |
 | Audit & Reporting | 2.6 | Directory, sign-ins and a hash-chained, append-only audit log, built only from events (no PII) |
 | Catalog | 2.7 | Card offers and parser templates, published as an Ed25519-signed snapshot (libsodium) |
+| Account Aggregator | 4 | Consents, the fetch saga, signed partner callbacks; bank data sealed to the user's delivery key in an inbox (ADR 0008). Sample AA until a partner exists |
+| Credit | 5 | Credit-report pulls with explicit consent, one per 30 days; reports sealed to the user's key; only "a pull happened" is stored (ADR 0008). Sample bureau for now |
 | Admin (Blazor) | 2.6 | Internal panel: dashboard, directory, audit log; reads only Audit & Reporting; every view audited |
 
 ## Run it locally
@@ -39,6 +41,11 @@
    exact requests. In Development the `dev` provider accepts
    `id_token: "dev:<anyone>[:<email>]"` in place of Google or Apple.
 
+Bank data and credit reports come from sample adapters (`Providers__AccountAggregator=Fake`,
+`Providers__Credit=Fake`), which approve consents on the first status check and
+return the same realistic data for the same user or PAN. Both are refused in
+Production.
+
 Local runs read `contracts/fixtures/amfi/navall_sample.txt`, never AMFI. To try
 the real file, set `Providers__Nav=Amfi` on `marketdata-api` in
 `Khazana.AppHost/AppHost.cs`.
@@ -62,9 +69,10 @@ Postgres and RabbitMQ containers (needs Docker running).
 | `Khazana.Gateway/` | YARP: the only public entry point (routes, GET-only, rate limits, security headers) |
 | `building-blocks/Khazana.Messaging/` | Versioned event contracts + the one place messaging is configured |
 | `building-blocks/Khazana.SharedKernel/` | Clock, IST time |
+| `building-blocks/Khazana.Crypto/` | Sealing to a user's delivery key (libsodium sealed box) for AA and Credit payloads |
 | `building-blocks/Khazana.Security/` | DPoP proof checks and `AddKhazanaAuthentication` for every service that serves a signed-in user |
 | `services/MarketData/` | Domain → Application → Infrastructure → Api, plus Tests |
-| `services/Identity/`, `Devices/`, `Sync/`, `Notification/`, `AuditReporting/`, `Catalog/` | The same five folders |
+| `services/Identity/`, `Devices/`, `Sync/`, `Notification/`, `AuditReporting/`, `Catalog/`, `AccountAggregator/`, `Credit/` | The same five folders |
 | `services/Admin/` | The admin panel (Blazor, static server rendering), http://localhost:5090 locally |
 | `tests/` | Architecture rules, gateway tests, DPoP tests, and the shared TestKit |
 

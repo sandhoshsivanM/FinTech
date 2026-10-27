@@ -227,6 +227,31 @@ public sealed class ReportingFlowTests(ReportingHost host) : IDisposable
     }
 
     [Fact]
+    public async Task Bank_data_and_credit_events_are_audited_with_ids_and_codes_only()
+    {
+        var user = Guid.CreateVersion7();
+        var consent = Guid.CreateVersion7();
+        var payload = Guid.CreateVersion7();
+        var at = DateTimeOffset.UtcNow;
+        await Publish(new ConsentActivatedV1(user, consent, "active", at));
+        await Publish(new AaFetchFailedV1(user, consent, "provider_unavailable", at));
+        await Publish(new ConsentRevokedV1(user, consent, "revoked", at));
+        await Publish(new CreditReportReadyV1(user, payload, at));
+        await Publish(new CreditConsentWithdrawnV1(user, at));
+
+        var items = (await AdminJson("/internal/admin/audit?size=200")).GetProperty("items").EnumerateArray().ToList();
+        string? Reason(string action, string target) => items.Single(a =>
+            a.GetProperty("action").GetString() == action && a.GetProperty("target").GetString() == target)
+            .GetProperty("reason").GetString();
+        Reason("aa.consent_activated", $"consent:{consent}").ShouldBeNull();
+        Reason("aa.fetch_failed", $"consent:{consent}").ShouldBe("provider_unavailable");
+        Reason("aa.consent_ended", $"consent:{consent}").ShouldBe("revoked");
+        Reason("credit.report_pulled", $"payload:{payload}").ShouldBeNull();
+        Reason("credit.consent_withdrawn", $"user:{user}").ShouldBeNull();
+        (await AdminJson("/internal/admin/audit/verify")).GetProperty("intact").GetBoolean().ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Without_the_internal_key_nothing_is_served()
     {
         (await Admin(HttpMethod.Get, "/internal/admin/metrics", key: null)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
