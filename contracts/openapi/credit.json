@@ -1,0 +1,146 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Khazana.Credit.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/credit/report": {
+      "post": {
+        "tags": [
+          "CreditEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PullRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/credit/pulls": {
+      "get": {
+        "tags": [
+          "CreditEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/credit/consent": {
+      "delete": {
+        "tags": [
+          "CreditEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/credit/inbox": {
+      "get": {
+        "tags": [
+          "CreditEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/credit/inbox/{id}/ack": {
+      "post": {
+        "tags": [
+          "CreditEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PullRequest": {
+        "required": [
+          "consent_text_version",
+          "consent_accepted",
+          "pan",
+          "mobile",
+          "delivery_key"
+        ],
+        "type": "object",
+        "properties": {
+          "consent_text_version": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "consent_accepted": {
+            "type": "boolean"
+          },
+          "pan": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mobile": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "delivery_key": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "byte"
+          },
+          "full_name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "CreditEndpoints"
+    }
+  ]
+}

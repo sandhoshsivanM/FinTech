@@ -1,0 +1,260 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Khazana.AccountAggregator.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/webhooks/aa": {
+      "post": {
+        "tags": [
+          "AaEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/aa/consents": {
+      "post": {
+        "tags": [
+          "AaEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConsent"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "AaEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/aa/consents/{id}": {
+      "get": {
+        "tags": [
+          "AaEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "AaEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/aa/fetch": {
+      "post": {
+        "tags": [
+          "AaEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/aa/fetch/{id}": {
+      "get": {
+        "tags": [
+          "AaEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/aa/inbox": {
+      "get": {
+        "tags": [
+          "AaEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/aa/inbox/{id}/ack": {
+      "post": {
+        "tags": [
+          "AaEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateConsent": {
+        "required": [
+          "fi_types",
+          "delivery_key"
+        ],
+        "type": "object",
+        "properties": {
+          "fi_types": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "delivery_key": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "byte"
+          },
+          "data_from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "data_to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "frequency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "validity_days": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "aa_handle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "FetchRequest": {
+        "required": [
+          "consent_id"
+        ],
+        "type": "object",
+        "properties": {
+          "consent_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "AaEndpoints"
+    }
+  ]
+}
