@@ -11,6 +11,7 @@ import 'core/key_store.dart';
 import 'core/passkey.dart';
 import 'features/gate_screen.dart';
 import 'features/sign_in_screen.dart';
+import 'security/hardening.dart';
 import 'sync/record_store.dart';
 
 /// Khazana Online: a separate app from the offline Khazana (ADR 0007), with an
@@ -19,10 +20,14 @@ import 'sync/record_store.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final keyStore = SecureKeyStore();
+  // Hardware-held device key, pinned TLS client and integrity checks.
+  final hardening = Hardening.create(gateway: gatewayUrl(), store: keyStore);
   final gateway = GatewayClient(
     baseUrl: gatewayUrl(),
     platform: platformName(),
     store: keyStore,
+    client: hardening.httpClient,
+    signers: hardening.deviceKeys,
     passkeys: PlatformPasskeys(),
     google: GoogleSignInTokens(),
   );

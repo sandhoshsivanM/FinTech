@@ -7,6 +7,8 @@ import 'package:khazana_online/core/gateway_client.dart';
 import 'package:khazana_online/core/google_auth.dart';
 import 'package:khazana_online/core/key_store.dart';
 import 'package:khazana_online/core/passkey.dart';
+import 'package:khazana_online/core/dpop.dart';
+import 'package:khazana_online/security/device_signer.dart';
 
 const _tokens = {
   'access_token': 'a', 'token_type': 'DPoP', 'expires_in': 900, 'refresh_token': 'r', 'user_id': 'u1', 'device_id': 'd1',
@@ -39,6 +41,7 @@ class FakeGoogle implements GoogleIdTokens {
 }
 
 void main() {
+  group('with hardening', hardenedSignInTests);
   late List<http.Request> seen;
   late MemoryKeyStore store;
   late FakePasskeys passkeys;
@@ -111,5 +114,62 @@ void main() {
     final bare = GatewayClient(baseUrl: Uri.parse('http://gw.test'), platform: 'ios', store: MemoryKeyStore());
     await expectLater(bare.signInWithPasskey(), throwsStateError);
     await expectLater(bare.signInWithGoogle(), throwsStateError);
+  });
+}
+
+/// Hands out one key before a new session is prepared and another after — the
+/// software-to-hardware swap the hardened provider makes.
+class _SwappingSigners extends DeviceSignerProvider {
+  _SwappingSigners() : _current = SoftwareDeviceSigner(DeviceKey.generate());
+  DeviceSigner _current;
+  int prepared = 0;
+  @override
+  Future<DeviceSigner> signer() async => _current;
+  @override
+  Future<void> prepareForNewSession() async {
+    prepared++;
+    _current = SoftwareDeviceSigner(DeviceKey.generate());
+  }
+}
+
+void hardenedSignInTests() {
+  late List<http.Request> seen;
+  late _SwappingSigners signers;
+  late FakeGoogle google;
+  late GatewayClient client;
+
+  setUp(() {
+    seen = [];
+    signers = _SwappingSigners();
+    google = FakeGoogle();
+    client = GatewayClient(
+      baseUrl: Uri.parse('http://gw.test'),
+      platform: 'android',
+      store: MemoryKeyStore(),
+      passkeys: FakePasskeys(),
+      google: google,
+      signers: signers,
+      client: MockClient((r) async {
+        seen.add(r);
+        if (r.url.path.contains('/options')) {
+          return http.Response(jsonEncode({'challenge_id': 'c1', 'options': {'challenge': 'abc'}}), 200);
+        }
+        return http.Response(jsonEncode(_tokens), 200);
+      }),
+    );
+  });
+
+  // Every new session binds to the key that will sign later requests: the
+  // hardware key, minted by prepareForNewSession before anything is signed.
+  test('passkey sign-up and sign-in prepare the session key first', () async {
+    await client.signUpWithPasskey();
+    await client.signInWithPasskey();
+    expect(signers.prepared, 2);
+  });
+
+  test('Google nonce is the thumbprint of the key that signs, prepared first', () async {
+    await client.signInWithGoogle();
+    expect(signers.prepared, 1);
+    expect(google.nonceSeen, (await signers.signer()).thumbprint);
   });
 }

@@ -3,6 +3,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Khazana Online"
+        android:allowBackup="false"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -39,6 +40,12 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Root managers IntegrityChannel looks for (package visibility). -->
+        <package android:name="com.topjohnwu.magisk"/>
+        <package android:name="eu.chainfire.supersu"/>
+        <package android:name="com.noshufou.android.su"/>
+        <package android:name="com.koushikdutta.superuser"/>
+        <package android:name="me.weishu.kernelsu"/>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
