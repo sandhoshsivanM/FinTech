@@ -2,14 +2,14 @@
 import Link from 'next/link';
 import { ClipboardPaste, FileText, FlaskConical, Globe, KeyRound, Server } from 'lucide-react';
 import { Chip } from '@khazana/ui/ui';
-import { LegalSection as Section } from '../components/LegalSection';
-import { ENTITY } from './legal';
-import type { ProductCopy } from './types';
+import { LegalSection as Section } from '@khazana/screens/components/LegalSection';
+import { ENTITY } from '@khazana/screens/copy/legal';
+import type { ProductCopy } from '@khazana/screens/platform';
 
 /**
  * Khazana Online: an account, end-to-end encrypted sync, and a server that
  * stores ciphertext only. Every statement here was read out of the sync code
- * (webapp-online/src/lib/crypto/e2e.ts, sync/codec.ts) and ADRs 0005 and 0006;
+ * (lib/crypto/e2e.ts, lib/sync/codec.ts) and ADRs 0005 and 0006;
  * if those change, this changes in the same commit.
  */
 export const onlineCopy: ProductCopy = {
