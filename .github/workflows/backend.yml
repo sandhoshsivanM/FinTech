@@ -38,6 +38,7 @@ jobs:
   openapi-drift:
     name: OpenAPI drift check
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4

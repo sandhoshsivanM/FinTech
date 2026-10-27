@@ -20,8 +20,17 @@ docker run -d --name "$pg" -e POSTGRES_PASSWORD=openapi -p 127.0.0.1::5432 postg
 docker run -d --name "$mq" -e RABBITMQ_DEFAULT_USER=openapi -e RABBITMQ_DEFAULT_PASS=openapi -p 127.0.0.1::5672 rabbitmq:4-alpine >/dev/null
 pg_port=$(docker port "$pg" 5432/tcp | head -1 | sed 's/.*://')
 mq_port=$(docker port "$mq" 5672/tcp | head -1 | sed 's/.*://')
-until docker exec "$pg" pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done
-until docker exec "$mq" rabbitmq-diagnostics -q ping >/dev/null 2>&1; do sleep 2; done
+# Bounded waits: a container that never comes up must fail the job, not hang it.
+wait_for() { # <what> <seconds> <command...>
+  local what=$1 limit=$2; shift 2
+  local start=$SECONDS
+  until "$@" >/dev/null 2>&1; do
+    if (( SECONDS - start > limit )); then echo "openapi: $what not ready after ${limit}s" >&2; docker logs "${what}" 2>&1 | tail -20 >&2; exit 1; fi
+    sleep 2
+  done
+}
+wait_for "$pg" 90 docker exec "$pg" pg_isready -U postgres
+wait_for "$mq" 180 docker exec "$mq" rabbitmq-diagnostics -q ping
 sleep 2 # postgres restarts once after initdb; pg_isready can answer during that
 
 export ASPNETCORE_ENVIRONMENT=Development
@@ -38,5 +47,10 @@ for proj in services/*/*.Api/*.Api.csproj; do
     export "ConnectionStrings__${name}=${cs}"
   done
   echo "openapi: ${svc}"
-  dotnet build "$proj" --configuration Release -p:GenerateOpenApi=true -v:q -nologo
+  # The build starts the app to read its endpoints; one that never returns
+  # (a hosted service waiting on something) must not stall CI for hours.
+  if ! timeout 600 dotnet build "$proj" --configuration Release -p:GenerateOpenApi=true -v:q -nologo; then
+    echo "openapi: ${svc} failed or timed out" >&2
+    exit 1
+  fi
 done
