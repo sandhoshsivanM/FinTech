@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Sealing to a user's delivery public key (design doc §6, "User delivery
+       public key"): the server can write data for a user but never read it
+       back. libsodium's sealed box, from the native library NSec ships. -->
+  <PropertyGroup>
+    <!-- Source-generated P/Invoke marshalling (LibraryImport) needs it; no unsafe code is written by hand. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NSec.Cryptography" />
+  </ItemGroup>
+</Project>

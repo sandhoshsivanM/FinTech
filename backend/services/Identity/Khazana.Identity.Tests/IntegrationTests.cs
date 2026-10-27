@@ -454,6 +454,8 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
         await UserStillExists(userId, true);
 
         (await Purged("notification")).Sent.MessagesOf<AccountDeletedV1>().ShouldBeEmpty();
+        (await Purged("aa")).Sent.MessagesOf<AccountDeletedV1>().ShouldBeEmpty("bank-data consents and sealed payloads must go first");
+        (await Purged("credit")).Sent.MessagesOf<AccountDeletedV1>().ShouldBeEmpty();
         var last = await Purged("reporting");
         last.Sent.SingleMessage<AccountDeletedV1>().UserId.ShouldBe(userId);
         await UserStillExists(userId, false);
@@ -462,7 +464,7 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
     }
 
     [Fact]
-    public async Task Four_confirmations_arriving_together_delete_the_user_exactly_once()
+    public async Task Every_services_confirmations_arriving_together_delete_the_user_exactly_once()
     {
         for (var round = 0; round < 3; round++)
         {
@@ -530,7 +532,7 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
         var settings = scope.ServiceProvider.GetRequiredService<Khazana.Identity.Application.DeletionSettings>();
         var later = DateTimeOffset.UtcNow + Khazana.Identity.Domain.AccountDeletion.CoolingOff + Khazana.Identity.Api.DeletionOverdueCheck.Grace + TimeSpan.FromHours(1);
         var overdue = await Khazana.Identity.Api.DeletionOverdueCheck.FindOverdueAsync(db, settings, later, Ct);
-        overdue.Single(o => o.UserId == userId).Missing.ShouldBe(["sync", "notification", "reporting"]);
+        overdue.Single(o => o.UserId == userId).Missing.ShouldBe(["sync", "notification", "reporting", "aa", "credit"]);
         (await Khazana.Identity.Api.DeletionOverdueCheck.FindOverdueAsync(db, settings, DateTimeOffset.UtcNow, Ct))
             .ShouldNotContain(o => o.UserId == userId, "not overdue during the cooling-off");
     }
@@ -718,7 +720,7 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
 
     // --- helpers --------------------------------------------------------------
 
-    private static readonly string[] AllServices = ["devices", "sync", "notification", "reporting"];
+    private static readonly string[] AllServices = ["devices", "sync", "notification", "reporting", "aa", "credit"];
 
     private static string Unique() => Guid.NewGuid().ToString("N")[..12];
 

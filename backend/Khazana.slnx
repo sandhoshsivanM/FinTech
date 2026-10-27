@@ -1,10 +1,18 @@
 <Solution>
   <Folder Name="/building-blocks/">
+    <Project Path="building-blocks/Khazana.Crypto/Khazana.Crypto.csproj" />
     <Project Path="building-blocks/Khazana.Messaging/Khazana.Messaging.csproj" />
     <Project Path="building-blocks/Khazana.Security/Khazana.Security.csproj" />
     <Project Path="building-blocks/Khazana.SharedKernel/Khazana.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/services/" />
+  <Folder Name="/services/AccountAggregator/">
+    <Project Path="services/AccountAggregator/Khazana.AccountAggregator.Api/Khazana.AccountAggregator.Api.csproj" />
+    <Project Path="services/AccountAggregator/Khazana.AccountAggregator.Application/Khazana.AccountAggregator.Application.csproj" />
+    <Project Path="services/AccountAggregator/Khazana.AccountAggregator.Domain/Khazana.AccountAggregator.Domain.csproj" />
+    <Project Path="services/AccountAggregator/Khazana.AccountAggregator.Infrastructure/Khazana.AccountAggregator.Infrastructure.csproj" />
+    <Project Path="services/AccountAggregator/Khazana.AccountAggregator.Tests/Khazana.AccountAggregator.Tests.csproj" />
+  </Folder>
   <Folder Name="/services/Admin/">
     <Project Path="services/Admin/Khazana.Admin.Tests/Khazana.Admin.Tests.csproj" />
     <Project Path="services/Admin/Khazana.Admin/Khazana.Admin.csproj" />
@@ -22,6 +30,13 @@
     <Project Path="services/Catalog/Khazana.Catalog.Domain/Khazana.Catalog.Domain.csproj" />
     <Project Path="services/Catalog/Khazana.Catalog.Infrastructure/Khazana.Catalog.Infrastructure.csproj" />
     <Project Path="services/Catalog/Khazana.Catalog.Tests/Khazana.Catalog.Tests.csproj" />
+  </Folder>
+  <Folder Name="/services/Credit/">
+    <Project Path="services/Credit/Khazana.Credit.Api/Khazana.Credit.Api.csproj" />
+    <Project Path="services/Credit/Khazana.Credit.Application/Khazana.Credit.Application.csproj" />
+    <Project Path="services/Credit/Khazana.Credit.Domain/Khazana.Credit.Domain.csproj" />
+    <Project Path="services/Credit/Khazana.Credit.Infrastructure/Khazana.Credit.Infrastructure.csproj" />
+    <Project Path="services/Credit/Khazana.Credit.Tests/Khazana.Credit.Tests.csproj" />
   </Folder>
   <Folder Name="/services/Devices/">
     <Project Path="services/Devices/Khazana.Devices.Api/Khazana.Devices.Api.csproj" />

@@ -20,6 +20,8 @@
     <ProjectReference Include="..\..\services\AuditReporting\Khazana.AuditReporting.Api\Khazana.AuditReporting.Api.csproj" />
     <ProjectReference Include="..\..\services\Admin\Khazana.Admin\Khazana.Admin.csproj" />
     <ProjectReference Include="..\..\services\Catalog\Khazana.Catalog.Api\Khazana.Catalog.Api.csproj" />
+    <ProjectReference Include="..\..\services\AccountAggregator\Khazana.AccountAggregator.Api\Khazana.AccountAggregator.Api.csproj" />
+    <ProjectReference Include="..\..\services\Credit\Khazana.Credit.Api\Khazana.Credit.Api.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />

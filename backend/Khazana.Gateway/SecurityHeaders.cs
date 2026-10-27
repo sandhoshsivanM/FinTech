@@ -9,6 +9,9 @@ public static class GatewayPolicies
 
     /// <summary>A signed-in user's own data (devices, keys, sync): generous, still bounded.</summary>
     public const string User = "user";
+
+    /// <summary>Calls that cost money at a partner (AA consents and fetches, credit pulls): tight, per user (design doc §7.3).</summary>
+    public const string Costly = "costly";
 }
 
 /// <summary>

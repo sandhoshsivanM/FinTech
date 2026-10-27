@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Consent and fetch-saga rules, and the normalised bank-data shapes, with no framework. -->
+</Project>

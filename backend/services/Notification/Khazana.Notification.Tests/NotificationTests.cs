@@ -342,6 +342,24 @@ public sealed class NotificationFlowTests(NotificationHost host)
     }
 
     [Fact]
+    public async Task Sealed_bank_data_and_credit_reports_nudge_every_device_silently()
+    {
+        var user = Guid.CreateVersion7();
+        var phone = await Register(user);
+        var laptop = await Register(user, "apns");
+        var stranger = await Register(Guid.CreateVersion7());
+
+        await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .PublishMessageAndWaitAsync(new PayloadSealedV1(user, Guid.CreateVersion7(), "aa.fi-bundle.v1", DateTimeOffset.UtcNow));
+        await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .PublishMessageAndWaitAsync(new CreditReportReadyV1(user, Guid.CreateVersion7(), DateTimeOffset.UtcNow));
+
+        SentTo(phone.Token).Select(s => s.Message).ShouldBe([PushContent.SyncNudge, PushContent.SyncNudge], "silent, and says nothing of what arrived");
+        SentTo(laptop.Token).Count.ShouldBe(2);
+        SentTo(stranger.Token).ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task A_new_device_triggers_a_visible_alert_on_the_existing_ones()
     {
         var user = Guid.CreateVersion7();

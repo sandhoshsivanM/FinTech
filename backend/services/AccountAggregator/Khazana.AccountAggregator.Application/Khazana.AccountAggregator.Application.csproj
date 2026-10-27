@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Use cases, the fetch saga, message handlers and the DbContext (here so
+       Wolverine commits a change and its event in one transaction). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.AccountAggregator.Domain\Khazana.AccountAggregator.Domain.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\Khazana.SharedKernel\Khazana.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\Khazana.Messaging\Khazana.Messaging.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\Khazana.Crypto\Khazana.Crypto.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
+  </ItemGroup>
+</Project>
