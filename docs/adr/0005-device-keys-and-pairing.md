@@ -28,6 +28,11 @@ able to read it, and without letting someone who stole a Google login get it.
   must present the key check.
 - **Remote logout:** revokes the device, deletes its envelope, ends pairing,
   and publishes `DeviceRevokedV1`. Identity ends that device's sessions.
+- **Step-up for remote logout:** `DELETE /v1/devices/{id}` needs a step-up
+  token: `POST /v1/auth/step-up` verifies a passkey assertion of the same
+  account and returns a two-minute, DPoP-bound access token with a `sua`
+  claim (no refresh token). Devices refuses with 403 `step_up_required`
+  without a fresh one. Accounts with no passkey cannot remove devices yet.
 - **Every call:** the device must be registered, not revoked, and its token
   bound to the DPoP key it registered with.
 - **Account deletion:** the purge is scheduled for the end of the cooling-off
@@ -42,6 +47,14 @@ able to read it, and without letting someone who stole a Google login get it.
   it (ADR 0007), and the independent cryptography review
   covers it.
 - **Open items:**
+  - **No key rotation on revoke.** Revoking deletes the device's envelope
+    and sessions, but the DEK is not rotated or re-wrapped: the ADR defines
+    no rotation, and `key_version` is fixed at 1. A removed device that
+    already extracted the DEK, or downloaded ciphertext, can still decrypt
+    data it holds, and data written later under the same DEK, if it ever
+    obtains ciphertext (it cannot authenticate to fetch any). Rotation
+    (new DEK, re-wrap for remaining devices and recovery, re-encrypt
+    records) needs its own ADR.
   - Biometric step-up before approving a pairing or revoking a device is
     enforced on the device (the key is biometric-gated), not provable here.
   - Push alerts to other devices on a new device arrive with Notification.
