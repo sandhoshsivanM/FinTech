@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.market.prices-published.v1.json",
+  "title": "PricesPublishedV1",
+  "description": " Market Data finished publishing a day's price file. Carries identifiers only \u2014 never prices, holdings or anything about a user \u2014 like every event (design doc \u00a78.3).   Contracts are versioned by name and change only additively. A breaking change is a new PricesPublishedV2 published alongside this one until every consumer has moved. The message identity is pinned so renaming the C# type can never silently change what goes on the wire. ",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "rowCount": {
+      "type": "integer"
+    },
+    "sha256": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "date",
+    "kind",
+    "rowCount",
+    "sha256"
+  ],
+  "additionalProperties": false
+}

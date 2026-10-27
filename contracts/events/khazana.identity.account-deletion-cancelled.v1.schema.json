@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.identity.account-deletion-cancelled.v1.json",
+  "title": "AccountDeletionCancelledV1",
+  "description": " The user changed their mind during the cooling-off. Every service drops the purge it scheduled for . ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "executeAfter": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "executeAfter"
+  ],
+  "additionalProperties": false
+}

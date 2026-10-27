@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.catalog.catalog-published.v1.json",
+  "title": "CatalogPublishedV1",
+  "description": "A new signed catalog (offers and parser templates) is available. Public data; apps poll for it.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "integer"
+    },
+    "checksum": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "version",
+    "checksum",
+    "at"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,393 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Khazana.Devices.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/devices/register": {
+      "post": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDevice"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/devices": {
+      "get": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/devices/me": {
+      "get": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/devices/{id}": {
+      "patch": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameDevice"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/devices/pairing": {
+      "post": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/devices/pairing/{id}": {
+      "get": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/devices/pairing/{id}/approve": {
+      "post": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovePairing"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/keys/bootstrap": {
+      "post": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Bootstrap"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/keys/envelopes/self": {
+      "get": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProvenEnvelope"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/keys/envelopes/recovery": {
+      "get": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "DeviceEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProvenEnvelope"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApprovePairing": {
+        "required": [
+          "code",
+          "envelope"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "envelope": {
+            "$ref": "#/components/schemas/EnvelopeDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Bootstrap": {
+        "required": [
+          "device",
+          "recovery",
+          "key_check"
+        ],
+        "type": "object",
+        "properties": {
+          "device": {
+            "$ref": "#/components/schemas/EnvelopeDto"
+          },
+          "recovery": {
+            "$ref": "#/components/schemas/EnvelopeDto"
+          },
+          "key_check": {
+            "type": "string",
+            "format": "byte"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnvelopeDto": {
+        "required": [
+          "wrapped_dek",
+          "alg",
+          "key_version"
+        ],
+        "type": "object",
+        "properties": {
+          "wrapped_dek": {
+            "type": "string",
+            "format": "byte"
+          },
+          "alg": {
+            "type": "string"
+          },
+          "key_version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProvenEnvelope": {
+        "required": [
+          "envelope",
+          "key_check"
+        ],
+        "type": "object",
+        "properties": {
+          "envelope": {
+            "$ref": "#/components/schemas/EnvelopeDto"
+          },
+          "key_check": {
+            "type": "string",
+            "format": "byte"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RegisterDevice": {
+        "required": [
+          "platform",
+          "public_key"
+        ],
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "public_key": {
+            "type": "string",
+            "format": "byte"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "app_version": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "RenameDevice": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "DeviceEndpoints"
+    }
+  ]
+}

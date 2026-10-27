@@ -11,6 +11,7 @@ using Wolverine.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Services.AddOpenApi();
 // The push endpoint raises its own limit to SyncRules.MaxPushBodyBytes; everything else stays small.
 builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = 64 * 1024);
 

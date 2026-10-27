@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.account.user-data-purged.v1.json",
+  "title": "UserDataPurgedV1",
+  "description": " A service finished deleting a user's data after . Identity collects these and deletes the user last (the deletion saga). ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "service": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "service",
+    "at"
+  ],
+  "additionalProperties": false
+}

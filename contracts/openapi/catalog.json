@@ -1,0 +1,310 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Khazana.Catalog.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/catalog": {
+      "get": {
+        "tags": [
+          "CatalogEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/catalog/keys": {
+      "get": {
+        "tags": [
+          "Khazana.Catalog.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/internal/catalog/offers": {
+      "get": {
+        "tags": [
+          "Khazana.Catalog.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/internal/catalog/offers/{id}": {
+      "put": {
+        "tags": [
+          "Khazana.Catalog.Api"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Offer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Khazana.Catalog.Api"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/internal/catalog/templates/{id}": {
+      "put": {
+        "tags": [
+          "Khazana.Catalog.Api"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParserTemplate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Khazana.Catalog.Api"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/internal/catalog/publish": {
+      "post": {
+        "tags": [
+          "Khazana.Catalog.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Offer": {
+        "required": [
+          "id",
+          "issuer",
+          "network",
+          "product",
+          "merchant",
+          "category",
+          "benefit",
+          "value",
+          "cap",
+          "valid_from",
+          "valid_to",
+          "source",
+          "verified_on"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "issuer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "network": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "product": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "merchant": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "benefit": {
+            "type": "string"
+          },
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "cap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_to": {
+            "type": "string",
+            "format": "date"
+          },
+          "source": {
+            "type": "string"
+          },
+          "verified_on": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParserTemplate": {
+        "required": [
+          "id",
+          "bank",
+          "channel",
+          "sender_patterns",
+          "rule_json",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "bank": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "sender_patterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rule_json": {
+            "type": "string"
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "CatalogEndpoints"
+    },
+    {
+      "name": "Khazana.Catalog.Api"
+    }
+  ]
+}

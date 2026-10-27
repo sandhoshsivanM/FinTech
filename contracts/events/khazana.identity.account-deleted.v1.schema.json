@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.identity.account-deleted.v1.json",
+  "title": "AccountDeletedV1",
+  "description": " The account is gone: every service confirmed its purge and Identity deleted the user last. Reporting drops the directory entry; nothing else remains. ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "at"
+  ],
+  "additionalProperties": false
+}

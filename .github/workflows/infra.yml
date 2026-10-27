@@ -1,0 +1,36 @@
+name: Infra
+
+# Terraform is checked, never applied: formatting and validation only, with no
+# cloud credentials. Plan and apply are run by a person.
+on:
+  push:
+    branches: [feature/safety-net-and-hardening]
+    paths: ['infra/**', '.github/workflows/infra.yml']
+  pull_request:
+    paths: ['infra/**', '.github/workflows/infra.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: fmt and validate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.x
+      - name: Format
+        run: terraform fmt -check -recursive -diff
+        working-directory: infra
+      - name: Validate every module and environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          for dir in infra/modules/* infra/envs/*; do
+            echo "::group::validate $dir"
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" validate
+            echo "::endgroup::"
+          done

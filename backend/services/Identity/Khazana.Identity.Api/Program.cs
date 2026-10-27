@@ -13,6 +13,7 @@ using Wolverine.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Services.AddOpenApi();
 
 // Sign-in bodies are small; a passkey attestation is ~2 KB.
 builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = 64 * 1024);

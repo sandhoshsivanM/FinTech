@@ -10,6 +10,7 @@ using Wolverine.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Services.AddOpenApi();
 builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = 64 * 1024);
 
 var database = builder.Configuration.GetConnectionString("catalog")

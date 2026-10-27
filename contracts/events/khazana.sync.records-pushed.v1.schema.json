@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.sync.records-pushed.v1.json",
+  "title": "RecordsPushedV1",
+  "description": " A device pushed records. Notification sends the user's other devices a data-free \"time to sync\" push. Ids and a sequence number only: never a record, a collection name or a count of anything. ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "fromDeviceId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "seq": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "userId",
+    "fromDeviceId",
+    "seq"
+  ],
+  "additionalProperties": false
+}

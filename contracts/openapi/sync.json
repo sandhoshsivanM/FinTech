@@ -1,0 +1,212 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Khazana.Sync.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/sync/push": {
+      "post": {
+        "tags": [
+          "SyncEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/sync/pull": {
+      "get": {
+        "tags": [
+          "SyncEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "epoch",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/sync/attachments/{id}": {
+      "put": {
+        "tags": [
+          "SyncEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "SyncEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "SyncEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PushRecord": {
+        "required": [
+          "record_id",
+          "collection",
+          "client_updated_at",
+          "deleted",
+          "ciphertext",
+          "key_version"
+        ],
+        "type": "object",
+        "properties": {
+          "record_id": {
+            "type": "string"
+          },
+          "collection": {
+            "type": "string"
+          },
+          "client_updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "ciphertext": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "byte"
+          },
+          "key_version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PushRequest": {
+        "required": [
+          "records"
+        ],
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PushRecord"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "SyncEndpoints"
+    }
+  ]
+}

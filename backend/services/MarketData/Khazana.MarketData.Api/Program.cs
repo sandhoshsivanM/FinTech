@@ -10,6 +10,7 @@ using Wolverine.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Services.AddOpenApi();
 
 // Connection strings are injected by Aspire locally and by the platform in the
 // cloud. Missing means misconfigured: fail now, not on the first request.

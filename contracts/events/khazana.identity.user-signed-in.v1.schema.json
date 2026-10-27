@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.identity.user-signed-in.v1.json",
+  "title": "UserSignedInV1",
+  "description": "A user signed in on a device (a new session, not a token refresh).",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "deviceId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "platform": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "deviceId",
+    "platform",
+    "at"
+  ],
+  "additionalProperties": false
+}

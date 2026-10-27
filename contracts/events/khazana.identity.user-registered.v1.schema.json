@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.identity.user-registered.v1.json",
+  "title": "UserRegisteredV1",
+  "description": "A new user signed in for the first time.",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "deviceId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "platform": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "deviceId",
+    "platform",
+    "at"
+  ],
+  "additionalProperties": false
+}
