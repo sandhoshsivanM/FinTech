@@ -24,6 +24,11 @@ public sealed record LogoutRequest(bool Everywhere);
 
 public sealed record PasskeyRegistration(Guid ChallengeId, JsonElement? Attestation = null);
 
+public sealed record StepUpRequest(Guid ChallengeId, JsonElement? Assertion = null);
+
+/// <summary>A short-lived access token that proves a passkey check just happened. No refresh token.</summary>
+public sealed record StepUpResponse(string AccessToken, string TokenType, int ExpiresIn);
+
 public sealed record TokenResponse(
     string AccessToken, string TokenType, int ExpiresIn, string RefreshToken, Guid UserId, Guid DeviceId);
 
@@ -48,6 +53,13 @@ public static class IdentityEndpoints
         auth.MapPost("/passkeys/register", CompletePasskeyRegistration).RequireAuthorization()
             .AddEndpointFilter(RequireLiveSession(SessionService.FreshSignIn));
         auth.MapPost("/passkeys/assert/options", BeginPasskeyAssertion);
+        // Step-up: prove it is you again, with a passkey, right now. Returns a
+        // two-minute token for this device that Devices & Keys asks for before
+        // it removes a device.
+        auth.MapPost("/step-up/options", BeginPasskeyAssertion).RequireAuthorization()
+            .AddEndpointFilter(RequireLiveSession(null));
+        auth.MapPost("/step-up", StepUp).RequireAuthorization()
+            .AddEndpointFilter(RequireLiveSession(null));
         // Anyone may start a sign-up (the gateway's auth rate limit applies);
         // the account exists only once /token verifies the answer.
         auth.MapPost("/passkeys/signup/options", BeginPasskeySignUp);
@@ -179,6 +191,33 @@ public static class IdentityEndpoints
         catch (AuthFailedException e)
         {
             Log.Refused(log, "Passkey registration", e.Message);
+            return Error(e.Error);
+        }
+    }
+
+    private static async Task<IResult> StepUp(
+        StepUpRequest body, HttpContext http, PasskeyService passkeys, TokenIssuer issuer, ILogger<StepUpRequest> log, CancellationToken ct)
+    {
+        if (body?.Assertion is not { ValueKind: JsonValueKind.Object } assertion) return Error(AuthError.InvalidRequest);
+        var response = DeserializeFido<AuthenticatorAssertionRawResponse>(assertion);
+        if (response?.Response is null) return Error(AuthError.InvalidRequest);
+        try
+        {
+            var passkeyOwner = await passkeys.CompleteAssertionAsync(body.ChallengeId, response, ct).ConfigureAwait(false);
+            // Someone else's passkey proves nothing about this account.
+            if (passkeyOwner != http.User.UserId())
+            {
+                Log.Refused(log, "Step-up", "The passkey belongs to another account.");
+                return Error(AuthError.InvalidGrant);
+            }
+            var access = issuer.IssueStepUp(http.User.UserId(), http.User.DeviceId(), http.User.DeviceKeyThumbprint());
+            http.Response.Headers.CacheControl = "no-store";
+            http.Response.Headers.Pragma = "no-cache";
+            return Results.Ok(new StepUpResponse(access.Token, "DPoP", access.ExpiresInSeconds));
+        }
+        catch (AuthFailedException e)
+        {
+            Log.Refused(log, "Step-up", e.Message);
             return Error(e.Error);
         }
     }

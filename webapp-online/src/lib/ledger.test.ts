@@ -62,7 +62,7 @@ describe('ledger', () => {
     await h.writer.addTxn({ accountId: ledger.accounts[0].id, type: 'expense', amount: '5', date: '2026-10-23', note: '', category: 'Other' });
     ledger = await h.read();
     await h.writer.deleteAccount(ledger.accounts[0], ledger);
-    expect(await h.read()).toEqual({ accounts: [], transactions: [] });
+    expect(await h.read()).toEqual({ accounts: [], transactions: [], cards: [] });
   });
 
   test('a record this key cannot open is skipped, not fatal', async () => {

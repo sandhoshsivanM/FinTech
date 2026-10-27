@@ -116,6 +116,8 @@ public sealed class GatewayTests : IDisposable
 
     [Theory]
     [InlineData("GET", "/v1/devices/")]
+    [InlineData("PATCH", "/v1/devices/0198f0a0-0000-7000-8000-000000000000")]
+    [InlineData("POST", "/v1/auth/step-up")]
     [InlineData("DELETE", "/v1/devices/0198f0a0-0000-7000-8000-000000000000")]
     [InlineData("PUT", "/v1/keys/envelopes/recovery")]
     [InlineData("POST", "/v1/push/register")]

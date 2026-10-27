@@ -47,6 +47,8 @@ export default function Home() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <SyncChip />
         <div className="flex gap-2">
+          <Link href="/cards/" className="rounded-full px-3 py-1.5 text-xs" style={{ background: 'var(--card)' }}>Cards</Link>
+          <Link href="/settings/" className="rounded-full px-3 py-1.5 text-xs" style={{ background: 'var(--card)' }}>Settings</Link>
           <Link href="/how/" className="rounded-full px-3 py-1.5 text-xs" style={{ background: 'var(--card)' }}>How it works</Link>
           <button onClick={signOut} className="rounded-full px-3 py-1.5 text-xs" style={{ background: 'var(--card)' }}>Sign out</button>
         </div>
