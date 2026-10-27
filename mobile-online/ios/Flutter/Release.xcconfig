@@ -1,2 +1,7 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
+
+// Gmail capture: the reversed Google client id (com.googleusercontent.apps.<id>). Set it in
+// Flutter/Local.xcconfig (git-ignored). The placeholder keeps unconfigured builds valid.
+KHAZANA_GOOGLE_REVERSED_CLIENT_ID = com.khazana.online.unconfigured
+#include? "Local.xcconfig"

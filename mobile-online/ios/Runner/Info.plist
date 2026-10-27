@@ -42,6 +42,19 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Khazana reads a payment screenshot or receipt you choose, on this phone, to add it to your review inbox. The image is not uploaded or kept.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Khazana reads a bill or receipt you photograph, on this phone. The photo is not uploaded or kept.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(KHAZANA_GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
