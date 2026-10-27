@@ -84,12 +84,16 @@ class DeviceKey {
         'ath': base64UrlNoPad(SHA256Digest().process(Uint8List.fromList(ascii.encode(accessToken)))),
     };
     final input = '${part(header)}.${part(payload)}';
-    // Deterministic ECDSA (RFC 6979): no per-signature randomness to get wrong.
+    return '$input.${base64UrlNoPad(signRaw(Uint8List.fromList(ascii.encode(input))))}';
+  }
+
+  /// ES256 over [message]: deterministic ECDSA (RFC 6979, no per-signature
+  /// randomness to get wrong), as raw r||s, 32 bytes each (what JWS wants).
+  Uint8List signRaw(Uint8List message) {
     final signer = ECDSASigner(SHA256Digest(), HMac(SHA256Digest(), 64))
       ..init(true, PrivateKeyParameter<ECPrivateKey>(_private));
-    final sig = signer.generateSignature(Uint8List.fromList(ascii.encode(input))) as ECSignature;
-    // JWS wants raw r||s, 32 bytes each.
-    return '$input.${base64UrlNoPad([..._fixed32(sig.r), ..._fixed32(sig.s)])}';
+    final sig = signer.generateSignature(message) as ECSignature;
+    return Uint8List.fromList([..._fixed32(sig.r), ..._fixed32(sig.s)]);
   }
 
   static String _jti() {
