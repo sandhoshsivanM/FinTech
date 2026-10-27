@@ -14,6 +14,7 @@ var syncDb = postgres.AddDatabase("sync");
 var notificationDb = postgres.AddDatabase("notification");
 var reportingDb = postgres.AddDatabase("reporting");
 var catalogDb = postgres.AddDatabase("catalog");
+var aaDb = postgres.AddDatabase("aa");
 
 var rabbitMq = builder.AddRabbitMQ("rabbitmq").WithManagementPlugin();
 
@@ -96,6 +97,15 @@ var catalog = builder.AddProject<Projects.Khazana_Catalog_Api>("catalog-api")
 // The admin's offer editors use Catalog's internal API with its own key.
 admin.WithReference(catalog).WaitFor(catalog).WithEnvironment("Admin__CatalogKey", catalogKey);
 
+// Bank data through the sample Account Aggregator until a partner exists
+// (decisions D4, D15); refused in Production. Payloads are sealed to the user's key.
+var aa = builder.AddProject<Projects.Khazana_AccountAggregator_Api>("aa-api")
+    .WithReference(aaDb).WaitFor(aaDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WaitFor(identity)
+    .WithEnvironment("Auth__MetadataAddress", identityMetadata)
+    .WithEnvironment("Providers__AccountAggregator", "Fake");
+
 var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(marketData).WaitFor(marketData)
     .WithReference(identity).WaitFor(identity)
@@ -103,6 +113,7 @@ var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(sync).WaitFor(sync)
     .WithReference(notification).WaitFor(notification)
     .WithReference(catalog).WaitFor(catalog)
+    .WithReference(aa).WaitFor(aa)
     .WithExternalHttpEndpoints()
     // Khazana Online's web app in development (webapp-online/: npm run dev).
     .WithEnvironment("Gateway__AllowedOrigins__0", "http://localhost:3100");
@@ -110,7 +121,7 @@ var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
 // DPoP proofs name the URL the app called, which is the gateway's.
 // The Android emulator reaches this machine's gateway as 10.0.2.2, so a phone
 // app in development names that address (local development only).
-foreach (var service in new[] { identity, devices, sync, notification })
+foreach (var service in new[] { identity, devices, sync, notification, aa })
     service.WithEnvironment("Auth__PublicOrigins__0", gateway.GetEndpoint("http"))
         .WithEnvironment("Auth__PublicOrigins__1", "http://10.0.2.2:5196");
 

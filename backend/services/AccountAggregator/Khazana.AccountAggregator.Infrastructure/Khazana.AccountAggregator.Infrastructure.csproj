@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Bank-data adapters behind IBankDataProvider: the sample AA now; the Finvu
+       sandbox and a regulated partner later (decisions D4, D15). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.AccountAggregator.Application\Khazana.AccountAggregator.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>
