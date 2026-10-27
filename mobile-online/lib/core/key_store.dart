@@ -16,6 +16,17 @@ abstract class KeyStore {
   Future<Session?> readSession();
   Future<void> writeSession(Session session);
   Future<void> clearSession();
+
+  /// This device's X25519 seed (the sealed-box key pair, ADR 0005). Never leaves the keystore.
+  Future<String?> readBoxSeed();
+  Future<void> writeBoxSeed(String seedBase64);
+
+  /// The data key sealed to this device's X25519 key (base64). Useless without that key.
+  Future<String?> readEnvelope();
+  Future<void> writeEnvelope(String sealedBase64);
+
+  /// Forgets the encryption keys on this device (sign-out).
+  Future<void> clearEncryptionKeys();
 }
 
 class SecureKeyStore implements KeyStore {
@@ -26,6 +37,8 @@ class SecureKeyStore implements KeyStore {
   static const _refresh = 'khazana_online.refresh_token';
   static const _user = 'khazana_online.user_id';
   static const _device = 'khazana_online.device_id';
+  static const _box = 'khazana_online.box_seed';
+  static const _envelope = 'khazana_online.envelope';
 
   @override
   Future<String?> readKey() => _s.read(key: _key);
@@ -54,6 +67,20 @@ class SecureKeyStore implements KeyStore {
     await _s.delete(key: _user);
     await _s.delete(key: _device);
   }
+
+  @override
+  Future<String?> readBoxSeed() => _s.read(key: _box);
+  @override
+  Future<void> writeBoxSeed(String seedBase64) => _s.write(key: _box, value: seedBase64);
+  @override
+  Future<String?> readEnvelope() => _s.read(key: _envelope);
+  @override
+  Future<void> writeEnvelope(String sealedBase64) => _s.write(key: _envelope, value: sealedBase64);
+  @override
+  Future<void> clearEncryptionKeys() async {
+    await _s.delete(key: _box);
+    await _s.delete(key: _envelope);
+  }
 }
 
 /// For tests.
@@ -70,4 +97,20 @@ class MemoryKeyStore implements KeyStore {
   Future<void> writeSession(Session s) async => session = s;
   @override
   Future<void> clearSession() async => session = null;
+
+  String? boxSeed;
+  String? envelope;
+  @override
+  Future<String?> readBoxSeed() async => boxSeed;
+  @override
+  Future<void> writeBoxSeed(String seedBase64) async => boxSeed = seedBase64;
+  @override
+  Future<String?> readEnvelope() async => envelope;
+  @override
+  Future<void> writeEnvelope(String sealedBase64) async => envelope = sealedBase64;
+  @override
+  Future<void> clearEncryptionKeys() async {
+    boxSeed = null;
+    envelope = null;
+  }
 }

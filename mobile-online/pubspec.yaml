@@ -40,6 +40,14 @@ dependencies:
   pointycastle: ^3.9.1          # ECDSA P-256 for DPoP proofs (same library as the offline app)
   flutter_secure_storage: ^10.0.0-beta.4   # Keychain / Android Keystore
   cupertino_icons: ^1.0.8
+  passkeys: ^2.23.1
+  google_sign_in: ^7.2.0
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.2
+  path_provider: ^2.1.6
+  uuid: ^4.6.0
+  cryptography: ^2.9.0
+  decimal: ^3.2.6
 
 dev_dependencies:
   flutter_test:
