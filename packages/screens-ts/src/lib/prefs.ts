@@ -15,3 +15,9 @@ export function lsSet(key: string, value: string): void {
   if (typeof localStorage === 'undefined') return;
   try { localStorage.setItem(key, value); } catch { /* quota or private mode */ }
 }
+
+/** Removes a preference. Safe when localStorage is absent or blocked. */
+export function lsRemove(key: string): void {
+  if (typeof localStorage === 'undefined') return;
+  try { localStorage.removeItem(key); } catch { /* private mode */ }
+}

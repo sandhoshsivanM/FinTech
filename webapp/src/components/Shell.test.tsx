@@ -27,7 +27,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
 }));
 // The tour reaches into the DOM on mount; it is not what these tests are about.
-vi.mock('./Tour', () => ({ Tour: () => null }));
+vi.mock('@khazana/screens/components/Tour', () => ({ Tour: () => null }));
 
 /**
  * The Flutter bottom bar: the four sections in `lib/core/router/nav_sections.dart`

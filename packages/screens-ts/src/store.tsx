@@ -23,8 +23,8 @@ import type {
 } from '@khazana/domain/types';
 import type { CaptureEdits, CaptureInput, CaptureOutcome } from './lib/capture';
 
-export type ThemeChoice = 'light' | 'dark' | 'system';
-export type AccentName = 'default' | 'emerald' | 'blue' | 'violet' | 'amber' | 'rose' | 'lime';
+import type { AccentName, ThemeChoice } from '@khazana/domain/appearance';
+export type { AccentName, ThemeChoice };
 
 /** Every entity collection a screen can read. Profile-scoped except `fxRates`. */
 export interface KhazanaData {

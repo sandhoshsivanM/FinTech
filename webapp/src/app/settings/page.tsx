@@ -7,7 +7,7 @@ import {
   HardDrive, ShieldAlert, Camera, ImageOff,
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/brand';
-import { TOUR_EVENT } from '@/components/Tour';
+import { TOUR_EVENT } from '@khazana/screens/components/Tour';
 import { MacSmsCard } from '@/components/MacSmsSettings';
 import { SyncCard } from '@/components/SyncSettings';
 import { useApp, ACCENTS, type AccentName, type ThemeChoice } from '@/lib/store';

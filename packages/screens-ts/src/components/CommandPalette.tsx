@@ -13,7 +13,7 @@ import { Search, CornerDownLeft } from 'lucide-react';
 import { useApp } from '@khazana/screens/store';
 import { D } from '@khazana/domain/money';
 import { useFmt } from '@khazana/screens/lib/useFmt';
-import { NAV_GROUPS } from '@khazana/screens/components/navConfig';
+import { NAV_GROUPS, type NavGroup } from '@khazana/screens/components/navConfig';
 import { DUR, EASE } from '@khazana/ui/motion';
 import { formatDayMonth } from '@khazana/screens/lib/dateFormat';
 
@@ -25,7 +25,7 @@ interface Item {
   href: string;
 }
 
-export function CommandPalette() {
+export function CommandPalette({ navGroups = NAV_GROUPS }: { navGroups?: NavGroup[] } = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -65,7 +65,7 @@ export function CommandPalette() {
 
   const items = useMemo<Item[]>(() => {
     const out: Item[] = [];
-    for (const g of NAV_GROUPS) {
+    for (const g of navGroups) {
       for (const n of g.items) {
         out.push({ id: `nav:${n.href}`, label: n.label, hint: g.label, group: 'Go to', href: n.href });
       }
@@ -93,7 +93,7 @@ export function CommandPalette() {
       out.push({ id: `g:${g.id}`, label: g.name, hint: 'Goal', group: 'Goals', href: '/goals' });
     }
     return out;
-  }, [holdings, txns, goals, categories, fmt]);
+  }, [holdings, txns, goals, categories, fmt, navGroups]);
 
   const results = useMemo(() => {
     const needle = q.trim().toLowerCase();
