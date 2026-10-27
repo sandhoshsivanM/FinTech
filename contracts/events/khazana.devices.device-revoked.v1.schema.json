@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.devices.device-revoked.v1.json",
+  "title": "DeviceRevokedV1",
+  "description": " A device was logged out remotely. Identity ends its sessions; Sync stops serving it; its key envelope is already deleted. ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "deviceId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "deviceId",
+    "at"
+  ],
+  "additionalProperties": false
+}

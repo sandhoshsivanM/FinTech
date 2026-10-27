@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.identity.account-deletion-requested.v1.json",
+  "title": "AccountDeletionRequestedV1",
+  "description": " The user asked for their account to be deleted. Every service that holds their data deletes it once  passes (the 24-hour cooling-off), and Identity deletes last. ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "executeAfter": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "executeAfter"
+  ],
+  "additionalProperties": false
+}
