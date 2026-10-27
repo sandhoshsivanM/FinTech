@@ -55,6 +55,11 @@ public class BoundaryTests
             typeof(Khazana.AccountAggregator.Application.ConsentService).Assembly,
             typeof(Khazana.AccountAggregator.Infrastructure.FakeBankDataProvider).Assembly,
             typeof(Khazana.AccountAggregator.Api.AaEndpoints).Assembly),
+        new("Credit",
+            typeof(Khazana.Credit.Domain.CreditRules).Assembly,
+            typeof(Khazana.Credit.Application.CreditService).Assembly,
+            typeof(Khazana.Credit.Infrastructure.FakeCreditReportProvider).Assembly,
+            typeof(Khazana.Credit.Api.CreditEndpoints).Assembly),
     ];
 
     private static readonly string[] AllServiceNamespaces =

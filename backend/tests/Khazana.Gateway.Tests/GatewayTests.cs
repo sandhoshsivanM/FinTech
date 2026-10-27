@@ -27,6 +27,7 @@ public sealed class GatewayTests : IDisposable
         b.UseSetting("services:notification-api:http:0", "http://127.0.0.1:9");
         b.UseSetting("services:catalog-api:http:0", "http://127.0.0.1:9");
         b.UseSetting("services:aa-api:http:0", "http://127.0.0.1:9");
+        b.UseSetting("services:credit-api:http:0", "http://127.0.0.1:9");
     });
 
     public void Dispose() => _factory.Dispose();
@@ -43,6 +44,8 @@ public sealed class GatewayTests : IDisposable
         }
         using var limited = await client.PostAsync("/v1/aa/fetch", null, TestContext.Current.CancellationToken);
         limited.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        using var credit = await client.PostAsync("/v1/credit/report", null, TestContext.Current.CancellationToken);
+        credit.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests, "one costly budget per user across partners");
         using var list = await client.GetAsync("/v1/aa/consents", TestContext.Current.CancellationToken);
         ((int)list.StatusCode).ShouldBeGreaterThanOrEqualTo(500, "reading is not limited by the costly policy");
     }
@@ -143,6 +146,9 @@ public sealed class GatewayTests : IDisposable
     [InlineData("POST", "/v1/aa/inbox/0198f0a0-0000-7000-8000-000000000000/ack")]
     [InlineData("POST", "/v1/aa/fetch")]
     [InlineData("POST", "/v1/webhooks/aa")]
+    [InlineData("POST", "/v1/credit/report")]
+    [InlineData("GET", "/v1/credit/inbox")]
+    [InlineData("DELETE", "/v1/credit/consent")]
     public async Task Device_and_key_routes_are_forwarded(string method, string path)
     {
         using var client = _factory.CreateClient();

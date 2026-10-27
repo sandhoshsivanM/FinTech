@@ -15,6 +15,7 @@ var notificationDb = postgres.AddDatabase("notification");
 var reportingDb = postgres.AddDatabase("reporting");
 var catalogDb = postgres.AddDatabase("catalog");
 var aaDb = postgres.AddDatabase("aa");
+var creditDb = postgres.AddDatabase("credit");
 
 var rabbitMq = builder.AddRabbitMQ("rabbitmq").WithManagementPlugin();
 
@@ -106,6 +107,14 @@ var aa = builder.AddProject<Projects.Khazana_AccountAggregator_Api>("aa-api")
     .WithEnvironment("Auth__MetadataAddress", identityMetadata)
     .WithEnvironment("Providers__AccountAggregator", "Fake");
 
+// Credit reports from the sample bureau until an aggregator is chosen (D15); refused in Production.
+var credit = builder.AddProject<Projects.Khazana_Credit_Api>("credit-api")
+    .WithReference(creditDb).WaitFor(creditDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WaitFor(identity)
+    .WithEnvironment("Auth__MetadataAddress", identityMetadata)
+    .WithEnvironment("Providers__Credit", "Fake");
+
 var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(marketData).WaitFor(marketData)
     .WithReference(identity).WaitFor(identity)
@@ -114,6 +123,7 @@ var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
     .WithReference(notification).WaitFor(notification)
     .WithReference(catalog).WaitFor(catalog)
     .WithReference(aa).WaitFor(aa)
+    .WithReference(credit).WaitFor(credit)
     .WithExternalHttpEndpoints()
     // Khazana Online's web app in development (webapp-online/: npm run dev).
     .WithEnvironment("Gateway__AllowedOrigins__0", "http://localhost:3100");
@@ -121,7 +131,7 @@ var gateway = builder.AddProject<Projects.Khazana_Gateway>("gateway")
 // DPoP proofs name the URL the app called, which is the gateway's.
 // The Android emulator reaches this machine's gateway as 10.0.2.2, so a phone
 // app in development names that address (local development only).
-foreach (var service in new[] { identity, devices, sync, notification, aa })
+foreach (var service in new[] { identity, devices, sync, notification, aa, credit })
     service.WithEnvironment("Auth__PublicOrigins__0", gateway.GetEndpoint("http"))
         .WithEnvironment("Auth__PublicOrigins__1", "http://10.0.2.2:5196");
 

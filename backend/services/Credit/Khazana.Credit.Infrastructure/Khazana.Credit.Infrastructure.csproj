@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Credit-report adapters behind ICreditReportProvider: the sample report
+       now; a licensed bureau aggregator later (decision D15). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Khazana.Credit.Application\Khazana.Credit.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>
