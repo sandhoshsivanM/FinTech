@@ -1,7 +1,16 @@
 // The few building blocks the online app's pages share, on the shared tokens.
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { useEffect, type ButtonHTMLAttributes, type ReactNode, type Ref } from 'react';
 
-export function Page({ title, lead, children }: { title: string; lead?: ReactNode; children: ReactNode }) {
+const APP_NAME = 'Khazana Online';
+
+/**
+ * Each page sets its own document title, so tabs, history and screen readers say where you are (WCAG 2.4.2).
+ * docTitle defaults to the heading; pass it when the heading is the brand name.
+ */
+export function Page({ title, docTitle = title, lead, children }: { title: string; docTitle?: string; lead?: ReactNode; children: ReactNode }) {
+  useEffect(() => {
+    document.title = docTitle === APP_NAME ? APP_NAME : `${docTitle} · ${APP_NAME}`;
+  }, [docTitle]);
   return (
     <section className="flex flex-col gap-5">
       <header>
@@ -22,19 +31,43 @@ export function Card({ children, title }: { children: ReactNode; title?: string 
   );
 }
 
-export function Button({ kind = 'primary', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { kind?: 'primary' | 'quiet' }) {
+export function Button({
+  kind = 'primary',
+  type = 'button',
+  ref,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { kind?: 'primary' | 'quiet'; ref?: Ref<HTMLButtonElement> }) {
   const style = kind === 'primary'
     ? { background: 'var(--primary)', color: 'var(--primary-fg)' }
     : { background: 'var(--surface)', color: 'var(--ink)' };
-  return <button {...props} className={`rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-50 ${props.className ?? ''}`} style={style} />;
+  return (
+    <button ref={ref} type={type} {...props} className={`rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-50 ${props.className ?? ''}`} style={style} />
+  );
 }
 
 export const Muted = ({ children }: { children: ReactNode }) => (
   <p className="text-sm" style={{ color: 'var(--muted)' }}>{children}</p>
 );
 
-export const ErrorText = ({ children }: { children: ReactNode }) =>
-  children ? <p role="alert" className="text-sm" style={{ color: 'var(--color-data-rose)' }}>{children}</p> : null;
+/**
+ * A status line that screen readers announce when its text changes (WCAG 4.1.3).
+ * Keep it mounted: a live region that is added with its text is often not announced.
+ */
+export const LiveStatus = ({ children }: { children?: ReactNode }) => (
+  <p role="status" aria-live="polite" className="text-sm" style={{ color: 'var(--muted)' }}>{children}</p>
+);
+
+/**
+ * A failure, announced at once. The text is the dark ink colour; the rose bar is decorative.
+ * Rose text on the page is only 3.3:1, too low for small text, so the colour carries the bar, not the words.
+ */
+export const ErrorText = ({ children }: { children?: ReactNode }) =>
+  children ? (
+    <div role="alert" className="flex items-start gap-2 text-sm">
+      <span aria-hidden="true" className="mt-0.5 h-4 w-1 shrink-0 rounded-full" style={{ background: 'var(--danger)' }} />
+      <p style={{ color: 'var(--ink)' }}>{children}</p>
+    </div>
+  ) : null;
 
 /** A user-facing sentence for anything a page's action threw. */
 export function describe(err: unknown): string {

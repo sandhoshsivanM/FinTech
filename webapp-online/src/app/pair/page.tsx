@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ensureReady, keys } from '@/lib/account';
-import { Button, Card, ErrorText, Muted, Page, describe } from '@/components/ui';
+import { Button, Card, ErrorText, LiveStatus, Muted, Page, describe } from '@/components/ui';
 
 type Target = Awaited<ReturnType<ReturnType<typeof keys>['inspectPairing']>>;
 
@@ -48,6 +48,14 @@ export default function Pair() {
 
   return (
     <Page title="Approve a new device">
+      {/* One status line, always mounted, so each change is announced. */}
+      <LiveStatus>
+        {done ? 'Done. The new device is opening your data now.'
+          : busy ? 'Approving…'
+          : !target && !error ? 'Checking the device asking to pair…'
+          : ''}
+      </LiveStatus>
+
       {target && !done && (
         <Card>
           <p className="text-sm">
@@ -56,17 +64,15 @@ export default function Pair() {
           <Muted>Its key matches this link. Approve only if you just started pairing on that device yourself.</Muted>
           <div className="flex gap-2">
             <Button kind="quiet" onClick={() => router.replace('/home/')}>Cancel</Button>
-            <Button disabled={busy} onClick={approve}>{busy ? 'Approving…' : 'Approve'}</Button>
+            <Button disabled={busy} onClick={approve}>Approve</Button>
           </div>
         </Card>
       )}
       {done && (
         <Card>
-          <p className="text-sm">Done. The new device is opening your data now.</p>
           <Button kind="quiet" onClick={() => router.replace('/home/')}>Back to Khazana Online</Button>
         </Card>
       )}
-      {!target && !error && !done && <Muted>Checking the device asking to pair…</Muted>}
       <ErrorText>{error}</ErrorText>
     </Page>
   );

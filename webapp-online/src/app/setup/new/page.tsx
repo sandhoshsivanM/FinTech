@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { keys } from '@/lib/account';
-import { Button, Card, ErrorText, Muted, Page, describe } from '@/components/ui';
+import { Button, Card, ErrorText, LiveStatus, Muted, Page, describe } from '@/components/ui';
 
 type Pending = { words: string[]; save: () => Promise<void> };
 
@@ -15,6 +15,7 @@ export default function NewAccountKey() {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const firstAnswer = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     keys().createAccountKey().then(setPending).catch((err) => setError(describe(err)));
@@ -26,6 +27,11 @@ export default function NewAccountKey() {
     while (picks.size < 3) picks.add(Math.floor(Math.random() * 24));
     return [...picks].sort((a, b) => a - b);
   }, []);
+
+  // The button that led here is gone once the stage changes; move focus to the first field.
+  useEffect(() => {
+    if (stage === 'confirm') firstAnswer.current?.focus();
+  }, [stage]);
 
   const correct = pending && asked.every((i) => answers[i]?.trim().toLowerCase() === pending.words[i]);
 
@@ -65,11 +71,12 @@ export default function NewAccountKey() {
 
       {stage === 'confirm' && pending && (
         <Card title="Check three words">
+          <Muted>Type these three words from your list, exactly as written, to finish.</Muted>
           {asked.map((i) => (
             <label key={i} className="flex items-center gap-3 text-sm">
               <span className="w-16">Word {i + 1}</span>
               <input
-                aria-label={`Word ${i + 1}`}
+                ref={i === asked[0] ? firstAnswer : undefined}
                 autoCapitalize="none"
                 autoComplete="off"
                 value={answers[i] ?? ''}
@@ -81,12 +88,12 @@ export default function NewAccountKey() {
           ))}
           <div className="flex gap-2">
             <Button kind="quiet" onClick={() => setStage('show')}>Show words again</Button>
-            <Button disabled={!correct || busy} onClick={save}>{busy ? 'Saving…' : 'Finish'}</Button>
+            <Button disabled={!correct || busy} onClick={save}>Finish</Button>
           </div>
         </Card>
       )}
 
-      {!pending && !error && <Muted>Creating your data key…</Muted>}
+      <LiveStatus>{busy ? 'Saving your data key…' : !pending && !error ? 'Creating your data key…' : ''}</LiveStatus>
       <ErrorText>{error}</ErrorText>
     </Page>
   );
