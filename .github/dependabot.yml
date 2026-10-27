@@ -1,0 +1,25 @@
+# Dependabot for the offline web app.
+#
+# open-pull-requests-limit: 0 keeps routine version-bump PRs off; security
+# updates still arrive (they are on in the repository settings) and honour the
+# ignore rules below.
+#
+# Ignored: major upgrades of the test tooling (vitest, @vitest/*, vite). They
+# run only in development and CI, never ship in the app, and each major needs a
+# deliberate migration (Vite 8 moved JSX settings from `esbuild` to `oxc`, and
+# vitest 5 needs newer @types/node). Dependabot's automatic attempts (#76, #78)
+# failed for exactly that reason. Remove these rules when doing the migration.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /webapp
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: vitest
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: vite
+        update-types: ["version-update:semver-major"]
