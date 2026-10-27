@@ -1,0 +1,66 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Khazana.Notification.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/push/register": {
+      "post": {
+        "tags": [
+          "PushEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterPush"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "PushEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RegisterPush": {
+        "required": [
+          "provider",
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "PushEndpoints"
+    }
+  ]
+}

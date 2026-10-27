@@ -1,0 +1,29 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <!-- OpenAPI for every HTTP service (the *.Api projects). The spec is generated
+       from the real endpoint metadata and checked in under contracts/openapi/,
+       and CI regenerates it and fails on any difference (tools/check-openapi.sh).
+       Generation is opt-in (-p:GenerateOpenApi=true) so a normal build neither
+       runs the app nor rewrites the checked-in file. -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Api'))">
+    <ServiceName>$(MSBuildProjectName.Replace('Khazana.', '').Replace('.Api', '').ToLowerInvariant())</ServiceName>
+  </PropertyGroup>
+  <!-- The package generates on every build by default; turn that off. -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Api'))">
+    <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
+    <OpenApiGenerateDocumentsOnBuild>false</OpenApiGenerateDocumentsOnBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Api')) And '$(GenerateOpenApi)' == 'true'">
+    <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
+    <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
+    <OpenApiDocumentsDirectory>$(MSBuildThisFileDirectory)../../contracts/openapi</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocumentsOptions>--file-name $(ServiceName)</OpenApiGenerateDocumentsOptions>
+  </PropertyGroup>
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Api'))">
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

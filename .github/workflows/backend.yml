@@ -32,3 +32,16 @@ jobs:
       # Docker).
       - name: Test
         run: dotnet test --solution Khazana.slnx --no-build --configuration Release
+
+  # Specs under contracts/openapi/ are generated from the real endpoints; any
+  # difference from what is committed fails the build.
+  openapi-drift:
+    name: OpenAPI drift check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: backend/global.json
+      - name: Regenerate specs and diff
+        run: backend/tools/check-openapi.sh

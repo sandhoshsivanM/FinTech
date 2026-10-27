@@ -11,6 +11,7 @@ using Wolverine.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Services.AddOpenApi();
 builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = 16 * 1024);
 
 var database = builder.Configuration.GetConnectionString("notification")
