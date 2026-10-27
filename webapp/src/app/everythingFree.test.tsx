@@ -9,18 +9,18 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { useApp } from '@/lib/store';
-import { ConfirmProvider } from '@/components/Confirm';
-import { NAV_GROUPS } from '@/components/navConfig';
+import { ConfirmProvider } from '@khazana/screens/components/Confirm';
+import { NAV_GROUPS } from '@khazana/screens/components/navConfig';
 import type { Txn } from '@khazana/domain/types';
-import TaxPage from './tax/page';
-import AnalyticsPage from './analytics/page';
-import ForecastPage from './forecast/page';
-import DividendsPage from './dividends/page';
-import WatchlistPage from './watchlist/page';
-import MarketsPage from './markets/page';
-import NewsPage from './news/page';
-import ReconcilePage from './reconcile/page';
-import ReportsPage from './reports/page';
+import TaxPage from '@khazana/screens/pages/tax';
+import AnalyticsPage from '@khazana/screens/pages/analytics';
+import ForecastPage from '@khazana/screens/pages/forecast';
+import DividendsPage from '@khazana/screens/pages/dividends';
+import WatchlistPage from '@khazana/screens/pages/watchlist';
+import MarketsPage from '@khazana/screens/pages/markets';
+import NewsPage from '@khazana/screens/pages/news';
+import ReconcilePage from '@khazana/screens/pages/reconcile';
+import ReportsPage from '@khazana/screens/pages/reports';
 
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (

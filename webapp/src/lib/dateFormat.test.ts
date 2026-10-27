@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vitest';
 import {
   formatDate, formatDayMonth, formatLongDate, formatMonthShort, formatMonthYear,
   fromInputValue, toInputValue,
-} from './dateFormat';
-import { parseDateCell } from './dateParse';
+} from '@khazana/screens/lib/dateFormat';
+import { parseDateCell } from '@khazana/screens/lib/dateParse';
 
 const AUG_8 = new Date(2026, 7, 8, 14, 30); // 8 Aug 2026, afternoon
 const MAR_1 = new Date(2026, 2, 1);

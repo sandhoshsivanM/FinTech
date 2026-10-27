@@ -7,9 +7,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { custom } from '@khazana/domain/period';
-import { buildReport, type ReportInput } from './model';
-import { buildPdf } from './pdf';
-import { EMPTY_ASSETS } from './assets';
+import { buildReport, type ReportInput } from '@khazana/screens/lib/reports/model';
+import { buildPdf } from '@khazana/screens/lib/reports/pdf';
+import { EMPTY_ASSETS } from '@khazana/screens/lib/reports/assets';
 
 const day = (y: number, m: number, d: number) => new Date(y, m - 1, d, 12).getTime();
 const input: ReportInput = {

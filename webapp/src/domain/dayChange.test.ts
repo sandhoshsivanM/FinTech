@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
-import { dayChange, hasRealClose, priceAsOfLabel, rowDayPct } from './dayChange';
-import { parseHoldingsCsv, planImport, importCounts } from '@/lib/holdingsCsv';
+import { dayChange, hasRealClose, priceAsOfLabel, rowDayPct } from '@khazana/screens/domain/dayChange';
+import { parseHoldingsCsv, planImport, importCounts } from '@khazana/screens/lib/holdingsCsv';
 import type { Holding } from '@khazana/domain/types';
 
 const h = (over: Partial<Holding>): Holding => ({

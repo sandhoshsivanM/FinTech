@@ -4,8 +4,8 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { DateInput } from './DateInput';
-import { Combobox } from './Combobox';
+import { DateInput } from '@khazana/screens/components/DateInput';
+import { Combobox } from '@khazana/screens/components/Combobox';
 
 beforeEach(cleanup);
 

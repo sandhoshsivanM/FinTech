@@ -12,9 +12,9 @@
  */
 import { describe, expect, test } from 'vitest';
 import { D } from '@khazana/domain/money';
-import { parseDelimited } from './sheet';
-import { parseTxnRows, planTxnImport, guessCategory } from './txnImport';
-import { parseHoldingsRows, planImport } from './holdingsCsv';
+import { parseDelimited } from '@khazana/screens/lib/sheet';
+import { parseTxnRows, planTxnImport, guessCategory } from '@khazana/screens/lib/txnImport';
+import { parseHoldingsRows, planImport } from '@khazana/screens/lib/holdingsCsv';
 import { deriveKey, encryptJson, decryptJson, bufToB64, b64ToBuf } from './crypto';
 import { reconcile } from '@khazana/domain/reconcile';
 import { runDiagnostics } from '@khazana/domain/diagnostics';

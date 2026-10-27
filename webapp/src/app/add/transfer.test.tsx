@@ -6,8 +6,8 @@ import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
 import type { Account } from '@khazana/domain/types';
-import AddTransactionPage from './page';
-import { ConfirmProvider } from '@/components/Confirm';
+import AddTransactionPage from '@khazana/screens/pages/add';
+import { ConfirmProvider } from '@khazana/screens/components/Confirm';
 
 /** The page asks for confirmation on high-impact edits, so it needs the host. */
 const renderPage = () => render(<ConfirmProvider><AddTransactionPage /></ConfirmProvider>);

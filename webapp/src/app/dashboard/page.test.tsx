@@ -11,7 +11,7 @@ import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
 import type { Account, Holding, Liability, Txn } from '@khazana/domain/types';
-import DashboardPage from './page';
+import DashboardPage from '@khazana/screens/pages/dashboard';
 
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (

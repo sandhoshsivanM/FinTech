@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { parseDelimited, sniffDelimiter, num, findHeaderRow } from './sheet';
-import { detectDayFirst, parseDateCell } from './dateParse';
+import { parseDelimited, sniffDelimiter, num, findHeaderRow } from '@khazana/screens/lib/sheet';
+import { detectDayFirst, parseDateCell } from '@khazana/screens/lib/dateParse';
 import {
   dividendKindOf, guessCategory, matchHolding, parseTxnRows, planTxnImport, txnFingerprint,
-} from './txnImport';
+} from '@khazana/screens/lib/txnImport';
 import type { Txn } from '@khazana/domain/types';
 
 const grid = (text: string) => parseDelimited(text);

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { newestPriceAsOf, priceAgeLabel } from './freshness';
+import { newestPriceAsOf, priceAgeLabel } from '@khazana/screens/lib/quotes/freshness';
 import type { Holding } from '@khazana/domain/types';
 
 const h = (over: Partial<Holding>): Holding => ({
