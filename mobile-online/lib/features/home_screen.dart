@@ -4,6 +4,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../app_services.dart';
+import '../capture/ui/capture_screen.dart';
 import '../cards/card_store.dart';
 import '../cards/cards_screen.dart';
 import '../core/gateway_client.dart';
@@ -123,6 +124,16 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             Text(_status, key: const Key('sync-status'), style: TextStyle(color: muted)),
+            const SizedBox(height: 8),
+            Card(
+              child: ListTile(
+                key: const Key('open-capture'),
+                leading: const Icon(Icons.auto_awesome_outlined),
+                title: const Text('Smart capture'),
+                subtitle: const Text('Gmail alerts, screenshots and iPhone SMS, reviewed before they count.'),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CaptureScreen())),
+              ),
+            ),
             const SizedBox(height: 8),
             if (_loaded) ...[
               Text('Net worth', style: TextStyle(color: muted)),

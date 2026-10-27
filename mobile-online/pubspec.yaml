@@ -48,6 +48,10 @@ dependencies:
   uuid: ^4.6.0
   cryptography: ^2.9.0
   decimal: ^3.2.6
+  # Smart capture (lib/capture/): Gmail OAuth (PKCE), on-device OCR, image picking.
+  flutter_appauth: ^9.0.0
+  google_mlkit_text_recognition: ^0.15.0
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

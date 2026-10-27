@@ -28,6 +28,11 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Gmail capture (flutter_appauth): the reversed Google client id. Set
+        // khazanaGoogleRedirectScheme in ~/.gradle/gradle.properties; no client
+        // id lives in the repo.
+        manifestPlaceholders["appAuthRedirectScheme"] =
+            (project.findProperty("khazanaGoogleRedirectScheme") as String?) ?: "com.khazana.online.unconfigured"
     }
 
     buildTypes {

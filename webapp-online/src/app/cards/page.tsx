@@ -91,7 +91,7 @@ export default function CardsPage() {
                   <button key={v.card.id} type="button" onClick={() => setPickedId(v.card.id)} aria-pressed={front}
                     aria-label={front ? `${v.card.name}, selected` : `Show ${v.card.name}`}
                     className="absolute left-0 right-0 flex flex-col justify-between rounded-3xl px-5 py-[18px] text-left transition-[top,transform] duration-300 ease-out active:scale-[0.98] motion-reduce:transition-none"
-                    style={{ top: pos * PEEK, zIndex: pos + 1, height: CARD_H, background: FACES[ledger.cards.indexOf(v.card) % FACES.length], color: 'var(--surface)', boxShadow: '0 -6px 18px rgba(0,0,0,0.18)' }}>
+                    style={{ top: pos * PEEK, zIndex: pos + 1, height: CARD_H, background: FACES[ledger.cards.indexOf(v.card) % FACES.length], color: 'var(--surface)', boxShadow: 'var(--shadow-3)' }}>
                     <span className="flex w-full items-center justify-between">
                       <span className="text-base font-semibold">{v.card.name}</span>
                       <span className="text-[13px] tracking-[2px] opacity-85">•••• {v.card.last4}</span>
@@ -268,7 +268,7 @@ function CardSheet({ initial, onClose }: { initial: CreditCard | 'new'; onClose:
   const label = 'flex flex-col gap-1.5 text-[13px]';
   const err = (k: keyof CardForm) => errors[k] && <span role="alert" className="text-xs" style={{ color: 'var(--expense)' }}>{errors[k]}</span>;
   return (
-    <div className="fixed inset-0 z-20 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.55)' }}>
+    <div className="fixed inset-0 z-20 flex items-end justify-center" style={{ background: 'color-mix(in srgb, var(--ink-surface) 55%, transparent)' }}>
       <form role="dialog" aria-label={title} onSubmit={save} noValidate
         className="flex max-h-full w-full max-w-xl flex-col gap-3 overflow-y-auto rounded-t-3xl px-4 pb-7 pt-4" style={{ background: 'var(--surface)' }}>
         <div className="h-1 w-9 self-center rounded-full" style={{ background: 'var(--line)' }} />
