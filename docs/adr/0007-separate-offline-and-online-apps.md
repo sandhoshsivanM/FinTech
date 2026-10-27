@@ -50,8 +50,8 @@ network, account or server dependencies without anyone deciding it should.
 ## Consequences
 - Each product can be understood, reviewed and shipped on its own. The offline
   app's promise ("no server") stays checkable by a test, not by discipline.
-- The UI is built twice where both products need a screen. Shared domain code
-  and tokens keep the numbers and the look the same; screens are not shared.
+- ~~The UI is built twice where both products need a screen.~~ Superseded by
+  the 2026-10-27 amendment below: screens are shared at build time.
 - Two store listings and two web addresses to explain to users. The offline
   app stays free with no paywalls; the online app's cost model is D13.
 - **Open items:**
@@ -62,3 +62,31 @@ network, account or server dependencies without anyone deciding it should.
     phase by phase; the offline app keeps every on-device feature it has.
   - Whether the online app also offers a local-only mode. By this decision,
     it doesn't: local-only is the offline app.
+
+## Amendment 2026-10-27: the apps may share screens
+
+The user approved sharing the screens themselves, so the online app renders the
+exact same pages as the offline app instead of rebuilding each one.
+
+- The apps stay separate products: separate sites, store listings, data,
+  builds and release tags. **The offline app still never talks to a server.**
+  Nothing about the four-app table, the guard tests or the `.ftos` file
+  hand-off changes.
+- Screens MAY be shared through `packages/screens-ts`, imported as
+  `@khazana/screens` and compiled into each app like `domain-ts` and `ui-ts`.
+- The package contains **no storage and no network**: no Dexie or IndexedDB, no
+  `fetch`, no vault data in `localStorage`, no Tauri. A screen reads and writes
+  through the `KhazanaStore` contract (the data entities plus `put`, `putMany`,
+  `del`, `reload` and the other CRUD actions, active profile, currency, theme and
+  accent). Each app injects its own implementation through
+  `KhazanaStoreProvider`: the offline app passes its encrypted Dexie-backed
+  store, the online app passes one backed by its own database and sync.
+- Platform-specific behaviour (saving a file through Tauri, notifications, the
+  tour) is injected through small adapters. Defaults are plain-browser ones.
+- Vault-only concerns (PIN, lock, backup, wipe, folder sync, persistence,
+  stranded and unreadable records) and the Settings, Capture and Diagnostics
+  screens stay in `webapp/`.
+- Still banned: a direct import of a `/webapp/` or `/webapp-online/` path from
+  either app or from the package, and the offline database name
+  (`fintech_os`) anywhere in the online app or the package. Guard tests in both
+  apps scan `packages/screens-ts` for these.

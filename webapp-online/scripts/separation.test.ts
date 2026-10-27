@@ -17,13 +17,34 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
-// The shared UI package is compiled into this app, so it is checked too.
+// The shared UI and screens packages are compiled into this app, so they are
+// checked too. `@khazana/screens` itself is allowed (ADR 0007, amended
+// 2026-10-27); a path into /webapp/ or /webapp-online/ is not.
 test('nothing imports the offline web app or opens its database', () => {
   const offline = [/from\s+['"][^'"]*\/webapp\//, /import\s*\(\s*['"][^'"]*\/webapp\//, /['"]fintech_os['"]/, /@import\s+["'][^"']*\/webapp\//];
-  const files = [...sourceFiles(join(app, 'src')), ...sourceFiles(join(repo, 'packages/ui-ts')), join(app, 'next.config.ts'), join(app, 'tsconfig.json')];
+  const files = [...sourceFiles(join(app, 'src')), ...sourceFiles(join(repo, 'packages/ui-ts')), ...sourceFiles(join(repo, 'packages/screens-ts')), join(app, 'next.config.ts'), join(app, 'tsconfig.json')];
   const hits = files.flatMap((file) =>
     offline.filter((re) => re.test(readFileSync(file, 'utf8'))).map((re) => `${file.slice(repo.length + 1)}: ${re}`),
   );
+  expect(hits).toEqual([]);
+});
+
+// The screens are shared with the offline app, which never talks to a server,
+// so the package holds no storage and no network: each app injects its own.
+test('packages/screens-ts has no storage, network or Tauri code', () => {
+  const banned = [/from\s+['"]dexie['"]/, /new\s+Dexie/, /\bindexedDB\./, /\bfetch\s*\(/, /XMLHttpRequest/, /new\s+WebSocket/, /EventSource/, /sendBeacon/, /@tauri-apps/, /plugin-http/, /fintech_os/];
+  // Screen preferences (not vault data) may use localStorage, from these files only.
+  const prefs = new Set(['src/components/DemoBadge.tsx', 'src/lib/prefs.ts', 'src/lib/useDashboardLayout.ts']);
+  const root = join(repo, 'packages/screens-ts');
+  const files = sourceFiles(join(root, 'src'));
+  expect(files.length).toBeGreaterThan(50);
+  const hits = files.flatMap((file) => {
+    const text = readFileSync(file, 'utf8');
+    const rel = file.slice(root.length + 1);
+    const found = banned.filter((re) => re.test(text)).map(String);
+    if (!prefs.has(rel) && /localStorage|sessionStorage/.test(text)) found.push('localStorage');
+    return found.map((f) => `${rel}: ${f}`);
+  });
   expect(hits).toEqual([]);
 });
 

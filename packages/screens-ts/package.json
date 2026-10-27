@@ -1,0 +1,20 @@
+{
+  "name": "@khazana/screens",
+  "private": true,
+  "description": "The Khazana screens (pages, the components and pure helpers they need) shared at build time by the Khazana web apps (ADR 0007, amended 2026-10-27). No storage and no network: each app injects its own data through KhazanaStoreProvider and its platform behaviour through configurePlatform.",
+  "type": "module",
+  "peerDependencies": {
+    "clsx": "^2.1.1",
+    "decimal.js": "^10.6.0",
+    "exceljs": "*",
+    "framer-motion": "^13.0.0",
+    "jspdf": "*",
+    "jspdf-autotable": "*",
+    "lucide-react": "^1.21.0",
+    "next": "*",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "xlsx": "*",
+    "zustand": "^5.0.0"
+  }
+}
