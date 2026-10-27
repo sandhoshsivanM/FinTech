@@ -4,6 +4,8 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../app_services.dart';
+import '../cards/card_store.dart';
+import '../cards/cards_screen.dart';
 import '../core/gateway_client.dart';
 import '../ledger/ledger.dart';
 import 'approve_screen.dart';
@@ -137,6 +139,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     onLongPress: () => _write(() => _s.writer.deleteAccount(a, _ledger)),
                   ),
                 ),
+              const SizedBox(height: 16),
+              Card(
+                child: ListTile(
+                  key: const Key('open-cards'),
+                  leading: const Icon(Icons.credit_card),
+                  title: const Text('Cards'),
+                  subtitle: const Text('What you owe on each card, its bill and due date.'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => CardsScreen(store: SecureCardStore()))),
+                ),
+              ),
               const SizedBox(height: 16),
               Text('Transactions', style: Theme.of(context).textTheme.titleMedium),
               if (_ledger.transactions.isEmpty) Text('No transactions yet.', style: TextStyle(color: muted)),
