@@ -50,6 +50,17 @@ export class GatewayClient {
     return this.deps.fetch(url, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   }
 
+  /** Like `send`, but the body is raw bytes (attachments) rather than JSON. */
+  private async sendBytes(method: string, path: string, body: Uint8Array | undefined, accessToken: string): Promise<Response> {
+    const url = `${this.baseUrl}${path}`;
+    const headers: Record<string, string> = {
+      DPoP: await createProof(await this.deviceKey(), method, url, accessToken, this.deps.now),
+      Authorization: `DPoP ${accessToken}`,
+    };
+    if (body) headers['Content-Type'] = 'application/octet-stream';
+    return this.deps.fetch(url, { method, headers, body: body ? new Blob([new Uint8Array(body)]) : undefined });
+  }
+
   private static async fail(response: Response): Promise<never> {
     const problem = await response.json().catch(() => ({}) as Record<string, unknown>);
     const code = typeof problem.error === 'string' ? problem.error : undefined;
@@ -144,6 +155,18 @@ export class GatewayClient {
     }
     if (!response.ok) return GatewayClient.fail(response);
     return (response.status === 204 ? undefined : await response.json()) as T;
+  }
+
+  /** A signed-in call whose request and response bodies are raw bytes. Returns undefined on 404. */
+  async callBytes(method: string, path: string, body?: Uint8Array): Promise<Uint8Array | undefined> {
+    let response = await this.sendBytes(method, path, body, await this.accessToken());
+    if (response.status === 401) {
+      this.access = undefined;
+      response = await this.sendBytes(method, path, body, await this.refresh());
+    }
+    if (response.status === 404) return undefined;
+    if (!response.ok) return GatewayClient.fail(response);
+    return method === 'GET' ? new Uint8Array(await response.arrayBuffer()) : undefined;
   }
 
   /**
