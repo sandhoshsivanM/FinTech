@@ -18,14 +18,14 @@ import {
   CURRENCIES, findCurrency, isRateStale, rateAsOf, resolveRate,
 } from '@khazana/domain/currency';
 import { GlassCard, SectionHeader, Button, Field, Select, PageIntro, Input, Segmented } from '@khazana/ui/ui';
-import { useDemoData } from '@/components/DemoBadge';
+import { useDemoData } from '@khazana/screens/components/DemoBadge';
 import { useLivePrices } from '@/lib/quotes/useLivePrices';
-import { useConfirm } from '@/components/Confirm';
+import { useConfirm } from '@khazana/screens/components/Confirm';
 import { STORE, type FxRate, type ProfileKind } from '@khazana/domain/types';
-import { NumberInput } from '@/components/NumberInput';
+import { NumberInput } from '@khazana/screens/components/NumberInput';
 import { FeedbackCard } from '@/components/Feedback';
-import { formatDate } from '@/lib/dateFormat';
-import { useNow } from '@/lib/useNow';
+import { formatDate } from '@khazana/screens/lib/dateFormat';
+import { useNow } from '@khazana/screens/lib/useNow';
 import { D } from '@khazana/domain/money';
 import { BackupError } from '@/lib/backupError';
 import { fileToProfilePhoto, PhotoError } from '@/lib/profilePhoto';

@@ -14,7 +14,7 @@
 import { create } from 'zustand';
 import { defaultBankProfiles } from '@khazana/domain/notificationParser';
 import { isTauri } from './notify';
-import type { CaptureInput, CaptureOutcome } from './capture';
+import type { CaptureInput, CaptureOutcome } from '@khazana/screens/lib/capture';
 
 const KEY = 'khazana-mac-sms';
 /** How far back the first read reaches, so enabling it does not replay years of alerts. */

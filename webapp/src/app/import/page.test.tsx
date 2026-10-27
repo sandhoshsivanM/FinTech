@@ -6,8 +6,8 @@ import { render, screen, cleanup, within, waitFor } from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
 import type { Account, Category, Txn } from '@khazana/domain/types';
-import { ConfirmProvider } from '@/components/Confirm';
-import ImportPage from './page';
+import { ConfirmProvider } from '@khazana/screens/components/Confirm';
+import ImportPage from '@khazana/screens/pages/import';
 
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (

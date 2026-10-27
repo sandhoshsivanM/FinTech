@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useApp, uid, type SyncConfig } from '@/lib/store';
 import { Button, Field, GlassCard, Input, SectionHeader } from '@khazana/ui/ui';
 import { MIN_PASSPHRASE } from '@/lib/syncFile';
-import { formatDate } from '@/lib/dateFormat';
+import { formatDate } from '@khazana/screens/lib/dateFormat';
 import {
   AUTO_SYNC_MS, forgetSyncFolder, importSyncFiles, pickSyncFolder, runFolderSync, saveOwnSyncFile,
   syncMode, useSync, type SyncMode,

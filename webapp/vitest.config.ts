@@ -14,8 +14,9 @@ export default defineConfig({
       // so their dependencies resolve from this app's: one copy of React.
       '@khazana/domain': fileURLToPath(new URL('../packages/domain-ts/src', import.meta.url)),
       '@khazana/ui': fileURLToPath(new URL('../packages/ui-ts/src', import.meta.url)),
+      '@khazana/screens': fileURLToPath(new URL('../packages/screens-ts/src', import.meta.url)),
       ...Object.fromEntries(
-        ['decimal.js', 'clsx', 'lucide-react', 'framer-motion', 'react', 'react-dom'].map((dep) => [
+        ['decimal.js', 'clsx', 'lucide-react', 'framer-motion', 'react', 'react-dom', 'zustand', 'next', 'exceljs', 'xlsx', 'jspdf', 'jspdf-autotable'].map((dep) => [
           dep,
           fileURLToPath(new URL(`./node_modules/${dep}`, import.meta.url)),
         ]),

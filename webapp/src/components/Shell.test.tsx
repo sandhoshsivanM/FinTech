@@ -14,7 +14,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import { Shell } from './Shell';
-import { NAV_ITEMS, isActive } from './navConfig';
+import { NAV_ITEMS, isActive } from '@khazana/screens/components/navConfig';
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...rest }: { children: React.ReactNode; href: string }) => (

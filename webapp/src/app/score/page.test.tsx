@@ -4,7 +4,7 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { useApp } from '@/lib/store';
 import type { Insurance, Txn } from '@khazana/domain/types';
-import ScorePage from './page';
+import ScorePage from '@khazana/screens/pages/score';
 
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (
