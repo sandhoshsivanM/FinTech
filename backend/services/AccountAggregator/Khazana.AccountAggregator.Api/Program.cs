@@ -12,6 +12,7 @@ using Wolverine.ErrorHandling;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Services.AddOpenApi();
 builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = AaEndpoints.MaxCallbackBytes);
 
 var database = builder.Configuration.GetConnectionString("aa")
