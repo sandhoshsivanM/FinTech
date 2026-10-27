@@ -11,6 +11,10 @@ public sealed record IssuedAccessToken(string Token, int ExpiresInSeconds);
 /// <summary>Mints access tokens and refresh tokens.</summary>
 public sealed class TokenIssuer(ISigningKeys keys, TokenSettings settings, IClock clock)
 {
+    /// <summary>Same name and lifetime as <c>KhazanaClaims.StepUp</c> and <c>StepUpLifetime</c>, which Devices & Keys checks.</summary>
+    public const string StepUpClaim = "sua";
+    public static readonly TimeSpan StepUpLifetime = TimeSpan.FromMinutes(2);
+
     private static readonly JsonWebTokenHandler Handler = new() { SetDefaultTimesOnTokenCreation = false };
 
     /// <summary>
@@ -18,28 +22,40 @@ public sealed class TokenIssuer(ISigningKeys keys, TokenSettings settings, ICloc
     /// key through <c>cnf.jkt</c> (RFC 9449). It names the user and device by
     /// id only: no email, no name.
     /// </summary>
-    public IssuedAccessToken IssueAccess(Guid userId, Guid deviceId, string jkt)
+    public IssuedAccessToken IssueAccess(Guid userId, Guid deviceId, string jkt) => Issue(userId, deviceId, jkt, stepUp: false);
+
+    /// <summary>
+    /// A two-minute token like <see cref="IssueAccess"/> plus the <c>sua</c> claim:
+    /// the passkey check that was just made. Sensitive actions (removing a
+    /// device) ask for it; it comes with no refresh token.
+    /// </summary>
+    public IssuedAccessToken IssueStepUp(Guid userId, Guid deviceId, string jkt) => Issue(userId, deviceId, jkt, stepUp: true);
+
+    private IssuedAccessToken Issue(Guid userId, Guid deviceId, string jkt, bool stepUp)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(jkt);
         var now = clock.UtcNow;
+        var lifetime = stepUp ? StepUpLifetime : AccessTokenRules.Lifetime;
+        var claims = new Dictionary<string, object>
+        {
+            ["sub"] = userId.ToString(),
+            ["did"] = deviceId.ToString(),
+            ["jti"] = Guid.NewGuid().ToString("N"),
+            ["cnf"] = new Dictionary<string, object> { ["jkt"] = jkt },
+        };
+        if (stepUp) claims[StepUpClaim] = now.ToUnixTimeSeconds();
         var token = Handler.CreateToken(new SecurityTokenDescriptor
         {
             Issuer = settings.Issuer,
             Audience = settings.Audience,
             IssuedAt = now.UtcDateTime,
             NotBefore = now.UtcDateTime,
-            Expires = (now + AccessTokenRules.Lifetime).UtcDateTime,
+            Expires = (now + lifetime).UtcDateTime,
             TokenType = "at+jwt",
             SigningCredentials = keys.Current,
-            Claims = new Dictionary<string, object>
-            {
-                ["sub"] = userId.ToString(),
-                ["did"] = deviceId.ToString(),
-                ["jti"] = Guid.NewGuid().ToString("N"),
-                ["cnf"] = new Dictionary<string, object> { ["jkt"] = jkt },
-            },
+            Claims = claims,
         });
-        return new IssuedAccessToken(token, (int)AccessTokenRules.Lifetime.TotalSeconds);
+        return new IssuedAccessToken(token, (int)lifetime.TotalSeconds);
     }
 
     /// <summary>256 random bits, base64url. Only its hash is stored.</summary>

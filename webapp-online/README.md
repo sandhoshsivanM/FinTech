@@ -34,7 +34,9 @@ tokens come from `../packages/domain-ts` at build time.
 | `src/lib/ledger.ts`, `src/lib/store.ts` | Accounts and transactions as encrypted records; live state and when sync runs |
 | `src/app/home/`, `src/app/account/`, `src/app/how/` | Accounts, transactions, and “How it works” (what the server stores vs what this device reads) |
 
-Not yet: cards, connections, device management, attachments.
+| `src/lib/devices.ts`, `src/app/settings/` | Settings: devices (list, rename, remove with a passkey check) and a "Connections, coming later" placeholder |
+
+Not yet: cards, connections (placeholder only), attachments, key rotation after a device is removed (see ADR 0005).
 
 ## Build settings
 

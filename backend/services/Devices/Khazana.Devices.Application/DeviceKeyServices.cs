@@ -17,6 +17,8 @@ public enum DevicesError
     Forbidden,
     NotFound,
     Conflict,
+    /// <summary>Needs a passkey check made in the last two minutes (a step-up token).</summary>
+    StepUpRequired,
 }
 
 /// <summary>A refused request. The message is for logs; clients see only the error code.</summary>
@@ -123,6 +125,17 @@ public sealed class DeviceKeyService(IDbContextOutbox<DevicesDbContext> outbox, 
             .Where(d => d.UserId == caller.UserId && d.RevokedAt == null)
             .OrderBy(d => d.CreatedAt).ToListAsync(ct).ConfigureAwait(false);
         return [.. rows.Select(d => new DeviceView(d.Id, d.Name, d.Platform, d.AppVersion, d.CreatedAt, d.LastSeenAt, d.Id == caller.DeviceId))];
+    }
+
+    /// <summary>Renames one of the caller's devices (any of their signed-in devices may).</summary>
+    public async Task RenameAsync(Caller caller, Guid deviceId, string? name, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        if (string.IsNullOrWhiteSpace(name)) throw new DevicesException(DevicesError.BadRequest, "A device name is required.");
+        var device = await Db.Devices.FirstOrDefaultAsync(d => d.Id == deviceId && d.UserId == caller.UserId && d.RevokedAt == null, ct).ConfigureAwait(false)
+            ?? throw new DevicesException(DevicesError.NotFound, "No such device for this user.");
+        device.Name = DeviceRules.CleanName(name);
+        await Db.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
     /// <summary>
