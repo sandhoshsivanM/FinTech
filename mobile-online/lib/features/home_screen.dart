@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../cards/card_store.dart';
+import '../cards/cards_screen.dart';
 import '../core/gateway_client.dart';
 import 'sign_in_screen.dart';
 
@@ -75,8 +77,12 @@ class _HomeScreenState extends State<HomeScreen> {
             Card(
               child: ListTile(
                 title: Text(title),
-                subtitle: Text('$body\nComing in the next slice.'),
-                isThreeLine: true,
+                subtitle: Text(title == 'Cards' ? body : '$body\nComing in the next slice.'),
+                isThreeLine: title != 'Cards',
+                trailing: title == 'Cards' ? const Icon(Icons.chevron_right) : null,
+                onTap: title == 'Cards'
+                    ? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => CardsScreen(store: SecureCardStore())))
+                    : null,
               ),
             ),
         ],
