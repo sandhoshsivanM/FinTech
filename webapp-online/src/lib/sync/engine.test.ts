@@ -61,10 +61,13 @@ function memoryStore(): RecordStore & { rows: Map<string, LocalRecord> } {
     all: async () => [...rows.values()],
     get: async (r) => rows.get(k(r)),
     put: async (r) => { rows.set(k(r), r); return k(r); },
+    putMany: async (rs) => { for (const r of rs) rows.set(k(r), r); },
+    saveMany: async (rs) => { for (const r of rs) { rows.set(k(r), r); out.set(k(r), r); } },
     clear: async () => { rows.clear(); return undefined; },
     outbox: async () => [...out.values()],
     queue: async (r) => { out.set(k(r), r); return k(r); },
     unqueue: async (r) => { out.delete(k(r)); return undefined; },
+    unqueueMany: async (rs) => { for (const r of rs) out.delete(k(r)); },
     cursor: async () => cursor,
     setCursor: async (c) => { cursor = c; return 'cursor'; },
   };

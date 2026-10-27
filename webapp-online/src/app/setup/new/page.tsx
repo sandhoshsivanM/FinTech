@@ -41,7 +41,7 @@ export default function NewAccountKey() {
     setError(undefined);
     try {
       await pending.save();
-      router.replace('/home/');
+      router.replace('/dashboard/');
     } catch (err) {
       setError(describe(err));
     } finally {

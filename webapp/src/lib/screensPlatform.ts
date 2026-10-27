@@ -8,7 +8,7 @@ import { configurePlatform } from '@khazana/screens/platform';
 import { APP_VERSION } from './store';
 import { saveFile } from './saveFile';
 import { loadSampleData } from './sampleData';
-import { TOUR_EVENT } from '@/components/Tour';
+import { TOUR_EVENT } from '@khazana/screens/components/Tour';
 import { SendFeedbackLink } from '@/components/Feedback';
 
 export function installScreensPlatform(): void {

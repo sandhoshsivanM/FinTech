@@ -37,7 +37,7 @@ export default function LinkDevice() {
       qr.addData(start.link);
       qr.make();
       setPairing({ ...start, qr: qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true }) });
-      if (await keys().waitForApproval(start.expiresAt, () => cancelled.current)) router.replace('/home/');
+      if (await keys().waitForApproval(start.expiresAt, () => cancelled.current)) router.replace('/dashboard/');
       else if (!cancelled.current) {
         // Back to the start, so the user can request a new link without reloading the page.
         setPairing(undefined);
@@ -64,7 +64,7 @@ export default function LinkDevice() {
     setError(undefined);
     try {
       await keys().recover(phrase);
-      router.replace('/home/');
+      router.replace('/dashboard/');
     } catch (err) {
       setError(describe(err));
     } finally {

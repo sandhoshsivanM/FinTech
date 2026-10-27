@@ -6,10 +6,12 @@
 // replayable via the TOUR_EVENT window event. Pure DOM — no deps.
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApp } from '@/lib/store';
+import { useApp } from '../store';
+import { lsGet, lsRemove, lsSet } from '../lib/prefs';
 import { Button } from '@khazana/ui/ui';
 
-interface Step { sel: string; title: string; body: string }
+export interface TourStep { sel: string; title: string; body: string }
+type Step = TourStep;
 
 // Every area of the app, explained once, in nav order.
 const STEPS: Step[] = [
@@ -36,7 +38,11 @@ const LEGACY_DONE_KEY = 'ftos-tour-done';
 /** Window event that replays the tour. Exported so callers can't drift from it. */
 export const TOUR_EVENT = 'khazana:start-tour';
 
-export function Tour() {
+/**
+ * `overrides` replaces the wording of a step by its selector, for the places the
+ * apps differ ("never leaves this device" is true offline, not online).
+ */
+export function Tour({ overrides }: { overrides?: Record<string, Partial<TourStep>> } = {}) {
   const router = useRouter();
   const [running, setRunning] = useState(false);
   const [i, setI] = useState(0);
@@ -59,7 +65,7 @@ export function Tour() {
     let t: ReturnType<typeof setTimeout> | undefined;
     // Honor the pre-rebrand key too, so an existing user isn't shown the
     // first-run tour again just because the key was renamed.
-    const done = localStorage.getItem(DONE_KEY) ?? localStorage.getItem(LEGACY_DONE_KEY);
+    const done = lsGet(DONE_KEY) ?? lsGet(LEGACY_DONE_KEY);
     // Fifteen steps describing trends, allocation and payoff planners, narrated
     // over a vault with none of those in it, teaches nothing and is fifteen
     // dismissals long. The dashboard's starter card is the right first screen;
@@ -68,8 +74,8 @@ export function Tour() {
     // what triggers the tour.
     if (!done && onDash && hasData) t = setTimeout(start, 800);
     const replay = () => {
-      localStorage.removeItem(DONE_KEY);
-      localStorage.removeItem(LEGACY_DONE_KEY);
+      lsRemove(DONE_KEY);
+      lsRemove(LEGACY_DONE_KEY);
       start();
     };
     // A replay is asked for out loud, so it never waits on the data check.
@@ -95,9 +101,9 @@ export function Tour() {
   }, [running, i]);
 
   if (!running) return null;
-  const step = STEPS[i];
+  const step = { ...STEPS[i], ...overrides?.[STEPS[i].sel] };
   const last = i === STEPS.length - 1;
-  const finish = () => { localStorage.setItem(DONE_KEY, '1'); setRunning(false); };
+  const finish = () => { lsSet(DONE_KEY, '1'); setRunning(false); };
 
   const W = 320;
   const vw = typeof window !== 'undefined' ? window.innerWidth : 800;

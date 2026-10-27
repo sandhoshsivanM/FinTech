@@ -10,6 +10,10 @@
  * hooks.
  */
 import type { ComponentType } from 'react';
+import { offlineCopy } from './copy/offline';
+import type { ProductCopy } from './copy/types';
+
+export type { ProductCopy };
 
 export type SaveOutcome =
   /** Written to disk, or handed to the browser's download machinery. */
@@ -45,6 +49,8 @@ export interface ScreensPlatform {
   SendFeedbackLink?: ComponentType;
   /** Fills an empty vault with a sample year. Omit to hide the button. */
   loadSampleData?: () => Promise<void>;
+  /** The words that differ between the apps (Help, Privacy, Terms). Defaults to the offline vault's. */
+  copy: ProductCopy;
 }
 
 const toBytes = (data: Uint8Array | string): Uint8Array<ArrayBuffer> =>
@@ -74,6 +80,7 @@ let current: ScreensPlatform = {
   saveFile: saveViaAnchor,
   fetchAsset: async () => null,
   replayTour: () => window.dispatchEvent(new Event('khazana:start-tour')),
+  copy: offlineCopy,
 };
 
 export function configurePlatform(next: Partial<ScreensPlatform>): void {

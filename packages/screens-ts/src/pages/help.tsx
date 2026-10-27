@@ -6,8 +6,8 @@
  * codebase is built around, and a user deserves to be able to read it.
  */
 import Link from 'next/link';
-import { HelpCircle, ShieldCheck, Command, Download, Compass, FlaskConical, ChevronDown } from 'lucide-react';
-import { PageIntro, Button, GlassCard, Chip } from '@khazana/ui/ui';
+import { HelpCircle, ShieldCheck, Command, Download, Compass, ChevronDown } from 'lucide-react';
+import { PageIntro, Button, buttonClass, GlassCard } from '@khazana/ui/ui';
 import { Stagger, StaggerItem } from '@khazana/ui/motion';
 import { getPlatform, PlatformFeedbackLink } from '../platform';
 
@@ -18,15 +18,8 @@ const SHORTCUTS: [string, string][] = [
   ['↵', 'Open the highlighted result'],
 ];
 
-const FAQ: [string, string][] = [
-  ['Where is my data stored?', 'In this browser only, in IndexedDB, encrypted with a key derived from your PIN using PBKDF2 (600,000 iterations) and AES-256-GCM. It is never uploaded, because there is no server to upload it to.'],
-  ['What happens if I forget my PIN?', 'The vault cannot be recovered. The PIN is never stored — it derives the key each time you unlock. This is why exporting a backup matters: the backup file carries its own copy of your data and you choose where to keep it.'],
-  ['Does Khazana fetch live prices?', 'No. Prices are the ones you enter or import. Asking a market data API for a quote would tell that API exactly which instruments you own, which is the one thing this app promises not to do.'],
-  ['Then what is the demo data?', 'Screens that would need a live feed — Markets, News, day-change columns — are filled with figures generated on your device from a fixed seed. They are always labelled, and you can switch them off in Settings → Privacy.'],
-  ['Can I move to another device?', 'Export an encrypted backup from Settings, then import it on the other device. The file uses the .ftos format and needs your PIN to open.'],
-];
-
 export default function HelpPage() {
+  const { help } = getPlatform().copy;
   return (
     <Stagger className="grid gap-6">
       <StaggerItem>
@@ -40,7 +33,7 @@ export default function HelpPage() {
             <h2 className="text-[16px] font-medium tracking-[-0.01em] px-1">Common questions</h2>
             {/* One card per question, with a disclosure chevron. The first is
                 open so the page never lands as a wall of closed rows. */}
-            {FAQ.map(([q, a], i) => (
+            {help.faq.map(([q, a], i) => (
               <details key={q} open={i === 0} className="card group px-5 py-4 [&_summary::-webkit-details-marker]:hidden">
                 <summary className="focus-ring flex items-center justify-between gap-3 cursor-pointer list-none rounded-[12px]">
                   <h3 className="text-[15px] font-medium tracking-[-0.01em]">{q}</h3>
@@ -79,21 +72,15 @@ export default function HelpPage() {
                 <h3 className="text-[16px] font-medium tracking-[-0.01em]">Privacy</h3>
               </div>
               <ul className="grid gap-2.5 text-[12.5px] text-ink-soft leading-relaxed">
-                <li className="flex gap-2"><Chip tone="success">No server</Chip> No account, and nowhere to upload your vault to.</li>
-                <li className="flex gap-2"><Chip tone="success">No analytics</Chip> No telemetry of any kind.</li>
-                <li className="flex gap-2"><Chip tone="violet"><FlaskConical size={11} />Demo</Chip> Market surfaces are generated locally, and off by default.</li>
-                {/* Scoped honestly: the only request this app makes is a
-                    live-price refresh, and the mobile app also calls price and
-                    FX providers on request. Claiming "never touches the
-                    network" would be false, and the privacy policy a reviewer
-                    reads says so. */}
-                <li className="flex gap-2"><Chip tone="success">Prices only</Chip> The only request Khazana makes is a live-price refresh, carrying a ticker symbol and nothing about you. Turn live prices off in Settings and nothing leaves at all.</li>
+                {help.privacyBullets}
               </ul>
               <div className="mt-4 flex gap-2 flex-wrap">
-                <Button variant="soft"><Link href="/settings" className="flex items-center gap-2"><Download size={15} />Export a backup</Link></Button>
+                {help.privacyAction && (
+                  <Link href={help.privacyAction.href} className={buttonClass('soft')}><Download size={15} />{help.privacyAction.label}</Link>
+                )}
                 {/* The store listings point at /privacy too, so this is the same
                     document a reviewer reads — not a second, looser summary. */}
-                <Button variant="ghost"><Link href="/privacy" className="flex items-center gap-2"><ShieldCheck size={15} />Privacy policy</Link></Button>
+                <Link href="/privacy" className={buttonClass('ghost')}><ShieldCheck size={15} />Privacy policy</Link>
               </div>
             </GlassCard>
           </StaggerItem>
@@ -105,7 +92,7 @@ export default function HelpPage() {
                 <h3 className="text-[16px] font-medium tracking-[-0.01em]">Still stuck?</h3>
               </div>
               <p className="text-[12.5px] text-ink-soft leading-relaxed">
-                Khazana runs entirely on your device, so there is no account to look up and no support team who can see your data. Exporting a backup before you experiment is always the safe move.
+                {help.stuck}
               </p>
               <p className="text-[12.5px] text-ink-soft leading-relaxed mt-2">
                 Found a bug or have an idea? Send it from your own mail app — it carries the app version and browser, never your data.

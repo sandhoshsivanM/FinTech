@@ -14,35 +14,15 @@
  * recovery, data loss is possible — because those are exactly the clauses a
  * user needs before trusting the app with their records.
  */
-import Link from 'next/link';
-import {
-  FileText, KeyRound, TriangleAlert, Scale, Ban, BookOpen,
-} from 'lucide-react';
-import { PageIntro, GlassCard } from '@khazana/ui/ui';
+import { FileText, KeyRound, TriangleAlert, Scale, Ban, BookOpen } from 'lucide-react';
+import { PageIntro } from '@khazana/ui/ui';
 import { Stagger, StaggerItem } from '@khazana/ui/motion';
-
-/** Kept in step with `src/app/privacy/page.tsx` and the root LICENSE file. */
-const EFFECTIVE = '21 August 2026';
-const ENTITY = 'Sandhosh Sivan';
-const CONTACT = 'sandhoshsivan00@gmail.com';
-
-function Section({ icon, title, children }: {
-  icon: React.ReactNode; title: string; children: React.ReactNode;
-}) {
-  return (
-    <StaggerItem>
-      <GlassCard>
-        <div className="mb-3 flex items-center gap-2.5">
-          <span className="text-accent">{icon}</span>
-          <h2 className="text-[16px] font-medium tracking-[-0.01em]">{title}</h2>
-        </div>
-        <div className="grid gap-3 text-[13px] leading-relaxed text-ink-soft">{children}</div>
-      </GlassCard>
-    </StaggerItem>
-  );
-}
+import { LegalSection as Section } from '../components/LegalSection';
+import { getPlatform } from '../platform';
+import { CONTACT, EFFECTIVE, ENTITY } from '../copy/legal';
 
 export default function TermsPage() {
+  const { terms } = getPlatform().copy;
   return (
     <Stagger className="grid max-w-[820px] gap-4">
       <StaggerItem>
@@ -66,23 +46,7 @@ export default function TermsPage() {
       </Section>
 
       <Section icon={<KeyRound size={17} />} title="Your data is yours">
-        <p>
-          Your records live on your device, encrypted with a key derived from your PIN. We never
-          receive them and cannot read them. See the{' '}
-          <Link href="/privacy" className="text-accent underline underline-offset-2">
-            privacy policy
-          </Link>{' '}
-          for the full picture.
-        </p>
-        <p>
-          You can export everything at any time — as an encrypted backup and as plain CSV.
-        </p>
-        <p>
-          <b className="text-ink">We cannot recover your PIN.</b> There is no reset, no recovery
-          code and no back door. That is deliberate: a recovery path we controlled would mean we
-          could read your vault. If you forget your PIN and have no backup, the data is
-          permanently unreadable — by you and by us alike.
-        </p>
+        {terms.yourData}
       </Section>
 
       <Section icon={<TriangleAlert size={17} />} title="Not financial advice">
@@ -98,32 +62,11 @@ export default function TermsPage() {
           figures may be out of date or wrong. Verify anything that matters with a qualified
           professional before acting on it.
         </p>
-        <p>
-          Demo market data, when you switch it on, is generated on your device, is clearly
-          labelled, and represents nothing real.
-        </p>
+        <p>{terms.demoNote}</p>
       </Section>
 
       <Section icon={<Ban size={17} />} title="No warranty, and keep your backups">
-        <p className=" text-[11.5px]">
-          The software is provided &ldquo;as is&rdquo;, without warranty of any kind, express or
-          implied, including merchantability, fitness for a particular purpose and
-          non-infringement.
-        </p>
-        <p>
-          Stated plainly rather than buried: we do not warrant that the software is free of
-          defects, that calculations are correct, or that your data cannot be lost. Data on a
-          device can be lost through device failure, loss or theft, an operating-system or browser
-          action that clears app storage, a forgotten PIN, or a defect in this software. In the web
-          app, the browser itself may clear storage.
-        </p>
-        <p>
-          <b className="text-ink">
-            Exporting backups regularly, and keeping them somewhere other than the device running
-            Khazana, is your responsibility.
-          </b>{' '}
-          The app provides the tools; it cannot make the copies for you.
-        </p>
+        {terms.warranty}
       </Section>
 
       <Section icon={<Scale size={17} />} title="Limitation of liability">
@@ -148,8 +91,7 @@ export default function TermsPage() {
           bring proceedings where you live, in which case that right is unaffected.
         </p>
         <p>
-          Khazana includes open-source components under their own licences, including SQLCipher,
-          Flutter, Drift, the Inter typeface, React, Next.js, Dexie and Tauri.
+          Khazana includes open-source components under their own licences, including {terms.components}.
         </p>
         <p>
           Questions:{' '}

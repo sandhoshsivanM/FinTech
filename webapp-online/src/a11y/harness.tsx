@@ -8,13 +8,13 @@ import axe from 'axe-core';
 
 export type Rendered = { container: HTMLElement; root: Root; unmount: () => Promise<void> };
 
-/** Renders inside a <main id="main">, as the root layout does, so landmark rules see the same page. */
-export async function render(ui: ReactElement): Promise<Rendered> {
+/** Renders inside a <main id="main"> so landmark rules see a whole page. `bare` skips it, for the shell, which brings its own. */
+export async function render(ui: ReactElement, opts: { bare?: boolean } = {}): Promise<Rendered> {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
   await act(async () => {
-    root.render(<main id="main">{ui}</main>);
+    root.render(opts.bare ? ui : <main id="main">{ui}</main>);
   });
   await flush();
   return {

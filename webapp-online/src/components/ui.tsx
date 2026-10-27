@@ -1,5 +1,7 @@
-// The few building blocks the online app's pages share, on the shared tokens.
+// The few building blocks the online-only pages share (sign-in, setup, pairing, cards, devices),
+// built on the same Zentra components as the shared screens so the whole app reads as one.
 import { useEffect, type ButtonHTMLAttributes, type ReactNode, type Ref } from 'react';
+import { GlassCard, PageIntro, buttonClass } from '@khazana/ui/ui';
 
 const APP_NAME = 'Khazana Online';
 
@@ -7,16 +9,13 @@ const APP_NAME = 'Khazana Online';
  * Each page sets its own document title, so tabs, history and screen readers say where you are (WCAG 2.4.2).
  * docTitle defaults to the heading; pass it when the heading is the brand name.
  */
-export function Page({ title, docTitle = title, lead, children }: { title: string; docTitle?: string; lead?: ReactNode; children: ReactNode }) {
+export function Page({ title, docTitle = title, lead, children }: { title: string; docTitle?: string; lead?: string; children: ReactNode }) {
   useEffect(() => {
     document.title = docTitle === APP_NAME ? APP_NAME : `${docTitle} · ${APP_NAME}`;
   }, [docTitle]);
   return (
-    <section className="flex flex-col gap-5">
-      <header>
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        {lead && <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>{lead}</p>}
-      </header>
+    <section className="online-plain flex flex-col gap-5">
+      <PageIntro title={title} subtitle={lead} />
       {children}
     </section>
   );
@@ -24,10 +23,10 @@ export function Page({ title, docTitle = title, lead, children }: { title: strin
 
 export function Card({ children, title }: { children: ReactNode; title?: string }) {
   return (
-    <article className="flex flex-col gap-3 rounded-2xl p-4" style={{ background: 'var(--card)' }}>
-      {title && <h2 className="font-medium">{title}</h2>}
+    <GlassCard className="flex flex-col gap-3">
+      {title && <h2 className="text-[16px] font-medium tracking-[-0.01em]">{title}</h2>}
       {children}
-    </article>
+    </GlassCard>
   );
 }
 
@@ -37,11 +36,8 @@ export function Button({
   ref,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { kind?: 'primary' | 'quiet'; ref?: Ref<HTMLButtonElement> }) {
-  const style = kind === 'primary'
-    ? { background: 'var(--primary)', color: 'var(--primary-fg)' }
-    : { background: 'var(--surface)', color: 'var(--ink)' };
   return (
-    <button ref={ref} type={type} {...props} className={`rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-50 ${props.className ?? ''}`} style={style} />
+    <button ref={ref} type={type} {...props} className={buttonClass(kind === 'primary' ? 'primary' : 'soft', props.className)} />
   );
 }
 

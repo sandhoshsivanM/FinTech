@@ -18,10 +18,13 @@ export function memoryRecords(): RecordStore {
     all: async () => [...records.values()],
     get: async (r: Ref) => records.get(key(r)),
     put: async (r: LocalRecord) => void records.set(key(r), r),
+    putMany: async (rs: LocalRecord[]) => void rs.forEach((r) => records.set(key(r), r)),
+    saveMany: async (rs: LocalRecord[]) => void rs.forEach((r) => { records.set(key(r), r); outbox.set(key(r), r); }),
     clear: async () => void records.clear(),
     outbox: async () => [...outbox.values()],
     queue: async (r: LocalRecord) => void outbox.set(key(r), r),
     unqueue: async (r: LocalRecord) => void outbox.delete(key(r)),
+    unqueueMany: async (rs: LocalRecord[]) => void rs.forEach((r) => outbox.delete(key(r))),
     cursor: async () => cursor,
     setCursor: async (c: Cursor) => void (cursor = c),
   } as unknown as RecordStore;

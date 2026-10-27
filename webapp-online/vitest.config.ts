@@ -10,9 +10,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@khazana/domain': fileURLToPath(new URL('../packages/domain-ts/src', import.meta.url)),
       '@khazana/ui': fileURLToPath(new URL('../packages/ui-ts/src', import.meta.url)),
+      '@khazana/screens': fileURLToPath(new URL('../packages/screens-ts/src', import.meta.url)),
       // The shared packages have no node_modules of their own: one copy of each, from here.
       ...Object.fromEntries(
-        ['decimal.js', 'clsx', 'lucide-react', 'framer-motion', 'react', 'react-dom'].map((dep) => [
+        ['decimal.js', 'clsx', 'lucide-react', 'framer-motion', 'react', 'react-dom', 'zustand', 'next', 'exceljs', 'xlsx', 'jspdf', 'jspdf-autotable'].map((dep) => [
           dep,
           fileURLToPath(new URL(`./node_modules/${dep}`, import.meta.url)),
         ]),

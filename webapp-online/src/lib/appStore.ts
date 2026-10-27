@@ -54,7 +54,7 @@ export interface AttachmentTransport {
 
 export interface AppDeps {
   dek: () => Uint8Array;
-  engine: Pick<SyncEngine, 'save'>;
+  engine: Pick<SyncEngine, 'saveMany'>;
   records: Pick<RecordStore, 'all'>;
   attachments?: AttachmentTransport;
   now?: () => number;
@@ -200,7 +200,7 @@ export function createAppStore(deps: AppDeps) {
     }
 
     async function commitRecords(recs: LocalRecord[]) {
-      for (const r of recs) await deps.engine.save(r);
+      await deps.engine.saveMany(recs);
       if (recs.length > 0) deps.onChange?.();
     }
 

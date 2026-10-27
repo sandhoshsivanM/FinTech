@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { gateway } from '@/lib/api';
 import { LiveStatus, Page } from '@/components/ui';
 
-/** Signed in: setup decides (it goes straight home when this device is ready). Otherwise sign-in. */
+/** Signed in: setup decides (it goes straight to the dashboard when this device is ready). Otherwise sign-in. */
 export default function Start() {
   const router = useRouter();
   useEffect(() => {

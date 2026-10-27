@@ -18,7 +18,7 @@ import { Landmark, Clock, TrendingUp, CircleHelp } from 'lucide-react';
 import { useApp } from '@khazana/screens/store';
 import { useFmt } from '@khazana/screens/lib/useFmt';
 import { D, ZERO } from '@khazana/domain/money';
-import { PageIntro, Chip, EmptyState, GlassCard, Button } from '@khazana/ui/ui';
+import { PageIntro, Chip, EmptyState, GlassCard, buttonClass } from '@khazana/ui/ui';
 import { Kpi, KpiRow } from '@khazana/ui/Kpi';
 import { DataGrid, type Column } from '@khazana/screens/components/DataGrid';
 import { Stagger, StaggerItem } from '@khazana/ui/motion';
@@ -124,7 +124,7 @@ export default function TaxPage() {
           <GlassCard padded={false}>
             <EmptyState icon={<Landmark size={22} />} title="No holdings to assess"
               hint="Add a position with its purchase date and this page will estimate the short- and long-term capital gains on it."
-              action={<Button><Link href="/investments">Go to Portfolio</Link></Button>} />
+              action={<Link href="/investments" className={buttonClass()}>Go to Portfolio</Link>} />
           </GlassCard>
         </StaggerItem>
       </Stagger>

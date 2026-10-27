@@ -63,14 +63,14 @@ export default function Pair() {
           </p>
           <Muted>Its key matches this link. Approve only if you just started pairing on that device yourself.</Muted>
           <div className="flex gap-2">
-            <Button kind="quiet" onClick={() => router.replace('/home/')}>Cancel</Button>
+            <Button kind="quiet" onClick={() => router.replace('/dashboard/')}>Cancel</Button>
             <Button disabled={busy} onClick={approve}>Approve</Button>
           </div>
         </Card>
       )}
       {done && (
         <Card>
-          <Button kind="quiet" onClick={() => router.replace('/home/')}>Back to Khazana Online</Button>
+          <Button kind="quiet" onClick={() => router.replace('/dashboard/')}>Back to Khazana Online</Button>
         </Card>
       )}
       <ErrorText>{error}</ErrorText>
