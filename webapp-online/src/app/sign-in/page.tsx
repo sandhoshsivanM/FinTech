@@ -5,11 +5,18 @@ import { useRouter } from 'next/navigation';
 import { gateway } from '@/lib/api';
 import { googleClientId, renderGoogleButton } from '@/lib/google';
 import { passkeysSupported } from '@/lib/passkey';
-import { Button, Card, ErrorText, Muted, Page, describe } from '@/components/ui';
+import { Button, Card, ErrorText, LiveStatus, Muted, Page, describe } from '@/components/ui';
 
 // The development provider exists only in local and test backends; a
 // production build never shows it.
 const devSignIn = process.env.NEXT_PUBLIC_DEV_SIGN_IN === 'true';
+
+const BUSY_TEXT: Record<string, string> = {
+  create: 'Waiting for your passkey…',
+  'sign-in': 'Waiting for your passkey…',
+  google: 'Signing in with Google…',
+  dev: 'Signing in…',
+};
 
 export default function SignIn() {
   const router = useRouter();
@@ -48,21 +55,18 @@ export default function SignIn() {
   return (
     <Page
       title="Khazana Online"
+      docTitle="Sign in"
       lead="Your money on every device, end-to-end encrypted. Want no account at all? Use the offline Khazana app instead."
     >
       <Card>
         <Button disabled={!!busy || !supported} onClick={() => run('create', () => gateway().signUpWithPasskey())}>
-          {busy === 'create' ? 'Waiting for your passkey…' : 'Create account with a passkey'}
+          Create account with a passkey
         </Button>
         <Button kind="quiet" disabled={!!busy || !supported} onClick={() => run('sign-in', () => gateway().signInWithPasskey())}>
-          {busy === 'sign-in' ? 'Waiting for your passkey…' : 'Sign in with a passkey'}
+          Sign in with a passkey
         </Button>
-        {googleClientId && (
-          <>
-            <div className="flex justify-center" ref={googleButton} data-testid="google-button" />
-            {busy === 'google' && <Muted>Signing in with Google…</Muted>}
-          </>
-        )}
+        {googleClientId && <div className="flex justify-center" ref={googleButton} data-testid="google-button" />}
+        <LiveStatus>{busy ? BUSY_TEXT[busy] : ''}</LiveStatus>
         <Muted>
           {supported
             ? 'A passkey is Face ID, Touch ID or your device PIN. No password, no email.'
@@ -72,13 +76,15 @@ export default function SignIn() {
 
       {devSignIn && (
         <Card title="Development sign-in">
-          <input
-            aria-label="Development subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="rounded-lg px-3 py-2 text-sm"
-            style={{ background: 'var(--surface)', color: 'var(--ink)' }}
-          />
+          <label className="flex flex-col gap-1 text-sm">
+            Development subject
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="rounded-lg px-3 py-2 text-sm"
+              style={{ background: 'var(--surface)', color: 'var(--ink)' }}
+            />
+          </label>
           <Button kind="quiet" disabled={!!busy || !subject.startsWith('dev:')} onClick={() => run('dev', () => gateway().signIn('dev', subject))}>
             Sign in (development)
           </Button>

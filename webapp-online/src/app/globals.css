@@ -4,3 +4,21 @@
 
 html, body { margin: 0; background: var(--canvas); color: var(--ink); }
 body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+
+/* WCAG 2.4.7 / 2.4.11: a keyboard focus ring that is always visible. Ink on the canvas is 16:1. */
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* The skip-link target is focused by script, not by a keyboard user's Tab, so it needs no ring of its own. */
+main:focus { outline: none; }
+
+/* WCAG 1.4.11: an input's edge must be visible at 3:1. --muted is 4.8:1 on the card, so it is the edge. */
+input, select, textarea { border: 1px solid var(--muted); }
+
+/* WCAG 2.3.3: no decorative motion for people who ask the system to reduce it. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

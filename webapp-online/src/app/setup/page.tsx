@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ensureReady, keys } from '@/lib/account';
-import { ErrorText, Muted, Page, describe } from '@/components/ui';
+import { ErrorText, LiveStatus, Page, describe } from '@/components/ui';
 
 /**
  * Decides what this device needs after signing in: nothing (go home), a new
@@ -26,7 +26,7 @@ export default function Setup() {
 
   return (
     <Page title="Setting up this device">
-      <Muted>Registering this device and checking for your data key…</Muted>
+      <LiveStatus>{error ? '' : 'Registering this device and checking for your data key…'}</LiveStatus>
       <ErrorText>{error}</ErrorText>
     </Page>
   );
