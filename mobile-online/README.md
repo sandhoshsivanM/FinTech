@@ -15,18 +15,28 @@ offline app; shared domain logic comes from `../packages/khazana_domain`.
 
 On-device check: `flutter test integration_test --dart-define=KHAZANA_DEV_SIGN_IN=true -d <device>`.
 
-## What is here (scaffold)
+## What is here
 
 | Path | What it does |
 |---|---|
 | `lib/core/dpop.dart` | DPoP proofs (RFC 9449), deterministic ECDSA P-256 (pointycastle) |
-| `lib/core/key_store.dart` | Keychain / Keystore storage for the device key and refresh token |
-| `lib/core/gateway_client.dart` | Sign-in, signed calls, refresh rotation, sign-out |
+| `lib/core/key_store.dart` | Keychain / Keystore storage: DPoP key, refresh token, X25519 seed, device envelope |
+| `lib/core/gateway_client.dart` | Sign-in (dev, passkey, Google bound to the DPoP key), signed calls, refresh rotation |
+| `lib/core/passkey.dart`, `google_auth.dart` | Platform passkey ceremony and Google ID token (nonce = DPoP thumbprint) |
+| `lib/crypto/` | Sealed box, recovery envelope, record AEAD, 24-word phrase; pinned by `../contracts/crypto/vectors.json` |
+| `lib/keys/account_keys.dart` | Device keys, create/recover/pair the data key (QR pairing) |
+| `lib/sync/` | Local record store (ciphertext only) and the sync engine, same protocol as the web client |
+| `lib/ledger/ledger.dart` | Accounts and transactions as encrypted records (Decimal money) |
+| `lib/features/` | Sign-in, key setup, recovery phrase, pair/approve, accounts and transactions |
 | `lib/security/` | M13 client hardening, see below |
-| `lib/features/` | Sign-in, and a home with empty Accounts, Cards and Connections |
 
-**Not yet:** device keys and pairing (ADR 0005), encrypted sync (ADR 0006), Google and passkey sign-in, and
-release jobs and store listings.
+Build-time settings: `KHAZANA_GATEWAY_URL`, `KHAZANA_GOOGLE_SERVER_CLIENT_ID`,
+`KHAZANA_GOOGLE_IOS_CLIENT_ID`. Passkeys need the gateway's relying-party id to be a
+domain that serves `/.well-known/assetlinks.json` (Android) and
+`apple-app-site-association` (iOS, plus the Associated Domains entitlement
+`webcredentials:<domain>`), which are release-time setup.
+
+**Not yet:** editing accounts and transactions in the UI (the writer supports it), connections, and store listings.
 
 ## Build settings (`--dart-define`)
 

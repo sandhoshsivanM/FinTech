@@ -5,9 +5,12 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../keys/account_keys.dart' show Api;
 import 'dpop.dart';
+import 'google_auth.dart';
 import 'key_store.dart';
 import '../security/device_signer.dart';
+import 'passkey.dart';
 
 class ApiException implements Exception {
   ApiException(this.status, this.code);
@@ -31,7 +34,7 @@ class TokenResponse {
   final String deviceId;
 }
 
-class GatewayClient {
+class GatewayClient implements Api {
   GatewayClient({
     required this.baseUrl,
     required this.platform,
@@ -39,8 +42,12 @@ class GatewayClient {
     http.Client? client,
     DateTime Function()? now,
     DeviceSignerProvider? signers,
+    PasskeyCeremony? passkeys,
+    GoogleIdTokens? google,
   })  : _store = store,
         _signers = signers,
+        _passkeys = passkeys,
+        _google = google,
         _http = client ?? http.Client(),
         _now = now ?? DateTime.now;
 
@@ -49,6 +56,8 @@ class GatewayClient {
   /// One of the platforms Identity accepts: android, ios, macos.
   final String platform;
   final KeyStore _store;
+  final PasskeyCeremony? _passkeys;
+  final GoogleIdTokens? _google;
   final http.Client _http;
   final DateTime Function() _now;
 
@@ -109,6 +118,55 @@ class GatewayClient {
     return _keep(response);
   }
 
+  Future<TokenResponse> _tokenWith(Map<String, Object?> body) async {
+    final response = await _send('POST', '/v1/auth/token', {'platform': platform, ...body});
+    if (response.statusCode != 200) _fail(response);
+    return _keep(response);
+  }
+
+  Future<({String challengeId, Map<String, dynamic> options})> _challenge(String path) async {
+    final response = await _send('POST', path, null);
+    if (response.statusCode != 200) _fail(response);
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    return (challengeId: body['challenge_id'] as String, options: body['options'] as Map<String, dynamic>);
+  }
+
+  PasskeyCeremony get _ceremony => _passkeys ?? (throw StateError('Passkeys are not available in this build.'));
+
+  /// Creates an account with a new passkey (Face ID / fingerprint / PIN) and signs in.
+  Future<TokenResponse> signUpWithPasskey() async {
+    final ceremony = _ceremony; // fail before any request if this build has no passkeys
+    await _signers?.prepareForNewSession();
+    final c = await _challenge('/v1/auth/passkeys/signup/options');
+    final attestation = await ceremony.create(c.options);
+    return _tokenWith({'provider': 'passkey_signup', 'challenge_id': c.challengeId, 'attestation': attestation});
+  }
+
+  /// Signs in with a passkey already on this device.
+  Future<TokenResponse> signInWithPasskey() async {
+    final ceremony = _ceremony;
+    await _signers?.prepareForNewSession();
+    final c = await _challenge('/v1/auth/passkeys/assert/options');
+    final assertion = await ceremony.get(c.options);
+    return _tokenWith({'provider': 'passkey', 'challenge_id': c.challengeId, 'assertion': assertion});
+  }
+
+  /// This device's DPoP key thumbprint (RFC 7638): the nonce Google's ID token must carry.
+  /// The key that signs requests: the hardware key when hardening provides one.
+  Future<String> dpopThumbprint() async {
+    final signers = _signers;
+    return signers != null ? (await signers.signer()).thumbprint : (await _deviceKey()).thumbprint;
+  }
+
+  /// Signs in (or creates the account) with a Google ID token minted for this device's key.
+  Future<TokenResponse> signInWithGoogle() async {
+    final google = _google ?? (throw StateError('Google sign-in is not available in this build.'));
+    // Before the thumbprint is read: the session (and the token's nonce) must
+    // bind to the key that will sign every later request.
+    await _signers?.prepareForNewSession();
+    return _tokenWith({'provider': 'google', 'id_token': await google.idToken(await dpopThumbprint())});
+  }
+
   Future<bool> isSignedIn() async => await _store.readSession() != null;
 
   Future<String> _refresh() async {
@@ -134,6 +192,7 @@ class GatewayClient {
   }
 
   /// A signed-in call. One retry after a refresh if the token was refused.
+  @override
   Future<Object?> call(String method, String path, [Object? body]) async {
     var response = await _send(method, path, body, await _accessToken());
     if (response.statusCode == 401) {

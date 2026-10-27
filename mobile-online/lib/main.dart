@@ -1,30 +1,44 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+
+import 'app_services.dart';
 import 'core/config.dart';
 import 'core/gateway_client.dart';
+import 'core/google_auth.dart';
 import 'core/key_store.dart';
-import 'features/home_screen.dart';
+import 'core/passkey.dart';
+import 'features/gate_screen.dart';
 import 'features/sign_in_screen.dart';
 import 'security/hardening.dart';
+import 'sync/record_store.dart';
 
 /// Khazana Online: a separate app from the offline Khazana (ADR 0007), with an
 /// account and end-to-end encrypted sync. It never imports the offline app;
 /// domain logic comes from packages/khazana_domain.
-void main() {
-  final store = SecureKeyStore();
-  final hardening = Hardening.create(gateway: gatewayUrl(), store: store);
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final keyStore = SecureKeyStore();
+  // Hardware-held device key, pinned TLS client and integrity checks.
+  final hardening = Hardening.create(gateway: gatewayUrl(), store: keyStore);
   final gateway = GatewayClient(
-      baseUrl: gatewayUrl(),
-      platform: platformName(),
-      store: store,
-      client: hardening.httpClient,
-      signers: hardening.deviceKeys);
-  runApp(KhazanaOnlineApp(gateway: gateway));
+    baseUrl: gatewayUrl(),
+    platform: platformName(),
+    store: keyStore,
+    client: hardening.httpClient,
+    signers: hardening.deviceKeys,
+    passkeys: PlatformPasskeys(),
+    google: GoogleSignInTokens(),
+  );
+  final dir = await getApplicationSupportDirectory();
+  final records = await FileRecordStore.open(File('${dir.path}/khazana_online_records.json'));
+  runApp(KhazanaOnlineApp(services: AppServices(gateway: gateway, keyStore: keyStore, records: records)));
 }
 
 class KhazanaOnlineApp extends StatelessWidget {
-  const KhazanaOnlineApp({super.key, required this.gateway});
-  final GatewayClient gateway;
+  const KhazanaOnlineApp({super.key, required this.services});
+  final AppServices services;
 
   @override
   Widget build(BuildContext context) {
@@ -35,23 +49,23 @@ class KhazanaOnlineApp extends StatelessWidget {
       darkTheme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF111214), brightness: Brightness.dark),
           useMaterial3: true),
-      home: _Start(gateway: gateway),
+      home: _Start(services: services),
     );
   }
 }
 
-/// Opens home if this device is signed in, otherwise sign-in.
+/// Opens the gate (home, setup) if this device is signed in, otherwise sign-in.
 class _Start extends StatelessWidget {
-  const _Start({required this.gateway});
-  final GatewayClient gateway;
+  const _Start({required this.services});
+  final AppServices services;
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: gateway.isSignedIn(),
+      future: services.gateway.isSignedIn(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        return snapshot.data! ? HomeScreen(gateway: gateway) : SignInScreen(gateway: gateway);
+        return snapshot.data! ? GateScreen(services: services) : SignInScreen(services: services);
       },
     );
   }
