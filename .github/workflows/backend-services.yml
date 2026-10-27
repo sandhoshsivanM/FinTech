@@ -1,0 +1,80 @@
+name: Backend services
+
+# Per-service CI. Only the services a change touches are built and tested, so a
+# fix in Sync does not wait for Catalog. A change to anything shared
+# (building-blocks, central package versions, test kit, contracts) runs all of
+# them. backend.yml still builds and tests the whole solution; this workflow
+# gives each service its own check and its own failure.
+on:
+  pull_request:
+    paths: ['backend/**', 'contracts/**', '.github/workflows/backend-services.yml']
+  push:
+    branches: [feature/safety-net-and-hardening]
+    paths: ['backend/**', 'contracts/**', '.github/workflows/backend-services.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-services-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Which services changed
+    runs-on: ubuntu-24.04
+    outputs:
+      services: ${{ steps.pick.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: pick
+        shell: bash
+        run: |
+          all=$(ls backend/services | grep -v '\.props$' | sort)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+          fi
+          if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            changed=$'backend/building-blocks/all'
+          else
+            changed=$(git diff --name-only "$base" HEAD)
+          fi
+          picked=""
+          if echo "$changed" | grep -Eq '^(backend/(building-blocks|tests|Directory\.|global\.json|dotnet-tools)|backend/Khazana\.(ServiceDefaults|slnx)|contracts/|\.github/workflows/backend-services\.yml)'; then
+            picked="$all"
+          else
+            for s in $all; do
+              echo "$changed" | grep -q "^backend/services/$s/" && picked="$picked $s"
+            done
+          fi
+          json=$(printf '%s\n' $picked | grep -v '^$' | jq -R . | jq -sc .)
+          echo "services=$json" >> "$GITHUB_OUTPUT"
+          echo "Services to test: $json"
+
+  service:
+    name: ${{ matrix.service }}
+    needs: changes
+    if: needs.changes.outputs.services != '[]'
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.changes.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: backend/global.json
+      # Warnings are errors (Directory.Build.props). Tests that need Postgres or
+      # RabbitMQ use Testcontainers on the runner's Docker.
+      - name: Test ${{ matrix.service }}
+        working-directory: backend
+        run: |
+          set -euo pipefail
+          for proj in services/${{ matrix.service }}/*.Tests/*.Tests.csproj; do
+            dotnet test --project "$proj" --configuration Release
+          done
