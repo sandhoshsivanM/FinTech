@@ -7,7 +7,7 @@ import { keys } from '@/lib/account';
 import { useOnline } from '@/lib/store';
 import { useReady } from '@/lib/useReady';
 import { records, type LocalRecord } from '@/lib/vault';
-import { Card, Muted, Page } from '@/components/ui';
+import { Card, LiveStatus, Muted, Page } from '@/components/ui';
 
 type Row = { record: LocalRecord; plain?: unknown };
 
@@ -37,7 +37,7 @@ export default function HowItWorks() {
 
   return (
     <Page title="How it works" lead="Everything you add is encrypted on this device with your data key before it is sent. The server stores the left column; only your devices can produce the right one.">
-      <Link href="/home/" className="text-sm" style={{ color: 'var(--muted)' }}>← Accounts</Link>
+      <Link href="/home/" className="inline-flex min-h-6 items-center text-sm" style={{ color: 'var(--muted)' }}>← Accounts</Link>
       <Card title="Your data key">
         <Muted>
           Created on your first device and never sent anywhere in readable form. Each of your devices holds a copy sealed to its own key;
@@ -59,7 +59,7 @@ export default function HowItWorks() {
           </div>
         </Card>
       ))}
-      {ready && rows.length === 0 && <Muted>Add an account first.</Muted>}
+      <LiveStatus>{ready && rows.length === 0 ? 'Add an account first.' : ''}</LiveStatus>
     </Page>
   );
 }
