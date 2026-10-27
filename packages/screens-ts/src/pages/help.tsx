@@ -7,7 +7,7 @@
  */
 import Link from 'next/link';
 import { HelpCircle, ShieldCheck, Command, Download, Compass, ChevronDown } from 'lucide-react';
-import { PageIntro, Button, GlassCard } from '@khazana/ui/ui';
+import { PageIntro, Button, buttonClass, GlassCard } from '@khazana/ui/ui';
 import { Stagger, StaggerItem } from '@khazana/ui/motion';
 import { getPlatform, PlatformFeedbackLink } from '../platform';
 
@@ -76,11 +76,11 @@ export default function HelpPage() {
               </ul>
               <div className="mt-4 flex gap-2 flex-wrap">
                 {help.privacyAction && (
-                  <Button variant="soft"><Link href={help.privacyAction.href} className="flex items-center gap-2"><Download size={15} />{help.privacyAction.label}</Link></Button>
+                  <Link href={help.privacyAction.href} className={buttonClass('soft')}><Download size={15} />{help.privacyAction.label}</Link>
                 )}
                 {/* The store listings point at /privacy too, so this is the same
                     document a reviewer reads — not a second, looser summary. */}
-                <Button variant="ghost"><Link href="/privacy" className="flex items-center gap-2"><ShieldCheck size={15} />Privacy policy</Link></Button>
+                <Link href="/privacy" className={buttonClass('ghost')}><ShieldCheck size={15} />Privacy policy</Link>
               </div>
             </GlassCard>
           </StaggerItem>

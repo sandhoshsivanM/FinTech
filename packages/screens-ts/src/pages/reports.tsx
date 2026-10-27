@@ -117,7 +117,7 @@ function Side({ title, lines, total, color, money }: {
 }) {
   return (
     <div>
-      <h4 className="text-xs font-medium text-muted">{title}</h4>
+      <div role="heading" aria-level={3} className="text-xs font-medium text-muted">{title}</div>
       {lines.length === 0 ? (
         <p className="mt-2 text-sm text-muted">None recorded.</p>
       ) : (

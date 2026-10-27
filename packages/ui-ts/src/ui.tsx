@@ -67,9 +67,12 @@ export function SectionHeader({ title, action, info, infoAlign }: {
  */
 type BtnVariant = 'primary' | 'secondary' | 'ghost' | 'soft' | 'danger';
 
-export function Button({
-  children, variant = 'primary', className, type = 'button', ...rest
-}: { children: ReactNode; variant?: BtnVariant } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+/**
+ * The classes of a button. Exported so a link that should LOOK like a button can
+ * wear them directly: a `<button>` containing an `<a>` is nested interactive
+ * content (two tab stops, and a press on the padding goes nowhere).
+ */
+export function buttonClass(variant: BtnVariant = 'primary', className?: string): string {
   const styles: Record<BtnVariant, string> = {
     // Emerald is the INTERACTION colour. Gold is identity and never lands here.
     // Glossy and raised: a lighter top and a soft drop, so a button reads as
@@ -82,19 +85,21 @@ export function Button({
     soft: 'btn-soft text-ink hover:border-line-strong',
     danger: 'bg-transparent text-danger border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] hover:bg-danger-soft',
   };
+  return clsx(
+    'focus-ring inline-flex items-center justify-center gap-2 rounded-full h-9 px-4',
+    'text-[13px] font-semibold tracking-[-0.01em] whitespace-nowrap',
+    'transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-standard',
+    'active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100',
+    styles[variant],
+    className,
+  );
+}
+
+export function Button({
+  children, variant = 'primary', className, type = 'button', ...rest
+}: { children: ReactNode; variant?: BtnVariant } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button
-      type={type}
-      {...rest}
-      className={clsx(
-        'focus-ring inline-flex items-center justify-center gap-2 rounded-full h-9 px-4',
-        'text-[13px] font-semibold tracking-[-0.01em] whitespace-nowrap',
-        'transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-standard',
-        'active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100',
-        styles[variant],
-        className,
-      )}
-    >
+    <button type={type} {...rest} className={buttonClass(variant, className)}>
       {children}
     </button>
   );

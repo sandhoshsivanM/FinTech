@@ -42,7 +42,8 @@ export function StatTile({
   const Tag = onClick ? 'button' : 'div';
   return (
     <Tag
-      {...(onClick ? { onClick, type: 'button' as const } : {})}
+      // A plain tile is a named group; only the button form may carry a label without a role.
+      {...(onClick ? { onClick, type: 'button' as const } : { role: 'group' as const })}
       aria-label={ghost ? `${label} hidden` : `${label} ${semanticValue ?? value}`}
       className={clsx(
         'card px-5 py-4 text-left w-full',

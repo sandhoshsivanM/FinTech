@@ -160,6 +160,8 @@ export function DropZone({
         type="file"
         accept={ACCEPTED_EXTENSIONS}
         className="hidden"
+        // The drop zone around it is the control; this input only opens the picker.
+        hidden
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) onFile(f);

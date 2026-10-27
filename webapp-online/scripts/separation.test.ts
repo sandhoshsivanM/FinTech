@@ -72,3 +72,28 @@ test('a plain-http gateway is refused unless it is localhost', () => {
   expect(gatewayOrigin('http://localhost:5196')).toBe('http://localhost:5196');
   expect(() => gatewayOrigin('http://api.khazana.example')).toThrow(/https/);
 });
+
+// The CSP's connect-src is this site plus the gateway, img-src is self/data/blob, and fonts are
+// self-hosted. The shared screens show demo market and news data that is generated on the device,
+// so nothing in the shared code may reach for another origin: no fetch to one, no remote image,
+// stylesheet, font or script. (Plain `<a href>` links out, e.g. to a broker's site, are navigation,
+// not a request, and are listed so a new one is a conscious decision.)
+test('shared code makes no request to any other origin', () => {
+  const roots = ['packages/screens-ts/src', 'packages/ui-ts/src', 'packages/domain-ts/src', 'webapp-online/src'];
+  const remote = [
+    /fetch\s*\(\s*[`'"]https?:/, /fetch\s*\(\s*new URL/, /\b(src|srcSet)\s*=\s*\{?\s*[`'"]https?:/, /url\(\s*[`'"]?https?:/,
+    /@import\s+(url\()?\s*['"]https?:/, /new Image\(\)[^;]*https?:/, /import\(\s*['"]https?:/, /new Worker\(\s*['"]https?:/,
+  ];
+  // google.ts loads Google's sign-in script, and only when Google sign-in is configured, which is the
+  // one case headers.mjs adds to the CSP.
+  const files = roots.flatMap((r) => sourceFiles(join(repo, r))).filter((f) => !f.endsWith('webapp-online/src/lib/google.ts'));
+  const hits = files.flatMap((file) => {
+    const text = readFileSync(file, 'utf8');
+    return remote.filter((re) => re.test(text)).map((re) => `${file.slice(repo.length + 1)}: ${re}`);
+  });
+  expect(hits).toEqual([]);
+
+  // Every absolute URL in the shared screens is a link the user follows (institutions' sites).
+  const urlFiles = sourceFiles(join(repo, 'packages/screens-ts/src')).filter((f) => /https?:\/\/(?!www\.w3\.org)/.test(readFileSync(f, 'utf8')));
+  expect(urlFiles.map((f) => f.slice(repo.length + 1)).sort()).toEqual(['packages/screens-ts/src/lib/institutions.ts']);
+});

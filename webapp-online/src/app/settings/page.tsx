@@ -13,7 +13,7 @@ import {
 import { ACCENTS } from '@khazana/domain/appearance';
 import { CURRENCIES } from '@khazana/domain/currency';
 import type { ProfileKind } from '@khazana/domain/types';
-import { Button, Field, GlassCard, Input, PageIntro, Segmented, SectionHeader, Select } from '@khazana/ui/ui';
+import { Button, buttonClass, Field, GlassCard, Input, PageIntro, Segmented, SectionHeader, Select } from '@khazana/ui/ui';
 import { useConfirm } from '@khazana/screens/components/Confirm';
 import { getPlatform } from '@khazana/screens/platform';
 import { useApp, useAppApi, type AccentName, type ThemeChoice } from '@khazana/screens/store';
@@ -277,7 +277,7 @@ export default function SettingsPage() {
             <div className="font-semibold text-sm">Your devices</div>
             <div className="text-xs text-muted mt-0.5">See where your account is signed in, rename a device, sign one out, or approve a new one. Each device holds its own sealed copy of your data key.</div>
           </div>
-          <Button variant="soft"><Link href="/settings/devices" className="flex items-center gap-2"><MonitorSmartphone size={15} />Manage devices</Link></Button>
+          <Link href="/settings/devices" className={buttonClass('soft')}><MonitorSmartphone size={15} />Manage devices</Link>
         </div>
       </GlassCard>
 

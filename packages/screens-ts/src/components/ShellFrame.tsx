@@ -33,7 +33,7 @@ export interface ShellConfig {
   /** The product name, used when a route has no title. */
   appName: string;
   /** The brand artwork: the mark image and the wordmark. */
-  Mark: ComponentType<{ size: number; className?: string }>;
+  Mark: ComponentType<{ size: number; className?: string; decorative?: boolean }>;
   Word: ComponentType<{ className?: string }>;
   /** The line beside the green dot at the foot of the sidebar. */
   footerNote: string;
@@ -366,7 +366,7 @@ function Brand({ rail }: { rail: boolean }) {
   const { Mark, Word } = useCfg();
   return (
     <Link href="/dashboard" className={clsx('flex items-center gap-3 px-5 pt-[18px] pb-4', rail && 'justify-center px-0')}>
-      <Mark size={34} className="shrink-0" />
+      <Mark size={34} className="shrink-0" decorative={!rail} />
       {/* Wordmark only. The full lockup carries the tagline under it, but at
           248px "Your wealth. Your vault." wraps to two lines and eats a nav
           row — so the tagline lives on the vault gate, where it has room. */}

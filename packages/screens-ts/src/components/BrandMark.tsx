@@ -31,14 +31,17 @@ export function BrandMark({
   size = 34,
   className,
   priority = false,
+  decorative = false,
 }: {
   size?: number;
   className?: string;
   /** Set on the vault gate, where the mark is the largest thing on screen. */
   priority?: boolean;
+  /** The name is already in the text beside it (a link that reads "Khazana"): no alt, so it is not said twice. */
+  decorative?: boolean;
 }) {
   const common = {
-    alt: 'Khazana',
+    alt: decorative ? '' : 'Khazana',
     width: size,
     height: size,
     // `priority` is deprecated in Next 16; eager + high fetch priority is the

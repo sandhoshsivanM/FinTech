@@ -5,10 +5,15 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { act } from 'react';
 import { click, byText, flush, render, type, violations, type Rendered } from './harness';
+import { KhazanaStoreProvider } from '@khazana/screens/store';
+import { ConfirmProvider } from '@khazana/screens/components/Confirm';
+import { createMockStore } from './mockStore';
 
 const h = vi.hoisted(() => ({
   replace: vi.fn(),
   push: vi.fn(),
+  redirect: vi.fn(),
+  path: '/dashboard',
   ready: { ready: false, error: undefined as string | undefined },
   online: {
     ledger: { accounts: [] as unknown[], transactions: [] as unknown[] },
@@ -21,9 +26,18 @@ const h = vi.hoisted(() => ({
   records: { all: vi.fn(async () => []) },
 }));
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: h.replace, push: h.push }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: h.replace, push: h.push, prefetch: vi.fn(), back: vi.fn() }),
+  usePathname: () => h.path,
+  useSearchParams: () => new URLSearchParams(),
+  redirect: (to: string) => h.redirect(to),
+}));
+vi.mock('next/link', () => ({
+  default: ({ children, href, ...rest }: { children: React.ReactNode; href: string }) => <a href={typeof href === 'string' ? href : '#'} {...rest}>{children}</a>,
+}));
 vi.mock('@/lib/useReady', () => ({ useReady: () => h.ready }));
-vi.mock('@/lib/store', () => ({
+vi.mock('@/lib/store', async () => ({
+  useAppStore: (await import('./mockStore')).createMockStore(),
   useOnline: () => h.online,
   writer: { addAccount: vi.fn(), addTxn: vi.fn(), updateTxn: vi.fn(), deleteTxn: vi.fn(), deleteAccount: vi.fn() },
   syncNow: vi.fn(async () => undefined),
@@ -43,8 +57,8 @@ vi.mock('@/lib/crypto/e2e', () => ({ decryptRecord: vi.fn(async () => undefined)
 const WORDS = Array.from({ length: 24 }, (_, i) => `word${i + 1}`);
 
 let rendered: Rendered[] = [];
-async function open(ui: Parameters<typeof render>[0]) {
-  const r = await render(ui);
+async function open(ui: Parameters<typeof render>[0], opts?: Parameters<typeof render>[1]) {
+  const r = await render(ui, opts);
   rendered.push(r);
   return r;
 }
@@ -221,5 +235,92 @@ describe('sync status', () => {
     expect(r.container.querySelector('[role="status"]')!.textContent).toBe('Sync problem: The server refused that (503). Tap to retry.');
     expect(r.container.querySelector('button')!.hasAttribute('title')).toBe(false);
     expect(await violations(r.container)).toEqual([]);
+  });
+});
+
+// --- the shared screens, mounted on Online's store contract -----------------------------------
+//
+// Every route that re-exports a screen from @khazana/screens, rendered on an empty KhazanaStore
+// (the first-run state) and on one with data, and checked with axe. A route added without a test
+// here fails `routes.test.ts`, which keeps this list and the app/ folder in step.
+
+import { SHARED_ROUTES } from './routes';
+
+function Wrapped({ store, children }: { store: ReturnType<typeof createMockStore>; children: React.ReactNode }) {
+  return (
+    <KhazanaStoreProvider store={store}>
+      <ConfirmProvider>{children}</ConfirmProvider>
+    </KhazanaStoreProvider>
+  );
+}
+
+const seeded = () => createMockStore({
+  categories: [{ id: 'cat-food', vaultId: 'default', name: 'Food', icon: 'Utensils' }],
+  accounts: [{ id: 'acct-1', vaultId: 'default', profileId: 'default', name: 'HDFC Savings', type: 'asset', subtype: 'bank', openingBalance: '10000' }],
+  txns: [{
+    id: 't1', vaultId: 'default', profileId: 'default', amount: '450', type: 'expense', categoryId: 'cat-food',
+    merchant: 'Swiggy', date: Date.UTC(2026, 9, 3), createdAt: 0, accountId: 'acct-1',
+  }],
+});
+
+describe.each(SHARED_ROUTES)('shared screen %s', (route) => {
+  for (const [label, make] of [['empty', () => createMockStore()], ['with data', seeded]] as const) {
+    test(`is accessible (${label})`, async () => {
+      h.path = `/${route}`;
+      const Page = (await import(`../../../packages/screens-ts/src/pages/${route}.tsx`)).default;
+      const r = await open(<Wrapped store={make()}><Page /></Wrapped>);
+      expect(r.container.textContent?.length ?? 0).toBeGreaterThan(0);
+      expect(await violations(r.container)).toEqual([]);
+    });
+  }
+});
+
+describe('the shell', () => {
+  test('is accessible, lists Cards, and has no lock, backup or diagnostics', async () => {
+    h.path = '/dashboard';
+    const { OnlineShell } = await import('@/components/OnlineShell');
+    const r = await open(<Wrapped store={createMockStore()}><OnlineShell><p>content</p></OnlineShell></Wrapped>, { bare: true });
+    const links = [...r.container.querySelectorAll('nav a')].map((a) => a.getAttribute('href'));
+    expect(links).toContain('/cards');
+    expect(links).not.toContain('/diagnostics');
+    expect(r.container.querySelector('[aria-label="Lock vault"]')).toBeNull();
+    expect(r.container.querySelector('[aria-label="Sign out"]')).not.toBeNull();
+    expect(r.container.querySelector('[data-testid="sync-status"]')).not.toBeNull();
+    expect(await violations(r.container)).toEqual([]);
+  });
+});
+
+describe('settings', () => {
+  test('is accessible and offers devices, export and sign out', async () => {
+    h.path = '/settings';
+    const Settings = (await import('@/app/settings/page')).default;
+    const r = await open(<Wrapped store={createMockStore()}><Settings /></Wrapped>);
+    expect(byText(r.container, 'Sign out')).toBeTruthy();
+    expect(byText(r.container, 'Export')).toBeTruthy();
+    expect(r.container.querySelector('a[href="/settings/devices"]')).not.toBeNull();
+    expect(await violations(r.container)).toEqual([]);
+  });
+});
+
+describe('home', () => {
+  test('redirects to the dashboard', async () => {
+    const Home = (await import('@/app/home/page')).default;
+    Home();
+    expect(h.redirect).toHaveBeenCalledWith('/dashboard');
+  });
+});
+
+describe('help, privacy and terms', () => {
+  test('say what is true of Online, not of the offline vault', async () => {
+    const { configurePlatform } = await import('@khazana/screens/platform');
+    const { onlineCopy } = await import('@/lib/onlineCopy');
+    configurePlatform({ copy: onlineCopy });
+    for (const route of ['help', 'privacy', 'terms']) {
+      const Page = (await import(`../../../packages/screens-ts/src/pages/${route}.tsx`)).default;
+      const r = await open(<Wrapped store={createMockStore()}><Page /></Wrapped>);
+      const text = r.container.textContent ?? '';
+      expect(text.match(/in this browser only|no server|Dexie|forget your PIN|PIN itself|never uploaded/i)).toBeNull();
+      if (route === 'privacy') expect(text).toMatch(/ciphertext/i);
+    }
   });
 });

@@ -38,7 +38,7 @@ import {
 import { investmentTotals, concentration } from '@khazana/domain/investmentTotals';
 import { loadInstrumentMaster, classifyHolding, EMPTY_MASTER, type InstrumentMaster } from '@khazana/domain/instrumentMaster';
 import { dayChange, hasRealClose, priceAsOfLabel, rowDayPct } from '@khazana/screens/domain/dayChange';
-import { PageIntro, Button, Chip, Delta, Donut, Gauge, EmptyState, GlassCard, type DonutSeg } from '@khazana/ui/ui';
+import { PageIntro, Button, buttonClass, Chip, Delta, Donut, Gauge, EmptyState, GlassCard, type DonutSeg } from '@khazana/ui/ui';
 import { Kpi, KpiRow } from '@khazana/ui/Kpi';
 import { ColumnChart } from '@khazana/ui/charts/ColumnChart';
 import { MiniSparkline, RankBars } from '@khazana/ui/charts/MiniSparkline';
@@ -272,7 +272,7 @@ export default function PortfolioPage() {
               icon={<TrendingUp size={22} />}
               title="No investments yet"
               hint="Add a holding, or load the sample portfolio from Settings to see the full overview."
-              action={<Button><Link href="/settings">Open Settings</Link></Button>}
+              action={<Link href="/settings" className={buttonClass()}>Open Settings</Link>}
             />
           </GlassCard>
         </StaggerItem>
@@ -347,7 +347,7 @@ export default function PortfolioPage() {
               />
             </div>
 
-            <Button><Link href="/holdings" className="flex items-center gap-2"><Plus size={16} />Add Investment</Link></Button>
+            <Link href="/holdings" className={buttonClass()}><Plus size={16} />Add Investment</Link>
           </div>
         </div>
       </StaggerItem>
@@ -359,7 +359,7 @@ export default function PortfolioPage() {
             <p className="text-[12.5px] text-ink-soft leading-relaxed flex-1 min-w-[240px]">
               <b className="text-ink">{unpricedCount} of {filtered.length}</b> position{unpricedCount === 1 ? ' is' : 's are'} carried at cost because no price is recorded for {unpricedCount === 1 ? 'it' : 'them'}. {unpricedCount === 1 ? 'It shows' : 'They show'} no gain or loss, so the totals above understate the book. Khazana never fetches prices — importing a fresh broker CSV is what updates them.
             </p>
-            <Button variant="ghost"><Link href="/holdings">Update prices</Link></Button>
+            <Link href="/holdings" className={buttonClass('ghost')}>Update prices</Link>
           </div>
         </StaggerItem>
       )}
@@ -380,7 +380,7 @@ export default function PortfolioPage() {
               valued at a guess, so the rupee figures above are only as good as that guess. Set the
               real rate and they correct immediately.
             </p>
-            <Button variant="ghost"><Link href="/settings">Set exchange rate</Link></Button>
+            <Link href="/settings" className={buttonClass('ghost')}>Set exchange rate</Link>
           </div>
         </StaggerItem>
       )}
