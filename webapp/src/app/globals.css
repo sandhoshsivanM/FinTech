@@ -6,6 +6,7 @@
 /* Tailwind only scans this app by default; the shared components use utility
    classes too. */
 @source "../../../packages/ui-ts/src";
+@source "../../../packages/screens-ts/src";
 
 /* ============================================================================
    This app's own chrome

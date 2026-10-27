@@ -23,23 +23,9 @@
  */
 import { isTauri } from './notify';
 
-export type SaveOutcome =
-  /** Written to disk, or handed to the browser's download machinery. */
-  | { status: 'saved'; path?: string }
-  /** The user dismissed the native save dialog. Not an error. */
-  | { status: 'cancelled' }
-  | { status: 'failed'; message: string };
+import type { SaveOutcome, SaveRequest } from '@khazana/screens/platform';
 
-export interface SaveRequest {
-  /** Suggested filename, including extension. */
-  filename: string;
-  /** File contents. */
-  data: Uint8Array | string;
-  /** MIME type, used only by the browser branch. */
-  mimeType: string;
-  /** For the native dialog's file-type filter, e.g. `{ name: 'Excel', extensions: ['xlsx'] }`. */
-  filter?: { name: string; extensions: string[] };
-}
+export type { SaveOutcome, SaveRequest };
 
 const toBytes = (data: Uint8Array | string): Uint8Array<ArrayBuffer> =>
   typeof data === 'string'

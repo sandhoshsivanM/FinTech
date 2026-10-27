@@ -6,7 +6,7 @@ import { BackupError } from './backupError';
 import {
   planCaptures, staleCaptureIds, approvalRecords, rejectionRecord,
   type CaptureInput, type CaptureOutcome, type CaptureEdits,
-} from './capture';
+} from '@khazana/screens/lib/capture';
 import { decodeBackup, encodeBackup } from './backupFormat';
 import {
   clearVault, listRecords, listRecordIds, getRecord, putRecord, deleteRecord, applyMutations,
@@ -32,6 +32,18 @@ import Decimal from 'decimal.js';
 import { healthScore } from '@khazana/domain/health';
 import { investmentTotals } from '@khazana/domain/investmentTotals';
 import { runDiagnostics, restoreBlockers } from '@khazana/domain/diagnostics';
+
+import { uid, cashAcctId, DEFAULT_CATEGORIES } from '@khazana/screens/lib/storeHelpers';
+import { LAST_ACCOUNT_KEY } from '@khazana/screens/lib/prefs';
+import type { ThemeChoice, AccentName, KhazanaStore } from '@khazana/screens/store';
+
+// Definitions live in @khazana/screens so the shared screens and this store
+// cannot disagree; re-exported because the rest of the app imports them here.
+export { uid, cashAcctId, DEFAULT_CATEGORIES, LAST_ACCOUNT_KEY };
+
+/** The shared screens' contract: this store must satisfy it (checked at compile time). */
+export const asKhazanaStore = (s: AppState): KhazanaStore => s;
+export type { ThemeChoice, AccentName };
 
 const VAULT_ID = 'default';
 
@@ -215,7 +227,6 @@ function entryMutations(
 
 /// Deterministic v3 account ids — keep the lazy backfill idempotent and isolated
 /// per profile (matches the Flutter Drift migration).
-export const cashAcctId = (profileId: string) => `acct-cash-${profileId}`;
 const openingAcctId = (profileId: string) => `acct-opening-${profileId}`;
 const incomeAcctId = (profileId: string) => `acct-income-${profileId}`;
 /**
@@ -359,19 +370,6 @@ async function backfillDoubleEntry(
   }
 }
 
-export const DEFAULT_CATEGORIES: { name: string; icon: string }[] = [
-  { name: 'Food', icon: 'Utensils' },
-  { name: 'Transport', icon: 'Bus' },
-  { name: 'Rent', icon: 'Home' },
-  { name: 'Utilities', icon: 'Zap' },
-  { name: 'Shopping', icon: 'ShoppingBag' },
-  { name: 'Health', icon: 'HeartPulse' },
-  { name: 'Entertainment', icon: 'Clapperboard' },
-  { name: 'EMI', icon: 'Landmark' },
-  { name: 'Salary', icon: 'Wallet' },
-  { name: 'Investment', icon: 'TrendingUp' },
-  { name: 'Other', icon: 'Shapes' },
-];
 
 export type VaultStatus = 'loading' | 'uninitialized' | 'locked' | 'unlocking' | 'unlocked';
 
@@ -528,7 +526,6 @@ interface AppState extends Data {
   setAsideStranded: () => Promise<void>;
 }
 
-export const uid = () => crypto.randomUUID();
 
 /** Per-device sync settings. Stored encrypted in the vault row, never in a record or a backup. */
 export interface SyncConfig {
@@ -593,7 +590,6 @@ export const ACCENT_MIGRATION_KEY = 'khazana-accent-zentra';
  */
 const GHOST_KEY = 'khazana-ghost';
 /** Account the add-transaction form defaults to. A convenience, not vault data. */
-export const LAST_ACCOUNT_KEY = 'khazana-last-account';
 
 /**
  * Failed-unlock throttle. The Flutter client has had one since the beginning
@@ -662,8 +658,6 @@ export function lsSet(key: string, value: string): void {
   try { localStorage.setItem(key, value); } catch { /* quota or private mode */ }
 }
 
-export type ThemeChoice = 'light' | 'dark' | 'system';
-export type AccentName = 'default' | 'emerald' | 'blue' | 'violet' | 'amber' | 'rose' | 'lime';
 
 // Each accent is tuned separately for light and dark so it always reads well.
 // [accent, accent-deep, accent-glow]. 'default' is Zentra Ink and sets no
