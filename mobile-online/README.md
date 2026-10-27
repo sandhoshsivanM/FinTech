@@ -22,11 +22,10 @@ On-device check: `flutter test integration_test --dart-define=KHAZANA_DEV_SIGN_I
 | `lib/core/dpop.dart` | DPoP proofs (RFC 9449), deterministic ECDSA P-256 (pointycastle) |
 | `lib/core/key_store.dart` | Keychain / Keystore storage for the device key and refresh token |
 | `lib/core/gateway_client.dart` | Sign-in, signed calls, refresh rotation, sign-out |
+| `lib/security/` | M13 client hardening, see below |
 | `lib/features/` | Sign-in, and a home with empty Accounts, Cards and Connections |
 
-**Not yet:** a hardware-held, non-exportable key (Secure Enclave / StrongBox:
-today the key is in the platform keystore and loaded to sign), device keys and
-pairing (ADR 0005), encrypted sync (ADR 0006), Google and passkey sign-in, and
+**Not yet:** device keys and pairing (ADR 0005), encrypted sync (ADR 0006), Google and passkey sign-in, and
 release jobs and store listings.
 
 ## Build settings (`--dart-define`)
@@ -38,3 +37,16 @@ release jobs and store listings.
 
 Release builds allow https only: plain http to `10.0.2.2`/`localhost` is a
 debug-only Android exception, and iOS allows only local networking.
+
+## Client hardening (`lib/security/`, MASVS L2+R)
+
+| Control | Where | Notes |
+|---|---|---|
+| Hardware device key | `hardware_key.dart`, `device_key_provider.dart`, `DeviceKeyChannel.kt`, `Hardening.swift` | P-256 in StrongBox / TEE / Secure Enclave, non-exportable. The old software key lives on only while a session is bound to it, and is erased at the next sign-in. Software fallback only where there is no hardware (simulator, old devices); `KHAZANA_ALLOW_SOFTWARE_KEY=false` forbids it. |
+| Root / jailbreak / tamper | `integrity.dart`, `IntegrityChannel.kt`, `Hardening.swift` | Pairing, key export and recovery-phrase reveal are blocked on a compromised device (and with a software key). `KHAZANA_ALLOW_COMPROMISED=true` downgrades to a warning in **debug builds only**. |
+| Screen protection | `screen_protection.dart` | FLAG_SECURE app-wide (Android); blur cover in the app switcher and while recording (iOS). Wrap secret screens in `ProtectedScreen`. |
+| Certificate pinning | `pinning.dart` | `KHAZANA_PIN_HOST` + `KHAZANA_PINS="<b64 sha256 SPKI>,<backup>"`. Off for any other host (sslip.io, tunnels). When on: at least two pins, https only, fail closed. Leaf SPKI only (dart:io exposes no chain). |
+| App attestation | `attestation.dart` | Interface + no-op default. Server verification and Play Integrity / App Attest wiring are TODO. |
+
+Not set on the signing key yet: biometric gating (every request is signed);
+the plan is a second, biometric-bound key for step-up on sensitive actions.

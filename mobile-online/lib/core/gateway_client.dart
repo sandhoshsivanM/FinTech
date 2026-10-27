@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import 'dpop.dart';
 import 'key_store.dart';
+import '../security/device_signer.dart';
 
 class ApiException implements Exception {
   ApiException(this.status, this.code);
@@ -37,7 +38,9 @@ class GatewayClient {
     required KeyStore store,
     http.Client? client,
     DateTime Function()? now,
+    DeviceSignerProvider? signers,
   })  : _store = store,
+        _signers = signers,
         _http = client ?? http.Client(),
         _now = now ?? DateTime.now;
 
@@ -49,6 +52,8 @@ class GatewayClient {
   final http.Client _http;
   final DateTime Function() _now;
 
+  /// Hardware-aware signer source; null keeps the software key (tests, tools).
+  final DeviceSignerProvider? _signers;
   DeviceKey? _key;
   ({String token, DateTime expiresAt})? _access;
 
@@ -63,8 +68,11 @@ class GatewayClient {
 
   Future<http.Response> _send(String method, String path, Object? body, [String? accessToken]) async {
     final url = baseUrl.resolve(path);
-    final request = http.Request(method, url)
-      ..headers['DPoP'] = (await _deviceKey()).proof(method, url, accessToken: accessToken, now: _now());
+    final signers = _signers;
+    final proof = signers != null
+        ? await buildDpopProof(await signers.signer(), method, url, accessToken: accessToken, now: _now())
+        : (await _deviceKey()).proof(method, url, accessToken: accessToken, now: _now());
+    final request = http.Request(method, url)..headers['DPoP'] = proof;
     if (accessToken != null) request.headers['Authorization'] = 'DPoP $accessToken';
     if (body != null) {
       request.headers['Content-Type'] = 'application/json';
@@ -94,6 +102,7 @@ class GatewayClient {
 
   /// Signs in with a provider's ID token (`dev` is the development provider).
   Future<TokenResponse> signIn(String provider, String idToken) async {
+    await _signers?.prepareForNewSession();
     final response =
         await _send('POST', '/v1/auth/token', {'provider': provider, 'platform': platform, 'id_token': idToken});
     if (response.statusCode != 200) _fail(response);

@@ -5,12 +5,20 @@ import 'core/gateway_client.dart';
 import 'core/key_store.dart';
 import 'features/home_screen.dart';
 import 'features/sign_in_screen.dart';
+import 'security/hardening.dart';
 
 /// Khazana Online: a separate app from the offline Khazana (ADR 0007), with an
 /// account and end-to-end encrypted sync. It never imports the offline app;
 /// domain logic comes from packages/khazana_domain.
 void main() {
-  final gateway = GatewayClient(baseUrl: gatewayUrl(), platform: platformName(), store: SecureKeyStore());
+  final store = SecureKeyStore();
+  final hardening = Hardening.create(gateway: gatewayUrl(), store: store);
+  final gateway = GatewayClient(
+      baseUrl: gatewayUrl(),
+      platform: platformName(),
+      store: store,
+      client: hardening.httpClient,
+      signers: hardening.deviceKeys);
   runApp(KhazanaOnlineApp(gateway: gateway));
 }
 
