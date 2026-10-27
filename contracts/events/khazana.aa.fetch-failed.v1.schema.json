@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.aa.fetch-failed.v1.json",
+  "title": "AaFetchFailedV1",
+  "description": " A fetch gave up (retries spent, decrypt error, consent gone). Reporting audits it; no data is involved. ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "consentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "errorCode": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "consentId",
+    "errorCode",
+    "at"
+  ],
+  "additionalProperties": false
+}

@@ -48,7 +48,7 @@ for proj in services/*/*.Api/*.Api.csproj; do
   svc=$(basename "$proj" .csproj | sed -e 's/^Khazana\.//' -e 's/\.Api$//' | tr 'A-Z' 'a-z')
   docker exec "$pg" psql -U postgres -qc "CREATE DATABASE openapi_${svc}"
   cs="Host=127.0.0.1;Port=${pg_port};Database=openapi_${svc};Username=postgres;Password=openapi"
-  for name in identity devices sync notification catalog marketdata reporting; do
+  for name in identity devices sync notification catalog marketdata reporting aa credit; do
     export "ConnectionStrings__${name}=${cs}"
   done
   echo "openapi: ${svc}"

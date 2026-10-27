@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khazana.app/contracts/events/khazana.credit.credit-report-ready.v1.json",
+  "title": "CreditReportReadyV1",
+  "description": " A credit report was pulled with the user's explicit consent, sealed to their key and put in the Credit inbox. ",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "payloadId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "userId",
+    "payloadId",
+    "at"
+  ],
+  "additionalProperties": false
+}
