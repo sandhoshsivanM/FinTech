@@ -30,10 +30,18 @@ public sealed class TestTokenIssuer : IDisposable
         }
     }
 
-    public string Mint(Guid userId, Guid deviceId, DeviceKey device, TimeSpan? lifetime = null, string audience = "khazana-api")
+    public string Mint(Guid userId, Guid deviceId, DeviceKey device, TimeSpan? lifetime = null, string audience = "khazana-api", DateTimeOffset? stepUpAt = null)
     {
         ArgumentNullException.ThrowIfNull(device);
         var now = DateTime.UtcNow;
+        var claims = new Dictionary<string, object>
+        {
+            ["sub"] = userId.ToString(),
+            ["did"] = deviceId.ToString(),
+            ["jti"] = Guid.NewGuid().ToString("N"),
+            ["cnf"] = new Dictionary<string, object> { ["jkt"] = device.Jkt },
+        };
+        if (stepUpAt is { } at) claims["sua"] = at.ToUnixTimeSeconds();
         return Handler.CreateToken(new SecurityTokenDescriptor
         {
             Issuer = "khazana-identity",
@@ -43,13 +51,7 @@ public sealed class TestTokenIssuer : IDisposable
             Expires = now + (lifetime ?? TimeSpan.FromMinutes(15)),
             TokenType = "at+jwt",
             SigningCredentials = new SigningCredentials(_securityKey, SecurityAlgorithms.EcdsaSha256),
-            Claims = new Dictionary<string, object>
-            {
-                ["sub"] = userId.ToString(),
-                ["did"] = deviceId.ToString(),
-                ["jti"] = Guid.NewGuid().ToString("N"),
-                ["cnf"] = new Dictionary<string, object> { ["jkt"] = device.Jkt },
-            },
+            Claims = claims,
         });
     }
 

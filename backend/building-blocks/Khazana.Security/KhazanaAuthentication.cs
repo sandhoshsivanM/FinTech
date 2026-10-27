@@ -47,6 +47,24 @@ public static class KhazanaClaims
     public const string Device = "did";
     public const string Confirmation = "cnf";
 
+    /// <summary>
+    /// Unix seconds of the passkey check behind a step-up token. Only Identity's
+    /// step-up endpoint puts it in a token; ordinary access tokens never carry it.
+    /// </summary>
+    public const string StepUp = "sua";
+
+    /// <summary>How long a step-up token, and so one passkey check, counts for.</summary>
+    public static readonly TimeSpan StepUpLifetime = TimeSpan.FromMinutes(2);
+
+    /// <summary>True when the token carries a passkey check made no longer than <see cref="StepUpLifetime"/> ago.</summary>
+    public static bool HasRecentStepUp(this ClaimsPrincipal user, DateTimeOffset now)
+    {
+        var raw = user?.FindFirstValue(StepUp);
+        if (!long.TryParse(raw, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var seconds)) return false;
+        var at = DateTimeOffset.FromUnixTimeSeconds(seconds);
+        return at <= now.AddSeconds(30) && now - at <= StepUpLifetime;
+    }
+
     public static Guid UserId(this ClaimsPrincipal user) =>
         Guid.Parse(user?.FindFirstValue(Subject) ?? throw new InvalidOperationException("Not signed in."));
 

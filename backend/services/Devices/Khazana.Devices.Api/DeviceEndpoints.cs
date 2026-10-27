@@ -1,5 +1,6 @@
 using Khazana.Devices.Application;
 using Khazana.Security;
+using Khazana.SharedKernel;
 
 namespace Khazana.Devices.Api;
 
@@ -18,6 +19,8 @@ public sealed record Bootstrap(EnvelopeDto Device, EnvelopeDto Recovery, byte[] 
 
 public sealed record ProvenEnvelope(EnvelopeDto Envelope, byte[] KeyCheck);
 
+public sealed record RenameDevice(string Name);
+
 public sealed record ApprovePairing(string Code, EnvelopeDto Envelope);
 
 public sealed record ErrorResponse(string Error);
@@ -30,6 +33,7 @@ public static class DeviceEndpoints
         devices.MapPost("/register", Register);
         devices.MapGet("/", List);
         devices.MapGet("/me", Status);
+        devices.MapPatch("/{id:guid}", Rename);
         devices.MapDelete("/{id:guid}", Revoke);
         devices.MapPost("/pairing", StartPairing);
         devices.MapGet("/pairing/{id:guid}", GetPairing);
@@ -61,10 +65,23 @@ public static class DeviceEndpoints
         return Results.Ok(await svc.ListAsync(Caller(http), ct).ConfigureAwait(false));
     }
 
-    /// <summary>Remote logout. The app asks for a biometric check before signing this request (§14.3).</summary>
-    private static async Task<IResult> Revoke(Guid id, HttpContext http, DeviceKeyService svc, CancellationToken ct)
+    private static async Task<IResult> Rename(Guid id, RenameDevice body, HttpContext http, DeviceKeyService svc, CancellationToken ct)
     {
         await svc.RequireActiveAsync(Caller(http), ct).ConfigureAwait(false);
+        await svc.RenameAsync(Caller(http), id, body.Name, ct).ConfigureAwait(false);
+        return Results.NoContent();
+    }
+
+    /// <summary>
+    /// Remote logout. It needs a step-up token: Identity issues one only after a
+    /// passkey check in the last two minutes, so a stolen or left-open session
+    /// cannot remove devices by itself.
+    /// </summary>
+    private static async Task<IResult> Revoke(Guid id, HttpContext http, DeviceKeyService svc, IClock clock, CancellationToken ct)
+    {
+        await svc.RequireActiveAsync(Caller(http), ct).ConfigureAwait(false);
+        if (!http.User.HasRecentStepUp(clock.UtcNow))
+            throw new DevicesException(DevicesError.StepUpRequired, "Revoking a device needs a recent passkey check.");
         await svc.RevokeAsync(Caller(http), id, ct).ConfigureAwait(false);
         return Results.NoContent();
     }
@@ -118,6 +135,7 @@ public static class DeviceEndpoints
             return e.Error switch
             {
                 DevicesError.Forbidden => Results.Json(new ErrorResponse("forbidden"), statusCode: StatusCodes.Status403Forbidden),
+                DevicesError.StepUpRequired => Results.Json(new ErrorResponse("step_up_required"), statusCode: StatusCodes.Status403Forbidden),
                 DevicesError.NotFound => Results.Json(new ErrorResponse("not_found"), statusCode: StatusCodes.Status404NotFound),
                 DevicesError.Conflict => Results.Json(new ErrorResponse("conflict"), statusCode: StatusCodes.Status409Conflict),
                 _ => Results.BadRequest(new ErrorResponse("invalid_request")),

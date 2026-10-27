@@ -146,6 +146,25 @@ export class GatewayClient {
     return (response.status === 204 ? undefined : await response.json()) as T;
   }
 
+  /**
+   * Proves it is you again, right now: a passkey check that returns a
+   * two-minute access token for this device. Removing a device asks for it
+   * (Devices & Keys refuses without it). The token is never kept.
+   */
+  async stepUp(): Promise<string> {
+    const challenge = await this.call<{ challenge_id: string; options: Record<string, unknown> }>('POST', '/v1/auth/step-up/options');
+    const assertion = await getPasskey(challenge.options);
+    const answer = await this.call<{ access_token: string }>('POST', '/v1/auth/step-up', { challenge_id: challenge.challenge_id, assertion });
+    return answer.access_token;
+  }
+
+  /** One call made with a fresh passkey check (see {@link stepUp}). No retry: the check is single-purpose. */
+  async callWithStepUp<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const response = await this.send(method, path, body, await this.stepUp());
+    if (!response.ok) return GatewayClient.fail(response);
+    return (response.status === 204 ? undefined : await response.json()) as T;
+  }
+
   async signOut(everywhere = false): Promise<void> {
     try {
       await this.call('POST', '/v1/auth/logout', { everywhere });

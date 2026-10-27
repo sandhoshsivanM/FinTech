@@ -580,6 +580,39 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
     }
 
     [Fact]
+    public async Task Step_up_needs_the_accounts_own_passkey_and_returns_a_two_minute_token_with_no_refresh_token()
+    {
+        var tokens = await SignIn(_phone, $"dev:{Unique()}");
+        var access = tokens.GetProperty("access_token").GetString()!;
+        using var mine = new SoftwareAuthenticator("localhost", IdentityHost.Origin);
+        await AddPasskey(_phone, access, mine);
+
+        var stepped = await StepUp(_phone, access, mine);
+        stepped.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await Json(stepped);
+        body.TryGetProperty("refresh_token", out _).ShouldBeFalse();
+        body.GetProperty("expires_in").GetInt32().ShouldBe(120);
+        var jwt = new Microsoft.IdentityModel.JsonWebTokens.JsonWebToken(body.GetProperty("access_token").GetString()!);
+        jwt.Claims.ShouldContain(c => c.Type == "sua");
+        jwt.Claims.Single(c => c.Type == "sub").Value.ShouldBe(tokens.GetProperty("user_id").GetString());
+        jwt.Claims.Single(c => c.Type == "did").Value.ShouldBe(tokens.GetProperty("device_id").GetString());
+
+        // A normal access token never carries the claim.
+        new Microsoft.IdentityModel.JsonWebTokens.JsonWebToken(access).Claims.ShouldNotContain(c => c.Type == "sua");
+
+        // Another account's passkey proves nothing about this one.
+        using var theirs = new SoftwareAuthenticator("localhost", IdentityHost.Origin);
+        using var theirPhone = new DeviceKey();
+        var theirSession = await SignIn(theirPhone, $"dev:{Unique()}");
+        await AddPasskey(theirPhone, theirSession.GetProperty("access_token").GetString()!, theirs);
+        (await Error(await StepUp(_phone, access, theirs))).ShouldBe("invalid_grant");
+
+        // Without a signed-in session there is no step-up at all.
+        const string path = "/v1/auth/step-up/options";
+        (await Call(path, access, null)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
     public async Task A_passkey_challenge_answers_once()
     {
         var options = await Json(await _client.PostAsync(new Uri("/v1/auth/passkeys/assert/options", UriKind.Relative), null, Ct));
@@ -735,6 +768,32 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
         var attestation = authenticator.Create(options.GetProperty("options"));
         using var request = SignUpRequest(device, options.GetProperty("challenge_id").GetGuid(), attestation);
         return await _client.SendAsync(request, Ct);
+    }
+
+    private async Task AddPasskey(DeviceKey device, string access, SoftwareAuthenticator authenticator)
+    {
+        const string optionsPath = "/v1/auth/passkeys/register/options";
+        var options = await Json(await Call(optionsPath, access, device.Proof("POST", Url(optionsPath), access)));
+        const string registerPath = "/v1/auth/passkeys/register";
+        var body = new JsonObject
+        {
+            ["challenge_id"] = options.GetProperty("challenge_id").GetGuid().ToString(),
+            ["attestation"] = authenticator.Create(options.GetProperty("options")),
+        };
+        (await Call(registerPath, access, device.Proof("POST", Url(registerPath), access), body)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    private async Task<HttpResponseMessage> StepUp(DeviceKey device, string access, SoftwareAuthenticator authenticator)
+    {
+        const string optionsPath = "/v1/auth/step-up/options";
+        var options = await Json(await Call(optionsPath, access, device.Proof("POST", Url(optionsPath), access)));
+        const string path = "/v1/auth/step-up";
+        var body = new JsonObject
+        {
+            ["challenge_id"] = options.GetProperty("challenge_id").GetGuid().ToString(),
+            ["assertion"] = authenticator.Get(options.GetProperty("options")),
+        };
+        return await Call(path, access, device.Proof("POST", Url(path), access), body);
     }
 
     private async Task<HttpResponseMessage> PasskeySignIn(DeviceKey device, SoftwareAuthenticator authenticator)

@@ -91,9 +91,10 @@ public sealed class Phone(DevicesHost host, Guid userId) : IDisposable
 
     public void SwitchDpopKey() => Key = new DeviceKey();
 
-    public async Task<HttpResponseMessage> Send(HttpMethod method, string path, object? body = null)
+    /// <param name="stepUpAt">When the passkey check behind a step-up token happened (null: an ordinary token).</param>
+    public async Task<HttpResponseMessage> Send(HttpMethod method, string path, object? body = null, DateTimeOffset? stepUpAt = null)
     {
-        var token = host.Issuer.Mint(UserId, DeviceId, Key);
+        var token = host.Issuer.Mint(UserId, DeviceId, Key, stepUpAt: stepUpAt);
         using var request = new HttpRequestMessage(method, path);
         request.Headers.Authorization = new AuthenticationHeaderValue("DPoP", token);
         request.Headers.Add("DPoP", Key.Proof(method.Method, "http://localhost" + path, token));
@@ -296,7 +297,7 @@ public sealed class DevicesFlowTests(DevicesHost host)
         HttpResponseMessage? response = null;
         var tracked = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
             .ExecuteAndWaitAsync((Func<IMessageContext, Task>)(async _ =>
-                response = await ownerPhone.Send(HttpMethod.Delete, $"/v1/devices/{lost.DeviceId}")));
+                response = await ownerPhone.Send(HttpMethod.Delete, $"/v1/devices/{lost.DeviceId}", stepUpAt: DateTimeOffset.UtcNow)));
         response!.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         tracked.Received.SingleMessage<DeviceRevokedV1>().DeviceId.ShouldBe(lost.DeviceId);
 
@@ -307,6 +308,70 @@ public sealed class DevicesFlowTests(DevicesHost host)
         await using var scope = host.Factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<DevicesDbContext>();
         (await db.KeyEnvelopes.AnyAsync(e => e.DeviceId == lost.DeviceId, TestContext.Current.CancellationToken)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Removing_a_device_needs_a_fresh_passkey_check()
+    {
+        var user = Guid.CreateVersion7();
+        var (owner, _) = await BootstrappedPhone(user);
+        using var ownerPhone = owner;
+        using var other = new Phone(host, user);
+        await other.Register("Other");
+        var path = $"/v1/devices/{other.DeviceId}";
+
+        async Task<string> Refused(DateTimeOffset? at)
+        {
+            var response = await ownerPhone.Send(HttpMethod.Delete, path, stepUpAt: at);
+            response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+            return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("error").GetString()!;
+        }
+
+        (await Refused(null)).ShouldBe("step_up_required");
+        (await Refused(DateTimeOffset.UtcNow.AddMinutes(-5))).ShouldBe("step_up_required");
+        (await Refused(DateTimeOffset.UtcNow.AddMinutes(10))).ShouldBe("step_up_required");
+        (await ownerPhone.Ok(HttpMethod.Get, "/v1/devices/")).GetArrayLength().ShouldBe(2);
+
+        (await ownerPhone.Send(HttpMethod.Delete, path, stepUpAt: DateTimeOffset.UtcNow)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await ownerPhone.Ok(HttpMethod.Get, "/v1/devices/")).GetArrayLength().ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_device_can_be_renamed_by_the_owner_but_not_by_anyone_else()
+    {
+        var user = Guid.CreateVersion7();
+        var (owner, _) = await BootstrappedPhone(user);
+        using var ownerPhone = owner;
+        using var other = new Phone(host, user);
+        await other.Register("Old name");
+        var (stranger, _) = await BootstrappedPhone(Guid.CreateVersion7());
+        using var strangerPhone = stranger;
+        var path = $"/v1/devices/{other.DeviceId}";
+
+        (await ownerPhone.Send(HttpMethod.Patch, path, new { name = "  Kitchen\u0007 iPad  " })).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        var names = (await ownerPhone.Ok(HttpMethod.Get, "/v1/devices/")).EnumerateArray()
+            .ToDictionary(d => d.GetProperty("id").GetGuid(), d => d.GetProperty("name").GetString());
+        names[other.DeviceId].ShouldBe("Kitchen iPad");
+
+        (await ownerPhone.Send(HttpMethod.Patch, path, new { name = "   " })).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await strangerPhone.Send(HttpMethod.Patch, path, new { name = "Mine now" })).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await ownerPhone.Send(HttpMethod.Patch, $"/v1/devices/{Guid.NewGuid()}", new { name = "Ghost" })).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task A_revoked_device_cannot_be_renamed_and_stays_off_the_list()
+    {
+        var user = Guid.CreateVersion7();
+        var (owner, _) = await BootstrappedPhone(user);
+        using var ownerPhone = owner;
+        using var lost = new Phone(host, user);
+        await lost.Register("Lost");
+        var path = $"/v1/devices/{lost.DeviceId}";
+        (await ownerPhone.Send(HttpMethod.Delete, path, stepUpAt: DateTimeOffset.UtcNow)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        (await ownerPhone.Send(HttpMethod.Patch, path, new { name = "Back" })).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await lost.Send(HttpMethod.Patch, $"/v1/devices/{ownerPhone.DeviceId}", new { name = "Hijack" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await lost.Send(HttpMethod.Get, "/v1/devices/")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -321,7 +386,7 @@ public sealed class DevicesFlowTests(DevicesHost host)
         var pairingId = (await aliceNew.Ok(HttpMethod.Post, "/v1/devices/pairing")).GetProperty("pairing_id").GetGuid();
 
         (await m.Send(HttpMethod.Get, $"/v1/devices/pairing/{pairingId}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        (await m.Send(HttpMethod.Delete, $"/v1/devices/{a.DeviceId}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await m.Send(HttpMethod.Delete, $"/v1/devices/{a.DeviceId}", stepUpAt: DateTimeOffset.UtcNow)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await m.Ok(HttpMethod.Get, "/v1/devices/")).GetArrayLength().ShouldBe(1);
     }
 
