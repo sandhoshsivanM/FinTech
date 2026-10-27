@@ -199,60 +199,6 @@ describe('approve a new device', () => {
   });
 });
 
-describe('home', () => {
-  const account = { id: 'a1', name: 'HDFC Savings', subtype: 'bank', openingBalance: '1000', updatedAt: '2026-10-01' };
-
-  test('the accounts list is accessible; each account is a link', async () => {
-    h.ready = { ready: true, error: undefined };
-    h.online.ledger = { accounts: [account], transactions: [] };
-    const Home = (await import('@/app/home/page')).default;
-    const r = await open(<Home />);
-    expect(r.container.querySelector('a[href*="id=a1"]')?.textContent).toContain('HDFC Savings');
-    expect(await violations(r.container)).toEqual([]);
-    expect(document.title).toBe('Accounts · Khazana Online');
-  });
-
-  test('the add-account form has visible labels, takes focus when it opens, and returns focus when it closes', async () => {
-    h.ready = { ready: true, error: undefined };
-    const Home = (await import('@/app/home/page')).default;
-    const r = await open(<Home />);
-    await click(byText(r.container, 'Add account'));
-    expect(document.activeElement?.getAttribute('placeholder')).toBe('e.g. HDFC Savings');
-    expect(document.activeElement?.closest('label')?.textContent).toContain('Account name');
-    expect(await violations(r.container)).toEqual([]);
-    await click(byText(r.container, 'Cancel'));
-    expect(document.activeElement?.textContent).toBe('Add account');
-  });
-});
-
-describe('account', () => {
-  const account = { id: 'a1', name: 'Wallet', subtype: 'cash', openingBalance: '0', updatedAt: '2026-10-01' };
-  const txn = { id: 't1', accountId: 'a1', type: 'income', amount: '250', date: '2026-10-03', note: 'Refund', category: 'Other', updatedAt: '2026-10-03' };
-
-  test('lists transactions with a sign for money in and out, and is accessible', async () => {
-    window.history.replaceState({}, '', '/account/?id=a1');
-    h.ready = { ready: true, error: undefined };
-    h.online.ledger = { accounts: [account], transactions: [txn] };
-    const Account = (await import('@/app/account/page')).default;
-    const r = await open(<Account />);
-    expect(r.container.querySelector('[data-testid="txn-amount"]')?.textContent).toMatch(/^\+/);
-    expect(await violations(r.container)).toEqual([]);
-  });
-
-  test('the type buttons say which type is selected, and editing moves focus into the form', async () => {
-    window.history.replaceState({}, '', '/account/?id=a1');
-    h.ready = { ready: true, error: undefined };
-    h.online.ledger = { accounts: [account], transactions: [txn] };
-    const Account = (await import('@/app/account/page')).default;
-    const r = await open(<Account />);
-    expect(byText(r.container, 'Spent').getAttribute('aria-pressed')).toBe('true');
-    expect(byText(r.container, 'Received').getAttribute('aria-pressed')).toBe('false');
-    await click(r.container.querySelector('[data-testid="txn"] button')!);
-    expect(document.activeElement?.closest('label')?.textContent).toContain('Amount (₹)');
-    expect(await violations(r.container)).toEqual([]);
-  });
-});
-
 describe('how it works', () => {
   test('the empty state is accessible', async () => {
     h.ready = { ready: true, error: undefined };

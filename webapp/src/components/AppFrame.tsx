@@ -7,7 +7,7 @@ import { Shell } from './Shell';
 import { AutoLock } from './AutoLock';
 import { ConfirmProvider } from '@khazana/screens/components/Confirm';
 import { usePathname, useRouter } from 'next/navigation';
-import { ErrorBoundary } from './ErrorBoundary';
+import { ErrorBoundary } from '@khazana/screens/components/ErrorBoundary';
 import { onNotificationNavigate } from '@/lib/notify';
 import { useNotificationDriver } from '@/lib/useNotificationDriver';
 import { installErrorLog } from '@/lib/errorLog';

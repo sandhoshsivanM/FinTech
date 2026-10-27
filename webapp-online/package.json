@@ -12,13 +12,17 @@
   "dependencies": {
     "clsx": "2.1.1",
     "decimal.js": "^10.6.0",
+    "exceljs": "^4.4.0",
     "framer-motion": "13.0.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9",
     "libsodium-wrappers-sumo": "0.8.4",
     "lucide-react": "1.21.0",
     "next": "16.2.9",
     "qrcode-generator": "2.0.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

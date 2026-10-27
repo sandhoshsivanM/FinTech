@@ -3,57 +3,9 @@
 @import "../../../packages/domain-ts/tokens.css";
 /* Component styles for the shared components in packages/ui-ts. */
 @import "../../../packages/ui-ts/styles.css";
+/* The shell's chrome (topbar, home header, wallet card, brand-mark switch). */
+@import "../../../packages/screens-ts/styles.css";
 /* Tailwind only scans this app by default; the shared components use utility
    classes too. */
 @source "../../../packages/ui-ts/src";
 @source "../../../packages/screens-ts/src";
-
-/* ============================================================================
-   This app's own chrome
-   ========================================================================= */
-
-/* Phone home: the top bar takes the header's colour so the two read as one
-   surface; on every other screen it keeps the canvas. */
-@media (max-width: 899px) {
-  .topbar-home { background: var(--home-header); border-color: transparent; }
-}
-.home-header { background: var(--home-header); color: var(--home-header-ink); }
-.home-sheet { background: var(--home-sheet); box-shadow: var(--home-sheet-shadow); }
-/* Inside the sheet, groups are inset panels, not bordered boxes. */
-.home-sheet .card { background: var(--home-group); border-color: transparent; box-shadow: var(--home-group-edge); }
-
-/* The wallet card: a dark, glossy payment-card surface used by the home
-   wallet stack and the accounts page. Dark in both themes, like a real card. */
-.wallet-card {
-  position: relative;
-  overflow: hidden;
-  color: #fff;
-  background:
-    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--accent-glow) 28%, transparent), transparent 55%),
-    linear-gradient(150deg, #1C2420 0%, #0C110F 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-panel);
-  box-shadow: var(--shadow-float);
-}
-.wallet-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.07) 48%, transparent 60%);
-}
-
-/* ---------------------------------------------------------------------------
-   Brand mark: light/dark variant switch (see components/BrandMark.tsx).
-   Hide-only rules, so whatever display the caller's className gives the
-   visible one is left alone. The no-data-theme branch covers the instant
-   before the inline script runs, and any page rendered without it.
-   ------------------------------------------------------------------------ */
-:root[data-theme="light"] .brandmark-dark,
-:root[data-theme="dark"] .brandmark-light { display: none !important; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) .brandmark-light { display: none !important; }
-}
-@media not (prefers-color-scheme: dark) {
-  :root:not([data-theme]) .brandmark-dark { display: none !important; }
-}

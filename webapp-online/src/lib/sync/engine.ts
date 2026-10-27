@@ -20,8 +20,6 @@ type PulledRecord = {
 type PullPage = { records: PulledRecord[]; last_seq: number; epoch: number; more: boolean; reset_required: boolean };
 
 export const MAX_BATCH = 500;
-const sameRecord = (a: Pick<LocalRecord, 'collection' | 'recordId'>, b: Pick<LocalRecord, 'collection' | 'recordId'>) =>
-  a.collection === b.collection && a.recordId === b.recordId;
 
 export type SyncReport = { pushed: number; pulled: number; reset: boolean };
 
@@ -32,6 +30,11 @@ export class SyncEngine {
   async save(record: LocalRecord): Promise<void> {
     await this.store.put(record);
     await this.store.queue(record);
+  }
+
+  /** Many local changes in one transaction (an import): atomic, and one database open instead of one per record. */
+  async saveMany(records: LocalRecord[]): Promise<void> {
+    await this.store.saveMany(records);
   }
 
   async pending(): Promise<number> {
@@ -62,10 +65,8 @@ export class SyncEngine {
       // the newer version the pull is about to bring. Only drop what wasn't
       // edited again while the push was in flight.
       const current = await this.store.outbox();
-      for (const sent of batch) {
-        const now = current.find((r) => sameRecord(r, sent));
-        if (now && now.updatedAt === sent.updatedAt) await this.store.unqueue(sent);
-      }
+      const byKey = new Map(current.map((r) => [`${r.collection}/${r.recordId}`, r]));
+      await this.store.unqueueMany(batch.filter((sent) => byKey.get(`${sent.collection}/${sent.recordId}`)?.updatedAt === sent.updatedAt));
     }
     return outbox.length;
   }
@@ -85,6 +86,8 @@ export class SyncEngine {
         continue;
       }
       const outbox = await this.store.outbox();
+      const queuedByKey = new Map(outbox.map((q) => [`${q.collection}/${q.recordId}`, q]));
+      const incomingRecords: LocalRecord[] = [];
       for (const r of page.records) {
         const incoming: LocalRecord = {
           collection: r.collection,
@@ -95,11 +98,12 @@ export class SyncEngine {
           keyVersion: r.key_version,
         };
         // A newer local change not yet pushed wins (it goes up next sync).
-        const queued = outbox.find((q) => sameRecord(q, incoming));
+        const queued = queuedByKey.get(`${incoming.collection}/${incoming.recordId}`);
         if (queued && Date.parse(queued.updatedAt) >= Date.parse(incoming.updatedAt)) continue;
-        await this.store.put(incoming);
+        incomingRecords.push(incoming);
         pulled++;
       }
+      await this.store.putMany(incomingRecords);
       cursor = { since: page.last_seq, epoch: page.epoch };
       await this.store.setCursor(cursor);
       if (!page.more) return { pulled, reset };

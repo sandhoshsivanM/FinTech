@@ -61,7 +61,7 @@ function useCfg(): ShellConfig {
 const KIND_LABEL: Record<string, string> = { self: 'Personal', spouse: 'Spouse', business: 'Business' };
 const RAIL_KEY = 'khazana-nav-collapsed';
 
-// A tiny external store for the rail preference. localStorage has no change
+// A tiny external store for the rail preference. Browser storage has no change
 // event for same-tab writes, so subscribers are notified by hand.
 const railListeners = new Set<() => void>();
 function subscribeRail(fn: () => void) {

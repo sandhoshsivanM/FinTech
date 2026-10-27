@@ -43,6 +43,29 @@ async function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) =>
   }
 }
 
+/**
+ * Several stores in ONE transaction on ONE connection. `run` opens the database
+ * per call, which is fine for a single write but turns an import of 1,100 rows
+ * into 1,100 opens; a batch goes through here instead, and is atomic (all of it
+ * is stored or none).
+ */
+async function runBatch(names: StoreName[], work: (stores: Record<string, IDBObjectStore>) => void): Promise<void> {
+  const db = await open();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(names, 'readwrite');
+      const stores: Record<string, IDBObjectStore> = {};
+      for (const n of names) stores[n] = tx.objectStore(n);
+      work(stores);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
 export const loadKey = () => run<DeviceKey | undefined>('readonly', (s) => s.get('key'));
 export const saveKey = (key: DeviceKey) => run('readwrite', (s) => s.put(key, 'key'));
 export const loadSession = () => run<Session | undefined>('readonly', (s) => s.get('session'));
@@ -92,10 +115,17 @@ export const records = {
   all: () => run<LocalRecord[]>('readonly', (s) => s.getAll(), 'records'),
   get: (r: Pick<LocalRecord, 'collection' | 'recordId'>) => run<LocalRecord | undefined>('readonly', (s) => s.get(keyOf(r)), 'records'),
   put: (r: LocalRecord) => run('readwrite', (s) => s.put(r, keyOf(r)), 'records'),
+  /** Many records, one transaction. */
+  putMany: (rs: LocalRecord[]) => (rs.length === 0 ? Promise.resolve() : runBatch(['records'], ({ records }) => { for (const r of rs) records.put(r, keyOf(r)); })),
+  /** Local changes: stored and queued for the server together, in one transaction. */
+  saveMany: (rs: LocalRecord[]) => (rs.length === 0 ? Promise.resolve() : runBatch(['records', 'outbox'], ({ records, outbox }) => {
+    for (const r of rs) { records.put(r, keyOf(r)); outbox.put(r, keyOf(r)); }
+  })),
   clear: () => run('readwrite', (s) => s.clear(), 'records'),
   outbox: () => run<LocalRecord[]>('readonly', (s) => s.getAll(), 'outbox'),
   queue: (r: LocalRecord) => run('readwrite', (s) => s.put(r, keyOf(r)), 'outbox'),
   unqueue: (r: LocalRecord) => run('readwrite', (s) => s.delete(keyOf(r)), 'outbox'),
+  unqueueMany: (rs: LocalRecord[]) => (rs.length === 0 ? Promise.resolve() : runBatch(['outbox'], ({ outbox }) => { for (const r of rs) outbox.delete(keyOf(r)); })),
   cursor: async (): Promise<Cursor> => (await run<Cursor | undefined>('readonly', (s) => s.get('cursor'), 'meta')) ?? { since: 0, epoch: 0 },
   setCursor: (c: Cursor) => run('readwrite', (s) => s.put(c, 'cursor'), 'meta'),
 };

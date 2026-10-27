@@ -104,7 +104,7 @@ export function NotificationsMenu({ useDriver = noDriver }: { useDriver?: Notifi
 
   const ICONS = { alert: BellRing, bill: CreditCard, policy: ShieldAlert, missed: History } as const;
 
-  // Read-state. Loaded after mount (localStorage is client-only; the page is
+  // Read-state. Loaded after mount (browser storage is client-only; the page is
   // statically exported), so the first paint never disagrees with hydration.
   const [seen, setSeen] = useState<Set<string> | null>(null);
   useEffect(() => { setSeen(loadSeen()); }, []);

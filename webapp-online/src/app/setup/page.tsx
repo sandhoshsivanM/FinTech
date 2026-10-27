@@ -18,7 +18,7 @@ export default function Setup() {
     (async () => {
       const readiness = await ensureReady();
       if (readiness === 'signed-out') return router.replace('/sign-in/');
-      if (readiness === 'ready') return router.replace('/home/');
+      if (readiness === 'ready') return router.replace('/dashboard/');
       const status = await keys().status();
       router.replace(status.account_has_keys ? '/setup/link/' : '/setup/new/');
     })().catch((err) => setError(describe(err)));

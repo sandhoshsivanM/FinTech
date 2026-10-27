@@ -12,7 +12,7 @@ export function Page({ title, docTitle = title, lead, children }: { title: strin
     document.title = docTitle === APP_NAME ? APP_NAME : `${docTitle} · ${APP_NAME}`;
   }, [docTitle]);
   return (
-    <section className="flex flex-col gap-5">
+    <section className="online-plain flex flex-col gap-5">
       <header>
         <h1 className="text-2xl font-semibold">{title}</h1>
         {lead && <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>{lead}</p>}
