@@ -126,15 +126,17 @@ class GatewayClient implements Api {
 
   /// Creates an account with a new passkey (Face ID / fingerprint / PIN) and signs in.
   Future<TokenResponse> signUpWithPasskey() async {
+    final ceremony = _ceremony; // fail before any request if this build has no passkeys
     final c = await _challenge('/v1/auth/passkeys/signup/options');
-    final attestation = await _ceremony.create(c.options);
+    final attestation = await ceremony.create(c.options);
     return _tokenWith({'provider': 'passkey_signup', 'challenge_id': c.challengeId, 'attestation': attestation});
   }
 
   /// Signs in with a passkey already on this device.
   Future<TokenResponse> signInWithPasskey() async {
+    final ceremony = _ceremony;
     final c = await _challenge('/v1/auth/passkeys/assert/options');
-    final assertion = await _ceremony.get(c.options);
+    final assertion = await ceremony.get(c.options);
     return _tokenWith({'provider': 'passkey', 'challenge_id': c.challengeId, 'assertion': assertion});
   }
 

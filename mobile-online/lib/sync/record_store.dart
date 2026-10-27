@@ -108,6 +108,14 @@ class MemoryRecordStore implements RecordStore {
     await changed();
   }
 
+  /// Forgets everything (sign-out): records, outbox and cursor.
+  Future<void> reset() async {
+    records.clear();
+    queued.clear();
+    _cursor = const Cursor(0, 0);
+    await changed();
+  }
+
   Map<String, dynamic> toJson() => {
         'records': [for (final r in records.values) r.toJson()],
         'outbox': [for (final r in queued.values) r.toJson()],
