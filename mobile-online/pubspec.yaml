@@ -40,6 +40,11 @@ dependencies:
   pointycastle: ^3.9.1          # ECDSA P-256 for DPoP proofs (same library as the offline app)
   flutter_secure_storage: ^10.0.0-beta.4   # Keychain / Android Keystore
   cupertino_icons: ^1.0.8
+  # Smart capture (lib/capture/): Gmail OAuth (PKCE), on-device OCR, image picking.
+  decimal: ^3.2.4
+  flutter_appauth: ^9.0.0
+  google_mlkit_text_recognition: ^0.15.0
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
