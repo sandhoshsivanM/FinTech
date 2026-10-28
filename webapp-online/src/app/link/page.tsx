@@ -88,6 +88,7 @@ export default function LinkPage() {
   const fetchAndImport = useCallback(async (id: string) => {
     setBusy('Fetching your data from the Account Aggregator…');
     const { fetch, report } = await linker().refresh(id);
+    if (fetch.state === 'fresh' && report.payloads === 0 && !report.failed) return 'Already up to date: this link was fetched in the last day.';
     if (fetch.state === 'failed') return `The fetch did not finish (${fetch.error_code ?? 'error'}). ${importSummary(report)}`.trim();
     if (report.failed) return `${importSummary(report)} ${report.failed} payload${report.failed === 1 ? '' : 's'} could not be opened on this device yet; it stays waiting for a device that can.`.trim();
     return importSummary(report);
