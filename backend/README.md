@@ -46,6 +46,61 @@ Bank data and credit reports come from sample adapters (`Providers__AccountAggre
 return the same realistic data for the same user or PAN. Both are refused in
 Production.
 
+### Account Aggregator: Setu sandbox
+
+`Providers__AccountAggregator=Setu` runs the Setu AA gateway adapter
+(`SetuBankDataProvider`) against Setu's **sandbox** by default
+(`https://fiu-sandbox.setu.co`). Setu does the AA protocol for us (consent
+artefact, the key exchange with the bank, decryption) and returns FI data as
+JSON; the adapter normalises it, and the saga seals it to the user's delivery
+key like any other payload. Setu's sandbox serves mock banks and data only.
+
+Sign up (free, about 15 minutes):
+
+1. Create an account on Setu's Bridge: https://bridge.setu.co/v2/signup.
+2. Create an **FIU** (basic details), then add the **Account Aggregator** data
+   product under it.
+3. Configure it: consent template (purpose 102, consent types profile,
+   summary and transactions; FI types deposit, term and recurring deposit,
+   mutual funds, equities, ETF, NPS, insurance), branding, account discovery.
+4. Notifications: set the URL to `https://<API_HOST>/v1/webhooks/aa`. Optional:
+   without it the fetch saga polls every two minutes.
+5. Credentials: the product page then shows `x-product-instance-id`,
+   client id (`x-client-id`) and client secret. Keep them out of git.
+
+Configure (environment variables only; nothing is committed):
+
+| Variable | Value |
+|---|---|
+| `Providers__AccountAggregator` | `Setu` |
+| `Providers__Setu__ClientId` | Bridge client id |
+| `Providers__Setu__ClientSecret` | Bridge client secret |
+| `Providers__Setu__ProductInstanceId` | Bridge product instance id |
+| `Providers__Setu__RedirectUrl` | where Setu returns the user: the web app's `/link/` page, e.g. `https://khazana-online.netlify.app/link/` |
+| `Providers__Setu__Auth` | `Token` (default: the id and secret are exchanged for a bearer token at `Providers__Setu__TokenUrl`, default `https://orgservice-prod.setu.co/v1/users/login`), or `Headers` if your product takes `x-client-id`/`x-client-secret` on each call |
+| `Providers__Setu__BaseUrl` | defaults to the sandbox; `https://fiu.setu.co` for production |
+
+In the demo the same values go in `deploy/demo/.env` as `AA_PROVIDER=Setu`,
+`SETU_CLIENT_ID`, `SETU_CLIENT_SECRET`, `SETU_PRODUCT_INSTANCE_ID` (and
+`SETU_AUTH=Headers` if needed); the redirect is `${WEB_ORIGIN}/link/`.
+
+Guards, at startup: Setu without its three credentials stops the service and
+names what is missing; every URL must be https (the redirect may be plain http
+only to a loopback address); **Production refuses Setu's sandbox host**, as it
+refuses `Fake`.
+
+Testing in the sandbox: in the web app, Settings → Link bank & investments,
+enter a 10-digit mobile number (Setu's AA screen sends an OTP to it) and link.
+You are sent to Setu's consent screen. Pick **Setu FIP-2**, whose OTP is the
+static `123456` (Setu FIP sends a real OTP to the number). Approve, and you come
+back to `/link/`, which waits for the consent, fetches and imports. Setu's docs:
+https://docs.setu.co/data/account-aggregator.
+
+Callbacks: Setu's notifications are not signed (as documented), so the adapter
+treats them as hints. A consent notification makes the service re-read the
+status from Setu's authenticated API; a session notification makes the saga
+collect sooner. A forged callback changes nothing.
+
 Local runs read `contracts/fixtures/amfi/navall_sample.txt`, never AMFI. To try
 the real file, set `Providers__Nav=Amfi` on `marketdata-api` in
 `Khazana.AppHost/AppHost.cs`.
