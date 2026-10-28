@@ -1,0 +1,9 @@
+{
+  "data": { "status": "COMPLETED", "fips": [ { "accounts": [ { "FIStatus": "READY", "linkRefNumber": "e4b27e62-e41a-42c0-a5b3-0a5542b25ddf" } ], "fipID": "setu-fip" } ], "format": "json" },
+  "timestamp": "TS",
+  "dataSessionId": "32d40afc-4795-495d-8ca4-d817d730e5b5",
+  "success": true,
+  "type": "SESSION_STATUS_UPDATE",
+  "error": null,
+  "consentId": "c16cc10e-eae3-4277-96e1-64c0ed21c53e"
+}

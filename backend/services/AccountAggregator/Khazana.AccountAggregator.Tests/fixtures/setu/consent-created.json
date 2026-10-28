@@ -1,0 +1,8 @@
+{
+  "id": "c16cc10e-eae3-4277-96e1-64c0ed21c53e",
+  "url": "https://fiu-sandbox.setu.co/consents/webview/c16cc10e-eae3-4277-96e1-64c0ed21c53e",
+  "status": "PENDING",
+  "detail": { "consentTypes": ["PROFILE", "SUMMARY", "TRANSACTIONS"] },
+  "redirectUrl": "https://online.example/link/",
+  "traceId": "1-646c4a4c-34b8663b0f1238aa04412e89"
+}

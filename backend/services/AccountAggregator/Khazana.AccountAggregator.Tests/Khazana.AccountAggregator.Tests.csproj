@@ -18,6 +18,9 @@
     <ProjectReference Include="..\..\..\tests\Khazana.TestKit\Khazana.TestKit.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

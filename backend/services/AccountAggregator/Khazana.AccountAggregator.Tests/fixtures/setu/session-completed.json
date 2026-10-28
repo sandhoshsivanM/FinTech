@@ -1,0 +1,84 @@
+{
+  "id": "32d40afc-4795-495d-8ca4-d817d730e5b5",
+  "status": "COMPLETED",
+  "consentId": "c16cc10e-eae3-4277-96e1-64c0ed21c53e",
+  "format": "json",
+  "dataRange": { "from": "2026-04-01T00:00:00.000Z", "to": "2026-10-28T23:59:59.999Z" },
+  "fips": [
+    {
+      "fipID": "setu-fip",
+      "accounts": [
+        {
+          "linkRefNumber": "e4b27e62-e41a-42c0-a5b3-0a5542b25ddf",
+          "maskedAccNumber": "XXXXXXXX6053",
+          "FIstatus": "READY",
+          "data": {
+            "account": {
+              "type": "deposit",
+              "version": "1.1",
+              "maskedAccNumber": "XXXXXXXX6053",
+              "profile": { "holders": { "type": "SINGLE", "holder": [ { "name": "Sample Holder", "mobile": "9999999999" } ] } },
+              "summary": { "currentBalance": "101666.33", "currency": "INR", "ifscCode": "SETU0000001", "type": "SAVINGS", "balanceDateTime": "2026-10-28T08:00:00+05:30", "status": "ACTIVE" },
+              "transactions": {
+                "startDate": "2026-04-01",
+                "endDate": "2026-10-28",
+                "transaction": [
+                  { "txnId": "S1001", "type": "CREDIT", "mode": "NEFT", "amount": 85000, "currentBalance": "102116.33", "transactionTimestamp": "2026-10-01T10:00:00+05:30", "valueDate": "2026-10-01", "narration": "NEFT SALARY ACME", "reference": "N274260012345" },
+                  { "txnId": "S1002", "type": "DEBIT", "mode": "UPI", "amount": "450", "currentBalance": "101666.33", "transactionTimestamp": "2026-10-20T08:15:00+05:30", "valueDate": "2026-10-20", "narration": "UPI/CAFE COFFEE DAY/311234567890", "reference": "311234567890" },
+                  { "type": "DEBIT", "amount": "1", "transactionTimestamp": "2026-10-21T08:15:00+05:30" }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "linkRefNumber": "denied-ref",
+          "maskedAccNumber": "XXXXXXXX9999",
+          "FIstatus": "DENIED",
+          "data": null
+        }
+      ]
+    },
+    {
+      "fipID": "setu-fip-2",
+      "accounts": [
+        {
+          "linkRefNumber": "mf-ref-1",
+          "maskedAccNumber": "XXXXXX7788",
+          "FIstatus": "READY",
+          "data": { "account": { "type": "mutual_funds", "summary": {
+            "costValue": "90000", "currentValue": "104500",
+            "investment": { "holdings": { "holding": [
+              { "amc": "Sample AMC", "isin": "INF209K01YN0", "amfiCode": "120503", "isinDescription": "Sample Flexi Cap Fund - Direct Growth", "closingUnits": "1000.000", "nav": "64.5", "navDate": "2026-10-27" },
+              { "amc": "Sample AMC", "isin": "INF209K01ZZ1", "schemeCode": "SL01", "isinDescription": "Sample Liquid Fund", "closingUnits": 10, "nav": 4000, "navDate": "2026-10-27" }
+            ] } } } } }
+        },
+        {
+          "linkRefNumber": "demat-ref-1",
+          "maskedAccNumber": "XXXXXXXX1201",
+          "FIstatus": "READY",
+          "data": { "account": { "type": "equities", "summary": { "currentValue": "29250",
+            "investment": { "holdings": { "holding": { "issuerName": "Sample Industries Ltd", "isin": "INE002A01018", "units": "10", "lastTradedPrice": "2925" } } } } } }
+        },
+        {
+          "linkRefNumber": "ins-ref-1",
+          "maskedAccNumber": "XXXXXX4455",
+          "FIstatus": "READY",
+          "data": { "account": { "type": "insurance_policies", "summary": { "policyName": "Sample Term Plan", "policyType": "TERM", "sumAssured": 10000000, "premiumAmount": "14500", "premiumFrequency": "YEARLY", "policyStartDate": "2022-01-15", "maturityDate": "2057-01-15" } } }
+        },
+        {
+          "linkRefNumber": "nps-ref-1",
+          "maskedAccNumber": "XXXXXXXX3344",
+          "FIstatus": "READY",
+          "data": { "account": { "type": "nps", "summary": { "currentValue": "245000.50", "asOnDate": "2026-10-25" } } }
+        },
+        {
+          "linkRefNumber": "fd-ref-1",
+          "maskedAccNumber": "XXXXXXXX5566",
+          "FIstatus": "READY",
+          "data": { "account": { "type": "term_deposit", "summary": { "principalAmount": "200000", "interestRate": "7.1", "openingDate": "2025-06-01", "maturityDate": "2027-06-01", "maturityAmount": "229400", "currentValue": "213900" } } }
+        }
+      ]
+    }
+  ]
+}

@@ -49,6 +49,8 @@ public sealed class FakeBankDataProvider(FakeAaOptions options) : IBankDataProvi
 
     public string Name => ProviderName;
 
+    public bool IsSample => true;
+
     public Task<ConsentCreated> CreateConsentAsync(ConsentRequest request, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(request);

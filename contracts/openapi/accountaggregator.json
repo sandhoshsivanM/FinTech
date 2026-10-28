@@ -17,6 +17,18 @@
         }
       }
     },
+    "/v1/aa/provider": {
+      "get": {
+        "tags": [
+          "AaEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/v1/aa/consents": {
       "post": {
         "tags": [
