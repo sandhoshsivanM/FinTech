@@ -12,11 +12,24 @@ namespace Khazana.Identity.Api;
 // Request and response bodies. JSON is snake_case (OAuth's convention) and an
 // unknown field fails the request (Program.cs), so a client bug is loud.
 
-/// <param name="Provider">google | apple | passkey (dev in Development).</param>
+/// <param name="Provider">google | apple | passkey | phone (dev in Development).</param>
 /// <param name="IdToken">The provider's ID token (google, apple, dev).</param>
 /// <param name="ChallengeId">From <c>/passkeys/assert/options</c> (passkey).</param>
+/// <param name="Code">The 6-digit SMS code (phone); <paramref name="ChallengeId"/> is from <c>/v1/auth/phone/start</c>.</param>
 /// <param name="Assertion">The authenticator's response, as the platform API returns it (passkey).</param>
-public sealed record TokenRequest(string Provider, string Platform, string? IdToken = null, Guid? ChallengeId = null, JsonElement? Assertion = null, JsonElement? Attestation = null);
+public sealed record TokenRequest(string Provider, string Platform, string? IdToken = null, Guid? ChallengeId = null, JsonElement? Assertion = null, JsonElement? Attestation = null, string? Code = null);
+
+/// <param name="Phone">A mobile number; +91 is assumed for a bare 10 digits.</param>
+/// <param name="Platform">The calling app, as in <see cref="TokenRequest"/>.</param>
+public sealed record PhoneStartRequest(string Phone, string Platform);
+
+/// <param name="ChallengeId">Send back to <c>/v1/auth/token</c> with <c>provider=phone</c> and the <c>code</c>.</param>
+/// <param name="ExpiresIn">Seconds the code lives.</param>
+/// <param name="ResendAfter">Seconds before another code may be asked for.</param>
+/// <param name="DemoCode">Present only on a demo server that echoes the code; never in Production.</param>
+public sealed record PhoneStartResponse(
+    Guid ChallengeId, int ExpiresIn, int ResendAfter,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? DemoCode = null);
 
 public sealed record RefreshRequest(string RefreshToken);
 
@@ -53,6 +66,8 @@ public static class IdentityEndpoints
         auth.MapPost("/passkeys/register", CompletePasskeyRegistration).RequireAuthorization()
             .AddEndpointFilter(RequireLiveSession(SessionService.FreshSignIn));
         auth.MapPost("/passkeys/assert/options", BeginPasskeyAssertion);
+        // Mobile number sign-in: ask for a code here, answer it at /token with provider=phone.
+        auth.MapPost("/phone/start", PhoneStart);
         // Step-up: prove it is you again, with a passkey, right now. Returns a
         // two-minute token for this device that Devices & Keys asks for before
         // it removes a device.
@@ -76,9 +91,9 @@ public static class IdentityEndpoints
     /// <summary>Signs in with Google, Apple, a passkey or (Development) a dev token.</summary>
     private static Task<IResult> Token(
         TokenRequest body, HttpContext http, DpopProofValidator dpop, IOptions<KhazanaAuthOptions> authOptions,
-        IEnumerable<IExternalIdentityVerifier> verifiers, SessionService sessions, PasskeyService passkeys,
+        IEnumerable<IExternalIdentityVerifier> verifiers, SessionService sessions, PasskeyService passkeys, PhoneOtpService phone,
         ILogger<TokenRequest> log, CancellationToken ct) =>
-        SignInAsync(body, http, dpop, authOptions, verifiers, passkeys, log, "Sign-in",
+        SignInAsync(body, http, dpop, authOptions, verifiers, passkeys, phone, log, "Sign-in",
             (identity, jkt) => sessions.SignInExternalAsync(identity, jkt, body.Platform, ct),
             (userId, jkt) => sessions.SignInPasskeyAsync(userId, jkt, body.Platform, ct), ct,
             (newPasskey, jkt) => sessions.SignUpWithPasskeyAsync(newPasskey, jkt, body.Platform, ct));
@@ -89,15 +104,15 @@ public static class IdentityEndpoints
     /// </summary>
     private static Task<IResult> Restore(
         TokenRequest body, HttpContext http, DpopProofValidator dpop, IOptions<KhazanaAuthOptions> authOptions,
-        IEnumerable<IExternalIdentityVerifier> verifiers, SessionService sessions, PasskeyService passkeys,
+        IEnumerable<IExternalIdentityVerifier> verifiers, SessionService sessions, PasskeyService passkeys, PhoneOtpService phone,
         ILogger<TokenRequest> log, CancellationToken ct) =>
-        SignInAsync(body, http, dpop, authOptions, verifiers, passkeys, log, "Restore",
+        SignInAsync(body, http, dpop, authOptions, verifiers, passkeys, phone, log, "Restore",
             (identity, jkt) => sessions.RestoreExternalAsync(identity, jkt, body.Platform, ct),
             (userId, jkt) => sessions.RestorePasskeyAsync(userId, jkt, body.Platform, ct), ct);
 
     private static async Task<IResult> SignInAsync(
         TokenRequest body, HttpContext http, DpopProofValidator dpop, IOptions<KhazanaAuthOptions> authOptions,
-        IEnumerable<IExternalIdentityVerifier> verifiers, PasskeyService passkeys, ILogger log, string action,
+        IEnumerable<IExternalIdentityVerifier> verifiers, PasskeyService passkeys, PhoneOtpService phone, ILogger log, string action,
         Func<ExternalIdentity, string, Task<TokenPair>> external, Func<Guid, string, Task<TokenPair>> passkey, CancellationToken ct,
         Func<NewPasskey, string, Task<TokenPair>>? signUp = null)
     {
@@ -128,6 +143,12 @@ public static class IdentityEndpoints
                 var userId = await passkeys.CompleteAssertionAsync(challengeId, response, ct).ConfigureAwait(false);
                 pair = await passkey(userId, proof.Jkt).ConfigureAwait(false);
             }
+            else if (body.Provider == Providers.Phone)
+            {
+                if (body.ChallengeId is not { } challengeId) return Error(AuthError.InvalidRequest);
+                var identity = await phone.VerifyAsync(challengeId, body.Code, proof.Jkt, ct).ConfigureAwait(false);
+                pair = await external(identity, proof.Jkt).ConfigureAwait(false);
+            }
             else
             {
                 var verifier = verifiers.FirstOrDefault(v => v.Provider == body.Provider);
@@ -146,6 +167,33 @@ public static class IdentityEndpoints
         catch (AuthFailedException e)
         {
             Log.Refused(log, action, e.Message);
+            return Error(e.Error);
+        }
+    }
+
+    /// <summary>
+    /// Texts a sign-in code. The answer has the same shape for a number with an
+    /// account and one without: this never looks the account up.
+    /// </summary>
+    private static async Task<IResult> PhoneStart(
+        PhoneStartRequest body, HttpContext http, DpopProofValidator dpop, IOptions<KhazanaAuthOptions> authOptions,
+        PhoneOtpService phone, ILogger<PhoneStartRequest> log, CancellationToken ct)
+    {
+        var proof = await CheckProofAsync(http, dpop, authOptions.Value, log).ConfigureAwait(false);
+        if (proof is null) return InvalidProof(http);
+        if (body is null || !Platforms.IsKnown(body.Platform)) return Error(AuthError.InvalidRequest);
+        try
+        {
+            var challenge = await phone.StartAsync(body.Phone, proof.Jkt, ct).ConfigureAwait(false);
+            http.Response.Headers.CacheControl = "no-store";
+            http.Response.Headers.Pragma = "no-cache";
+            return Results.Ok(new PhoneStartResponse(challenge.ChallengeId, challenge.ExpiresInSeconds, challenge.ResendAfterSeconds, challenge.DemoCode));
+        }
+        catch (AuthFailedException e)
+        {
+            Log.Refused(log, "Phone code request", e.Message);
+            if (e.Error == AuthError.TooManyRequests && e.RetryAfterSeconds is { } wait)
+                http.Response.Headers.RetryAfter = wait.ToString(System.Globalization.CultureInfo.InvariantCulture);
             return Error(e.Error);
         }
     }
@@ -311,10 +359,13 @@ public static class IdentityEndpoints
     {
         AuthError.SessionRevoked => Results.Json(new ErrorResponse("invalid_token"), statusCode: StatusCodes.Status401Unauthorized),
         AuthError.ReauthenticationRequired => Results.Json(new ErrorResponse("reauthentication_required"), statusCode: StatusCodes.Status403Forbidden),
+        AuthError.TooManyRequests => Results.Json(new ErrorResponse("too_many_requests"), statusCode: StatusCodes.Status429TooManyRequests),
+        AuthError.TemporarilyUnavailable => Results.Json(new ErrorResponse("temporarily_unavailable"), statusCode: StatusCodes.Status503ServiceUnavailable),
         _ => Results.BadRequest(new ErrorResponse(error switch
         {
             AuthError.InvalidGrant => "invalid_grant",
             AuthError.UnsupportedProvider => "unsupported_provider",
+            AuthError.InvalidPhone => "invalid_phone",
             // The app offers "Restore my account" on this answer (POST /v1/account/restore).
             AuthError.AccountDeletionPending => "account_deletion_pending",
             AuthError.DeletionTooLate => "deletion_in_progress",

@@ -20,7 +20,8 @@ compromised VM exposes no money data.
 
 Left out: **admin** (it needs an OIDC provider), and attachments
 (`Providers__Attachments=Disabled`: there's no object store). Pushes are logged,
-not sent. All services run as `ASPNETCORE_ENVIRONMENT=Staging`, so the
+not sent, and the SMS sign-in code is shown on screen (`Providers__Sms=Fake`,
+`Identity__Phone__EchoCode`). All services run as `ASPNETCORE_ENVIRONMENT=Staging`, so the
 development sign-in and other Development-only shortcuts are off.
 
 About 1.8 GB of memory in use when idle (measured in Docker on ARM64).

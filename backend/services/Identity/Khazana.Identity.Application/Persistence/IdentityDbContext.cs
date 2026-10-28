@@ -15,6 +15,7 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     public DbSet<PasskeyRow> Passkeys => Set<PasskeyRow>();
     public DbSet<RefreshTokenRow> RefreshTokens => Set<RefreshTokenRow>();
     public DbSet<WebAuthnChallengeRow> WebAuthnChallenges => Set<WebAuthnChallengeRow>();
+    public DbSet<PhoneOtpChallengeRow> PhoneOtpChallenges => Set<PhoneOtpChallengeRow>();
     public DbSet<DeletionRequestRow> DeletionRequests => Set<DeletionRequestRow>();
     public DbSet<DeletionConfirmationRow> DeletionConfirmations => Set<DeletionConfirmationRow>();
     public DbSet<SessionRow> Sessions => Set<SessionRow>();
@@ -137,6 +138,25 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             e.Property(x => x.UsedAt).HasColumnName("used_at");
             e.HasIndex(x => x.ExpiresAt);
         });
+
+        modelBuilder.Entity<PhoneOtpChallengeRow>(e =>
+        {
+            e.ToTable("phone_otp_challenges");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.PhoneHash).HasColumnName("phone_hash");
+            e.Property(x => x.PhoneEnc).HasColumnName("phone_enc");
+            e.Property(x => x.CodeHash).HasColumnName("code_hash");
+            e.Property(x => x.Jkt).HasColumnName("dpop_jkt").HasMaxLength(64);
+            e.Property(x => x.Attempts).HasColumnName("attempts");
+            e.Property(x => x.CreatedAt).HasColumnName("created_at");
+            e.Property(x => x.ExpiresAt).HasColumnName("expires_at");
+            e.Property(x => x.UsedAt).HasColumnName("used_at");
+            // The rate limits count recent rows per number and per device key.
+            e.HasIndex(x => new { x.PhoneHash, x.CreatedAt });
+            e.HasIndex(x => new { x.Jkt, x.CreatedAt });
+            e.HasIndex(x => x.CreatedAt);
+        });
     }
 }
 
@@ -208,6 +228,27 @@ public sealed class WebAuthnChallengeRow
     public Guid? UserId { get; set; }
     public required string Kind { get; set; }
     public required string OptionsJson { get; set; }
+    public DateTimeOffset ExpiresAt { get; set; }
+    public DateTimeOffset? UsedAt { get; set; }
+}
+
+/// <summary>
+/// One SMS sign-in code: single use, five minutes, a few tries. The code is
+/// stored only as a keyed hash and the number only encrypted (plus a keyed
+/// hash for the rate limits), so a database copy yields neither. Bound to the
+/// device key that asked, so a code can't be answered from another device.
+/// </summary>
+public sealed class PhoneOtpChallengeRow
+{
+    public Guid Id { get; set; }
+#pragma warning disable CA1819
+    public required byte[] PhoneHash { get; set; }
+    public required byte[] PhoneEnc { get; set; }
+    public required byte[] CodeHash { get; set; }
+#pragma warning restore CA1819
+    public required string Jkt { get; set; }
+    public int Attempts { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
     public DateTimeOffset? UsedAt { get; set; }
 }

@@ -78,6 +78,10 @@ services:
       # Google stays off until GOOGLE_CLIENT_ID is in .env.
       Identity__GoogleClientIds__0: ${GOOGLE_CLIENT_ID:-unset}
       Identity__RequireNonce: "true"
+      # Sign in with a mobile number. No SMS provider yet: the code is logged and
+      # shown on screen as "Demo code". Both settings are refused in Production.
+      Providers__Sms: Fake
+      Identity__Phone__EchoCode: "true"
     secrets: [identity-signing.pem]
 
   marketdata-api:

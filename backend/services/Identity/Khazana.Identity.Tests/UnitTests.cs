@@ -217,6 +217,45 @@ public class StartupGuardTests
     public void Production_starts_with_a_real_key_and_no_dev_sign_in() =>
         Should.NotThrow(() => Register(new(Safe) { ["Identity:SigningKey"] = "Pem", ["Identity:SigningKeyPath"] = WriteKey() }, Environments.Production));
 
+    private static Dictionary<string, string?> ProdBase() =>
+        new(Safe) { ["Identity:SigningKey"] = "Pem", ["Identity:SigningKeyPath"] = WriteKey() };
+
+    [Fact]
+    public void The_fake_SMS_sender_is_refused_in_Production()
+    {
+        var values = ProdBase();
+        values["Providers:Sms"] = "Fake";
+        Should.Throw<InvalidOperationException>(() => Register(values, Environments.Production)).Message.ShouldContain("Providers:Sms=Fake");
+        Should.NotThrow(() => Register(values, Environments.Staging));
+    }
+
+    [Fact]
+    public void Echoing_the_SMS_code_is_refused_in_Production_and_with_a_real_provider()
+    {
+        var values = ProdBase();
+        values["Identity:Phone:EchoCode"] = "true";
+        values["Providers:Sms"] = "Fake";
+        Should.Throw<InvalidOperationException>(() => Register(values, Environments.Production)).Message.ShouldContain("EchoCode");
+        values["Providers:Sms"] = "Msg91";
+        values["Sms:Msg91:AuthKey"] = "k";
+        values["Sms:Msg91:TemplateId"] = "t";
+        Should.Throw<InvalidOperationException>(() => Register(values, Environments.Staging)).Message.ShouldContain("EchoCode");
+    }
+
+    [Fact]
+    public void MSG91_without_its_settings_stops_startup_and_unset_means_off_outside_Development()
+    {
+        var values = ProdBase();
+        values["Providers:Sms"] = "Msg91";
+        Should.Throw<InvalidOperationException>(() => Register(values, Environments.Production)).Message.ShouldContain("Msg91");
+        values["Providers:Sms"] = "Bogus";
+        Should.Throw<InvalidOperationException>(() => Register(values, Environments.Production));
+        values.Remove("Providers:Sms");
+        var services = new ServiceCollection();
+        services.AddIdentityInfrastructure(new ConfigurationBuilder().AddInMemoryCollection(values).Build(), new FakeEnvironment(Environments.Production));
+        services.ShouldNotContain(d => d.ServiceType == typeof(ISmsSender));
+    }
+
     private static void Register(Dictionary<string, string?> values, string environment) =>
         new ServiceCollection().AddIdentityInfrastructure(
             new ConfigurationBuilder().AddInMemoryCollection(values).Build(), new FakeEnvironment(environment));
@@ -236,4 +275,46 @@ public class StartupGuardTests
         public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
+}
+
+public class PhoneNumberTests
+{
+    private static readonly IReadOnlyList<string> India = ["+91"];
+
+    [Theory]
+    [InlineData("+919876543210", "+919876543210")]
+    [InlineData("+91 98765 43210", "+919876543210")]
+    [InlineData("98765-43210", "+919876543210")]
+    [InlineData("09876543210", "+919876543210")]
+    [InlineData("919876543210", "+919876543210")]
+    public void Indian_mobiles_normalise_to_one_form(string input, string expected) =>
+        PhoneNumbers.Normalize(input, India).ShouldBe(expected);
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("12345")]
+    [InlineData("+911234567890")]
+    [InlineData("+14155550123")]
+    [InlineData("+9198765432101")]
+    [InlineData("+91 98765 4321a")]
+    [InlineData("++919876543210")]
+    [InlineData("91+9876543210")]
+    [InlineData("+0919876543210")]
+    public void Anything_else_is_refused(string input) => PhoneNumbers.Normalize(input, India).ShouldBeNull();
+
+    [Fact]
+    public void Another_country_works_only_when_allowed() =>
+        PhoneNumbers.Normalize("+14155550123", ["+91", "+1"]).ShouldBe("+14155550123");
+
+    [Fact]
+    public void The_log_never_shows_the_whole_number() =>
+        PhoneNumbers.Mask("+919876543210").ShouldBe("+91 ******3210");
+
+    [Theory]
+    [InlineData("123456", true)]
+    [InlineData("12345", false)]
+    [InlineData("1234567", false)]
+    [InlineData("12345a", false)]
+    [InlineData("\u0661\u0662\u0663\u0664\u0665\u0666", false)]
+    public void A_code_is_exactly_six_ascii_digits(string code, bool ok) => PhoneOtpRules.IsWellFormed(code).ShouldBe(ok);
 }

@@ -26,6 +26,15 @@ public enum AuthError
 
     /// <summary>A sensitive action needs a sign-in from the last few minutes.</summary>
     ReauthenticationRequired,
+
+    /// <summary>Not a mobile number we can text.</summary>
+    InvalidPhone,
+
+    /// <summary>Too many texts or tries; see <see cref="AuthFailedException.RetryAfterSeconds"/>.</summary>
+    TooManyRequests,
+
+    /// <summary>The SMS provider could not take the message right now.</summary>
+    TemporarilyUnavailable,
 }
 
 /// <summary>A refused sign-in or refresh. <see cref="Exception.Message"/> is for logs only.</summary>
@@ -36,7 +45,13 @@ public sealed class AuthFailedException : Exception
     public AuthFailedException(string message) : this(AuthError.InvalidRequest, message) { }
     public AuthFailedException(string message, Exception inner) : base(message, inner) => Error = AuthError.InvalidRequest;
 
+    public AuthFailedException(AuthError error, string logMessage, int retryAfterSeconds) : this(error, logMessage) =>
+        RetryAfterSeconds = retryAfterSeconds;
+
     public AuthError Error { get; }
+
+    /// <summary>For <see cref="AuthError.TooManyRequests"/>: when asking again can work.</summary>
+    public int? RetryAfterSeconds { get; }
 }
 
 /// <summary>

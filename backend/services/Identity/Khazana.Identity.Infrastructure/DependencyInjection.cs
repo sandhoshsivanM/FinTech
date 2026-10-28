@@ -30,6 +30,17 @@ public sealed class IdentityOptions
     public bool RequireNonce { get; set; }
 
     public PasskeyOptions Passkeys { get; set; } = new();
+
+    public PhoneOptions Phone { get; set; } = new();
+}
+
+public sealed class PhoneOptions
+{
+    /// <summary>Calling codes that may sign in with a number. India only until a provider and DLT are in place.</summary>
+    public IReadOnlyList<string> AllowedCountryCodes { get; set; } = ["+91"];
+
+    /// <summary>Return the code in the API response, for a demo with no SMS provider. Fake sender only; refused in Production.</summary>
+    public bool EchoCode { get; set; }
 }
 
 public sealed class PasskeyOptions
@@ -99,6 +110,8 @@ public static class DependencyInjection
                 OidcIdTokenVerifier.Apple(options.AppleClientIds, sp.GetRequiredService<TimeProvider>(), options.RequireNonce));
         }
 
+        AddSms(services, configuration, environment, options.Phone);
+
         services.AddSingleton<IMetadataService, NoMetadataService>();
         services.AddSingleton(new Fido2Configuration
         {
@@ -109,6 +122,49 @@ public static class DependencyInjection
         });
         services.AddScoped<IFido2, Fido2>();
         return services;
+    }
+
+    /// <summary>
+    /// Mirrors <c>Providers:Push</c> (ADR 0003). Fake texts nothing and is refused in
+    /// Production; Msg91 stops startup without its settings; Disabled (the default
+    /// outside Development) turns phone sign-in off.
+    /// </summary>
+    private static void AddSms(IServiceCollection services, IConfiguration configuration, IHostEnvironment environment, PhoneOptions phone)
+    {
+        var mode = configuration["Providers:Sms"] ?? (environment.IsDevelopment() ? "Fake" : "Disabled");
+        if (phone.AllowedCountryCodes.Count == 0 || phone.AllowedCountryCodes.Any(c => c.Length < 2 || c[0] != '+' || !c.Skip(1).All(char.IsAsciiDigit)))
+            throw new InvalidOperationException("Identity:Phone:AllowedCountryCodes must be calling codes like +91.");
+        if (phone.EchoCode && environment.IsProduction())
+            throw new InvalidOperationException(
+                "Identity:Phone:EchoCode is not allowed in Production: it hands the SMS code to whoever asks for it.");
+        if (phone.EchoCode && mode != "Fake")
+            throw new InvalidOperationException("Identity:Phone:EchoCode needs Providers:Sms=Fake: a real provider's code must go only to the phone.");
+
+        services.AddSingleton(new PhoneOtpSettings(phone.AllowedCountryCodes, phone.EchoCode));
+        switch (mode)
+        {
+            case "Fake" when environment.IsProduction():
+                throw new InvalidOperationException(
+                    "Providers:Sms=Fake is not allowed in Production: the code is only logged, never texted.");
+            case "Fake":
+                services.AddSingleton<FakeSmsLog>();
+                services.AddSingleton<ISmsSender, LogSmsSender>();
+                break;
+            case "Msg91":
+                var msg91 = new Msg91Options
+                {
+                    AuthKey = configuration["Sms:Msg91:AuthKey"] ?? throw new InvalidOperationException("Sms:Msg91:AuthKey is not set."),
+                    TemplateId = configuration["Sms:Msg91:TemplateId"] ?? throw new InvalidOperationException("Sms:Msg91:TemplateId is not set."),
+                };
+                services.AddHttpClient(nameof(Msg91SmsSender));
+                services.AddSingleton<ISmsSender>(sp =>
+                    new Msg91SmsSender(sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(Msg91SmsSender)), msg91));
+                break;
+            case "Disabled":
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown Providers:Sms '{mode}'. Use Fake, Msg91 or Disabled.");
+        }
     }
 }
 

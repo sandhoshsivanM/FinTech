@@ -39,6 +39,7 @@ builder.Services.AddSingleton(new DeletionSettings(
     builder.Configuration.GetSection("Identity:Deletion:Services").Get<string[]>() ?? ["devices", "sync", "notification", "reporting", "aa", "credit"]));
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<PasskeyService>();
+builder.Services.AddScoped<PhoneOtpService>();
 builder.Services.AddHostedService<DatabaseMigrator>();
 builder.Services.AddHostedService<DeletionOverdueCheck>();
 builder.Services.AddHostedService<ChallengeCleanup>();

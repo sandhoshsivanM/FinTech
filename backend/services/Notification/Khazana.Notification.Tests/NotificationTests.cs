@@ -376,6 +376,23 @@ public sealed class NotificationFlowTests(NotificationHost host)
     }
 
     [Fact]
+    public async Task A_sign_in_triggers_a_visible_alert_on_the_other_devices_only()
+    {
+        var user = Guid.CreateVersion7();
+        var existing = await Register(user);
+        var stranger = await Register(Guid.CreateVersion7());
+        var signedInDevice = Guid.CreateVersion7();
+
+        await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .PublishMessageAndWaitAsync(new UserSignedInV1(user, signedInDevice, "web", DateTimeOffset.UtcNow));
+
+        var alert = SentTo(existing.Token).Single().Message;
+        alert.Kind.ShouldBe(PushKind.NewDevice);
+        alert.Title!.ShouldContain("web browser");
+        SentTo(stranger.Token).ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task A_dead_token_is_forgotten_after_the_provider_rejects_it()
     {
         var user = Guid.CreateVersion7();

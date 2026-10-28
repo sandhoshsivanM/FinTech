@@ -175,6 +175,28 @@
         }
       }
     },
+    "/v1/auth/phone/start": {
+      "post": {
+        "tags": [
+          "IdentityEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/v1/auth/step-up/options": {
       "post": {
         "tags": [
@@ -250,6 +272,22 @@
         },
         "additionalProperties": false
       },
+      "PhoneStartRequest": {
+        "required": [
+          "phone",
+          "platform"
+        ],
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "RefreshRequest": {
         "required": [
           "refresh_token"
@@ -303,7 +341,13 @@
             "format": "uuid"
           },
           "assertion": { },
-          "attestation": { }
+          "attestation": { },
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
         },
         "additionalProperties": false
       }

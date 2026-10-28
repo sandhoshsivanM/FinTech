@@ -150,6 +150,61 @@ namespace Khazana.Identity.Application.Persistence.Migrations
                     b.ToTable("passkeys", "identity");
                 });
 
+            modelBuilder.Entity("Khazana.Identity.Application.Persistence.PhoneOtpChallengeRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<byte[]>("CodeHash")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Jkt")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("dpop_jkt");
+
+                    b.Property<byte[]>("PhoneEnc")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("phone_enc");
+
+                    b.Property<byte[]>("PhoneHash")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("phone_hash");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Jkt", "CreatedAt");
+
+                    b.HasIndex("PhoneHash", "CreatedAt");
+
+                    b.ToTable("phone_otp_challenges", "identity");
+                });
+
             modelBuilder.Entity("Khazana.Identity.Application.Persistence.RefreshTokenRow", b =>
                 {
                     b.Property<Guid>("Id")

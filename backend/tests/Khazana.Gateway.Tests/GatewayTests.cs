@@ -118,6 +118,19 @@ public sealed class GatewayTests : IDisposable
     }
 
     [Fact]
+    public async Task Asking_for_an_SMS_code_has_its_own_limit_apart_from_sign_in()
+    {
+        using var factory = _factory.WithWebHostBuilder(b => b.UseSetting("RateLimits:PhoneOtp:PermitLimit", "1"));
+        using var client = factory.CreateClient();
+        using var first = await client.PostAsync(new Uri("/v1/auth/phone/start", UriKind.Relative), content: null, TestContext.Current.CancellationToken);
+        ((int)first.StatusCode).ShouldBeGreaterThanOrEqualTo(500, "forwarded to the (absent) Identity service");
+        using var second = await client.PostAsync(new Uri("/v1/auth/phone/start", UriKind.Relative), content: null, TestContext.Current.CancellationToken);
+        second.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        using var token = await client.PostAsync(new Uri("/v1/auth/token", UriKind.Relative), content: null, TestContext.Current.CancellationToken);
+        ((int)token.StatusCode).ShouldBeGreaterThanOrEqualTo(500, "the code check is under the ordinary sign-in limit");
+    }
+
+    [Fact]
     public async Task Sign_in_has_its_own_tighter_limit()
     {
         using var client = _factory.CreateClient();

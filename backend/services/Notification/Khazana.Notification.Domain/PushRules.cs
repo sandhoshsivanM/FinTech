@@ -30,6 +30,16 @@ public static class PushContent
         $"A new {PlatformName(platform)} device was added to your Khazana account. If this wasn't you, remove it in Settings, then Devices.",
         "new-device");
 
+    /// <summary>
+    /// Someone signed in (any way: a texted code, a passkey, Google). A SIM-swap
+    /// attacker can sign in with a texted code, so every other device is told.
+    /// </summary>
+    public static PushMessage NewSignIn(string platform) => new(
+        PushKind.NewDevice,
+        $"New sign-in on {PlatformName(platform)}",
+        "Someone signed in to your Khazana account. If this wasn't you, remove that device in Settings, then Devices.",
+        "new-sign-in");
+
     private static string PlatformName(string platform) => platform switch
     {
         "ios" => "iPhone or iPad",

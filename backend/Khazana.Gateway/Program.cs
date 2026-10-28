@@ -74,6 +74,7 @@ builder.Services.AddRateLimiter(o =>
     });
     o.AddPolicy(GatewayPolicies.Public, ctx => PerClientWindow(ctx, "RateLimits:Public", 60));
     o.AddPolicy(GatewayPolicies.Auth, ctx => PerClientWindow(ctx, "RateLimits:Auth", 20));
+    o.AddPolicy(GatewayPolicies.PhoneOtp, ctx => PerClientWindow(ctx, "RateLimits:PhoneOtp", 10));
     o.AddPolicy(GatewayPolicies.User, ctx => PerClientWindow(ctx, "RateLimits:User", 120, UserBucket(ctx)));
     o.AddPolicy(GatewayPolicies.Costly, ctx => PerClientWindow(ctx, "RateLimits:Costly", 10, UserBucket(ctx)));
 });

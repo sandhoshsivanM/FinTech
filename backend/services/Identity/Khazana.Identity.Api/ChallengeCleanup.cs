@@ -3,7 +3,7 @@ using Khazana.Identity.Application;
 namespace Khazana.Identity.Api;
 
 /// <summary>
-/// Hourly: deletes expired WebAuthn challenges. Anyone may ask for sign-in
+/// Hourly: deletes expired WebAuthn challenges and old SMS codes. Anyone may ask for sign-in
 /// options, so without this the table only ever grows. Waits for start, never throws.
 /// </summary>
 public sealed partial class ChallengeCleanup(IServiceScopeFactory scopes, IHostApplicationLifetime lifetime, ILogger<ChallengeCleanup> log)
@@ -32,6 +32,7 @@ public sealed partial class ChallengeCleanup(IServiceScopeFactory scopes, IHostA
             {
                 await using var scope = scopes.CreateAsyncScope();
                 await scope.ServiceProvider.GetRequiredService<PasskeyService>().DeleteExpiredChallengesAsync(stoppingToken).ConfigureAwait(false);
+                await scope.ServiceProvider.GetRequiredService<PhoneOtpService>().DeleteOldAsync(stoppingToken).ConfigureAwait(false);
             }
 #pragma warning disable CA1031 // housekeeping must never take the service down
             catch (Exception e)
