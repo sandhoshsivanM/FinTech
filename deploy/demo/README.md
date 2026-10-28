@@ -16,7 +16,8 @@ compromised VM exposes no money data.
 | caddy | HTTPS (Let's Encrypt, automatic) → gateway | **80/443 only** |
 | gateway | routes, CORS for the web app, rate limits | no |
 | identity, devices, sync, notification, catalog, marketdata, reporting | the services | no |
-| postgres (7 databases), rabbitmq | storage and messaging | no |
+| aa, credit | bank & investment linking (sample data, or Setu's AA sandbox), credit report (sample) | no |
+| postgres (9 databases), rabbitmq | storage and messaging | no |
 
 Left out: **admin** (it needs an OIDC provider), and attachments
 (`Providers__Attachments=Disabled`: there's no object store). Pushes are logged,
@@ -62,9 +63,26 @@ deploy/demo/up.sh                 # git pull, rebuild what changed, restart, smo
 
 `secrets.sh` writes `deploy/demo/.env` (passwords and keys, mode 600) and
 `deploy/demo/secrets/identity-signing.pem`. Both are git-ignored and never
-leave the VM. It refuses to run twice: new keys would sign everyone out and
-make Identity's encrypted fields unreadable. Delete `.env` on purpose to start
+leave the VM. It never replaces a secret: new keys would sign everyone out and
+make Identity's encrypted fields unreadable. On an existing `.env` it only
+appends secrets added since it was first run (`AA_CALLBACK_SECRET`, and the
+`AA_PROVIDER` / `SETU_*` block), so after pulling this change run
+`deploy/demo/secrets.sh` once, then `up.sh`. Delete `.env` on purpose to start
 over (and `docker compose ... down -v` to wipe the data with it).
+
+## Bank & investment linking
+
+`aa-api` runs the sample Account Aggregator (`AA_PROVIDER=Fake`): consents
+approve at once and every fetch returns the same realistic sample banks,
+deposits, funds, shares, NPS/EPF/PPF and policies. In the web app: **Settings →
+Link bank & investments**. The data arrives sealed to a key only your devices
+hold, and is imported on the device.
+
+To try Setu's real AA consent screen instead (free sandbox account), follow
+`backend/README.md` → "Account Aggregator: Setu sandbox", put the three Setu
+values in `.env`, set `AA_PROVIDER=Setu`, and run `up.sh` (or
+`docker compose ... up -d aa-api`). Setu's sandbox serves mock data only;
+the adapter refuses the sandbox in Production.
 
 ## Checks
 

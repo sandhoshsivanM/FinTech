@@ -67,7 +67,7 @@ public static class DependencyInjection
             throw new InvalidOperationException($"{SetuAaOptions.Section}:TokenUrl must be an https URL.");
         if (options.Auth is not ("Token" or "Headers"))
             throw new InvalidOperationException($"{SetuAaOptions.Section}:Auth must be Token or Headers.");
-        if (options.RedirectUrl is { Length: > 0 } back && !IsHttps(back) && !environment.IsDevelopment())
+        if (options.RedirectUrl is { Length: > 0 } back && !IsHttps(back) && !IsLocal(back))
             throw new InvalidOperationException($"{SetuAaOptions.Section}:RedirectUrl must be an https URL.");
         if (environment.IsProduction() && new Uri(options.BaseUrl).Host.Contains("sandbox", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException($"{SetuAaOptions.Section}:BaseUrl is Setu's sandbox, which is not allowed in Production: it would serve mock bank data as real.");
@@ -82,6 +82,10 @@ public static class DependencyInjection
         });
         services.AddSingleton<IBankDataProvider, SetuBankDataProvider>();
     }
+
+    /// <summary>A web app on this machine (the demo's Mac tunnel): plain http never leaves it.</summary>
+    private static bool IsLocal(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttp && u.IsLoopback;
 
     private static bool IsHttps(string? url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps;
