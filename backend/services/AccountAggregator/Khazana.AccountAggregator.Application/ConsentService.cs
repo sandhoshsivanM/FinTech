@@ -54,7 +54,11 @@ public sealed record ConsentView(
     DateTimeOffset? ActivatedAt,
     DateTimeOffset? LastFetchedAt,
     DateTimeOffset? NextFetchAt,
-    Uri? RedirectUrl);
+    Uri? RedirectUrl,
+    string Provider);
+
+/// <summary>Which partner this deployment runs, so the app knows whether to redirect, ask for a handle, or label sample data.</summary>
+public sealed record ProviderView(string Provider, bool Sample, bool NeedsAaHandle, IReadOnlyList<string> FiTypes);
 
 /// <param name="Started">False when an existing fetch was joined or the data is fresh enough.</param>
 public sealed record FetchView(Guid? SagaId, string State, bool Started, int Attempt, string? ErrorCode, DateTimeOffset? LastFetchedAt);
@@ -71,7 +75,7 @@ public sealed class ConsentService(IDbContextOutbox<AaDbContext> outbox, IBankDa
     /// <summary>Open (pending, active or paused) consents per user: enough for every bank, not for abuse.</summary>
     public const int MaxOpenConsents = 20;
 
-    public const int MaxAaHandleLength = 64;
+    public const int MaxAaHandleLength = ConsentRules.MaxAaHandleLength;
 
     /// <summary>Payloads per inbox call; the app acks and calls again for the rest.</summary>
     public const int InboxPage = 10;
@@ -86,6 +90,8 @@ public sealed class ConsentService(IDbContextOutbox<AaDbContext> outbox, IBankDa
         var now = clock.UtcNow;
         var today = DateOnly.FromDateTime(now.UtcDateTime);
         var fiTypes = ConsentRules.CleanFiTypes(request.FiTypes) ?? throw new AaException(AaError.BadRequest, "Unknown, duplicate or missing FI types.");
+        if (!fiTypes.All(provider.SupportedFiTypes.Contains))
+            throw new AaException(AaError.BadRequest, "FI types this partner can't deliver.");
         if (request.DeliveryKey is null || !DeliveryBox.IsValidPublicKey(request.DeliveryKey))
             throw new AaException(AaError.BadRequest, "Delivery key must be 32 non-zero bytes.");
         if (!ConsentRules.TryParseFrequency(request.Frequency, out var frequency))
@@ -95,8 +101,10 @@ public sealed class ConsentService(IDbContextOutbox<AaDbContext> outbox, IBankDa
         var to = request.DataTo ?? today;
         var from = request.DataFrom ?? today.AddDays(-ConsentRules.DefaultHistoryDays);
         if (!ConsentRules.IsValidRange(from, to, today)) throw new AaException(AaError.BadRequest, "Data range out of bounds.");
-        if (request.AaHandle is { } handle && (handle.Length > MaxAaHandleLength || handle.Any(char.IsControl) || !handle.Contains('@', StringComparison.Ordinal)))
+        if (request.AaHandle is { } handle && !ConsentRules.IsValidAaHandle(handle))
             throw new AaException(AaError.BadRequest, "AA handle malformed.");
+        if (request.AaHandle is null && provider.NeedsAaHandle)
+            throw new AaException(AaError.BadRequest, "This partner needs the user's AA handle or mobile number.");
 
         var open = await Db.Consents.CountAsync(c => c.UserId == userId &&
             (c.Status == ConsentStatus.Pending || c.Status == ConsentStatus.Active || c.Status == ConsentStatus.Paused), ct).ConfigureAwait(false);
@@ -137,6 +145,9 @@ public sealed class ConsentService(IDbContextOutbox<AaDbContext> outbox, IBankDa
         await Db.SaveChangesAsync(ct).ConfigureAwait(false);
         return View(row);
     }
+
+    public ProviderView Provider() =>
+        new(provider.Name, provider.IsSample, provider.NeedsAaHandle, [.. provider.SupportedFiTypes.Order(StringComparer.Ordinal)]);
 
     public async Task<IReadOnlyList<ConsentView>> ListAsync(Guid userId, CancellationToken ct)
     {
@@ -267,6 +278,19 @@ public sealed class ConsentService(IDbContextOutbox<AaDbContext> outbox, IBankDa
             case AaCallbackKind.ConsentStatus when callback.Status is { } status:
                 await ApplyAndSaveAsync(consent, status, ct).ConfigureAwait(false);
                 break;
+            case AaCallbackKind.ConsentStatus when consent.Provider == provider.Name:
+                // An unsigned hint: believe only what the partner's authenticated API says.
+                ConsentStatus current;
+                try
+                {
+                    current = await provider.GetConsentStatusAsync(consent.Handle, ct).ConfigureAwait(false);
+                }
+                catch (BankDataProviderException)
+                {
+                    return;
+                }
+                await ApplyAndSaveAsync(consent, current, ct).ConfigureAwait(false);
+                break;
             case AaCallbackKind.DataReady when callback.SessionId is { } session:
                 var saga = await Db.FetchSagas.AsNoTracking().FirstOrDefaultAsync(
                     s => s.ConsentId == consent.Id && s.SessionId == session && s.State == FetchState.Fetching, ct).ConfigureAwait(false);
@@ -300,7 +324,8 @@ public sealed class ConsentService(IDbContextOutbox<AaDbContext> outbox, IBankDa
     private static ConsentView View(ConsentRow c) => new(
         c.Id, ConsentRules.Wire(c.Status), c.FiTypes, ConsentRules.Wire(c.Frequency), c.DataFrom, c.DataTo, c.ExpiresAt,
         c.CreatedAt, c.ActivatedAt, c.LastFetchedAt, c.NextFetchAt,
-        c.Status == ConsentStatus.Pending && c.RedirectUrl is not null ? new Uri(c.RedirectUrl) : null);
+        c.Status == ConsentStatus.Pending && c.RedirectUrl is not null ? new Uri(c.RedirectUrl) : null,
+        c.Provider);
 
     private static FetchView SagaView(FetchSagaRow s, bool started, DateTimeOffset? lastFetchedAt) =>
         new(s.Id, FetchSagaRules.Wire(s.State), started, s.Attempt, s.ErrorCode, lastFetchedAt);

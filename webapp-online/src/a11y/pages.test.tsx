@@ -472,6 +472,7 @@ describe('settings', () => {
     expect(byText(r.container, 'Sign out')).toBeTruthy();
     expect(byText(r.container, 'Export')).toBeTruthy();
     expect(r.container.querySelector('a[href="/settings/devices"]')).not.toBeNull();
+    expect(r.container.querySelector('a[href="/link"]')?.textContent).toContain('Link bank & investments');
     expect(await violations(r.container)).toEqual([]);
   });
 });

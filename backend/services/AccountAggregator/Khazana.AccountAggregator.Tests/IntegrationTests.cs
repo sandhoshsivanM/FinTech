@@ -64,7 +64,15 @@ public sealed class ScriptedProvider(FakeBankDataProvider inner) : IBankDataProv
         return FetchFailures.TryDequeue(out var failure) ? throw failure : inner.FetchFiDataAsync(context, ct);
     }
 
-    public AaCallback? VerifyCallback(byte[] body, Func<string, string?> header, DateTimeOffset now) => inner.VerifyCallback(body, header, now);
+    /// <summary>True: act like a partner whose callbacks are unsigned hints (Setu), returning no status.</summary>
+    public bool Hints { get; set; }
+
+    public AaCallback? VerifyCallback(byte[] body, Func<string, string?> header, DateTimeOffset now)
+    {
+        if (!Hints) return inner.VerifyCallback(body, header, now);
+        using var doc = JsonDocument.Parse(body);
+        return new AaCallback(AaCallbackKind.ConsentStatus, doc.RootElement.GetProperty("consent_handle").GetString()!, null, null);
+    }
 }
 
 public sealed class AaHost : IAsyncLifetime
@@ -411,6 +419,43 @@ public sealed class ConsentFlowTests(AaHost host)
 
         var unknown = Encoding.UTF8.GetBytes("""{"type":"consent_status","consent_handle":"fake-nobody","status":"ACTIVE"}""");
         (await PostCallback(client, unknown)).StatusCode.ShouldBe(HttpStatusCode.NoContent, "an unknown handle reveals nothing");
+    }
+
+    [Fact]
+    public async Task An_unsigned_hint_is_never_believed_the_status_is_read_back_from_the_partner()
+    {
+        using var app = new App(host);
+        var consent = await app.CreateConsent();
+        var handle = await HandleOf(consent);
+        // The body claims a rejection; the partner's own API (the sample: approve on first check) says active.
+        var body = Encoding.UTF8.GetBytes($$"""{"type":"consent_status","consent_handle":"{{handle}}","status":"REJECTED"}""");
+        using var client = host.Factory.CreateClient();
+        host.Provider.Hints = true;
+        try
+        {
+            await Tracked(async () => (await PostCallback(client, body, signature: new string('0', 64))).StatusCode.ShouldBe(HttpStatusCode.NoContent));
+        }
+        finally
+        {
+            host.Provider.Hints = false;
+        }
+        await using var scope = host.Factory.Services.CreateAsyncScope();
+        (await (await Db(scope)).Consents.SingleAsync(c => c.Id == consent, Ct)).Status.ShouldBe(ConsentStatus.Active);
+    }
+
+    [Fact]
+    public async Task The_app_can_ask_which_partner_runs_and_each_consent_names_its_partner()
+    {
+        using var app = new App(host);
+        var info = await app.Ok(HttpMethod.Get, "/v1/aa/provider");
+        info.GetProperty("provider").GetString().ShouldBe("fake");
+        info.GetProperty("needs_aa_handle").GetBoolean().ShouldBeFalse();
+        info.GetProperty("fi_types").EnumerateArray().Select(e => e.GetString()).ShouldContain(FiTypes.Epf);
+        var id = await app.CreateConsent([FiTypes.Deposit]);
+        (await app.Ok(HttpMethod.Get, "/v1/aa/consents")).EnumerateArray().Single(c => c.GetProperty("id").GetGuid() == id)
+            .GetProperty("provider").GetString().ShouldBe("fake");
+        await app.Ok(HttpMethod.Post, "/v1/aa/consents", new { fi_types = new[] { FiTypes.Deposit }, delivery_key = app.Delivery.Public, aa_handle = "not a handle" },
+            HttpStatusCode.BadRequest);
     }
 
     [Fact]

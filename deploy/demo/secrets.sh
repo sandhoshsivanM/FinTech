@@ -5,14 +5,46 @@
 #   deploy/demo/secrets.sh                # API host from this VM's public IP
 #   deploy/demo/secrets.sh api.example.in # or a name you own
 #
-# It refuses to run twice: rotating these keys would invalidate every session
-# and every encrypted Identity field. Delete .env deliberately to start over.
+# It never replaces a secret: rotating these keys would invalidate every
+# session and every encrypted Identity field. Run again on an existing .env, it
+# only appends secrets added since (e.g. AA_CALLBACK_SECRET). Delete .env
+# deliberately to start over.
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# 48+ random characters, letters and digits only (safe in connection strings and env files).
+rand() { openssl rand -base64 64 | tr -dc 'A-Za-z0-9' | head -c "${1:-48}"; }
+
+# Secrets added after a demo was first set up. An existing .env gets only the
+# ones it lacks, appended; nothing already there is changed.
+added=0
+add_missing() {
+  if ! grep -q '^AA_CALLBACK_SECRET=' .env; then
+    printf '# Signs the sample Account Aggregator callbacks (added %s).\nAA_CALLBACK_SECRET=%s\n' "$(date -u +%Y-%m-%d)" "$(rand 64)" >> .env
+    added=1
+  fi
+  if ! grep -q '^AA_PROVIDER=' .env; then
+    cat >> .env <<'SETU'
+# Bank linking: Fake (sample data) or Setu (Setu's AA sandbox; needs the three
+# values below from bridge.setu.co, see backend/README.md).
+AA_PROVIDER=Fake
+SETU_CLIENT_ID=
+SETU_CLIENT_SECRET=
+SETU_PRODUCT_INSTANCE_ID=
+SETU
+    added=1
+  fi
+}
+
 if [[ -e .env ]]; then
-  echo "secrets.sh: .env already exists; refusing to overwrite it." >&2
-  exit 1
+  umask 077
+  add_missing
+  if [[ $added == 0 ]]; then
+    echo "secrets.sh: .env already exists and has every secret; nothing changed." >&2
+    exit 1
+  fi
+  echo "secrets.sh: added the missing new secrets to the existing .env; nothing else changed."
+  exit 0
 fi
 
 host="${1:-}"
@@ -20,9 +52,6 @@ if [[ -z "$host" ]]; then
   ip=$(curl -fsS https://api.ipify.org)
   host="api.${ip}.sslip.io"
 fi
-
-# 48+ random characters, letters and digits only (safe in connection strings and env files).
-rand() { openssl rand -base64 64 | tr -dc 'A-Za-z0-9' | head -c "${1:-48}"; }
 
 umask 077
 cat > .env <<ENV
@@ -40,6 +69,7 @@ REPORTING_AUDIT_KEY=$(rand 64)
 CATALOG_INTERNAL_KEY=$(rand 64)
 CATALOG_SIGNING_SEED=$(openssl rand -base64 32)
 ENV
+add_missing
 
 # Identity's ES256 token-signing key (PKCS#8 PEM, P-256).
 mkdir -p secrets

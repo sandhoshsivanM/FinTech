@@ -89,3 +89,37 @@ services are consent-driven by law (RBI AA framework, DPDP Act 2023).
 - **Large payloads:** `inbox_payloads` holds the sealed bytes, up to 8 MB per
   fetch. The design's `s3_key` option for larger payloads comes with
   `IBlobStore`.
+
+## Amendment (2026-10-28): the web client, and Setu's sandbox
+
+- **Delivery key ring (client).** The web app makes the delivery key pair on
+  the device and keeps the private half as an encrypted sync record
+  (`aa_delivery_keys`, AES-GCM under the data key, record id = hash of the
+  public key). Every key ever made is kept: two devices that each made one
+  before syncing would otherwise overwrite each other and strand a consent.
+  New consents use the oldest key; a payload is opened by trying each key.
+  The server only ever receives the public key, with each consent.
+- **Import on the device.** The app opens a payload, checks the envelope's
+  `payload_id`, `kind` and `consent_id` against the inbox entry, writes the
+  mapped entities, and only then acks. A payload no key on the device opens
+  is left on the server. What each consent imported is kept as an encrypted
+  `aa_links` record, so revoking can also delete it (the user chooses).
+- **`GET /v1/aa/provider`** tells the app which partner runs (to redirect for
+  approval, ask for the user's mobile number, or label sample data), and
+  each consent names its provider. Consents asking for FI types the partner
+  can't deliver are refused.
+- **Setu adapter** (`Providers:AccountAggregator=Setu`, sandbox by default).
+  Setu is the FIU-side gateway: it handles the ReBIT consent artefact, the
+  ECDH exchange with the FIP and the decryption, and returns FI data as JSON
+  over its authenticated API. Plaintext is in memory only, as with the sample.
+  - Trade-off: with Setu, Setu (a regulated FIU technology service provider)
+    sees the decrypted data before we seal it. Running our own FIU with the
+    key in KMS (the Finvu/ReBIT route above) avoids that, at the cost of
+    Sahamati certification. Chosen for the sandbox because it is free and
+    testable now; revisit before production.
+  - Setu's notifications are not signed in its docs, so they are **hints**:
+    a consent notification makes the service re-read the status over Setu's
+    authenticated API (`AaCallback.Status` null), and a session notification
+    only makes the saga collect sooner. A forged callback changes no state.
+  - Startup refuses Setu without its credentials, any non-https URL (except
+    a loopback redirect), and Setu's sandbox in Production.

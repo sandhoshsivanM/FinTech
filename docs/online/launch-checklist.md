@@ -72,7 +72,7 @@
 
 | # | Item | Needed for a free sync launch | Cost | Lead time | Decision | Status today |
 |---|---|---|---|---|---|---|
-| R1 | Account Aggregator: regulated FIU partner agreement, sandbox, certification by a Sahamati-empanelled certifier, and the partner's security audit (design 14.5) | No (bank data is Phase 4) | **Quote needed.** The design says so. The Finvu sandbox token is needed by Nov 2027 (design 15.3). | Months | Partner choice. | Not started. There is no AA service under `backend/services` on this base. |
+| R1 | Account Aggregator: regulated FIU partner agreement, sandbox, certification by a Sahamati-empanelled certifier, and the partner's security audit (design 14.5) | No (bank data is Phase 4) | **Quote needed.** The design says so. The Finvu sandbox token is needed by Nov 2027 (design 15.3). | Months | Partner choice. | The AA service runs with a sample AA and a **Setu sandbox** adapter (`Providers:AccountAggregator=Setu`, free Bridge account; see backend/README.md "Account Aggregator: Setu sandbox"). Production needs Setu's production FIU onboarding (KYC, Sahamati), production credentials and `Providers__Setu__BaseUrl=https://fiu.setu.co`. |
 | R2 | Credit bureau aggregator agreement, eligibility checks and consent records (design 14.5) | No (Phase 5) | **Quote needed.** Credit pulls cost ₹0.6 to 6 L per year at 1,000 users (design 13.2). | Months | Business decision. | Not started. |
 | R3 | Stock price data licence (design 13.2) | Conditional: needed when prices are shown to other people | ₹1 to 5 L per year (design 13.2) | Weeks | Provider. | The offline app uses public feeds. Online does not show prices yet. |
 | R4 | Google OAuth consent screen and brand verification for Google sign-in | Conditional: only if Google sign-in ships | Free for basic scopes. Restricted scopes (Gmail) need CASA: ₹0.5 to 4 L per year (design 13.1, 13.2). Gmail is not in the online launch. | Days to weeks | Scopes requested. | Web Google button code exists; the GCP OAuth client is not confirmed. |
@@ -108,45 +108,46 @@ Start the long lead times first. The design's own dates (section 15.3) are used 
 2. **A2** Confirm the Apple team ID. Fix the committed one if it is stale.
 3. **A1** Confirm the Play Console account. If it is new, start identity verification now, because the 12-tester closed test follows it.
 4. **B1, B2** Choose the name and domain (decisions 1 and 2), and register the domain. Passkeys, CORS, the store URLs and the Android fingerprint all depend on it.
-5. Decide the sign-in methods (decision 4), the free-model confirmation (decision 5) and the reviewer access path (decision 9).
+5. **R1 (sandbox only, free)** Create a Setu Bridge account and an AA data product, and put its three credentials in `deploy/demo/.env` (`AA_PROVIDER=Setu`, `SETU_CLIENT_ID`, `SETU_CLIENT_SECRET`, `SETU_PRODUCT_INSTANCE_ID`) to test the real consent screen. Test login on Setu's screen: your mobile number, then Setu FIP-2 with OTP `123456`.
+6. Decide the sign-in methods (decision 4), the free-model confirmation (decision 5) and the reviewer access path (decision 9).
 
 ### Before the P2 release (by September 2027)
 
-6. **L1** Company, if partners or organisation accounts are wanted. Design target: start February 2027.
-7. **L2, L3** Privacy policy, terms, consent texts and the DPDP grievance contact. Design target: start March 2027. Needed before any other person's data is held.
-8. **S1, S2, S3** Book the cryptography review, the VAPT and the MASVS pentest. Design target: June 2027. They cover the P2 release and must be re-tested before the online launch.
-9. **C1, C2, C3** AWS staging, with KMS signing keys. Open the account only when staging is needed.
-10. **S7** CI security scanning (SBOM, CodeQL or Semgrep, secret scanning).
+7. **L1** Company, if partners or organisation accounts are wanted. Design target: start February 2027.
+8. **L2, L3** Privacy policy, terms, consent texts and the DPDP grievance contact. Design target: start March 2027. Needed before any other person's data is held.
+9. **S1, S2, S3** Book the cryptography review, the VAPT and the MASVS pentest. Design target: June 2027. They cover the P2 release and must be re-tested before the online launch.
+10. **C1, C2, C3** AWS staging, with KMS signing keys. Open the account only when staging is needed.
+11. **S7** CI security scanning (SBOM, CodeQL or Semgrep, secret scanning).
 
 ### Before the first real user (any real data, including friends)
 
-11. **L4** CERT-In contact and incident plan, and log retention in India.
-12. **L6** Account deletion, in the app and on the web.
-13. **B3, B4, B5, B6** Passkey relying-party setup, production CORS, Netlify production site, TLS.
-14. **B7** Certificate pins and the rotation plan (if pinning ships).
-15. **P1, P2** Push, if decision 4 or the new-device alert needs it.
-16. **D3** Error tracking decision and provider (changes the data-safety answers).
+12. **L4** CERT-In contact and incident plan, and log retention in India.
+13. **L6** Account deletion, in the app and on the web.
+14. **B3, B4, B5, B6** Passkey relying-party setup, production CORS, Netlify production site, TLS.
+15. **B7** Certificate pins and the rotation plan (if pinning ships).
+16. **P1, P2** Push, if decision 4 or the new-device alert needs it.
+17. **D3** Error tracking decision and provider (changes the data-safety answers).
 
 ### Before store submission
 
-17. **A1** Closed test: 12 testers, 14 days, on the production track's requirements. This is the longest pole. Start it as soon as the Play account is verified.
-18. **A2, A4** iOS signing, entitlements, Sign in with Apple and Associated Domains.
-19. **S8** Resolve the web dependency findings (the `next` upgrade decision).
-20. **S4** Decide on RASP after the pentest result.
-21. Data-safety and privacy-label answers checked against the release build (`docs/online/store-listing-draft.md`, section 8).
+18. **A1** Closed test: 12 testers, 14 days, on the production track's requirements. This is the longest pole. Start it as soon as the Play account is verified.
+19. **A2, A4** iOS signing, entitlements, Sign in with Apple and Associated Domains.
+20. **S8** Resolve the web dependency findings (the `next` upgrade decision).
+21. **S4** Decide on RASP after the pentest result.
+22. Data-safety and privacy-label answers checked against the release build (`docs/online/store-listing-draft.md`, section 8).
 
 ### Before the online launch (Phase 6, October to December 2028)
 
-22. **S2, S3** Re-test: the VAPT and the MASVS pentest, on the release build.
-23. **S5** Private bug bounty live.
-24. **S1** Cryptography review findings closed.
+23. **S2, S3** Re-test: the VAPT and the MASVS pentest, on the release build.
+24. **S5** Private bug bounty live.
+25. **S1** Cryptography review findings closed.
 
 ### After launch
 
-25. **S2** Yearly VAPT (₹2 to 8 L per year).
-26. **S6** ISO/IEC 27001, within 12 to 18 months of launch (quote needed).
-27. **L5** Accountant and legal, yearly.
-28. **R1, R2, R3** Only if the bank-data, credit or prices features ship. Each is a separate decision and a separate cost.
+26. **S2** Yearly VAPT (₹2 to 8 L per year).
+27. **S6** ISO/IEC 27001, within 12 to 18 months of launch (quote needed).
+28. **L5** Accountant and legal, yearly.
+29. **R1, R2, R3** Only if the bank-data, credit or prices features ship. Each is a separate decision and a separate cost.
 
 ## 4. Rough annual and one-time costs
 

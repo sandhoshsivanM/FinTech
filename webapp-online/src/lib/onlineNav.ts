@@ -25,4 +25,5 @@ export const ONLINE_TITLES: Record<string, string> = {
   ...TITLES,
   '/cards': 'Cards',
   '/settings': 'Settings',
+  '/link': 'Link bank & investments',
 };

@@ -1,0 +1,8 @@
+{
+  "data": { "status": "ACTIVE", "detail": { "accounts": [ { "maskedAccNumber": "XXXXXXXX6053", "accType": "SAVINGS", "fipId": "setu-fip", "fiType": "DEPOSIT", "linkRefNumber": "e4b27e62-e41a-42c0-a5b3-0a5542b25ddf" } ] } },
+  "timestamp": "TS",
+  "success": true,
+  "type": "CONSENT_STATUS_UPDATE",
+  "error": null,
+  "consentId": "c16cc10e-eae3-4277-96e1-64c0ed21c53e"
+}

@@ -135,10 +135,39 @@ services:
       Catalog__InternalKey: ${CATALOG_INTERNAL_KEY}
       Catalog__SigningSeed: ${CATALOG_SIGNING_SEED}
 
+  # Bank and investment linking (ADR 0008). Sample data by default (Fake),
+  # or Setu's AA sandbox when AA_PROVIDER=Setu and the SETU_* values are in
+  # .env (backend/README.md, "Account Aggregator: Setu sandbox"). Staging, so
+  # the sample adapter is allowed; Production refuses it at startup.
+  aa-api:
+    <<: *service
+    build: { <<: *build, args: { PROJECT: services/AccountAggregator/Khazana.AccountAggregator.Api, ASSEMBLY: Khazana.AccountAggregator.Api } }
+    environment:
+      <<: [*env, *token-checks]
+      ConnectionStrings__aa: Host=postgres;Database=aa;Username=khazana;Password=${POSTGRES_PASSWORD}
+      Providers__AccountAggregator: ${AA_PROVIDER:-Fake}
+      # Signs the sample AA's callbacks. Required: secrets.sh writes it.
+      Providers__FakeAa__CallbackSecret: ${AA_CALLBACK_SECRET:?AA_CALLBACK_SECRET is not set; run deploy/demo/secrets.sh to add it}
+      Providers__Setu__BaseUrl: ${SETU_BASE_URL:-https://fiu-sandbox.setu.co}
+      Providers__Setu__ClientId: ${SETU_CLIENT_ID:-}
+      Providers__Setu__ClientSecret: ${SETU_CLIENT_SECRET:-}
+      Providers__Setu__ProductInstanceId: ${SETU_PRODUCT_INSTANCE_ID:-}
+      Providers__Setu__Auth: ${SETU_AUTH:-Token}
+      Providers__Setu__RedirectUrl: ${WEB_ORIGIN}/link/
+
+  credit-api:
+    <<: *service
+    build: { <<: *build, args: { PROJECT: services/Credit/Khazana.Credit.Api, ASSEMBLY: Khazana.Credit.Api } }
+    environment:
+      <<: [*env, *token-checks]
+      ConnectionStrings__credit: Host=postgres;Database=credit;Username=khazana;Password=${POSTGRES_PASSWORD}
+      # Sample credit report only: no bureau adapter is built.
+      Providers__Credit: Fake
+
   gateway:
     <<: *service
     build: { <<: *build, args: { PROJECT: Khazana.Gateway, ASSEMBLY: Khazana.Gateway } }
-    depends_on: [identity-api, marketdata-api, devices-api, sync-api, notification-api, catalog-api]
+    depends_on: [identity-api, marketdata-api, devices-api, sync-api, notification-api, catalog-api, aa-api, credit-api]
     environment:
       ASPNETCORE_ENVIRONMENT: Staging
       # Routes name http://identity-api and so on: the compose service names, port 80.

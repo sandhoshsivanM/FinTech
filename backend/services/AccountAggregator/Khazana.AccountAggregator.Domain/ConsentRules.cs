@@ -112,6 +112,21 @@ public static class ConsentRules
     public static bool IsValidRange(DateOnly from, DateOnly to, DateOnly today) =>
         from <= to && to <= today && from >= today.AddDays(-MaxHistoryDays);
 
+    public const int MaxAaHandleLength = 64;
+
+    /// <summary>
+    /// The user's AA id: <c>name@aa</c> (e.g. <c>9876543210@onemoney</c>), or a
+    /// bare 10-digit Indian mobile number for gateways that pick the AA.
+    /// </summary>
+    public static bool IsValidAaHandle(string handle)
+    {
+        ArgumentNullException.ThrowIfNull(handle);
+        if (handle.Length is 0 or > MaxAaHandleLength || handle.Any(c => char.IsControl(c) || char.IsWhiteSpace(c))) return false;
+        if (handle.Length == 10 && handle.All(char.IsAsciiDigit) && handle[0] is >= '6' and <= '9') return true;
+        var at = handle.IndexOf('@', StringComparison.Ordinal);
+        return at > 0 && at < handle.Length - 1 && handle.IndexOf('@', at + 1) < 0;
+    }
+
     /// <summary>The one gate every fetch passes: an active consent that hasn't expired.</summary>
     public static bool AllowsFetch(ConsentStatus status, DateTimeOffset expiresAt, DateTimeOffset now) =>
         status == ConsentStatus.Active && expiresAt > now;

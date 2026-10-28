@@ -18,6 +18,15 @@ public interface IBankDataProvider
     /// <summary>Stored with each consent, so a consent is only ever handled by the adapter that made it.</summary>
     string Name { get; }
 
+    /// <summary>True for the sample adapter: the app labels what it imports as sample data.</summary>
+    bool IsSample => false;
+
+    /// <summary>The FI types this adapter can deliver. A consent asking for others is refused.</summary>
+    IReadOnlySet<string> SupportedFiTypes => FiTypes.All;
+
+    /// <summary>True when creating a consent needs the user's AA handle or mobile number.</summary>
+    bool NeedsAaHandle => false;
+
     /// <summary>Creates the consent request. The user approves it at their AA, then the partner calls back.</summary>
     Task<ConsentCreated> CreateConsentAsync(ConsentRequest request, CancellationToken ct);
 
@@ -82,6 +91,13 @@ public enum AaCallbackKind
     DataReady,
 }
 
+/// <param name="Status">
+/// The new consent status, from a partner whose callbacks are signed. Null on a
+/// <see cref="AaCallbackKind.ConsentStatus"/> callback means "something
+/// changed, ask me": the callback is an unauthenticated hint, and the service
+/// re-reads the status from the partner over its authenticated API instead of
+/// believing the body.
+/// </param>
 public sealed record AaCallback(AaCallbackKind Kind, string ConsentHandle, ConsentStatus? Status, string? SessionId);
 
 /// <summary>The partner refused or failed. Transient errors are retried by the saga; the rest fail it.</summary>

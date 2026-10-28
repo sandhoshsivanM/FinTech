@@ -17,6 +17,7 @@ public static class AaEndpoints
     public static void MapAaEndpoints(this IEndpointRouteBuilder app)
     {
         var aa = app.MapGroup("/v1/aa").RequireAuthorization().AddEndpointFilter(MapErrors);
+        aa.MapGet("/provider", Provider);
         aa.MapPost("/consents", Create);
         aa.MapGet("/consents", List);
         aa.MapGet("/consents/{id:guid}", Get);
@@ -29,6 +30,9 @@ public static class AaEndpoints
         // Signed partner callbacks: no user token, the signature is the authentication.
         app.MapPost("/v1/webhooks/aa", Callback).AllowAnonymous().AddEndpointFilter(MapErrors);
     }
+
+    /// <summary>Which partner runs here: whether to redirect, ask for a handle, or label the data as sample.</summary>
+    private static IResult Provider(ConsentService svc) => Results.Ok(svc.Provider());
 
     /// <summary>Consent request. The app asks for a biometric check before signing this request (§14.3).</summary>
     private static async Task<IResult> Create(CreateConsent body, HttpContext http, ConsentService svc, CancellationToken ct)
