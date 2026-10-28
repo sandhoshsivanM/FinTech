@@ -13,7 +13,7 @@ import { createAppStore } from './appStore';
 import { legacyWriter, ledgerView } from './legacyView';
 import type { Ledger } from './ledger';
 import { SyncEngine } from './sync/engine';
-import { records } from './vault';
+import { records, type LocalRecord } from './vault';
 
 export type SyncStatus =
   | { kind: 'idle' }
@@ -44,6 +44,12 @@ export const useAppStore = createAppStore({
 });
 
 export const writer = legacyWriter(useAppStore);
+
+/** Writes raw encrypted records (the AA delivery key ring, link records) and syncs them soon. */
+export async function saveRecords(rs: LocalRecord[]): Promise<void> {
+  await engine.saveMany(rs);
+  scheduleSync(300);
+}
 
 let running: Promise<void> | undefined;
 export function syncNow(): Promise<void> {

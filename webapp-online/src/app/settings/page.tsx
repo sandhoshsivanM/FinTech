@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  AlertCircle, Briefcase, Check, CheckCircle2, Download, Globe, LogOut, MonitorSmartphone, Pencil, Plus,
+  AlertCircle, Briefcase, Check, CheckCircle2, Download, Globe, Link2, LogOut, MonitorSmartphone, Pencil, Plus,
   Sparkles, Trash2, User, Users, Heart,
 } from 'lucide-react';
 import { ACCENTS } from '@khazana/domain/appearance';
@@ -267,6 +267,17 @@ export default function SettingsPage() {
         <div className="flex items-center gap-2 mt-2.5">
           <Globe size={14} className="text-muted" />
           <span className="text-xs text-muted">Currently displaying in <strong>{currencyCode}</strong></span>
+        </div>
+      </GlassCard>
+
+      <GlassCard>
+        <SectionHeader title="Connections" />
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <div className="font-semibold text-sm">Bank accounts & investments</div>
+            <div className="text-xs text-muted mt-0.5">Link banks, deposits, mutual funds, demat, NPS and insurance through an Account Aggregator. The data reaches this device sealed and is imported here.</div>
+          </div>
+          <Link href="/link" className={buttonClass('soft')}><Link2 size={15} />Link bank & investments</Link>
         </div>
       </GlassCard>
 
