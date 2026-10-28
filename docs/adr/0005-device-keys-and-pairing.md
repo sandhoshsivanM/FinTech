@@ -33,6 +33,10 @@ able to read it, and without letting someone who stole a Google login get it.
   account and returns a two-minute, DPoP-bound access token with a `sua`
   claim (no refresh token). Devices refuses with 403 `step_up_required`
   without a fresh one. Accounts with no passkey cannot remove devices yet.
+  A mobile-number (SMS code) sign-in is such an account until a passkey is
+  added (ADR 0004 amendment): the apps offer one right after sign-in, and the
+  Devices page tells a phone-only user to add a passkey or remove the device
+  from another device that has one, instead of showing a passkey error.
 - **Every call:** the device must be registered, not revoked, and its token
   bound to the DPoP key it registered with.
 - **Account deletion:** the purge is scheduled for the end of the cooling-off
