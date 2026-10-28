@@ -5,7 +5,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { gateway } from '@/lib/api';
 import { Devices, ago, platformLabel, MAX_NAME, type Device } from '@/lib/devices';
 import { useReady } from '@/lib/useReady';
+import { signInMethod } from '@/lib/signInMethod';
+import { removalNeedsPasskey } from '@/lib/devices';
 import { Button, Card, ErrorText, Muted, Page, describe } from '@/components/ui';
+
+const PHONE_ONLY_NOTE =
+  'Removing a device needs a passkey, and you signed in with a mobile number. Add a passkey first, or remove this device from another device that has one.';
 
 export default function DevicesPage() {
   const { ready, error } = useReady();
@@ -16,6 +21,9 @@ export default function DevicesPage() {
   const [confirming, setConfirming] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string>();
+  // Signed in with a mobile number and no passkey added here: a text cannot approve removing a device (ADR 0004).
+  const [phoneOnly, setPhoneOnly] = useState(false);
+  useEffect(() => setPhoneOnly(signInMethod() === 'phone'), []);
 
   const load = useCallback(() => api.list().then(setDevices).catch((e) => setProblem(describe(e))), [api]);
   useEffect(() => {
@@ -29,7 +37,7 @@ export default function DevicesPage() {
       await work();
       await load();
     } catch (e) {
-      setProblem(describe(e));
+      setProblem(removalNeedsPasskey(e, phoneOnly) ? PHONE_ONLY_NOTE : describe(e));
     } finally {
       setBusy(false);
     }
@@ -72,6 +80,7 @@ export default function DevicesPage() {
             </form>
           ) : confirming === d.id ? (
             <div className="flex flex-col gap-2">
+              {phoneOnly && <Muted>{PHONE_ONLY_NOTE}</Muted>}
               <Muted>
                 {d.current
                   ? 'This signs you out here and removes this device’s copy of your data key.'

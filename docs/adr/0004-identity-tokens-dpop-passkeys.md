@@ -41,3 +41,28 @@ and SIM swap.
   - The production signing key moves to KMS.
   - The account-deletion saga is the next step (the event is published now).
   - Play Integrity and App Attest checks are not done yet.
+
+## Amendment (2026-10-28): SMS code sign-in, as a convenience only
+Easy sign-in matters for Indian users, so a mobile number and a 6-digit SMS
+code may start a session (`POST /v1/auth/phone/start`, then `POST /v1/auth/token`
+with `provider=phone`). It is allowed on these terms, because SIM swap and
+interception remain real:
+- **No data access.** A session is only a session. The data key still comes
+  from pairing or the recovery phrase, which end-to-end encryption keeps off
+  the server. A SIM-swapper gets a session, not the data.
+- **No step-up.** An SMS code never satisfies `/v1/auth/step-up`; it stays
+  passkey-only. Removing a device, the sensitive action, still needs a passkey.
+- **Anti-pumping limits.** Gateway `phone_otp` policy (10 per 15 minutes per
+  address), then in Identity per number (30 s gap, 3 per 15 minutes, 10 per
+  day) and per device key (5 per 15 minutes, 20 per day). Codes live 5 minutes,
+  work once, allow 5 tries, are bound to the asking device key, and are stored
+  only as an HMAC. Asking never reveals whether a number has an account.
+- **New-device alerts.** Every sign-in publishes `UserSignedInV1`; Notification
+  pushes "New sign-in on <platform>" to the user's other devices.
+- **Adapter.** `ISmsSender` (ADR 0003): the Fake sender (logs the code; a demo
+  flag may also echo it) is refused in Production, and the echo flag too. A
+  real provider (MSG91) stops startup without its settings. A real provider
+  needs a registered business and DLT registration (sender id and template),
+  about ₹0.15 to ₹0.25 per SMS.
+- After a phone sign-in the apps offer to add a passkey, which Identity allows
+  within the 10-minute fresh-sign-in window.

@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { ErrorBoundary } from '@khazana/screens/components/ErrorBoundary';
 import { useReady } from '@/lib/useReady';
 import { OnlineShell } from './OnlineShell';
+import { PasskeyOffer } from './PasskeyOffer';
 
 /**
  * Screens that run before an account is ready (sign-in, key setup, approving a
@@ -34,6 +35,7 @@ function Gate({ children }: { children: ReactNode }) {
     <OnlineShell>
       {/* The skip link's target, inside the shell's own <main>. */}
       <div id="main" tabIndex={-1}>
+        <PasskeyOffer />
         {/* Per-route: a screen that throws must not take the shell with it. */}
         <ErrorBoundary resetKey={pathname}>{children}</ErrorBoundary>
       </div>

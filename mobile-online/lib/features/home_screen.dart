@@ -8,6 +8,7 @@ import '../capture/ui/capture_screen.dart';
 import '../cards/card_store.dart';
 import '../cards/cards_screen.dart';
 import '../core/gateway_client.dart';
+import '../core/passkey.dart' show PasskeyCancelled;
 import '../ledger/ledger.dart';
 import 'approve_screen.dart';
 import 'sign_in_screen.dart';
@@ -26,12 +27,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Ledger _ledger = Ledger.empty;
   String _status = 'Syncing…';
   bool _loaded = false;
+  bool _offerOpen = false;
+  bool _passkeyAdded = false;
+  bool _addingPasskey = false;
+  String? _passkeyError;
 
   AppServices get _s => widget.services;
 
   @override
   void initState() {
     super.initState();
+    final until = _s.passkeyOfferUntil;
+    _offerOpen = until != null && DateTime.now().isBefore(until) && _s.gateway.passkeysAvailable;
     _refresh();
     _sync();
   }
@@ -58,6 +65,33 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) setState(() => _status = 'Offline. Your changes are saved here and will sync later.');
     }
     await _refresh();
+  }
+
+  Future<void> _addPasskey() async {
+    setState(() {
+      _addingPasskey = true;
+      _passkeyError = null;
+    });
+    try {
+      await _s.gateway.addPasskey();
+      _s.passkeyOfferUntil = null;
+      if (mounted) setState(() => _passkeyAdded = true);
+    } on PasskeyCancelled {
+      // The user closed the prompt: the offer stays.
+    } on ApiException catch (e) {
+      setState(() => _passkeyError = e.code == 'reauthentication_required'
+          ? 'That took too long. Sign out and sign in again, then add the passkey.'
+          : 'The passkey was not added (${e.status}${e.code == null ? '' : ' ${e.code}'}).');
+    } catch (_) {
+      setState(() => _passkeyError = 'The passkey was not added. Check your connection and try again.');
+    } finally {
+      if (mounted) setState(() => _addingPasskey = false);
+    }
+  }
+
+  void _dismissPasskeyOffer() {
+    _s.passkeyOfferUntil = null;
+    setState(() => _offerOpen = false);
   }
 
   void _toSignIn() {
@@ -124,6 +158,37 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             Text(_status, key: const Key('sync-status'), style: TextStyle(color: muted)),
+            const SizedBox(height: 8),
+            if (_offerOpen || _passkeyAdded)
+              Card(
+                key: const Key('passkey-offer'),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(_passkeyAdded ? 'Passkey added' : 'Add a passkey for faster sign-in', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      _passkeyAdded
+                          ? 'Next time you can sign in with your fingerprint, Face ID or device PIN, and it can approve removing a device.'
+                          : 'You signed in with a mobile number. A passkey is quicker, can’t be intercepted like a text message, and is needed to remove a device.',
+                      style: TextStyle(color: muted),
+                    ),
+                    if (!_passkeyAdded) ...[
+                      const SizedBox(height: 8),
+                      Row(children: [
+                        FilledButton(
+                          key: const Key('add-passkey'),
+                          onPressed: _addingPasskey ? null : _addPasskey,
+                          child: Text(_addingPasskey ? 'Waiting for your passkey…' : 'Add a passkey'),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(key: const Key('passkey-not-now'), onPressed: _addingPasskey ? null : _dismissPasskeyOffer, child: const Text('Not now')),
+                      ]),
+                    ],
+                    if (_passkeyError != null) Text(_passkeyError!, key: const Key('passkey-error'), style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  ]),
+                ),
+              ),
             const SizedBox(height: 8),
             Card(
               child: ListTile(

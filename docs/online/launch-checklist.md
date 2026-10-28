@@ -52,6 +52,8 @@
 |---|---|---|---|---|---|---|
 | P1 | Firebase Cloud Messaging (Android, and iOS through APNs) | Conditional: needed for new-device alerts and reminders on the phone | FCM has no per-message charge at this scale, as far as the public pricing shows; verify | Days | Whether push is in v1. Design 14.3 requires push alerts for new-device sign-in. | The Notification service exists on trunk (`backend/services/Notification`). Mobile has no push code. |
 | P2 | APNs key (from A2) | Same as P1, on iOS | Included in A2 | With A2 | As P1. | No APNs key. |
+| P3 | SMS provider (MSG91 adapter) for mobile-number sign-in | Conditional: needed only if sign-in by SMS code ships beyond the demo | About ₹0.15 to ₹0.25 per SMS (verify on the vendor page). A sign-in or sign-up is one SMS; pumping limits cap the rest. | Days to weeks: see P4 | Provider choice; set `Providers:Sms=Msg91` with `Sms:Msg91:AuthKey` and `TemplateId`. | The demo uses the Fake sender (code on screen). Selecting Msg91 without settings stops startup. The adapter follows MSG91's documented Flow API and has not run against the live service. |
+| P4 | DLT registration (TRAI): registered business entity, sender id (header) and an approved OTP template | Conditional: required by Indian carriers before any real SMS is delivered | Registration fee set by the telecom operator's DLT portal (verify) | Days to weeks | Needs a registered business (A6) | Not started. Until done, no real SMS can be sent. |
 
 ### 2.5 Security assurance (the largest cost)
 

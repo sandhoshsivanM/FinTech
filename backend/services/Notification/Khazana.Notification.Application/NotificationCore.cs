@@ -139,6 +139,17 @@ public static class DeviceAddedHandler
     }
 }
 
+/// <summary>A sign-in on a new session: alert the user's other devices (the new one has no push token yet).</summary>
+public static class UserSignedInHandler
+{
+    public static Task Handle(UserSignedInV1 message, PushDispatcher dispatcher, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(dispatcher);
+        return dispatcher.SendAsync(message.UserId, message.DeviceId, PushContent.NewSignIn(message.Platform), ct);
+    }
+}
+
 /// <summary>A revoked device gets no more pushes.</summary>
 public static class DeviceRevokedHandler
 {

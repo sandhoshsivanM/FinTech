@@ -17,10 +17,24 @@ export type TokenResponse = {
 };
 
 export class ApiError extends Error {
-  constructor(readonly status: number, readonly code: string | undefined, message: string) {
+  constructor(
+    readonly status: number,
+    readonly code: string | undefined,
+    message: string,
+    /** Seconds the server asked us to wait (429). */
+    readonly retryAfter?: number,
+  ) {
     super(message);
   }
 }
+
+/** What asking for an SMS code returns. `demo_code` appears only on a demo server that shows the code instead of texting it. */
+export type PhoneChallenge = {
+  challenge_id: string;
+  expires_in: number;
+  resend_after: number;
+  demo_code?: string;
+};
 
 type Deps = { fetch: typeof fetch; now: () => number; vault: typeof vault };
 
@@ -64,7 +78,8 @@ export class GatewayClient {
   private static async fail(response: Response): Promise<never> {
     const problem = await response.json().catch(() => ({}) as Record<string, unknown>);
     const code = typeof problem.error === 'string' ? problem.error : undefined;
-    throw new ApiError(response.status, code, `${response.status}${code ? ` ${code}` : ''}`);
+    const wait = Number(response.headers?.get?.('Retry-After'));
+    throw new ApiError(response.status, code, `${response.status}${code ? ` ${code}` : ''}`, Number.isFinite(wait) && wait > 0 ? wait : undefined);
   }
 
   private async keep(tokens: TokenResponse): Promise<TokenResponse> {
@@ -106,6 +121,28 @@ export class GatewayClient {
     const { challenge_id, options } = await this.challenge('/v1/auth/passkeys/assert/options');
     const assertion = await getPasskey(options);
     return this.tokenWith({ provider: 'passkey', challenge_id, assertion });
+  }
+
+  /** Texts a 6-digit code to a mobile number (+91 only for now). Answers the same whether or not the number has an account. */
+  async startPhoneSignIn(phone: string): Promise<PhoneChallenge> {
+    const response = await this.send('POST', '/v1/auth/phone/start', { phone, platform: PLATFORM });
+    if (!response.ok) return GatewayClient.fail(response);
+    return (await response.json()) as PhoneChallenge;
+  }
+
+  /** Signs in (or creates the account) with the code that was texted. Five wrong tries burn the code. */
+  async signInWithPhone(challengeId: string, code: string): Promise<TokenResponse> {
+    return this.tokenWith({ provider: 'phone', challenge_id: challengeId, code });
+  }
+
+  /**
+   * Adds a passkey to the signed-in account (Face ID / Touch ID / device PIN).
+   * The server allows it only within a few minutes of signing in.
+   */
+  async addPasskey(): Promise<void> {
+    const challenge = await this.call<{ challenge_id: string; options: Record<string, unknown> }>('POST', '/v1/auth/passkeys/register/options');
+    const attestation = await createPasskey(challenge.options);
+    await this.call('POST', '/v1/auth/passkeys/register', { challenge_id: challenge.challenge_id, attestation });
   }
 
   /**

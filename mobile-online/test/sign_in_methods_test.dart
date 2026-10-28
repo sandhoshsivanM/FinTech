@@ -110,10 +110,60 @@ void main() {
     expect(header['jwk']['kty'], 'EC');
   });
 
+  test('asking for an SMS code sends the phone and platform with a proof and returns the challenge', () async {
+    client = GatewayClient(
+      baseUrl: Uri.parse('http://gw.test'),
+      platform: 'ios',
+      store: store,
+      client: MockClient((r) async {
+        seen.add(r);
+        return http.Response(jsonEncode({'challenge_id': 'c9', 'expires_in': 300, 'resend_after': 30, 'demo_code': '123456'}), 200);
+      }),
+    );
+    final c = await client.startPhoneSignIn('+919876543210');
+    expect(seen.single.url.path, '/v1/auth/phone/start');
+    expect(jsonDecode(seen.single.body), {'phone': '+919876543210', 'platform': 'ios'});
+    expect(seen.single.headers['DPoP']!.split('.'), hasLength(3));
+    expect(seen.single.headers['Authorization'], isNull);
+    expect((c.challengeId, c.expiresIn, c.resendAfter, c.demoCode), ('c9', 300, 30, '123456'));
+    expect(store.session, isNull);
+  });
+
+  test('a 429 carries the server\'s Retry-After', () async {
+    client = GatewayClient(
+      baseUrl: Uri.parse('http://gw.test'),
+      platform: 'ios',
+      store: store,
+      client: MockClient((r) async => http.Response(jsonEncode({'error': 'too_many_requests'}), 429, headers: {'retry-after': '42'})),
+    );
+    await expectLater(
+        client.startPhoneSignIn('+919876543210'),
+        throwsA(isA<ApiException>().having((e) => e.status, 'status', 429).having((e) => e.retryAfter, 'retryAfter', 42)));
+  });
+
+  test('phone sign-in sends provider phone, the challenge and the code, and keeps the session', () async {
+    await client.signInWithPhone('c1', '123456');
+    expect(seen.single.url.path, '/v1/auth/token');
+    expect(jsonDecode(seen.single.body), {'platform': 'ios', 'provider': 'phone', 'challenge_id': 'c1', 'code': '123456'});
+    expect(store.session!.refreshToken, 'r');
+  });
+
+  test('adding a passkey asks for options, creates the credential and registers it, signed in', () async {
+    await client.signInWithPhone('c1', '123456');
+    seen.clear();
+    await client.addPasskey();
+    expect(seen.map((r) => r.url.path), ['/v1/auth/passkeys/register/options', '/v1/auth/passkeys/register']);
+    expect(seen.first.headers['Authorization'], 'DPoP a');
+    expect(jsonDecode(seen.last.body), {'challenge_id': 'c1', 'attestation': {'id': 'cred', 'type': 'public-key'}});
+    expect(client.passkeysAvailable, isTrue);
+  });
+
   test('a build without passkeys or Google says so instead of crashing', () async {
     final bare = GatewayClient(baseUrl: Uri.parse('http://gw.test'), platform: 'ios', store: MemoryKeyStore());
     await expectLater(bare.signInWithPasskey(), throwsStateError);
     await expectLater(bare.signInWithGoogle(), throwsStateError);
+    await expectLater(bare.addPasskey(), throwsStateError);
+    expect(bare.passkeysAvailable, isFalse);
   });
 }
 
@@ -154,6 +204,9 @@ void hardenedSignInTests() {
         if (r.url.path.contains('/options')) {
           return http.Response(jsonEncode({'challenge_id': 'c1', 'options': {'challenge': 'abc'}}), 200);
         }
+        if (r.url.path.endsWith('/phone/start')) {
+          return http.Response(jsonEncode({'challenge_id': 'c1', 'expires_in': 300, 'resend_after': 30}), 200);
+        }
         return http.Response(jsonEncode(_tokens), 200);
       }),
     );
@@ -165,6 +218,17 @@ void hardenedSignInTests() {
     await client.signUpWithPasskey();
     await client.signInWithPasskey();
     expect(signers.prepared, 2);
+  });
+
+  // The server binds the code to the key that asked for it, so the code must be
+  // answered by the same key: the session key is prepared once, when asking.
+  test('phone sign-in prepares the key when asking and not again when answering', () async {
+    await client.startPhoneSignIn('+919876543210');
+    final asked = (await signers.signer()).thumbprint;
+    expect(signers.prepared, 1);
+    await client.signInWithPhone('c1', '123456');
+    expect(signers.prepared, 1);
+    expect((await signers.signer()).thumbprint, asked);
   });
 
   test('Google nonce is the thumbprint of the key that signs, prepared first', () async {

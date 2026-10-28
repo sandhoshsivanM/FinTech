@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Khazana.Identity.Application;
 using Khazana.Identity.Application.Persistence;
+using Khazana.Identity.Domain;
 using Khazana.Messaging.Contracts;
 using Khazana.TestKit;
 using Microsoft.AspNetCore.Hosting;
@@ -50,6 +51,7 @@ public sealed class IdentityHost : IAsyncLifetime
         Environment.SetEnvironmentVariable("ConnectionStrings__identity", _postgres.GetConnectionString());
         Environment.SetEnvironmentVariable("ConnectionStrings__rabbitmq", _rabbitMq.GetConnectionString());
         Environment.SetEnvironmentVariable("Identity__Secrets__FieldKey", "integration-test-field-secret-0123456789abcdef");
+        Environment.SetEnvironmentVariable("Identity__Phone__EchoCode", "true");
         Environment.SetEnvironmentVariable("Identity__Passkeys__RpId", "localhost");
         Environment.SetEnvironmentVariable("Identity__Passkeys__Origins__0", Origin);
 
@@ -59,6 +61,8 @@ public sealed class IdentityHost : IAsyncLifetime
             {
                 s.RemoveAll<Khazana.SharedKernel.IClock>();
                 s.AddSingleton<Khazana.SharedKernel.IClock>(Clock);
+                s.RemoveAll<ISmsSender>();
+                s.AddSingleton<ISmsSender, ToggleSmsSender>();
                 s.ConfigureWolverine(o => o.Discovery.IncludeType(typeof(IdentityEventProbe)));
             }));
         _ = Factory.Server;
@@ -68,6 +72,25 @@ public sealed class IdentityHost : IAsyncLifetime
     {
         await Factory.DisposeAsync();
         await Task.WhenAll(_postgres.DisposeAsync().AsTask(), _rabbitMq.DisposeAsync().AsTask());
+    }
+}
+
+/// <summary>The fake sender, with a switch to make the "provider" fail.</summary>
+public sealed class ToggleSmsSender(Khazana.Identity.Infrastructure.FakeSmsLog log) : ISmsSender
+{
+    private static volatile bool _fail;
+
+    public static bool Fail
+    {
+        get => _fail;
+        set => _fail = value;
+    }
+
+    public Task SendCodeAsync(string e164, string code, CancellationToken cancellationToken)
+    {
+        if (Fail) throw new SmsSendFailedException("Provider down.");
+        log.Record(e164, code);
+        return Task.CompletedTask;
     }
 }
 
@@ -721,6 +744,300 @@ public sealed class IdentityFlowTests(IdentityHost host) : IDisposable
     // --- helpers --------------------------------------------------------------
 
     private static readonly string[] AllServices = ["devices", "sync", "notification", "reporting", "aa", "credit"];
+
+    // --- mobile number (SMS code) --------------------------------------------
+
+    private static string NewPhone() => "+9198" + Random.Shared.Next(0, 100_000_000).ToString("D8", System.Globalization.CultureInfo.InvariantCulture);
+
+    private static HttpRequestMessage PhoneStartRequest(DeviceKey device, string phone, string platform = "android")
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/v1/auth/phone/start")
+        {
+            Content = JsonContent.Create(new Dictionary<string, object> { ["phone"] = phone, ["platform"] = platform }),
+        };
+        request.Headers.Add("DPoP", device.Proof("POST", Url("/v1/auth/phone/start")));
+        return request;
+    }
+
+    private async Task<HttpResponseMessage> PhoneStart(DeviceKey device, string phone)
+    {
+        using var request = PhoneStartRequest(device, phone);
+        return await _client.SendAsync(request, Ct);
+    }
+
+    private async Task<(Guid Id, string Code)> PhoneChallenge(DeviceKey device, string phone)
+    {
+        var response = await PhoneStart(device, phone);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await Json(response);
+        return (body.GetProperty("challenge_id").GetGuid(), body.GetProperty("demo_code").GetString()!);
+    }
+
+    private async Task<HttpResponseMessage> PhoneVerify(DeviceKey device, Guid challenge, string code, string path = "/v1/auth/token")
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, path)
+        {
+            Content = JsonContent.Create(new Dictionary<string, object>
+            {
+                ["provider"] = "phone", ["platform"] = "android", ["challenge_id"] = challenge, ["code"] = code,
+            }),
+        };
+        request.Headers.Add("DPoP", device.Proof("POST", Url(path)));
+        return await _client.SendAsync(request, Ct);
+    }
+
+    private static string WrongCode(string code) => code == "000000" ? "000001" : "000000";
+
+    private async Task ClearPhoneLimits() =>
+        await host.Factory.Services.CreateAsyncScope().ServiceProvider.GetRequiredService<IdentityDbContext>()
+            .PhoneOtpChallenges.ExecuteDeleteAsync(Ct);
+
+    [Fact]
+    public async Task A_texted_code_signs_the_number_in_and_signing_in_again_is_the_same_user()
+    {
+        var phone = NewPhone();
+        HttpResponseMessage? response = null;
+        var (id, code) = await PhoneChallenge(_phone, phone);
+        host.Factory.Services.GetRequiredService<Khazana.Identity.Infrastructure.FakeSmsLog>().Sent
+            .ShouldContain(x => x.Phone == phone && x.Code == code, "the fake sender got the same code the demo echoes");
+
+        var tracked = await host.Host.TrackActivity().IncludeExternalTransports().Timeout(TimeSpan.FromSeconds(60))
+            .ExecuteAndWaitAsync((Func<IMessageContext, Task>)(async _ => response = await PhoneVerify(_phone, id, code)));
+        response!.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.CacheControl!.NoStore.ShouldBeTrue();
+        var tokens = await Json(response);
+        var userId = tokens.GetProperty("user_id").GetGuid();
+        tracked.Received.SingleMessage<UserRegisteredV1>().UserId.ShouldBe(userId);
+        tracked.Received.SingleMessage<UserSignedInV1>().UserId.ShouldBe(userId);
+
+        await ClearPhoneLimits();
+        using var other = new DeviceKey();
+        var (id2, code2) = await PhoneChallenge(other, phone);
+        var again = await Json(await PhoneVerify(other, id2, code2));
+        again.GetProperty("user_id").GetGuid().ShouldBe(userId);
+
+        // The number is stored only as a keyed hash.
+        await using var scope = host.Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+        var login = await db.ExternalLogins.SingleAsync(x => x.UserId == userId && x.Provider == "phone", Ct);
+        Encoding.UTF8.GetString(login.SubjectHash).ShouldNotContain(phone);
+        var challenge = await db.PhoneOtpChallenges.SingleAsync(x => x.Id == id2, Ct);
+        BitConverter.ToString(challenge.CodeHash).ShouldNotContain(code2);
+        Encoding.UTF8.GetString(challenge.PhoneEnc).ShouldNotContain(phone);
+        challenge.CodeHash.Length.ShouldBe(32, "an HMAC, not the code");
+    }
+
+    [Fact]
+    public async Task A_phone_session_refreshes_like_any_other()
+    {
+        var (id, code) = await PhoneChallenge(_phone, NewPhone());
+        var tokens = await Json(await PhoneVerify(_phone, id, code));
+        await RefreshOk(_phone, tokens.GetProperty("refresh_token").GetString()!);
+    }
+
+    [Fact]
+    public async Task A_wrong_code_is_refused_and_five_wrong_tries_burn_the_code_even_for_the_right_one()
+    {
+        var (id, code) = await PhoneChallenge(_phone, NewPhone());
+        for (var i = 0; i < PhoneOtpRules.MaxVerifyAttempts; i++)
+            (await Error(await PhoneVerify(_phone, id, WrongCode(code)))).ShouldBe("invalid_grant");
+        (await Error(await PhoneVerify(_phone, id, code))).ShouldBe("invalid_grant");
+    }
+
+    [Fact]
+    public async Task A_code_works_once()
+    {
+        var (id, code) = await PhoneChallenge(_phone, NewPhone());
+        (await PhoneVerify(_phone, id, code)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Error(await PhoneVerify(_phone, id, code))).ShouldBe("invalid_grant");
+    }
+
+    [Fact]
+    public async Task An_expired_code_is_refused()
+    {
+        var (id, code) = await PhoneChallenge(_phone, NewPhone());
+        host.Clock.Offset = PhoneOtpRules.Lifetime + TimeSpan.FromSeconds(1);
+        try
+        {
+            (await Error(await PhoneVerify(_phone, id, code))).ShouldBe("invalid_grant");
+        }
+        finally
+        {
+            host.Clock.Offset = TimeSpan.Zero;
+        }
+    }
+
+    [Fact]
+    public async Task A_code_cannot_be_answered_from_another_device_key()
+    {
+        var (id, code) = await PhoneChallenge(_phone, NewPhone());
+        using var thief = new DeviceKey();
+        (await Error(await PhoneVerify(thief, id, code))).ShouldBe("invalid_grant");
+        (await PhoneVerify(_phone, id, code)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task A_malformed_code_or_unknown_challenge_is_refused()
+    {
+        var (id, code) = await PhoneChallenge(_phone, NewPhone());
+        (await Error(await PhoneVerify(_phone, id, "12"))).ShouldBe("invalid_request");
+        (await Error(await PhoneVerify(_phone, id, "12345a"))).ShouldBe("invalid_request");
+        (await Error(await PhoneVerify(_phone, Guid.NewGuid(), code))).ShouldBe("invalid_grant");
+        using var noChallenge = new HttpRequestMessage(HttpMethod.Post, "/v1/auth/token")
+        {
+            Content = JsonContent.Create(new Dictionary<string, object> { ["provider"] = "phone", ["platform"] = "android", ["code"] = code }),
+        };
+        noChallenge.Headers.Add("DPoP", _phone.Proof("POST", Url("/v1/auth/token")));
+        (await Error(await _client.SendAsync(noChallenge, Ct))).ShouldBe("invalid_request");
+    }
+
+    [Fact]
+    public async Task Asking_for_a_code_answers_the_same_for_a_known_and_an_unknown_number()
+    {
+        var known = NewPhone();
+        var (id, code) = await PhoneChallenge(_phone, known);
+        (await PhoneVerify(_phone, id, code)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await ClearPhoneLimits();
+        using var a = new DeviceKey();
+        using var b = new DeviceKey();
+        var forKnown = await Json(await PhoneStart(a, known));
+        var forUnknown = await Json(await PhoneStart(b, NewPhone()));
+        forKnown.EnumerateObject().Select(p => p.Name).OrderBy(x => x)
+            .ShouldBe(forUnknown.EnumerateObject().Select(p => p.Name).OrderBy(x => x));
+        forKnown.GetProperty("expires_in").GetInt32().ShouldBe(forUnknown.GetProperty("expires_in").GetInt32());
+        forKnown.GetProperty("resend_after").GetInt32().ShouldBe(forUnknown.GetProperty("resend_after").GetInt32());
+    }
+
+    [Fact]
+    public async Task Only_allowed_numbers_get_a_text_and_the_request_needs_a_proof_and_a_known_platform()
+    {
+        (await Error(await PhoneStart(_phone, "+14155550123"))).ShouldBe("invalid_phone");
+        (await Error(await PhoneStart(_phone, "12345"))).ShouldBe("invalid_phone");
+        using var badPlatform = PhoneStartRequest(_phone, NewPhone(), platform: "toaster");
+        (await Error(await _client.SendAsync(badPlatform, Ct))).ShouldBe("invalid_request");
+        using var noProof = PhoneStartRequest(_phone, NewPhone());
+        noProof.Headers.Remove("DPoP");
+        (await _client.SendAsync(noProof, Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task A_number_gets_one_text_per_thirty_seconds_three_per_fifteen_minutes_and_ten_a_day()
+    {
+        var phone = NewPhone();
+        await PhoneChallenge(_phone, phone);
+        // Resend cooldown, with a Retry-After.
+        using var second = await PhoneStart(_phone, phone);
+        second.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        second.Headers.RetryAfter!.Delta!.Value.TotalSeconds.ShouldBeInRange(1, 30);
+        (await Json(second)).GetProperty("error").GetString().ShouldBe("too_many_requests");
+
+        // Third inside fifteen minutes is allowed; the fourth is not.
+        host.Clock.Offset = TimeSpan.FromSeconds(31);
+        try
+        {
+            await PhoneChallenge(_phone, phone);
+            host.Clock.Offset = TimeSpan.FromSeconds(62);
+            await PhoneChallenge(_phone, phone);
+            host.Clock.Offset = TimeSpan.FromSeconds(93);
+            (await PhoneStart(_phone, phone)).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+
+            // After fifteen minutes texts resume: three more per window, ten in all per day.
+            var sent = 3;
+            for (var batch = 1; sent < PhoneOtpRules.PerPhoneDayLimit; batch++)
+            {
+                for (var i = 0; i < PhoneOtpRules.PerPhoneWindowLimit && sent < PhoneOtpRules.PerPhoneDayLimit; i++)
+                {
+                    host.Clock.Offset = TimeSpan.FromMinutes(17 * batch) + TimeSpan.FromSeconds(31 * i);
+                    await PhoneChallenge(_phone, phone);
+                    sent++;
+                }
+            }
+            host.Clock.Offset += TimeSpan.FromSeconds(31);
+            (await PhoneStart(_phone, phone)).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests, "the daily cap of ten");
+        }
+        finally
+        {
+            host.Clock.Offset = TimeSpan.Zero;
+        }
+    }
+
+    [Fact]
+    public async Task One_device_key_cannot_spray_texts_at_many_numbers()
+    {
+        using var sprayer = new DeviceKey();
+        for (var i = 0; i < PhoneOtpRules.PerDeviceWindowLimit; i++) await PhoneChallenge(sprayer, NewPhone());
+        (await PhoneStart(sprayer, NewPhone())).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
+    public async Task A_provider_failure_is_a_503_and_does_not_count_against_the_number()
+    {
+        var phone = NewPhone();
+        ToggleSmsSender.Fail = true;
+        try
+        {
+            (await PhoneStart(_phone, phone)).StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
+        }
+        finally
+        {
+            ToggleSmsSender.Fail = false;
+        }
+        await PhoneChallenge(_phone, phone);
+    }
+
+    [Fact]
+    public async Task A_phone_session_can_never_pass_step_up_and_cannot_use_a_code_as_a_passkey()
+    {
+        var (id, code) = await PhoneChallenge(_phone, NewPhone());
+        var tokens = await Json(await PhoneVerify(_phone, id, code));
+        var access = tokens.GetProperty("access_token").GetString()!;
+        new Microsoft.IdentityModel.JsonWebTokens.JsonWebToken(access).Claims.ShouldNotContain(c => c.Type == "sua");
+
+        // Step-up takes a passkey assertion for this account and nothing else.
+        const string path = "/v1/auth/step-up";
+        (await Call(path, access, _phone.Proof("POST", Url(path), access),
+            new JsonObject { ["challenge_id"] = id.ToString(), ["code"] = code })).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Error(await Call(path, access, _phone.Proof("POST", Url(path), access),
+            new JsonObject { ["challenge_id"] = id.ToString(), ["assertion"] = new JsonObject() }))).ShouldBe("invalid_request");
+
+        // With no passkey on the account, even a real passkey assertion is refused.
+        using var stranger = new SoftwareAuthenticator("localhost", IdentityHost.Origin);
+        (await Error(await StepUp(_phone, access, stranger))).ShouldBe("invalid_grant");
+    }
+
+    [Fact]
+    public async Task A_phone_user_can_add_a_passkey_while_the_sign_in_is_fresh_then_sign_in_with_it()
+    {
+        var (id, code) = await PhoneChallenge(_phone, NewPhone());
+        var tokens = await Json(await PhoneVerify(_phone, id, code));
+        using var authenticator = new SoftwareAuthenticator("localhost", IdentityHost.Origin);
+        await AddPasskey(_phone, tokens.GetProperty("access_token").GetString()!, authenticator);
+        using var another = new DeviceKey();
+        var signedIn = await PasskeySignIn(another, authenticator);
+        signedIn.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Json(signedIn)).GetProperty("user_id").GetGuid().ShouldBe(tokens.GetProperty("user_id").GetGuid());
+    }
+
+    [Fact]
+    public async Task Restore_accepts_a_texted_code_too()
+    {
+        var phone = NewPhone();
+        var (id, code) = await PhoneChallenge(_phone, phone);
+        var tokens = await Json(await PhoneVerify(_phone, id, code));
+        var access = tokens.GetProperty("access_token").GetString()!;
+        using var del = new HttpRequestMessage(HttpMethod.Delete, "/v1/account");
+        Authorize(del, access, _phone.Proof("DELETE", Url("/v1/account"), access));
+        (await _client.SendAsync(del, Ct)).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+
+        await ClearPhoneLimits();
+        using var other = new DeviceKey();
+        var (id2, code2) = await PhoneChallenge(other, phone);
+        (await Error(await PhoneVerify(other, id2, code2))).ShouldBe("account_deletion_pending");
+        await ClearPhoneLimits();
+        var (id3, code3) = await PhoneChallenge(other, phone);
+        (await PhoneVerify(other, id3, code3, "/v1/account/restore")).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 
     private static string Unique() => Guid.NewGuid().ToString("N")[..12];
 

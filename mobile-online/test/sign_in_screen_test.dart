@@ -26,6 +26,6 @@ void main() {
 
   testWidgets('the development sign-in appears only when the build asks for it', (t) async {
     await t.pumpWidget(MaterialApp(home: SignInScreen(services: _services(), showDevSignIn: true)));
-    expect(find.text('Development sign-in'), findsOneWidget);
+    expect(find.text('Development sign-in', skipOffstage: false), findsOneWidget);
   });
 }

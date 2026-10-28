@@ -7,6 +7,12 @@ public static class GatewayPolicies
     /// <summary>Sign-in, refresh and account deletion: tighter, as each attempt is worth guessing.</summary>
     public const string Auth = "auth";
 
+    /// <summary>
+    /// Asking for an SMS code. Every request can cost a text message, so this is
+    /// far tighter than <see cref="Auth"/>: per client address, over fifteen minutes.
+    /// </summary>
+    public const string PhoneOtp = "phone_otp";
+
     /// <summary>A signed-in user's own data (devices, keys, sync): generous, still bounded.</summary>
     public const string User = "user";
 
