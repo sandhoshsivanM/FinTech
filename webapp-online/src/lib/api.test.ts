@@ -67,6 +67,51 @@ describe('GatewayClient', () => {
     expect(h.vault.session?.refreshToken).toBe('refresh-1');
   });
 
+  test('asking for an SMS code sends the phone and platform with a proof, and returns the challenge', async () => {
+    const h = harness([json({ challenge_id: 'c1', expires_in: 300, resend_after: 30, demo_code: '123456' })]);
+    const challenge = await h.client.startPhoneSignIn('+919876543210');
+    const [req] = h.seen;
+    expect(req.url).toBe(`${BASE}/v1/auth/phone/start`);
+    expect(req.headers.DPoP.split('.')).toHaveLength(3);
+    expect(req.headers.Authorization).toBeUndefined();
+    expect(JSON.parse(req.body!)).toEqual({ phone: '+919876543210', platform: 'web' });
+    expect(challenge).toEqual({ challenge_id: 'c1', expires_in: 300, resend_after: 30, demo_code: '123456' });
+    expect(h.vault.session).toBeUndefined();
+  });
+
+  test('a 429 on asking for a code carries the server\'s Retry-After', async () => {
+    const h = harness([() => new Response(JSON.stringify({ error: 'too_many_requests' }), { status: 429, headers: { 'Retry-After': '42' } })]);
+    await expect(h.client.startPhoneSignIn('+919876543210')).rejects.toMatchObject({ status: 429, code: 'too_many_requests', retryAfter: 42 });
+  });
+
+  test('signing in with the code sends provider phone, the challenge and the code, and keeps the session', async () => {
+    const h = harness([json(tokens(1))]);
+    await h.client.signInWithPhone('c1', '123456');
+    const [req] = h.seen;
+    expect(req.url).toBe(`${BASE}/v1/auth/token`);
+    expect(JSON.parse(req.body!)).toEqual({ platform: 'web', provider: 'phone', challenge_id: 'c1', code: '123456' });
+    expect(h.vault.session?.refreshToken).toBe('refresh-1');
+  });
+
+  test('a wrong code is an ApiError invalid_grant and keeps no session', async () => {
+    const h = harness([json({ error: 'invalid_grant' }, 400)]);
+    await expect(h.client.signInWithPhone('c1', '000000')).rejects.toMatchObject({ status: 400, code: 'invalid_grant' });
+    expect(h.vault.session).toBeUndefined();
+  });
+
+  test('adding a passkey asks for options, creates the credential and registers it, signed in', async () => {
+    const passkey = await import('./passkey');
+    vi.mocked(passkey.createPasskey).mockResolvedValueOnce({ id: 'new-cred' });
+    const h = harness([json(tokens(1)), json({ challenge_id: 'r1', options: { challenge: 'abc' } }), () => new Response(null, { status: 204 })]);
+    await h.client.signIn('dev', 'dev:me');
+    await h.client.addPasskey();
+    const [, options, register] = h.seen;
+    expect(options.url).toBe(`${BASE}/v1/auth/passkeys/register/options`);
+    expect(options.headers.Authorization).toBe('DPoP access-1');
+    expect(register.url).toBe(`${BASE}/v1/auth/passkeys/register`);
+    expect(JSON.parse(register.body!)).toEqual({ challenge_id: 'r1', attestation: { id: 'new-cred' } });
+  });
+
   test('a signed-in call carries the access token and a proof from the same key', async () => {
     const h = harness([json(tokens(1)), json({ ok: true })]);
     await h.client.signIn('dev', 'dev:me');

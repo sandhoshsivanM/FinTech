@@ -42,6 +42,18 @@ export class Devices {
   }
 }
 
+/**
+ * True when removing a device failed only because a mobile-number sign-in has
+ * no passkey to approve it with: the passkey prompt closed or found nothing,
+ * or the server refused the check. A network or server fault is left as it is.
+ */
+export function removalNeedsPasskey(err: unknown, phoneOnly: boolean): boolean {
+  if (!phoneOnly || !(err instanceof Error)) return false;
+  if (err.name === 'NotAllowedError' || err.constructor.name === 'PasskeyCancelled') return true;
+  const status = (err as Error & { status?: number }).status;
+  return status === 400 || status === 403;
+}
+
 const PLATFORM_LABELS: Record<string, string> = { ios: 'iPhone / iPad', android: 'Android', web: 'Web browser' };
 export const platformLabel = (platform: string) => PLATFORM_LABELS[platform] ?? platform;
 

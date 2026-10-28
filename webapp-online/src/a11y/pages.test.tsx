@@ -112,6 +112,180 @@ describe('sign-in', () => {
   });
 });
 
+describe('sign-in with a mobile number', () => {
+  const digits = (r: Rendered) => r.container.querySelector<HTMLInputElement>('#phone')!;
+  const codeField = (r: Rendered) => r.container.querySelector<HTMLInputElement>('#otp')!;
+
+  async function asked(challenge: Record<string, unknown> = { challenge_id: 'c1', expires_in: 300, resend_after: 30 }) {
+    h.gateway.startPhoneSignIn = vi.fn(async () => challenge);
+    const SignIn = (await import('@/app/sign-in/page')).default;
+    const r = await open(<SignIn />);
+    await type(digits(r), '98765 43210');
+    await click(byText(r.container, 'Send code'));
+    return r;
+  }
+
+  test('leads with the mobile number, passkey and Google sit under other ways, and it is accessible', async () => {
+    const SignIn = (await import('@/app/sign-in/page')).default;
+    const r = await open(<SignIn />);
+    const headings = [...r.container.querySelectorAll('h2')].map((x) => x.textContent);
+    expect(headings).toEqual(['Continue with mobile number', 'Other ways to sign in']);
+    expect(digits(r).labels![0].textContent).toBe('Mobile number');
+    expect(await violations(r.container)).toEqual([]);
+  });
+
+  test('a bad number is refused in words before any request', async () => {
+    h.gateway.startPhoneSignIn = vi.fn();
+    const SignIn = (await import('@/app/sign-in/page')).default;
+    const r = await open(<SignIn />);
+    await type(digits(r), '12345');
+    await click(byText(r.container, 'Send code'));
+    expect(h.gateway.startPhoneSignIn).not.toHaveBeenCalled();
+    expect(r.container.querySelector('[role="alert"]')!.textContent).toContain('valid 10-digit');
+    expect(await violations(r.container)).toEqual([]);
+  });
+
+  test('asking sends +91 and the 10 digits, then the code field takes focus', async () => {
+    const r = await asked();
+    expect(h.gateway.startPhoneSignIn).toHaveBeenCalledWith('+919876543210');
+    expect(document.activeElement).toBe(codeField(r));
+    expect(codeField(r).autocomplete).toBe('one-time-code');
+    expect(r.container.textContent).toContain('+91 9876543210');
+    expect(r.container.querySelector('[data-testid="demo-code"]')).toBeNull();
+    expect(await violations(r.container)).toEqual([]);
+  });
+
+  test('a demo server code is shown, labelled Demo code, and the state is accessible', async () => {
+    const r = await asked({ challenge_id: 'c1', expires_in: 300, resend_after: 30, demo_code: '482913' });
+    expect(r.container.querySelector('[data-testid="demo-code"]')!.textContent).toBe('482913');
+    expect(r.container.textContent).toContain('Demo code:');
+    expect(await violations(r.container)).toEqual([]);
+  });
+
+  test('resend is off during the countdown, which is plain text, not a live region', async () => {
+    const r = await asked();
+    expect(byText(r.container, 'Resend code').hasAttribute('disabled')).toBe(true);
+    expect(r.container.textContent).toMatch(/new code in \d+ s/);
+    expect(r.container.querySelector('[role="status"]')!.textContent).toBe('');
+  });
+
+  test('the right code signs in and goes on to setup; a wrong one is explained and can retry', async () => {
+    const r = await asked();
+    h.gateway.signInWithPhone = vi.fn().mockRejectedValueOnce(Object.assign(new Error('400'), { status: 400, code: 'invalid_grant' }))
+      .mockResolvedValueOnce(undefined);
+    await type(codeField(r), '12 34x56');
+    expect(codeField(r).value).toBe('123456');
+    await click(byText(r.container, 'Sign in'));
+    expect(r.container.querySelector('[role="alert"]')!.textContent).toContain('isn’t right, or it has expired');
+    expect(h.replace).not.toHaveBeenCalled();
+    expect(await violations(r.container)).toEqual([]);
+    await click(byText(r.container, 'Sign in'));
+    expect(h.gateway.signInWithPhone).toHaveBeenLastCalledWith('c1', '123456');
+    expect(h.replace).toHaveBeenCalledWith('/setup/');
+  });
+
+  test('an incomplete code is not sent', async () => {
+    const r = await asked();
+    h.gateway.signInWithPhone = vi.fn();
+    await type(codeField(r), '123');
+    await click(byText(r.container, 'Sign in'));
+    expect(h.gateway.signInWithPhone).not.toHaveBeenCalled();
+    expect(r.container.querySelector('[role="alert"]')!.textContent).toContain('6-digit');
+  });
+
+  test('a rate limit says how long to wait, and Change number goes back', async () => {
+    h.gateway.startPhoneSignIn = vi.fn(async () => {
+      throw Object.assign(new Error('429'), { status: 429, code: 'too_many_requests', retryAfter: 600 });
+    });
+    const SignIn = (await import('@/app/sign-in/page')).default;
+    const r = await open(<SignIn />);
+    await type(digits(r), '9876543210');
+    await click(byText(r.container, 'Send code'));
+    expect(r.container.querySelector('[role="alert"]')!.textContent).toContain('10 minutes');
+    expect(await violations(r.container)).toEqual([]);
+
+    const ok = await asked();
+    await click(byText(ok.container, 'Change number'));
+    expect(digits(ok)).not.toBeNull();
+  });
+
+  test('the wait for the code is announced in the live status', async () => {
+    let finish!: (c: unknown) => void;
+    h.gateway.startPhoneSignIn = vi.fn(() => new Promise((resolve) => (finish = resolve)));
+    const SignIn = (await import('@/app/sign-in/page')).default;
+    const r = await open(<SignIn />);
+    await type(digits(r), '9876543210');
+    await click(byText(r.container, 'Send code'));
+    expect(r.container.querySelector('[role="status"]')!.textContent).toBe('Sending the code…');
+    await act(async () => finish({ challenge_id: 'c1', expires_in: 300, resend_after: 30 }));
+  });
+});
+
+describe('the passkey offer after a mobile-number sign-in', () => {
+  afterEach(() => localStorage.clear());
+
+  test('is accessible, adds the passkey and then says so', async () => {
+    const { rememberSignIn } = await import('@/lib/signInMethod');
+    rememberSignIn('phone');
+    h.gateway.addPasskey = vi.fn(async () => undefined);
+    const { PasskeyOffer } = await import('@/components/PasskeyOffer');
+    const r = await open(<PasskeyOffer />);
+    expect(r.container.querySelector('h2')!.textContent).toBe('Add a passkey for faster sign-in');
+    expect(await violations(r.container)).toEqual([]);
+    await click(byText(r.container, 'Add a passkey'));
+    expect(h.gateway.addPasskey).toHaveBeenCalled();
+    expect(r.container.querySelector('h2')!.textContent).toBe('Passkey added');
+    expect(await violations(r.container)).toEqual([]);
+  });
+
+  test('a late attempt says to sign in again, and Not now closes the offer', async () => {
+    const { rememberSignIn, passkeyOfferOpen } = await import('@/lib/signInMethod');
+    rememberSignIn('phone');
+    h.gateway.addPasskey = vi.fn(async () => {
+      throw Object.assign(new Error('403'), { status: 403, code: 'reauthentication_required' });
+    });
+    const { PasskeyOffer } = await import('@/components/PasskeyOffer');
+    const r = await open(<PasskeyOffer />);
+    await click(byText(r.container, 'Add a passkey'));
+    expect(r.container.querySelector('[role="alert"]')!.textContent).toContain('sign in again');
+    await click(byText(r.container, 'Not now'));
+    expect(r.container.textContent).toBe('');
+    expect(passkeyOfferOpen()).toBe(false);
+  });
+
+  test('shows nothing for any other sign-in', async () => {
+    const { rememberSignIn } = await import('@/lib/signInMethod');
+    rememberSignIn('other');
+    const { PasskeyOffer } = await import('@/components/PasskeyOffer');
+    const r = await open(<PasskeyOffer />);
+    expect(r.container.textContent).toBe('');
+  });
+});
+
+describe('devices for a mobile-number sign-in', () => {
+  afterEach(() => localStorage.clear());
+
+  test('explains up front, and a failed passkey check becomes that explanation, not a passkey error', async () => {
+    const { rememberSignIn } = await import('@/lib/signInMethod');
+    rememberSignIn('phone');
+    h.ready = { ready: true, error: undefined };
+    const device = { id: 'd2', name: 'Old laptop', platform: 'web', app_version: null, created_at: '2026-10-01T00:00:00Z', last_seen_at: '2026-10-02T00:00:00Z', current: false };
+    h.gateway.call = vi.fn(async () => [device]);
+    h.gateway.callWithStepUp = vi.fn(async () => {
+      throw Object.assign(new Error('x'), { name: 'NotAllowedError' });
+    });
+    const Devices = (await import('@/app/settings/devices/page')).default;
+    const r = await open(<Devices />);
+    await click(byText(r.container, 'Remove'));
+    expect(r.container.textContent).toContain('you signed in with a mobile number');
+    await click(byText(r.container, 'Confirm with passkey and remove'));
+    const alert = r.container.querySelector('[role="alert"]')!.textContent!;
+    expect(alert).toContain('Add a passkey first');
+    expect(alert).not.toContain('prompt');
+    expect(await violations(r.container)).toEqual([]);
+  });
+});
+
 describe('setup', () => {
   test('the waiting state is accessible and announced', async () => {
     h.ensureReady.mockResolvedValue('needs-setup');

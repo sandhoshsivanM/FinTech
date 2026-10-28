@@ -2,6 +2,7 @@
 // signed-in page needs before it can show data.
 import { ApiError, gateway } from './api';
 import { AccountKeys } from './keys';
+import { forgetSignIn } from './signInMethod';
 
 let instance: AccountKeys | undefined;
 export const keys = () => (instance ??= new AccountKeys(gateway()));
@@ -51,6 +52,7 @@ export async function signOutEverywhereLocal(): Promise<void> {
   try {
     await gateway().signOut();
   } finally {
+    forgetSignIn();
     await (await import('./vault')).clearAll();
     instance = undefined;
   }
