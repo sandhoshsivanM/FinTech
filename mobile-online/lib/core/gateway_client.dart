@@ -13,9 +13,12 @@ import '../security/device_signer.dart';
 import 'passkey.dart';
 
 class ApiException implements Exception {
-  ApiException(this.status, this.code);
+  ApiException(this.status, this.code, [this.retryAfter]);
   final int status;
   final String? code;
+
+  /// Seconds the server asked us to wait (429).
+  final int? retryAfter;
   @override
   String toString() => 'ApiException($status${code == null ? '' : ' $code'})';
 }
@@ -32,6 +35,20 @@ class TokenResponse {
   final String refreshToken;
   final String userId;
   final String deviceId;
+}
+
+/// What asking for an SMS code returns. [demoCode] appears only on a demo
+/// server that shows the code instead of texting it.
+class PhoneChallenge {
+  PhoneChallenge.fromJson(Map<String, dynamic> j)
+      : challengeId = j['challenge_id'] as String,
+        expiresIn = j['expires_in'] as int,
+        resendAfter = j['resend_after'] as int,
+        demoCode = j['demo_code'] as String?;
+  final String challengeId;
+  final int expiresIn;
+  final int resendAfter;
+  final String? demoCode;
 }
 
 class GatewayClient implements Api {
@@ -98,7 +115,8 @@ class GatewayClient implements Api {
     } on FormatException {
       // Not JSON: the status alone says enough.
     }
-    throw ApiException(response.statusCode, code);
+    final wait = int.tryParse(response.headers['retry-after'] ?? '');
+    throw ApiException(response.statusCode, code, wait != null && wait > 0 ? wait : null);
   }
 
   Future<TokenResponse> _keep(http.Response response) async {
@@ -149,6 +167,34 @@ class GatewayClient implements Api {
     final c = await _challenge('/v1/auth/passkeys/assert/options');
     final assertion = await ceremony.get(c.options);
     return _tokenWith({'provider': 'passkey', 'challenge_id': c.challengeId, 'assertion': assertion});
+  }
+
+  /// Whether this build can create passkeys (so adding one can be offered).
+  bool get passkeysAvailable => _passkeys != null;
+
+  /// Texts a 6-digit code to a mobile number (+91 only for now). The answer is
+  /// the same whether or not the number has an account.
+  ///
+  /// The session key is chosen here, once: [signInWithPhone] must be signed by
+  /// the same key, because the server binds the code to it.
+  Future<PhoneChallenge> startPhoneSignIn(String phone) async {
+    await _signers?.prepareForNewSession();
+    final response = await _send('POST', '/v1/auth/phone/start', {'phone': phone, 'platform': platform});
+    if (response.statusCode != 200) _fail(response);
+    return PhoneChallenge.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  /// Signs in (or creates the account) with the code that was texted. Five wrong tries burn the code.
+  Future<TokenResponse> signInWithPhone(String challengeId, String code) =>
+      _tokenWith({'provider': 'phone', 'challenge_id': challengeId, 'code': code});
+
+  /// Adds a passkey to the signed-in account. The server allows it only within
+  /// a few minutes of signing in.
+  Future<void> addPasskey() async {
+    final ceremony = _ceremony;
+    final options = await call('POST', '/v1/auth/passkeys/register/options') as Map<String, dynamic>;
+    final attestation = await ceremony.create(options['options'] as Map<String, dynamic>);
+    await call('POST', '/v1/auth/passkeys/register', {'challenge_id': options['challenge_id'], 'attestation': attestation});
   }
 
   /// This device's DPoP key thumbprint (RFC 7638): the nonce Google's ID token must carry.

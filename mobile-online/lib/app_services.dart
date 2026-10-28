@@ -30,6 +30,10 @@ class AppServices {
   late final SyncEngine engine;
   late final LedgerWriter writer;
 
+  /// Set after a mobile-number sign-in: until then the home screen offers to
+  /// add a passkey (the server allows it only within minutes of signing in).
+  DateTime? passkeyOfferUntil;
+
   static String _defaultDeviceName() => Platform.isIOS ? 'iPhone' : (Platform.isAndroid ? 'Android phone' : 'Mac');
 
   Future<Ledger> ledger() async => readLedger(keys.dataKey, await records.all());
