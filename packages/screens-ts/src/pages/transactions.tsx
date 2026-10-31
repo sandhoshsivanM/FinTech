@@ -271,7 +271,7 @@ export default function TransactionsPage() {
       {toReview > 0 && (
         <Link
           href="/capture"
-          className="focus-ring card flex items-center gap-3 px-4 py-3 text-[13.5px] hover:bg-fill transition-colors"
+          className="focus-ring card flex items-center gap-3 px-4 py-3 fs-13.5 hover:bg-fill transition-colors"
         >
           <Inbox size={17} className="text-ink-soft shrink-0" />
           <span className="text-ink">
@@ -318,11 +318,11 @@ export default function TransactionsPage() {
           the two fields handle everything else. */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-[150px]">
-          <label className="text-[12.5px] text-muted" htmlFor="stmt-from">From</label>
+          <label className="fs-12.5 text-muted" htmlFor="stmt-from">From</label>
           <div className="mt-1"><DateInput id="stmt-from" value={from} onChange={(v) => { setFrom(v); setPage(0); }} max={to || undefined} /></div>
         </div>
         <div className="w-[150px]">
-          <label className="text-[12.5px] text-muted" htmlFor="stmt-to">To</label>
+          <label className="fs-12.5 text-muted" htmlFor="stmt-to">To</label>
           <div className="mt-1"><DateInput id="stmt-to" value={to} onChange={(v) => { setTo(v); setPage(0); }} min={from || undefined} /></div>
         </div>
         <div className="flex flex-wrap gap-1.5 pb-1">
@@ -331,7 +331,7 @@ export default function TransactionsPage() {
               key={p.label}
               type="button"
               onClick={() => { const [f, t] = presetInputRange(p.key); setFrom(f); setTo(t); setPage(0); }}
-              className="btn-soft px-3 py-1.5 rounded-full text-[12px] font-medium text-ink-soft hover:text-ink transition-colors"
+              className="btn-soft px-3 py-1.5 rounded-full fs-12 font-medium text-ink-soft hover:text-ink transition-colors"
             >
               {p.label}
             </button>
@@ -340,7 +340,7 @@ export default function TransactionsPage() {
             <button
               type="button"
               onClick={() => { setFrom(''); setTo(''); setPage(0); }}
-              className="px-3 py-1.5 rounded-full text-[12px] font-semibold text-ink hover:underline"
+              className="px-3 py-1.5 rounded-full fs-12 font-semibold text-ink hover:underline"
             >
               Clear dates
             </button>
@@ -391,7 +391,7 @@ export default function TransactionsPage() {
                 <div key={e.id}>
                   {showHeader && (
                     // Sticky day header: the day on the left, its net on the right.
-                    <div className="sticky top-16 z-[1] flex items-center justify-between gap-3 px-4 sm:px-5 py-2 bg-card text-[12px] text-muted">
+                    <div className="sticky top-16 z-[1] flex items-center justify-between gap-3 px-4 sm:px-5 py-2 bg-card fs-12 text-muted">
                       <span>{dayLabel(e.date)}</span>
                       {dayNet && !dayNet.isZero() && (
                         <span
@@ -427,12 +427,12 @@ export default function TransactionsPage() {
 
                     {/* Details */}
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-[14px] truncate">
+                      <div className="font-medium fs-14 truncate">
                         {isTransfer
                           ? `${acctName(e.transfer.fromAccountId)} → ${acctName(e.transfer.toAccountId)}`
                           : (e.txn.merchant || cat?.name || 'Other')}
                       </div>
-                      <div className="text-[11.5px] text-muted truncate">
+                      <div className="fs-11.5 text-muted truncate">
                         {isTransfer ? 'Transfer' : cat?.name}
                         {!isTransfer && <> · <span className="text-ink-soft">{acctName(e.txn.accountId)}</span></>}
                         {(isTransfer ? e.transfer.note : e.txn.note) ? ` · ${isTransfer ? e.transfer.note : e.txn.note}` : ''}
@@ -443,7 +443,7 @@ export default function TransactionsPage() {
 
                     {/* Amount */}
                     <span
-                      className="font-semibold text-[14px] tnum whitespace-nowrap"
+                      className="font-semibold fs-14 tnum whitespace-nowrap"
                       style={{ color: tone }}
                     >
                       {isTransfer

@@ -42,8 +42,8 @@ export function BudgetRingCard({ month: picked }: { month?: DateRange }) {
             <PiggyBank size={20} />
           </span>
           <span className="min-w-0">
-            <span className="block font-medium text-[14px]">Set a monthly budget</span>
-            <span className="block text-[12px] text-muted">See how much is left at a glance.</span>
+            <span className="block font-medium fs-14">Set a monthly budget</span>
+            <span className="block fs-12 text-muted">See how much is left at a glance.</span>
           </span>
         </GlassCard>
       </Link>
@@ -58,28 +58,30 @@ export function BudgetRingCard({ month: picked }: { month?: DateRange }) {
   return (
     <GlassCard>
       <div className="flex items-baseline justify-between mb-3">
-        <CardTitle info="dashboard.budgetThisMonth" className="text-[17px] font-medium tracking-[-0.01em]">{isPast ? `Budget · ${monthName(picked!.start)}` : 'Budget this month'}</CardTitle>
-        <Link href="/budget" className="text-[12.5px] font-semibold text-ink-soft">Details</Link>
+        <CardTitle info="dashboard.budgetThisMonth" className="fs-17 font-medium tracking-[-0.01em]">{isPast ? `Budget · ${monthName(picked!.start)}` : 'Budget this month'}</CardTitle>
+        <Link href="/budget" className="fs-12.5 font-semibold text-ink-soft">Details</Link>
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-[26px] font-light tracking-[-0.03em] leading-none tnum">{mask(fmt.money(data.spent))}</span>
+        <span className="fs-26 font-light tracking-[-0.03em] leading-none tnum">{mask(fmt.money(data.spent))}</span>
         <span className="chip text-[var(--data-blue)] tnum">{Math.round(data.pct)}% used</span>
       </div>
-      <p className="mt-1.5 text-[12.5px] text-muted tnum">of {mask(fmt.money(data.limit))} budgeted</p>
+      <p className="mt-1.5 fs-12.5 text-muted tnum">of {mask(fmt.money(data.limit))} budgeted</p>
 
-      <ul className="tray mt-3 grid gap-3.5 p-3">
+      <ul className="tray mt-3 grid grid-cols-1 gap-3.5 p-3">
         {data.top.map((r) => {
           const c = cat(r.budget.categoryId);
           return (
             <li key={r.budget.id}>
-              <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[13px]">
+              <div className="mb-1.5 flex items-baseline justify-between gap-3 fs-13">
                 <span className="flex items-center gap-2 min-w-0">
                   <CategoryIcon name={c?.icon} size={24} />
                   <span className="truncate">{c?.name ?? 'Uncategorized'}</span>
                 </span>
-                <span className="tnum font-semibold whitespace-nowrap">
-                  {mask(fmt.money(r.spent))}
-                  <span className="font-normal text-muted"> / {mask(fmt.money(r.limit))}</span>
+                {/* Each figure stays whole, but the pair may break at the
+                    slash when large text leaves no room for both. */}
+                <span className="tnum font-semibold text-right">
+                  <span className="whitespace-nowrap">{mask(fmt.money(r.spent))}</span>
+                  <span className="font-normal text-muted whitespace-nowrap"> / {mask(fmt.money(r.limit))}</span>
                 </span>
               </div>
               <Gauge fraction={r.ratio} hue={gaugeHue(r.ratio)} />

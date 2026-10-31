@@ -68,7 +68,7 @@ export function AreaChart({
           height on hover and nudged everything below it. */}
       <div className="absolute top-0 left-0 right-0 text-center pointer-events-none z-10">
         {readout != null && (
-          <span className="text-[12px] font-semibold tnum">
+          <span className="fs-12 font-semibold tnum">
             {labels?.[hover!] && <span className="text-muted font-normal mr-2">{labels[hover!]}</span>}
             <span style={{ color }}>{format ? format(readout) : readout.toLocaleString('en-IN')}</span>
           </span>
@@ -116,7 +116,7 @@ export function AreaChart({
 
 export function EmptyChart({ label = 'Not enough data yet' }: { label?: string }) {
   return (
-    <div className="h-36 flex flex-col items-center justify-center text-muted text-[13px] gap-1">
+    <div className="h-36 flex flex-col items-center justify-center text-muted fs-13 gap-1">
       <span className="w-8 h-px bg-[var(--line-strong)]" />
       {label}
     </div>

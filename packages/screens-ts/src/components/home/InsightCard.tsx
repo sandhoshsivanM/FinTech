@@ -105,15 +105,15 @@ export function InsightCard({ month: picked }: { month?: DateRange }) {
       style={{ background: 'var(--insight-bg)' }}
     >
       <div className="relative flex items-center gap-1.5">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.18] px-2.5 py-1 text-[11.5px]">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.18] px-2.5 py-1 fs-11.5">
           <Lightbulb size={13} aria-hidden /> Insights
         </span>
         <SectionInfo k="dashboard.quickInsights" tone="inverse" />
       </div>
       <div key={i} className="relative mt-5 animate-[kz-rise_.45s_var(--ease)]" aria-live="polite">
-        <div className="text-[60px] font-light leading-none tracking-[-0.03em] tnum">{cur.figure}</div>
-        <p className="mt-3 text-[16px] font-semibold leading-snug">{cur.title}</p>
-        <p className="mt-1.5 text-[13px] text-white/80 leading-relaxed">{cur.detail}</p>
+        <div className="fs-60 font-light leading-none tracking-[-0.03em] tnum">{cur.figure}</div>
+        <p className="mt-3 fs-16 font-semibold leading-snug">{cur.title}</p>
+        <p className="mt-1.5 fs-13 text-white/80 leading-relaxed">{cur.detail}</p>
       </div>
       {insights.length > 1 && (
         <div className="relative mt-auto pt-5 grid gap-2" style={{ gridTemplateColumns: `repeat(${insights.length}, 1fr)` }}>

@@ -30,18 +30,18 @@ export default function HelpPage() {
       <div className="grid gap-6 min-[1100px]:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <StaggerItem>
           <section aria-label="Common questions" className="grid gap-3">
-            <h2 className="text-[16px] font-medium tracking-[-0.01em] px-1">Common questions</h2>
+            <h2 className="fs-16 font-medium tracking-[-0.01em] px-1">Common questions</h2>
             {/* One card per question, with a disclosure chevron. The first is
                 open so the page never lands as a wall of closed rows. */}
             {help.faq.map(([q, a], i) => (
               <details key={q} open={i === 0} className="card group px-5 py-4 [&_summary::-webkit-details-marker]:hidden">
                 <summary className="focus-ring flex items-center justify-between gap-3 cursor-pointer list-none rounded-[12px]">
-                  <h3 className="text-[15px] font-medium tracking-[-0.01em]">{q}</h3>
+                  <h3 className="fs-15 font-medium tracking-[-0.01em]">{q}</h3>
                   <span className="grid place-items-center w-8 h-8 shrink-0 rounded-full bg-[var(--card-2)] shadow-[0_2px_6px_-3px_rgba(0,0,0,0.25)] text-ink-soft transition-transform group-open:rotate-180">
                     <ChevronDown size={16} />
                   </span>
                 </summary>
-                <p className="text-[13.5px] text-ink-soft mt-2.5 leading-relaxed">{a}</p>
+                <p className="fs-13.5 text-ink-soft mt-2.5 leading-relaxed">{a}</p>
               </details>
             ))}
           </section>
@@ -52,13 +52,13 @@ export default function HelpPage() {
             <section className="card">
               <div className="px-5 py-4 border-b border-line flex items-center gap-2.5">
                 <Command size={17} className="text-muted" />
-                <h3 className="text-[16px] font-medium tracking-[-0.01em]">Keyboard</h3>
+                <h3 className="fs-16 font-medium tracking-[-0.01em]">Keyboard</h3>
               </div>
               <div className="p-5 grid gap-3">
                 {SHORTCUTS.map(([keys, what]) => (
                   <div key={keys} className="flex items-start gap-3">
-                    <kbd className="chip shrink-0 !text-[11px] font-medium text-ink-soft">{keys}</kbd>
-                    <span className="text-[12.5px] text-ink-soft leading-snug">{what}</span>
+                    <kbd className="chip shrink-0 !fs-11 font-medium text-ink-soft">{keys}</kbd>
+                    <span className="fs-12.5 text-ink-soft leading-snug">{what}</span>
                   </div>
                 ))}
               </div>
@@ -69,9 +69,9 @@ export default function HelpPage() {
             <GlassCard>
               <div className="flex items-center gap-2.5 mb-3">
                 <ShieldCheck size={17} className="text-muted" />
-                <h3 className="text-[16px] font-medium tracking-[-0.01em]">Privacy</h3>
+                <h3 className="fs-16 font-medium tracking-[-0.01em]">Privacy</h3>
               </div>
-              <ul className="grid gap-2.5 text-[12.5px] text-ink-soft leading-relaxed">
+              <ul className="grid gap-2.5 fs-12.5 text-ink-soft leading-relaxed">
                 {help.privacyBullets}
               </ul>
               <div className="mt-4 flex gap-2 flex-wrap">
@@ -89,12 +89,12 @@ export default function HelpPage() {
             <GlassCard>
               <div className="flex items-center gap-2.5 mb-2">
                 <HelpCircle size={17} className="text-muted" />
-                <h3 className="text-[16px] font-medium tracking-[-0.01em]">Still stuck?</h3>
+                <h3 className="fs-16 font-medium tracking-[-0.01em]">Still stuck?</h3>
               </div>
-              <p className="text-[12.5px] text-ink-soft leading-relaxed">
+              <p className="fs-12.5 text-ink-soft leading-relaxed">
                 {help.stuck}
               </p>
-              <p className="text-[12.5px] text-ink-soft leading-relaxed mt-2">
+              <p className="fs-12.5 text-ink-soft leading-relaxed mt-2">
                 Found a bug or have an idea? Send it from your own mail app — it carries the app version and browser, never your data.
               </p>
               <div className="mt-3">

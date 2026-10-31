@@ -68,7 +68,7 @@ export function SplineDots({ points, format, color = 'var(--data-rose)', ariaLab
           />
         ))}
         <span
-          className="float-pill absolute px-2.5 py-[3px] text-[11.5px] font-semibold tnum whitespace-nowrap pointer-events-none"
+          className="float-pill absolute px-2.5 py-[3px] fs-11.5 font-semibold tnum whitespace-nowrap pointer-events-none"
           style={{
             left: px(active), top: py(a.value),
             // Slide toward the inside at either end so the pill never leaves the card.
@@ -78,7 +78,7 @@ export function SplineDots({ points, format, color = 'var(--data-rose)', ariaLab
           {a.title ?? a.label} {format(a.value)}
         </span>
       </div>
-      <div className="flex justify-between mt-2 text-[11.5px]">
+      <div className="flex justify-between mt-2 fs-11.5">
         {points.map((p, i) => (
           <span key={i} className={clsx('w-0 flex justify-center whitespace-nowrap', i === active ? 'text-ink font-semibold' : 'text-muted')}>
             {p.label}

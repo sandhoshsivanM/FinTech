@@ -118,8 +118,8 @@ export default function ForecastPage() {
                 <CircleHelp size={16} />
               </span>
               <div>
-                <p className="text-[15px] font-semibold">Not enough data</p>
-                <p className="text-[13px] text-ink-soft mt-1 leading-relaxed">
+                <p className="fs-15 font-semibold">Not enough data</p>
+                <p className="fs-13 text-ink-soft mt-1 leading-relaxed">
                   {sts.gap === 'no-income'
                     ? 'No income has been recorded in the last three months, so there is no basis for a spending allowance. Khazana will not invent one — record your income and this fills in.'
                     : 'There is not enough recorded history to work out an allowance yet.'}
@@ -133,19 +133,19 @@ export default function ForecastPage() {
             <>
               <div className="mt-3 flex items-end gap-3 flex-wrap">
                 <div>
-                  <div className="text-[34px] font-light tracking-[-0.04em] leading-none tnum">
+                  <div className="fs-34 font-light tracking-[-0.04em] leading-none tnum">
                     {money(sts.perDay)}
                   </div>
                   <div className="text-xs text-muted mt-1.5">per day for {sts.inputs.daysRemaining} more days</div>
                 </div>
                 <div className="ml-auto text-right">
-                  <div className="text-[18px] font-semibold tnum">{money(sts.total!)}</div>
+                  <div className="fs-18 font-semibold tnum">{money(sts.total!)}</div>
                   <div className="text-xs text-muted mt-0.5">left in total</div>
                 </div>
               </div>
 
               {/* The workings. §9: Safe-to-Spend must never be a magic number. */}
-              <div className="mt-5 pt-4 border-t border-[var(--line)] grid gap-2 text-[13px]">
+              <div className="mt-5 pt-4 border-t border-[var(--line)] grid gap-2 fs-13">
                 <Working label="Available cash" value={money(sts.inputs.availableCash)} />
                 <Working
                   label="Less committed recurring payments"
@@ -157,7 +157,7 @@ export default function ForecastPage() {
                 />
                 <Working label="Days remaining" value={String(sts.inputs.daysRemaining)} />
               </div>
-              <p className="mt-3 text-[11px] text-muted leading-relaxed">
+              <p className="mt-3 fs-11 text-muted leading-relaxed">
                 The lower of your remaining cash and your remaining budget, after everything already
                 scheduled. It never offers money that is committed or that is not there.
               </p>
@@ -171,7 +171,7 @@ export default function ForecastPage() {
         <GlassCard padded={false}>
           <div className="px-5 py-4 border-b border-[var(--line)] flex items-center gap-3 flex-wrap">
             <div>
-              <CardTitle info="forecast.cashFlowForecast" className="text-[16px] font-medium tracking-[-0.01em]">Cash-flow forecast</CardTitle>
+              <CardTitle info="forecast.cashFlowForecast" className="fs-16 font-medium tracking-[-0.01em]">Cash-flow forecast</CardTitle>
               <p className="text-xs text-muted mt-0.5">
                 {forecast.monthlyDiscretionary == null
                   ? 'Recurring rules only — not enough history for typical spending'
@@ -185,7 +185,7 @@ export default function ForecastPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[11px] text-muted">
+                <tr className="fs-11 text-muted">
                   <th className="text-left font-semibold px-5 py-2">Month</th>
                   <th className="text-right font-semibold px-3 py-2">Scheduled in</th>
                   <th className="text-right font-semibold px-3 py-2">Scheduled out</th>
@@ -215,7 +215,7 @@ export default function ForecastPage() {
               </tbody>
             </table>
           </div>
-          <p className="px-5 py-3 text-[11px] text-muted border-t border-[var(--line)] leading-relaxed">
+          <p className="px-5 py-3 fs-11 text-muted border-t border-[var(--line)] leading-relaxed">
             Built from your recurring rules and the median of your completed months — a median, so one
             unusual month cannot skew it. It assumes those rules keep running and your habits hold.
           </p>
@@ -261,7 +261,7 @@ export default function ForecastPage() {
               </p>
               <div className="grid gap-1.5">
                 {review.categoryMoves.slice(0, 5).map((m) => (
-                  <div key={m.categoryId} className="flex items-baseline justify-between gap-3 text-[13px]">
+                  <div key={m.categoryId} className="flex items-baseline justify-between gap-3 fs-13">
                     <span className="min-w-0 truncate">{catName(m.categoryId)}</span>
                     <span className="tnum shrink-0"
                       style={{ color: m.delta.gt(0) ? 'var(--expense)' : 'var(--income)' }}>
@@ -301,13 +301,13 @@ export default function ForecastPage() {
               </div>
               <div className="mt-4 flex items-baseline justify-between gap-3">
                 <span className="text-sm text-muted">In five years</span>
-                <span className="text-[22px] font-light tnum">
+                <span className="fs-22 font-light tnum">
                   {money(projection.points[projection.points.length - 1].value)}
                 </span>
               </div>
               {/* The assumptions, stated. A projection without them is a guess
                   wearing a chart. */}
-              <p className="mt-3 text-[11px] text-muted leading-relaxed">
+              <p className="mt-3 fs-11 text-muted leading-relaxed">
                 Assumes you keep saving {money(projection.monthlySurplus)} a month — the median of your
                 last {projection.basedOnMonths} recorded months — and that invested assets grow{' '}
                 {projection.growthPct}% a year. Cash is not assumed to grow. This is a projection under
@@ -350,7 +350,7 @@ export default function ForecastPage() {
                 <Outcome label="Total interest" value={money(scenario.totalInterest)} />
                 <Outcome label="Net worth in 5 years" value={money(scenario.netWorthAtHorizon)} />
               </div>
-              <p className="mt-4 text-[11px] text-muted leading-relaxed">
+              <p className="mt-4 fs-11 text-muted leading-relaxed">
                 Extra payments go to the highest-rate debt first, which is what minimises total
                 interest. Minimum payments are derived from each liability&rsquo;s principal, rate and
                 term — the same figures the Liabilities screen shows.
@@ -376,7 +376,7 @@ function Outcome({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[var(--radius-card)] border border-[var(--line)] p-3">
       <div className="text-xs text-muted">{label}</div>
-      <div className="text-[17px] font-light tnum mt-1">{value}</div>
+      <div className="fs-17 font-light tnum mt-1">{value}</div>
     </div>
   );
 }

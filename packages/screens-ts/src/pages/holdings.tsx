@@ -161,7 +161,7 @@ export default function HoldingsPage() {
           <AssetMark colour={r.colour} title={r.assetLabel} />
           <span className="min-w-0">
             <span className="block font-semibold tracking-[-0.01em] truncate">{r.name}</span>
-            <span className="block text-[11px] text-muted">{r.symbol}</span>
+            <span className="block fs-11 text-muted">{r.symbol}</span>
           </span>
         </div>
       ),
@@ -214,7 +214,7 @@ export default function HoldingsPage() {
           <span className={r.pnl >= 0 ? 'text-success font-semibold' : 'text-danger font-semibold'}>
             {r.pnlPct >= 0 ? '+' : '−'}{Math.abs(r.pnlPct).toFixed(2)}%
           </span>
-          <span className="block text-[11px] text-muted">{r.pnl >= 0 ? '+' : '−'}{fmt.money(Math.abs(r.pnl))}</span>
+          <span className="block fs-11 text-muted">{r.pnl >= 0 ? '+' : '−'}{fmt.money(Math.abs(r.pnl))}</span>
         </span>
       ),
     },
@@ -235,7 +235,7 @@ export default function HoldingsPage() {
       value: (r) => r.weight,
       cell: (r) => (
         <span className="inline-flex items-center gap-2 justify-end">
-          <span className="text-[11.5px] text-ink-soft">{r.weight.toFixed(1)}%</span>
+          <span className="fs-11.5 text-ink-soft">{r.weight.toFixed(1)}%</span>
           <span className="w-11 h-1.5 rounded-full bg-fill-strong overflow-hidden">
             <span className="block h-full rounded-full" style={{ width: `${Math.min(r.weight * 5.5, 100)}%`, background: r.colour }} />
           </span>
@@ -308,7 +308,7 @@ export default function HoldingsPage() {
         <section className="card overflow-hidden">
           <div className="flex items-center gap-3 px-4 min-[900px]:px-5 py-4 border-b border-line">
             <div className="min-w-0">
-              <CardTitle info="holdings.allPositions" className="text-[16px] font-medium tracking-[-0.01em]">All positions</CardTitle>
+              <CardTitle info="holdings.allPositions" className="fs-16 font-medium tracking-[-0.01em]">All positions</CardTitle>
               <p className="text-xs text-muted mt-0.5">Sort, filter and export the full book</p>
             </div>
             {demo && !anyRealClose && <span className="ml-auto"><DemoBadge label="Day change" title="Day change is synthesised on this device. Turn on live prices in Settings to measure it against a real previous close." /></span>}
@@ -328,7 +328,7 @@ export default function HoldingsPage() {
                     onChange={(e) => setTypeFilter(e.target.value as AssetType | 'all')}
                     // Matches the toolbar's search box exactly (h-9, same
                     // radius and surface) so the two controls sit on one line.
-                    className="h-9 rounded-input border border-line bg-surface px-3 text-[12.5px] font-semibold text-ink outline-none cursor-pointer focus:border-[var(--accent)]"
+                    className="h-9 rounded-input border border-line bg-surface px-3 fs-12.5 font-semibold text-ink outline-none cursor-pointer focus:border-[var(--accent)]"
                   >
                     <option value="all">All types ({rows.length})</option>
                     {typesPresent.map(([t, n]) => (
@@ -342,8 +342,8 @@ export default function HoldingsPage() {
             exportName="khazana-holdings"
             empty={
               <div className="text-center px-6">
-                <p className="font-semibold text-[15px]">No holdings yet</p>
-                <p className="text-[13px] text-muted mt-2">Add a position by hand, or import a CSV exported from your broker.</p>
+                <p className="font-semibold fs-15">No holdings yet</p>
+                <p className="fs-13 text-muted mt-2">Add a position by hand, or import a CSV exported from your broker.</p>
                 <div className="mt-5 flex gap-2 justify-center">
                   <Button onClick={() => setPanel('add')}><Plus size={16} />Add holding</Button>
                   <Button variant="soft" onClick={() => setPanel('import')}><Upload size={16} />Import CSV</Button>

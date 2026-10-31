@@ -370,7 +370,7 @@ export default function ReportsPage() {
           <BalanceSheetCard />
 
           {/* Category donut + Net worth sparkline */}
-          <div className="grid lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Spending by category */}
             <GlassCard>
               <SectionHeader title="Spending by Category" info="reports.spendingByCategory" action={<span className="text-xs text-muted">{range.label}</span>} />
@@ -399,13 +399,13 @@ export default function ReportsPage() {
           {monthlyRows.length > 1 && (
             <GlassCard padded={false}>
               <div className="px-5 py-4 border-b border-[var(--line)]">
-                <CardTitle className="text-[16px] font-medium tracking-[-0.01em]" info="reports.monthByMonth">Month by month</CardTitle>
+                <CardTitle className="fs-16 font-medium tracking-[-0.01em]" info="reports.monthByMonth">Month by month</CardTitle>
                 <p className="text-xs text-muted mt-0.5">{range.label}</p>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-[11px] text-muted">
+                    <tr className="fs-11 text-muted">
                       <th className="text-left font-semibold px-5 py-2">Month</th>
                       <th className="text-right font-semibold px-3 py-2">Income</th>
                       <th className="text-right font-semibold px-3 py-2">Expense</th>
@@ -443,7 +443,7 @@ export default function ReportsPage() {
                   </tbody>
                 </table>
               </div>
-              <p className="px-5 py-3 text-[11px] text-muted border-t border-[var(--line)]">
+              <p className="px-5 py-3 fs-11 text-muted border-t border-[var(--line)]">
                 Saved is net as a share of income for that month. Transfers between your own
                 accounts and investment purchases are excluded from both income and expense.
               </p>

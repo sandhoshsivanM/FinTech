@@ -276,7 +276,7 @@ export default function AnalyticsPage() {
       <div className="grid gap-6 min-[1100px]:grid-cols-3">
         <StaggerItem>
           <section className="card h-full p-5">
-            <CardTitle info="analytics.riskDiversification" className="text-[16px] font-medium tracking-[-0.01em]">Risk &amp; asset spread</CardTitle>
+            <CardTitle info="analytics.riskDiversification" className="fs-16 font-medium tracking-[-0.01em]">Risk &amp; asset spread</CardTitle>
             {/* Always stacked. This card is one third of the row, so splitting
                 it on a VIEWPORT breakpoint sized the stat column against the
                 window rather than against the card — at 1440px that left ~150px
@@ -290,7 +290,7 @@ export default function AnalyticsPage() {
                   sublabel={diversification == null ? undefined : diversificationBand(diversification)}
                   untrackedLabel="Not yet scored"
                 />
-                <p className="mt-1 text-center text-[11.5px] text-muted">asset spread score</p>
+                <p className="mt-1 text-center fs-11.5 text-muted">asset spread score</p>
               </div>
               <div className="min-w-0">
                 <LedgerLine label="Holdings" value={stats.holdings} />
@@ -311,8 +311,8 @@ export default function AnalyticsPage() {
         <StaggerItem>
           <section className="card h-full p-5">
             <div className="flex items-baseline gap-3">
-              <CardTitle info="analytics.returnDistribution" className="text-[16px] font-medium tracking-[-0.01em]">Return distribution</CardTitle>
-              <span className="ml-auto text-[11.5px] text-muted">positions by unrealised return</span>
+              <CardTitle info="analytics.returnDistribution" className="fs-16 font-medium tracking-[-0.01em]">Return distribution</CardTitle>
+              <span className="ml-auto fs-11.5 text-muted">positions by unrealised return</span>
             </div>
             <div className="mt-5">
               <Histogram bins={buckets.map((b) => ({
@@ -320,7 +320,7 @@ export default function AnalyticsPage() {
                 color: b.negative ? 'var(--danger)' : 'var(--data-blue)',
               }))} height={200} />
             </div>
-            <p className="mt-3 text-[12px] leading-relaxed text-muted">
+            <p className="mt-3 fs-12 leading-relaxed text-muted">
               {belowCost === 0
                 ? `No position sits below its cost basis. A count histogram, not a value one — the question is how many positions are working, which a value-weighted chart would hide behind the largest holding.`
                 : `${belowCost} of ${holdings.length} position${holdings.length === 1 ? '' : 's'} sit below their cost basis. The negative buckets take the danger token so the split is legible without reading the axis.`}
@@ -330,16 +330,16 @@ export default function AnalyticsPage() {
 
         <StaggerItem>
           <section className="card h-full p-5">
-            <CardTitle info="analytics.concentration" className="text-[16px] font-medium tracking-[-0.01em]">Concentration</CardTitle>
+            <CardTitle info="analytics.concentration" className="fs-16 font-medium tracking-[-0.01em]">Concentration</CardTitle>
             {/* Per NAME, not per asset group. "Largest asset group is 100%" is
                 true of any all-equity book and tells its owner nothing they can
                 act on; which single holding is too large is actionable. */}
             <div className="mt-4 grid gap-3">
               {weights.slice(0, CONCENTRATION_ROWS).map((w) => (
                 <div key={w.symbol} className="grid gap-1.5">
-                  <div className="flex items-baseline gap-2 text-[12.5px]">
+                  <div className="flex items-baseline gap-2 fs-12.5">
                     <span className="truncate font-medium text-ink-soft">{w.symbol}</span>
-                    <b className="ml-auto text-[13px] font-semibold tnum">{pct(w.weight)}</b>
+                    <b className="ml-auto fs-13 font-semibold tnum">{pct(w.weight)}</b>
                   </div>
                   <ProgressBar
                     fraction={w.weight / Math.max(weights[0].weight, 0.0001)}
@@ -348,7 +348,7 @@ export default function AnalyticsPage() {
                 </div>
               ))}
               {weights.length > CONCENTRATION_ROWS && (
-                <p className="text-[11.5px] text-muted">
+                <p className="fs-11.5 text-muted">
                   and {weights.length - CONCENTRATION_ROWS} smaller position
                   {weights.length - CONCENTRATION_ROWS === 1 ? '' : 's'}
                 </p>
@@ -358,7 +358,7 @@ export default function AnalyticsPage() {
             {flagged.length > 0 && (
               <div className="mt-4 flex gap-2.5 rounded-[var(--radius-btn)] border border-[color-mix(in_srgb,var(--warning)_35%,transparent)] bg-warning-soft p-3">
                 <AlertTriangle size={15} className="mt-px shrink-0 text-warning" aria-hidden="true" />
-                <div className="text-[12.5px] leading-relaxed">
+                <div className="fs-12.5 leading-relaxed">
                   <b className="font-semibold text-ink">
                     {flagged.length === 1
                       ? 'One position exceeds the alert weight'
@@ -380,13 +380,13 @@ export default function AnalyticsPage() {
       <div className="grid gap-6 min-[1100px]:grid-cols-3">
         <StaggerItem>
           <section className="card h-full p-5">
-            <CardTitle info="analytics.netWorthTrend" className="text-[16px] font-medium tracking-[-0.01em]">Net worth trend</CardTitle>
+            <CardTitle info="analytics.netWorthTrend" className="fs-16 font-medium tracking-[-0.01em]">Net worth trend</CardTitle>
             <div className="mt-4">
               {netWorthSeries.length > 1
                 ? <LineChart values={netWorthSeries} height={190}
                     format={(n) => short(n, fmt.symbol)}
                     ariaLabel={`Net worth over ${range}`} />
-                : <p className="py-12 text-center text-[13px] text-muted">
+                : <p className="py-12 text-center fs-13 text-muted">
                     Not enough history in this range yet.
                   </p>}
             </div>
@@ -395,12 +395,12 @@ export default function AnalyticsPage() {
 
         <StaggerItem>
           <section className="card h-full p-5">
-            <CardTitle info="analytics.netWorthMovement" className="text-[16px] font-medium tracking-[-0.01em]">Net worth movement</CardTitle>
+            <CardTitle info="analytics.netWorthMovement" className="fs-16 font-medium tracking-[-0.01em]">Net worth movement</CardTitle>
             <div className="mt-4">
               {monthly.length > 0
                 ? <ColumnChart columns={monthly} height={190} format={(n) => fmt.money(n)}
                     formatLabel={(n) => short(n, fmt.symbol)} />
-                : <p className="py-12 text-center text-[13px] text-muted">
+                : <p className="py-12 text-center fs-13 text-muted">
                     Not enough history yet — snapshots are recorded each day you open Khazana.
                   </p>}
             </div>
@@ -409,7 +409,7 @@ export default function AnalyticsPage() {
 
         <StaggerItem>
           <section className="card h-full p-5">
-            <CardTitle info="analytics.whereValueSits" className="text-[16px] font-medium tracking-[-0.01em]">Where value sits</CardTitle>
+            <CardTitle info="analytics.whereValueSits" className="fs-16 font-medium tracking-[-0.01em]">Where value sits</CardTitle>
             {/* Asset group on the inner ring, what it is made of on the outer.
                 The component, its colour ramp and the `sunburst` roll-up were
                 all built and shipped; nothing in the app had ever rendered

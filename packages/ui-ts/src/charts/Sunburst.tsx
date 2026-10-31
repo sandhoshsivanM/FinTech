@@ -88,7 +88,7 @@ export function Sunburst({
 
   if (children.length === 0 || total <= 0) {
     return (
-      <div className="h-40 grid place-items-center text-muted text-[13px]">
+      <div className="h-40 grid place-items-center text-muted fs-13">
         Nothing to show yet
       </div>
     );
@@ -148,7 +148,7 @@ export function Sunburst({
   return (
     <div>
       {pathNodes.length > 1 && (
-        <nav aria-label="Chart drill-down" className="flex items-center gap-1 mb-2 overflow-x-auto text-[13px]">
+        <nav aria-label="Chart drill-down" className="flex items-center gap-1 mb-2 overflow-x-auto fs-13">
           {pathNodes.map((n, i) => (
             <span key={n.key} className="flex items-center gap-1 shrink-0">
               {i > 0 && <span className="text-muted">›</span>}
@@ -222,10 +222,10 @@ export function Sunburst({
             style={{ width: (innerR - ringWidth / 2) * 2, height: (innerR - ringWidth / 2) * 2 }}
           >
             <span>
-              <span className="block text-[17px] font-light tracking-tight tnum">
+              <span className="block fs-17 font-light tracking-tight tnum">
                 {formatValue(focus.value)}
               </span>
-              <span className="block text-[10.5px] text-muted">
+              <span className="block fs-10.5 text-muted">
                 {path.length === 0 ? (centerSub ?? focus.label) : 'Zoom out'}
               </span>
             </span>
@@ -235,7 +235,7 @@ export function Sunburst({
 
       {/* The caption is the tooltip: it always says something, so nothing is
           hover-only, and it doubles as the live description. */}
-      <div className="flex items-center gap-2.5 mt-3 text-[13.5px]">
+      <div className="flex items-center gap-2.5 mt-3 fs-13.5">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: described.color }} />
         <span className="flex-1 min-w-0 truncate font-medium">{described.label}</span>
         <span className="shrink-0 text-muted tnum">
@@ -246,7 +246,7 @@ export function Sunburst({
       {showLegend && (
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
           {children.filter((c) => c.value > 0).map((c) => (
-            <span key={c.key} className="flex items-center gap-1.5 text-[11.5px] text-ink-soft">
+            <span key={c.key} className="flex items-center gap-1.5 fs-11.5 text-ink-soft">
               <span className="w-2 h-2 rounded-full" style={{ background: c.color }} />
               {c.label} {Math.round((c.value / total) * 100)}%
             </span>

@@ -54,3 +54,55 @@ export function accentVars(name: string, dark: boolean): Record<string, string> 
   if (a.on) vars['--accent-on'] = dark ? a.on.dark : a.on.light;
   return vars;
 }
+
+// Reading comfort: Settings → Appearance in the offline app. Testers could not
+// read the 11–13px figures, so the reader picks a text size and a typeface.
+// Keys are FROZEN (persisted in localStorage) and, like ACCENTS, mirrored in
+// the no-FOUC script in webapp/src/app/layout.tsx.
+
+export type TextSize = 'small' | 'default' | 'large' | 'larger' | 'largest';
+
+/** Multiplier applied to every text size through the --font-scale variable. */
+export const TEXT_SIZES: Record<TextSize, { label: string; scale: number }> = {
+  small: { label: 'Small', scale: 0.9 },
+  default: { label: 'Default', scale: 1 },
+  large: { label: 'Large', scale: 1.15 },
+  larger: { label: 'Larger', scale: 1.3 },
+  largest: { label: 'Largest', scale: 1.5 },
+};
+
+export type FontFamily =
+  | 'default' | 'atkinson' | 'inter' | 'noto' | 'manrope' | 'dmsans'
+  | 'jakarta' | 'plex' | 'roboto' | 'poppins' | 'system';
+
+/**
+ * What --font-sans becomes for each choice. 'default' (Anek Latin) sets
+ * nothing and falls through to the app's own font. Every web font here was
+ * checked to draw ₹ (U+20B9) itself in its latin-ext subset — the original
+ * Atkinson Hyperlegible does not, which is why this is the Next cut. Check any
+ * new face the same way before adding it.
+ */
+export const FONT_FAMILIES: Record<FontFamily, { label: string; note: string; value: string | null }> = {
+  default: { label: 'Anek Latin', note: 'Khazana default', value: null },
+  atkinson: { label: 'Atkinson Hyperlegible', note: 'Made for low vision', value: 'var(--font-atkinson)' },
+  inter: { label: 'Inter', note: 'Clear, even digits', value: 'var(--font-inter)' },
+  noto: { label: 'Noto Sans', note: 'Familiar Android look', value: 'var(--font-noto)' },
+  manrope: { label: 'Manrope', note: 'Modern fintech', value: 'var(--font-manrope)' },
+  dmsans: { label: 'DM Sans', note: 'Modern fintech', value: 'var(--font-dmsans)' },
+  jakarta: { label: 'Plus Jakarta Sans', note: 'Modern fintech', value: 'var(--font-jakarta)' },
+  plex: { label: 'IBM Plex Sans', note: 'Banking classic', value: 'var(--font-plex)' },
+  roboto: { label: 'Roboto', note: 'Payments-app look', value: 'var(--font-roboto)' },
+  poppins: { label: 'Poppins', note: 'Rounded and wide', value: 'var(--font-poppins)' },
+  system: {
+    label: 'System font', note: 'Your device’s own font',
+    // Unquoted on purpose (valid CSS) so the no-FOUC script can carry it verbatim.
+    value: '-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, Roboto, sans-serif',
+  },
+};
+
+/** The two CSS custom properties a reading choice sets on <html>; unknown keys fall back to the defaults. */
+export function readingVars(size: string, font: string): { '--font-scale': string; '--font-sans': string | null } {
+  const s = (TEXT_SIZES as Record<string, { scale: number }>)[size] ?? TEXT_SIZES.default;
+  const f = (FONT_FAMILIES as Record<string, { value: string | null }>)[font] ?? FONT_FAMILIES.default;
+  return { '--font-scale': String(s.scale), '--font-sans': f.value };
+}

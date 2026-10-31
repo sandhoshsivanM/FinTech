@@ -140,7 +140,7 @@ export function Gauge({
             >
               {label ?? (tracked ? Math.round(clamped) : '—')}
             </div>
-            <div className="text-[12px] text-muted mt-1.5">
+            <div className="fs-12 text-muted mt-1.5">
               {tracked ? (sublabel ?? '') : untrackedLabel}
             </div>
           </div>

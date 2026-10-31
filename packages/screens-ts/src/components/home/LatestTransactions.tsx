@@ -28,8 +28,8 @@ export function LatestTransactions() {
   return (
     <GlassCard padded={false} className="p-4">
       <div className="flex items-baseline justify-between px-1 mb-2">
-        <CardTitle info="dashboard.latestTransactions" className="text-[16px] font-medium tracking-[-0.01em]">Latest transactions</CardTitle>
-        <Link href="/transactions" className="text-[12.5px] font-semibold text-ink-soft">See all</Link>
+        <CardTitle info="dashboard.latestTransactions" className="fs-16 font-medium tracking-[-0.01em]">Latest transactions</CardTitle>
+        <Link href="/transactions" className="fs-12.5 font-semibold text-ink-soft">See all</Link>
       </div>
       <motion.ul variants={stagger} initial="hidden" animate="show">
         {latest.map((t) => {
@@ -45,12 +45,12 @@ export function LatestTransactions() {
               >
                 <CategoryIcon name={c?.icon} size={40} />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-medium truncate">{t.merchant || c?.name || 'Transaction'}</span>
-                  <span className="block text-[11.5px] text-muted truncate">
+                  <span className="block fs-14 font-medium truncate">{t.merchant || c?.name || 'Transaction'}</span>
+                  <span className="block fs-11.5 text-muted truncate">
                     {c?.name ?? 'Other'} · {formatDayMonth(t.date)}, {time}
                   </span>
                 </span>
-                <span className="text-[14px] font-semibold tnum whitespace-nowrap" style={{ color: ghost ? 'var(--muted)' : color }}>
+                <span className="fs-14 font-semibold tnum whitespace-nowrap" style={{ color: ghost ? 'var(--muted)' : color }}>
                   {ghost ? '••••' : `${sign}${fmt.money(t.amount)}`}
                 </span>
               </Link>

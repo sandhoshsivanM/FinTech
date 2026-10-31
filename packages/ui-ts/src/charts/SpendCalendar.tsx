@@ -40,7 +40,7 @@ export function SpendCalendar({ days, firstWeekday, today, format, monthLabel, c
         className="grid grid-cols-7 gap-1.5"
         onMouseLeave={() => setHover(null)}
       >
-        {WEEKDAYS.map((w, i) => <span key={i} aria-hidden className="text-center text-[11px] text-muted">{w}</span>)}
+        {WEEKDAYS.map((w, i) => <span key={i} aria-hidden className="text-center fs-11 text-muted">{w}</span>)}
         {Array.from({ length: firstWeekday }, (_, i) => <span key={`pad-${i}`} aria-hidden />)}
         {days.map((d, i) => {
           const future = d.value == null;
@@ -51,7 +51,7 @@ export function SpendCalendar({ days, firstWeekday, today, format, monthLabel, c
               aria-hidden
               onMouseEnter={() => setHover(i)}
               className={clsx(
-                'h-10 rounded-[10px] px-[7px] py-1 text-[11px] tnum cursor-default',
+                'h-10 rounded-[10px] px-[7px] py-1 fs-11 tnum cursor-default',
                 future && 'border border-dashed border-line-strong text-muted',
                 d.date === today && 'shadow-[0_0_0_2px_var(--ink)]',
                 s >= 3 && 'text-white',
@@ -65,11 +65,11 @@ export function SpendCalendar({ days, firstWeekday, today, format, monthLabel, c
           );
         })}
       </div>
-      <div className="mt-3 flex items-center gap-1 text-[11px] text-muted">
+      <div className="mt-3 flex items-center gap-1 fs-11 text-muted">
         Less
         {STEPS.map((p) => <span key={p} aria-hidden className="w-3.5 h-3.5 rounded-[4px]" style={{ background: `color-mix(in srgb, ${color} ${p}%, transparent)` }} />)}
         More
-        <span className="ml-auto text-[12px] text-ink-soft tnum truncate">
+        <span className="ml-auto fs-12 text-ink-soft tnum truncate">
           {h ? (h.value == null ? `${h.date} ${monthLabel} · still to come` : `${h.date} ${monthLabel} · ${format(h.value)}${h.note ? ` (${h.note})` : ''}`) : ''}
         </span>
       </div>

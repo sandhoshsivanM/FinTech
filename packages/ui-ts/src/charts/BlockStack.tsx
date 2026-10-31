@@ -93,7 +93,7 @@ export function BlockStack({ columns, format, formatTick, height = 220, ariaLabe
           </div>
           <span aria-hidden className="absolute w-2.5 h-2.5 rounded-full bg-ink -translate-x-1/2 -translate-y-1/2 shadow-[0_0_0_2.5px_var(--card)] pointer-events-none"
             style={{ left: `${cx}%`, top: topY }} />
-          <div aria-hidden className="absolute z-[2] card px-3 py-2 grid gap-0.5 min-w-[150px] text-[12px] pointer-events-none shadow-[var(--shadow-float)]"
+          <div aria-hidden className="absolute z-[2] card px-3 py-2 grid gap-0.5 min-w-[150px] fs-12 pointer-events-none shadow-[var(--shadow-float)]"
             style={{ left: `clamp(80px, ${cx}%, calc(100% - 80px))`, top: topY, transform: 'translate(-50%, calc(-100% - 12px))' }}>
             {[columns[s].total, ...columns[s].parts].filter(Boolean).map((p) => (
               <div key={p!.label} className="flex items-center gap-2">
@@ -106,7 +106,7 @@ export function BlockStack({ columns, format, formatTick, height = 220, ariaLabe
         </div>
         <div className="relative w-11 shrink-0" style={{ height }} aria-hidden>
           {ticks.map((t) => (
-            <span key={t} className="absolute right-0 -translate-y-1/2 text-[11px] text-muted tnum whitespace-nowrap" style={{ top: height - sc(t) }}>
+            <span key={t} className="absolute right-0 -translate-y-1/2 fs-11 text-muted tnum whitespace-nowrap" style={{ top: height - sc(t) }}>
               {tick(t)}
             </span>
           ))}
@@ -114,7 +114,7 @@ export function BlockStack({ columns, format, formatTick, height = 220, ariaLabe
       </div>
       <div className="flex gap-2.5 mt-2 mr-[54px]">
         {columns.map((c, i) => (
-          <span key={`${c.label}-${i}`} className={`flex-1 min-w-0 text-center text-[11.5px] truncate ${i === s ? 'text-ink font-semibold' : 'text-muted'}`}>
+          <span key={`${c.label}-${i}`} className={`flex-1 min-w-0 text-center fs-11.5 truncate ${i === s ? 'text-ink font-semibold' : 'text-muted'}`}>
             {c.label}
           </span>
         ))}

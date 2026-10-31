@@ -19,7 +19,7 @@ function KindBadge({ kind }: { kind: LiabilityKind }) {
   const isCc = kind === 'credit_card';
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${isCc ? 'bg-violet/12 text-violet' : 'bg-accent/12 text-accent'}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full fs-11 font-semibold ${isCc ? 'bg-violet/12 text-violet' : 'bg-accent/12 text-accent'}`}
     >
       {isCc ? <CreditCard size={10} /> : <Landmark size={10} />}
       {isCc ? 'Credit Card' : 'Loan'}
@@ -57,8 +57,8 @@ function SummaryTile({ label, value, sub, accent, term }: {
         <div className="eyebrow">{label}</div>
         {term && <Hint term={term} className="shrink-0" />}
       </div>
-      <div className="mt-1.5 text-[22px] font-light tracking-tight tnum" style={accent ? { color: accent } : undefined}>{value}</div>
-      {sub && <div className="text-[11.5px] text-muted mt-0.5">{sub}</div>}
+      <div className="mt-1.5 fs-22 font-light tracking-tight tnum" style={accent ? { color: accent } : undefined}>{value}</div>
+      {sub && <div className="fs-11.5 text-muted mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -264,13 +264,13 @@ export default function LiabilitiesPage() {
                 {/* Principal + APR */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <div className="text-[11px] text-muted">Balance</div>
+                    <div className="fs-11 text-muted">Balance</div>
                     <div className="font-semibold text-base tnum" style={{ color: 'var(--expense)' }}>
                       {mask(fmt.money(principal))}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-muted">APR</div>
+                    <div className="fs-11 text-muted">APR</div>
                     <div className="font-semibold text-base tnum">{aprPct.toFixed(2)}%</div>
                   </div>
                 </div>
@@ -288,7 +288,7 @@ export default function LiabilitiesPage() {
                       </span>
                     </div>
                     <ProgressBar fraction={utilizationFraction} />
-                    <div className="text-[11px] text-muted mt-1 tnum">
+                    <div className="fs-11 text-muted mt-1 tnum">
                       Limit: {mask(fmt.money(D(l.creditLimit)))}
                     </div>
                   </div>
@@ -303,7 +303,7 @@ export default function LiabilitiesPage() {
                 )}
 
                 {l.kind === 'loan' && l.termMonths && (
-                  <div className="text-[11px] text-muted">{l.termMonths} month term</div>
+                  <div className="fs-11 text-muted">{l.termMonths} month term</div>
                 )}
               </GlassCard>
             );
@@ -436,20 +436,20 @@ export default function LiabilitiesPage() {
                 ) : (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <div className="text-[11px] text-muted">Payoff Time</div>
+                      <div className="fs-11 text-muted">Payoff Time</div>
                       <div className="font-light text-xl tnum" style={{ color: 'var(--income)' }}>
                         {formatMonths(simResult.months)}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-muted">Total Interest</div>
+                      <div className="fs-11 text-muted">Total Interest</div>
                       <div className="font-light text-xl tnum" style={{ color: 'var(--expense)' }}>
                         {mask(fmt.money(simResult.totalInterest))}
                       </div>
                     </div>
                   </div>
                 )}
-                <div className="text-[11px] text-muted pt-1 border-t border-[var(--glass-border)]">
+                <div className="fs-11 text-muted pt-1 border-t border-[var(--glass-border)]">
                   <strong>Avalanche</strong>: pays highest-APR first (less interest). <strong>Snowball</strong>: pays smallest balance first (faster wins).
                 </div>
               </div>

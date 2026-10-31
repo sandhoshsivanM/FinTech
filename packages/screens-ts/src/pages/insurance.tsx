@@ -323,13 +323,13 @@ export default function InsurancePage() {
           {/* Coverage gap analysis */}
           <GlassCard>
             <SectionHeader title="Coverage gap analysis" info="insurance.coverageGap" />
-            <p className="text-[12px] text-muted mb-4 leading-relaxed">
+            <p className="fs-12 text-muted mb-4 leading-relaxed">
               Guidelines only — not financial advice. Life cover guideline: {LIFE_COVER_MULTIPLE}× annual income.
               Health cover guideline: ₹5L or 50% of annual income, whichever is higher.
               Consult a certified financial planner for personal advice.
             </p>
             {annualIncome.isZero() && (
-              <p className="text-[12px] text-warn mb-4">
+              <p className="fs-12 text-warn mb-4">
                 No income transactions found in the last 365 days — gap calculations use zero income as the baseline.
               </p>
             )}
@@ -355,16 +355,16 @@ export default function InsurancePage() {
                 return (
                   <div key={g.kind}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[13.5px] text-ink">{g.label}</span>
+                      <span className="fs-13.5 text-ink">{g.label}</span>
                       <span
-                        className="text-[11.5px] font-semibold"
+                        className="fs-11.5 font-semibold"
                         style={{ color: textColor }}
                       >
                         {g.coveredPct}%
                       </span>
                     </div>
                     <ProgressBar fraction={g.coveredPct / 100} color={barColor} height={6} />
-                    <div className="mt-1.5 flex items-center justify-between text-[12px]">
+                    <div className="mt-1.5 flex items-center justify-between fs-12">
                       <span className="text-muted">
                         Current: {mask(fmt.money(g.current))} · Recommended: {mask(fmt.money(g.recommended))}
                       </span>
@@ -418,18 +418,18 @@ export default function InsurancePage() {
 
                   {/* Name + provider */}
                   <div className="min-w-0">
-                    <div className="font-medium text-[17px] text-ink leading-tight truncate">
+                    <div className="font-medium fs-17 text-ink leading-tight truncate">
                       {p.name}
                     </div>
                     {p.provider && (
-                      <div className="text-[12px] text-muted mt-0.5 truncate">{p.provider}</div>
+                      <div className="fs-12 text-muted mt-0.5 truncate">{p.provider}</div>
                     )}
                   </div>
 
                   {/* Cover amount */}
                   <div>
                     <div className="eyebrow">Sum assured</div>
-                    <div className="text-[22px] font-light tracking-tight tnum mt-0.5">
+                    <div className="fs-22 font-light tracking-tight tnum mt-0.5">
                       {mask(fmt.money(D(p.coverAmount)))}
                     </div>
                   </div>
@@ -438,7 +438,7 @@ export default function InsurancePage() {
                   <div className="inset flex items-end justify-between gap-2 px-3 py-2.5">
                     <div>
                       <div className="eyebrow">Annual premium</div>
-                      <div className="text-[14px] font-semibold tnum mt-0.5">
+                      <div className="fs-14 font-semibold tnum mt-0.5">
                         {mask(fmt.money(D(p.premium)))}
                       </div>
                     </div>
@@ -446,7 +446,7 @@ export default function InsurancePage() {
                       <div className="text-right">
                         <div className="eyebrow">Renewal</div>
                         <div
-                          className="text-[12px] font-semibold mt-0.5"
+                          className="fs-12 font-semibold mt-0.5"
                           style={{
                             color: overdue
                               ? 'var(--expense)'
@@ -457,12 +457,12 @@ export default function InsurancePage() {
                         >
                           {formatDate(p.renewalDate)}
                           {renewingSoon && !overdue && (
-                            <span className="ml-1 text-[11px]">
+                            <span className="ml-1 fs-11">
                               ({daysUntil(p.renewalDate)}d)
                             </span>
                           )}
                           {overdue && (
-                            <span className="ml-1 text-[11px]">(overdue)</span>
+                            <span className="ml-1 fs-11">(overdue)</span>
                           )}
                         </div>
                       </div>

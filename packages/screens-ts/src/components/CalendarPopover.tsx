@@ -104,7 +104,7 @@ export function CalendarPopover({
 
       <div className="grid grid-cols-7 gap-0.5 mb-1">
         {WEEKDAYS.map((w) => (
-          <span key={w} className="text-[10px] font-semibold text-muted text-center py-1">{w}</span>
+          <span key={w} className="fs-10 font-semibold text-muted text-center py-1">{w}</span>
         ))}
       </div>
 
@@ -122,7 +122,7 @@ export function CalendarPopover({
               aria-pressed={isSelected}
               onClick={() => { onPick(toInputValue(c.ms)); onClose(); }}
               className={[
-                'h-8 rounded-[var(--radius-btn)] text-[12.5px] tnum transition-colors',
+                'h-8 rounded-[var(--radius-btn)] fs-12.5 tnum transition-colors',
                 disabled ? 'opacity-25 cursor-not-allowed' : 'hover:bg-[var(--surface-2)]',
                 c.outside ? 'text-muted' : '',
                 isSelected ? 'bg-[var(--accent)] text-[var(--accent-on)] font-semibold hover:bg-[var(--accent)]' : '',

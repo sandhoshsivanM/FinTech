@@ -144,15 +144,15 @@ export function CommandPalette({ navGroups = NAV_GROUPS }: { navGroups?: NavGrou
                 onChange={(e) => { setQ(e.target.value); setActive(0); }}
                 onKeyDown={onKeyDown}
                 placeholder="Search holdings, transactions, goals or a page…"
-                className="flex-1 bg-transparent outline-none text-[15px] text-ink placeholder:text-muted"
+                className="flex-1 bg-transparent outline-none fs-15 text-ink placeholder:text-muted"
                 aria-label="Search"
               />
-              <kbd className="text-[10.5px] font-semibold px-1.5 py-0.5 rounded-[var(--radius-btn)] bg-fill-strong text-muted border border-line">ESC</kbd>
+              <kbd className="fs-10.5 font-semibold px-1.5 py-0.5 rounded-[var(--radius-btn)] bg-fill-strong text-muted border border-line">ESC</kbd>
             </div>
 
             <div className="max-h-[52vh] overflow-y-auto py-1.5">
               {results.length === 0 && (
-                <p className="px-4 py-8 text-center text-[13px] text-muted">
+                <p className="px-4 py-8 text-center fs-13 text-muted">
                   Nothing matches “{q}”.
                 </p>
               )}
@@ -165,12 +165,12 @@ export function CommandPalette({ navGroups = NAV_GROUPS }: { navGroups?: NavGrou
                     i === activeIndex ? 'bg-accent-soft' : 'hover:bg-fill'
                   }`}
                 >
-                  <span className={`text-[11px] font-semibold w-[86px] shrink-0 ${i === activeIndex ? 'text-accent' : 'text-muted'}`}>
+                  <span className={`fs-11 font-semibold w-[86px] shrink-0 ${i === activeIndex ? 'text-accent' : 'text-muted'}`}>
                     {r.group}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[13.5px] font-medium text-ink truncate">{r.label}</span>
-                    <span className="block text-[11.5px] text-muted truncate">{r.hint}</span>
+                    <span className="block fs-13.5 font-medium text-ink truncate">{r.label}</span>
+                    <span className="block fs-11.5 text-muted truncate">{r.hint}</span>
                   </span>
                   {i === activeIndex && <CornerDownLeft size={14} className="text-accent shrink-0" />}
                 </button>

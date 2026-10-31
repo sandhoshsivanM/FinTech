@@ -130,7 +130,7 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
   return (
     <GlassCard>
       <div className="flex items-center gap-3 mb-5">
-        <h3 className="text-[16px] font-medium tracking-[-0.01em]">{editing ? `Edit ${editing.symbol}` : 'Add a holding'}</h3>
+        <h3 className="fs-16 font-medium tracking-[-0.01em]">{editing ? `Edit ${editing.symbol}` : 'Add a holding'}</h3>
         <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-ink hover:bg-fill transition-colors">
           <X size={16} />
         </button>
@@ -210,7 +210,7 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
       </div>
 
       {fixedIncome && (
-        <p className="mt-3 text-[12px] text-muted leading-relaxed">
+        <p className="mt-3 fs-12 text-muted leading-relaxed">
           Quantity 1 and average cost = the amount deposited. Value is principal plus interest
           earned to date, so it grows daily rather than sitting at cost until maturity.
         </p>
@@ -289,12 +289,12 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
   return (
     <GlassCard>
       <div className="flex items-center gap-3 mb-2">
-        <h3 className="text-[16px] font-medium tracking-[-0.01em]">Import holdings from CSV</h3>
+        <h3 className="fs-16 font-medium tracking-[-0.01em]">Import holdings from CSV</h3>
         <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-ink hover:bg-fill transition-colors">
           <X size={16} />
         </button>
       </div>
-      <p className="text-[13px] text-ink-soft leading-relaxed mb-4">
+      <p className="fs-13 text-ink-soft leading-relaxed mb-4">
         Export your holdings from Zerodha Console, Upstox, Groww or any broker and drop the file here. Columns are matched
         automatically — <b className="text-ink">symbol</b>, <b className="text-ink">quantity</b> and <b className="text-ink">average cost</b> are
         required; last price and exchange are used when present. Keep the
@@ -304,7 +304,7 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
       </p>
 
       {imported && (
-        <div className="flex items-center gap-2 text-success font-semibold text-[13px] mb-4">
+        <div className="flex items-center gap-2 text-success font-semibold fs-13 mb-4">
           <CheckCircle2 size={16} />
           Imported {imported.created + imported.updated} holding{imported.created + imported.updated === 1 ? '' : 's'}
           {imported.updated > 0 && ` — ${imported.created} new, ${imported.updated} updated`}.
@@ -342,13 +342,13 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
       </div>
 
       {error && (
-        <p className="mt-4 text-[13px] text-danger leading-relaxed">{error}</p>
+        <p className="mt-4 fs-13 text-danger leading-relaxed">{error}</p>
       )}
 
       {preview !== null && !error && (
         <div className="mt-5">
           <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-            <span className="text-[13px] font-semibold">{preview.length} row{preview.length === 1 ? '' : 's'} ready</span>
+            <span className="fs-13 font-semibold">{preview.length} row{preview.length === 1 ? '' : 's'} ready</span>
             {counts && counts.updated > 0 && <Chip tone="accent">{counts.created} new, {counts.updated} updating existing</Chip>}
             {skipped > 0 && <Chip tone="warning">{skipped} skipped — missing symbol, quantity or cost</Chip>}
             {preview.length > 0 && withClose === 0 && (
@@ -356,15 +356,15 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
             )}
           </div>
           {preview.length === 0 ? (
-            <p className="text-[13px] text-danger">No usable rows found.</p>
+            <p className="fs-13 text-danger">No usable rows found.</p>
           ) : (
             <>
               <div className="overflow-x-auto rounded-panel border border-line max-h-[260px] overflow-y-auto">
-                <table className="w-full text-[13px] border-separate border-spacing-0">
+                <table className="w-full fs-13 border-separate border-spacing-0">
                   <thead>
                     <tr>
                       {['Symbol', 'Exch', 'Qty', 'Avg cost', 'Last price', 'Prev close'].map((h, i) => (
-                        <th key={h} className={`sticky top-0 bg-card-2 border-b border-line px-3 py-2 text-[11px] font-normal text-muted ${i > 1 ? 'text-right' : 'text-left'}`}>{h}</th>
+                        <th key={h} className={`sticky top-0 bg-card-2 border-b border-line px-3 py-2 fs-11 font-normal text-muted ${i > 1 ? 'text-right' : 'text-left'}`}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -384,7 +384,7 @@ export function ImportPanel({ onDone }: { onDone: () => void }) {
                   </tbody>
                 </table>
               </div>
-              {preview.length > 60 && <p className="text-[11.5px] text-muted mt-2">Showing the first 60 of {preview.length}. All will be imported.</p>}
+              {preview.length > 60 && <p className="fs-11.5 text-muted mt-2">Showing the first 60 of {preview.length}. All will be imported.</p>}
               <div className="flex gap-2 mt-4">
                 <Button onClick={() => void confirmImport()} disabled={busy}>
                   {busy ? 'Importing…'

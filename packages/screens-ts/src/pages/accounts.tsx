@@ -178,10 +178,10 @@ export default function AccountsPage() {
                 <ArrowRightLeft size={17} />
               </span>
               <div className="min-w-0 flex-1">
-                <CardTitle as="h3" info="accounts.reassign" className="text-[16px] font-medium tracking-[-0.01em]">
+                <CardTitle as="h3" info="accounts.reassign" className="fs-16 font-medium tracking-[-0.01em]">
                   {strandedCount} transaction{strandedCount === 1 ? '' : 's'} not on a real account
                 </CardTitle>
-                <p className="text-[13px] text-ink-soft leading-relaxed mt-1">
+                <p className="fs-13 text-ink-soft leading-relaxed mt-1">
                   Everything recorded before accounts existed sits on the built-in Cash account. Move it to the
                   account it actually came from — usually the one your salary lands in — then re-tag the exceptions
                   individually.
@@ -219,7 +219,7 @@ export default function AccountsPage() {
           <section className="card overflow-hidden">
             <div className="flex items-center gap-2.5 px-4 min-[900px]:px-5 py-4 border-b border-line">
               <g.icon size={17} className="text-muted" />
-              <CardTitle info={g.info} className="text-[16px] font-medium tracking-[-0.01em]">{g.label}</CardTitle>
+              <CardTitle info={g.info} className="fs-16 font-medium tracking-[-0.01em]">{g.label}</CardTitle>
               <span className="ml-auto chip tnum">
                 {mask(fmt.money(g.rows.reduce((s, a) => s.plus(balances.get(a.id) ?? ZERO), ZERO)))}
               </span>
@@ -230,15 +230,15 @@ export default function AccountsPage() {
                 return (
                   <li key={a.id} className="group flex items-center gap-3 px-4 min-[900px]:px-5 py-3.5 border-b border-line last:border-0">
                     <span className="min-w-0 flex-1">
-                      <span className="block font-medium text-[14px] truncate">{a.name}</span>
-                      <span className="block text-[11.5px] text-muted">
+                      <span className="block font-medium fs-14 truncate">{a.name}</span>
+                      <span className="block fs-11.5 text-muted">
                         {D(a.openingBalance).isZero()
                           ? 'No opening balance'
                           : `Opened with ${mask(fmt.money(D(a.openingBalance)))}`}
                         {a.id === defaultCash && <> · <span className="text-ink-soft">built-in</span></>}
                       </span>
                     </span>
-                    <span className={`text-[15px] font-normal tnum ${bal.isNegative() ? 'text-danger' : ''}`}>
+                    <span className={`fs-15 font-normal tnum ${bal.isNegative() ? 'text-danger' : ''}`}>
                       {mask(fmt.money(bal))}
                     </span>
                     <span className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
@@ -267,7 +267,7 @@ export default function AccountsPage() {
 
       {accounts.some((a) => a.archived) && (
         <StaggerItem>
-          <p className="text-[12.5px] text-muted">
+          <p className="fs-12.5 text-muted">
             {accounts.filter((a) => a.archived).length} archived account
             {accounts.filter((a) => a.archived).length === 1 ? '' : 's'} hidden. Their past transactions still count.
           </p>
@@ -315,7 +315,7 @@ function AccountForm({ editing, vaultId, onDone }: {
   return (
     <GlassCard>
       <div className="flex items-center gap-3 mb-5">
-        <CardTitle as="h3" info="accounts.form" className="text-[16px] font-medium tracking-[-0.01em]">
+        <CardTitle as="h3" info="accounts.form" className="fs-16 font-medium tracking-[-0.01em]">
           {editing ? `Edit ${editing.name}` : 'Add an account'}
         </CardTitle>
         <button onClick={onDone} aria-label="Close" className="ml-auto focus-ring p-1.5 rounded-[var(--radius-btn)] text-muted hover:text-ink hover:bg-fill transition-colors">
@@ -336,7 +336,7 @@ function AccountForm({ editing, vaultId, onDone }: {
       </div>
 
       {editing && (
-        <p className="mt-4 text-[12px] text-muted leading-relaxed">
+        <p className="mt-4 fs-12 text-muted leading-relaxed">
           Changing the balance restates history: it shifts this account&rsquo;s current balance by the same amount,
           because everything recorded against it is measured from here.
         </p>

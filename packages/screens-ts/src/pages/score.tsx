@@ -73,7 +73,7 @@ export default function ScorePage() {
                 Based on {health.trackedCategoryCount} of {health.categories.length} areas
               </div>
             )}
-            <p className="text-[15px] text-ink-soft leading-relaxed">{health.summary}</p>
+            <p className="fs-15 text-ink-soft leading-relaxed">{health.summary}</p>
           </div>
         </div>
       </GlassCard>
@@ -126,11 +126,11 @@ function CategoryCard({ category }: { category: HealthCategory }) {
         )}
       >
         <div className="flex items-center gap-2">
-          <span className="flex-1 text-[14px]">{category.label}</span>
+          <span className="flex-1 fs-14">{category.label}</span>
           {/* "23/30" alone never said what the 30 was. Naming the unit once
               here is what makes the four areas legible as a weighting rather
               than four unrelated fractions. */}
-          <span className={clsx('text-[13px] tnum', tracked ? 'font-semibold text-ink' : 'text-muted')}>
+          <span className={clsx('fs-13 tnum', tracked ? 'font-semibold text-ink' : 'text-muted')}>
             {tracked ? (
               <>
                 {Math.round(category.score as number)}/{category.weight}
@@ -149,7 +149,7 @@ function CategoryCard({ category }: { category: HealthCategory }) {
             height={6}
           />
         </div>
-        <p className="text-[12.5px] text-muted mt-1.5">{category.detail}</p>
+        <p className="fs-12.5 text-muted mt-1.5">{category.detail}</p>
       </button>
 
       {/* The CTA sits outside the header button, not inside it. Nesting one
@@ -173,14 +173,14 @@ function CategoryCard({ category }: { category: HealthCategory }) {
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2">
-                  <span className="flex-1 text-[13.5px] font-medium">{m.label}</span>
-                  <span className="text-[12px] text-muted tnum">
+                  <span className="flex-1 fs-13.5 font-medium">{m.label}</span>
+                  <span className="fs-12 text-muted tnum">
                     {/* No percentage for an untracked metric — a number here
                         would be exactly the fabrication this design avoids. */}
                     {m.value === null ? 'Not tracked' : `${Math.round(m.value * 100)}%`}
                   </span>
                 </div>
-                <p className="text-[12px] text-muted mt-0.5">{m.detail}</p>
+                <p className="fs-12 text-muted mt-0.5">{m.detail}</p>
               </div>
             </div>
           ))}

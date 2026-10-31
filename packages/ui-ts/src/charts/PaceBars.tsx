@@ -35,7 +35,7 @@ export function PaceBars({ rows, elapsed, elapsedLabel }: {
       <ul className="grid gap-4">
         {rows.map((r) => (
           <li key={r.label}>
-            <div className="flex items-center gap-2 text-[13.5px]">
+            <div className="flex items-center gap-2 fs-13.5">
               <span className="mr-auto font-medium truncate">{r.label}</span>
               {r.status === 'over'
                 ? <Chip tone="danger">Over{r.over ? ` by ${r.over}` : ''}</Chip>
@@ -52,11 +52,11 @@ export function PaceBars({ rows, elapsed, elapsedLabel }: {
                 style={{ width: `${Math.min(Math.max(r.ratio, 0), 1) * 100}%`, background: COLOR[r.status] }} />
               <span aria-hidden className="absolute -top-1 -bottom-1 w-0.5 rounded-sm bg-ink" style={{ left: mark }} />
             </div>
-            <div className="mt-1 text-[12px] text-muted tnum">{r.amounts}</div>
+            <div className="mt-1 fs-12 text-muted tnum">{r.amounts}</div>
           </li>
         ))}
       </ul>
-      <p className="mt-3.5 flex items-center gap-1.5 text-[11.5px] text-muted">
+      <p className="mt-3.5 flex items-center gap-1.5 fs-11.5 text-muted">
         <span aria-hidden className="w-0.5 h-3 rounded-sm bg-ink" />{elapsedLabel}
       </p>
     </div>

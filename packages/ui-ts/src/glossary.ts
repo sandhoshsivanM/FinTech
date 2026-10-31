@@ -640,6 +640,10 @@ export const SECTION_HELP = {
     title: "Appearance",
     body: "Choose light, dark or system theme, and an accent colour. System follows your device's setting.",
   },
+  "settings.reading": {
+    title: "Text & font",
+    body: "Make every amount and label bigger, or switch to a typeface you find easier to read. Atkinson Hyperlegible was designed for people with low vision. The choice is saved on this device only.",
+  },
   "settings.profiles": {
     title: "Profiles",
     body: "Each profile keeps completely separate data inside the same encrypted vault, so you can track yourself, a spouse or a business apart. Switch, rename, add or delete profiles here.",

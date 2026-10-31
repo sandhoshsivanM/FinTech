@@ -36,7 +36,7 @@ import { runDiagnostics, restoreBlockers } from '@khazana/domain/diagnostics';
 import { uid, cashAcctId, DEFAULT_CATEGORIES } from '@khazana/screens/lib/storeHelpers';
 import { LAST_ACCOUNT_KEY } from '@khazana/screens/lib/prefs';
 import type { ThemeChoice, AccentName, KhazanaStore } from '@khazana/screens/store';
-import { ACCENTS } from '@khazana/domain/appearance';
+import { ACCENTS, readingVars, type FontFamily, type TextSize } from '@khazana/domain/appearance';
 import { contraAccountFor, supersedeMutations as supersede } from '@khazana/domain/vaultWrites';
 
 // Definitions live in @khazana/screens so the shared screens and this store
@@ -45,7 +45,7 @@ export { uid, cashAcctId, DEFAULT_CATEGORIES, LAST_ACCOUNT_KEY };
 
 /** The shared screens' contract: this store must satisfy it (checked at compile time). */
 export const asKhazanaStore = (s: AppState): KhazanaStore => s;
-export type { ThemeChoice, AccentName };
+export type { ThemeChoice, AccentName, TextSize, FontFamily };
 
 const VAULT_ID = 'default';
 
@@ -408,6 +408,9 @@ interface AppState extends Data {
   currencyCode: string;
   theme: ThemeChoice;
   accent: AccentName;
+  /** Reading comfort (Settings → Appearance). Offline only: not in KhazanaStore. */
+  textSize: TextSize;
+  fontFamily: FontFamily;
   profiles: Profile[];
   activeProfileId: string;
   /**
@@ -432,6 +435,8 @@ interface AppState extends Data {
   init: () => Promise<void>;
   setTheme: (t: ThemeChoice) => void;
   setAccent: (a: AccentName) => void;
+  setTextSize: (t: TextSize) => void;
+  setFontFamily: (f: FontFamily) => void;
   setup: (pin: string) => Promise<void>;
   unlock: (pin: string) => Promise<void>;
   lock: () => void;
@@ -549,6 +554,9 @@ const CURRENCY_KEY = 'khazana-currency';
 const ACTIVE_PROFILE_KEY = 'khazana-active-profile';
 const THEME_KEY = 'khazana-theme';
 const ACCENT_KEY = 'khazana-accent';
+/** Reading comfort. New since the rebrand, so no ftos-* legacy names. */
+const TEXT_SIZE_KEY = 'khazana-text-size';
+const FONT_KEY = 'khazana-font';
 /**
  * One-time marker for the Zentra redesign. Accents picked before it (Jade,
  * Sapphire, …) painted the nav and primary buttons in a colour the new
@@ -675,10 +683,19 @@ function applyAccent(name: string, dark: boolean) {
   else root.style.removeProperty('--accent-on');
 }
 
+function applyReading(size: string, font: string) {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  const v = readingVars(size, font);
+  root.style.setProperty('--font-scale', v['--font-scale']);
+  if (v['--font-sans']) root.style.setProperty('--font-sans', v['--font-sans']);
+  else root.style.removeProperty('--font-sans');
+}
+
 /** Records belonging to THE vault — set-aside ones live under another id. */
 const vaultRecordCount = () => db.records.where('vaultId').equals(VAULT_ID).count();
 
-// Resolve theme + accent from storage and apply to <html>. Honors OS preference
+// Resolve theme, accent, text size and font from storage and apply to <html>. Honors OS preference
 // for 'system'. Safe on the server (guards on document).
 export function applyAppearance() {
   if (typeof document === 'undefined') return;
@@ -688,6 +705,7 @@ export function applyAppearance() {
     || (theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   applyAccent(accent, !!dark);
+  applyReading(lsGet(TEXT_SIZE_KEY) || 'default', lsGet(FONT_KEY) || 'default');
 }
 
 export const useApp = create<AppState>((set, get) => ({
@@ -700,6 +718,8 @@ export const useApp = create<AppState>((set, get) => ({
   currencyCode: 'INR',
   theme: 'system',
   accent: 'default',
+  textSize: 'default',
+  fontFamily: 'default',
   profiles: [],
   activeProfileId: '',
   persistence: 'unsupported',
@@ -716,12 +736,16 @@ export const useApp = create<AppState>((set, get) => ({
     migrateLegacyAccent();
     const accent = (lsGet(ACCENT_KEY) as AccentName) ?? 'default';
     const ghost = lsGet(GHOST_KEY) === '1';
+    const textSize = (lsGet(TEXT_SIZE_KEY) as TextSize) ?? 'default';
+    const fontFamily = (lsGet(FONT_KEY) as FontFamily) ?? 'default';
     set({
       status: meta ? 'locked' : 'uninitialized',
       strandedRecords,
       currencyCode: cur,
       theme,
       accent,
+      textSize,
+      fontFamily,
       ghost,
       pinFailures: Number(lsGet(PIN_FAILURES_KEY) ?? 0) || 0,
       lockedOutUntil: Number(lsGet(LOCKOUT_UNTIL_KEY) ?? 0) || 0,
@@ -741,6 +765,16 @@ export const useApp = create<AppState>((set, get) => ({
   setAccent: (a) => {
     if (typeof localStorage !== 'undefined') localStorage.setItem(ACCENT_KEY, a);
     set({ accent: a });
+    applyAppearance();
+  },
+  setTextSize: (t) => {
+    lsSet(TEXT_SIZE_KEY, t);
+    set({ textSize: t });
+    applyAppearance();
+  },
+  setFontFamily: (f) => {
+    lsSet(FONT_KEY, f);
+    set({ fontFamily: f });
     applyAppearance();
   },
 

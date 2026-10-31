@@ -97,7 +97,7 @@ function SyncSetup({ mode, onDone }: { mode: SyncMode; onDone: (c: SyncConfig) =
       <p className="text-xs text-muted leading-relaxed">
         This is not your PIN. Khazana cannot recover it: a device without it cannot read the others&rsquo; files.
       </p>
-      {error && <p role="alert" className="text-[13px] text-danger">{error}</p>}
+      {error && <p role="alert" className="fs-13 text-danger">{error}</p>}
       <Button onClick={() => void start()}>{mode === 'manual' ? 'Turn on sync' : 'Choose folder and turn on'}</Button>
     </div>
   );
@@ -122,8 +122,8 @@ function SyncOn({ mode, cfg, onOff }: { mode: SyncMode; cfg: SyncConfig; onOff: 
 
   return (
     <div className="space-y-4">
-      <div className="text-[13px] text-ink-soft space-y-1">
-        <p><b className="text-ink font-medium">{cfg.deviceName}</b>{mode !== 'manual' && folderLabel && <> · syncing through <span className="font-mono text-[12px]">{folderLabel}</span></>}</p>
+      <div className="fs-13 text-ink-soft space-y-1">
+        <p><b className="text-ink font-medium">{cfg.deviceName}</b>{mode !== 'manual' && folderLabel && <> · syncing through <span className="font-mono fs-12">{folderLabel}</span></>}</p>
         <p role="status" className="text-xs text-muted">
           {busy ? 'Syncing…' : last ? `Last synced ${formatDate(last)} ${new Date(last).toLocaleTimeString()}` : 'Not synced yet'}
         </p>
@@ -158,8 +158,8 @@ function SyncOn({ mode, cfg, onOff }: { mode: SyncMode; cfg: SyncConfig; onOff: 
 
       {devices.length > 0 && (
         <div>
-          <p className="text-[12.5px] font-medium text-ink-soft mb-1.5">Other devices</p>
-          <ul className="text-[13px] space-y-1">
+          <p className="fs-12.5 font-medium text-ink-soft mb-1.5">Other devices</p>
+          <ul className="fs-13 space-y-1">
             {devices.map((d) => (
               <li key={d.deviceId} className="flex gap-2">
                 <span className="text-ink">{d.deviceName}</span>

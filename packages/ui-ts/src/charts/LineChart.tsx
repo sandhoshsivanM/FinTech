@@ -191,7 +191,7 @@ export function LineChart({
               />
               {hover == null && <span
                 aria-hidden
-                className="absolute -translate-x-1/2 -translate-y-full rounded-full px-2.5 py-1 text-[11px] font-semibold text-white tnum pointer-events-none whitespace-nowrap"
+                className="absolute -translate-x-1/2 -translate-y-full rounded-full px-2.5 py-1 fs-11 font-semibold text-white tnum pointer-events-none whitespace-nowrap"
                 style={{
                   left: `clamp(36px, ${(pt[0] / VB_W) * 100}%, calc(100% - 36px))`,
                   top: `calc(${top}% - 18px)`,
@@ -225,9 +225,9 @@ export function LineChart({
                 top: `calc(${(activePt[1] / height) * 100}% - 14px)`,
               }}
             >
-              <div className="text-[11.5px] text-muted">{caption}</div>
-              <div className="text-[16px] font-normal tracking-[-0.02em] tnum mt-0.5">{format(values[active])}</div>
-              <div className={`text-[11.5px] mt-0.5 tnum ${changePct >= 0 ? 'text-success' : 'text-danger'}`}>
+              <div className="fs-11.5 text-muted">{caption}</div>
+              <div className="fs-16 font-normal tracking-[-0.02em] tnum mt-0.5">{format(values[active])}</div>
+              <div className={`fs-11.5 mt-0.5 tnum ${changePct >= 0 ? 'text-success' : 'text-danger'}`}>
                 {changePct >= 0 ? '+' : '−'}{Math.abs(changePct).toFixed(2)}% from previous
               </div>
             </div>
@@ -238,7 +238,7 @@ export function LineChart({
         {GRID_BANDS.map((f) => (
           <span
             key={f}
-            className="absolute left-0 text-[11px] text-muted pr-1.5 pointer-events-none"
+            className="absolute left-0 fs-11 text-muted pr-1.5 pointer-events-none"
             style={{ top: 12 + (height - 12) * f - 16 }}
           >
             {format(hi - (hi - lo) * f)}
@@ -247,7 +247,7 @@ export function LineChart({
       </div>
 
       {labels.length > 0 && (
-        <div className="flex justify-between mt-2 text-[11px] text-muted">
+        <div className="flex justify-between mt-2 fs-11 text-muted">
           {labels.map((l, i) => <span key={`${l}-${i}`}>{l}</span>)}
         </div>
       )}

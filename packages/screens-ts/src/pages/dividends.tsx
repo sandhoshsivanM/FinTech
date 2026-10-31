@@ -168,7 +168,7 @@ export default function DividendsPage() {
           <StaggerItem>
             <section className="card">
               <div className="px-5 py-4 border-b border-line">
-                <CardTitle info="dividends.payoutsByMonth" className="text-[16px] font-medium tracking-[-0.01em]">Payouts by month</CardTitle>
+                <CardTitle info="dividends.payoutsByMonth" className="fs-16 font-medium tracking-[-0.01em]">Payouts by month</CardTitle>
                 <p className="text-xs text-muted mt-0.5">Received only, last twelve months</p>
               </div>
               <div className="p-5">

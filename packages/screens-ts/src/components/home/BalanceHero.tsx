@@ -38,7 +38,7 @@ export function BalanceHero() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 text-[13px] text-muted">
+      <div className="flex items-center gap-2 fs-13 text-muted">
         <span>Total balance</span>
         <SectionInfo k="dashboard.totalBalance" />
         <motion.button
@@ -52,7 +52,7 @@ export function BalanceHero() {
           {ghost ? <EyeOff size={15} /> : <Eye size={15} />}
         </motion.button>
       </div>
-      <div className="mt-1 text-[42px] font-light tracking-[-0.035em] leading-[1.05] tnum">
+      <div className="mt-1 fs-42 font-light tracking-[-0.035em] leading-[1.05] tnum">
         {ghost ? (
           <span key="h" className="inline-block animate-[kz-pop_.35s_var(--ease)]">
             {fmt.symbol} ••••••
@@ -63,7 +63,7 @@ export function BalanceHero() {
           </span>
         )}
       </div>
-      <p className="mt-1.5 text-[12px] text-muted">
+      <p className="mt-1.5 fs-12 text-muted">
         Across {count} account{count === 1 ? '' : 's'}
       </p>
     </div>

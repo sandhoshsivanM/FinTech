@@ -3,6 +3,7 @@ import { Anek_Latin } from 'next/font/google';
 import './globals.css';
 import { AppFrame } from '@/components/AppFrame';
 import { ScreensProvider } from '@/components/ScreensProvider';
+import { readingFontVariables } from '@/lib/fonts';
 import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE, APP_TITLE } from '@/lib/brand';
 
 // Anek Latin, by the Indian foundry Ek Type: a ₹ drawn as part of the face
@@ -67,7 +68,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     // variable so `.font-display` and h1–h3 stay meaningful selectors.
     <html
       lang="en"
-      className={`${sans.variable}`}
+      className={`${sans.variable} ${readingFontVariables}`}
       style={{ '--font-display': 'var(--font-sans)' } as React.CSSProperties}
       suppressHydrationWarning
     >
@@ -87,7 +88,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               // the two must be changed together or the accent flashes on load.
               // The khazana-accent-zentra block is the one-time Zentra reset —
               // it mirrors migrateLegacyAccent() in lib/store.ts.
-              "(function(){try{var g=function(k){return localStorage.getItem('khazana-'+k)||localStorage.getItem('ftos-'+k);};var t=g('theme')||'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme:dark)').matches);var r=document.documentElement;r.dataset.theme=d?'dark':'light';try{if(localStorage.getItem('khazana-accent-zentra')!=='1'){localStorage.setItem('khazana-accent','default');localStorage.setItem('khazana-accent-zentra','1');}}catch(e){}var A={emerald:{l:['#136344','#0D4C33','#1B7F52'],d:['#3FD99A','#1F8A5B','#7BE9BC']},blue:{l:['#2F4C9C','#243B7A','#4F7CFF'],d:['#6E93FF','#4A6FE0','#A9C1FF']},violet:{l:['#584796','#443873','#8E7CC3'],d:['#A492DC','#7E6CB8','#C9BDEE']},amber:{l:['#8E4E20','#703D19','#C2610F'],d:['#D98A4E','#B4642A','#F0B183']},rose:{l:['#8C2F38','#6E252C','#C0392F'],d:['#E0707C','#B84B58','#F2A6AE']},lime:{l:['#4D6B00','#3A5200','#8DB31F','#FFFFFF'],d:['#C5F23A','#8DB31F','#DDFF7A','#0B0F0D']}};var p=A[g('accent')];if(p){var v=d?p.d:p.l;r.style.setProperty('--accent',v[0]);r.style.setProperty('--accent-deep',v[1]);r.style.setProperty('--accent-glow',v[2]);if(v[3])r.style.setProperty('--accent-on',v[3]);}}catch(e){}})();",
+              // `S` (text size) and `F` (font) MIRROR TEXT_SIZES and
+              // FONT_FAMILIES in @khazana/domain/appearance, for the same
+              // reason: so a reader who needs large text never sees small text
+              // flash first. readingParity.test.ts holds them together.
+              "(function(){try{var g=function(k){return localStorage.getItem('khazana-'+k)||localStorage.getItem('ftos-'+k);};var t=g('theme')||'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme:dark)').matches);var r=document.documentElement;r.dataset.theme=d?'dark':'light';try{if(localStorage.getItem('khazana-accent-zentra')!=='1'){localStorage.setItem('khazana-accent','default');localStorage.setItem('khazana-accent-zentra','1');}}catch(e){}var A={emerald:{l:['#136344','#0D4C33','#1B7F52'],d:['#3FD99A','#1F8A5B','#7BE9BC']},blue:{l:['#2F4C9C','#243B7A','#4F7CFF'],d:['#6E93FF','#4A6FE0','#A9C1FF']},violet:{l:['#584796','#443873','#8E7CC3'],d:['#A492DC','#7E6CB8','#C9BDEE']},amber:{l:['#8E4E20','#703D19','#C2610F'],d:['#D98A4E','#B4642A','#F0B183']},rose:{l:['#8C2F38','#6E252C','#C0392F'],d:['#E0707C','#B84B58','#F2A6AE']},lime:{l:['#4D6B00','#3A5200','#8DB31F','#FFFFFF'],d:['#C5F23A','#8DB31F','#DDFF7A','#0B0F0D']}};var p=A[g('accent')];if(p){var v=d?p.d:p.l;r.style.setProperty('--accent',v[0]);r.style.setProperty('--accent-deep',v[1]);r.style.setProperty('--accent-glow',v[2]);if(v[3])r.style.setProperty('--accent-on',v[3]);}try{var S={small:'0.9',large:'1.15',larger:'1.3',largest:'1.5'};var F={atkinson:'var(--font-atkinson)',inter:'var(--font-inter)',noto:'var(--font-noto)',manrope:'var(--font-manrope)',dmsans:'var(--font-dmsans)',jakarta:'var(--font-jakarta)',plex:'var(--font-plex)',roboto:'var(--font-roboto)',poppins:'var(--font-poppins)',system:'-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, Roboto, sans-serif'};var s=S[g('text-size')];if(s)r.style.setProperty('--font-scale',s);var f=F[g('font')];if(f)r.style.setProperty('--font-sans',f);}catch(e){}}catch(e){}})();",
           }}
         />
         <ScreensProvider>

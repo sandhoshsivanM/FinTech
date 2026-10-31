@@ -60,10 +60,10 @@ export function TrendTile({
       <span aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(120% 140% at 100% 100%, ${tint}, transparent 60%)` }} />
       <div className="relative min-h-[190px] px-5 pt-4 pb-5 flex flex-col">
         <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="mr-auto text-[16px] font-medium tracking-[-0.01em]">{title}</h3>
+          <h3 className="mr-auto fs-16 font-medium tracking-[-0.01em]">{title}</h3>
           {change && (
-            <span className={clsx('inline-flex items-center gap-1 text-[12.5px] font-semibold tnum', change.good ? 'text-success' : 'text-danger')}>
-              <span aria-hidden className={clsx('w-[18px] h-[18px] rounded-[6px] grid place-items-center text-[11px]', change.good ? 'bg-success-soft' : 'bg-danger-soft')}>
+            <span className={clsx('inline-flex items-center gap-1 fs-12.5 font-semibold tnum', change.good ? 'text-success' : 'text-danger')}>
+              <span aria-hidden className={clsx('w-[18px] h-[18px] rounded-[6px] grid place-items-center fs-11', change.good ? 'bg-success-soft' : 'bg-danger-soft')}>
                 {change.up ? '↑' : '↓'}
               </span>
               {change.text}
@@ -88,15 +88,15 @@ export function TrendTile({
             </svg>
             <span className="absolute w-2 h-2 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-[0_0_0_2px_var(--card)]"
               style={{ left: ax, top: ay, background: color }} />
-            <span className="absolute card px-2 py-[3px] text-[12px] font-semibold leading-tight tnum whitespace-nowrap shadow-[var(--shadow-float)] rounded-[8px]"
+            <span className="absolute card px-2 py-[3px] fs-12 font-semibold leading-tight tnum whitespace-nowrap shadow-[var(--shadow-float)] rounded-[8px]"
               style={{ left: ax, top: ay, transform: 'translate(calc(-100% - 10px), -50%)' }}>
               {marker}
-              {markerSub && <span className="block text-[10.5px] font-normal text-muted">{markerSub}</span>}
+              {markerSub && <span className="block fs-10.5 font-normal text-muted">{markerSub}</span>}
             </span>
           </div>
         )}
         <div className="relative mt-auto pt-8 max-w-[50%] text-[clamp(28px,3.2vw,40px)] font-light tracking-[-0.035em] leading-none tnum">{ghost ? '••••••' : value}</div>
-        {sub && <div className="relative mt-1.5 text-[12.5px] text-muted truncate max-w-[50%]">{sub}</div>}
+        {sub && <div className="relative mt-1.5 fs-12.5 text-muted truncate max-w-[50%]">{sub}</div>}
       </div>
     </section>
   );

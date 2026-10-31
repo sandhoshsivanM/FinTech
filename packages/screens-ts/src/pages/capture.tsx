@@ -121,7 +121,7 @@ export default function CapturePage() {
             <Button onClick={() => void ingest(text)} disabled={busy || !text.trim()}>
               <ClipboardPaste size={16} />Read messages
             </Button>
-            {note && <span role="status" className="text-[13px] text-ink-soft">{note}</span>}
+            {note && <span role="status" className="fs-13 text-ink-soft">{note}</span>}
           </div>
         </GlassCard>
       </StaggerItem>
@@ -187,10 +187,10 @@ function CaptureCard({ capture: c }: { capture: PendingCapture }) {
     <GlassCard>
       <div className="flex items-start gap-4 flex-wrap">
         <div className="min-w-0">
-          <p className={c.type === 'income' ? 'text-success text-[22px] font-semibold' : 'text-ink text-[22px] font-semibold'}>
+          <p className={c.type === 'income' ? 'text-success fs-22 font-semibold' : 'text-ink fs-22 font-semibold'}>
             {signed}{fmt.money(c.amount)}
           </p>
-          <p className="text-[13px] text-ink-soft mt-0.5 capitalize truncate">
+          <p className="fs-13 text-ink-soft mt-0.5 capitalize truncate">
             {c.merchant || 'No merchant'} · {formatDate(c.occurredAt)}
             {c.accountLast4 ? ` · ••${c.accountLast4}` : ''}
           </p>
@@ -228,7 +228,7 @@ function CaptureCard({ capture: c }: { capture: PendingCapture }) {
         </Field>
       </div>
 
-      {error && <p role="alert" className="text-[13px] text-danger mt-3">{error}</p>}
+      {error && <p role="alert" className="fs-13 text-danger mt-3">{error}</p>}
 
       <div className="flex gap-2 mt-5 flex-wrap">
         <Button onClick={() => void approve()} disabled={!categoryId}><Check size={16} />Approve</Button>

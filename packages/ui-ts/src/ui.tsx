@@ -45,7 +45,7 @@ export function SectionHeader({ title, action, info, infoAlign }: {
   return (
     <div className="flex items-center justify-between gap-3 mb-4">
       <div className="flex items-center gap-1.5 min-w-0">
-        <h2 className="text-[17px] font-medium tracking-[-0.015em] text-ink">{title}</h2>
+        <h2 className="fs-17 font-medium tracking-[-0.015em] text-ink">{title}</h2>
         {info && <SectionInfo k={info} align={infoAlign} />}
       </div>
       {action}
@@ -87,7 +87,7 @@ export function buttonClass(variant: BtnVariant = 'primary', className?: string)
   };
   return clsx(
     'focus-ring inline-flex items-center justify-center gap-2 rounded-full h-9 px-4',
-    'text-[13px] font-semibold tracking-[-0.01em] whitespace-nowrap',
+    'fs-13 font-semibold tracking-[-0.01em] whitespace-nowrap',
     'transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-standard',
     'active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100',
     styles[variant],
@@ -115,7 +115,7 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
   return (
     <div
       role="group"
-      className={clsx('inline-flex p-[3px] gap-px rounded-full bg-[color-mix(in_srgb,var(--ink)_7%,transparent)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] max-w-full overflow-x-auto no-scrollbar', className)}
+      className={clsx('inline-flex min-w-0 p-[3px] gap-px rounded-full bg-[color-mix(in_srgb,var(--ink)_7%,transparent)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] max-w-full overflow-x-auto no-scrollbar', className)}
     >
       {options.map((o) => {
         const on = value === o.value;
@@ -126,7 +126,7 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
             aria-pressed={on}
             onClick={() => onChange(o.value)}
             className={clsx(
-              'focus-ring relative shrink-0 px-3.5 py-1.5 rounded-full text-[12.5px] tracking-[-0.01em]',
+              'focus-ring relative shrink-0 px-3.5 py-1.5 rounded-full fs-12.5 tracking-[-0.01em]',
               'transition-colors duration-150 ease-standard',
               on ? 'text-ink font-semibold' : 'text-muted font-medium hover:text-ink',
             )}
@@ -180,9 +180,9 @@ export function Toggle({ on, onChange, label, disabled }: {
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="text-[12.5px] font-medium text-ink-soft">{label}</span>
+      <span className="fs-12.5 font-medium text-ink-soft">{label}</span>
       <div className="mt-1.5">{children}</div>
-      {hint && <span className="mt-1.5 block text-[11.5px] text-muted">{hint}</span>}
+      {hint && <span className="mt-1.5 block fs-11.5 text-muted">{hint}</span>}
     </label>
   );
 }
@@ -306,7 +306,7 @@ export function Chip({ children, tone = 'neutral', className }: { children: Reac
     violet: 'bg-violet-soft text-violet border-[color-mix(in_srgb,var(--violet)_30%,transparent)]',
   };
   return (
-    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full border text-[11.5px] font-medium whitespace-nowrap', tones[tone], className)}>
+    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full border fs-11.5 font-medium whitespace-nowrap', tones[tone], className)}>
       {children}
     </span>
   );
@@ -321,12 +321,12 @@ export function Chip({ children, tone = 'neutral', className }: { children: Reac
 export function Delta({ value, suffix = '%', digits = 2, className }: {
   value: number | null; suffix?: string; digits?: number; className?: string;
 }) {
-  if (value == null) return <span className={clsx('text-muted text-[11.5px]', className)}>—</span>;
+  if (value == null) return <span className={clsx('text-muted fs-11.5', className)}>—</span>;
   const up = value > 0, down = value < 0;
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-1 px-2 py-[2px] rounded-full text-[11.5px] font-semibold tnum',
+        'inline-flex items-center gap-1 px-2 py-[2px] rounded-full fs-11.5 font-semibold tnum',
         up && 'bg-success-soft text-success',
         down && 'bg-danger-soft text-danger',
         !up && !down && 'bg-fill text-muted',
@@ -408,7 +408,7 @@ export function Bars({ groups, height = 200, formatY }: { groups: BarGroup[]; he
                 >
                   {hover === i && (
                     <span
-                      className="whitespace-nowrap text-[12px] font-semibold tnum"
+                      className="whitespace-nowrap fs-12 font-semibold tnum"
                       style={{ transform: `translateX(${(0.5 - t) * 100}%)` }}
                     >
                       <span className="text-muted font-normal">{g.label}</span>
@@ -441,7 +441,7 @@ export function Bars({ groups, height = 200, formatY }: { groups: BarGroup[]; he
               </div>
               <span
                 className={clsx(
-                  'text-[11px] truncate max-w-full transition-colors',
+                  'fs-11 truncate max-w-full transition-colors',
                   hover === i ? 'font-semibold text-ink' : 'text-muted',
                 )}
               >
@@ -482,7 +482,7 @@ export function StatStrip({ items }: { items: StatItem[] }) {
         {items.map((it, i) => (
           <div key={i} className="inset px-4 py-3 min-w-0">
             <div className="flex items-center gap-1">
-              <div className="text-[12.5px] text-muted truncate">{it.label}</div>
+              <div className="fs-12.5 text-muted truncate">{it.label}</div>
               {it.term && <Hint term={it.term} className="shrink-0" />}
             </div>
             <div
@@ -491,7 +491,7 @@ export function StatStrip({ items }: { items: StatItem[] }) {
             >
               {it.value}
             </div>
-            {it.sub && <div className="text-[11.5px] text-muted mt-0.5 truncate">{it.sub}</div>}
+            {it.sub && <div className="fs-11.5 text-muted mt-0.5 truncate">{it.sub}</div>}
           </div>
         ))}
       </div>
@@ -512,12 +512,12 @@ export function PageIntro({ title, subtitle, action, info }: {
     <div className="flex items-end gap-4 flex-wrap mb-6">
       <div className="min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          <h1 className="text-[32px] leading-[1.1] font-normal tracking-[-0.03em] font-display">{title}</h1>
+          <h1 className="fs-32 leading-[1.1] font-normal tracking-[-0.03em] font-display">{title}</h1>
           {info && <SectionInfo k={info} />}
         </div>
         {subtitle && <p className="text-ink-soft text-sm mt-1.5">{subtitle}</p>}
       </div>
-      {action && <div className="ml-auto flex items-center gap-2 flex-wrap">{action}</div>}
+      {action && <div className="ml-auto flex min-w-0 max-w-full items-center gap-2 flex-wrap">{action}</div>}
     </div>
   );
 }
@@ -530,8 +530,8 @@ export function EmptyState({ icon, title, hint, action }: { icon?: ReactNode; ti
           {icon}
         </div>
       )}
-      <p className="font-medium text-ink text-[16px]">{title}</p>
-      {hint && <p className="text-[13px] text-muted mt-2 max-w-sm leading-relaxed">{hint}</p>}
+      <p className="font-medium text-ink fs-16">{title}</p>
+      {hint && <p className="fs-13 text-muted mt-2 max-w-sm leading-relaxed">{hint}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );

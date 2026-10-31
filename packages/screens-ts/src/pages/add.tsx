@@ -364,7 +364,7 @@ export default function AddTransactionPage() {
               placeholder="0.00"
               value={amountRaw}
               onChange={setAmountRaw}
-              className="text-[44px] font-light tracking-[-0.035em] font-display w-56 bg-transparent outline-none tnum text-center"
+              className="fs-44 font-light tracking-[-0.035em] font-display w-56 bg-transparent outline-none tnum text-center"
               style={{ color: amountColor }}
               aria-label="Amount"
             />
@@ -372,7 +372,7 @@ export default function AddTransactionPage() {
           {amountRaw && !amountValid && (
             <p className="text-xs text-expense">Enter a valid amount</p>
           )}
-          <p className="text-[11px] text-muted">Amount is stored in INR</p>
+          <p className="fs-11 text-muted">Amount is stored in INR</p>
         </div>
 
         {/* Transfer takes two accounts where the others take a category: money
@@ -393,7 +393,7 @@ export default function AddTransactionPage() {
               </Select>
             </Field>
             {money.length < 2 && (
-              <p className="sm:col-span-2 text-[12.5px] text-muted leading-relaxed">
+              <p className="sm:col-span-2 fs-12.5 text-muted leading-relaxed">
                 A transfer needs two accounts. <Link href="/accounts" className="text-accent font-semibold">Add another</Link> first.
               </p>
             )}

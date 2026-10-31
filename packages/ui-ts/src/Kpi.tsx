@@ -57,7 +57,7 @@ export function Kpi({
         {/* The Hint sits OUTSIDE the label span: that span is `truncate`, and a
             popover trigger inside a truncating box gets clipped away exactly
             when the label is long enough to need explaining. */}
-        <span className="text-[12.5px] text-muted truncate">{label}</span>
+        <span className="fs-12.5 text-muted truncate">{label}</span>
         {term && <Hint term={term} className="shrink-0" />}
         {/* A plain tinted circle — no gloss. */}
         <GlossTile hue={TONE[tone]} size={26} className="ml-auto">
@@ -65,7 +65,7 @@ export function Kpi({
         </GlossTile>
       </div>
 
-      <div className="mt-1 text-[22px] font-light tracking-[-0.02em] leading-[1.1] whitespace-nowrap tnum">
+      <div className="mt-1 fs-22 font-light tracking-[-0.02em] leading-[1.1] whitespace-nowrap tnum">
         {untracked ? (
           <span className="text-muted">—</span>
         ) : numeric != null ? (
@@ -75,7 +75,7 @@ export function Kpi({
         )}
       </div>
 
-      <div className="flex items-center gap-1.5 text-[12px] text-muted min-w-0 whitespace-nowrap overflow-hidden">
+      <div className="flex items-center gap-1.5 fs-12 text-muted min-w-0 whitespace-nowrap overflow-hidden">
         {untracked ? <span>Not yet tracked</span> : footer}
       </div>
     </div>

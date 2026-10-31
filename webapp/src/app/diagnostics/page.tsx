@@ -66,10 +66,10 @@ function CheckRow({ check }: { check: Check }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-[14px] flex-1 min-w-0">{check.label}</span>
+          <span className="font-medium fs-14 flex-1 min-w-0">{check.label}</span>
           <Chip tone={TONE[check.level].chip}>{TONE[check.level].word}</Chip>
         </div>
-        <p className="text-[13px] text-muted leading-relaxed mt-0.5">{check.detail}</p>
+        <p className="fs-13 text-muted leading-relaxed mt-0.5">{check.detail}</p>
         {fix && (
           <Link
             href={fix.href}
@@ -84,7 +84,7 @@ function CheckRow({ check }: { check: Check }) {
             <summary className="text-xs text-[var(--accent)] cursor-pointer font-semibold">
               Show affected records
             </summary>
-            <pre className="mt-1.5 text-[11px] text-muted bg-[var(--surface-2)] rounded-[var(--radius-btn)] p-2 overflow-x-auto">
+            <pre className="mt-1.5 fs-11 text-muted bg-[var(--surface-2)] rounded-[var(--radius-btn)] p-2 overflow-x-auto">
               {check.offenders.join('\n')}
             </pre>
           </details>

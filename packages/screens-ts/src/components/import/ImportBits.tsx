@@ -73,7 +73,7 @@ export function InstitutionGrid({
             type="button"
             onClick={() => onSelect(inst.id)}
             aria-pressed={active}
-            className={`focus-ring flex items-center gap-2 px-3 py-2 rounded-full text-[13px] font-medium transition-colors ${
+            className={`focus-ring flex items-center gap-2 px-3 py-2 rounded-full fs-13 font-medium transition-colors ${
               active
                 ? 'bg-primary text-[var(--primary-fg)] shadow-[0_6px_14px_-8px_rgba(0,0,0,0.5)]'
                 : 'bg-[var(--card-2)] text-ink shadow-[0_2px_6px_-3px_rgba(0,0,0,0.18)] hover:text-ink'

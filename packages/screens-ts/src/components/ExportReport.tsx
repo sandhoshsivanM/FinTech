@@ -82,10 +82,10 @@ export function ExportReport({ range }: { range: DateRange }) {
       </div>
 
       {note && (
-        <p className="text-[12.5px] leading-snug text-[var(--ink)]" role="status">{note}</p>
+        <p className="fs-12.5 leading-snug text-[var(--ink)]" role="status">{note}</p>
       )}
 
-      <p className="text-[12.5px] leading-snug text-[var(--ink-soft)]">
+      <p className="fs-12.5 leading-snug text-[var(--ink-soft)]">
         {ghost
           // Ghost mode hides balances on screen; exporting the very figures it
           // conceals would defeat it, so the control is disabled rather than

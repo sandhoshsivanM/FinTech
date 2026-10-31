@@ -38,8 +38,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         <div className="fixed inset-0 z-[100] grid place-items-center p-5" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => close(false)} />
           <GlassCard className="relative w-full max-w-sm p-5">
-            <h2 className="text-[16px] font-medium tracking-tight">{opts.title}</h2>
-            {opts.message && <p className="mt-2 text-[13.5px] text-ink-soft leading-relaxed">{opts.message}</p>}
+            <h2 className="fs-16 font-medium tracking-tight">{opts.title}</h2>
+            {opts.message && <p className="mt-2 fs-13.5 text-ink-soft leading-relaxed">{opts.message}</p>}
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="ghost" onClick={() => close(false)}>{opts.cancelLabel ?? 'Cancel'}</Button>
               <Button variant={opts.danger ? 'danger' : 'primary'} onClick={() => close(true)} autoFocus>
