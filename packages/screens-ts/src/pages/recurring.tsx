@@ -256,7 +256,7 @@ export default function RecurringPage() {
       {posting && (
         <GlassCard>
           <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
-            <h2 className="text-[16px] font-medium tracking-[-0.01em]">
+            <h2 className="fs-16 font-medium tracking-[-0.01em]">
               Post {posting.rule.merchant || 'this rule'}
             </h2>
             <span className="text-xs text-muted">
@@ -285,7 +285,7 @@ export default function RecurringPage() {
               </Button>
             </div>
           </div>
-          <p className="text-[12.5px] leading-snug text-[var(--ink-soft)] mt-3">
+          <p className="fs-12.5 leading-snug text-[var(--ink-soft)] mt-3">
             The next run stays on its schedule — {FREQ_LABEL[posting.rule.frequency].toLowerCase()} from{' '}
             {formatDate(posting.rule.nextRun)} — so posting late once does not move every future occurrence.
           </p>
@@ -406,7 +406,7 @@ export default function RecurringPage() {
             </div>
 
             {editingId && (
-              <p className="text-[12.5px] leading-snug text-[var(--ink-soft)]">
+              <p className="fs-12.5 leading-snug text-[var(--ink-soft)]">
                 Changes apply to future postings. Transactions already posted keep their amounts.
               </p>
             )}
@@ -451,21 +451,21 @@ export default function RecurringPage() {
                 <CategoryIcon name={cat?.icon} size={40} />
 
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-[14px] truncate cursor-pointer" onClick={() => startEdit(rule)}>
+                  <div className="font-medium fs-14 truncate cursor-pointer" onClick={() => startEdit(rule)}>
                     {rule.merchant || cat?.name || 'Other'}
                   </div>
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                    <span className="chip !py-[1px] !text-[11px] text-ink-soft">{FREQ_LABEL[rule.frequency]}</span>
+                    <span className="chip !py-[1px] !fs-11 text-ink-soft">{FREQ_LABEL[rule.frequency]}</span>
                     {overdue ? (
-                      <span className="chip !py-[1px] !text-[11px] !bg-danger-soft !shadow-none text-danger whitespace-nowrap">
+                      <span className="chip !py-[1px] !fs-11 !bg-danger-soft !shadow-none text-danger whitespace-nowrap">
                         Overdue · {formatDate(rule.nextRun)}
                       </span>
                     ) : dueSoon ? (
-                      <span className="chip !py-[1px] !text-[11px] !bg-warning-soft !shadow-none text-warning whitespace-nowrap">
+                      <span className="chip !py-[1px] !fs-11 !bg-warning-soft !shadow-none text-warning whitespace-nowrap">
                         Due soon · {formatDate(rule.nextRun)}
                       </span>
                     ) : (
-                      <span className="text-[11.5px] text-muted whitespace-nowrap">
+                      <span className="fs-11.5 text-muted whitespace-nowrap">
                         Next {formatDate(rule.nextRun)}
                       </span>
                     )}
@@ -474,14 +474,14 @@ export default function RecurringPage() {
 
                 <div className="text-right shrink-0">
                   <div
-                    className="font-semibold text-[14px] tnum whitespace-nowrap"
+                    className="font-semibold fs-14 tnum whitespace-nowrap"
                     style={{ color: income ? 'var(--data-green-ink)' : 'var(--data-rose)' }}
                   >
                     {ghost
                       ? (income ? '+' : '-') + '••••••'
                       : fmt.signed(D(rule.amount), income)}
                   </div>
-                  <div className="text-[11px] text-muted tnum whitespace-nowrap">
+                  <div className="fs-11 text-muted tnum whitespace-nowrap">
                     {ghost ? '••••••' : `~${fmt.money(monthlyEq)}/mo`}
                   </div>
                 </div>
@@ -492,7 +492,7 @@ export default function RecurringPage() {
                   onClick={() => openPost(rule)}
                   title={`Post ${rule.merchant || cat?.name || 'this'} on its own`}
                   className={clsx(
-                    'btn-soft ml-1 px-3 h-8 rounded-full text-[12px] font-semibold whitespace-nowrap transition shrink-0',
+                    'btn-soft ml-1 px-3 h-8 rounded-full fs-12 font-semibold whitespace-nowrap transition shrink-0',
                     // Always reachable on an overdue rule: that is the one the
                     // user came to the page for.
                     overdue || dueSoon ? 'opacity-100' : 'max-sm:[@media(hover:hover)]:hidden opacity-0 group-hover:opacity-100 focus:opacity-100',

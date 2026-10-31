@@ -70,7 +70,7 @@ export function ColumnChart({
                     under the cursor. Reserving the slot keeps it still. */}
                 {!empty && up && (
                   <span
-                    className="text-[10px] font-semibold tnum text-ink mb-0.5 whitespace-nowrap"
+                    className="fs-10 font-semibold tnum text-ink mb-0.5 whitespace-nowrap"
                     style={{ visibility: showValues || hover === i ? 'visible' : 'hidden' }}
                   >
                     {(formatLabel ?? format)(c.value)}
@@ -82,7 +82,7 @@ export function ColumnChart({
                 {!up && !empty && <Bar h={barH} up={false} title={`${c.label}: ${format(c.value)}`} />}
                 {!empty && !up && (
                   <span
-                    className="text-[10px] font-semibold tnum text-ink mt-0.5 whitespace-nowrap"
+                    className="fs-10 font-semibold tnum text-ink mt-0.5 whitespace-nowrap"
                     style={{ visibility: showValues || hover === i ? 'visible' : 'hidden' }}
                   >
                     {(formatLabel ?? format)(c.value)}
@@ -90,7 +90,7 @@ export function ColumnChart({
                 )}
               </div>
             </div>
-            <span className={clsx('text-[11px] truncate max-w-full transition-colors',
+            <span className={clsx('fs-11 truncate max-w-full transition-colors',
               hover === i ? 'font-semibold text-ink' : 'text-muted')}>{c.label}</span>
           </div>
         );

@@ -223,7 +223,7 @@ export default function PortfolioPage() {
           <AssetMark colour={SERIES[r.symbol.charCodeAt(0) % SERIES.length]} />
           <span className="min-w-0">
             <span className="block font-semibold truncate">{r.symbol}</span>
-            <span className="block text-[11px] text-muted truncate">{r.company}</span>
+            <span className="block fs-11 text-muted truncate">{r.company}</span>
           </span>
         </div>
       ),
@@ -253,7 +253,7 @@ export default function PortfolioPage() {
       key: 'weight', header: 'Weight', term: 'weight', align: 'right', value: (r) => r.weight,
       cell: (r) => (
         <span className="inline-flex items-center gap-2 justify-end">
-          <span className="text-[11.5px] text-ink-soft tnum">{r.weight.toFixed(2)}%</span>
+          <span className="fs-11.5 text-ink-soft tnum">{r.weight.toFixed(2)}%</span>
           <span className="w-10 h-1.5 rounded-full bg-fill-strong overflow-hidden">
             <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.min(r.weight * 5, 100)}%` }} />
           </span>
@@ -288,7 +288,7 @@ export default function PortfolioPage() {
       <StaggerItem>
         <div className="flex items-end gap-3 flex-wrap">
           <div className="min-w-0">
-            <h1 className="text-[36px] leading-[1.1] font-normal tracking-[-0.035em] font-display">Portfolio Overview</h1>
+            <h1 className="fs-36 leading-[1.1] font-normal tracking-[-0.035em] font-display">Portfolio Overview</h1>
             <p className="text-ink-soft text-sm mt-1.5">All your investments at a glance</p>
           </div>
 
@@ -297,7 +297,7 @@ export default function PortfolioPage() {
             <div className="relative">
               <button
                 onClick={() => setGroupOpen((o) => !o)}
-                className="focus-ring inline-flex items-center gap-2 h-9 px-3 rounded-btn border border-line bg-card text-[13px] font-semibold hover:border-line-strong transition-colors"
+                className="focus-ring inline-flex items-center gap-2 h-9 px-3 rounded-btn border border-line bg-card fs-13 font-semibold hover:border-line-strong transition-colors"
               >
                 <Filter size={14} className="text-muted" />
                 {groupLabel}
@@ -309,7 +309,7 @@ export default function PortfolioPage() {
                   <div className="absolute right-0 mt-2 w-52 z-50 card p-1.5 shadow-[var(--shadow-2)]">
                     <button
                       onClick={() => { setGroup('all'); setGroupOpen(false); }}
-                      className={`w-full text-left px-2.5 py-2 rounded-[var(--radius-btn)] text-[13px] transition-colors ${group === 'all' ? 'bg-accent-soft text-accent font-semibold' : 'hover:bg-fill'}`}
+                      className={`w-full text-left px-2.5 py-2 rounded-[var(--radius-btn)] fs-13 transition-colors ${group === 'all' ? 'bg-accent-soft text-accent font-semibold' : 'hover:bg-fill'}`}
                     >
                       All Holdings <span className="text-muted font-normal">({holdings.length})</span>
                     </button>
@@ -319,7 +319,7 @@ export default function PortfolioPage() {
                         <button
                           key={g}
                           onClick={() => { setGroup(g); setGroupOpen(false); }}
-                          className={`w-full text-left px-2.5 py-2 rounded-[var(--radius-btn)] text-[13px] flex items-center gap-2 transition-colors ${group === g ? 'bg-accent-soft text-accent font-semibold' : 'hover:bg-fill'}`}
+                          className={`w-full text-left px-2.5 py-2 rounded-[var(--radius-btn)] fs-13 flex items-center gap-2 transition-colors ${group === g ? 'bg-accent-soft text-accent font-semibold' : 'hover:bg-fill'}`}
                         >
                           <span className="w-2.5 h-2.5 rounded-[3px] shrink-0" style={{ background: ASSET_GROUP_META[g][dark ? 'dark' : 'light'] }} />
                           {ASSET_GROUP_META[g].label} <span className="ml-auto text-muted font-normal">{n}</span>
@@ -335,7 +335,7 @@ export default function PortfolioPage() {
             {/* One pill, one calendar icon: the field renders bare and the
                 trigger is DateInput's own button, so there is no nested box
                 and nothing to misalign against the filter beside it. */}
-            <div className="inline-flex items-center gap-2 h-9 px-3 rounded-btn border border-line bg-card text-[13px] font-semibold hover:border-line-strong transition-colors">
+            <div className="inline-flex items-center gap-2 h-9 px-3 rounded-btn border border-line bg-card fs-13 font-semibold hover:border-line-strong transition-colors">
               <span className="text-muted font-normal">As on</span>
               <DateInput
                 bare
@@ -343,7 +343,7 @@ export default function PortfolioPage() {
                 max={todayStr || undefined}
                 onChange={setAsOn}
                 aria-label="Show figures as on"
-                className="text-ink font-semibold w-[92px] text-[13px]"
+                className="text-ink font-semibold w-[92px] fs-13"
               />
             </div>
 
@@ -356,7 +356,7 @@ export default function PortfolioPage() {
         <StaggerItem>
           <div className="card p-3.5 flex items-start gap-3 flex-wrap">
             <span className="w-7 h-7 shrink-0 rounded-[var(--radius-btn)] grid place-items-center bg-warning-soft text-warning"><Info size={14} /></span>
-            <p className="text-[12.5px] text-ink-soft leading-relaxed flex-1 min-w-[240px]">
+            <p className="fs-12.5 text-ink-soft leading-relaxed flex-1 min-w-[240px]">
               <b className="text-ink">{unpricedCount} of {filtered.length}</b> position{unpricedCount === 1 ? ' is' : 's are'} carried at cost because no price is recorded for {unpricedCount === 1 ? 'it' : 'them'}. {unpricedCount === 1 ? 'It shows' : 'They show'} no gain or loss, so the totals above understate the book. Khazana never fetches prices — importing a fresh broker CSV is what updates them.
             </p>
             <Link href="/holdings" className={buttonClass('ghost')}>Update prices</Link>
@@ -372,7 +372,7 @@ export default function PortfolioPage() {
         <StaggerItem>
           <div className="card p-3.5 flex items-start gap-3 flex-wrap">
             <span className="w-7 h-7 shrink-0 rounded-[var(--radius-btn)] grid place-items-center bg-danger-soft text-danger"><Info size={14} /></span>
-            <p className="text-[12.5px] text-ink-soft leading-relaxed flex-1 min-w-[240px]">
+            <p className="fs-12.5 text-ink-soft leading-relaxed flex-1 min-w-[240px]">
               <b className="text-ink">
                 {seedFxCodes.join(', ')} {seedFxCodes.length === 1 ? 'is' : 'are'} being converted at a built-in rate you have never set.
               </b>{' '}
@@ -389,7 +389,7 @@ export default function PortfolioPage() {
         <StaggerItem>
           <div className="card p-3.5 flex items-start gap-3 flex-wrap">
             <span className="w-7 h-7 shrink-0 rounded-[var(--radius-btn)] grid place-items-center bg-accent-soft text-accent"><Info size={14} /></span>
-            <p className="text-[12.5px] text-ink-soft leading-relaxed flex-1 min-w-[240px]">
+            <p className="fs-12.5 text-ink-soft leading-relaxed flex-1 min-w-[240px]">
               {group !== 'all' && <>Showing <b className="text-ink">{groupLabel}</b> only — {filtered.length} of {holdings.length} holdings. </>}
               {isPast && <>Net-worth history is cut at your chosen date. Position values are marked to the last recorded price, because holdings have no per-day price history.</>}
             </p>
@@ -500,7 +500,7 @@ export default function PortfolioPage() {
           <Panel title="Today's P&L by Stock" info="investments.todayPnlByStock" sub="top 8 by movement" badge={!day.isReal && dayColumns.length > 0 ? <DemoBadge label="Demo" /> : undefined}>
             {dayColumns.length > 0
               ? <ColumnChart columns={dayColumns} height={190} format={(n) => fmt.money(n)} ariaLabel="Today's profit and loss by stock" />
-              : <p className="py-14 text-center text-[12.5px] text-muted">Import a broker file with a previous-close or day-P&L column to see this, or turn demo market data on in Settings to preview it.</p>}
+              : <p className="py-14 text-center fs-12.5 text-muted">Import a broker file with a previous-close or day-P&L column to see this, or turn demo market data on in Settings to preview it.</p>}
           </Panel>
         </StaggerItem>
       </div>
@@ -511,10 +511,10 @@ export default function PortfolioPage() {
           <section className="card overflow-hidden">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
               <div>
-                <CardTitle info="investments.holdingsSummary" className="text-[16px] font-medium tracking-[-0.01em]">Holdings Summary</CardTitle>
+                <CardTitle info="investments.holdingsSummary" className="fs-16 font-medium tracking-[-0.01em]">Holdings Summary</CardTitle>
                 <p className="text-xs text-muted mt-0.5">{rows.length} of {holdings.length} positions</p>
               </div>
-              <Link href="/holdings" className="ml-auto focus-ring text-[13px] font-semibold text-accent hover:underline">Full grid</Link>
+              <Link href="/holdings" className="ml-auto focus-ring fs-13 font-semibold text-accent hover:underline">Full grid</Link>
             </div>
             <DataGrid
               rows={rows} columns={columns} rowKey={(r) => r.id}
@@ -536,9 +536,9 @@ export default function PortfolioPage() {
           </StaggerItem>
           <StaggerItem>
             <section className="card p-5 grid justify-items-center gap-3 text-center min-w-0 overflow-hidden">
-              <CardTitle as="h3" info="investments.diversificationScore" className="text-[16px] font-medium tracking-[-0.01em]" wrapClassName="justify-self-start">Diversification Score</CardTitle>
+              <CardTitle as="h3" info="investments.diversificationScore" className="fs-16 font-medium tracking-[-0.01em]" wrapClassName="justify-self-start">Diversification Score</CardTitle>
               <Gauge value={divScore} size={172} sublabel={divLabel} />
-              <p className="text-[12.5px] text-muted leading-relaxed">
+              <p className="fs-12.5 text-muted leading-relaxed">
                 {divScore == null
                   ? 'At least two holdings are needed before diversification can be judged.'
                   : `${groupsPresent.length} asset group${groupsPresent.length === 1 ? '' : 's'}, ${sectorCount} sector${sectorCount === 1 ? '' : 's'}, largest position ${rows.length ? Math.max(...rows.map((r) => r.weight)).toFixed(1) : '0'}%.`}
@@ -574,8 +574,8 @@ function Panel({
       <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
         {icon}
         <div className="min-w-0 flex-1">
-          <CardTitle as="h3" info={info} className="text-[16px] font-medium tracking-[-0.01em] truncate whitespace-nowrap">{title}</CardTitle>
-          {sub && <p className="text-[11.5px] text-muted mt-0.5 truncate">{sub}</p>}
+          <CardTitle as="h3" info={info} className="fs-16 font-medium tracking-[-0.01em] truncate whitespace-nowrap">{title}</CardTitle>
+          {sub && <p className="fs-11.5 text-muted mt-0.5 truncate">{sub}</p>}
         </div>
         {badge && <span className="shrink-0">{badge}</span>}
       </div>

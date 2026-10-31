@@ -33,7 +33,7 @@ export function DemoBadge({ label = 'Demo data', title }: { label?: string; titl
   return (
     <span
       title={title ?? 'Illustrative figures generated on this device, not fetched from a market data provider.'}
-      className="inline-flex items-center gap-1.5 px-2 py-[3px] rounded-full border border-[color-mix(in_srgb,var(--violet)_30%,transparent)] bg-violet-soft text-violet text-[9.5px] font-medium whitespace-nowrap"
+      className="inline-flex items-center gap-1.5 px-2 py-[3px] rounded-full border border-[color-mix(in_srgb,var(--violet)_30%,transparent)] bg-violet-soft text-violet fs-9.5 font-medium whitespace-nowrap"
     >
       <FlaskConical size={11} strokeWidth={2.4} />
       {label}

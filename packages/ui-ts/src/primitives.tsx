@@ -49,12 +49,12 @@ export interface MoneyValueProps {
 }
 
 const SIZES: Record<NonNullable<MoneyValueProps['size']>, string> = {
-  sm: 'text-[13px]',
-  md: 'text-[15px]',
+  sm: 'fs-13',
+  md: 'fs-15',
   // Sized for a half-width tile on a phone: crore figures must fit.
   lg: 'text-[clamp(17px,4.6vw,24px)] font-light tracking-[-0.025em]',
   // The one figure on a screen that is allowed to be large.
-  xl: 'text-[40px] font-light tracking-[-0.035em] leading-[1.05]',
+  xl: 'fs-40 font-light tracking-[-0.035em] leading-[1.05]',
 };
 
 function toneColor(tone: MoneyTone, sign: number): string | undefined {
@@ -125,7 +125,7 @@ export function Section({
         <div className="flex items-baseline gap-3 flex-wrap mb-3">
           {title && (
             <div className="flex items-center gap-1.5 min-w-0">
-              <h2 className="text-[16px] font-medium tracking-[-0.01em] text-ink">
+              <h2 className="fs-16 font-medium tracking-[-0.01em] text-ink">
                 {title}
               </h2>
               {info && <SectionInfo k={info} align={infoAlign} />}
@@ -180,7 +180,7 @@ export function Metric({
   return (
     // An inset tile inside its section card: raised card, recessed tile.
     <div className="min-w-0 rounded-[18px] bg-[var(--card-2)] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
-      <div className="flex items-center gap-1 text-[13px] text-muted">
+      <div className="flex items-center gap-1 fs-13 text-muted">
         <span className="truncate">{label}</span>
         {hint && <Hint term={hint} />}
       </div>
@@ -197,7 +197,7 @@ export function Metric({
         )}
       </div>
       {(untracked ? untrackedHint : sub) && (
-        <div className="text-[11.5px] text-muted mt-0.5 truncate">
+        <div className="fs-11.5 text-muted mt-0.5 truncate">
           {untracked ? untrackedHint : sub}
         </div>
       )}
@@ -264,7 +264,7 @@ export function LedgerLine({
         emphasis && 'border-t border-[var(--line)] mt-1.5 pt-2.5',
       )}
     >
-      <span className={clsx('flex min-w-0 items-center text-[13.5px]', icon ? 'gap-3' : 'gap-1', emphasis ? 'font-semibold' : 'text-ink-soft')}>
+      <span className={clsx('flex min-w-0 items-center fs-13.5', icon ? 'gap-3' : 'gap-1', emphasis ? 'font-semibold' : 'text-ink-soft')}>
         {icon}
         <span className="truncate">{label}</span>
         {hint && <Hint term={hint} />}
@@ -302,8 +302,8 @@ export function PageHeader({
   return (
     <header className="flex items-start gap-4 flex-wrap">
       <div className="min-w-0">
-        <h1 className="text-[32px] font-normal tracking-[-0.03em] leading-[1.1]">{title}</h1>
-        {meta && <p className="text-[13px] text-muted mt-1 tnum">{meta}</p>}
+        <h1 className="fs-32 font-normal tracking-[-0.03em] leading-[1.1]">{title}</h1>
+        {meta && <p className="fs-13 text-muted mt-1 tnum">{meta}</p>}
         {children}
       </div>
       {action && <div className="ml-auto flex items-center gap-2 flex-wrap">{action}</div>}

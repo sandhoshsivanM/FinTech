@@ -67,11 +67,11 @@ export function DashboardStarter() {
               href={href}
               className="focus-ring flex h-full flex-col gap-1.5 rounded-[var(--radius-btn)] border border-line bg-card p-4 transition-colors hover:border-line-strong"
             >
-              <span className="flex items-center gap-2 text-[14px] font-semibold text-ink">
+              <span className="flex items-center gap-2 fs-14 font-semibold text-ink">
                 <Icon size={16} className="text-accent shrink-0" aria-hidden="true" />
                 {label}
               </span>
-              <span className="text-[12.5px] leading-relaxed text-muted">{hint}</span>
+              <span className="fs-12.5 leading-relaxed text-muted">{hint}</span>
             </Link>
           </li>
         ))}
@@ -87,14 +87,14 @@ export function DashboardStarter() {
           <Sparkles size={15} aria-hidden="true" />
           {busy ? 'Loading…' : 'Load sample data'}
         </Button>
-        <span className="text-[12.5px] text-muted">
+        <span className="fs-12.5 text-muted">
           Fills the vault with a realistic year so you can see what the app does. Erase it any time from Settings.
         </span>
       </div>
       )}
 
       {error && (
-        <p role="alert" className="mt-3 text-[12.5px] text-danger">
+        <p role="alert" className="mt-3 fs-12.5 text-danger">
           Could not load the sample: {error}
         </p>
       )}

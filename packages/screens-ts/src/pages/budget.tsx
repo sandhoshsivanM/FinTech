@@ -27,7 +27,7 @@ function StatusPill({ status }: { status: 'ok' | 'warning' | 'over' }) {
     over: { label: 'Over budget', bg: 'bg-expense/12', text: 'text-expense' },
   }[status];
   return (
-    <span className={`inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-[11px] font-semibold ${cfg.bg} ${cfg.text}`}>
+    <span className={`inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full fs-11 font-semibold ${cfg.bg} ${cfg.text}`}>
       {cfg.label}
     </span>
   );

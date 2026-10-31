@@ -56,7 +56,7 @@ function MacSmsSection() {
     <div className="space-y-4">
       <div className="flex items-start gap-4">
         <div className="min-w-0">
-          <p className="text-[14px] font-medium text-ink">Read bank SMS from Messages</p>
+          <p className="fs-14 font-medium text-ink">Read bank SMS from Messages</p>
           <p className="text-xs text-muted leading-relaxed mt-1">
             Bank alerts your iPhone forwards to this Mac go to{' '}
             <Link href="/capture" className="text-accent font-semibold">Review</Link>, where you approve

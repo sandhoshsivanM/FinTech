@@ -178,7 +178,7 @@ function Greeting() {
   }, []);
   return (
     <span className="min-[900px]:hidden min-w-0 leading-tight">
-      <span className="block text-[11.5px] text-muted">{hello},</span>
+      <span className="block fs-11.5 text-muted">{hello},</span>
       <span className="block font-semibold tracking-tight truncate">
         {name ?? 'there'} <Hand size={15} aria-hidden className="inline -mt-0.5 ml-0.5 text-gold" />
       </span>
@@ -262,13 +262,13 @@ function SearchButton() {
       onClick={open}
       className={clsx(
         'hidden min-[1024px]:flex focus-ring items-center gap-2.5 h-9 px-3 min-w-0 flex-1 max-w-[380px]',
-        'rounded-btn border border-line bg-card text-muted text-[13px]',
+        'rounded-btn border border-line bg-card text-muted fs-13',
         'hover:border-line-strong transition-colors duration-150',
       )}
     >
       <Search size={15} className="shrink-0" />
       <span className="truncate">Search holdings, transactions, reports…</span>
-      <kbd className="ml-auto shrink-0 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-[var(--radius-btn)] bg-fill-strong border border-line">⌘K</kbd>
+      <kbd className="ml-auto shrink-0 fs-10.5 font-semibold px-1.5 py-0.5 rounded-[var(--radius-btn)] bg-fill-strong border border-line">⌘K</kbd>
     </button>
   );
 }
@@ -296,7 +296,7 @@ function MarketPill() {
   return (
     <span
       className={clsx(
-        'hidden min-[720px]:inline-flex items-center gap-2 h-8 px-3 rounded-full text-[11.5px] font-semibold whitespace-nowrap',
+        'hidden min-[720px]:inline-flex items-center gap-2 h-8 px-3 rounded-full fs-11.5 font-semibold whitespace-nowrap',
         // The expanded sidebar carries the card; do not say it twice.
         !rail && 'min-[900px]:hidden',
         open && 'bg-success-soft text-success ring-1 ring-inset ring-[color-mix(in_srgb,var(--success)_26%,transparent)]',
@@ -354,8 +354,8 @@ function PortfolioSelector() {
         <ProfileFace profile={active} size={14} />
       </span>
       <span className="hidden min-[1024px]:block min-w-0 text-left">
-        <span className="block text-[13px] font-semibold leading-tight truncate max-w-[130px]">{active?.name ?? 'Portfolio'}</span>
-        <span className="block text-[10.5px] text-muted leading-tight">{KIND_LABEL[active?.kind ?? 'self']}</span>
+        <span className="block fs-13 font-semibold leading-tight truncate max-w-[130px]">{active?.name ?? 'Portfolio'}</span>
+        <span className="block fs-10.5 text-muted leading-tight">{KIND_LABEL[active?.kind ?? 'self']}</span>
       </span>
       <ChevronDown size={14} className="text-muted shrink-0" />
     </Link>
@@ -370,7 +370,7 @@ function Brand({ rail }: { rail: boolean }) {
       {/* Wordmark only. The full lockup carries the tagline under it, but at
           248px "Your wealth. Your vault." wraps to two lines and eats a nav
           row — so the tagline lives on the vault gate, where it has room. */}
-      {!rail && <Word className="min-w-0 truncate text-[15px] leading-tight text-ink" />}
+      {!rail && <Word className="min-w-0 truncate fs-15 leading-tight text-ink" />}
     </Link>
   );
 }
@@ -389,7 +389,7 @@ function Nav({
           {rail ? (
             gi > 0 && <div className="mx-2.5 mb-2 h-px bg-line" />
           ) : (
-            <p className="px-2.5 pb-1.5 text-[12px] font-normal text-muted leading-snug">
+            <p className="px-2.5 pb-1.5 fs-12 font-normal text-muted leading-snug">
               {group.label}
             </p>
           )}
@@ -406,7 +406,7 @@ function Nav({
                 data-tour={`nav-${n.href.replace('/', '')}`}
                 title={rail ? n.label : undefined}
                 className={clsx(
-                  'group/nav relative flex items-center gap-3 rounded-[12px] mb-0.5 text-[13.5px] leading-[1.45]',
+                  'group/nav relative flex items-center gap-3 rounded-[12px] mb-0.5 fs-13.5 leading-[1.45]',
                   'transition-colors duration-150 ease-standard',
                   rail ? 'justify-center p-2.5' : 'px-2.5 py-1.5',
                   // Vault: #12352A on #20C98A. Ledger: #E1F3EB on #087A56.
@@ -429,7 +429,7 @@ function Nav({
                 <Icon size={17.5} strokeWidth={active ? 2.2 : 1.9} className="relative shrink-0" />
                 {!rail && <span className="relative truncate">{n.label}</span>}
                 {!rail && badge != null && (
-                  <span className="relative ml-auto text-[10px] font-semibold px-1.5 rounded-full bg-danger text-white">{badge}</span>
+                  <span className="relative ml-auto fs-10 font-semibold px-1.5 rounded-full bg-danger text-white">{badge}</span>
                 )}
                 {/* Always in the accessible name, so a screen reader hears
                     "Portfolio, allocation returns performance" and never has to
@@ -442,7 +442,7 @@ function Nav({
                     <span className="sr-only">. {n.description}</span>
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute left-full top-1/2 z-40 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-[var(--radius-btn)] border border-line bg-card px-2.5 py-1.5 text-[12px] font-medium text-ink-soft shadow-lg group-hover/nav:block group-focus-visible/nav:block"
+                      className="pointer-events-none absolute left-full top-1/2 z-40 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-[var(--radius-btn)] border border-line bg-card px-2.5 py-1.5 fs-12 font-medium text-ink-soft shadow-lg group-hover/nav:block group-focus-visible/nav:block"
                     >
                       {n.description}
                     </span>
@@ -468,7 +468,7 @@ function SidebarFooter({ rail }: { rail: boolean }) {
         title="New transaction"
         className={clsx(
           'focus-ring flex items-center justify-center gap-2 rounded-btn h-10',
-          'bg-primary text-primary-fg text-[13px] font-semibold',
+          'bg-primary text-primary-fg fs-13 font-semibold',
           'shadow-[0_2px_10px_-3px_color-mix(in_srgb,var(--primary)_75%,transparent)]',
           'hover:shadow-[var(--glow)] transition-shadow duration-[250ms] ease-standard',
         )}
@@ -476,7 +476,7 @@ function SidebarFooter({ rail }: { rail: boolean }) {
         <Plus size={17} />
         {!rail && 'New Transaction'}
       </Link>
-      <p className={clsx('flex items-center gap-2 px-1 text-[11px] text-muted', rail && 'justify-center')}>
+      <p className={clsx('flex items-center gap-2 px-1 fs-11 text-muted', rail && 'justify-center')}>
         <span className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_0_3px_var(--success-soft)] shrink-0" />
         {!rail && <span>{footerNote}</span>}
       </p>
@@ -510,7 +510,7 @@ function BottomNav({ path }: { path: string }) {
         key={n.href}
         href={n.href}
         aria-current={active ? 'page' : undefined}
-        className="focus-ring relative flex-1 min-w-0 flex flex-col items-center justify-center gap-1 text-[10.5px] font-medium rounded-[22px]"
+        className="focus-ring relative flex-1 min-w-0 flex flex-col items-center justify-center gap-1 fs-10.5 font-medium rounded-[22px]"
       >
         <span className="relative grid place-items-center w-12 h-8">
           {active && (
@@ -606,8 +606,8 @@ function ProfileMenu() {
                   <ProfileFace profile={p} size={14} />
                 </span>
                 <span className="flex-1 min-w-0">
-                  <span className="block text-[13.5px] font-medium truncate">{p.name}</span>
-                  <span className="block text-[11px] text-muted">{KIND_LABEL[p.kind] ?? p.kind}</span>
+                  <span className="block fs-13.5 font-medium truncate">{p.name}</span>
+                  <span className="block fs-11 text-muted">{KIND_LABEL[p.kind] ?? p.kind}</span>
                 </span>
                 {p.id === activeId && <Check size={15} className="text-success shrink-0" />}
               </button>
@@ -616,7 +616,7 @@ function ProfileMenu() {
             <Link
               href="/settings"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] text-[13px] font-medium text-ink-soft hover:bg-fill transition-colors"
+              className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] fs-13 font-medium text-ink-soft hover:bg-fill transition-colors"
             >
               <Plus size={15} /> Manage profiles
             </Link>
@@ -625,7 +625,7 @@ function ProfileMenu() {
             <Link
               href="/settings"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] text-[13px] font-medium text-ink-soft hover:bg-fill transition-colors"
+              className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] fs-13 font-medium text-ink-soft hover:bg-fill transition-colors"
             >
               <Settings size={15} /> Settings
             </Link>
@@ -675,21 +675,21 @@ function MarketStatusCard() {
     <div className="rounded-panel border border-line bg-card p-3">
       <div className="flex items-center gap-2">
         <span className="eyebrow">Market status</span>
-        <span className="ml-auto text-[10px] font-semibold text-muted">NSE</span>
+        <span className="ml-auto fs-10 font-semibold text-muted">NSE</span>
       </div>
       <div className="flex items-center gap-1.5 mt-1.5">
         <span className={clsx('w-1.5 h-1.5 rounded-full', open ? 'bg-success' : 'bg-muted')} />
-        <span className={clsx('text-[11.5px] font-semibold', open ? 'text-success' : 'text-muted')}>
+        <span className={clsx('fs-11.5 font-semibold', open ? 'text-success' : 'text-muted')}>
           {open ? 'Open' : state.phase === 'pre-open' ? 'Pre-open' : 'Closed'}
         </span>
-        <span className="ml-auto text-[10.5px] text-muted tnum">{state.clock}</span>
+        <span className="ml-auto fs-10.5 text-muted tnum">{state.clock}</span>
       </div>
       {nifty ? (
         <>
-          <div className="mt-2 text-[18px] font-light tracking-[-0.02em] tnum">
+          <div className="mt-2 fs-18 font-light tracking-[-0.02em] tnum">
             {nifty.level.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className={clsx('text-[11px] font-semibold tnum', nifty.changePct >= 0 ? 'text-success' : 'text-danger')}>
+          <div className={clsx('fs-11 font-semibold tnum', nifty.changePct >= 0 ? 'text-success' : 'text-danger')}>
             {nifty.changePct >= 0 ? '+' : '−'}{Math.abs(nifty.changePct).toFixed(2)}%
           </div>
           <MiniSparkline values={series} width={110} height={30}
@@ -698,10 +698,10 @@ function MarketStatusCard() {
               production chrome tells the user they are looking at a prototype;
               the honest thing is to label the data once, in the widget that
               carries it, in the same voice as everything else. */}
-          <div className="mt-1 text-[10.5px] text-muted">Sample index data</div>
+          <div className="mt-1 fs-10.5 text-muted">Sample index data</div>
         </>
       ) : (
-        <p className="mt-2 text-[11px] text-muted leading-relaxed">
+        <p className="mt-2 fs-11 text-muted leading-relaxed">
           Index levels need a price feed. Session state is from the clock.
         </p>
       )}

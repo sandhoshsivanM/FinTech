@@ -48,9 +48,9 @@ export function SplitBar({ segments, format, ariaLabel }: {
                 ? { background: 'repeating-linear-gradient(-45deg, var(--fill-strong) 0 2px, transparent 2px 6px)' }
                 : undefined}
             >
-              <span className="text-[22px] font-light tracking-[-0.02em] tnum leading-none">{pct(s.value)}%</span>
+              <span className="fs-22 font-light tracking-[-0.02em] tnum leading-none">{pct(s.value)}%</span>
               <span
-                className="mt-1 text-[11px] font-semibold tnum whitespace-nowrap"
+                className="mt-1 fs-11 font-semibold tnum whitespace-nowrap"
                 style={{ visibility: hover === i ? 'visible' : 'hidden' }}
               >
                 {format(s.value)}
@@ -60,7 +60,7 @@ export function SplitBar({ segments, format, ariaLabel }: {
           </div>
         ))}
       </div>
-      <div className="mt-3 flex flex-wrap justify-center gap-x-3.5 gap-y-1.5 text-[12px] text-ink-soft">
+      <div className="mt-3 flex flex-wrap justify-center gap-x-3.5 gap-y-1.5 fs-12 text-ink-soft">
         {segments.map((s) => (
           <span key={s.label} className="inline-flex items-center gap-1.5">
             <span className="w-[7px] h-[7px] rounded-full" style={{ background: s.color }} />

@@ -74,8 +74,8 @@ export function WalletStack({ anchorId }: { anchorId?: string } = {}) {
   return (
     <section id={anchorId} aria-label="My wallet" className="card scroll-mt-24 px-4 pt-4 pb-3">
       <div className="flex items-baseline justify-between mb-3">
-        <CardTitle info="dashboard.myWallet" className="text-[16px] font-medium tracking-[-0.01em]">My wallet</CardTitle>
-        <Link href="/accounts" className="text-[12.5px] font-semibold text-ink-soft">Manage</Link>
+        <CardTitle info="dashboard.myWallet" className="fs-16 font-medium tracking-[-0.01em]">My wallet</CardTitle>
+        <Link href="/accounts" className="fs-12.5 font-semibold text-ink-soft">Manage</Link>
       </div>
 
       {/* ISO ID-1 proportions (85.6 × 54 mm), so it reads as a card. The
@@ -168,8 +168,8 @@ export function WalletCard({
       />
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="font-semibold text-[15px] leading-tight truncate"><T text={account.name} decorative={decorative} /></div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.14em] text-white/55">
+          <div className="font-semibold fs-15 leading-tight truncate"><T text={account.name} decorative={decorative} /></div>
+          <div className="mt-0.5 flex items-center gap-1.5 fs-10.5 uppercase tracking-[0.14em] text-white/55">
             <Icon size={12} aria-hidden />
             <T text={owed ? 'Outstanding' : kind.label} decorative={decorative} />
           </div>
@@ -182,13 +182,13 @@ export function WalletCard({
       </div>
 
       <div className="relative mt-auto">
-        <div className="text-[25px] font-semibold tracking-[-0.02em] tnum leading-none">
+        <div className="fs-25 font-semibold tracking-[-0.02em] tnum leading-none">
           <T text={hidden ? '••••••' : money(shown)} decorative={decorative} />
         </div>
         <div className="mt-2.5 flex items-center justify-between">
           {/* Masked, and deliberately not a made-up number: the vault holds no
               card numbers, so none is shown. */}
-          <span className="text-[13px] tracking-[0.22em] text-white/60 tnum" aria-hidden>
+          <span className="fs-13 tracking-[0.22em] text-white/60 tnum" aria-hidden>
             •••• •••• ••••
           </span>
           <span className="flex -space-x-2.5" aria-hidden>

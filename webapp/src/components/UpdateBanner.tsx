@@ -75,13 +75,13 @@ export function UpdateBanner() {
         <RefreshCw size={16} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[13.5px] font-medium text-ink">A new version of Khazana is available</span>
-        <span className="block text-[11.5px] text-muted">Reload to update. You will unlock with your PIN again.</span>
+        <span className="block fs-13.5 font-medium text-ink">A new version of Khazana is available</span>
+        <span className="block fs-11.5 text-muted">Reload to update. You will unlock with your PIN again.</span>
       </span>
       <button
         type="button"
         onClick={() => location.reload()}
-        className="focus-ring shrink-0 rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold bg-primary text-[var(--primary-fg)] hover:brightness-110"
+        className="focus-ring shrink-0 rounded-full px-3.5 py-1.5 fs-12.5 font-semibold bg-primary text-[var(--primary-fg)] hover:brightness-110"
       >
         Reload
       </button>

@@ -190,7 +190,7 @@ function Tile({ label, value, hint, color }: { label: string; value: string; hin
     <GlassCard className="flex flex-col gap-1">
       <span className="text-xs font-semibold text-muted">{label}</span>
       <span className="text-xl font-light tnum" style={color ? { color } : undefined}>{value}</span>
-      {hint && <span className="text-[11px] text-muted">{hint}</span>}
+      {hint && <span className="fs-11 text-muted">{hint}</span>}
     </GlassCard>
   );
 }

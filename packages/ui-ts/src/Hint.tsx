@@ -110,8 +110,8 @@ export function Hint({ term, className, align = 'left', size = 13, tone = 'muted
             ? { top: pos.top, left: pos.left, width: pos.width }
             : { top: 0, left: 0, width: 256, visibility: 'hidden' }}
         >
-          <span className="block text-[12.5px] font-semibold text-ink">{title}</span>
-          <span className="mt-1 block text-[12.5px] leading-relaxed text-ink-soft">{body}</span>
+          <span className="block fs-12.5 font-semibold text-ink">{title}</span>
+          <span className="mt-1 block fs-12.5 leading-relaxed text-ink-soft">{body}</span>
         </span>,
         document.body,
       )}

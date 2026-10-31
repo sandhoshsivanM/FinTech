@@ -53,7 +53,7 @@ function BoardCard({ title, sub, href, className, children }: {
     <section className={`card flex flex-col min-w-0 ${className ?? ''}`}>
       <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
         <div className="min-w-0">
-          <CardTitle as="h3" className="text-[16px] font-medium tracking-[-0.01em]">{title}</CardTitle>
+          <CardTitle as="h3" className="fs-16 font-medium tracking-[-0.01em]">{title}</CardTitle>
           {sub && <p className="text-xs text-muted mt-0.5 truncate">{sub}</p>}
         </div>
         {href && (
@@ -71,7 +71,7 @@ function BoardCard({ title, sub, href, className, children }: {
 function Headline({ value, children }: { value: string; children?: ReactNode }) {
   return (
     <div className="flex items-baseline gap-2.5 flex-wrap mb-4">
-      <span className="text-[30px] font-light tracking-[-0.035em] leading-[1.05] tnum">{value}</span>
+      <span className="fs-30 font-light tracking-[-0.035em] leading-[1.05] tnum">{value}</span>
       {children}
     </div>
   );
@@ -85,8 +85,8 @@ function Change({ now, before, goodWhenUp, label }: { now: Decimal; before: Deci
   const c = trend(now, before, goodWhenUp);
   if (!c) return null;
   return (
-    <span className={`inline-flex items-center gap-1 text-[12.5px] font-semibold tnum ${c.good ? 'text-success' : 'text-danger'}`}>
-      <span aria-hidden className={`w-[18px] h-[18px] rounded-[6px] grid place-items-center text-[11px] ${c.good ? 'bg-success-soft' : 'bg-danger-soft'}`}>
+    <span className={`inline-flex items-center gap-1 fs-12.5 font-semibold tnum ${c.good ? 'text-success' : 'text-danger'}`}>
+      <span aria-hidden className={`w-[18px] h-[18px] rounded-[6px] grid place-items-center fs-11 ${c.good ? 'bg-success-soft' : 'bg-danger-soft'}`}>
         {c.up ? '↑' : '↓'}
       </span>
       {c.text}
@@ -103,7 +103,7 @@ function trend(now: Decimal, before: Decimal, goodWhenUp: boolean) {
 }
 
 const Empty = ({ children }: { children: ReactNode }) => (
-  <p className="flex-1 grid place-items-center py-8 text-center text-[13px] text-muted">{children}</p>
+  <p className="flex-1 grid place-items-center py-8 text-center fs-13 text-muted">{children}</p>
 );
 
 /**
@@ -214,7 +214,7 @@ export function useChartBoardWidgets({ month, now, netWorth, investments, liabil
         {data.goalRows.length === 0 ? <Empty>Add a goal to watch it fill up.</Empty> : (
           <>
             <Headline value={money(data.goalRows.reduce((s, g) => s.plus(g.saved), ZERO))}>
-              <span className="text-[12.5px] text-muted tnum">of {money(data.goalRows.reduce((s, g) => s.plus(g.target), ZERO))}</span>
+              <span className="fs-12.5 text-muted tnum">of {money(data.goalRows.reduce((s, g) => s.plus(g.target), ZERO))}</span>
             </Headline>
             <DotMatrix groups={data.goalRows.slice(0, 4).map((g, i) => ({
               label: g.goal.name, fraction: g.fraction, color: GOAL_COLOURS[i % GOAL_COLOURS.length],
@@ -251,9 +251,9 @@ export function useChartBoardWidgets({ month, now, netWorth, investments, liabil
           const tout = data.flow12.reduce((s, m) => s.plus(m.expense).plus(m.invested), ZERO);
           return (
             <dl className="mt-auto pt-4 grid grid-cols-3 gap-3 border-t border-line m-0">
-              <div><dt className="text-[11.5px] text-muted">In, 12 months</dt><dd className="m-0 text-[15px] tnum text-success">{compact(tin.toNumber())}</dd></div>
-              <div><dt className="text-[11.5px] text-muted">Out</dt><dd className="m-0 text-[15px] tnum">{compact(tout.toNumber())}</dd></div>
-              <div><dt className="text-[11.5px] text-muted">Kept</dt><dd className={`m-0 text-[15px] tnum ${tin.gte(tout) ? 'text-success' : 'text-danger'}`}>{tin.gte(tout) ? '' : '−'}{compact(tin.minus(tout).abs().toNumber())}</dd></div>
+              <div><dt className="fs-11.5 text-muted">In, 12 months</dt><dd className="m-0 fs-15 tnum text-success">{compact(tin.toNumber())}</dd></div>
+              <div><dt className="fs-11.5 text-muted">Out</dt><dd className="m-0 fs-15 tnum">{compact(tout.toNumber())}</dd></div>
+              <div><dt className="fs-11.5 text-muted">Kept</dt><dd className={`m-0 fs-15 tnum ${tin.gte(tout) ? 'text-success' : 'text-danger'}`}>{tin.gte(tout) ? '' : '−'}{compact(tin.minus(tout).abs().toNumber())}</dd></div>
             </dl>
           );
         })()}
@@ -263,9 +263,9 @@ export function useChartBoardWidgets({ month, now, netWorth, investments, liabil
       cashFlow: (
       <BoardCard title="Cash flow" sub="Each month's income, split into spent and saved" href="/reports">
         <Headline value={money(data.flow6.reduce((s, m) => s.plus(m.income.minus(m.expense)), ZERO))}>
-          <span className="text-[12.5px] text-muted">saved over six months</span>
+          <span className="fs-12.5 text-muted">saved over six months</span>
         </Headline>
-        <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12px] text-ink-soft">
+        <div className="flex flex-wrap gap-x-3.5 gap-y-1 fs-12 text-ink-soft">
           <span className="inline-flex items-center gap-1.5"><span className="w-[7px] h-[7px] rounded-full bg-data-rose" />Spent</span>
           <span className="inline-flex items-center gap-1.5"><span className="w-[7px] h-[7px] rounded-full bg-data-green" />Saved</span>
         </div>
@@ -334,11 +334,11 @@ export function useChartBoardWidgets({ month, now, netWorth, investments, liabil
                   <span className="row-span-3 w-10 h-10 rounded-[12px] bg-card-2 shadow-[var(--shadow-1)] grid place-items-center text-ink-soft">
                     {GOAL_ICON[g.goal.goalType]}
                   </span>
-                  <span className="flex justify-between gap-2 text-[14px] font-medium">
+                  <span className="flex justify-between gap-2 fs-14 font-medium">
                     <span className="truncate">{g.goal.name}</span><span className="tnum">{pct}%</span>
                   </span>
                   <DotProgress fraction={g.fraction} color={GOAL_COLOURS[i % GOAL_COLOURS.length]} label={`${g.goal.name}: ${pct}% saved`} />
-                  <span className="flex justify-between gap-2 flex-wrap text-[11.5px] text-muted tnum">
+                  <span className="flex justify-between gap-2 flex-wrap fs-11.5 text-muted tnum">
                     <span>
                       {by ? `By ${SHORT_MONTHS[by.getMonth()]} ${by.getFullYear()}` : 'No target date'}
                       {g.perMonth ? ` · ${money(g.perMonth)}/month` : g.fraction >= 1 ? ' · reached' : ''}
@@ -383,11 +383,11 @@ export function useChartBoardWidgets({ month, now, netWorth, investments, liabil
             monthLabel={mLabel}
           />
           <dl className="grid gap-3.5 m-0">
-            <div><dt className="text-[12px] text-muted">Spent so far</dt><dd className="m-0 text-[20px] tracking-[-0.02em] tnum">{money(data.spentSoFar)}</dd></div>
-            <div><dt className="text-[12px] text-muted">Daily average</dt><dd className="m-0 text-[20px] tracking-[-0.02em] tnum">{data.daysGone ? money(data.spentSoFar.div(data.daysGone)) : '—'}</dd></div>
-            <div><dt className="text-[12px] text-muted">Busiest day</dt><dd className="m-0 text-[20px] tracking-[-0.02em] tnum">{data.busiest ? `${data.busiest.date} ${mLabel} · ${money(data.busiest.spent!)}` : '—'}</dd></div>
+            <div><dt className="fs-12 text-muted">Spent so far</dt><dd className="m-0 fs-20 tracking-[-0.02em] tnum">{money(data.spentSoFar)}</dd></div>
+            <div><dt className="fs-12 text-muted">Daily average</dt><dd className="m-0 fs-20 tracking-[-0.02em] tnum">{data.daysGone ? money(data.spentSoFar.div(data.daysGone)) : '—'}</dd></div>
+            <div><dt className="fs-12 text-muted">Busiest day</dt><dd className="m-0 fs-20 tracking-[-0.02em] tnum">{data.busiest ? `${data.busiest.date} ${mLabel} · ${money(data.busiest.spent!)}` : '—'}</dd></div>
             {isCurrent && (
-              <div><dt className="text-[12px] text-muted">Days left</dt><dd className="m-0 text-[20px] tracking-[-0.02em] tnum">{data.days.length - data.daysGone}</dd></div>
+              <div><dt className="fs-12 text-muted">Days left</dt><dd className="m-0 fs-20 tracking-[-0.02em] tnum">{data.days.length - data.daysGone}</dd></div>
             )}
           </dl>
         </div>

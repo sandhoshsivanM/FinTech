@@ -101,7 +101,7 @@ export function WidgetGrid({ layout, widgets, editing, onChange, tagLive = false
                 >
                   <GripVertical size={16} />
                 </button>
-                <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold">{widgetTitle(w.id)}</span>
+                <span className="min-w-0 flex-1 truncate fs-12.5 font-semibold">{widgetTitle(w.id)}</span>
                 <span className="inline-flex shrink-0 p-[3px] gap-px rounded-full bg-card-2" role="group" aria-label={`${widgetTitle(w.id)} size`}>
                   {sizes.map((s) => (
                     <button
@@ -111,7 +111,7 @@ export function WidgetGrid({ layout, widgets, editing, onChange, tagLive = false
                       aria-label={SIZE_NAME[s]}
                       title={SIZE_NAME[s]}
                       onClick={() => onChange(setWidgetSize(layout, w.id, s))}
-                      className={clsx('focus-ring min-w-6 px-1.5 h-6 rounded-full text-[11px] font-semibold transition-colors',
+                      className={clsx('focus-ring min-w-6 px-1.5 h-6 rounded-full fs-11 font-semibold transition-colors',
                         w.size === s ? 'bg-accent text-[var(--accent-on)]' : 'text-muted hover:text-ink')}
                     >
                       {SIZE_LABEL[s]}
@@ -131,7 +131,7 @@ export function WidgetGrid({ layout, widgets, editing, onChange, tagLive = false
             )}
             {tagLive && !editing && isLiveWidget(w.id) && (
               <span
-                className="absolute -top-2.5 right-5 z-10 px-2 py-[2px] rounded-full bg-card-2 shadow-[var(--shadow-float)] text-[10.5px] font-semibold text-ink-soft pointer-events-none"
+                className="absolute -top-2.5 right-5 z-10 px-2 py-[2px] rounded-full bg-card-2 shadow-[var(--shadow-float)] fs-10.5 font-semibold text-ink-soft pointer-events-none"
                 title="Shows today's figures, whatever month is picked"
               >
                 Today

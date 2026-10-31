@@ -142,11 +142,11 @@ export function NotificationsMenu({ useDriver = noDriver }: { useDriver?: Notifi
               <p className="eyebrow">Notifications</p>
               {unread > 0 && (
                 <>
-                  <span className="ml-auto text-[11px] font-semibold text-muted">{unread} new</span>
+                  <span className="ml-auto fs-11 font-semibold text-muted">{unread} new</span>
                   <button
                     type="button"
                     onClick={() => setSeen(markSeen(keys))}
-                    className="focus-ring text-[11px] font-semibold text-ink hover:underline"
+                    className="focus-ring fs-11 font-semibold text-ink hover:underline"
                   >
                     Mark all as read
                   </button>
@@ -156,8 +156,8 @@ export function NotificationsMenu({ useDriver = noDriver }: { useDriver?: Notifi
             {items.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Inbox size={22} className="mx-auto text-muted mb-2.5" />
-                <p className="text-[13px] font-medium">Nothing needs attention</p>
-                <p className="text-[11.5px] text-muted mt-1 leading-relaxed">
+                <p className="fs-13 font-medium">Nothing needs attention</p>
+                <p className="fs-11.5 text-muted mt-1 leading-relaxed">
                   Alerts whose condition is met, bills due this week and renewals due this month show
                   up here. Rules are checked while Khazana is open — never in the background. Turn on
                   system notifications in Settings to hear about one the moment it fires.
@@ -187,8 +187,8 @@ export function NotificationsMenu({ useDriver = noDriver }: { useDriver?: Notifi
                         <Icon size={15} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className={clsx('block text-[13px] truncate', fresh ? 'font-semibold text-ink' : 'font-normal text-ink-soft')}>{n.title}</span>
-                        <span className="block text-[11.5px] text-muted">{n.sub}</span>
+                        <span className={clsx('block fs-13 truncate', fresh ? 'font-semibold text-ink' : 'font-normal text-ink-soft')}>{n.title}</span>
+                        <span className="block fs-11.5 text-muted">{n.sub}</span>
                       </span>
                       {fresh && <span aria-label="New" className="shrink-0 w-2 h-2 rounded-full bg-[var(--data-blue)]" />}
                     </Link>

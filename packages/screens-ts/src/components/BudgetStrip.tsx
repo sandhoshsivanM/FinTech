@@ -70,7 +70,7 @@ export function BudgetStrip() {
         className="focus-ring w-full flex items-center gap-2 rounded text-left"
       >
         <PieChart size={15} className="text-muted shrink-0" />
-        <span className={clsx('flex-1 text-[13.5px] font-semibold', overCount > 0 && 'text-expense')}>
+        <span className={clsx('flex-1 fs-13.5 font-semibold', overCount > 0 && 'text-expense')}>
           {overCount > 0
             ? `${overCount} budget${overCount === 1 ? '' : 's'} over limit`
             : 'Budgets this month'}
@@ -86,10 +86,10 @@ export function BudgetStrip() {
             return (
               <div key={budget.id}>
                 <div className="flex items-baseline gap-2 mb-1">
-                  <span className="flex-1 text-[13px] font-medium truncate">
+                  <span className="flex-1 fs-13 font-medium truncate">
                     {byId.get(budget.categoryId) ?? 'Uncategorized'}
                   </span>
-                  <span className={clsx('text-[11.5px] tnum', over ? 'text-expense font-semibold' : 'text-muted')}>
+                  <span className={clsx('fs-11.5 tnum', over ? 'text-expense font-semibold' : 'text-muted')}>
                     {money(spent)} / {money(limit)}
                   </span>
                 </div>
@@ -104,7 +104,7 @@ export function BudgetStrip() {
           })}
           <Link
             href="/budget"
-            className="focus-ring inline-block rounded text-[12.5px] font-semibold text-accent hover:underline"
+            className="focus-ring inline-block rounded fs-12.5 font-semibold text-accent hover:underline"
           >
             {ranked.length > MAX_SHOWN ? `All ${ranked.length} budgets →` : 'Manage budgets →'}
           </Link>

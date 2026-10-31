@@ -78,7 +78,7 @@ export default function WatchlistPage() {
           <AssetMark colour="var(--c1)" />
           <span className="min-w-0">
             <span className="block font-semibold truncate">{r.name ?? r.symbol}</span>
-            <span className="block text-[11px] text-muted">{r.symbol} · {r.exchange}</span>
+            <span className="block fs-11 text-muted">{r.symbol} · {r.exchange}</span>
           </span>
         </div>
       ),

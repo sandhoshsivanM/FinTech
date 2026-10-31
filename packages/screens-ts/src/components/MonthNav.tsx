@@ -45,7 +45,7 @@ export function MonthNav({
 
       <span className="min-w-[10.5rem] text-center text-sm font-semibold tabular-nums">
         {month.label.split(' · ')[0]}
-        {isFuture && <span className="ml-1.5 text-[11px] font-normal text-muted">upcoming</span>}
+        {isFuture && <span className="ml-1.5 fs-11 font-normal text-muted">upcoming</span>}
       </span>
 
       <button
@@ -62,7 +62,7 @@ export function MonthNav({
         <button
           type="button"
           onClick={() => onChange(thisMonth)}
-          className="focus-ring ml-1 h-7 px-2.5 rounded-[var(--radius-btn)] border border-[var(--line)] text-[12px] font-semibold text-muted hover:text-ink hover:border-[var(--line-strong)] transition-colors"
+          className="focus-ring ml-1 h-7 px-2.5 rounded-[var(--radius-btn)] border border-[var(--line)] fs-12 font-semibold text-muted hover:text-ink hover:border-[var(--line-strong)] transition-colors"
         >
           This month
         </button>

@@ -59,9 +59,9 @@ export function VaultGate() {
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <BrandMark size={96} priority />
-          <WordMark className="mt-5 text-[26px] text-ink" />
+          <WordMark className="mt-5 fs-26 text-ink" />
           {/* The rules either side of the tagline are from the brand lockup. */}
-          <p className="mt-2.5 flex items-center gap-3 text-[11.5px] font-semibold text-gold-ink">
+          <p className="mt-2.5 flex items-center gap-3 fs-11.5 font-semibold text-gold-ink">
             <span className="h-px w-6 bg-[var(--gold)] opacity-45" aria-hidden="true" />
             {APP_TAGLINE}
             <span className="h-px w-6 bg-[var(--gold)] opacity-45" aria-hidden="true" />
@@ -72,7 +72,7 @@ export function VaultGate() {
           {!secure && (
             <div className="mb-4 rounded-[var(--radius-card)] border border-line bg-warning-soft p-3.5 flex gap-3">
               <ShieldAlert size={16} className="shrink-0 mt-0.5 text-warning" />
-              <div className="text-[12.5px] leading-relaxed">
+              <div className="fs-12.5 leading-relaxed">
                 <b className="block text-ink">This address can&rsquo;t encrypt your vault.</b>
                 <span className="text-ink-soft">
                   Browsers only allow encryption over <b>https://</b> or on{' '}
@@ -104,7 +104,7 @@ export function VaultGate() {
               )}
               {confirmAside ? (
                 <div className="mt-5 grid gap-2">
-                  <p className="text-[12.5px] text-ink-soft">
+                  <p className="fs-12.5 text-ink-soft">
                     The old records will be kept in this browser, set aside where
                     Khazana will not open them. Do not clear this site&rsquo;s data.
                   </p>
@@ -168,7 +168,7 @@ export function VaultGate() {
         </div>
         <ul className="mt-6 grid gap-2.5">
           {TRUST_POINTS.map((t) => (
-            <li key={t.title} className="flex items-start gap-2.5 text-[12px] leading-snug">
+            <li key={t.title} className="flex items-start gap-2.5 fs-12 leading-snug">
               <ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
               <span>
                 <b className="font-semibold text-ink">{t.title}.</b>{' '}

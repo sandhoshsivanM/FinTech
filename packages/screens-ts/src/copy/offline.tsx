@@ -86,7 +86,7 @@ export const offlineCopy: ProductCopy = {
           The requests the app can make are these, and no others:
         </p>
         <div className="overflow-x-auto">
-          <table className="w-full text-[12.5px]">
+          <table className="w-full fs-12.5">
             <thead>
               <tr className="border-b border-line text-left text-muted">
                 <th className="py-2 pr-3 font-semibold">Destination</th>
@@ -239,7 +239,7 @@ export const offlineCopy: ProductCopy = {
     ),
     warranty: (
       <>
-        <p className=" text-[11.5px]">
+        <p className=" fs-11.5">
           The software is provided &ldquo;as is&rdquo;, without warranty of any kind, express or
           implied, including merchantability, fitness for a particular purpose and
           non-infringement.

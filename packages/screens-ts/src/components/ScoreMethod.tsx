@@ -55,7 +55,7 @@ export function ScoreMethod() {
         className="focus-ring flex w-full items-center gap-2 px-5 py-4 text-left transition-colors hover:bg-[var(--fill)]"
       >
         <HelpCircle size={16} className="text-muted shrink-0" aria-hidden="true" />
-        <span className="flex-1 text-[15px] font-semibold tracking-tight">
+        <span className="flex-1 fs-15 font-semibold tracking-tight">
           How is this calculated?
         </span>
         <ChevronDown
@@ -66,7 +66,7 @@ export function ScoreMethod() {
       </button>
 
       {open && (
-        <div className="border-t border-line px-5 py-4 text-[13.5px] leading-relaxed text-ink-soft">
+        <div className="border-t border-line px-5 py-4 fs-13.5 leading-relaxed text-ink-soft">
           <p>
             Four areas, each worth a fixed number of points out of {total}. Inside an
             area, each check contributes its own share — the figure beside an area is

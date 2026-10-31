@@ -302,7 +302,7 @@ export default function DashboardPage() {
             {fmt.money(cash.plus(summary.current).minus(liab))}
           </MoneyValue>
           {monthChange != null && (
-            <div className="mt-1.5 text-[13px]">
+            <div className="mt-1.5 fs-13">
               <MoneyValue tone="delta" sign={monthChange.s} size="sm" hidden={ghost}>
                 {`${monthChange.s >= 0 ? '+' : '−'}${fmt.money(monthChange.abs)}`}
               </MoneyValue>
@@ -359,7 +359,7 @@ export default function DashboardPage() {
               />
             </div>
             <div className="mt-5 @[560px]:mt-0 flex flex-col justify-center gap-1">
-              <div className="flex items-center gap-1 text-[11px] font-normal text-muted">
+              <div className="flex items-center gap-1 fs-11 font-normal text-muted">
                 Savings rate
                 <Hint term="savingsRate" />
               </div>
@@ -370,19 +370,19 @@ export default function DashboardPage() {
                     : '—'}
                 </MoneyValue>
                 {period.income.gt(0) && (
-                  <span className="text-[12px] text-muted">of income kept</span>
+                  <span className="fs-12 text-muted">of income kept</span>
                 )}
               </div>
               {dayPnl != null && day.isReal && (
                 <div className="mt-4">
-                  <div className="text-[11px] font-normal text-muted">
+                  <div className="fs-11 font-normal text-muted">
                     Day change
                   </div>
                   <div className="flex items-baseline gap-2 mt-1">
                     <MoneyValue tone="delta" sign={dayPnl} size="md" hidden={ghost}>
                       {`${dayPnl >= 0 ? '+' : '−'}${fmt.money(Math.abs(dayPnl))}`}
                     </MoneyValue>
-                    <span className="text-[12px] text-muted">
+                    <span className="fs-12 text-muted">
                       {day.covered < day.total
                         ? `${day.covered} of ${day.total} priced`
                         : priceAsOfLabel(holdings, now)}
@@ -398,7 +398,7 @@ export default function DashboardPage() {
         <section className="card">
           <div className="flex items-center gap-3 flex-wrap px-5 py-4 border-b border-line">
             <div className="min-w-0">
-              <CardTitle info="dashboard.portfolioPerformance" className="text-[16px] font-medium tracking-[-0.01em]">Portfolio performance</CardTitle>
+              <CardTitle info="dashboard.portfolioPerformance" className="fs-16 font-medium tracking-[-0.01em]">Portfolio performance</CardTitle>
               <p className="text-xs text-muted mt-0.5">
                 {snapshots.length >= 2 ? `${snapshots.length} recorded snapshots` : 'Recorded once a day when you open Khazana'}
               </p>
@@ -415,14 +415,14 @@ export default function DashboardPage() {
             <div className="flex items-end gap-4 flex-wrap mb-5">
               <div>
                 <div className="eyebrow">Net worth</div>
-                <div className="text-[34px] font-light tracking-[-0.04em] leading-[1.05] tnum mt-1">
+                <div className="fs-34 font-light tracking-[-0.04em] leading-[1.05] tnum mt-1">
                   {mask(fmt.money(cash.plus(summary.current).minus(liab)))}
                 </div>
               </div>
               {rangeChange != null && (
                 <div className="pb-1.5 flex items-center gap-2.5">
                   <Delta value={rangeChange} />
-                  <span className="text-[12.5px] text-muted">over {range === 'ALL' ? 'all recorded history' : range}</span>
+                  <span className="fs-12.5 text-muted">over {range === 'ALL' ? 'all recorded history' : range}</span>
                 </div>
               )}
             </div>
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                 <LineChart values={series} height={260} format={(n) => short(n, fmt.symbol)}
                   ariaLabel={`Net worth over ${range}`} />
                 {estimated && (
-                  <p className="mt-3 text-[12px] text-muted leading-relaxed">
+                  <p className="mt-3 fs-12 text-muted leading-relaxed">
                     Estimated from your recorded transactions, with today&apos;s investments and liabilities
                     held constant — the vault keeps no price history, so past holding values are unknown.
                     Daily snapshots replace this automatically once two have been recorded.
@@ -439,7 +439,7 @@ export default function DashboardPage() {
                 )}
               </>
             ) : (
-              <p className="py-16 text-center text-[13px] text-muted">
+              <p className="py-16 text-center fs-13 text-muted">
                 Nothing to plot yet. Add or import transactions and the trend appears immediately;
                 Khazana also records one snapshot a day as you use it.
               </p>
@@ -450,7 +450,7 @@ export default function DashboardPage() {
     allocation: (
           <section className="card h-full">
             <div className="flex items-center gap-3 flex-wrap px-5 py-4 border-b border-line">
-              <CardTitle info="dashboard.allocation" className="text-[16px] font-medium tracking-[-0.01em]">Allocation</CardTitle>
+              <CardTitle info="dashboard.allocation" className="fs-16 font-medium tracking-[-0.01em]">Allocation</CardTitle>
               <span className="ml-auto">
                 <Segmented
                   value={allocDim}
@@ -475,7 +475,7 @@ export default function DashboardPage() {
                   centerSub="Total"
                 />
               ) : (
-                <p className="py-12 text-center text-[13px] text-muted">Add a holding to see how the book is split.</p>
+                <p className="py-12 text-center fs-13 text-muted">Add a holding to see how the book is split.</p>
               )}
             </div>
           </section>
@@ -483,7 +483,7 @@ export default function DashboardPage() {
     movers: (
           <section className="card h-full">
             <div className="px-5 py-4 border-b border-line">
-              <CardTitle info="dashboard.movers" className="text-[16px] font-medium tracking-[-0.01em]">Movers</CardTitle>
+              <CardTitle info="dashboard.movers" className="fs-16 font-medium tracking-[-0.01em]">Movers</CardTitle>
               <p className="text-xs text-muted mt-0.5">By return since purchase</p>
             </div>
             <div className="p-5 grid gap-5">
@@ -494,7 +494,7 @@ export default function DashboardPage() {
                     <Chip tone={up ? 'success' : 'danger'}>{list.length}</Chip>
                   </div>
                   {list.length === 0 ? (
-                    <p className="text-[12.5px] text-muted py-2">Nothing {up ? 'above' : 'below'} cost.</p>
+                    <p className="fs-12.5 text-muted py-2">Nothing {up ? 'above' : 'below'} cost.</p>
                   ) : (
                     <div className="grid gap-2.5">
                       {list.map((v) => (
@@ -503,14 +503,14 @@ export default function DashboardPage() {
                             {up ? <ArrowUpRight size={15} /> : <ArrowDownRight size={15} />}
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block text-[13.5px] font-semibold truncate">{v.holding.name ?? v.holding.symbol}</span>
-                            <span className="block text-[11.5px] text-muted">{v.holding.symbol}</span>
+                            <span className="block fs-13.5 font-semibold truncate">{v.holding.name ?? v.holding.symbol}</span>
+                            <span className="block fs-11.5 text-muted">{v.holding.symbol}</span>
                           </span>
                           <span className="text-right">
-                            <span className={`block text-[13px] font-semibold tnum ${up ? 'text-success' : 'text-danger'}`}>
+                            <span className={`block fs-13 font-semibold tnum ${up ? 'text-success' : 'text-danger'}`}>
                               {fmtPct(v.pnlPct)}
                             </span>
-                            <span className="block text-[11px] text-muted tnum">{mask(fmt.money(v.pnl.abs()))}</span>
+                            <span className="block fs-11 text-muted tnum">{mask(fmt.money(v.pnl.abs()))}</span>
                           </span>
                         </div>
                       ))}
@@ -527,8 +527,8 @@ export default function DashboardPage() {
             <div className="flex flex-col sm:flex-row items-center gap-5">
               <Ring fraction={(health.score ?? 0) / 100} size={130} stroke={11} color={ringColor}>
                 <div className="text-center">
-                  <div className="text-[34px] font-light leading-none tracking-[-0.03em]">{health.score ?? '—'}</div>
-                  <div className="text-[11.5px] text-muted mt-1">{health.grade ?? 'Not yet scored'}</div>
+                  <div className="fs-34 font-light leading-none tracking-[-0.03em]">{health.score ?? '—'}</div>
+                  <div className="fs-11.5 text-muted mt-1">{health.grade ?? 'Not yet scored'}</div>
                 </div>
               </Ring>
               {/* An untracked category shows a grey bar and the words "Not yet
@@ -538,7 +538,7 @@ export default function DashboardPage() {
                 {health.categories.map((c) => (
                   <div key={c.key}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[13px]">{c.label}</span>
+                      <span className="fs-13">{c.label}</span>
                       <span className="text-xs text-muted">
                         {c.tracked ? `${Math.round(c.score as number)}/${c.weight}` : 'Not yet tracked'}
                       </span>
@@ -559,11 +559,11 @@ export default function DashboardPage() {
           <section className="card h-full flex flex-col">
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-line">
               <Sparkles size={17} className="text-accent" />
-              <CardTitle info="dashboard.insights" className="text-[16px] font-medium tracking-[-0.01em]">Insights</CardTitle>
+              <CardTitle info="dashboard.insights" className="fs-16 font-medium tracking-[-0.01em]">Insights</CardTitle>
               <span className="ml-auto"><Chip>{narratives.length} observation{narratives.length === 1 ? '' : 's'}</Chip></span>
             </div>
             {narratives.length === 0 ? (
-              <p className="flex-1 grid place-items-center text-[13px] text-muted p-8 text-center">
+              <p className="flex-1 grid place-items-center fs-13 text-muted p-8 text-center">
                 Add a transaction, a holding or a policy and insights will appear here.
               </p>
             ) : (
@@ -576,36 +576,36 @@ export default function DashboardPage() {
                     >
                       <Sparkles size={15} />
                     </span>
-                    <p className="text-[13px] text-ink-soft leading-relaxed">{n.text}</p>
+                    <p className="fs-13 text-ink-soft leading-relaxed">{n.text}</p>
                   </div>
                 ))}
               </div>
             )}
-            <p className="px-5 py-3 text-[11px] text-muted border-t border-line bg-fill rounded-b-[inherit]">{NARRATIVE_DISCLAIMER}</p>
+            <p className="px-5 py-3 fs-11 text-muted border-t border-line bg-fill rounded-b-[inherit]">{NARRATIVE_DISCLAIMER}</p>
           </section>
     ),
     holdings: (
           <section className="card overflow-hidden h-full">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
               <div>
-                <CardTitle info="dashboard.topHoldings" className="text-[16px] font-medium tracking-[-0.01em]">Top holdings</CardTitle>
+                <CardTitle info="dashboard.topHoldings" className="fs-16 font-medium tracking-[-0.01em]">Top holdings</CardTitle>
                 <p className="text-xs text-muted mt-0.5">By value · {holdings.length} total</p>
               </div>
-              <Link href="/holdings" className="ml-auto focus-ring inline-flex items-center gap-1 text-[13px] font-semibold text-accent hover:underline">
+              <Link href="/holdings" className="ml-auto focus-ring inline-flex items-center gap-1 fs-13 font-semibold text-accent hover:underline">
                 View all <ChevronRight size={15} />
               </Link>
             </div>
             {topHoldings.length === 0 ? (
-              <p className="py-12 text-center text-[13px] text-muted">
+              <p className="py-12 text-center fs-13 text-muted">
                 No holdings yet — load sample data from Settings, or add one from Portfolio.
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-[13px] border-separate border-spacing-0">
+                <table className="w-full fs-13 border-separate border-spacing-0">
                   <thead>
                     <tr>
                       {['Company', 'Value', 'Weight', 'Return'].map((h, i) => (
-                        <th key={h} className={`sticky top-0 bg-card-2 border-b border-line px-3 py-2.5 text-[11px] font-normal text-muted whitespace-nowrap ${i === 0 ? 'text-left' : 'text-right'}`}>
+                        <th key={h} className={`sticky top-0 bg-card-2 border-b border-line px-3 py-2.5 fs-11 font-normal text-muted whitespace-nowrap ${i === 0 ? 'text-left' : 'text-right'}`}>
                           {h}
                         </th>
                       ))}
@@ -621,7 +621,7 @@ export default function DashboardPage() {
                               <AssetMark colour={SERIES_COLOURS[i % SERIES_COLOURS.length]} />
                               <span className="min-w-0">
                                 <span className="block font-semibold truncate">{v.holding.name ?? v.holding.symbol}</span>
-                                <span className="block text-[11px] text-muted">{v.holding.symbol}</span>
+                                <span className="block fs-11 text-muted">{v.holding.symbol}</span>
                               </span>
                             </div>
                           </td>
@@ -642,13 +642,13 @@ export default function DashboardPage() {
     bills: (
           <section className="card overflow-hidden h-full">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
-              <CardTitle info="dashboard.upcomingBills" className="text-[16px] font-medium tracking-[-0.01em]">Upcoming bills</CardTitle>
-              <Link href="/recurring" className="ml-auto focus-ring inline-flex items-center gap-1 text-[13px] font-semibold text-accent hover:underline">
+              <CardTitle info="dashboard.upcomingBills" className="fs-16 font-medium tracking-[-0.01em]">Upcoming bills</CardTitle>
+              <Link href="/recurring" className="ml-auto focus-ring inline-flex items-center gap-1 fs-13 font-semibold text-accent hover:underline">
                 See all <ChevronRight size={15} />
               </Link>
             </div>
             {bills.length === 0 ? (
-              <p className="py-12 text-center text-[13px] text-muted">Nothing scheduled.</p>
+              <p className="py-12 text-center fs-13 text-muted">Nothing scheduled.</p>
             ) : (
               bills.map((b) => {
                 const due = daysUntil(b.nextRun, now);
@@ -658,10 +658,10 @@ export default function DashboardPage() {
                       <CreditCard size={16} />
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-[13.5px] font-semibold truncate">{b.merchant || catName(b.categoryId)}</span>
-                      <span className="block text-[11.5px] text-muted">{due == null ? '—' : due <= 0 ? 'Due today' : `Due in ${due} day${due === 1 ? '' : 's'}`}</span>
+                      <span className="block fs-13.5 font-semibold truncate">{b.merchant || catName(b.categoryId)}</span>
+                      <span className="block fs-11.5 text-muted">{due == null ? '—' : due <= 0 ? 'Due today' : `Due in ${due} day${due === 1 ? '' : 's'}`}</span>
                     </span>
-                    <span className="font-semibold tnum text-[13.5px]">{mask(fmt.money(D(b.amount)))}</span>
+                    <span className="font-semibold tnum fs-13.5">{mask(fmt.money(D(b.amount)))}</span>
                   </div>
                 );
               })
@@ -687,7 +687,7 @@ export default function DashboardPage() {
               <button
                 onClick={toggleGhost}
                 data-tour="networth"
-                className="focus-ring btn-soft inline-flex items-center gap-2 h-[var(--control-md)] px-3.5 rounded-full text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors"
+                className="focus-ring btn-soft inline-flex items-center gap-2 h-[var(--control-md)] px-3.5 rounded-full fs-13 font-semibold text-ink-soft hover:text-ink transition-colors"
               >
                 {ghost ? <EyeOff size={15} /> : <Eye size={15} />}
                 {ghost ? 'Amounts hidden' : 'Hide amounts'}
@@ -696,7 +696,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => setEditing((e) => !e)}
                   aria-pressed={editing}
-                  className="focus-ring btn-soft inline-flex items-center gap-2 h-[var(--control-md)] px-3.5 rounded-full text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors"
+                  className="focus-ring btn-soft inline-flex items-center gap-2 h-[var(--control-md)] px-3.5 rounded-full fs-13 font-semibold text-ink-soft hover:text-ink transition-colors"
                 >
                   {editing ? <Check size={15} /> : <LayoutGrid size={15} />}
                   {editing ? 'Done' : 'Customize'}
@@ -711,15 +711,15 @@ export default function DashboardPage() {
       {pinnedMonth != null && !editing && !isEmptyVault && (
         <StaggerItem>
           <div className="card px-5 py-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <p className="m-0 mr-auto text-[13px] text-ink-soft">
+            <p className="m-0 mr-auto fs-13 text-ink-soft">
               Viewing <span className="font-semibold text-ink">{monthName(month.start)}</span>. Cards tagged
-              <span className="mx-1 px-2 py-[1px] rounded-full bg-card-2 shadow-[var(--shadow-float)] text-[10.5px] font-semibold">Today</span>
+              <span className="mx-1 px-2 py-[1px] rounded-full bg-card-2 shadow-[var(--shadow-float)] fs-10.5 font-semibold">Today</span>
               show current figures: balances and holdings have no history to look back on.
             </p>
             <button
               type="button"
               onClick={() => setPinnedMonth(null)}
-              className="focus-ring btn-soft inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12.5px] font-semibold"
+              className="focus-ring btn-soft inline-flex items-center gap-1.5 h-8 px-3 rounded-full fs-12.5 font-semibold"
             >
               Back to this month
             </button>
@@ -730,7 +730,7 @@ export default function DashboardPage() {
       {editing && (
         <StaggerItem>
           <div className="card px-5 py-4 flex flex-wrap items-center gap-3">
-            <p className="m-0 mr-auto text-[13px] text-ink-soft">
+            <p className="m-0 mr-auto fs-13 text-ink-soft">
               Drag a card by its handle, pick a size, or hide it. Saved for this profile on this device.
             </p>
             {hiddenWidgets.length > 0 && (
@@ -741,7 +741,7 @@ export default function DashboardPage() {
                     key={w.id}
                     type="button"
                     onClick={() => setLayout(setWidgetHidden(layout, w.id, false))}
-                    className="focus-ring btn-soft inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12.5px] font-medium"
+                    className="focus-ring btn-soft inline-flex items-center gap-1.5 h-8 px-3 rounded-full fs-12.5 font-medium"
                   >
                     <Plus size={13} /> {widgetTitle(w.id)}
                   </button>
@@ -751,7 +751,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={reset}
-              className="focus-ring inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12.5px] font-semibold text-ink-soft hover:text-ink"
+              className="focus-ring inline-flex items-center gap-1.5 h-8 px-3 rounded-full fs-12.5 font-semibold text-ink-soft hover:text-ink"
             >
               <RotateCcw size={13} /> Reset layout
             </button>

@@ -10,9 +10,9 @@ export function LegalSection({ icon, title, children }: { icon: ReactNode; title
       <GlassCard>
         <div className="mb-3 flex items-center gap-2.5">
           <span className="text-accent">{icon}</span>
-          <h2 className="text-[16px] font-medium tracking-[-0.01em]">{title}</h2>
+          <h2 className="fs-16 font-medium tracking-[-0.01em]">{title}</h2>
         </div>
-        <div className="grid gap-3 text-[13px] leading-relaxed text-ink-soft">{children}</div>
+        <div className="grid gap-3 fs-13 leading-relaxed text-ink-soft">{children}</div>
       </GlassCard>
     </StaggerItem>
   );

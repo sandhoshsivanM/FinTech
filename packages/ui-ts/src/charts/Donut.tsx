@@ -216,7 +216,7 @@ export function Donut({
         {(hovered ? true : centerSub) && (
           <text
             x="50%" y="60%" textAnchor="middle" dominantBaseline="middle"
-            fill="var(--muted)" style={{ fontSize: 10.5 }}
+            fill="var(--muted)" style={{ fontSize: 'calc(10.5px * var(--font-scale, 1))' }}
           >
             {hovered ? `${hovered.label} · ${pct(hovered.value)}` : centerSub}
           </text>
@@ -235,7 +235,7 @@ export function Donut({
               <button
                 onClick={() => setOpen((o) => !o)}
                 aria-expanded={open}
-                className="focus-ring w-full flex items-center gap-2.5 text-[13.5px] rounded-[var(--radius-btn)] py-0.5 hover:bg-fill transition-colors"
+                className="focus-ring w-full flex items-center gap-2.5 fs-13.5 rounded-[var(--radius-btn)] py-0.5 hover:bg-fill transition-colors"
               >
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ background: otherColor }} />
                 <span className="flex-1 min-w-0 text-ink-soft truncate text-left">
@@ -254,7 +254,7 @@ export function Donut({
                 // is still reachable — nothing is truncated away.
                 <div className="mt-2 ml-[18px] pl-3 border-l border-line grid gap-1.5 max-h-[264px] overflow-y-auto">
                   {tail.map((s, i) => (
-                    <div key={`${s.label}-${i}`} className="flex items-center gap-2.5 text-[12.5px] min-w-0">
+                    <div key={`${s.label}-${i}`} className="flex items-center gap-2.5 fs-12.5 min-w-0">
                       <span className="flex-1 min-w-0 text-muted truncate">{s.label}</span>
                       {formatValue && (
                         <span className="shrink-0 text-muted tnum">{formatValue(s.value)}</span>
@@ -278,7 +278,11 @@ function Row({
   seg, pct, formatValue,
 }: { seg: DonutSeg; pct: string; formatValue?: (n: number) => string }) {
   return (
-    <div className="flex items-center gap-2.5 text-[13.5px] min-w-0">
+    // In the two-column legend (240–380px) large text leaves no room for the
+    // figure and the share side by side, so there the share may wrap to its
+    // own line. Only there: elsewhere wrapping lowers the legend's min-content
+    // width and cards sized by their content shrink with it.
+    <div className="flex items-center gap-x-2.5 fs-13.5 min-w-0 @[240px]/donut:flex-wrap @[380px]/donut:flex-nowrap">
       <span className="w-2 h-2 rounded-full shrink-0" style={{ background: seg.color }} />
       <span className="flex-1 min-w-0 text-ink-soft truncate">{seg.label}</span>
       {formatValue && <span className="shrink-0 text-muted tnum hidden @[300px]/donut:inline">{formatValue(seg.value)}</span>}

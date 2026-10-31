@@ -124,10 +124,10 @@ export function Tour({ overrides }: { overrides?: Record<string, Partial<TourSte
       )}
       <div className="absolute card p-4 shadow-xl" style={{ top, left, width: W }}>
         <div className="eyebrow">Step {i + 1} of {STEPS.length}</div>
-        <h3 className="mt-1 text-[15px] font-medium tracking-tight">{step.title}</h3>
-        <p className="mt-1.5 text-[13px] text-ink-soft leading-relaxed">{step.body}</p>
+        <h3 className="mt-1 fs-15 font-medium tracking-tight">{step.title}</h3>
+        <p className="mt-1.5 fs-13 text-ink-soft leading-relaxed">{step.body}</p>
         <div className="mt-4 flex items-center justify-between">
-          <button onClick={finish} className="text-[12.5px] text-muted hover:text-ink transition-colors">Skip</button>
+          <button onClick={finish} className="fs-12.5 text-muted hover:text-ink transition-colors">Skip</button>
           <div className="flex gap-2">
             {i > 0 && <Button variant="soft" onClick={() => setI(i - 1)}>Back</Button>}
             <Button variant="primary" onClick={() => (last ? finish() : setI(i + 1))}>{last ? 'Done' : 'Next'}</Button>

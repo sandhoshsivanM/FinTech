@@ -68,7 +68,7 @@ export function Gauge({
         </div>
       </div>
       {scale && (
-        <div className="mt-1 flex justify-between px-1 text-[10px] text-muted tnum" aria-hidden>
+        <div className="mt-1 flex justify-between px-1 fs-10 text-muted tnum" aria-hidden>
           {[0, 20, 40, 60, 80, 100].map((n) => <span key={n}>{n}</span>)}
         </div>
       )}

@@ -62,12 +62,12 @@ export function StatTile({
         )}
         <div className="eyebrow truncate">{label}</div>
         <div
-          className={clsx('mt-1.5 font-light tracking-tight tnum tabular-nums truncate', emphasise ? 'text-[22px]' : 'text-[19px]')}
+          className={clsx('mt-1.5 font-light tracking-tight tnum tabular-nums truncate', emphasise ? 'fs-22' : 'fs-19')}
           style={valueColor ? { color: valueColor } : undefined}
         >
           {ghost ? '••••••' : value}
         </div>
-        {footer && <div className="text-[11.5px] text-muted mt-0.5 truncate">{footer}</div>}
+        {footer && <div className="fs-11.5 text-muted mt-0.5 truncate">{footer}</div>}
       </div>
     </Tag>
   );

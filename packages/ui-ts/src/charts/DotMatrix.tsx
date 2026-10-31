@@ -39,7 +39,7 @@ export function DotMatrix({ groups, ariaLabel }: { groups: DotGroup[]; ariaLabel
           const filled = Math.round(Math.min(Math.max(g.fraction, 0), 1) * n);
           return (
             <div key={g.label} className="grid gap-2 justify-items-start cursor-default" onMouseEnter={() => setHover(gi)}>
-              <span className={clsx('text-[20px] font-light tracking-[-0.02em] tnum leading-none transition-colors',
+              <span className={clsx('fs-20 font-light tracking-[-0.02em] tnum leading-none transition-colors',
                 hover === gi ? 'text-ink' : 'text-muted')}>
                 {Math.round(g.fraction * 100)}%
               </span>
@@ -56,10 +56,10 @@ export function DotMatrix({ groups, ariaLabel }: { groups: DotGroup[]; ariaLabel
           );
         })}
       </div>
-      <p className="mt-3 h-[18px] text-center text-[12px] text-ink-soft tnum truncate">
+      <p className="mt-3 h-[18px] text-center fs-12 text-ink-soft tnum truncate">
         {shown ? `${shown.label}${shown.detail ? ` · ${shown.detail}` : ''}` : ''}
       </p>
-      <div className="flex flex-wrap justify-center gap-x-3.5 gap-y-1.5 text-[12px] text-ink-soft">
+      <div className="flex flex-wrap justify-center gap-x-3.5 gap-y-1.5 fs-12 text-ink-soft">
         {groups.slice(0, 4).map((g) => (
           <span key={g.label} className="inline-flex items-center gap-1.5 min-w-0">
             <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: g.color }} />

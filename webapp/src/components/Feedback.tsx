@@ -56,7 +56,7 @@ export async function copyText(text: string): Promise<boolean> {
 
 const linkBtn = clsx(
   'focus-ring inline-flex items-center justify-center gap-2 rounded-full h-9 px-4',
-  'text-[13px] font-semibold tracking-[-0.01em] whitespace-nowrap',
+  'fs-13 font-semibold tracking-[-0.01em] whitespace-nowrap',
   'btn-soft text-ink hover:border-line-strong transition-[border-color,transform] active:scale-[0.97]',
 );
 
@@ -88,7 +88,7 @@ function MailtoLink({ build, children, label }: {
 function CopyAddress({ onCopied }: { onCopied: (ok: boolean) => void }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-[13px] font-medium text-ink select-all">{FEEDBACK_EMAIL}</span>
+      <span className="fs-13 font-medium text-ink select-all">{FEEDBACK_EMAIL}</span>
       <Button variant="soft" onClick={async () => onCopied(await copyText(FEEDBACK_EMAIL))}>
         <Copy size={15} /> Copy address
       </Button>
@@ -193,7 +193,7 @@ export function FeedbackCard() {
           readOnly
           aria-label="Problem report"
           value={fallback}
-          className="mt-3 w-full h-40 rounded-[var(--radius-panel)] border border-line bg-[var(--card-2)] p-3 font-mono text-[11.5px] text-ink-soft"
+          className="mt-3 w-full h-40 rounded-[var(--radius-panel)] border border-line bg-[var(--card-2)] p-3 font-mono fs-11.5 text-ink-soft"
         />
       )}
     </GlassCard>
@@ -210,7 +210,7 @@ export function SendFeedbackLink() {
       <div className="grid gap-1.5">
         <CopyAddress onCopied={setCopied} />
         {copied !== null && (
-          <span role="status" className="text-[12px] text-muted">
+          <span role="status" className="fs-12 text-muted">
             {copied ? 'Address copied.' : 'Copying was blocked — select the address above.'}
           </span>
         )}

@@ -111,11 +111,11 @@ export function WeekFlowCard() {
     <GlassCard>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <CardTitle info="dashboard.lastSevenDays" className="text-[16px] font-medium tracking-[-0.01em]">Last 7 days</CardTitle>
-          <div className="mt-2 text-[28px] font-light tracking-[-0.03em] leading-none tnum">
+          <CardTitle info="dashboard.lastSevenDays" className="fs-16 font-medium tracking-[-0.01em]">Last 7 days</CardTitle>
+          <div className="mt-2 fs-28 font-light tracking-[-0.03em] leading-none tnum">
             {money(weekOut)}
           </div>
-          <div className="mt-1.5 flex items-center gap-3 text-[12px] text-muted">
+          <div className="mt-1.5 flex items-center gap-3 fs-12 text-muted">
             <span>spent this week</span>
             <span className="flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[var(--data-green)]" />In</span>
             <span className="flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[var(--data-rose)]" />Out</span>
@@ -128,9 +128,9 @@ export function WeekFlowCard() {
             </span>
           )}
           {change != null && (
-            <span className="text-right text-[12px] leading-tight text-muted">
+            <span className="text-right fs-12 leading-tight text-muted">
               vs last week
-              <b className={clsx('block text-[15px] font-semibold tnum', change.up ? 'text-[var(--data-rose)]' : 'text-[var(--data-green-ink)]')}>
+              <b className={clsx('block fs-15 font-semibold tnum', change.up ? 'text-[var(--data-rose)]' : 'text-[var(--data-green-ink)]')}>
                 {change.up ? '↑' : '↓'} {change.text}
               </b>
             </span>
@@ -165,7 +165,7 @@ export function WeekFlowCard() {
           </div>
         </div>
 
-        <div className="mt-1.5 grid grid-cols-7 gap-1.5 text-center text-[10.5px]" aria-hidden>
+        <div className="mt-1.5 grid grid-cols-7 gap-1.5 text-center fs-10.5" aria-hidden>
           {days.map((d, i) => (
             <span key={d.day} className={i === selIndex ? 'font-semibold text-ink' : 'text-muted'}>
               {i === days.length - 1 ? 'Today' : weekday(d.day)}
@@ -177,7 +177,7 @@ export function WeekFlowCard() {
       {/* The picked day, as a glass readout. */}
       <div
         aria-live="polite"
-        className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full bg-[var(--card-2)] px-4 py-2 text-[12px] text-muted shadow-[0_3px_8px_-4px_rgba(0,0,0,0.2)]"
+        className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full bg-[var(--card-2)] px-4 py-2 fs-12 text-muted shadow-[0_3px_8px_-4px_rgba(0,0,0,0.2)]"
       >
         <b className="font-semibold text-ink">{isToday ? 'Today' : longDay(sel.day)}</b>
         <span aria-hidden>|</span>

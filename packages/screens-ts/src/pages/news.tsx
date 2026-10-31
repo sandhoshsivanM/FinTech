@@ -66,7 +66,7 @@ export default function NewsPage() {
           <section className="card overflow-hidden">
             <div className="flex items-center gap-3 flex-wrap px-5 py-4 border-b border-line">
               <div className="min-w-0">
-                <CardTitle info="news.latest" className="text-[16px] font-medium tracking-[-0.01em]">Latest</CardTitle>
+                <CardTitle info="news.latest" className="fs-16 font-medium tracking-[-0.01em]">Latest</CardTitle>
                 <p className="text-xs text-muted mt-0.5">{stories.length} stories in the last 72 hours</p>
               </div>
               <span className="ml-auto">
@@ -84,8 +84,8 @@ export default function NewsPage() {
                     <Newspaper size={15} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-[14px] font-medium tracking-[-0.01em] leading-snug text-balance">{s.title}</h3>
-                    <p className="text-[11.5px] text-muted mt-1">
+                    <h3 className="fs-14 font-medium tracking-[-0.01em] leading-snug text-balance">{s.title}</h3>
+                    <p className="fs-11.5 text-muted mt-1">
                       {s.source} · {agoLabel(s.agoHours)} · {s.symbols.length ? s.symbols.join(', ') : 'Portfolio-wide'}
                     </p>
                     <div className="mt-1.5"><Chip>{s.category}</Chip></div>
@@ -101,15 +101,15 @@ export default function NewsPage() {
           <StaggerItem>
             <section className="card">
               <div className="px-5 py-4 border-b border-line flex items-center gap-3">
-                <CardTitle as="h3" info="news.indices" className="text-[16px] font-medium tracking-[-0.01em]">Indices</CardTitle>
+                <CardTitle as="h3" info="news.indices" className="fs-16 font-medium tracking-[-0.01em]">Indices</CardTitle>
                 <span className="ml-auto"><DemoBadge /></span>
               </div>
               <div className="p-5 grid gap-3.5">
                 {indices.map((i) => (
                   <div key={i.symbol} className="flex items-center gap-3">
-                    <span className="flex-1 text-[13px] text-ink-soft truncate">{i.name}</span>
-                    <b className="text-[14px] font-normal tnum">{i.level.toLocaleString('en-IN', { minimumFractionDigits: i.digits, maximumFractionDigits: i.digits })}</b>
-                    <span className={`text-[12px] font-semibold tnum min-w-[58px] text-right ${i.changePct >= 0 ? 'text-[var(--data-green-ink)]' : 'text-[var(--data-rose)]'}`}>
+                    <span className="flex-1 fs-13 text-ink-soft truncate">{i.name}</span>
+                    <b className="fs-14 font-normal tnum">{i.level.toLocaleString('en-IN', { minimumFractionDigits: i.digits, maximumFractionDigits: i.digits })}</b>
+                    <span className={`fs-12 font-semibold tnum min-w-[58px] text-right ${i.changePct >= 0 ? 'text-[var(--data-green-ink)]' : 'text-[var(--data-rose)]'}`}>
                       {pct(i.changePct)}
                     </span>
                   </div>
@@ -122,7 +122,7 @@ export default function NewsPage() {
             <StaggerItem>
               <section className="card">
                 <div className="px-5 py-4 border-b border-line flex items-center gap-3">
-                  <CardTitle as="h3" info="news.upcomingEarnings" className="text-[16px] font-medium tracking-[-0.01em]">Upcoming earnings</CardTitle>
+                  <CardTitle as="h3" info="news.upcomingEarnings" className="fs-16 font-medium tracking-[-0.01em]">Upcoming earnings</CardTitle>
                   <span className="ml-auto"><DemoBadge /></span>
                 </div>
                 <div>
@@ -130,8 +130,8 @@ export default function NewsPage() {
                     <div key={e.symbol} className="flex items-center gap-3 px-5 py-3 border-b border-line last:border-0">
                       <AssetMark colour="var(--c5)" />
                       <span className="flex-1 min-w-0">
-                        <span className="block text-[14px] font-medium truncate">{e.symbol}</span>
-                        <span className="block text-[11.5px] text-muted">{e.quarter}</span>
+                        <span className="block fs-14 font-medium truncate">{e.symbol}</span>
+                        <span className="block fs-11.5 text-muted">{e.quarter}</span>
                       </span>
                       <Chip>{formatDayMonth(e.date)}</Chip>
                     </div>

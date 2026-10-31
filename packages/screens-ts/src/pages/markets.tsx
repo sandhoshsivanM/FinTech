@@ -84,7 +84,7 @@ export default function MarketsPage() {
           <section className="card">
             <div className="flex items-center gap-3 flex-wrap px-5 py-4 border-b border-line">
               <div>
-                <CardTitle info="markets.nifty50" className="text-[16px] font-medium tracking-[-0.01em]">NIFTY 50</CardTitle>
+                <CardTitle info="markets.nifty50" className="fs-16 font-medium tracking-[-0.01em]">NIFTY 50</CardTitle>
                 <p className="text-xs text-muted mt-0.5">One month</p>
               </div>
               <span className="ml-auto"><DemoBadge /></span>
@@ -104,7 +104,7 @@ export default function MarketsPage() {
             <StaggerItem key={title}>
               <section className="card overflow-hidden">
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
-                  <CardTitle as="h3" info={info} className="text-[16px] font-medium tracking-[-0.01em]">{title}</CardTitle>
+                  <CardTitle as="h3" info={info} className="fs-16 font-medium tracking-[-0.01em]">{title}</CardTitle>
                   <span className="ml-auto"><DemoBadge /></span>
                 </div>
                 <div>
@@ -112,19 +112,19 @@ export default function MarketsPage() {
                     <div key={m.symbol} className="flex items-center gap-3 px-5 py-3 border-b border-line last:border-0 hover:bg-fill transition-colors">
                       <AssetMark colour={`var(--${tone === 'success' ? 'c6' : 'c8'})`} />
                       <span className="flex-1 min-w-0">
-                        <span className="block text-[13.5px] font-semibold truncate">{m.name}</span>
-                        <span className="block text-[11.5px] text-muted">{m.symbol} · {m.owned ? 'Held' : 'Watchlist'}</span>
+                        <span className="block fs-13.5 font-semibold truncate">{m.name}</span>
+                        <span className="block fs-11.5 text-muted">{m.symbol} · {m.owned ? 'Held' : 'Watchlist'}</span>
                       </span>
                       <span className="text-right">
                         {m.price != null && m.price > 0
                           ? (
-                            <span className="block text-[13px] font-semibold tnum">
+                            <span className="block fs-13 font-semibold tnum">
                               {fmt.money(m.price)}
                               {m.unpriced && <span className="text-muted font-normal"> at cost</span>}
                             </span>
                           )
-                          : <span className="block text-[13px] text-muted">No price recorded</span>}
-                        <span className={`block text-[12px] font-semibold tnum ${m.dayPct >= 0 ? 'text-success' : 'text-danger'}`}>{pct(m.dayPct)}</span>
+                          : <span className="block fs-13 text-muted">No price recorded</span>}
+                        <span className={`block fs-12 font-semibold tnum ${m.dayPct >= 0 ? 'text-success' : 'text-danger'}`}>{pct(m.dayPct)}</span>
                       </span>
                     </div>
                   ))}

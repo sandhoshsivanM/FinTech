@@ -109,7 +109,7 @@ export default function TaxPage() {
       key: 'gain', header: 'Unrealised gain', align: 'right', value: (r) => r.gain,
       cell: (r) => <span className={r.gain >= 0 ? 'text-success font-semibold' : 'text-danger font-semibold'}>{r.gain >= 0 ? '+' : '−'}{fmt.money(Math.abs(r.gain))}</span>,
     },
-    { key: 'rate', header: 'Rate', term: 'slabRate', align: 'right', optional: true, value: (r) => r.rateLabel, cell: (r) => <span className="text-ink-soft text-[12px]">{r.rateLabel}</span> },
+    { key: 'rate', header: 'Rate', term: 'slabRate', align: 'right', optional: true, value: (r) => r.rateLabel, cell: (r) => <span className="text-ink-soft fs-12">{r.rateLabel}</span> },
     {
       key: 'tax', header: 'Est. tax', align: 'right', value: (r) => r.tax,
       cell: (r) => r.gainType == null ? <span className="text-muted">—</span> : <span className="font-semibold">{fmt.money(r.tax)}</span>,
@@ -153,7 +153,7 @@ export default function TaxPage() {
         <StaggerItem>
           <div className="card p-4 flex items-start gap-3 border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
             <span className="w-8 h-8 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-warning-soft text-warning"><CircleHelp size={16} /></span>
-            <p className="text-[13px] text-ink-soft leading-relaxed">
+            <p className="fs-13 text-ink-soft leading-relaxed">
               <b className="text-ink font-semibold">{fmt.money(estimate.slabGain)} of gain is taxed at your slab rate.</b>{' '}
               {estimate.slabCount} position{estimate.slabCount === 1 ? '' : 's'} — debt funds, bonds, FDs and NPS —
               are taxed at your marginal rate, which Khazana does not know. That gain is <b>not</b> included in the
@@ -167,7 +167,7 @@ export default function TaxPage() {
         <StaggerItem>
           <div className="card p-4 flex items-start gap-3 border-[color-mix(in_srgb,var(--warning)_30%,transparent)]">
             <span className="w-8 h-8 shrink-0 rounded-[var(--radius-card)] grid place-items-center bg-warning-soft text-warning"><CircleHelp size={16} /></span>
-            <p className="text-[13px] text-ink-soft leading-relaxed">
+            <p className="fs-13 text-ink-soft leading-relaxed">
               <b className="text-ink font-semibold">{unknown.length} holding{unknown.length === 1 ? ' has' : 's have'} no purchase date.</b>{' '}
               Without one there is no holding period, so the gain cannot be classified as short or long term. Those positions are excluded from the totals above rather than assumed.
             </p>
@@ -178,13 +178,13 @@ export default function TaxPage() {
       <StaggerItem>
         <section className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-line">
-            <CardTitle info="tax.positionByPosition" className="text-[16px] font-medium tracking-[-0.01em]">Position by position</CardTitle>
+            <CardTitle info="tax.positionByPosition" className="fs-16 font-medium tracking-[-0.01em]">Position by position</CardTitle>
             <p className="text-xs text-muted mt-0.5">Unrealised — nothing has been sold</p>
           </div>
           <DataGrid rows={rows} columns={columns} rowKey={(r) => r.id}
             searchable={(r) => `${r.symbol} ${r.assetLabel}`} searchPlaceholder="Search holdings…"
             initialSort={{ key: 'tax', dir: 'desc' }} exportName="khazana-capital-gains" />
-          <p className="px-5 py-3 text-[11px] text-muted border-t border-line bg-fill">
+          <p className="px-5 py-3 fs-11 text-muted border-t border-line bg-fill">
             Estimates only, using {Object.keys(TAX_RULES).length} asset-type rules · {estimate.ruleSet} · rule set v{estimate.ruleSchemaVersion}.
             The long-term exemption is applied once across the whole portfolio, as it would be on a return.
             Surcharge, cess, set-offs, carried-forward losses and indexation are not modelled. CAS, AIS/26AS import

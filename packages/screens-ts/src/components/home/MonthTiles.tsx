@@ -33,10 +33,10 @@ export function MonthTiles({ month }: { month?: DateRange }) {
         return (
           <div key={t.label} className="card p-3 min-w-0 !rounded-[18px]">
             <div className="flex items-center justify-between">
-              <span className="text-[11.5px] text-muted">{t.label}</span>
+              <span className="fs-11.5 text-muted">{t.label}</span>
               <GlossTile hue={t.hue} size={26}><Icon size={13} strokeWidth={2.2} /></GlossTile>
             </div>
-            <div className="mt-2 text-[16px] font-light tracking-[-0.02em] tnum truncate">{ghost ? '••••' : t.value}</div>
+            <div className="mt-2 fs-16 font-light tracking-[-0.02em] tnum truncate">{ghost ? '••••' : t.value}</div>
           </div>
         );
       })}

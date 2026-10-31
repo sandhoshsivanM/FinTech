@@ -276,8 +276,8 @@ export default function GoalsPage() {
                       {GOAL_ICON_MAP[goal.goalType]}
                     </span>
                     <div className="min-w-0">
-                      <div className="font-medium text-[15px] leading-tight truncate">{goal.name}</div>
-                      <div className="text-[11px] text-muted">{goalLabel(goal.goalType)}</div>
+                      <div className="font-medium fs-15 leading-tight truncate">{goal.name}</div>
+                      <div className="fs-11 text-muted">{goalLabel(goal.goalType)}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0 ml-2">
@@ -303,13 +303,13 @@ export default function GoalsPage() {
                 {/* Ring + amounts */}
                 <div className="flex items-center gap-4">
                   <Ring fraction={fraction} size={84} stroke={8}>
-                    <span className="text-[18px] font-light tracking-[-0.02em]">{pct}%</span>
+                    <span className="fs-18 font-light tracking-[-0.02em]">{pct}%</span>
                   </Ring>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-muted">Saved</div>
-                    <div className="text-[22px] font-light tracking-[-0.02em] tnum leading-tight">{mask(fmt.money(current))}</div>
+                    <div className="fs-22 font-light tracking-[-0.02em] tnum leading-tight">{mask(fmt.money(current))}</div>
                     <div className="text-xs text-muted mt-1">Target</div>
-                    <div className="text-[14px] tnum text-ink-soft">{mask(fmt.money(target))}</div>
+                    <div className="fs-14 tnum text-ink-soft">{mask(fmt.money(target))}</div>
                   </div>
                 </div>
 
@@ -325,7 +325,7 @@ export default function GoalsPage() {
 
                 {/* Track hint pill */}
                 <div
-                  className="inset text-[12.5px] px-3 py-2 truncate text-ink-soft"
+                  className="inset fs-12.5 px-3 py-2 truncate text-ink-soft"
                 >
                   {trackHint}
                 </div>
@@ -335,7 +335,7 @@ export default function GoalsPage() {
                     it, and a button that only moved the number would make the
                     goal disagree with the bank. */}
                 {goal.accountId ? (
-                  <Link href="/add" className="text-[12.5px] font-semibold text-accent hover:underline">
+                  <Link href="/add" className="fs-12.5 font-semibold text-accent hover:underline">
                     Transfer money in →
                   </Link>
                 ) : !achieved && (

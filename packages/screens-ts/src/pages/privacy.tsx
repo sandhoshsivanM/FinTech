@@ -76,7 +76,7 @@ export default function PrivacyPage() {
       </Section>
 
       <StaggerItem>
-        <p className="px-1 text-[12px] text-muted">
+        <p className="px-1 fs-12 text-muted">
           See also{' '}
           <Link href="/help" className="text-accent hover:underline">Help</Link>{' '}
           for how the product works, and{' '}

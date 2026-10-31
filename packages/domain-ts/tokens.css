@@ -273,9 +273,14 @@
   --icon-inline: 15px;
   --icon-action: 16px;
 
-  /* Type scale */
-  --fs-h1: 32px; --fs-h2: 24px; --fs-h3: 20px; --fs-h4: 18px;
-  --fs-body: 16px; --fs-sm: 14px; --fs-xs: 12px; --fs-2xs: 11px;
+  /* Type scale. --font-scale is the reader's Text size (Settings → Appearance,
+     offline app only); 1 means the sizes below exactly. Growth stops at 32px,
+     as for the fs-* utility in packages/ui-ts/styles.css. */
+  --font-scale: 1;
+  --fs-h1: min(calc(32px * var(--font-scale)), 32px); --fs-h2: min(calc(24px * var(--font-scale)), 32px);
+  --fs-h3: min(calc(20px * var(--font-scale)), 32px); --fs-h4: min(calc(18px * var(--font-scale)), 32px);
+  --fs-body: min(calc(16px * var(--font-scale)), 32px); --fs-sm: min(calc(14px * var(--font-scale)), 32px);
+  --fs-xs: min(calc(12px * var(--font-scale)), 32px); --fs-2xs: min(calc(11px * var(--font-scale)), 32px);
 
   /* Motion */
   --dur-fast: 150ms;

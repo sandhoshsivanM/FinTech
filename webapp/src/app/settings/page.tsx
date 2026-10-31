@@ -10,7 +10,8 @@ import { APP_NAME } from '@/lib/brand';
 import { TOUR_EVENT } from '@khazana/screens/components/Tour';
 import { MacSmsCard } from '@/components/MacSmsSettings';
 import { SyncCard } from '@/components/SyncSettings';
-import { useApp, ACCENTS, type AccentName, type ThemeChoice } from '@/lib/store';
+import { useApp, ACCENTS, type AccentName, type FontFamily, type TextSize, type ThemeChoice } from '@/lib/store';
+import { FONT_FAMILIES, TEXT_SIZES, readingVars } from '@khazana/domain/appearance';
 import { requestPersistence } from '@/lib/db';
 import { loadSampleData } from '@/lib/sampleData';
 import { saveFile } from '@/lib/saveFile';
@@ -73,6 +74,10 @@ export default function SettingsPage() {
   const setTheme = useApp((s) => s.setTheme);
   const accent = useApp((s) => s.accent);
   const setAccent = useApp((s) => s.setAccent);
+  const textSize = useApp((s) => s.textSize);
+  const setTextSize = useApp((s) => s.setTextSize);
+  const fontFamily = useApp((s) => s.fontFamily);
+  const setFontFamily = useApp((s) => s.setFontFamily);
 
   // Profiles
   const profiles = useApp((s) => s.profiles);
@@ -286,7 +291,7 @@ export default function SettingsPage() {
               value={theme}
               onChange={setTheme}
             />
-            <p className="text-[11.5px] text-muted mt-2">System follows your OS setting.</p>
+            <p className="fs-11.5 text-muted mt-2">System follows your OS setting.</p>
           </div>
           <div>
             <div className="eyebrow mb-2">Accent color</div>
@@ -296,8 +301,58 @@ export default function SettingsPage() {
                 <AccentSwatch key={k} swatch={ACCENTS[k].swatch} label={ACCENTS[k].label} active={accent === k} onClick={() => setAccent(k)} />
               ))}
             </div>
-            <p className="text-[11.5px] text-muted mt-2">Tuned for both light and dark.</p>
+            <p className="fs-11.5 text-muted mt-2">Tuned for both light and dark.</p>
           </div>
+        </div>
+      </GlassCard>
+
+      {/* Text & font: testers could not read the small figures. */}
+      <GlassCard>
+        <SectionHeader title="Text & font" info="settings.reading" />
+        <div className="grid sm:grid-cols-2 gap-6">
+          <div>
+            <div className="eyebrow mb-2">Text size</div>
+            <Segmented<TextSize>
+              options={(Object.keys(TEXT_SIZES) as TextSize[]).map((k, i) => ({
+                value: k,
+                // Each step's "A" is drawn at its own size so the control
+                // reads at a glance; the name is there for screen readers.
+                label: (
+                  <>
+                    <span aria-hidden style={{ fontSize: 11 + i * 2.5, lineHeight: 1 }}>A</span>
+                    <span className="sr-only">{TEXT_SIZES[k].label}</span>
+                  </>
+                ),
+              }))}
+              value={textSize}
+              onChange={setTextSize}
+            />
+            <p className="fs-11.5 text-muted mt-2">{TEXT_SIZES[textSize]?.label ?? 'Default'} · every amount and label in the app.</p>
+          </div>
+          <div>
+            <Field label="Font">
+              <Select value={fontFamily} onChange={(e) => setFontFamily(e.target.value as FontFamily)}>
+                {(Object.keys(FONT_FAMILIES) as FontFamily[]).map((k) => (
+                  <option key={k} value={k} style={{ fontFamily: readingVars('default', k)['--font-sans'] ?? undefined }}>
+                    {FONT_FAMILIES[k].label} — {FONT_FAMILIES[k].note}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+        </div>
+        {/* Live preview: the whole app already uses the choice, this just puts
+            a figure where the reader is looking. */}
+        <div className="mt-5 rounded-[var(--radius-panel)] bg-[var(--card-2)] px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
+            <div className="fs-12 text-muted">Groceries · Today</div>
+            <div className="fs-22 font-light tnum text-ink">₹1,23,456.78</div>
+          </div>
+          {(textSize !== 'default' || fontFamily !== 'default') && (
+            <Button variant="ghost" onClick={() => { setTextSize('default'); setFontFamily('default'); }}>
+              Reset to default
+            </Button>
+          )}
         </div>
       </GlassCard>
 
@@ -367,13 +422,13 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="font-medium text-sm truncate">{p.name}</span>
                       {isActive && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-income/12 text-income shrink-0">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full fs-11 font-semibold bg-income/12 text-income shrink-0">
                           <Check size={10} />Active
                         </span>
                       )}
                     </div>
                   )}
-                  <div className="flex items-center gap-1 mt-0.5 text-[11px] text-muted">
+                  <div className="flex items-center gap-1 mt-0.5 fs-11 text-muted">
                     <KindIcon size={11} />
                     <span>{kindLabel}</span>
                   </div>
@@ -403,7 +458,7 @@ export default function SettingsPage() {
                       {!isActive && (
                         <button
                           onClick={() => void setActiveProfile(p.id)}
-                          className="px-2.5 py-1 rounded-[var(--radius-btn)] text-[12px] font-semibold text-accent hover:bg-accent/10 border border-accent/25 transition-colors"
+                          className="px-2.5 py-1 rounded-[var(--radius-btn)] fs-12 font-semibold text-accent hover:bg-accent/10 border border-accent/25 transition-colors"
                         >
                           Switch
                         </button>
@@ -882,8 +937,8 @@ function ExchangeRates() {
           return (
             <div key={code} className="flex items-end gap-3 flex-wrap">
               <div className="min-w-[7rem]">
-                <div className="text-[13px] font-semibold">{code} → INR</div>
-                <div className="text-[11px] text-muted">{cur.name}</div>
+                <div className="fs-13 font-semibold">{code} → INR</div>
+                <div className="fs-11 text-muted">{cur.name}</div>
               </div>
               <Field label={`₹ per 1 ${cur.symbol}`}>
                 <NumberInput
@@ -895,7 +950,7 @@ function ExchangeRates() {
               <Button variant="soft" onClick={() => void save(code)} disabled={!draft[code]}>
                 Set rate
               </Button>
-              <div className="text-[11px] leading-relaxed pb-2.5">
+              <div className="fs-11 leading-relaxed pb-2.5">
                 <span className="tnum font-medium">₹{rate.toString()}</span>{' '}
                 {/* An unrecorded rate is a built-in guess and says so — the
                     difference between "we know" and "we assumed" is the whole

@@ -7,6 +7,31 @@
    stays in each app's globals.css.
    ========================================================================= */
 
+/* Scalable text size: `fs-13` is 13px times --font-scale, which Settings →
+   Appearance → Text size sets on <html> in the offline app. The scale defaults
+   to 1, so Online (which never sets it) renders exactly 13px. Use this, not
+   `text-[13px]`, for any fixed size — webapp/scripts/codemod-font-scale.mjs
+   --check fails the build on a fixed one.
+
+   Growth stops at 32px: small text is what readers could not see, and a 40px
+   balance that grew to 60px would no longer fit a phone. A size already above
+   32px stays as designed; `Small` still shrinks everything. */
+@utility fs-* {
+  font-size: min(calc(--value(number) * 1px * var(--font-scale, 1)), max(--value(number) * 1px, 32px));
+}
+/* Tailwind's named sizes (text-xs, text-sm, …) follow the same scale. Their
+   line-heights are ratios, so line spacing grows with them. */
+@theme {
+  --text-xs: min(calc(0.75rem * var(--font-scale, 1)), max(0.75rem, 2rem));
+  --text-sm: min(calc(0.875rem * var(--font-scale, 1)), max(0.875rem, 2rem));
+  --text-base: min(calc(1rem * var(--font-scale, 1)), max(1rem, 2rem));
+  --text-lg: min(calc(1.125rem * var(--font-scale, 1)), max(1.125rem, 2rem));
+  --text-xl: min(calc(1.25rem * var(--font-scale, 1)), max(1.25rem, 2rem));
+  --text-2xl: min(calc(1.5rem * var(--font-scale, 1)), max(1.5rem, 2rem));
+  --text-3xl: min(calc(1.875rem * var(--font-scale, 1)), max(1.875rem, 2rem));
+  --text-4xl: min(calc(2.25rem * var(--font-scale, 1)), max(2.25rem, 2rem));
+}
+
 /* ============================================================================
    Base
    ========================================================================= */
@@ -117,7 +142,7 @@ body {
   padding: 0 7px;
   border-radius: 999px;
   display: grid; place-items: center;
-  font-size: 10.5px; font-weight: 600; color: #fff;
+  font-size: calc(10.5px * var(--font-scale, 1)); font-weight: 600; color: #fff;
   background: rgba(255, 255, 255, 0.25);
 }
 /* Floating value pill — chart callouts. */
@@ -158,7 +183,7 @@ body {
 /* A quiet chip: a type label, a status word. */
 .chip {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11.5px; line-height: 1.2; padding: 3px 9px;
+  font-size: calc(11.5px * var(--font-scale, 1)); line-height: 1.2; padding: 3px 9px;
   border-radius: 999px;
   background: var(--card-2);
   box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.18);
@@ -240,7 +265,7 @@ body {
 
 /* Section label: sentence case, never letter-spaced caps. */
 .eyebrow {
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--font-scale, 1));
   font-weight: 400;
   color: var(--muted);
 }

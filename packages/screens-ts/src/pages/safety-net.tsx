@@ -58,8 +58,8 @@ export default function SafetyNetPage() {
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <Ring fraction={sn.score / 100} size={120} stroke={11} color={ringColor}>
             <div className="text-center">
-              <div className="text-[28px] font-light leading-none" >{sn.score}</div>
-              <div className="text-[11px] font-semibold text-muted mt-0.5">{sn.grade}</div>
+              <div className="fs-28 font-light leading-none" >{sn.score}</div>
+              <div className="fs-11 font-semibold text-muted mt-0.5">{sn.grade}</div>
             </div>
           </Ring>
           <div className="flex-1">
@@ -67,7 +67,7 @@ export default function SafetyNetPage() {
               <div className="eyebrow">Safety-net readiness</div>
               <SectionInfo k="safety-net.readiness" />
             </div>
-            <p className="mt-1 text-[15px] text-ink-soft leading-relaxed">{sn.summary}</p>
+            <p className="mt-1 fs-15 text-ink-soft leading-relaxed">{sn.summary}</p>
           </div>
         </div>
       </GlassCard>
@@ -79,19 +79,19 @@ export default function SafetyNetPage() {
         { label: 'Annual premiums', value: m(sn.premium), sub: `${insurances.length} polic${insurances.length === 1 ? 'y' : 'ies'}` },
       ]} />
 
-      <div className="grid lg:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* Emergency fund */}
         <GlassCard>
           <SectionHeader title="Emergency fund" info="safety-net.emergencyFund" action={<CardLink href="/goals" label="Goals" />} />
-          <div className="flex items-center gap-2.5 mb-3">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mb-3">
             <span className="w-9 h-9 rounded-[var(--radius-card)] grid place-items-center bg-income/12 text-income"><PiggyBank size={18} /></span>
-            <div className="text-[22px] font-light tnum">{m(emergency.current)}</div>
+            <div className="fs-22 font-light tnum">{m(emergency.current)}</div>
             <div className="text-sm text-muted">of {m(emergency.recommended)} target</div>
           </div>
           <ProgressBar fraction={emergency.coveredPct / 100} color={coverColor(emergency.coveredPct)} height={8} />
-          <p className="text-[12.5px] text-ink-soft mt-2">{emergency.detail}</p>
+          <p className="fs-12.5 text-ink-soft mt-2">{emergency.detail}</p>
           {emergency.gap.gt(0) && (
-            <p className="text-[12.5px] text-muted mt-0.5">{m(emergency.gap)} to reach ~6 months of expenses.</p>
+            <p className="fs-12.5 text-muted mt-0.5">{m(emergency.gap)} to reach ~6 months of expenses.</p>
           )}
         </GlassCard>
 
@@ -102,17 +102,17 @@ export default function SafetyNetPage() {
             {[life, health].map((c) => (
               <div key={c.key}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[13.5px] font-medium">{c.label}</span>
-                  <span className="text-[13px] font-semibold tnum" style={{ color: coverText(c.coveredPct) }}>{Math.min(999, c.coveredPct)}%</span>
+                  <span className="fs-13.5 font-medium">{c.label}</span>
+                  <span className="fs-13 font-semibold tnum" style={{ color: coverText(c.coveredPct) }}>{Math.min(999, c.coveredPct)}%</span>
                 </div>
                 <ProgressBar fraction={c.coveredPct / 100} color={coverColor(c.coveredPct)} height={6} />
-                <div className="text-[11.5px] text-muted mt-1">
+                <div className="fs-11.5 text-muted mt-1">
                   {m(c.current)} of {m(c.recommended)} recommended{c.gap.gt(0) ? ` · ${m(c.gap)} short` : ' · covered'}
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-[11px] text-muted mt-3 pt-3 border-t border-[var(--line)]">
+          <p className="fs-11 text-muted mt-3 pt-3 border-t border-[var(--line)]">
             Guideline only, not advice — life ≈ 10× annual income; health ≥ ₹5L. Premiums: {m(sn.premium)}/yr.
           </p>
         </GlassCard>
@@ -132,14 +132,14 @@ export default function SafetyNetPage() {
           <div className="divide-y divide-[var(--line)]">
             {retireHoldings.map(({ h, value, atCost }) => (
               <div key={h.id} className="flex items-center gap-3 py-2.5">
-                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
+                <span className="fs-11 font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
                   style={{ background: `color-mix(in srgb, ${ASSET_META[h.assetType].color} 12%, transparent)`, color: ASSET_META[h.assetType].color }}>
                   {ASSET_META[h.assetType].label}
                 </span>
                 <span className="flex-1 min-w-0 truncate font-medium">{h.symbol}</span>
                 <span className="font-semibold tnum">
                   {m(value)}
-                  {atCost && <span className="ml-1 text-[11px] font-normal text-muted">at cost</span>}
+                  {atCost && <span className="ml-1 fs-11 font-normal text-muted">at cost</span>}
                 </span>
               </div>
             ))}
@@ -163,7 +163,7 @@ export default function SafetyNetPage() {
 
 function CardLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-1 text-accent text-[13px] font-semibold hover:gap-1.5 transition-all">
+    <Link href={href} className="inline-flex items-center gap-1 text-accent fs-13 font-semibold hover:gap-1.5 transition-all">
       {label} <ArrowRight size={14} />
     </Link>
   );

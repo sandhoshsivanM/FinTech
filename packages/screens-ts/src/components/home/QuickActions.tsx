@@ -35,7 +35,7 @@ export function QuickActions() {
                 >
                   <Icon size={20} strokeWidth={2} />
                 </span>
-                <span className="text-[11.5px] text-ink-soft">{a.label}</span>
+                <span className="fs-11.5 text-ink-soft">{a.label}</span>
               </Link>
             </motion.div>
           </motion.li>

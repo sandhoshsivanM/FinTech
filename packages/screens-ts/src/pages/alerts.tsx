@@ -134,7 +134,7 @@ export default function AlertsPage() {
       <StaggerItem>
         <div className="card p-4 flex items-start gap-3">
           <span className="w-8 h-8 shrink-0 rounded-full grid place-items-center bg-[color-mix(in_srgb,var(--data-blue)_14%,transparent)] text-[var(--data-blue)]"><Bell size={16} /></span>
-          <p className="text-[13px] text-ink-soft leading-relaxed">
+          <p className="fs-13 text-ink-soft leading-relaxed">
             Alerts are evaluated when you open Khazana and while this screen is on, using data already
             in your vault. There is no server and no push notification, so <b className="text-ink font-semibold">nothing
             is checked while the app is closed</b> — every rule below shows when it was last actually looked at.
@@ -194,7 +194,7 @@ export default function AlertsPage() {
           <StaggerItem>
             <section className="card overflow-hidden">
               <div className="px-5 py-4 border-b border-line">
-                <CardTitle className="text-[16px] font-medium tracking-[-0.01em]" info="alerts.yourAlerts">Your alerts</CardTitle>
+                <CardTitle className="fs-16 font-medium tracking-[-0.01em]" info="alerts.yourAlerts">Your alerts</CardTitle>
               </div>
               {alerts.map((a) => {
                 const on = firing.has(a.id);
@@ -205,14 +205,14 @@ export default function AlertsPage() {
                       {on ? <BellRing size={16} /> : <Bell size={16} />}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[14px] font-medium truncate">{a.label}</div>
+                      <div className="fs-14 font-medium truncate">{a.label}</div>
                       {/* The rendered condition, not the raw threshold: §5.4
                           asks for "Food spending is 90% of the August budget",
                           not "Budget exceeded 300". */}
-                      <div className="text-[11.5px] text-muted mt-0.5 truncate">
+                      <div className="fs-11.5 text-muted mt-0.5 truncate">
                         {evaluation?.message ?? `${KIND_LABEL[a.kind]} ${a.kind === 'weight_above' ? `${a.threshold}%` : fmt.money(a.threshold)}`}
                       </div>
-                      <div className="text-[11px] text-muted mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                      <div className="fs-11 text-muted mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
                         {/* The stored words are enum-style caps; shown in sentence case. */}
                         <span>{sentence(ALERT_TYPE_OF[a.kind])}</span>
                         <span>{sentence(stateOf(a))}</span>

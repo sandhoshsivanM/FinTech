@@ -77,17 +77,17 @@ export function RankBars({
   emptyLabel?: string;
 }) {
   if (rows.length === 0) {
-    return <p className="py-6 text-center text-[12.5px] text-muted">{emptyLabel}</p>;
+    return <p className="py-6 text-center fs-12.5 text-muted">{emptyLabel}</p>;
   }
   const max = Math.max(...rows.map((r) => Math.abs(r.value))) || 1;
   return (
     <ol className="grid gap-3">
       {rows.map((r, i) => (
         <li key={r.key} className="flex items-center gap-3">
-          <span className="w-3.5 shrink-0 text-[11.5px] font-semibold text-muted tnum">{i + 1}</span>
+          <span className="w-3.5 shrink-0 fs-11.5 font-semibold text-muted tnum">{i + 1}</span>
           <span className="w-[86px] shrink-0 min-w-0">
-            <span className="block text-[12.5px] font-semibold truncate">{r.label}</span>
-            {r.sub && <span className="block text-[10.5px] text-muted truncate">{r.sub}</span>}
+            <span className="block fs-12.5 font-semibold truncate">{r.label}</span>
+            {r.sub && <span className="block fs-10.5 text-muted truncate">{r.sub}</span>}
           </span>
           <span className="flex-1 h-2 rounded-full bg-fill-strong overflow-hidden min-w-0">
             <span
@@ -95,7 +95,7 @@ export function RankBars({
               style={{ width: `${(Math.abs(r.value) / max) * 100}%`, background: color }}
             />
           </span>
-          <span className="shrink-0 text-[12.5px] font-semibold tnum tabular-nums" style={{ color }}>
+          <span className="shrink-0 fs-12.5 font-semibold tnum tabular-nums" style={{ color }}>
             {formatValue(r.value)}
           </span>
         </li>

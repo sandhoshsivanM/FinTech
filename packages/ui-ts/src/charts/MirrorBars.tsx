@@ -35,7 +35,7 @@ export function MirrorBars({
 
   return (
     <div>
-      <p className="text-[12px] text-muted tnum mb-3 truncate">
+      <p className="fs-12 text-muted tnum mb-3 truncate">
         <span className="text-ink font-semibold">{s.label}</span>
         {' · '}<span className="text-success">{format(s.up)} {upLabel}</span>
         {' · '}<span>{format(s.down)} {downLabel}</span>
@@ -67,7 +67,7 @@ export function MirrorBars({
       </div>
       <div className="flex gap-1 mt-1.5">
         {rows.map((r, i) => (
-          <span key={`${r.label}-${i}`} className={clsx('flex-1 min-w-0 text-center text-[11px] whitespace-nowrap',
+          <span key={`${r.label}-${i}`} className={clsx('flex-1 min-w-0 text-center fs-11 whitespace-nowrap',
             i === sel ? 'text-ink font-semibold' : 'text-muted')}>
             {/* Every other label, plus the selected one, so twelve fit on a phone. */}
             {(last - i) % 2 === 0 || i === sel ? r.label : ''}
