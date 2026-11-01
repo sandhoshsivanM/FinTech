@@ -20,8 +20,12 @@ export function AppFrame({ children }: { children: ReactNode }) {
   const router = useRouter();
   const status = useApp((s) => s.status);
   const init = useApp((s) => s.init);
+  // `/demo/` only sets this tab's demo flag and reloads (app/demo/page.tsx). It
+  // must render without the gate, and must not open a vault: this page load's
+  // database is still the real one.
+  const demoEntry = /^\/demo\/?$/.test(pathname ?? '');
 
-  useEffect(() => { void init(); }, [init]);
+  useEffect(() => { if (!demoEntry) void init(); }, [init, demoEntry]);
 
   // Local-only record of uncaught errors for Settings → Report a problem.
   // Installed here, before the vault gate, so a crash on the PIN screen is
@@ -61,6 +65,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
     return () => clearTimeout(id);
   }, []);
 
+  if (demoEntry) return <>{children}</>;
   if (status === 'loading') {
     return <div className="min-h-screen grid place-items-center text-muted">Loading…</div>;
   }

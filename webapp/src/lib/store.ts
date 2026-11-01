@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { db, persistenceState, requestPersistence, type PersistenceState } from './db';
 import { deriveKey, encryptJson, decryptJson, randomBytes, bufToB64, b64ToBuf, type Encrypted } from './crypto';
 import { BackupError } from './backupError';
+import { DEMO_DB_NAME } from './demoDbName';
 import {
   planCaptures, staleCaptureIds, approvalRecords, rejectionRecord,
   type CaptureInput, type CaptureOutcome, type CaptureEdits,
@@ -591,6 +592,21 @@ const GHOST_KEY = 'khazana-ghost';
 const PIN_FAILURES_KEY = 'khazana-pin-failures';
 const LOCKOUT_UNTIL_KEY = 'khazana-lockout-until';
 
+/**
+ * Whether this page load opened the "Try demo" database (db.ts `dbName`).
+ * Read from the open database rather than the session flag, so the answer can
+ * never disagree with which vault is actually on screen.
+ */
+export const inDemo = (): boolean => db.name === DEMO_DB_NAME;
+
+/**
+ * The throttle keys for the vault that is open. The demo has its own pair: its
+ * successful unlock writes "0" to both, and on the real keys that would reset
+ * the real vault's lockout — a free five more guesses for anyone at the keyboard.
+ */
+const failuresKey = () => (inDemo() ? 'khazana-demo-pin-failures' : PIN_FAILURES_KEY);
+const lockoutKey = () => (inDemo() ? 'khazana-demo-lockout-until' : LOCKOUT_UNTIL_KEY);
+
 /** Free attempts before any delay. Typos are normal; five of them are not. */
 const LOCKOUT_AFTER = 5;
 /** Never grow past this — a locked-out honest user is a support ticket. */
@@ -738,8 +754,11 @@ export const useApp = create<AppState>((set, get) => ({
     const ghost = lsGet(GHOST_KEY) === '1';
     const textSize = (lsGet(TEXT_SIZE_KEY) as TextSize) ?? 'default';
     const fontFamily = (lsGet(FONT_KEY) as FontFamily) ?? 'default';
+    const demo = inDemo();
     set({
-      status: meta ? 'locked' : 'uninitialized',
+      // A demo stays on the loading screen until its vault is open: its PIN
+      // screen is never the right thing to show first.
+      status: demo ? 'loading' : meta ? 'locked' : 'uninitialized',
       strandedRecords,
       currencyCode: cur,
       theme,
@@ -747,13 +766,15 @@ export const useApp = create<AppState>((set, get) => ({
       textSize,
       fontFamily,
       ghost,
-      pinFailures: Number(lsGet(PIN_FAILURES_KEY) ?? 0) || 0,
-      lockedOutUntil: Number(lsGet(LOCKOUT_UNTIL_KEY) ?? 0) || 0,
+      pinFailures: Number(lsGet(failuresKey()) ?? 0) || 0,
+      lockedOutUntil: Number(lsGet(lockoutKey()) ?? 0) || 0,
     });
     applyAppearance();
     // Read-only: asking to upgrade here would prompt before the user has any
     // data worth protecting. The request happens at vault creation.
     void persistenceState().then((persistence) => set({ persistence }));
+    // Imported lazily: demoVault needs sample data, which imports this store.
+    if (demo) await (await import('./demoVault')).openDemoVault();
   },
 
   setTheme: (t) => {
@@ -806,8 +827,8 @@ export const useApp = create<AppState>((set, get) => ({
       // The moment to ask: the user has just deliberately created a vault, so
       // any browser prompt is expected and the answer is about data that is
       // about to exist. Asking at first page load instead would be a prompt
-      // about nothing.
-      void requestPersistence().then((persistence) => set({ persistence }));
+      // about nothing. Not for the demo: its sample data is not worth a prompt.
+      if (!inDemo()) void requestPersistence().then((persistence) => set({ persistence }));
     } catch (e) {
       set({ status: 'uninitialized', error: `Could not create vault: ${e}` });
     }
@@ -838,8 +859,8 @@ export const useApp = create<AppState>((set, get) => ({
         await runMigrations(ver, key, VAULT_ID);
         await db.vaults.update(VAULT_ID, { schemaVersion: SCHEMA_VERSION });
       }
-      lsSet(PIN_FAILURES_KEY, '0');
-      lsSet(LOCKOUT_UNTIL_KEY, '0');
+      lsSet(failuresKey(), '0');
+      lsSet(lockoutKey(), '0');
       set({ pinFailures: 0, lockedOutUntil: 0 });
       await get().reload();
       set({ status: 'unlocked' });
@@ -853,8 +874,8 @@ export const useApp = create<AppState>((set, get) => ({
       const until = failures >= LOCKOUT_AFTER
         ? Date.now() + lockoutDelayMs(failures)
         : 0;
-      lsSet(PIN_FAILURES_KEY, String(failures));
-      lsSet(LOCKOUT_UNTIL_KEY, String(until));
+      lsSet(failuresKey(), String(failures));
+      lsSet(lockoutKey(), String(until));
       set({
         status: 'locked',
         pinFailures: failures,

@@ -4,8 +4,10 @@
   <img src="docs/showcase/hero-split.jpg" alt="Khazana — your wealth, your vault. The dashboard in light and dark themes, side by side.">
 </p>
 
-**[Try it in your browser →](https://khazana-app.netlify.app)** · no signup, no
-install, no data leaves your device — the link *is* the whole app.
+**[Try the demo in your browser →](https://khazana-app.netlify.app/demo/)** · opens
+straight into a vault of sample data, no PIN, no signup, no install. The real app,
+where you set your own PIN, is at [khazana-app.netlify.app](https://khazana-app.netlify.app)
+— no data leaves your device; the link *is* the whole app.
 &nbsp;·&nbsp; **[Technical case study →](docs/Khazana_Technical_Case_Study.pdf)**
 &nbsp;·&nbsp; [Architecture](docs/ARCHITECTURE.md)
 &nbsp;·&nbsp; [Threat model](docs/THREAT-MODEL.md)

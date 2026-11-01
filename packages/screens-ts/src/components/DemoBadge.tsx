@@ -13,8 +13,11 @@
  */
 import { useSyncExternalStore } from 'react';
 import { FlaskConical } from 'lucide-react';
+import { isDemoSession, demoSessionGet, demoSessionSet } from '../lib/demoSession';
 
-const KEY = 'khazana-demo-market';
+/** Exported so the "Try demo" setup can switch it on for its own tab. */
+export const DEMO_MARKET_KEY = 'khazana-demo-market';
+const KEY = DEMO_MARKET_KEY;
 
 // External store: localStorage fires no event for same-tab writes, so the
 // setter notifies subscribers directly. Reading through
@@ -25,7 +28,11 @@ function subscribe(fn: () => void) {
   listeners.add(fn);
   return () => { listeners.delete(fn); };
 }
+// A "Try demo" tab keeps this setting in sessionStorage. Writing it to
+// localStorage would switch synthesised figures on for the real vault in every
+// later visit — the opt-in described below, taken without the user's consent.
 function read(): boolean {
+  if (isDemoSession()) return demoSessionGet(KEY) === '1';
   try { return localStorage.getItem(KEY) === '1'; } catch { return false; }
 }
 
@@ -64,7 +71,8 @@ export function useDemoData(): [boolean, (v: boolean) => void] {
   const on = useSyncExternalStore(subscribe, read, () => false);
 
   const set = (v: boolean) => {
-    try { localStorage.setItem(KEY, v ? '1' : '0'); } catch { /* private mode */ }
+    if (isDemoSession()) demoSessionSet(KEY, v ? '1' : '0');
+    else try { localStorage.setItem(KEY, v ? '1' : '0'); } catch { /* private mode */ }
     listeners.forEach((fn) => fn());
   };
 
