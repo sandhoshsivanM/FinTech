@@ -35,7 +35,7 @@ vi.mock('@/lib/sampleData', () => ({ loadSampleData: vi.fn(async () => undefined
 const { useApp, lsGet, lsSet } = await import('@/lib/store');
 const { openDemoVault } = await import('@/lib/demoVault');
 const { loadSampleData } = await import('@/lib/sampleData');
-const { DEMO_PIN_KEY, DEMO_SESSION_KEY } = await import('@khazana/screens/lib/demoSession');
+const { DEMO_PIN_KEY, DEMO_SESSION_KEY } = await import('@/lib/demoSession');
 
 const setup = vi.fn(async () => { useApp.setState({ status: 'unlocked' }); });
 const unlock = vi.fn(async () => { useApp.setState({ status: 'unlocked' }); });

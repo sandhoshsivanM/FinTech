@@ -3,7 +3,7 @@
 // indexing). Reads decrypt with the in-memory session key. No server, ever.
 import Dexie, { type Table } from 'dexie';
 import { type Encrypted } from './crypto';
-import { isDemoSession } from '@khazana/screens/lib/demoSession';
+import { isDemoSession } from '@/lib/demoSession';
 import { DEMO_DB_NAME } from './demoDbName';
 
 export interface EncRecord {

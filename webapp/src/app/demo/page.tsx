@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { DEMO_SESSION_KEY, demoSessionSet } from '@khazana/screens/lib/demoSession';
+import { DEMO_SESSION_KEY, demoSessionSet } from '@/lib/demoSession';
 
 /**
  * `/demo/` — the "Try demo" entry point linked from the README and the PIN

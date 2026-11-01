@@ -2,7 +2,7 @@
 // only an explicit demo flag in this tab's sessionStorage picks the other one.
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { dbName, DEMO_DB_NAME, REAL_DB_NAME } from '@/lib/db';
-import { isDemoSession, DEMO_SESSION_KEY } from '@khazana/screens/lib/demoSession';
+import { isDemoSession, DEMO_SESSION_KEY } from '@/lib/demoSession';
 
 beforeEach(() => { sessionStorage.clear(); localStorage.clear(); });
 afterEach(() => { vi.restoreAllMocks(); });

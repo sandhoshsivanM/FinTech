@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useApp } from '@/lib/store';
@@ -126,6 +126,11 @@ describe('last 7 days', () => {
 });
 
 describe('insights', () => {
+  // These read "yesterday" and "last month" off the real clock, which on the
+  // 1st puts yesterday in last month. Pin a mid-month day; fake Date only so
+  // userEvent and findBy keep their real timers.
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date(2026, 5, 17, 12)); });
+  afterEach(() => { vi.useRealTimers(); });
   const dayAgo = (n: number) => { const d = new Date(); d.setHours(12, 0, 0, 0); return d.getTime() - n * 86_400_000; };
 
   test('compares this week with last, and the dashes switch insight', async () => {
@@ -159,6 +164,11 @@ describe('insights', () => {
 });
 
 describe('a past month picked on the dashboard', () => {
+  // These read "yesterday" and "last month" off the real clock, which on the
+  // 1st puts yesterday in last month. Pin a mid-month day; fake Date only so
+  // userEvent and findBy keep their real timers.
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date(2026, 5, 17, 12)); });
+  afterEach(() => { vi.useRealTimers(); });
   const lastMonth = () => shiftMonths(Date.now(), -1);
   const inLastMonth = () => lastMonth().start + 5 * 86_400_000;
   const recent = () => { const d = new Date(); d.setHours(12, 0, 0, 0); return d.getTime() - 86_400_000; };

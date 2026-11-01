@@ -17,7 +17,7 @@ import { useApp } from './store';
 import { loadSampleData } from './sampleData';
 import {
   DEMO_PIN_KEY, DEMO_SESSION_KEY, demoSessionGet, demoSessionRemove, demoSessionSet,
-} from '@khazana/screens/lib/demoSession';
+} from '@/lib/demoSession';
 import { DEMO_MARKET_KEY } from '@khazana/screens/components/DemoBadge';
 
 /**

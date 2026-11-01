@@ -2,15 +2,17 @@
  * The "Try demo" session flag, for reviewers who want to look around without
  * creating a vault of their own.
  *
- * It lives in sessionStorage, never localStorage, on purpose: it is scoped to
- * one tab, so a demo opened beside a real vault cannot switch that vault's tab
- * into demo mode, and nothing about it survives into a later visit to `/`.
+ * It lives in sessionStorage on purpose, never in storage that outlives the
+ * tab: a demo opened beside a real vault cannot switch that vault's tab into
+ * demo mode, and nothing about it survives into a later visit to `/`.
  *
  * Every read is guarded. sessionStorage is absent during static export (SSR)
  * and throws in some private modes; either way the answer is "not a demo",
  * which is the safe default — it routes to the real vault and its real PIN.
  */
-export const DEMO_SESSION_KEY = 'khazana.demo';
+// Defined beside the shared DemoBadge, which reads the same flag.
+export { DEMO_SESSION_KEY } from '@khazana/screens/components/DemoBadge';
+import { DEMO_SESSION_KEY } from '@khazana/screens/components/DemoBadge';
 /** The demo vault's generated PIN. Random, per tab, and never shown. */
 export const DEMO_PIN_KEY = 'khazana.demo.pin';
 
