@@ -37,6 +37,7 @@ vi.mock('./db', () => {
       vaults: {
         get: async (id: string) => mem.vaults.get(id),
         put: async (v: { vaultId: string }) => { mem.vaults.set(v.vaultId, v); },
+        delete: async (id: string) => { mem.vaults.delete(id); },
         update: async () => 1,
       },
       records: table(mem.records),
@@ -96,6 +97,34 @@ describe('records with no vault row', () => {
     expect(mem.records).toHaveLength(2);
     expect(mem.records.every((r) => String(r.vaultId).startsWith('set-aside-'))).toBe(true);
     expect(mem.tombstones[0].vaultId).toMatch(/^set-aside-/);
+    expect(useApp.getState().strandedRecords).toBe(0);
+  });
+});
+
+describe('a forgotten PIN', () => {
+  test('starting over keeps the old vault, salt and all, under another id', async () => {
+    mem.vaults.set('default', meta);
+    mem.records.push(rec('txn', 'a'), rec('account', 'b'));
+    useApp.setState({ status: 'locked', pinFailures: 4, lockedOutUntil: Date.now() + 60_000 });
+    await useApp.getState().startOverForgotten();
+    expect(mem.vaults.has('default')).toBe(false);
+    const [asideId, aside] = [...mem.vaults.entries()][0] as [string, VaultMeta];
+    expect(asideId).toMatch(/^set-aside-/);
+    expect(aside.saltB64).toBe(meta.saltB64);
+    expect(aside.verifier).toBe(meta.verifier);
+    expect(mem.records.every((r) => r.vaultId === asideId)).toBe(true);
+    const s = useApp.getState();
+    expect(s.status).toBe('uninitialized');
+    expect(s.pinFailures).toBe(0);
+    expect(s.lockedOutUntil).toBe(0);
+  });
+
+  test('then setup runs, because nothing is left under the live id', async () => {
+    mem.vaults.set('default', meta);
+    mem.records.push(rec('txn', 'a'));
+    await useApp.getState().startOverForgotten();
+    await useApp.getState().init();
+    expect(useApp.getState().status).toBe('uninitialized');
     expect(useApp.getState().strandedRecords).toBe(0);
   });
 });
