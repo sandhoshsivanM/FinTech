@@ -69,3 +69,27 @@ describe('VaultGate in a demo tab', () => {
     expect(exitDemo).toHaveBeenCalledOnce();
   });
 });
+
+describe('VaultGate forgotten PIN', () => {
+  test('the lock screen offers a new vault, after a confirm step', () => {
+    const startOverForgotten = vi.fn(async () => undefined);
+    useApp.setState({ startOverForgotten });
+    render(<VaultGate />);
+    fireEvent.click(screen.getByRole('button', { name: 'Forgot your PIN?' }));
+    expect(screen.getByText(/can’t be reset or recovered/)).toBeInTheDocument();
+    expect(startOverForgotten).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Set this vault aside and start a new one' }));
+    expect(startOverForgotten).toHaveBeenCalledOnce();
+  });
+
+  test('not offered on setup or in a demo tab', () => {
+    useApp.setState({ status: 'uninitialized' });
+    const { unmount } = render(<VaultGate />);
+    expect(screen.queryByRole('button', { name: 'Forgot your PIN?' })).toBeNull();
+    unmount();
+    fake.name = 'fintech_os_demo';
+    useApp.setState({ status: 'locked' });
+    render(<VaultGate />);
+    expect(screen.queryByRole('button', { name: 'Forgot your PIN?' })).toBeNull();
+  });
+});

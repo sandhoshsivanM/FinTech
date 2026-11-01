@@ -508,6 +508,8 @@ interface AppState extends Data {
   wipe: () => Promise<void>;
   /** Moves stranded records out of the way (kept, not deleted) so setup can run. */
   setAsideStranded: () => Promise<void>;
+  /** Forgotten PIN: sets the locked vault aside, still encrypted, so a new one can be made. */
+  startOverForgotten: () => Promise<void>;
 }
 
 
@@ -1698,6 +1700,29 @@ export const useApp = create<AppState>((set, get) => ({
       await db.tombstones.where('vaultId').equals(VAULT_ID).modify({ vaultId: aside });
     });
     set({ strandedRecords: 0, error: null, status: 'uninitialized' });
+  },
+
+  startOverForgotten: async () => {
+    // The PIN is never stored, so a forgotten one cannot be recovered — only
+    // got around by starting again. Nothing is deleted: the vault row moves
+    // with its records, salt and verifier intact, so the old vault still opens
+    // if the PIN is remembered later. Nothing is decrypted either, so this
+    // gives someone at the keyboard nothing that clearing site data would not.
+    const meta = await db.vaults.get(VAULT_ID);
+    const aside = `set-aside-${Date.now()}`;
+    await db.transaction('rw', db.vaults, db.records, db.tombstones, async () => {
+      if (meta) {
+        await db.vaults.put({ ...meta, vaultId: aside });
+        await db.vaults.delete(VAULT_ID);
+      }
+      await db.records.where('vaultId').equals(VAULT_ID).modify({ vaultId: aside });
+      await db.tombstones.where('vaultId').equals(VAULT_ID).modify({ vaultId: aside });
+    });
+    // The failure count and lockout belonged to the old vault's PIN.
+    lsSet(PIN_FAILURES_KEY, '0');
+    lsSet(LOCKOUT_UNTIL_KEY, '0');
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(ACTIVE_PROFILE_KEY);
+    set({ key: null, pinFailures: 0, lockedOutUntil: 0, strandedRecords: 0, error: null, activeProfileId: '', status: 'uninitialized' });
   },
 
   wipe: async () => {

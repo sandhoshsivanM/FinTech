@@ -15,7 +15,9 @@ export function VaultGate() {
   const unlock = useApp((s) => s.unlock);
   const stranded = useApp((s) => s.strandedRecords);
   const setAsideStranded = useApp((s) => s.setAsideStranded);
+  const startOverForgotten = useApp((s) => s.startOverForgotten);
   const [confirmAside, setConfirmAside] = useState(false);
+  const [forgot, setForgot] = useState(false);
 
   const [pin, setPin] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -190,6 +192,32 @@ export function VaultGate() {
               <Fingerprint size={16} /> PIN secured with PBKDF2 + AES-256
             </div>
           )}
+          {/* A forgotten PIN cannot be recovered, by design, so the only way
+              forward is a new vault. The old one is set aside, not erased. */}
+          {!isSetup && (forgot ? (
+            <div className="mt-4 grid gap-2 rounded-[var(--radius-card)] border border-line p-3.5">
+              <p className="fs-12.5 text-ink-soft leading-relaxed">
+                Your PIN is never stored, so it can&rsquo;t be reset or recovered.
+                You can start a new, empty vault instead. The current one stays in
+                this browser, still encrypted and set aside, in case you remember
+                the PIN later. Don&rsquo;t clear this site&rsquo;s data if you
+                might want it back.
+              </p>
+              <button
+                onClick={() => { setPin(''); setForgot(false); void startOverForgotten(); }}
+                className="focus-ring w-full rounded-btn border border-line-strong py-2.5 text-sm font-semibold text-ink hover:border-accent"
+              >
+                Set this vault aside and start a new one
+              </button>
+              <button onClick={() => setForgot(false)} className="focus-ring w-full rounded-btn py-2 text-sm font-semibold text-ink-soft hover:bg-fill">
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => setForgot(true)} className="focus-ring mt-3 block w-full text-center fs-12.5 font-semibold text-ink-soft hover:underline">
+              Forgot your PIN?
+            </button>
+          ))}
           {/* For reviewers: a separate vault of sample data, in its own
               database. A plain link, so entering it is a full page load. */}
           <a href="/demo/" className="focus-ring mt-4 block text-center fs-12.5 font-semibold text-accent hover:underline">
