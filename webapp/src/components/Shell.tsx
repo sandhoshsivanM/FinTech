@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { Download, Lock, RefreshCw } from 'lucide-react';
-import { useApp } from '@/lib/store';
+import { inDemo, useApp } from '@/lib/store';
+import { DemoSessionBar } from './DemoSessionBar';
 import { BrandMark, WordMark } from './BrandMark';
 import { usePriceRefresh, refreshMessage } from '@/lib/quotes/usePriceRefresh';
 import { useLivePrices } from '@/lib/quotes/useLivePrices';
@@ -105,6 +106,8 @@ export function Shell({ children }: { children: ReactNode }) {
       footerNote="Encrypted on this device"
       actions={(
         <>
+          {/* Only in a "Try demo" tab: labels the sample vault and offers the way out. */}
+          {inDemo() && <DemoSessionBar compact />}
           <RefreshButton />
           <ExportButton />
           <NotificationsMenu useDriver={useNotificationDriver} />

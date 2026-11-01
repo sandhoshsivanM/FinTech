@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { ShieldCheck, Fingerprint, ShieldAlert } from 'lucide-react';
 import { APP_TAGLINE, TRUST_POINTS } from '@/lib/brand';
 import { BrandMark, WordMark } from './BrandMark';
-import { useApp } from '@/lib/store';
+import { inDemo, useApp } from '@/lib/store';
 import { cryptoAvailable } from '@/lib/crypto';
+import { openDemoVault } from '@/lib/demoVault';
+import { DemoSessionBar } from './DemoSessionBar';
 
 export function VaultGate() {
   const status = useApp((s) => s.status);
@@ -21,6 +23,9 @@ export function VaultGate() {
 
   const isSetup = status === 'uninitialized';
   const busy = status === 'unlocking' || status === 'loading';
+  // A "Try demo" tab. Its PIN is random and never shown, so it gets no PIN
+  // field — only a way back in (after auto-lock) and a way out.
+  const demo = inDemo();
 
   /**
    * Minimum digits for a *new* PIN.
@@ -84,7 +89,28 @@ export function VaultGate() {
               </div>
             </div>
           )}
-          {isSetup && stranded > 0 ? (
+          {demo ? (
+            <div>
+              <DemoSessionBar />
+              <h2 className="text-lg font-medium mt-4 mb-1">
+                {busy ? 'Opening the demo…' : isSetup ? 'The demo could not open' : 'The demo is locked'}
+              </h2>
+              <p className="text-sm text-ink-soft leading-relaxed">
+                {isSetup
+                  ? 'Try again, or exit the demo and use the app with your own PIN.'
+                  : 'It locked itself, as a real vault does when left alone.'}
+              </p>
+              {error && (
+                <div className="mt-3 flex items-center gap-2 text-expense text-sm"><span>⚠</span>{error}</div>
+              )}
+              <button
+                onClick={() => void openDemoVault()} disabled={busy || !secure}
+                className="focus-ring mt-5 w-full rounded-btn bg-primary text-[var(--primary-fg)] font-semibold py-3 transition-shadow duration-[250ms] hover:shadow-[var(--glow)] disabled:opacity-60"
+              >
+                {busy ? 'Working…' : 'Reopen the demo'}
+              </button>
+            </div>
+          ) : isSetup && stranded > 0 ? (
             /* Data is here but the vault row that opens it is gone. Offering
                setup would write a new salt over it, so explain instead, and
                make "start again" an explicit, non-destructive choice. */
@@ -164,6 +190,11 @@ export function VaultGate() {
               <Fingerprint size={16} /> PIN secured with PBKDF2 + AES-256
             </div>
           )}
+          {/* For reviewers: a separate vault of sample data, in its own
+              database. A plain link, so entering it is a full page load. */}
+          <a href="/demo/" className="focus-ring mt-4 block text-center fs-12.5 font-semibold text-accent hover:underline">
+            Just looking? Open the demo with sample data →
+          </a>
           </>)}
         </div>
         <ul className="mt-6 grid gap-2.5">

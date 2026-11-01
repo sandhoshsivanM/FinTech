@@ -3,6 +3,8 @@
 // indexing). Reads decrypt with the in-memory session key. No server, ever.
 import Dexie, { type Table } from 'dexie';
 import { type Encrypted } from './crypto';
+import { isDemoSession } from '@/lib/demoSession';
+import { DEMO_DB_NAME } from './demoDbName';
 
 export interface EncRecord {
   id: string; // `${type}:${uuid}`
@@ -35,17 +37,35 @@ export interface Tombstone {
   deletedAt: number; // epoch ms
 }
 
+/** The real vault's database. FROZEN — see the constructor. */
+export const REAL_DB_NAME = 'fintech_os';
+export { DEMO_DB_NAME };
+
+/**
+ * Which database this page load opens.
+ *
+ * A demo session gets a separate IndexedDB database rather than a separate
+ * vault id inside the real one, so no code path in demo mode — a bug, a
+ * "clear vault", a restore — can reach a real record: the real database is
+ * simply never opened. Decided once, when this module loads; entering and
+ * leaving the demo are full page loads for exactly that reason.
+ */
+export function dbName(demo: boolean = isDemoSession()): string {
+  return demo ? DEMO_DB_NAME : REAL_DB_NAME;
+}
+
 class KhazanaDB extends Dexie {
   records!: Table<EncRecord, string>;
   vaults!: Table<VaultMeta, string>;
   tombstones!: Table<Tombstone, string>;
 
-  constructor() {
+  constructor(name: string) {
     // FROZEN: the IndexedDB database name stays `fintech_os` despite the rebrand.
     // Renaming it would orphan every existing vault — the encrypted records,
     // salt and verifier would still be on disk but invisible, dropping users
     // onto the first-run "Set up your vault" screen. Class name only was renamed.
-    super('fintech_os');
+    // `dbName()` returns it for every page load that is not a demo session.
+    super(name);
     this.version(1).stores({
       records: 'id, [type+vaultId], vaultId',
       vaults: 'vaultId',
@@ -57,7 +77,7 @@ class KhazanaDB extends Dexie {
   }
 }
 
-export const db = new KhazanaDB();
+export const db = new KhazanaDB(dbName());
 
 /** What the browser will tell us about the durability of this vault. */
 export type PersistenceState =

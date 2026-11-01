@@ -462,7 +462,9 @@ export default function ReportsPage() {
                 />
               </div>
               {sparkValues.length >= 2 && (
-                <div className="mt-3 flex items-center justify-between text-sm">
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm">
+                  {/* Wraps rather than overflowing: at the largest text size the
+                      two dates and the value outgrow a phone-width card. */}
                   <span className="text-muted">{formatDate(range.start)}</span>
                   <span className="font-semibold tnum" style={{
                     color: sparkValues[sparkValues.length - 1] >= sparkValues[0]
