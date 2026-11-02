@@ -39,3 +39,9 @@ export function demoSessionSet(key: string, value: string): void {
 export function demoSessionRemove(key: string): void {
   try { session()?.removeItem(key); } catch { /* private mode */ }
 }
+/**
+ * Set once this tab's demo vault holds the whole sample. A reload that finds
+ * the vault without it — the seed was cut short by a reload or a crash — builds
+ * the demo again instead of reopening a half-filled one.
+ */
+export const DEMO_SEEDED_KEY = 'khazana.demo.seeded';

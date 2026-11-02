@@ -10,7 +10,7 @@
  *   2. Coverage has to reach every screen. A vault with no insurance leaves the
  *      health score's Protection pillar untracked; one with fewer than two
  *      snapshots leaves every trend chart empty. So this seeds insurance,
- *      ninety days of snapshots, dividends, a watchlist and alerts too.
+ *      a year of snapshots, dividends, a watchlist and alerts too.
  */
 import { STORE } from './types';
 
@@ -18,6 +18,8 @@ import { STORE } from './types';
 export type SampleEntry = { type: string; value: { id: string } & Record<string, unknown> };
 
 const DAY = 86400000;
+/** Days of net-worth history, so every trend chart can show a full year. */
+export const SNAPSHOT_DAYS = 365;
 
 /** Deterministic 0..1, so the demo vault is the same every time it is loaded. */
 function rnd(seed: string): number {
@@ -101,60 +103,133 @@ export function sampleEntries(ctx: SampleContext): SampleEntry[] {
   const cat = (name: string): string => (cats.find((c) => c.name === name) ?? cats[0]).id;
 
   // ---- Accounts -----------------------------------------------------------
-  // Three real accounts, the shape most people actually have: salary lands in
-  // one, day-to-day spending leaves another, the emergency fund sits apart.
-  // Opening balances are what each held before this sample history begins.
-  const acct = (id: string, name: string, openingBalance: string) => {
+  // The shape most people actually have: salary lands in one account,
+  // day-to-day spending leaves another, the emergency fund sits apart, and a
+  // credit card is paid off from salary each month. Opening balances are what
+  // each held when this sample year begins.
+  const acct = (id: string, name: string, openingBalance: string, type = 'asset', subtype = 'bank') => {
     const full = `acct-${id}-${profileId}`;
-    put(STORE.account, {
-      id: full, vaultId, profileId, name, type: 'asset', subtype: 'bank', openingBalance,
-    });
+    put(STORE.account, { id: full, vaultId, profileId, name, type, subtype, openingBalance });
     return full;
   };
   const SALARY = acct('salary', 'HDFC Salary', '180000');
   const SPENDS = acct('spends', 'ICICI Spends', '42000');
   const EMERGENCY = acct('emergency', 'Emergency Fund', '1420000');
+  const CARD = acct('card', 'HDFC Millennia Card', '0', 'liability', 'credit_card');
+
+  // A second income source, so "Income by source" is more than one bar.
+  put(STORE.category, { id: `cat-sample-freelance-${vaultId}`, vaultId, name: 'Freelance', icon: 'Wallet' });
+  const catId = (name: string): string =>
+    name === 'Freelance' ? `cat-sample-freelance-${vaultId}` : cat(name);
 
   const txn = (
-    amount: string, type: 'expense' | 'income', category: string, dAgo: number,
-    merchant?: string, accountId: string = SPENDS,
+    amount: string | number, type: 'expense' | 'income' | 'investment', category: string, date: number,
+    merchant: string, accountId: string,
   ) =>
-    put(STORE.txn, { id: uid(), vaultId, profileId, amount, type, categoryId: cat(category), merchant, note: 'Sample', date: daysAgo(dAgo), createdAt: now, accountId });
-
-  // ---- Cash flow ----------------------------------------------------------
-  // Pay lands in the salary account; everything else leaves the spends account.
-  txn('2400000', 'income', 'Salary', 95, 'Opening balance', SALARY);
-  for (const d of [90, 60, 30, 1]) txn('285000', 'income', 'Salary', d, 'Aurelius Systems', SALARY);
-
-  // ---- Transfers ----------------------------------------------------------
-  // Salary out to spending money and to the emergency fund. Neither is income
-  // or expense, and the Budget and Reports screens should stay blind to them.
-  const transfer = (amount: string, from: string, to: string, dAgo: number, note: string) =>
-    put(STORE.transfer, {
-      id: uid(), vaultId, profileId, amount, fromAccountId: from, toAccountId: to,
-      date: daysAgo(dAgo), note, createdAt: now,
+    put(STORE.txn, {
+      id: uid(), vaultId, profileId, amount: String(amount), type, categoryId: catId(category),
+      merchant, note: 'Sample', date, createdAt: now, accountId,
     });
-  for (const d of [89, 59, 29]) {
-    transfer('150000', SALARY, SPENDS, d, 'Monthly spending float');
-    transfer('25000', SALARY, EMERGENCY, d, 'Emergency fund top-up');
+  const transfer = (amount: string | number, from: string, to: string, date: number, note: string) =>
+    put(STORE.transfer, {
+      id: uid(), vaultId, profileId, amount: String(amount), fromAccountId: from, toAccountId: to,
+      date, note, createdAt: now,
+    });
+
+  // ---- Calendar ------------------------------------------------------------
+  // Dated by the calendar, not "n days ago", so salary always lands on the 1st
+  // and the current month is never empty. Today's entries are clamped to now:
+  // nothing in the sample is ever in the future.
+  const today = new Date(now);
+  const at = (monthsAgo: number, day: number, hour: number): number | null => {
+    const d = new Date(today.getFullYear(), today.getMonth() - monthsAgo, day, hour, 0, 0, 0);
+    if (d.getMonth() !== ((today.getMonth() - monthsAgo) % 12 + 12) % 12) return null; // 31st of a short month
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    if (d.getTime() >= startOfToday + DAY) return null;
+    return Math.min(d.getTime(), now);
+  };
+
+  // ---- Monthly fixed flows ---------------------------------------------------
+  for (let m = 11; m >= 0; m--) {
+    const on = (day: number, hour: number, f: (t: number) => void) => { const t = at(m, day, hour); if (t !== null) f(t); };
+    // A raise six months in.
+    on(1, 9, (t) => txn(m >= 6 ? 262000 : 285000, 'income', 'Salary', t, 'Aurelius Systems', SALARY));
+    on(2, 10, (t) => transfer(95000, SALARY, SPENDS, t, 'Monthly spending float'));
+    on(2, 10, (t) => transfer(25000, SALARY, EMERGENCY, t, 'Emergency fund top-up'));
+    on(3, 11, (t) => txn(58000, 'expense', 'Rent', t, 'Landlord', SPENDS));
+    on(5, 9, (t) => txn(64820, 'expense', 'EMI', t, 'HDFC Home Loan', SALARY));
+    on(7, 9, (t) => txn(30000, 'investment', 'Investment', t, 'Zerodha — Nifty 50 SIP', SALARY));
+    on(7, 9, (t) => txn(15000, 'investment', 'Investment', t, 'Zerodha — Flexi Cap SIP', SALARY));
+    on(8, 18, (t) => txn(Math.round(3200 + rnd(`power${m}`) * 2600), 'expense', 'Utilities', t, 'Tata Power', SPENDS));
+    on(10, 12, (t) => txn(799, 'expense', 'Utilities', t, 'Airtel Postpaid', SPENDS));
+    on(12, 20, (t) => txn(649, 'expense', 'Entertainment', t, 'Netflix', CARD));
+    on(14, 20, (t) => txn(119, 'expense', 'Entertainment', t, 'Spotify', CARD));
+    on(16, 7, (t) => txn(1499, 'expense', 'Health', t, 'Cult.fit', CARD));
+    // Freelance work, most months.
+    if (rnd(`gig${m}`) < 0.7) {
+      on(18, 15, (t) => txn(Math.round(50 + rnd(`gigamt${m}`) * 100) * 500, 'income', 'Freelance', t, 'Northwind Studio', SALARY));
+    }
   }
-  for (const d of [92, 62, 32, 2]) {
-    txn('58000', 'expense', 'Rent', d, 'Landlord');
-    txn('4310', 'expense', 'Utilities', d, 'Tata Power');
-    txn('649', 'expense', 'Entertainment', d, 'Netflix');
-    txn('64820', 'expense', 'EMI', d, 'HDFC Home Loan');
-  }
-  const spends: [string, string, number, string][] = [
-    ['1240', 'Food', 0, 'Swiggy'], ['420', 'Food', 1, 'Blue Tokai'], ['980', 'Transport', 1, 'Uber'],
-    ['8460', 'Shopping', 3, 'Amazon India'], ['3250', 'Food', 4, 'BigBasket'], ['640', 'Transport', 6, 'Ola'],
-    ['2400', 'Health', 9, 'Apollo Pharmacy'], ['1180', 'Entertainment', 12, 'BookMyShow'],
-    ['6300', 'Shopping', 18, 'Myntra'], ['1760', 'Food', 22, 'Zomato'], ['4200', 'Transport', 27, 'Fuel'],
-    ['3480', 'Food', 40, 'Toit'], ['9500', 'Shopping', 52, 'Decathlon'], ['2600', 'Health', 70, 'Clinic'],
-    ['1450', 'Food', 15, 'Third Wave'], ['5200', 'Shopping', 35, 'IKEA'], ['890', 'Transport', 44, 'Metro card'],
+  // Something unusual, so Insights and the year view have a story.
+  { const t = at(4, 21, 13); if (t !== null) txn(38500, 'expense', 'Shopping', t, 'Croma — laptop', CARD); }
+  { const t = at(8, 11, 10); if (t !== null) txn(12800, 'expense', 'Health', t, 'Apollo Hospitals', SPENDS); }
+  { const t = at(2, 26, 16); if (t !== null) txn(42000, 'income', 'Other', t, 'Annual bonus', SALARY); }
+
+  // ---- Day-to-day spending ---------------------------------------------------
+  // category, merchant, min, max, weight
+  const MERCHANTS: [string, string, number, number, number][] = [
+    ['Food', 'Swiggy', 240, 920, 9], ['Food', 'Zomato', 280, 1150, 7], ['Food', 'Blue Tokai', 180, 460, 6],
+    ['Food', 'BigBasket', 1200, 3800, 4], ['Food', 'Third Wave', 200, 420, 3], ['Food', 'Toit', 1800, 3600, 1],
+    ['Transport', 'Uber', 180, 680, 6], ['Transport', 'Ola', 150, 520, 3], ['Transport', 'Metro card', 200, 500, 2],
+    ['Transport', 'Shell — fuel', 2400, 4200, 2],
+    ['Shopping', 'Amazon India', 450, 5200, 4], ['Shopping', 'Myntra', 1100, 4300, 2], ['Shopping', 'Decathlon', 1400, 6200, 1],
+    ['Shopping', 'IKEA', 2200, 8800, 0.4],
+    ['Entertainment', 'BookMyShow', 380, 1400, 1.5], ['Entertainment', 'PVR', 520, 1200, 0.8],
+    ['Health', 'Apollo Pharmacy', 280, 1800, 1.6], ['Health', 'Practo', 500, 900, 0.4],
   ];
-  for (const [a, c, d, m] of spends) txn(a, 'expense', c, d, m);
-  // SIP purchases, so the Investment category is not empty.
-  for (const d of [95, 65, 35, 5]) txn('45000', 'expense', 'Investment', d, 'Zerodha — SIP');
+  const totalWeight = MERCHANTS.reduce((s, x) => s + x[4], 0);
+  const pick = (r: number) => {
+    let acc = r * totalWeight;
+    for (const x of MERCHANTS) { acc -= x[4]; if (acc <= 0) return x; }
+    return MERCHANTS[0];
+  };
+  const cardBill = new Map<number, number>(); // months ago → card spend that month
+  const startDay = Math.floor((today.getTime() - new Date(today.getFullYear(), today.getMonth() - 11, 1).getTime()) / DAY);
+  for (let i = startDay; i >= 0; i--) {
+    const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+    const r = rnd(`day${i}`);
+    // Every one of the last seven days has something, so the week cards are never blank.
+    const count = r < 0.22 ? (i < 7 ? 1 : 0) : r < 0.72 ? 1 : 2;
+    for (let k = 0; k < count; k++) {
+      const [category, merchant, lo, hi] = pick(rnd(`m${i}.${k}`));
+      const amount = Math.round(lo + rnd(`a${i}.${k}`) * (hi - lo));
+      const date = Math.min(day.getTime() + (9 + Math.floor(rnd(`h${i}.${k}`) * 12)) * 3600000, now - (k + 1) * 60000);
+      const onCard = rnd(`c${i}.${k}`) < 0.45;
+      txn(amount, 'expense', category, date, merchant, onCard ? CARD : SPENDS);
+      if (onCard) {
+        const ago = (today.getFullYear() - day.getFullYear()) * 12 + today.getMonth() - day.getMonth();
+        cardBill.set(ago, (cardBill.get(ago) ?? 0) + amount);
+      }
+    }
+  }
+  // Card bills: each month's spend, paid in full from salary on the 6th of the next.
+  for (const [ago, total] of cardBill) {
+    const t = ago > 0 ? at(ago - 1, 6, 9) : null;
+    if (t !== null) transfer(total, SALARY, CARD, t, 'Credit card bill');
+  }
+
+  // ---- Review inbox -----------------------------------------------------------
+  // Bank SMS waiting for a yes or no, so the Review screen shows how capture works.
+  const capture = (amount: string, type: 'expense' | 'income', merchant: string | null, hoursAgo: number, category: string | null, reasons: string[]) =>
+    put(STORE.pendingCapture, {
+      id: uid(), vaultId, profileId, amount, type, merchant, occurredAt: now - hoursAgo * 3600000,
+      source: 'sms', uncategorized: category === null, fingerprint: `sample-${merchant ?? 'unknown'}-${hoursAgo}`,
+      capturedAt: now - hoursAgo * 3600000, status: 'pending', reasons,
+      categoryId: category ? catId(category) : null, accountId: SPENDS, accountLast4: '4821',
+    });
+  capture('486', 'expense', 'Swiggy', 2, 'Food', []);
+  capture('1250', 'expense', null, 5, null, ['no_merchant', 'no_category']);
+  capture('3200', 'income', 'Rahul — UPI', 20, null, ['no_category']);
 
   // ---- Holdings -----------------------------------------------------------
   for (const [symbol, name, qty, avg, last, assetType, dAgo] of HOLDINGS) {
@@ -192,7 +267,6 @@ export function sampleEntries(ctx: SampleContext): SampleEntry[] {
   alert('weight_above', 'HDFCBANK', 'HDFCBANK: Weight exceeds 8%', '8');
 
   // ---- Liabilities --------------------------------------------------------
-  put(STORE.liability, { id: uid(), vaultId, name: 'HDFC Credit Card', kind: 'credit_card', principal: '86400', aprPct: '42', creditLimit: '400000' });
   put(STORE.liability, { id: uid(), vaultId, name: 'HDFC Home Loan', kind: 'loan', principal: '4820000', aprPct: '8.6', termMonths: 216 });
   put(STORE.liability, { id: uid(), vaultId, name: 'Car Loan', kind: 'loan', principal: '412000', aprPct: '9.4', termMonths: 48 });
 
@@ -231,13 +305,13 @@ export function sampleEntries(ctx: SampleContext): SampleEntry[] {
   bill('649', 'Entertainment', 'Netflix', 5);
   bill('4310', 'Utilities', 'Tata Power', 9);
   bill('58000', 'Rent', 'Landlord', 11);
-  put(STORE.recurring, { id: uid(), vaultId, amount: '285000', type: 'income', categoryId: cat('Salary'), merchant: 'Aurelius Systems', frequency: 'monthly', nextRun: now + 24 * DAY });
+  put(STORE.recurring, { id: uid(), vaultId, amount: '285000', type: 'income', categoryId: cat('Salary'), merchant: 'Aurelius Systems', frequency: 'monthly', nextRun: new Date(today.getFullYear(), today.getMonth() + 1, 1, 9).getTime() });
 
   return entries;
 }
 
 /**
- * Ninety days of net-worth history ending at today's figures, so a fresh sample
+ * A year of net-worth history ending at today's figures, so a fresh sample
  * has trend charts. The end point comes from the loaded balances, not a constant.
  */
 export function sampleSnapshots(
@@ -248,9 +322,9 @@ export function sampleSnapshots(
   const entries: SampleEntry[] = [];
   const put = (type: string, value: { id: string } & Record<string, unknown>) => { entries.push({ type, value }); };
   const endNet = endCash + endInvest - endLiab;
-  const startNet = endNet * 0.82;
-  for (let i = 90; i >= 1; i--) {
-    const t = (90 - i) / 90;
+  const startNet = endNet * 0.74;
+  for (let i = SNAPSHOT_DAYS; i >= 1; i--) {
+    const t = (SNAPSHOT_DAYS - i) / SNAPSHOT_DAYS;
     const wobble = (rnd(`snap${i}`) - 0.5) * 0.03 + Math.sin(t * Math.PI * 3.4) * 0.018;
     const net = startNet + (endNet - startNet) * Math.pow(t, 0.95) + endNet * wobble * (1 - Math.abs(t - 0.5));
     // Scale today's mix, so cash + investments - liabilities still equals net.

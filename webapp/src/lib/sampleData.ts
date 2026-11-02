@@ -13,8 +13,8 @@
  *      snapshots leaves every trend chart empty. So this seeds insurance,
  *      ninety days of snapshots, dividends, a watchlist and alerts too.
  */
-import { putRecord, clearVault, userRecordCount } from './repo';
-import { useApp, uid, repairPostings } from './store';
+import { clearVault, userRecordCount } from './repo';
+import { useApp, uid } from './store';
 import { liquidBalance } from '@khazana/domain/accountLedger';
 import { investmentTotals } from '@khazana/domain/investmentTotals';
 import { sampleEntries, sampleSnapshots } from '@khazana/domain/sampleVault';
@@ -43,15 +43,12 @@ export async function loadSampleData() {
 
   const profileId = useApp.getState().activeProfileId;
   const now = Date.now();
-  const write = (entries: { type: string; value: { id: string } & Record<string, unknown> }[]) =>
-    Promise.all(entries.map((e) => putRecord(key, e.type, vaultId, e.value.id, e.value)));
-
-  await write(sampleEntries({ vaultId, profileId, categories: cats.map((c) => ({ id: c.id as string, name: c.name })), uid, now }));
-  // These records were written straight to storage for speed, which skips the
-  // ledger. Build the postings now, or every account balance would read as its
-  // opening balance and the sample vault would look broken.
-  await repairPostings(key, vaultId);
-  await useApp.getState().reload();
+  // One atomic batch with its ledger postings, then one reload. It used to be
+  // a hundred separate writes and a separate posting repair, so a reload partway
+  // through left accounts at their opening balances and nothing else.
+  await useApp.getState().putMany(
+    sampleEntries({ vaultId, profileId, categories: cats.map((c) => ({ id: c.id as string, name: c.name })), uid, now }),
+  );
 
   // Net-worth history. Real snapshots are written once a day when the app is
   // opened, so a fresh demo vault has none and every trend chart is empty.
@@ -59,6 +56,5 @@ export async function loadSampleData() {
   const endCash = liquidBalance(accounts, postings).toNumber();
   const endInvest = investmentTotals(holdings).marketValue.toNumber();
   const endLiab = liabilities.reduce((sum, l) => sum + Number(l.principal), 0);
-  await write(sampleSnapshots({ vaultId, now, endCash, endInvest, endLiab }));
-  await useApp.getState().reload();
+  await useApp.getState().putMany(sampleSnapshots({ vaultId, now, endCash, endInvest, endLiab }));
 }

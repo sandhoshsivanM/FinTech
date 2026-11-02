@@ -16,7 +16,7 @@ import { bufToB64, randomBytes } from './crypto';
 import { useApp } from './store';
 import { loadSampleData } from './sampleData';
 import {
-  DEMO_PIN_KEY, DEMO_SESSION_KEY, demoSessionGet, demoSessionRemove, demoSessionSet,
+  DEMO_PIN_KEY, DEMO_SEEDED_KEY, DEMO_SESSION_KEY, demoSessionGet, demoSessionRemove, demoSessionSet,
 } from '@/lib/demoSession';
 import { DEMO_MARKET_KEY } from '@khazana/screens/components/DemoBadge';
 
@@ -37,31 +37,52 @@ async function deleteDemoDb(reopen: boolean): Promise<void> {
  * Called from `init()` when the page loaded the demo database, and from the
  * gate's "Reopen the demo" after an auto-lock.
  */
-export async function openDemoVault(): Promise<void> {
+export function openDemoVault(): Promise<void> {
+  // One at a time. `init()` runs from an effect that can fire twice, and two
+  // overlapping opens cleared and deleted each other's vault mid-seed — the
+  // demo then showed its accounts at opening balance and nothing else.
+  opening ??= openOnce().finally(() => { opening = null; });
+  return opening;
+}
+let opening: Promise<void> | null = null;
+
+async function openOnce(): Promise<void> {
   if (db.name !== DEMO_DB_NAME) return;
 
   const pin = demoSessionGet(DEMO_PIN_KEY);
   const meta = await db.vaults.get('default');
-  if (meta && pin) {
+  // Only a vault this tab finished seeding is reopened. One without the mark
+  // was cut short partway, and reopening it showed a dashboard of empty cards.
+  if (meta && pin && demoSessionGet(DEMO_SEEDED_KEY) === '1') {
     await useApp.getState().unlock(pin);
     if (useApp.getState().status === 'unlocked') return;
   }
 
-  // Stale: a vault this tab has no PIN for, a failed unlock, or leftover
-  // records. Sample data is all it ever held, so start again.
-  if (meta || (await db.records.count()) > 0) await deleteDemoDb(true);
+  // Stale: a vault this tab has no PIN for, a failed unlock, a half-seeded
+  // vault, or leftover records. Sample data is all it ever held, so start again.
+  // Two tries: a seed that fails once is rebuilt from nothing, not left empty.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    demoSessionRemove(DEMO_SEEDED_KEY);
+    if ((await db.vaults.get('default')) || (await db.records.count()) > 0) await deleteDemoDb(true);
 
-  const fresh = bufToB64(randomBytes(32).buffer);
-  demoSessionSet(DEMO_PIN_KEY, fresh);
-  useApp.setState({ status: 'uninitialized', strandedRecords: 0, error: null });
-  await useApp.getState().setup(fresh);
-  if (useApp.getState().status !== 'unlocked') return; // setup has set the error
+    const fresh = bufToB64(randomBytes(32).buffer);
+    demoSessionSet(DEMO_PIN_KEY, fresh);
+    useApp.setState({ status: 'uninitialized', strandedRecords: 0, error: null });
+    await useApp.getState().setup(fresh);
+    if (useApp.getState().status !== 'unlocked') return; // setup has set the error
 
-  try {
-    await loadSampleData();
-  } catch {
-    // An empty demo vault is still a working one; nothing else to undo.
+    // Keep the gate's busy state up while the sample is written. Shown as
+    // unlocked, the empty vault invited the clicks and reloads that cut it short.
+    useApp.setState({ status: 'unlocking' });
+    try {
+      await loadSampleData();
+      demoSessionSet(DEMO_SEEDED_KEY, '1');
+      break;
+    } catch (e) {
+      console.error('Demo sample data failed to load', e);
+    }
   }
+  useApp.setState({ status: 'unlocked' });
   // Markets and News are empty without it. Session-scoped: see DemoBadge.
   demoSessionSet(DEMO_MARKET_KEY, '1');
 }
@@ -75,6 +96,7 @@ export async function exitDemo(): Promise<void> {
   demoSessionRemove(DEMO_PIN_KEY);
   demoSessionRemove(DEMO_SESSION_KEY);
   demoSessionRemove(DEMO_MARKET_KEY);
+  demoSessionRemove(DEMO_SEEDED_KEY);
   useApp.getState().lock();
   try { await deleteDemoDb(false); } catch { /* recreated on the next visit anyway */ }
   window.location.replace('/');
