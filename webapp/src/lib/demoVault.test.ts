@@ -35,7 +35,7 @@ vi.mock('@/lib/sampleData', () => ({ loadSampleData: vi.fn(async () => undefined
 const { useApp, lsGet, lsSet } = await import('@/lib/store');
 const { openDemoVault } = await import('@/lib/demoVault');
 const { loadSampleData } = await import('@/lib/sampleData');
-const { DEMO_PIN_KEY, DEMO_SESSION_KEY } = await import('@/lib/demoSession');
+const { DEMO_PIN_KEY, DEMO_SEEDED_KEY, DEMO_SESSION_KEY } = await import('@/lib/demoSession');
 
 const setup = vi.fn(async () => { useApp.setState({ status: 'unlocked' }); });
 const unlock = vi.fn(async () => { useApp.setState({ status: 'unlocked' }); });
@@ -82,6 +82,7 @@ describe('opening the demo vault', () => {
     fake.meta = { vaultId: 'default' };
     fake.records = 40;
     sessionStorage.setItem(DEMO_PIN_KEY, 'the-session-pin');
+    sessionStorage.setItem(DEMO_SEEDED_KEY, '1');
 
     await openDemoVault();
 
@@ -89,6 +90,50 @@ describe('opening the demo vault', () => {
     expect(setup).not.toHaveBeenCalled();
     expect(loadSampleData).not.toHaveBeenCalled();
     expect(fake.deleted).toBe(0);
+  });
+
+  test('half-seeded: a vault whose seed never finished is built again, not reopened', async () => {
+    // The tab was reloaded mid-seed: PIN and vault exist, the seeded mark does not.
+    fake.meta = { vaultId: 'default' };
+    fake.records = 12;
+    sessionStorage.setItem(DEMO_PIN_KEY, 'the-session-pin');
+
+    await openDemoVault();
+
+    expect(unlock).not.toHaveBeenCalled();
+    expect(fake.deleted).toBe(1);
+    expect(loadSampleData).toHaveBeenCalledOnce();
+    expect(sessionStorage.getItem(DEMO_SEEDED_KEY)).toBe('1');
+  });
+
+  test('a seed that fails is rebuilt from nothing once, and the demo still opens', async () => {
+    vi.mocked(loadSampleData).mockRejectedValueOnce(new Error('quota'));
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await openDemoVault();
+
+    expect(setup).toHaveBeenCalledTimes(2);
+    expect(loadSampleData).toHaveBeenCalledTimes(2);
+    expect(sessionStorage.getItem(DEMO_SEEDED_KEY)).toBe('1');
+    expect(useApp.getState().status).toBe('unlocked');
+    err.mockRestore();
+  });
+
+  test('two overlapping opens share one run instead of clearing each other', async () => {
+    await Promise.all([openDemoVault(), openDemoVault()]);
+
+    expect(setup).toHaveBeenCalledOnce();
+    expect(loadSampleData).toHaveBeenCalledOnce();
+  });
+
+  test('the gate stays busy until the sample is written', async () => {
+    let during: string | undefined;
+    vi.mocked(loadSampleData).mockImplementationOnce(async () => { during = useApp.getState().status; });
+
+    await openDemoVault();
+
+    expect(during).toBe('unlocking');
+    expect(useApp.getState().status).toBe('unlocked');
   });
 
   test('stale: a demo vault this tab has no PIN for is deleted and built again', async () => {
