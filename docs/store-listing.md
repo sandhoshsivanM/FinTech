@@ -31,7 +31,7 @@ depends on something only the Play Console can confirm, it says so.
 | App or game | App |
 | Category | Finance |
 | Tags | Personal finance, Budgeting, Investing |
-| Developer contact email | the support address on the custom domain (see RELEASE-CHECKLIST) |
+| Developer contact email | sandhoshsivan00@gmail.com (move to the custom-domain address later; see RELEASE-CHECKLIST) |
 | Website | https://khazana-app.netlify.app |
 | Privacy policy URL | https://khazana-app.netlify.app/privacy/ |
 

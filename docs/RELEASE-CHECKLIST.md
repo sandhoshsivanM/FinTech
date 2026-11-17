@@ -90,6 +90,8 @@ is a day added to launch.
 - [ ] Custom domain, and point Netlify at it. `*.netlify.app` on a free tier is
       not a credible URL for a finance product.
 - [ ] Support email on that domain. Both stores require a working support URL.
+      For the first Play release the listing uses sandhoshsivan00@gmail.com;
+      switch it once the custom domain exists.
 - [ ] **BLOCKER** Create the Android release keystore. Back it up off-machine —
       **losing it means you can never update the app on Play, ever.**
 - [ ] `macos/Runner/Configs/Signing.local.xcconfig` with a real Developer ID,
