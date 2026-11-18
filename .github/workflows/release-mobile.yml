@@ -72,9 +72,11 @@ jobs:
                  "without it is signed with debug keys and Play will reject it."
             exit 1
           fi
+          # Absolute path: build.gradle.kts resolves storeFile with file(), which is
+          # relative to android/app/, not android/ where the keystore is written.
           echo "$KEYSTORE_BASE64" | base64 --decode > android/khazana-release.jks
           cat > android/key.properties <<EOF
-          storeFile=khazana-release.jks
+          storeFile=$GITHUB_WORKSPACE/android/khazana-release.jks
           storePassword=$STORE_PASSWORD
           keyAlias=$KEY_ALIAS
           keyPassword=$KEY_PASSWORD
