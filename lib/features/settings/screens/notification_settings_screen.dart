@@ -1,5 +1,6 @@
 import '../../../core/help/info_hint.dart';
 import 'package:flutter/material.dart';
+import 'package:khazana/core/theme/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/notification_providers.dart';
@@ -294,6 +295,7 @@ class _HourTile extends StatelessWidget {
     enabled: enabled,
     title: Text(title),
     trailing: DropdownButton<int>(
+      dropdownColor: AppTheme.menuSurface(context),
       value: value.clamp(0, 23),
       onChanged: enabled ? (v) => v == null ? null : onChanged(v) : null,
       items: [
@@ -328,6 +330,7 @@ class _DaysTile extends StatelessWidget {
       enabled: enabled,
       title: Text(title),
       trailing: DropdownButton<int>(
+        dropdownColor: AppTheme.menuSurface(context),
         value: value,
         onChanged: enabled ? (v) => v == null ? null : onChanged(v) : null,
         items: [

@@ -1,6 +1,7 @@
 import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:khazana/core/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -183,6 +184,7 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<AssetType>(
+                      dropdownColor: AppTheme.menuSurface(context),
                       initialValue: _kind,
                       decoration: const InputDecoration(
                         labelText: 'Asset type',
@@ -230,6 +232,7 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                     if (!_isFund) ...[
                       const SizedBox(height: AppSpacing.md),
                       DropdownButtonFormField<String>(
+                        dropdownColor: AppTheme.menuSurface(context),
                         initialValue: _exchange,
                         decoration: const InputDecoration(
                           labelText: 'Exchange',

@@ -1,6 +1,7 @@
 import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:khazana/core/theme/app_theme.dart';
 
 import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -540,6 +541,7 @@ class AccountPicker extends ConsumerWidget {
         ? (value == cashId ? null : value)
         : null;
     return DropdownButtonFormField<String?>(
+      dropdownColor: AppTheme.menuSurface(context),
       initialValue: current,
       isExpanded: true,
       decoration: const InputDecoration(

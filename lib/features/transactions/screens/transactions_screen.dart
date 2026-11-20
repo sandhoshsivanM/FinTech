@@ -1,6 +1,7 @@
 import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:khazana/core/theme/app_theme.dart';
 
 import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -146,6 +147,7 @@ class _FilterBar extends ConsumerWidget {
         List<DropdownMenuItem<String?>> items, void Function(String?) on) {
       return Expanded(
         child: DropdownButtonFormField<String?>(
+          dropdownColor: AppTheme.menuSurface(context),
           key: ValueKey('$label-$value'),
           initialValue: value,
           isExpanded: true,

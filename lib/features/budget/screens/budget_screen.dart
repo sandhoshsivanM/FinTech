@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:khazana/core/theme/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/help/info_hint.dart';
@@ -119,6 +120,7 @@ class _BudgetBody extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
+                dropdownColor: AppTheme.menuSurface(context),
                 initialValue: categoryId,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: [
@@ -147,6 +149,7 @@ class _BudgetBody extends ConsumerWidget {
                 onChanged: (v) => setState(() => rollover = v),
               ),
               DropdownButtonFormField<int>(
+                dropdownColor: AppTheme.menuSurface(context),
                 initialValue: threshold,
                 decoration: const InputDecoration(labelText: 'Alert at'),
                 items: const [

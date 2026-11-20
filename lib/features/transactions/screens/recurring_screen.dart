@@ -1,6 +1,7 @@
 import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:khazana/core/theme/app_theme.dart';
 import '../../../presentation/zentra_kit.dart';
 
 import '../../../core/theme/semantic_colors.dart';
@@ -215,6 +216,7 @@ class _Body extends ConsumerWidget {
                   ),
                 ),
                 DropdownButtonFormField<String>(
+                  dropdownColor: AppTheme.menuSurface(context),
                   initialValue: categoryId,
                   decoration: const InputDecoration(labelText: 'Category'),
                   items: [
@@ -228,6 +230,7 @@ class _Body extends ConsumerWidget {
                   onChanged: (id) => setState(() => accountId = id),
                 ),
                 DropdownButtonFormField<Frequency>(
+                  dropdownColor: AppTheme.menuSurface(context),
                   initialValue: freq,
                   decoration: const InputDecoration(labelText: 'Frequency'),
                   items: [
