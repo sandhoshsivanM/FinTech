@@ -1,6 +1,7 @@
 import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:khazana/core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/semantic_colors.dart';
@@ -180,6 +181,7 @@ class _Body extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 DropdownButtonFormField<InsuranceType>(
+                  dropdownColor: AppTheme.menuSurface(context),
                   initialValue: type,
                   decoration: const InputDecoration(labelText: 'Type'),
                   items: [

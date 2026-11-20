@@ -229,10 +229,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           _tab(Routes.recurring, const RecurringScreen()),
           _tab(Routes.captureInbox, const CaptureInboxScreen()),
           _tab(Routes.calendar, const CalendarLedgerScreen()),
-          _tab(Routes.settings, const SettingsScreen()),
-          _tab(Routes.marketData, const MarketDataSettingsScreen()),
-          _tab(Routes.currency, const CurrencySettingsScreen()),
-          _tab(Routes.notifications, const NotificationSettingsScreen()),
+          // Settings' own sub-screens are children, not siblings: `go` to a
+          // child builds [settings, child], so Android Back returns to
+          // Settings. As siblings, Back had nothing under it and left the app.
+          _tab(
+            Routes.settings,
+            const SettingsScreen(),
+            children: [
+              GoRoute(
+                path: 'market-data',
+                builder: (context, state) => const MarketDataSettingsScreen(),
+              ),
+              GoRoute(
+                path: 'currency',
+                builder: (context, state) => const CurrencySettingsScreen(),
+              ),
+              GoRoute(
+                path: 'notifications',
+                builder: (context, state) =>
+                    const NotificationSettingsScreen(),
+              ),
+            ],
+          ),
         ],
       ),
     ],
@@ -241,6 +259,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
 /// A bottom-nav destination route that swaps in with no transition animation
 /// (instant tab switch — avoids per-switch jank).
+///
+/// Every destination except Home is wrapped in [BackToHome]. Navigation uses
+/// `go`, which replaces the stack, so a top-level screen has nothing under it
+/// and Android Back used to close the app from anywhere. Now Back goes Home,
+/// and only Back on Home leaves.
 GoRoute _tab(
   String path,
   Widget screen, {
@@ -248,8 +271,31 @@ GoRoute _tab(
 }) {
   return GoRoute(
     path: path,
-    pageBuilder: (context, state) =>
-        NoTransitionPage(key: state.pageKey, child: screen),
+    pageBuilder: (context, state) => NoTransitionPage(
+      key: state.pageKey,
+      child: path == Routes.dashboard ? screen : BackToHome(child: screen),
+    ),
     routes: children,
   );
+}
+
+/// Turns system Back on a top-level screen into "go to Home".
+///
+/// Only affects the screen when it is the top of its navigator: a pushed child
+/// (Add transaction, a Settings sub-screen) is above it and pops normally.
+class BackToHome extends StatelessWidget {
+  const BackToHome({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go(Routes.dashboard);
+      },
+      child: child,
+    );
+  }
 }

@@ -77,6 +77,19 @@ abstract final class AppTheme {
   static ThemeData get dark => _build(Brightness.dark);
   static ThemeData get light => _build(Brightness.light);
 
+  /// Opaque background for dropdown menus.
+  ///
+  /// `canvasColor` is deliberately transparent (bare `Material` wrappers rely
+  /// on it to show the backdrop), and `DropdownButton` paints its popup with
+  /// `canvasColor` unless given a `dropdownColor`, which made every menu
+  /// see-through, its items printed over the page behind. Same surface as
+  /// dialogs and bottom sheets. Every dropdown must pass this; a source test
+  /// (`test/widget/dropdown_menu_opaque_test.dart`) enforces it.
+  static Color menuSurface(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? AppColors.darkSurface
+          : Colors.white;
+
   static ThemeData _build(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
 

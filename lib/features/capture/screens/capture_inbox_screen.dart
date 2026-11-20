@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:khazana/core/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -338,6 +339,7 @@ class _ReviewCardState extends ConsumerState<_ReviewCard> {
           ),
           const SizedBox(height: AppSpacing.sm),
           DropdownButtonFormField<String>(
+            dropdownColor: AppTheme.menuSurface(context),
             initialValue: categoryId,
             isExpanded: true,
             decoration: const InputDecoration(
@@ -353,6 +355,7 @@ class _ReviewCardState extends ConsumerState<_ReviewCard> {
           ),
           const SizedBox(height: AppSpacing.sm),
           DropdownButtonFormField<String?>(
+            dropdownColor: AppTheme.menuSurface(context),
             initialValue: accountId,
             isExpanded: true,
             decoration: const InputDecoration(

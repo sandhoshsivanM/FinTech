@@ -1,6 +1,7 @@
 import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:khazana/core/theme/app_theme.dart';
 
 import '../../../core/theme/semantic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,6 +86,7 @@ class _Body extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<GoalType>(
+                dropdownColor: AppTheme.menuSurface(context),
                 initialValue: type,
                 decoration: const InputDecoration(labelText: 'Type'),
                 items: [
