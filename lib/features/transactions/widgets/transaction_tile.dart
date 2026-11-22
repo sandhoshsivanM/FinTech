@@ -5,6 +5,7 @@ import '../../../core/theme/semantic_colors.dart';
 import '../../../core/utils/money_format.dart';
 import 'package:khazana_domain/entities/category.dart';
 import 'package:khazana_domain/entities/transaction.dart';
+import 'package:khazana_domain/services/recurring_income.dart';
 import '../../home/widgets/category_tint.dart';
 import '../screens/transactions_screen.dart';
 
@@ -17,6 +18,7 @@ class TransactionTile extends StatelessWidget {
     required this.category,
     this.onDelete,
     this.onTap,
+    this.recurring,
     super.key,
   });
 
@@ -26,6 +28,9 @@ class TransactionTile extends StatelessWidget {
 
   /// Opens the entry for editing.
   final VoidCallback? onTap;
+
+  /// Set when this income is part of a monthly pattern (a salary, rent).
+  final RecurringIncomeKind? recurring;
 
   Future<bool> _confirm(BuildContext context) async {
     final ok = await showDialog<bool>(
@@ -59,7 +64,8 @@ class TransactionTile extends StatelessWidget {
     final words = Money.toWords(txn.amount);
     final label =
         '${income ? 'Income' : 'Expense'}, $words, ${categoryName(category)}, '
-        '${formatTxnDate(txn.date)}';
+        '${formatTxnDate(txn.date)}'
+        '${recurring != null ? ', ${recurring!.label} income' : ''}';
 
     final row = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
@@ -83,14 +89,27 @@ class TransactionTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 1),
-                Text(
-                  [categoryName(category), formatTxnDate(txn.date)].join(' · '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: scheme.onSurfaceVariant,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        [categoryName(category), formatTxnDate(txn.date)]
+                            .join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    if (recurring != null) ...[
+                      const SizedBox(width: 6),
+                      ExcludeSemantics(
+                        child: RecurringChip(kind: recurring!, color: color),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -141,6 +160,33 @@ class TransactionTile extends StatelessWidget {
               ),
               child: tappable,
             ),
+    );
+  }
+}
+
+/// A small "Salary" / "Regular" pill on income that arrives every month.
+class RecurringChip extends StatelessWidget {
+  const RecurringChip({required this.kind, required this.color, super.key});
+
+  final RecurringIncomeKind kind;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        kind.label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }
