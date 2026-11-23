@@ -86,6 +86,9 @@ describe('encode / decode', () => {
     importBatch: { id: 'ib', vaultId: 'default', at: 1, filename: 'a.csv', kind: 'transactions', created: [{ type: 'txn', id: 't1' }], updatedCount: 0 },
     lot: { id: 'lot', vaultId: 'default', purchaseDate: 1 },
     fxRate: { id: 'USD', code: 'USD', rateToInr: '83.5', asOf: 1, source: 'manual' },
+    sipPlan: { id: 'sip', vaultId: 'default', holdingId: 'h', name: 'Flexi Cap', assetType: 'equity_mf', amount: '5000', dayOfMonth: 5, startDate: '2026-01-05', stepUpPct: 10, remind: true, active: true, createdAt: 1 },
+    sipInstalment: { id: 'si', vaultId: 'default', sipId: 'sip', dueDate: '2026-11-05', status: 'done', amount: '5000', units: '51.856', nav: '96.42', lotId: null, decidedAt: 1 },
+    allocationTarget: { id: 'alloc-p1', vaultId: 'default', targets: { equity: 60, debt: 40 }, tolerance: 2, updatedAt: 1 },
   };
 
   test('every synced type round-trips through ciphertext', async () => {

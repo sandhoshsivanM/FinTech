@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, LineChart, BarChart3, TrendingUp, Table2, Star, CandlestickChart,
   Coins, Landmark, Wallet, Receipt, CalendarDays, CalendarClock, PieChart, Repeat, Flag, CreditCard,
-  Shield, ShieldCheck, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle, Upload, Stethoscope, Scale, Inbox,
+  Shield, ShieldCheck, LifeBuoy, Gauge, Newspaper, Bell, Settings, HelpCircle, Upload, Stethoscope, Scale, Inbox, Target, Repeat2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -61,6 +61,8 @@ export const NAV_GROUPS: NavGroup[] = [
       // separate them: one is the summary, the other is the table it summarises.
       { href: '/investments', label: 'Portfolio', icon: TrendingUp, description: 'Allocation, returns, performance' },
       { href: '/holdings', label: 'Holdings', icon: Table2, description: 'Every position, one row each' },
+      { href: '/allocation', label: 'Allocation', icon: Target, description: 'Target vs actual mix' },
+      { href: '/sips', label: 'SIPs', icon: Repeat2, description: 'Monthly investments, due and done' },
       { href: '/watchlist', label: 'Watchlist', icon: Star, description: 'Things you do not own yet' },
       { href: '/markets', label: 'Markets', icon: CandlestickChart, description: 'Index levels and sessions' },
       { href: '/dividends', label: 'Dividends', icon: Coins, description: 'Income your holdings paid out' },

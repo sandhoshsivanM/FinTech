@@ -7,7 +7,7 @@ import type { KhazanaData, KhazanaStore } from '@khazana/screens/store';
 const empty = (): KhazanaData => ({
   txns: [], categories: [], budgets: [], goals: [], holdings: [], liabilities: [], recurring: [], insurances: [],
   snapshots: [], importBatches: [], lots: [], accounts: [], postings: [], transfers: [], pendingCaptures: [],
-  watchlist: [], dividends: [], alerts: [], fxRates: [],
+  watchlist: [], dividends: [], alerts: [], fxRates: [], sipPlans: [], sipInstalments: [], allocationTargets: [],
 });
 
 export function createMockStore(seed: Partial<KhazanaStore> = {}) {
