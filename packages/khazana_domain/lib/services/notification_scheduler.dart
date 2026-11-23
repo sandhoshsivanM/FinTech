@@ -125,6 +125,29 @@ class BudgetFact {
   final String? amountText;
 }
 
+/// What happened today, for the evening digest. Counts always; the amounts are
+/// pre-formatted by the caller and only shown when [NotifyPrefs.hideAmounts]
+/// is off, because the lock screen is readable without the PIN.
+class TodayFact {
+  const TodayFact({
+    this.spentCount = 0,
+    this.receivedCount = 0,
+    this.toReview = 0,
+    this.spentText,
+    this.receivedText,
+  });
+
+  final int spentCount;
+  final int receivedCount;
+
+  /// Captures waiting in the review inbox.
+  final int toReview;
+  final String? spentText;
+  final String? receivedText;
+
+  bool get hasActivity => spentCount + receivedCount + toReview > 0;
+}
+
 /// User-facing settings. One shape, mirrored in `notifyPrefs.ts` and persisted
 /// as JSON under `notification_prefs_v1`.
 class NotifyPrefs {
@@ -279,9 +302,15 @@ class NotificationPlanInput {
     this.marketAlerts = const [],
     this.deliveries = const {},
     this.maxPending = 200,
+    this.today,
   });
 
   final NotifyRoutes routes;
+
+  /// Today's spending and income so far. Only used when the digest fires
+  /// later today; a digest planned for tomorrow would be describing the wrong
+  /// day.
+  final TodayFact? today;
 
   final int now;
 
@@ -566,7 +595,26 @@ NotificationPlan planNotifications(NotificationPlanInput input) {
         .where((e) =>
             prefs.allows(e.category) && e.dueAt >= input.now && e.dueAt <= horizon)
         .length;
-    if (upcoming > 0) {
+    final day = input.today;
+    final todayFact = (day != null &&
+            day.hasActivity &&
+            localEpochDay(at, input.tzOffsetMinutes) == today)
+        ? day
+        : null;
+    if (todayFact != null) {
+      final key = 'digest:${localDateKey(at, input.tzOffsetMinutes)}';
+      if (!suppressed(key, input.deliveries, prefs.cooldownHours, input.now)) {
+        scheduled.add(PlannedNotification(
+          dedupeKey: key,
+          fireAt: at,
+          category: NotifyCategory.digest,
+          title: 'Your day so far',
+          body: _todayBody(todayFact, upcoming, prefs, input.now,
+              input.tzOffsetMinutes),
+          deepLink: input.routes.dashboard,
+        ));
+      }
+    } else if (upcoming > 0) {
       final key = 'digest:${localDateKey(at, input.tzOffsetMinutes)}';
       if (!suppressed(key, input.deliveries, prefs.cooldownHours, input.now)) {
         scheduled.add(PlannedNotification(
@@ -611,6 +659,30 @@ NotificationPlan planNotifications(NotificationPlanInput input) {
 int _byFireAt(PlannedNotification a, PlannedNotification b) {
   final t = a.fireAt.compareTo(b.fireAt);
   return t != 0 ? t : a.dedupeKey.compareTo(b.dedupeKey);
+}
+
+/// "As of 14:05: ₹1,250 spent · ₹45,000 received · 2 to review." The time is
+/// there because the text is written when the app was last open, not when it
+/// fires.
+String _todayBody(
+    TodayFact t, int upcoming, NotifyPrefs prefs, int now, int tzOffsetMinutes) {
+  final amounts = !prefs.hideAmounts;
+  final parts = <String>[
+    if (t.spentCount > 0)
+      amounts && t.spentText != null
+          ? '${t.spentText} spent'
+          : '${t.spentCount} ${_plural(t.spentCount, 'spend', 'spends')}',
+    if (t.receivedCount > 0)
+      amounts && t.receivedText != null
+          ? '${t.receivedText} received'
+          : '${t.receivedCount} ${_plural(t.receivedCount, 'credit', 'credits')}',
+    if (t.toReview > 0) '${t.toReview} to review',
+    if (upcoming > 0) '$upcoming due within a day',
+  ];
+  final m = localMinuteOfDay(now, tzOffsetMinutes);
+  final hhmm = '${(m ~/ 60).toString().padLeft(2, '0')}:'
+      '${(m % 60).toString().padLeft(2, '0')}';
+  return 'As of $hhmm: ${parts.join(' · ')}.';
 }
 
 String _keyPrefix(NotifyCategory c) => switch (c) {

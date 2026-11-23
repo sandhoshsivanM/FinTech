@@ -17,6 +17,7 @@ import {
   stableId,
   suppressed,
   type BudgetFact,
+  type TodayFact,
   type DueEvent,
   type NotificationPlanInput,
   type NotifyPrefs,
@@ -90,6 +91,7 @@ function inputFrom(c: Record<string, unknown>): NotificationPlanInput {
     })),
     deliveries,
     maxPending: (c.maxPending as number) ?? 200,
+    today: (c.today as TodayFact | undefined) ?? null,
   };
 }
 

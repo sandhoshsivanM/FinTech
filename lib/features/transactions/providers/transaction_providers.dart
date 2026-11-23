@@ -4,6 +4,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/services/notification_sync_service.dart';
 import '../../../core/di/data_providers.dart';
 import 'package:khazana_domain/entities/transaction.dart';
 import 'package:khazana_domain/repositories/transaction_repository.dart';
@@ -35,8 +36,10 @@ class TransactionError extends TransactionState {
 /// save/delete also maintains the double-entry postings via [LedgerWriter] so
 /// the chart of accounts stays in step with the transaction header (PRD §16).
 class TransactionNotifier extends StateNotifier<TransactionState> {
-  TransactionNotifier(this._repo, this._vaultId, {LedgerWriter? ledger})
+  TransactionNotifier(this._repo, this._vaultId,
+      {LedgerWriter? ledger, void Function()? onWrite})
       : _ledger = ledger,
+        _onWrite = onWrite,
         super(const TransactionLoading()) {
     _sub = _repo.watch(_vaultId).listen(
           (txns) => state = TransactionData(txns),
@@ -47,6 +50,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
   final ITransactionRepository _repo;
   final String _vaultId;
   final LedgerWriter? _ledger;
+  final void Function()? _onWrite;
   late final StreamSubscription<List<Txn>> _sub;
 
   /// Records a transaction and its postings. Returns the new entry's id.
@@ -85,17 +89,20 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     );
     await _repo.save(txn);
     await _ledger?.writeEntry(txn, categoryName: categoryName);
+    _onWrite?.call();
     return txn.id;
   }
 
   Future<void> update(Txn txn, {String? categoryName}) async {
     await _repo.save(txn);
     await _ledger?.writeEntry(txn, categoryName: categoryName);
+    _onWrite?.call();
   }
 
   Future<void> remove(String id) async {
     await _ledger?.deleteEntry(id);
     await _repo.delete(id);
+    _onWrite?.call();
   }
 
   @override
@@ -110,5 +117,7 @@ final transactionListProvider =
   final repo = ref.watch(transactionRepositoryProvider);
   final vaultId = ref.watch(currentVaultIdProvider);
   return TransactionNotifier(repo, vaultId,
-      ledger: ref.watch(ledgerWriterProvider));
+      ledger: ref.watch(ledgerWriterProvider),
+      // The evening digest quotes today's spending; keep it current.
+      onWrite: ref.reconcileNotifications);
 });

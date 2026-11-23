@@ -95,6 +95,20 @@ export interface BudgetFact {
   amountText?: string | null;
 }
 
+/**
+ * What happened today, for the evening digest. Counts always; the amounts are
+ * pre-formatted by the caller and only shown when `hideAmounts` is off, because
+ * the lock screen is readable without the PIN.
+ */
+export interface TodayFact {
+  spentCount?: number;
+  receivedCount?: number;
+  /** Captures waiting in the review inbox. */
+  toReview?: number;
+  spentText?: string | null;
+  receivedText?: string | null;
+}
+
 /** User-facing settings. Mirrors `NotifyPrefs` in the Dart twin, field for field. */
 export interface NotifyPrefs {
   /**
@@ -177,6 +191,11 @@ export interface NotificationPlanInput {
    * 65th. Everything else gets a sane ceiling instead.
    */
   maxPending?: number;
+  /**
+   * Today's spending and income so far. Only used when the digest fires later
+   * today; a digest planned for tomorrow would be describing the wrong day.
+   */
+  today?: TodayFact | null;
 }
 
 export interface NotificationPlan {
@@ -335,6 +354,32 @@ const EMPTY_PLAN: NotificationPlan = {
  * Turns the current state of the vault into the set of notifications that
  * should exist. Deterministic: same input, same output, always.
  */
+/**
+ * "As of 14:05: ₹1,250 spent · ₹45,000 received · 2 to review." The time is
+ * there because the text is written when the app was last open, not when it
+ * fires.
+ */
+function todayBody(t: TodayFact, upcoming: number, prefs: NotifyPrefs, now: number, tz: number): string {
+  const amounts = !prefs.hideAmounts;
+  const spent = t.spentCount ?? 0;
+  const received = t.receivedCount ?? 0;
+  const review = t.toReview ?? 0;
+  const parts: string[] = [];
+  if (spent > 0) {
+    parts.push(amounts && t.spentText != null ? `${t.spentText} spent` : `${spent} ${plural(spent, 'spend', 'spends')}`);
+  }
+  if (received > 0) {
+    parts.push(amounts && t.receivedText != null
+      ? `${t.receivedText} received`
+      : `${received} ${plural(received, 'credit', 'credits')}`);
+  }
+  if (review > 0) parts.push(`${review} to review`);
+  if (upcoming > 0) parts.push(`${upcoming} due within a day`);
+  const m = localMinuteOfDay(now, tz);
+  const hhmm = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  return `As of ${hhmm}: ${parts.join(' · ')}.`;
+}
+
 export function planNotifications(input: NotificationPlanInput): NotificationPlan {
   const prefs = input.prefs ?? DEFAULT_NOTIFY_PREFS;
   if (!prefs.enabled) return EMPTY_PLAN;
@@ -430,7 +475,23 @@ export function planNotifications(input: NotificationPlanInput): NotificationPla
     const upcoming = dueEvents.filter(
       (e) => allows(prefs, e.category) && e.dueAt >= now && e.dueAt <= horizon,
     ).length;
-    if (upcoming > 0) {
+    const day = input.today;
+    const active = day
+      ? (day.spentCount ?? 0) + (day.receivedCount ?? 0) + (day.toReview ?? 0) > 0
+      : false;
+    if (day && active && localEpochDay(at, tz) === today) {
+      const key = `digest:${localDateKey(at, tz)}`;
+      if (!suppressed(key, deliveries, prefs.cooldownHours, now)) {
+        scheduled.push({
+          dedupeKey: key,
+          fireAt: at,
+          category: 'digest',
+          title: 'Your day so far',
+          body: todayBody(day, upcoming, prefs, now, tz),
+          deepLink: input.routes.dashboard,
+        });
+      }
+    } else if (upcoming > 0) {
       const key = `digest:${localDateKey(at, tz)}`;
       if (!suppressed(key, deliveries, prefs.cooldownHours, now)) {
         scheduled.push({

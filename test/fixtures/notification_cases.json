@@ -591,6 +591,126 @@
         "missed": [],
         "truncated": 0
       }
+    },
+    {
+      "name": "the digest sums up today in counts while amounts are hidden",
+      "now": "2026-08-18T14:05:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": {
+        "categories": [
+          "digest"
+        ],
+        "digestHour": 20
+      },
+      "today": {
+        "spentCount": 3,
+        "receivedCount": 1,
+        "toReview": 2,
+        "spentText": "₹1,250",
+        "receivedText": "₹45,000"
+      },
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "digest:2026-08-18",
+            "fireAt": "2026-08-18T20:00:00+05:30",
+            "category": "digest",
+            "title": "Your day so far",
+            "body": "As of 14:05: 3 spends · 1 credit · 2 to review.",
+            "deepLink": "/dashboard"
+          }
+        ],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+    {
+      "name": "the digest shows today's amounts once the user allows them",
+      "now": "2026-08-18T14:05:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": {
+        "categories": [
+          "digest"
+        ],
+        "digestHour": 20,
+        "hideAmounts": false
+      },
+      "today": {
+        "spentCount": 3,
+        "receivedCount": 1,
+        "toReview": 2,
+        "spentText": "₹1,250",
+        "receivedText": "₹45,000"
+      },
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "digest:2026-08-18",
+            "fireAt": "2026-08-18T20:00:00+05:30",
+            "category": "digest",
+            "title": "Your day so far",
+            "body": "As of 14:05: ₹1,250 spent · ₹45,000 received · 2 to review.",
+            "deepLink": "/dashboard"
+          }
+        ],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+    {
+      "name": "captures waiting for review are enough for a digest",
+      "now": "2026-08-18T14:05:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": {
+        "categories": [
+          "digest"
+        ],
+        "digestHour": 20
+      },
+      "today": {
+        "toReview": 1
+      },
+      "expect": {
+        "immediate": [],
+        "scheduled": [
+          {
+            "dedupeKey": "digest:2026-08-18",
+            "fireAt": "2026-08-18T20:00:00+05:30",
+            "category": "digest",
+            "title": "Your day so far",
+            "body": "As of 14:05: 1 to review.",
+            "deepLink": "/dashboard"
+          }
+        ],
+        "missed": [],
+        "truncated": 0
+      }
+    },
+    {
+      "name": "after the digest hour, today's figures are not sent as tomorrow's",
+      "now": "2026-08-18T21:30:00+05:30",
+      "tzOffsetMinutes": 330,
+      "prefs": {
+        "categories": [
+          "digest"
+        ],
+        "digestHour": 20
+      },
+      "today": {
+        "spentCount": 3,
+        "receivedCount": 1,
+        "toReview": 2,
+        "spentText": "₹1,250",
+        "receivedText": "₹45,000"
+      },
+      "expect": {
+        "immediate": [],
+        "scheduled": [],
+        "missed": [],
+        "truncated": 0
+      }
     }
   ]
 }

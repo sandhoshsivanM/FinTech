@@ -96,6 +96,16 @@ void main() {
           e.key as String: _ms(e.value as String),
       },
       maxPending: c['maxPending'] as int? ?? 200,
+      today: switch (c['today']) {
+        final Map<String, dynamic> t => TodayFact(
+            spentCount: t['spentCount'] as int? ?? 0,
+            receivedCount: t['receivedCount'] as int? ?? 0,
+            toReview: t['toReview'] as int? ?? 0,
+            spentText: t['spentText'] as String?,
+            receivedText: t['receivedText'] as String?,
+          ),
+        _ => null,
+      },
     );
   }
 
