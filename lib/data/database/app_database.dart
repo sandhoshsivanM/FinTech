@@ -18,6 +18,7 @@ import 'pending_capture_dao.dart';
 import 'portfolio_dao.dart';
 import 'posting_dao.dart';
 import 'recurring_dao.dart';
+import 'sip_dao.dart';
 import 'snapshot_dao.dart';
 import 'transaction_dao.dart';
 import 'vault_executor.dart';
@@ -55,6 +56,9 @@ part 'app_database.g.dart';
     FundHoldings,
     BenchmarkSeries,
     NotificationDeliveries,
+    AllocationTargets,
+    SipPlans,
+    SipInstalments,
   ],
   daos: [
     TransactionDao,
@@ -73,6 +77,7 @@ part 'app_database.g.dart';
     PendingCaptureDao,
     NotificationDeliveryDao,
     PortfolioDao,
+    SipDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -88,7 +93,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -145,6 +150,18 @@ class AppDatabase extends _$AppDatabase {
             } else {
               await _addColumnIfMissing(
                   m, recurringRules, recurringRules.accountId);
+            }
+          }
+          // v9: SIP plans, their instalments and allocation targets. Three new
+          // tables, nothing existing touched. Guarded so a vault that somehow
+          // already has one (a partially applied upgrade) does not fail here.
+          if (from < 9) {
+            for (final t in <TableInfo>[allocationTargets, sipPlans, sipInstalments]) {
+              final exists = await customSelect(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+                variables: [Variable.withString(t.actualTableName)],
+              ).getSingleOrNull();
+              if (exists == null) await m.createTable(t);
             }
           }
         },
@@ -393,6 +410,10 @@ class AppDatabase extends _$AppDatabase {
       // leaves every holding on screen" the moment the UI moved to the lot
       // model. A privacy promise this app makes in writing, so it is tested:
       // see test/integration/erase_all_data_test.dart.
+      // SIP answers point at trades and plans at instruments, so they go first.
+      await delete(sipInstalments).go();
+      await delete(sipPlans).go();
+      await delete(allocationTargets).go();
       await delete(dividends).go();
       await delete(instrumentPrices).go();
       await delete(trades).go();
