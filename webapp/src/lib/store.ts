@@ -58,7 +58,7 @@ const VAULT_ID = 'default';
  * the same version, and a sixth literal elsewhere in the app would sit outside
  * that check and drift silently.
  */
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.1.0';
 const VERIFIER = 'FTOS-OK';
 
 // Bump when the persisted data shape changes; add a step in runMigrations().
