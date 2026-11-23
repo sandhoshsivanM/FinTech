@@ -17,6 +17,22 @@ export const DEFAULT_ALLOCATION_TOLERANCE = 2;
 
 export type AllocationTargets = Partial<Record<AssetGroup, number>>;
 
+/**
+ * The stored targets: one record per profile (`STORE.allocationTarget`), keyed
+ * by `allocationTargetId(profileId)` so a save always replaces, never adds.
+ */
+export interface AllocationTargetRecord {
+  id: string;
+  vaultId: string;
+  profileId?: string;
+  targets: AllocationTargets;
+  /** Points either side of target that still read "On track". */
+  tolerance: number;
+  updatedAt: number;
+}
+
+export const allocationTargetId = (profileId: string): string => `alloc:${profileId}`;
+
 export interface AllocationInput {
   type: AssetType;
   /** Current market value, a Decimal string. */

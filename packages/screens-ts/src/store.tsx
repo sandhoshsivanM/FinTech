@@ -21,6 +21,8 @@ import type {
   Insurance, Liability, NetWorthSnapshot, PendingCapture, Posting, Profile, ProfileKind,
   RecurringRule, Transfer, Txn, WatchItem,
 } from '@khazana/domain/types';
+import type { AllocationTargetRecord } from '@khazana/domain/allocation';
+import type { SipInstalment, SipPlan } from '@khazana/domain/sip';
 import type { CaptureEdits, CaptureInput, CaptureOutcome } from './lib/capture';
 
 import type { AccentName, ThemeChoice } from '@khazana/domain/appearance';
@@ -46,6 +48,10 @@ export interface KhazanaData {
   watchlist: WatchItem[];
   dividends: Dividend[];
   alerts: Alert[];
+  sipPlans: SipPlan[];
+  sipInstalments: SipInstalment[];
+  /** At most one per profile. */
+  allocationTargets: AllocationTargetRecord[];
   /** Vault-wide, not profile-scoped: an exchange rate is a fact about the world. */
   fxRates: FxRate[];
 }

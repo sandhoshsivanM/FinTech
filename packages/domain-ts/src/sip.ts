@@ -52,6 +52,11 @@ export interface SipInstalment {
   nav?: string | null;
   /** The lot this created, so Undo removes exactly that buy. */
   lotId?: string | null;
+  /**
+   * The holding as it was before Mark done, so Undo can put it back exactly
+   * rather than reverse an average (which divides, and so rounds).
+   */
+  holdingBefore?: { quantity: string; avgCost: string; firstPurchaseDate?: number | null } | null;
   decidedAt: number;
 }
 

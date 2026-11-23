@@ -81,7 +81,14 @@ class PortfolioDao extends DatabaseAccessor<AppDatabase>
           .write(InstrumentsCompanion(industryOverride: Value(industry)));
 
   Future<void> deleteInstrument(String id) async {
-    // Children first — the FKs point here.
+    // Children first — the FKs point here. SIP plans for this instrument go
+    // too: a reminder to buy something no longer tracked is noise.
+    await customStatement(
+        'DELETE FROM sip_instalments WHERE sip_id IN '
+        '(SELECT id FROM sip_plans WHERE instrument_id = ?)',
+        [id]);
+    await customStatement(
+        'DELETE FROM sip_plans WHERE instrument_id = ?', [id]);
     await (delete(trades)..where((t) => t.instrumentId.equals(id))).go();
     await (delete(instrumentPrices)..where((t) => t.instrumentId.equals(id)))
         .go();

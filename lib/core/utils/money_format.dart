@@ -10,6 +10,13 @@ abstract final class Money {
   /// Display string, e.g. ₹10,000.00 (Indian grouping).
   static String format(Decimal amount) => _inr.format(amount.toDouble());
 
+  static final NumberFormat _inrWhole =
+      NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+
+  /// Whole rupees, e.g. ₹10,000. For figures that are already rounded to the
+  /// rupee — SIP amounts, allocation gaps — where ".00" is noise.
+  static String whole(Decimal amount) => _inrWhole.format(amount.toDouble());
+
   /// Short form for chart axes: ₹1.2L, ₹90k, ₹450.
   ///
   /// Uses the Indian scale — lakh and crore — because the rest of the app
