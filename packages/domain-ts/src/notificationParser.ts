@@ -23,6 +23,22 @@ export const defaultBankProfiles: BankProfile[] = [
   { id: 'sbi', name: 'State Bank of India', senderKeywords: ['sbi'] },
   { id: 'axis', name: 'Axis Bank', senderKeywords: ['axis'] },
   { id: 'kotak', name: 'Kotak Mahindra Bank', senderKeywords: ['kotak'] },
+  // Keywords also match the message body when the sender is unknown, so each
+  // one must be distinctive: 'bob' or 'yes' alone would hit ordinary words, and
+  // 'bank of india' is inside 'state bank of india'. Short codes are DLT sender
+  // headers (VM-CANBNK, AD-YESBNK, ...).
+  { id: 'canara', name: 'Canara Bank', senderKeywords: ['canbnk', 'canara'] },
+  { id: 'pnb', name: 'Punjab National Bank', senderKeywords: ['pnbsms', 'pnb'] },
+  { id: 'bob', name: 'Bank of Baroda', senderKeywords: ['bobtxn', 'bobsms', 'bank of baroda'] },
+  { id: 'union', name: 'Union Bank of India', senderKeywords: ['unionb', 'union bank'] },
+  { id: 'indusind', name: 'IndusInd Bank', senderKeywords: ['indusb', 'indusind'] },
+  { id: 'yes', name: 'Yes Bank', senderKeywords: ['yesbnk', 'yes bank'] },
+  { id: 'idfc', name: 'IDFC First Bank', senderKeywords: ['idfcfb', 'idfc'] },
+  { id: 'federal', name: 'Federal Bank', senderKeywords: ['fedbnk', 'federal bank'] },
+  { id: 'idbi', name: 'IDBI Bank', senderKeywords: ['idbibk', 'idbi'] },
+  { id: 'boi', name: 'Bank of India', senderKeywords: ['boiind', 'boibnk'] },
+  { id: 'au', name: 'AU Small Finance Bank', senderKeywords: ['aubank', 'au small finance'] },
+  { id: 'paytm', name: 'Paytm Payments Bank', senderKeywords: ['paytmb', 'paytm payments bank'] },
 ];
 
 /** The payment rail or product a message is about. */
@@ -63,15 +79,36 @@ const PROMO_RE =
 const REFUND_RE = /\b(?:refund|refunded|reversed|reversal)\b/;
 const PAYMENT_RE = /\bpayment\b/;
 
-const AMOUNT_RE = /(?:rs\.?|inr|₹) ?([0-9][0-9,]*(?:\.[0-9]{1,2})?)/;
+const AMOUNT_RE = /(?:rs[.:]?|inr|₹) ?([0-9][0-9,]*(?:\.[0-9]{1,2})?)/;
+// Bank of Baroda and others put the direction right after the amount:
+// "Rs.500.00 Dr. from A/C XX1234 and Cr. to shop@upi". Only an amount-adjacent
+// Dr/Cr counts, so a payee called "Dr Sharma" never flips the direction.
+const AMOUNT_DIR_RE = /(?:rs[.:]?|inr|₹) ?[0-9][0-9,]*(?:\.[0-9]{1,2})? ?(dr|cr)\b/;
 const BARE_AMOUNT_RE = /\b(?:debited|credited) (?:by|with|for) ([0-9][0-9,]*(?:\.[0-9]{1,2})?)\b/;
 const BALANCE_RE =
-  /(?:available balance|avl\.? ?bal(?:ance)?|a\/c bal(?:ance)?|\bbal(?:ance)?) ?(?:is )?:? ?(?:rs\.?|inr|₹)? ?([0-9][0-9,]*(?:\.[0-9]{1,2})?)/;
+  /(?:available balance|avl\.? ?bal(?:ance)?|a\/c bal(?:ance)?|\bbal(?:ance)?) ?(?:is )?:? ?(?:rs[.:]?|inr|₹)? ?([0-9][0-9,]*(?:\.[0-9]{1,2})?)/;
 const BALANCE_RE_G = new RegExp(BALANCE_RE.source, 'g');
 const LIMIT_RE_G =
-  /(?:avl\.? ?(?:lmt|limit)|available (?:credit )?limit) ?:? ?(?:rs\.?|inr|₹)? ?[0-9][0-9,]*(?:\.[0-9]{1,2})?/g;
-const MERCHANT_RE =
-  /(?:\btowards|\bvpa|\bat|\bto) ([a-z0-9][a-z0-9 &@_-]*?) ?(?:[.,(]|\bon\b|\bvia\b|\bref|\btxn\b|\bavl\b|\busing\b|\binfo\b|\bfrom\b|$)/;
+  /(?:avl\.? ?(?:lmt|limit)|available (?:credit )?limit) ?:? ?(?:rs[.:]?|inr|₹)? ?[0-9][0-9,]*(?:\.[0-9]{1,2})?/g;
+// Rail prefixes ("towards UPI/swiggy@ybl", "to VPA shop@icici") are skipped so
+// the name is the payee, not the payment method.
+const MERCHANT_RE_G =
+  /(?:\btowards|\bvpa|\bat|\bto) (?:(?:upi|neft|imps|rtgs)(?:\/| to )|vpa )?([a-z0-9][a-z0-9 &@_-]*?) ?(?:[.,(]|\bon\b|\bvia\b|\bref|\btxn\b|\bavl\b|\busing\b|\binfo\b|\bfrom\b|\bupi\b|$)/g;
+// Credits name the sender with "from". Only tried for income, and only after
+// MERCHANT_RE_G found nothing, because debits say "from your a/c" too.
+const PAYER_RE_G =
+  /\bfrom (?:(?:upi|neft|imps|rtgs)(?:\/| to )|vpa )?([a-z0-9][a-z0-9 &@_-]*?) ?(?:[.,(]|\bon\b|\bvia\b|\bref|\btxn\b|\bavl\b|\busing\b|\binfo\b|\bfrom\b|\bupi\b|$)/g;
+// "debited to your account XXX4321" names the user's own account, not a payee.
+const OWN_ACCOUNT_RE = /^(?:your\b|ac\b|acct\b|account\b|[x*]{2,}[0-9])/;
+
+function merchantOf(lower: string, re: RegExp): string | null {
+  for (const m of lower.matchAll(re)) {
+    const raw = m[1]?.trim();
+    if (!raw || OWN_ACCOUNT_RE.test(raw)) continue;
+    return raw;
+  }
+  return null;
+}
 const DATE_RE = /\bon (\d{1,2}[-/][A-Za-z0-9]{2,3}[-/]\d{2,4}|\d{4}-\d{2}-\d{2})/;
 
 // A reference only counts after a keyword: a bare 12-digit run is as likely to
@@ -160,9 +197,15 @@ export function parseNotification(
 
   if (OTP_RE.test(lower) || FAILED_RE.test(lower)) return null;
 
+  const availableBalance = parseAmount(BALANCE_RE.exec(lower)?.[1]);
+  const cleaned = lower.replace(BALANCE_RE_G, ' ').replace(LIMIT_RE_G, ' ');
+
+  // Read from `cleaned` so a balance printed as "Rs 9,000.00 Cr" is not
+  // mistaken for the direction of the transaction.
+  const dir = AMOUNT_DIR_RE.exec(cleaned)?.[1];
   const words = lower.replace(CARD_PHRASE_RE, 'card');
-  const hasDebit = DEBIT_WORDS.some((w) => words.includes(w));
-  const hasCredit = CREDIT_WORDS.some((w) => words.includes(w));
+  const hasDebit = dir !== undefined ? dir === 'dr' : DEBIT_WORDS.some((w) => words.includes(w));
+  const hasCredit = dir !== undefined ? dir === 'cr' : CREDIT_WORDS.some((w) => words.includes(w));
   const isRefund = REFUND_RE.test(words);
   if (!hasDebit && !hasCredit && !isRefund) return null;
 
@@ -170,9 +213,6 @@ export function parseNotification(
     lower.includes('card') &&
     PAYMENT_RE.test(lower) &&
     (lower.includes('received') || lower.includes('credited'));
-
-  const availableBalance = parseAmount(BALANCE_RE.exec(lower)?.[1]);
-  const cleaned = lower.replace(BALANCE_RE_G, ' ').replace(LIMIT_RE_G, ' ');
   const amount = parseAmount(AMOUNT_RE.exec(cleaned)?.[1] ?? BARE_AMOUNT_RE.exec(cleaned)?.[1]);
   if (!amount || amount.isZero()) return null;
 
@@ -192,8 +232,8 @@ export function parseNotification(
         ? 'income'
         : 'spend';
 
-  const merchantRaw = MERCHANT_RE.exec(lower)?.[1]?.trim();
-  const merchant = merchantRaw && merchantRaw.length > 0 ? merchantRaw : null;
+  const merchant =
+    merchantOf(lower, MERCHANT_RE_G) ?? (type === 'income' ? merchantOf(lower, PAYER_RE_G) : null);
 
   const dm = DATE_RE.exec(lower);
   const timestamp = (dm && parseEmbeddedDate(dm[1])) ?? localYmd(opts.now ?? Date.now());

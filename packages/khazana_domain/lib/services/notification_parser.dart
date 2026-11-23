@@ -28,6 +28,22 @@ const List<BankProfile> defaultBankProfiles = [
   BankProfile(id: 'sbi', name: 'State Bank of India', senderKeywords: ['sbi']),
   BankProfile(id: 'axis', name: 'Axis Bank', senderKeywords: ['axis']),
   BankProfile(id: 'kotak', name: 'Kotak Mahindra Bank', senderKeywords: ['kotak']),
+  // Keywords also match the message body when the sender is unknown, so each
+  // one must be distinctive: 'bob' or 'yes' alone would hit ordinary words, and
+  // 'bank of india' is inside 'state bank of india'. Short codes are DLT sender
+  // headers (VM-CANBNK, AD-YESBNK, ...).
+  BankProfile(id: 'canara', name: 'Canara Bank', senderKeywords: ['canbnk', 'canara']),
+  BankProfile(id: 'pnb', name: 'Punjab National Bank', senderKeywords: ['pnbsms', 'pnb']),
+  BankProfile(id: 'bob', name: 'Bank of Baroda', senderKeywords: ['bobtxn', 'bobsms', 'bank of baroda']),
+  BankProfile(id: 'union', name: 'Union Bank of India', senderKeywords: ['unionb', 'union bank']),
+  BankProfile(id: 'indusind', name: 'IndusInd Bank', senderKeywords: ['indusb', 'indusind']),
+  BankProfile(id: 'yes', name: 'Yes Bank', senderKeywords: ['yesbnk', 'yes bank']),
+  BankProfile(id: 'idfc', name: 'IDFC First Bank', senderKeywords: ['idfcfb', 'idfc']),
+  BankProfile(id: 'federal', name: 'Federal Bank', senderKeywords: ['fedbnk', 'federal bank']),
+  BankProfile(id: 'idbi', name: 'IDBI Bank', senderKeywords: ['idbibk', 'idbi']),
+  BankProfile(id: 'boi', name: 'Bank of India', senderKeywords: ['boiind', 'boibnk']),
+  BankProfile(id: 'au', name: 'AU Small Finance Bank', senderKeywords: ['aubank', 'au small finance']),
+  BankProfile(id: 'paytm', name: 'Paytm Payments Bank', senderKeywords: ['paytmb', 'paytm payments bank']),
 ];
 
 /// The normalized output of parsing one message — the *only* thing that leaves
@@ -130,18 +146,31 @@ class NotificationParser {
   // Amounts must carry a currency token so we never mistake an account number,
   // card suffix or date for the amount.
   static final _amountRe =
-      RegExp(r'(?:rs\.?|inr|₹) ?([0-9][0-9,]*(?:\.[0-9]{1,2})?)');
+      RegExp(r'(?:rs[.:]?|inr|₹) ?([0-9][0-9,]*(?:\.[0-9]{1,2})?)');
   // SBI writes "debited by 120.0" with no currency token at all.
+  // Bank of Baroda and others put the direction right after the amount:
+  // "Rs.500.00 Dr. from A/C XX1234 and Cr. to shop@upi". Only an amount-adjacent
+  // Dr/Cr counts, so a payee called "Dr Sharma" never flips the direction.
+  static final _amountDirRe =
+      RegExp(r'(?:rs[.:]?|inr|₹) ?[0-9][0-9,]*(?:\.[0-9]{1,2})? ?(dr|cr)\b');
   static final _bareAmountRe = RegExp(
       r'\b(?:debited|credited) (?:by|with|for) ([0-9][0-9,]*(?:\.[0-9]{1,2})?)\b');
   // Stripped so they are never read as the transaction amount. A card's
   // available *limit* is stripped too, but is not a balance.
   static final _balanceRe = RegExp(
-      r'(?:available balance|avl\.? ?bal(?:ance)?|a/c bal(?:ance)?|\bbal(?:ance)?) ?(?:is )?:? ?(?:rs\.?|inr|₹)? ?([0-9][0-9,]*(?:\.[0-9]{1,2})?)');
+      r'(?:available balance|avl\.? ?bal(?:ance)?|a/c bal(?:ance)?|\bbal(?:ance)?) ?(?:is )?:? ?(?:rs[.:]?|inr|₹)? ?([0-9][0-9,]*(?:\.[0-9]{1,2})?)');
   static final _limitRe = RegExp(
-      r'(?:avl\.? ?(?:lmt|limit)|available (?:credit )?limit) ?:? ?(?:rs\.?|inr|₹)? ?[0-9][0-9,]*(?:\.[0-9]{1,2})?');
+      r'(?:avl\.? ?(?:lmt|limit)|available (?:credit )?limit) ?:? ?(?:rs[.:]?|inr|₹)? ?[0-9][0-9,]*(?:\.[0-9]{1,2})?');
+  // Rail prefixes ("towards UPI/swiggy@ybl", "to VPA shop@icici") are skipped so
+  // the name is the payee, not the payment method.
   static final _merchantRe = RegExp(
-      r'(?:\btowards|\bvpa|\bat|\bto) ([a-z0-9][a-z0-9 &@_-]*?) ?(?:[.,(]|\bon\b|\bvia\b|\bref|\btxn\b|\bavl\b|\busing\b|\binfo\b|\bfrom\b|$)');
+      r'(?:\btowards|\bvpa|\bat|\bto) (?:(?:upi|neft|imps|rtgs)(?:/| to )|vpa )?([a-z0-9][a-z0-9 &@_-]*?) ?(?:[.,(]|\bon\b|\bvia\b|\bref|\btxn\b|\bavl\b|\busing\b|\binfo\b|\bfrom\b|\bupi\b|$)');
+  // Credits name the sender with "from". Only tried for income, and only after
+  // [_merchantRe] found nothing, because debits say "from your a/c" too.
+  static final _payerRe = RegExp(
+      r'\bfrom (?:(?:upi|neft|imps|rtgs)(?:/| to )|vpa )?([a-z0-9][a-z0-9 &@_-]*?) ?(?:[.,(]|\bon\b|\bvia\b|\bref|\btxn\b|\bavl\b|\busing\b|\binfo\b|\bfrom\b|\bupi\b|$)');
+  // "debited to your account XXX4321" names the user's own account, not a payee.
+  static final _ownAccountRe = RegExp(r'^(?:your\b|ac\b|acct\b|account\b|[x*]{2,}[0-9])');
   static final _dateRe = RegExp(
       r'\bon (\d{1,2}[-/][A-Za-z0-9]{2,3}[-/]\d{2,4}|\d{4}-\d{2}-\d{2})');
 
@@ -165,20 +194,24 @@ class NotificationParser {
 
     if (_otpRe.hasMatch(lower) || _failedRe.hasMatch(lower)) return null;
 
+    final availableBalance =
+        parseAmount(_balanceRe.firstMatch(lower)?.group(1));
+    final cleaned =
+        lower.replaceAll(_balanceRe, ' ').replaceAll(_limitRe, ' ');
+
+    // Read from [cleaned] so a balance printed as "Rs 9,000.00 Cr" is not
+    // mistaken for the direction of the transaction.
+    final dir = _amountDirRe.firstMatch(cleaned)?.group(1);
     final words = lower.replaceAll(_cardPhraseRe, 'card');
-    final hasDebit = _debitWords.any(words.contains);
-    final hasCredit = _creditWords.any(words.contains);
+    final hasDebit = dir != null ? dir == 'dr' : _debitWords.any(words.contains);
+    final hasCredit =
+        dir != null ? dir == 'cr' : _creditWords.any(words.contains);
     final isRefund = _refundRe.hasMatch(words);
     if (!hasDebit && !hasCredit && !isRefund) return null;
 
     final isCardBill = lower.contains('card') &&
         _paymentRe.hasMatch(lower) &&
         (lower.contains('received') || lower.contains('credited'));
-
-    final availableBalance =
-        parseAmount(_balanceRe.firstMatch(lower)?.group(1));
-    final cleaned =
-        lower.replaceAll(_balanceRe, ' ').replaceAll(_limitRe, ' ');
     final amountText = _amountRe.firstMatch(cleaned)?.group(1) ??
         _bareAmountRe.firstMatch(cleaned)?.group(1);
     final amount = parseAmount(amountText);
@@ -200,7 +233,8 @@ class NotificationParser {
             ? CaptureKind.refund
             : (type == TxnType.income ? CaptureKind.income : CaptureKind.spend);
 
-    final merchant = _merchant(lower);
+    final merchant = _merchant(lower, _merchantRe) ??
+        (type == TxnType.income ? _merchant(lower, _payerRe) : null);
     final dm = _dateRe.firstMatch(lower);
     final date = (dm != null ? BankDate.tryParse(dm.group(1)) : null) ?? at;
 
@@ -241,10 +275,13 @@ class NotificationParser {
     return CaptureInstrument.unknown;
   }
 
-  String? _merchant(String lower) {
-    final m = _merchantRe.firstMatch(lower);
-    final raw = m?.group(1)?.trim();
-    return (raw == null || raw.isEmpty) ? null : raw;
+  String? _merchant(String lower, RegExp re) {
+    for (final m in re.allMatches(lower)) {
+      final raw = m.group(1)?.trim();
+      if (raw == null || raw.isEmpty || _ownAccountRe.hasMatch(raw)) continue;
+      return raw;
+    }
+    return null;
   }
 
   /// The sender is the stronger signal: "paid to HDFC Ergo from your ICICI

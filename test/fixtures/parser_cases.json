@@ -214,6 +214,204 @@
       "sender": "VM-SWIGGY",
       "text": "Your Swiggy order has been delivered. Enjoy your meal!",
       "expect": null
+    },
+    {
+      "name": "canara upi debit: own account after \"to\" is skipped, rail prefix stripped",
+      "sender": "VM-CANBNK",
+      "text": "An amount of INR 1,250.00 has been DEBITED to your account XXX4321 on 12/01/2026 towards UPI/swiggy@ybl. Total Avail.bal INR 18,420.55. - Canara Bank",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "1250", "merchant": "swiggy@ybl",
+        "timestamp": "2026-01-12", "utr": null, "accountLast4": "4321",
+        "availableBalance": "18420.55", "instrument": "upi", "profileId": "canara",
+        "fingerprint": "2026-01-12|1250|swiggy@ybl|4321|18420.55"
+      }
+    },
+    {
+      "name": "canara neft salary credit: payee after a rail prefix",
+      "sender": "VM-CANBNK",
+      "text": "An amount of INR 45,000.00 has been CREDITED to your account XXX4321 on 01/01/2026 towards NEFT/ACME TECH PVT LTD SALARY. Total Avail.bal INR 63,420.55. - Canara Bank",
+      "expect": {
+        "type": "income", "kind": "income", "amount": "45000",
+        "merchant": "acme tech pvt ltd salary", "timestamp": "2026-01-01", "utr": null,
+        "accountLast4": "4321", "availableBalance": "63420.55",
+        "instrument": "account", "profileId": "canara",
+        "fingerprint": "2026-01-01|45000|acme tech pvt ltd salary|4321|63420.55"
+      }
+    },
+    {
+      "name": "pnb upi debit naming a \"credited\" payee",
+      "sender": "AD-PNBSMS",
+      "text": "Your A/c XX8812 is debited for Rs.320.00 on 14-01-26 and credited to zomato@hdfcbank (UPI Ref No 601234567890). -PNB",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "320",
+        "merchant": "zomato@hdfcbank", "timestamp": "2026-01-14",
+        "utr": "601234567890", "accountLast4": "8812", "availableBalance": null,
+        "instrument": "upi", "profileId": "pnb",
+        "fingerprint": "utr|601234567890|expense"
+      }
+    },
+    {
+      "name": "bob dr/cr shorthand: amount-adjacent Dr wins over the later Cr",
+      "sender": "VM-BOBTXN",
+      "text": "Rs.500.00 Dr. from A/C XXXXXX2290 and Cr. to blinkit@axl. Ref:612345678901. AvlBal:Rs10,240.00(2026:01:15 10:20:30) -Bank of Baroda",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "500", "merchant": "blinkit@axl",
+        "timestamp": "2026-06-30", "utr": "612345678901", "accountLast4": "2290",
+        "availableBalance": "10240", "instrument": "upi", "profileId": "bob",
+        "fingerprint": "utr|612345678901|expense"
+      }
+    },
+    {
+      "name": "bob credit: amount-adjacent Cr, balance printed with Cr, payer from \"from\"",
+      "sender": "VM-BOBTXN",
+      "text": "Rs.2,000.00 Cr. to A/C XXXXXX2290 from priya@okaxis. Ref:612345678902. AvlBal:Rs12,240.00 Cr -Bank of Baroda",
+      "expect": {
+        "type": "income", "kind": "income", "amount": "2000",
+        "merchant": "priya@okaxis", "timestamp": "2026-06-30", "utr": "612345678902",
+        "accountLast4": "2290", "availableBalance": "12240", "instrument": "upi",
+        "profileId": "bob", "fingerprint": "utr|612345678902|income"
+      }
+    },
+    {
+      "name": "union bank: currency written \"Rs:\"",
+      "sender": "VM-UNIONB",
+      "text": "A/c *5521 Debited for Rs:899.00 on 16-01-2026 10:20:30 by Mob Bk ref no 623456789012 Avl Bal Rs:7,101.00. If not you, call 1800222243 -Union Bank of India",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "899", "merchant": "",
+        "timestamp": "2026-01-16", "utr": "623456789012", "accountLast4": "5521",
+        "availableBalance": "7101", "instrument": "account", "profileId": "union",
+        "fingerprint": "utr|623456789012|expense"
+      }
+    },
+    {
+      "name": "indusind credit card spend with an available limit",
+      "sender": "VM-INDUSB",
+      "text": "INR 2,450.00 debited from your IndusInd Bank Credit Card XX7788 at DMART on 17-Jan-26. Avl Lmt: INR 47,550.00",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "2450", "merchant": "dmart",
+        "timestamp": "2026-01-17", "utr": null, "accountLast4": "7788",
+        "availableBalance": null, "instrument": "credit_card", "profileId": "indusind",
+        "fingerprint": "2026-01-17|2450|dmart|7788|"
+      }
+    },
+    {
+      "name": "yes bank: \"towards UPI to\" prefix stripped",
+      "sender": "AD-YESBNK",
+      "text": "INR 150.00 debited from A/c XX3344 on 18-JAN-26 towards UPI to chaipoint@paytm. UPI Ref 634567890123. Avl Bal INR 4,850.00 -Yes Bank",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "150",
+        "merchant": "chaipoint@paytm", "timestamp": "2026-01-18",
+        "utr": "634567890123", "accountLast4": "3344", "availableBalance": "4850",
+        "instrument": "upi", "profileId": "yes",
+        "fingerprint": "utr|634567890123|expense"
+      }
+    },
+    {
+      "name": "idfc first: \"new bal\" balance, merchant after towards",
+      "sender": "VM-IDFCFB",
+      "text": "Your A/C XXXXXXX6677 has been debited with INR 799.00 on 19-JAN-26 towards NETFLIX. New bal INR 21,201.00 - IDFC FIRST Bank",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "799", "merchant": "netflix",
+        "timestamp": "2026-01-19", "utr": null, "accountLast4": "6677",
+        "availableBalance": "21201", "instrument": "account", "profileId": "idfc",
+        "fingerprint": "2026-01-19|799|netflix|6677|21201"
+      }
+    },
+    {
+      "name": "federal upi credit: payer from \"from\"",
+      "sender": "VM-FEDBNK",
+      "text": "Rs 1,000.00 credited to your A/c XX9001 on 20-01-2026 by UPI from rahul@okicici. UPI Ref 645678901234 -Federal Bank",
+      "expect": {
+        "type": "income", "kind": "income", "amount": "1000",
+        "merchant": "rahul@okicici", "timestamp": "2026-01-20", "utr": "645678901234",
+        "accountLast4": "9001", "availableBalance": null, "instrument": "upi",
+        "profileId": "federal", "fingerprint": "utr|645678901234|income"
+      }
+    },
+    {
+      "name": "idbi upi debit via \"thru UPI\"",
+      "sender": "VM-IDBIBK",
+      "text": "Your IDBI Bank A/c XX1234 debited for INR 260.00 on 21/01/26 thru UPI 656789012345 to uber@axisbank. Bal INR 3,740.00",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "260",
+        "merchant": "uber@axisbank", "timestamp": "2026-01-21", "utr": "656789012345",
+        "accountLast4": "1234", "availableBalance": "3740", "instrument": "upi",
+        "profileId": "idbi", "fingerprint": "utr|656789012345|expense"
+      }
+    },
+    {
+      "name": "boi: \"to VPA\" prefix stripped, upi stops the name",
+      "sender": "VM-BOIIND",
+      "text": "Rs.400.00 debited A/c XX1122 on 22-01-26 to VPA bigbasket@icici UPI Ref 667890123456. Avl Bal Rs.9,600.00 -BOI",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "400",
+        "merchant": "bigbasket@icici", "timestamp": "2026-01-22",
+        "utr": "667890123456", "accountLast4": "1122", "availableBalance": "9600",
+        "instrument": "upi", "profileId": "boi",
+        "fingerprint": "utr|667890123456|expense"
+      }
+    },
+    {
+      "name": "au small finance: \"Debit INR\" wording",
+      "sender": "AD-AUBANK",
+      "text": "Debit INR 1,999.00 A/c XX5050 on 23-01-26 at AMAZON PAY. Avl Bal INR 15,001.00 - AU Small Finance Bank",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "1999", "merchant": "amazon pay",
+        "timestamp": "2026-01-23", "utr": null, "accountLast4": "5050",
+        "availableBalance": "15001", "instrument": "account", "profileId": "au",
+        "fingerprint": "2026-01-23|1999|amazon pay|5050|15001"
+      }
+    },
+    {
+      "name": "paytm payments bank upi sent",
+      "sender": "VM-PAYTMB",
+      "text": "Rs.75 sent to metro@paytm from Paytm Payments Bank a/c XX8080. UPI Ref: 678901234567",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "75", "merchant": "metro@paytm",
+        "timestamp": "2026-06-30", "utr": "678901234567", "accountLast4": "8080",
+        "availableBalance": null, "instrument": "upi", "profileId": "paytm",
+        "fingerprint": "utr|678901234567|expense"
+      }
+    },
+    {
+      "name": "a payee called Dr is not a debit",
+      "sender": "VM-FEDBNK",
+      "text": "Rs 700.00 credited to your A/c XX9001 from Dr Sharma Clinic. UPI Ref 690123456789 -Federal Bank",
+      "expect": {
+        "type": "income", "kind": "income", "amount": "700",
+        "merchant": "dr sharma clinic", "timestamp": "2026-06-30",
+        "utr": "690123456789", "accountLast4": "9001", "availableBalance": null,
+        "instrument": "upi", "profileId": "federal",
+        "fingerprint": "utr|690123456789|income"
+      }
+    },
+    {
+      "name": "no sender: \"State Bank of India\" in the body is not Bank of India",
+      "text": "Rs.300.00 debited from A/c XX4455 to cafe@ybl on 24-01-26. UPI Ref 701234567890. State Bank of India",
+      "expect": {
+        "type": "expense", "kind": "spend", "amount": "300", "merchant": "cafe@ybl",
+        "timestamp": "2026-01-24", "utr": "701234567890", "accountLast4": "4455",
+        "availableBalance": null, "instrument": "upi", "profileId": null,
+        "fingerprint": "utr|701234567890|expense"
+      }
+    },
+    {
+      "name": "canara loan promotion",
+      "sender": "VM-CANBNK",
+      "text": "Dear Customer, you are pre-approved for a personal loan up to Rs.5,00,000. Apply now - Canara Bank",
+      "expect": null
+    },
+    {
+      "name": "yes bank otp quoting an amount",
+      "sender": "VM-YESBNK",
+      "text": "Your OTP for transaction of INR 2,000.00 is 482910. Do not share. -Yes Bank",
+      "expect": null
+    },
+    {
+      "name": "pnb failed debit",
+      "sender": "VM-PNBSMS",
+      "text": "Transaction of Rs.1,200.00 on A/c XX8812 failed due to insufficient balance. -PNB",
+      "expect": null
     }
   ]
 }
