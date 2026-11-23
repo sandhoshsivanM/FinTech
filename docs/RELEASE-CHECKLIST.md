@@ -145,12 +145,15 @@ The failures here are silent and permanent, so they are checked by hand:
 ### 5. Store artifacts
 
 - [ ] `flutter build appbundle --release --flavor play --dart-define=KHAZANA_CHANNEL=play`
-      (the **play** flavor — never upload a `sideload` build to Play: it declares
-      `READ_SMS`/`RECEIVE_SMS`.)
+      (the **play** flavor — never upload a `sideload` build to Play: it has a
+      different application id. The play build declares `READ_SMS`/`RECEIVE_SMS`,
+      so its first upload goes with the SMS permissions declaration; see
+      `docs/play-store/sms-permission-declaration.md`.)
 - [ ] Signed with the **release** keystore, not debug.
-- [ ] Shipped manifest: `INTERNET` present, `READ_SMS`/`RECEIVE_SMS` absent,
-      `allowBackup="false"`, `com.android.vending.BILLING` absent. (The
-      `android` job in `release-mobile.yml` asserts all five.)
+- [ ] Shipped manifest: `INTERNET`, `READ_SMS`, `RECEIVE_SMS` and the
+      receiver's `BROADCAST_SMS` guard present, `allowBackup="false"`,
+      `SEND_SMS` and `com.android.vending.BILLING` absent. (The `android` job in
+      `release-mobile.yml` asserts these.)
 - [ ] `flutter build ipa --release --dart-define=KHAZANA_CHANNEL=appStore`,
       passes Xcode validation with no ITMS errors.
 - [ ] iOS 1024 icon has **no alpha** (ITMS-90717 is an upload failure).

@@ -13,7 +13,7 @@ import 'package:khazana_domain/entities/pending_capture.dart';
 import 'package:khazana/features/capture/providers/capture_providers.dart';
 import 'package:khazana/features/capture/services/capture_channel.dart';
 
-/// Device-only, Android `sideload` flavor: auto-capture end to end through the
+/// Device-only, Android `play` or `sideload` flavor: auto-capture end to end through the
 /// real OS. Run with tool/run_capture_e2e.sh, which grants the permissions
 /// first (notification access and SMS can only be granted outside the app).
 ///
@@ -108,7 +108,7 @@ void main() {
   testWidgets('bank SMS in the phone inbox is imported; personal SMS is not',
       (tester) async {
     final channel = container.read(captureChannelProvider);
-    expect(await channel.isSmsAvailable(), isTrue, reason: 'run the sideload flavor');
+    expect(await channel.isSmsAvailable(), isTrue, reason: 'run the play or sideload flavor');
     expect(await eventually(channel.isSmsPermissionGranted), isTrue,
         reason: 'grant it first: tool/run_capture_e2e.sh does');
 

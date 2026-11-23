@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'notification_access_disclosure.dart' show agreeLabel, declineLabel;
 
 /// The prominent in-app disclosure shown before the system SMS permission
-/// prompt (sideload build). Same rules as the notification-access one: inside
+/// prompt (play and sideload builds). Same rules as the notification-access one: inside
 /// the app, says exactly what is read and why, and needs an explicit yes.
 ///
 /// Returns true only when the user agrees. Callers must not request the SMS

@@ -114,8 +114,8 @@ final captureSupportedProvider = Provider<bool>((ref) => CaptureChannel.supporte
 final notificationCaptureAvailableProvider = FutureProvider<bool>(
     (ref) => ref.watch(captureChannelProvider).isNotificationCaptureAvailable());
 
-/// Whether this build reads SMS (the `sideload` flavor) — false on Play builds
-/// and off Android.
+/// Whether this build reads SMS (the `play` and `sideload` flavors) — false on
+/// the `share` build and off Android.
 final smsAvailableProvider = FutureProvider<bool>(
     (ref) => ref.watch(captureChannelProvider).isSmsAvailable());
 

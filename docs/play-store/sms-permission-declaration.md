@@ -1,20 +1,30 @@
 # Play Console: SMS permissions declaration
 
 Draft answers for the **Permissions Declaration Form** (App content → Sensitive
-permissions → SMS and Call Log). Submit it only when SMS capture moves into the
-Play build. Until then SMS stays in the `sideload` flavor, and the Play build
-declares neither permission (see `android/app/src/sideload/AndroidManifest.xml`).
+permissions → SMS and Call Log).
+
+SMS capture is in the `play` build. The `play` and `sideload` flavors both
+compile `android/app/src/sms/` (the receiver, the inbox reader and the
+`RECEIVE_SMS`/`READ_SMS` permissions), wired in `android/app/build.gradle.kts`.
+The `share` flavor still has none of it.
+
+Google lists "SMS-based money management (apps that track and manage budget)"
+as an exception for apps that are not the default SMS handler. It grants it
+case by case and calls these exceptions temporary, so approval is not
+guaranteed.
+
+**Any `play` upload that carries these permissions needs the declaration.** Do
+not send this build to a track until you are ready to submit the form with it.
 
 ## Before submitting
 
-1. Move `RECEIVE_SMS`, `READ_SMS` and the `SmsReceiver` entry from
-   `src/sideload/AndroidManifest.xml` into the `play` flavor's manifest, and make
-   `isSmsCaptureAvailable` return true in that flavor.
-2. Build a release `play` AAB and upload it to a **closed testing** track. The
+1. Build a release `play` AAB and upload it to a **closed testing** track. The
    declaration is reviewed against that build.
-3. Record the demo video (script below) on that build and upload it unlisted.
-4. Check that the privacy policy (`webapp/src/app/privacy`) still says what the
-   "Data handling" answer below says.
+2. Record the demo video (script below) on that build and upload it unlisted.
+3. Check that the privacy policy (`webapp/src/app/privacy`) still says what the
+   "Data handling" answer below says, and that the Data safety form lists SMS
+   as *not collected*.
+4. Submit the form with the release.
 
 ## Form answers
 
@@ -79,5 +89,8 @@ causes:
 - The video does not show the feature that uses the permission.
 - The Data safety form disagrees with the declaration.
 
-Fix the cited item and resubmit. Keep SMS in the `sideload` flavor until the
-review is approved.
+Fix the cited item and resubmit. If Google refuses the exception outright,
+take SMS out of the `play` build: drop `"play"` from the `sourceSets` loop in
+`android/app/build.gradle.kts` and restore an inert `SmsCaptureImpl` under
+`src/play/kotlin` (copy `src/share/kotlin/.../SmsCaptureImpl.kt`). The
+notification listener keeps working either way.

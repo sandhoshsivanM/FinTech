@@ -50,13 +50,17 @@ android {
     //   flutter run --flavor sideload
     //   flutter build appbundle --release --flavor play --dart-define=KHAZANA_CHANNEL=play
     //
-    // play     — the Google Play build. No SMS permissions in its manifest and no
-    //            SMS code in its binary; bank alerts arrive through the
-    //            notification listener. This stays true until Play approves the
-    //            "SMS-based money management" permission exception for Khazana.
-    // sideload — the build installed directly (developer and testers). Adds
-    //            RECEIVE_SMS/READ_SMS and the SMS receiver. Its own application
-    //            id, so it installs beside a Play copy without a signature clash.
+    // play     — the Google Play build. Reads bank SMS (RECEIVE_SMS/READ_SMS),
+    //            declared to Play under the "SMS-based money management"
+    //            exception of the SMS/Call Log policy; see
+    //            docs/play-store/sms-permission-declaration.md. Off until the
+    //            user turns it on, behind a full-screen disclosure.
+    // sideload — the build installed directly (developer and testers). The same
+    //            SMS capture, under its own application id so it installs
+    //            beside a Play copy without a signature clash.
+    //
+    // Both take their SMS code and manifest entries from src/sms (see
+    // sourceSets below), so there is one copy of each.
     flavorDimensions += "distribution"
     productFlavors {
         create("play") {
@@ -76,6 +80,18 @@ android {
             dimension = "distribution"
             applicationIdSuffix = ".share"
             manifestPlaceholders["appLabel"] = "Khazana"
+        }
+    }
+
+    // The SMS receiver, the inbox reader and their permissions. The `share`
+    // flavor leaves them out: Android blocks a directly-installed app that asks
+    // for SMS access.
+    sourceSets {
+        for (flavor in listOf("play", "sideload")) {
+            getByName(flavor) {
+                java.srcDir("src/sms/kotlin")
+                manifest.srcFile("src/sms/AndroidManifest.xml")
+            }
         }
     }
 
