@@ -19,7 +19,16 @@ enum AssetType {
   nps('nps', 'NPS'),
   ssy('ssy', 'Sukanya Samriddhi'),
   sgb('sgb', 'Sovereign Gold Bond'),
-  ulip('ulip', 'ULIP');
+  ulip('ulip', 'ULIP'),
+
+  /// Gold bought by the gram through an app or a jeweller's digital scheme.
+  /// Taxed like physical gold, which since July 2024 is the same 24-month,
+  /// 12.5% treatment as a gold ETF.
+  digitalGold('digital_gold', 'Digital Gold'),
+
+  /// Silver: physical bars and coins, silver ETFs, digital silver. Same tax
+  /// treatment as gold.
+  silver('silver', 'Silver');
 
   const AssetType(this.key, this.label);
 

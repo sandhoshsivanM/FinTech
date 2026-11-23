@@ -87,6 +87,10 @@ const FY25_RULES: Record<AssetType, Rule> = {
   // pools the exemption by amount, so a '0' rule gets its own empty pool and
   // cannot draw down the ₹1.25 L allowance that domestic equity is entitled to.
   foreign_equity: { stcgRate: null, ltcgRate: 12.5, ltcgThresholdMonths: 24, ltcgExemption: '0' },
+  // Digital gold and silver are taxed as physical metal: 24 months to long
+  // term, 12.5% without indexation, short-term at slab. Same as a gold ETF.
+  digital_gold: { stcgRate: null, ltcgRate: 12.5, ltcgThresholdMonths: 24, ltcgExemption: '0' },
+  silver: { stcgRate: null, ltcgRate: 12.5, ltcgThresholdMonths: 24, ltcgExemption: '0' },
 };
 
 /**
@@ -104,6 +108,9 @@ const PRE_FY25_RULES: Record<AssetType, Rule> = {
   // Before 23 Jul 2024 the same disposal was 20% with indexation. Indexation
   // itself is not modelled, so this overstates slightly — the safer direction.
   foreign_equity: { stcgRate: null, ltcgRate: 20, ltcgThresholdMonths: 24, ltcgExemption: '0' },
+  // Physical metal before 23 Jul 2024: 36 months, 20% with indexation.
+  digital_gold: { stcgRate: null, ltcgRate: 20, ltcgThresholdMonths: 36, ltcgExemption: '0' },
+  silver: { stcgRate: null, ltcgRate: 20, ltcgThresholdMonths: 36, ltcgExemption: '0' },
 };
 
 /** Newest first. `rulesFor` walks this and takes the first that has taken effect. */

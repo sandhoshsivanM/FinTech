@@ -124,6 +124,10 @@ export type AssetType =
   | 'equity_etf' | 'equity_mf' | 'debt_mf' | 'gold_etf' | 'bond' | 'cash'
   | 'real_estate' | 'crypto' | 'fd' | 'ppf_epf' | 'nps'
   | 'ssy' | 'sgb' | 'ulip'
+  /** Gold bought by the gram in an app or jeweller's scheme. Taxed as physical gold. */
+  | 'digital_gold'
+  /** Silver bars, coins, silver ETFs and digital silver. Taxed like gold. */
+  | 'silver'
   /**
    * Shares and ETFs listed outside India — QQQ, VOO, individual US stocks.
    *

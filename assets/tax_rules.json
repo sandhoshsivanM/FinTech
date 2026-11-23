@@ -80,6 +80,18 @@
       "ltcg_threshold_months": 12,
       "ltcg_exemption_inr": 0
     },
+    "digital_gold": {
+      "stcg_rate": "slab",
+      "ltcg_rate": 12.5,
+      "ltcg_threshold_months": 24,
+      "ltcg_exemption_inr": 0
+    },
+    "silver": {
+      "stcg_rate": "slab",
+      "ltcg_rate": 12.5,
+      "ltcg_threshold_months": 24,
+      "ltcg_exemption_inr": 0
+    },
     "ulip": {
       "stcg_rate": 20.0,
       "ltcg_rate": 12.5,
