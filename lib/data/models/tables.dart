@@ -563,3 +563,81 @@ class NotificationDeliveries extends Table {
   @override
   Set<Column> get primaryKey => {id};
 }
+
+// ---- v9: SIPs and allocation targets ----------------------------------------
+
+/// The user's target share of the portfolio for each asset group.
+///
+/// One row per group. Whole percents, and a complete set totals 100 — checked
+/// by `validateTargets` before anything is written. Encrypted like the rest of
+/// the vault: a target allocation says a lot about someone's money.
+@DataClassName('AllocationTargetRow')
+class AllocationTargets extends Table {
+  TextColumn get vaultId => text()();
+
+  /// `AssetGroup.name` — equity | debt | gold | realEstate | retirement | crypto | cash.
+  TextColumn get groupKey => text()();
+  IntColumn get targetPct => integer()();
+  IntColumn get updatedAt => integer()(); // Unix ms
+
+  @override
+  Set<Column> get primaryKey => {vaultId, groupKey};
+}
+
+/// A monthly SIP the user pays at their bank or broker and tracks here.
+///
+/// Nothing is ever bought automatically: a plan produces a reminder, and units
+/// are recorded only when the user taps Mark done.
+@DataClassName('SipPlanRow')
+class SipPlans extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get instrumentId => text().references(Instruments, #id)();
+  TextColumn get name => text()();
+
+  /// `AssetType.key` of the instrument, copied so the SIP mix needs no join.
+  TextColumn get assetType => text()();
+  TextColumn get amount => text().map(const DecimalConverter())();
+  IntColumn get dayOfMonth => integer()();
+
+  /// `YYYY-MM-DD`. A calendar date, not an instant: a 5th-of-month SIP must
+  /// stay the 5th in every timezone.
+  TextColumn get startDate => text()();
+  IntColumn get stepUpPct => integer().withDefault(const Constant(0))();
+  BoolColumn get remind => boolean().withDefault(const Constant(true))();
+  BoolColumn get active => boolean().withDefault(const Constant(true))();
+  IntColumn get createdAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// The user's answer for one SIP due date: done (with the buy it recorded) or
+/// skipped.
+@DataClassName('SipInstalmentRow')
+class SipInstalments extends Table {
+  TextColumn get id => text()();
+  TextColumn get vaultId => text()();
+  TextColumn get sipId => text().references(SipPlans, #id)();
+
+  /// `YYYY-MM-DD`.
+  TextColumn get dueDate => text()();
+  TextColumn get status => text()(); // done | skipped
+  TextColumn get amount => text().map(const DecimalConverter())();
+  TextColumn get units => text().map(const DecimalConverter()).nullable()();
+  TextColumn get nav => text().map(const DecimalConverter()).nullable()();
+
+  /// The buy this created, so Undo deletes exactly that trade.
+  TextColumn get tradeId => text().nullable()();
+  IntColumn get decidedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+
+  /// One answer per due date. A double tap on Mark done must not record two
+  /// buys.
+  @override
+  List<Set<Column>> get uniqueKeys => [
+        {sipId, dueDate},
+      ];
+}

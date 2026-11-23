@@ -8,6 +8,8 @@ import 'package:khazana_domain/entities/recurring_rule.dart';
 import 'package:khazana_domain/entities/transaction.dart';
 import 'package:khazana_domain/services/notification_scheduler.dart';
 import '../../features/capture/providers/capture_providers.dart';
+import '../../features/investments/providers/sip_providers.dart';
+import '../../features/investments/services/sip_reminders.dart';
 import '../../features/transactions/providers/transaction_providers.dart';
 import '../di/data_providers.dart';
 import '../utils/money_format.dart';
@@ -81,13 +83,36 @@ class NotificationSyncService {
     // already delivered these while the app was closed, so re-showing them on
     // open would say everything twice. The web client, which has no OS
     // scheduler, is the one that consumes them.
-    final r = await service.reconcile(plan.scheduled);
+    final r = await service.reconcile([
+      ...plan.scheduled,
+      ...await _sipReminders(prefs, now),
+    ]);
     return (
       added: r.added,
       removed: r.removed,
       kept: r.kept,
       truncated: plan.truncated,
     );
+  }
+
+  /// SIP due-date reminders. A failure here must not take the rest of the
+  /// plan down with it.
+  Future<List<PlannedNotification>> _sipReminders(
+      NotifyPrefs prefs, DateTime now) async {
+    try {
+      final vaultId = _ref.read(currentVaultIdProvider);
+      final repo = _ref.read(sipRepositoryProvider);
+      return planSipReminders(
+        plans: await repo.plans(vaultId),
+        instalments: await repo.instalments(vaultId),
+        prefs: prefs,
+        now: now,
+        deepLink: '/app/investments/sips',
+      );
+    } on Object catch (e) {
+      debugPrint('NotificationSync: SIPs unavailable ($e)');
+      return const [];
+    }
   }
 
   /// Today's ledger and review queue, for the evening digest.

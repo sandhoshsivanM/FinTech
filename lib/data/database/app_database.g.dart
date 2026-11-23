@@ -11563,6 +11563,1409 @@ class NotificationDeliveriesCompanion
   }
 }
 
+class $AllocationTargetsTable extends AllocationTargets
+    with TableInfo<$AllocationTargetsTable, AllocationTargetRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AllocationTargetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<String> vaultId = GeneratedColumn<String>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _groupKeyMeta =
+      const VerificationMeta('groupKey');
+  @override
+  late final GeneratedColumn<String> groupKey = GeneratedColumn<String>(
+      'group_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _targetPctMeta =
+      const VerificationMeta('targetPct');
+  @override
+  late final GeneratedColumn<int> targetPct = GeneratedColumn<int>(
+      'target_pct', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [vaultId, groupKey, targetPct, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'allocation_targets';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<AllocationTargetRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('group_key')) {
+      context.handle(_groupKeyMeta,
+          groupKey.isAcceptableOrUnknown(data['group_key']!, _groupKeyMeta));
+    } else if (isInserting) {
+      context.missing(_groupKeyMeta);
+    }
+    if (data.containsKey('target_pct')) {
+      context.handle(_targetPctMeta,
+          targetPct.isAcceptableOrUnknown(data['target_pct']!, _targetPctMeta));
+    } else if (isInserting) {
+      context.missing(_targetPctMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {vaultId, groupKey};
+  @override
+  AllocationTargetRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AllocationTargetRow(
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vault_id'])!,
+      groupKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}group_key'])!,
+      targetPct: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}target_pct'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $AllocationTargetsTable createAlias(String alias) {
+    return $AllocationTargetsTable(attachedDatabase, alias);
+  }
+}
+
+class AllocationTargetRow extends DataClass
+    implements Insertable<AllocationTargetRow> {
+  final String vaultId;
+
+  /// `AssetGroup.name` — equity | debt | gold | realEstate | retirement | crypto | cash.
+  final String groupKey;
+  final int targetPct;
+  final int updatedAt;
+  const AllocationTargetRow(
+      {required this.vaultId,
+      required this.groupKey,
+      required this.targetPct,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['vault_id'] = Variable<String>(vaultId);
+    map['group_key'] = Variable<String>(groupKey);
+    map['target_pct'] = Variable<int>(targetPct);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  AllocationTargetsCompanion toCompanion(bool nullToAbsent) {
+    return AllocationTargetsCompanion(
+      vaultId: Value(vaultId),
+      groupKey: Value(groupKey),
+      targetPct: Value(targetPct),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory AllocationTargetRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AllocationTargetRow(
+      vaultId: serializer.fromJson<String>(json['vaultId']),
+      groupKey: serializer.fromJson<String>(json['groupKey']),
+      targetPct: serializer.fromJson<int>(json['targetPct']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'vaultId': serializer.toJson<String>(vaultId),
+      'groupKey': serializer.toJson<String>(groupKey),
+      'targetPct': serializer.toJson<int>(targetPct),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  AllocationTargetRow copyWith(
+          {String? vaultId,
+          String? groupKey,
+          int? targetPct,
+          int? updatedAt}) =>
+      AllocationTargetRow(
+        vaultId: vaultId ?? this.vaultId,
+        groupKey: groupKey ?? this.groupKey,
+        targetPct: targetPct ?? this.targetPct,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  AllocationTargetRow copyWithCompanion(AllocationTargetsCompanion data) {
+    return AllocationTargetRow(
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      groupKey: data.groupKey.present ? data.groupKey.value : this.groupKey,
+      targetPct: data.targetPct.present ? data.targetPct.value : this.targetPct,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AllocationTargetRow(')
+          ..write('vaultId: $vaultId, ')
+          ..write('groupKey: $groupKey, ')
+          ..write('targetPct: $targetPct, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(vaultId, groupKey, targetPct, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AllocationTargetRow &&
+          other.vaultId == this.vaultId &&
+          other.groupKey == this.groupKey &&
+          other.targetPct == this.targetPct &&
+          other.updatedAt == this.updatedAt);
+}
+
+class AllocationTargetsCompanion extends UpdateCompanion<AllocationTargetRow> {
+  final Value<String> vaultId;
+  final Value<String> groupKey;
+  final Value<int> targetPct;
+  final Value<int> updatedAt;
+  final Value<int> rowid;
+  const AllocationTargetsCompanion({
+    this.vaultId = const Value.absent(),
+    this.groupKey = const Value.absent(),
+    this.targetPct = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AllocationTargetsCompanion.insert({
+    required String vaultId,
+    required String groupKey,
+    required int targetPct,
+    required int updatedAt,
+    this.rowid = const Value.absent(),
+  })  : vaultId = Value(vaultId),
+        groupKey = Value(groupKey),
+        targetPct = Value(targetPct),
+        updatedAt = Value(updatedAt);
+  static Insertable<AllocationTargetRow> custom({
+    Expression<String>? vaultId,
+    Expression<String>? groupKey,
+    Expression<int>? targetPct,
+    Expression<int>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (vaultId != null) 'vault_id': vaultId,
+      if (groupKey != null) 'group_key': groupKey,
+      if (targetPct != null) 'target_pct': targetPct,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AllocationTargetsCompanion copyWith(
+      {Value<String>? vaultId,
+      Value<String>? groupKey,
+      Value<int>? targetPct,
+      Value<int>? updatedAt,
+      Value<int>? rowid}) {
+    return AllocationTargetsCompanion(
+      vaultId: vaultId ?? this.vaultId,
+      groupKey: groupKey ?? this.groupKey,
+      targetPct: targetPct ?? this.targetPct,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (vaultId.present) {
+      map['vault_id'] = Variable<String>(vaultId.value);
+    }
+    if (groupKey.present) {
+      map['group_key'] = Variable<String>(groupKey.value);
+    }
+    if (targetPct.present) {
+      map['target_pct'] = Variable<int>(targetPct.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AllocationTargetsCompanion(')
+          ..write('vaultId: $vaultId, ')
+          ..write('groupKey: $groupKey, ')
+          ..write('targetPct: $targetPct, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SipPlansTable extends SipPlans
+    with TableInfo<$SipPlansTable, SipPlanRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SipPlansTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<String> vaultId = GeneratedColumn<String>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _instrumentIdMeta =
+      const VerificationMeta('instrumentId');
+  @override
+  late final GeneratedColumn<String> instrumentId = GeneratedColumn<String>(
+      'instrument_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES instruments (id)'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _assetTypeMeta =
+      const VerificationMeta('assetType');
+  @override
+  late final GeneratedColumn<String> assetType = GeneratedColumn<String>(
+      'asset_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> amount =
+      GeneratedColumn<String>('amount', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>($SipPlansTable.$converteramount);
+  static const VerificationMeta _dayOfMonthMeta =
+      const VerificationMeta('dayOfMonth');
+  @override
+  late final GeneratedColumn<int> dayOfMonth = GeneratedColumn<int>(
+      'day_of_month', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _startDateMeta =
+      const VerificationMeta('startDate');
+  @override
+  late final GeneratedColumn<String> startDate = GeneratedColumn<String>(
+      'start_date', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _stepUpPctMeta =
+      const VerificationMeta('stepUpPct');
+  @override
+  late final GeneratedColumn<int> stepUpPct = GeneratedColumn<int>(
+      'step_up_pct', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _remindMeta = const VerificationMeta('remind');
+  @override
+  late final GeneratedColumn<bool> remind = GeneratedColumn<bool>(
+      'remind', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("remind" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+      'active', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("active" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        vaultId,
+        instrumentId,
+        name,
+        assetType,
+        amount,
+        dayOfMonth,
+        startDate,
+        stepUpPct,
+        remind,
+        active,
+        createdAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sip_plans';
+  @override
+  VerificationContext validateIntegrity(Insertable<SipPlanRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('instrument_id')) {
+      context.handle(
+          _instrumentIdMeta,
+          instrumentId.isAcceptableOrUnknown(
+              data['instrument_id']!, _instrumentIdMeta));
+    } else if (isInserting) {
+      context.missing(_instrumentIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('asset_type')) {
+      context.handle(_assetTypeMeta,
+          assetType.isAcceptableOrUnknown(data['asset_type']!, _assetTypeMeta));
+    } else if (isInserting) {
+      context.missing(_assetTypeMeta);
+    }
+    context.handle(_amountMeta, const VerificationResult.success());
+    if (data.containsKey('day_of_month')) {
+      context.handle(
+          _dayOfMonthMeta,
+          dayOfMonth.isAcceptableOrUnknown(
+              data['day_of_month']!, _dayOfMonthMeta));
+    } else if (isInserting) {
+      context.missing(_dayOfMonthMeta);
+    }
+    if (data.containsKey('start_date')) {
+      context.handle(_startDateMeta,
+          startDate.isAcceptableOrUnknown(data['start_date']!, _startDateMeta));
+    } else if (isInserting) {
+      context.missing(_startDateMeta);
+    }
+    if (data.containsKey('step_up_pct')) {
+      context.handle(
+          _stepUpPctMeta,
+          stepUpPct.isAcceptableOrUnknown(
+              data['step_up_pct']!, _stepUpPctMeta));
+    }
+    if (data.containsKey('remind')) {
+      context.handle(_remindMeta,
+          remind.isAcceptableOrUnknown(data['remind']!, _remindMeta));
+    }
+    if (data.containsKey('active')) {
+      context.handle(_activeMeta,
+          active.isAcceptableOrUnknown(data['active']!, _activeMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SipPlanRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SipPlanRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vault_id'])!,
+      instrumentId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}instrument_id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      assetType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}asset_type'])!,
+      amount: $SipPlansTable.$converteramount.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}amount'])!),
+      dayOfMonth: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}day_of_month'])!,
+      startDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}start_date'])!,
+      stepUpPct: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}step_up_pct'])!,
+      remind: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}remind'])!,
+      active: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}active'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $SipPlansTable createAlias(String alias) {
+    return $SipPlansTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Decimal, String> $converteramount =
+      const DecimalConverter();
+}
+
+class SipPlanRow extends DataClass implements Insertable<SipPlanRow> {
+  final String id;
+  final String vaultId;
+  final String instrumentId;
+  final String name;
+
+  /// `AssetType.key` of the instrument, copied so the SIP mix needs no join.
+  final String assetType;
+  final Decimal amount;
+  final int dayOfMonth;
+
+  /// `YYYY-MM-DD`. A calendar date, not an instant: a 5th-of-month SIP must
+  /// stay the 5th in every timezone.
+  final String startDate;
+  final int stepUpPct;
+  final bool remind;
+  final bool active;
+  final int createdAt;
+  const SipPlanRow(
+      {required this.id,
+      required this.vaultId,
+      required this.instrumentId,
+      required this.name,
+      required this.assetType,
+      required this.amount,
+      required this.dayOfMonth,
+      required this.startDate,
+      required this.stepUpPct,
+      required this.remind,
+      required this.active,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vault_id'] = Variable<String>(vaultId);
+    map['instrument_id'] = Variable<String>(instrumentId);
+    map['name'] = Variable<String>(name);
+    map['asset_type'] = Variable<String>(assetType);
+    {
+      map['amount'] =
+          Variable<String>($SipPlansTable.$converteramount.toSql(amount));
+    }
+    map['day_of_month'] = Variable<int>(dayOfMonth);
+    map['start_date'] = Variable<String>(startDate);
+    map['step_up_pct'] = Variable<int>(stepUpPct);
+    map['remind'] = Variable<bool>(remind);
+    map['active'] = Variable<bool>(active);
+    map['created_at'] = Variable<int>(createdAt);
+    return map;
+  }
+
+  SipPlansCompanion toCompanion(bool nullToAbsent) {
+    return SipPlansCompanion(
+      id: Value(id),
+      vaultId: Value(vaultId),
+      instrumentId: Value(instrumentId),
+      name: Value(name),
+      assetType: Value(assetType),
+      amount: Value(amount),
+      dayOfMonth: Value(dayOfMonth),
+      startDate: Value(startDate),
+      stepUpPct: Value(stepUpPct),
+      remind: Value(remind),
+      active: Value(active),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory SipPlanRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SipPlanRow(
+      id: serializer.fromJson<String>(json['id']),
+      vaultId: serializer.fromJson<String>(json['vaultId']),
+      instrumentId: serializer.fromJson<String>(json['instrumentId']),
+      name: serializer.fromJson<String>(json['name']),
+      assetType: serializer.fromJson<String>(json['assetType']),
+      amount: serializer.fromJson<Decimal>(json['amount']),
+      dayOfMonth: serializer.fromJson<int>(json['dayOfMonth']),
+      startDate: serializer.fromJson<String>(json['startDate']),
+      stepUpPct: serializer.fromJson<int>(json['stepUpPct']),
+      remind: serializer.fromJson<bool>(json['remind']),
+      active: serializer.fromJson<bool>(json['active']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vaultId': serializer.toJson<String>(vaultId),
+      'instrumentId': serializer.toJson<String>(instrumentId),
+      'name': serializer.toJson<String>(name),
+      'assetType': serializer.toJson<String>(assetType),
+      'amount': serializer.toJson<Decimal>(amount),
+      'dayOfMonth': serializer.toJson<int>(dayOfMonth),
+      'startDate': serializer.toJson<String>(startDate),
+      'stepUpPct': serializer.toJson<int>(stepUpPct),
+      'remind': serializer.toJson<bool>(remind),
+      'active': serializer.toJson<bool>(active),
+      'createdAt': serializer.toJson<int>(createdAt),
+    };
+  }
+
+  SipPlanRow copyWith(
+          {String? id,
+          String? vaultId,
+          String? instrumentId,
+          String? name,
+          String? assetType,
+          Decimal? amount,
+          int? dayOfMonth,
+          String? startDate,
+          int? stepUpPct,
+          bool? remind,
+          bool? active,
+          int? createdAt}) =>
+      SipPlanRow(
+        id: id ?? this.id,
+        vaultId: vaultId ?? this.vaultId,
+        instrumentId: instrumentId ?? this.instrumentId,
+        name: name ?? this.name,
+        assetType: assetType ?? this.assetType,
+        amount: amount ?? this.amount,
+        dayOfMonth: dayOfMonth ?? this.dayOfMonth,
+        startDate: startDate ?? this.startDate,
+        stepUpPct: stepUpPct ?? this.stepUpPct,
+        remind: remind ?? this.remind,
+        active: active ?? this.active,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  SipPlanRow copyWithCompanion(SipPlansCompanion data) {
+    return SipPlanRow(
+      id: data.id.present ? data.id.value : this.id,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      instrumentId: data.instrumentId.present
+          ? data.instrumentId.value
+          : this.instrumentId,
+      name: data.name.present ? data.name.value : this.name,
+      assetType: data.assetType.present ? data.assetType.value : this.assetType,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      dayOfMonth:
+          data.dayOfMonth.present ? data.dayOfMonth.value : this.dayOfMonth,
+      startDate: data.startDate.present ? data.startDate.value : this.startDate,
+      stepUpPct: data.stepUpPct.present ? data.stepUpPct.value : this.stepUpPct,
+      remind: data.remind.present ? data.remind.value : this.remind,
+      active: data.active.present ? data.active.value : this.active,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SipPlanRow(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('name: $name, ')
+          ..write('assetType: $assetType, ')
+          ..write('amount: $amount, ')
+          ..write('dayOfMonth: $dayOfMonth, ')
+          ..write('startDate: $startDate, ')
+          ..write('stepUpPct: $stepUpPct, ')
+          ..write('remind: $remind, ')
+          ..write('active: $active, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, vaultId, instrumentId, name, assetType,
+      amount, dayOfMonth, startDate, stepUpPct, remind, active, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SipPlanRow &&
+          other.id == this.id &&
+          other.vaultId == this.vaultId &&
+          other.instrumentId == this.instrumentId &&
+          other.name == this.name &&
+          other.assetType == this.assetType &&
+          other.amount == this.amount &&
+          other.dayOfMonth == this.dayOfMonth &&
+          other.startDate == this.startDate &&
+          other.stepUpPct == this.stepUpPct &&
+          other.remind == this.remind &&
+          other.active == this.active &&
+          other.createdAt == this.createdAt);
+}
+
+class SipPlansCompanion extends UpdateCompanion<SipPlanRow> {
+  final Value<String> id;
+  final Value<String> vaultId;
+  final Value<String> instrumentId;
+  final Value<String> name;
+  final Value<String> assetType;
+  final Value<Decimal> amount;
+  final Value<int> dayOfMonth;
+  final Value<String> startDate;
+  final Value<int> stepUpPct;
+  final Value<bool> remind;
+  final Value<bool> active;
+  final Value<int> createdAt;
+  final Value<int> rowid;
+  const SipPlansCompanion({
+    this.id = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.instrumentId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.assetType = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.dayOfMonth = const Value.absent(),
+    this.startDate = const Value.absent(),
+    this.stepUpPct = const Value.absent(),
+    this.remind = const Value.absent(),
+    this.active = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SipPlansCompanion.insert({
+    required String id,
+    required String vaultId,
+    required String instrumentId,
+    required String name,
+    required String assetType,
+    required Decimal amount,
+    required int dayOfMonth,
+    required String startDate,
+    this.stepUpPct = const Value.absent(),
+    this.remind = const Value.absent(),
+    this.active = const Value.absent(),
+    required int createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        vaultId = Value(vaultId),
+        instrumentId = Value(instrumentId),
+        name = Value(name),
+        assetType = Value(assetType),
+        amount = Value(amount),
+        dayOfMonth = Value(dayOfMonth),
+        startDate = Value(startDate),
+        createdAt = Value(createdAt);
+  static Insertable<SipPlanRow> custom({
+    Expression<String>? id,
+    Expression<String>? vaultId,
+    Expression<String>? instrumentId,
+    Expression<String>? name,
+    Expression<String>? assetType,
+    Expression<String>? amount,
+    Expression<int>? dayOfMonth,
+    Expression<String>? startDate,
+    Expression<int>? stepUpPct,
+    Expression<bool>? remind,
+    Expression<bool>? active,
+    Expression<int>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (instrumentId != null) 'instrument_id': instrumentId,
+      if (name != null) 'name': name,
+      if (assetType != null) 'asset_type': assetType,
+      if (amount != null) 'amount': amount,
+      if (dayOfMonth != null) 'day_of_month': dayOfMonth,
+      if (startDate != null) 'start_date': startDate,
+      if (stepUpPct != null) 'step_up_pct': stepUpPct,
+      if (remind != null) 'remind': remind,
+      if (active != null) 'active': active,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SipPlansCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? vaultId,
+      Value<String>? instrumentId,
+      Value<String>? name,
+      Value<String>? assetType,
+      Value<Decimal>? amount,
+      Value<int>? dayOfMonth,
+      Value<String>? startDate,
+      Value<int>? stepUpPct,
+      Value<bool>? remind,
+      Value<bool>? active,
+      Value<int>? createdAt,
+      Value<int>? rowid}) {
+    return SipPlansCompanion(
+      id: id ?? this.id,
+      vaultId: vaultId ?? this.vaultId,
+      instrumentId: instrumentId ?? this.instrumentId,
+      name: name ?? this.name,
+      assetType: assetType ?? this.assetType,
+      amount: amount ?? this.amount,
+      dayOfMonth: dayOfMonth ?? this.dayOfMonth,
+      startDate: startDate ?? this.startDate,
+      stepUpPct: stepUpPct ?? this.stepUpPct,
+      remind: remind ?? this.remind,
+      active: active ?? this.active,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<String>(vaultId.value);
+    }
+    if (instrumentId.present) {
+      map['instrument_id'] = Variable<String>(instrumentId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (assetType.present) {
+      map['asset_type'] = Variable<String>(assetType.value);
+    }
+    if (amount.present) {
+      map['amount'] =
+          Variable<String>($SipPlansTable.$converteramount.toSql(amount.value));
+    }
+    if (dayOfMonth.present) {
+      map['day_of_month'] = Variable<int>(dayOfMonth.value);
+    }
+    if (startDate.present) {
+      map['start_date'] = Variable<String>(startDate.value);
+    }
+    if (stepUpPct.present) {
+      map['step_up_pct'] = Variable<int>(stepUpPct.value);
+    }
+    if (remind.present) {
+      map['remind'] = Variable<bool>(remind.value);
+    }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SipPlansCompanion(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('name: $name, ')
+          ..write('assetType: $assetType, ')
+          ..write('amount: $amount, ')
+          ..write('dayOfMonth: $dayOfMonth, ')
+          ..write('startDate: $startDate, ')
+          ..write('stepUpPct: $stepUpPct, ')
+          ..write('remind: $remind, ')
+          ..write('active: $active, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SipInstalmentsTable extends SipInstalments
+    with TableInfo<$SipInstalmentsTable, SipInstalmentRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SipInstalmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _vaultIdMeta =
+      const VerificationMeta('vaultId');
+  @override
+  late final GeneratedColumn<String> vaultId = GeneratedColumn<String>(
+      'vault_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sipIdMeta = const VerificationMeta('sipId');
+  @override
+  late final GeneratedColumn<String> sipId = GeneratedColumn<String>(
+      'sip_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES sip_plans (id)'));
+  static const VerificationMeta _dueDateMeta =
+      const VerificationMeta('dueDate');
+  @override
+  late final GeneratedColumn<String> dueDate = GeneratedColumn<String>(
+      'due_date', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> amount =
+      GeneratedColumn<String>('amount', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Decimal>($SipInstalmentsTable.$converteramount);
+  static const VerificationMeta _unitsMeta = const VerificationMeta('units');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> units =
+      GeneratedColumn<String>('units', aliasedName, true,
+              type: DriftSqlType.string, requiredDuringInsert: false)
+          .withConverter<Decimal?>($SipInstalmentsTable.$converterunitsn);
+  static const VerificationMeta _navMeta = const VerificationMeta('nav');
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> nav =
+      GeneratedColumn<String>('nav', aliasedName, true,
+              type: DriftSqlType.string, requiredDuringInsert: false)
+          .withConverter<Decimal?>($SipInstalmentsTable.$converternavn);
+  static const VerificationMeta _tradeIdMeta =
+      const VerificationMeta('tradeId');
+  @override
+  late final GeneratedColumn<String> tradeId = GeneratedColumn<String>(
+      'trade_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _decidedAtMeta =
+      const VerificationMeta('decidedAt');
+  @override
+  late final GeneratedColumn<int> decidedAt = GeneratedColumn<int>(
+      'decided_at', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        vaultId,
+        sipId,
+        dueDate,
+        status,
+        amount,
+        units,
+        nav,
+        tradeId,
+        decidedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sip_instalments';
+  @override
+  VerificationContext validateIntegrity(Insertable<SipInstalmentRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('vault_id')) {
+      context.handle(_vaultIdMeta,
+          vaultId.isAcceptableOrUnknown(data['vault_id']!, _vaultIdMeta));
+    } else if (isInserting) {
+      context.missing(_vaultIdMeta);
+    }
+    if (data.containsKey('sip_id')) {
+      context.handle(
+          _sipIdMeta, sipId.isAcceptableOrUnknown(data['sip_id']!, _sipIdMeta));
+    } else if (isInserting) {
+      context.missing(_sipIdMeta);
+    }
+    if (data.containsKey('due_date')) {
+      context.handle(_dueDateMeta,
+          dueDate.isAcceptableOrUnknown(data['due_date']!, _dueDateMeta));
+    } else if (isInserting) {
+      context.missing(_dueDateMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    context.handle(_amountMeta, const VerificationResult.success());
+    context.handle(_unitsMeta, const VerificationResult.success());
+    context.handle(_navMeta, const VerificationResult.success());
+    if (data.containsKey('trade_id')) {
+      context.handle(_tradeIdMeta,
+          tradeId.isAcceptableOrUnknown(data['trade_id']!, _tradeIdMeta));
+    }
+    if (data.containsKey('decided_at')) {
+      context.handle(_decidedAtMeta,
+          decidedAt.isAcceptableOrUnknown(data['decided_at']!, _decidedAtMeta));
+    } else if (isInserting) {
+      context.missing(_decidedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+        {sipId, dueDate},
+      ];
+  @override
+  SipInstalmentRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SipInstalmentRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      vaultId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vault_id'])!,
+      sipId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sip_id'])!,
+      dueDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}due_date'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      amount: $SipInstalmentsTable.$converteramount.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}amount'])!),
+      units: $SipInstalmentsTable.$converterunitsn.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}units'])),
+      nav: $SipInstalmentsTable.$converternavn.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nav'])),
+      tradeId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}trade_id']),
+      decidedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}decided_at'])!,
+    );
+  }
+
+  @override
+  $SipInstalmentsTable createAlias(String alias) {
+    return $SipInstalmentsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Decimal, String> $converteramount =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterunits =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterunitsn =
+      NullAwareTypeConverter.wrap($converterunits);
+  static TypeConverter<Decimal, String> $converternav =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converternavn =
+      NullAwareTypeConverter.wrap($converternav);
+}
+
+class SipInstalmentRow extends DataClass
+    implements Insertable<SipInstalmentRow> {
+  final String id;
+  final String vaultId;
+  final String sipId;
+
+  /// `YYYY-MM-DD`.
+  final String dueDate;
+  final String status;
+  final Decimal amount;
+  final Decimal? units;
+  final Decimal? nav;
+
+  /// The buy this created, so Undo deletes exactly that trade.
+  final String? tradeId;
+  final int decidedAt;
+  const SipInstalmentRow(
+      {required this.id,
+      required this.vaultId,
+      required this.sipId,
+      required this.dueDate,
+      required this.status,
+      required this.amount,
+      this.units,
+      this.nav,
+      this.tradeId,
+      required this.decidedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['vault_id'] = Variable<String>(vaultId);
+    map['sip_id'] = Variable<String>(sipId);
+    map['due_date'] = Variable<String>(dueDate);
+    map['status'] = Variable<String>(status);
+    {
+      map['amount'] =
+          Variable<String>($SipInstalmentsTable.$converteramount.toSql(amount));
+    }
+    if (!nullToAbsent || units != null) {
+      map['units'] =
+          Variable<String>($SipInstalmentsTable.$converterunitsn.toSql(units));
+    }
+    if (!nullToAbsent || nav != null) {
+      map['nav'] =
+          Variable<String>($SipInstalmentsTable.$converternavn.toSql(nav));
+    }
+    if (!nullToAbsent || tradeId != null) {
+      map['trade_id'] = Variable<String>(tradeId);
+    }
+    map['decided_at'] = Variable<int>(decidedAt);
+    return map;
+  }
+
+  SipInstalmentsCompanion toCompanion(bool nullToAbsent) {
+    return SipInstalmentsCompanion(
+      id: Value(id),
+      vaultId: Value(vaultId),
+      sipId: Value(sipId),
+      dueDate: Value(dueDate),
+      status: Value(status),
+      amount: Value(amount),
+      units:
+          units == null && nullToAbsent ? const Value.absent() : Value(units),
+      nav: nav == null && nullToAbsent ? const Value.absent() : Value(nav),
+      tradeId: tradeId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tradeId),
+      decidedAt: Value(decidedAt),
+    );
+  }
+
+  factory SipInstalmentRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SipInstalmentRow(
+      id: serializer.fromJson<String>(json['id']),
+      vaultId: serializer.fromJson<String>(json['vaultId']),
+      sipId: serializer.fromJson<String>(json['sipId']),
+      dueDate: serializer.fromJson<String>(json['dueDate']),
+      status: serializer.fromJson<String>(json['status']),
+      amount: serializer.fromJson<Decimal>(json['amount']),
+      units: serializer.fromJson<Decimal?>(json['units']),
+      nav: serializer.fromJson<Decimal?>(json['nav']),
+      tradeId: serializer.fromJson<String?>(json['tradeId']),
+      decidedAt: serializer.fromJson<int>(json['decidedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'vaultId': serializer.toJson<String>(vaultId),
+      'sipId': serializer.toJson<String>(sipId),
+      'dueDate': serializer.toJson<String>(dueDate),
+      'status': serializer.toJson<String>(status),
+      'amount': serializer.toJson<Decimal>(amount),
+      'units': serializer.toJson<Decimal?>(units),
+      'nav': serializer.toJson<Decimal?>(nav),
+      'tradeId': serializer.toJson<String?>(tradeId),
+      'decidedAt': serializer.toJson<int>(decidedAt),
+    };
+  }
+
+  SipInstalmentRow copyWith(
+          {String? id,
+          String? vaultId,
+          String? sipId,
+          String? dueDate,
+          String? status,
+          Decimal? amount,
+          Value<Decimal?> units = const Value.absent(),
+          Value<Decimal?> nav = const Value.absent(),
+          Value<String?> tradeId = const Value.absent(),
+          int? decidedAt}) =>
+      SipInstalmentRow(
+        id: id ?? this.id,
+        vaultId: vaultId ?? this.vaultId,
+        sipId: sipId ?? this.sipId,
+        dueDate: dueDate ?? this.dueDate,
+        status: status ?? this.status,
+        amount: amount ?? this.amount,
+        units: units.present ? units.value : this.units,
+        nav: nav.present ? nav.value : this.nav,
+        tradeId: tradeId.present ? tradeId.value : this.tradeId,
+        decidedAt: decidedAt ?? this.decidedAt,
+      );
+  SipInstalmentRow copyWithCompanion(SipInstalmentsCompanion data) {
+    return SipInstalmentRow(
+      id: data.id.present ? data.id.value : this.id,
+      vaultId: data.vaultId.present ? data.vaultId.value : this.vaultId,
+      sipId: data.sipId.present ? data.sipId.value : this.sipId,
+      dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
+      status: data.status.present ? data.status.value : this.status,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      units: data.units.present ? data.units.value : this.units,
+      nav: data.nav.present ? data.nav.value : this.nav,
+      tradeId: data.tradeId.present ? data.tradeId.value : this.tradeId,
+      decidedAt: data.decidedAt.present ? data.decidedAt.value : this.decidedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SipInstalmentRow(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('sipId: $sipId, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('status: $status, ')
+          ..write('amount: $amount, ')
+          ..write('units: $units, ')
+          ..write('nav: $nav, ')
+          ..write('tradeId: $tradeId, ')
+          ..write('decidedAt: $decidedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, vaultId, sipId, dueDate, status, amount,
+      units, nav, tradeId, decidedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SipInstalmentRow &&
+          other.id == this.id &&
+          other.vaultId == this.vaultId &&
+          other.sipId == this.sipId &&
+          other.dueDate == this.dueDate &&
+          other.status == this.status &&
+          other.amount == this.amount &&
+          other.units == this.units &&
+          other.nav == this.nav &&
+          other.tradeId == this.tradeId &&
+          other.decidedAt == this.decidedAt);
+}
+
+class SipInstalmentsCompanion extends UpdateCompanion<SipInstalmentRow> {
+  final Value<String> id;
+  final Value<String> vaultId;
+  final Value<String> sipId;
+  final Value<String> dueDate;
+  final Value<String> status;
+  final Value<Decimal> amount;
+  final Value<Decimal?> units;
+  final Value<Decimal?> nav;
+  final Value<String?> tradeId;
+  final Value<int> decidedAt;
+  final Value<int> rowid;
+  const SipInstalmentsCompanion({
+    this.id = const Value.absent(),
+    this.vaultId = const Value.absent(),
+    this.sipId = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    this.status = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.units = const Value.absent(),
+    this.nav = const Value.absent(),
+    this.tradeId = const Value.absent(),
+    this.decidedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SipInstalmentsCompanion.insert({
+    required String id,
+    required String vaultId,
+    required String sipId,
+    required String dueDate,
+    required String status,
+    required Decimal amount,
+    this.units = const Value.absent(),
+    this.nav = const Value.absent(),
+    this.tradeId = const Value.absent(),
+    required int decidedAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        vaultId = Value(vaultId),
+        sipId = Value(sipId),
+        dueDate = Value(dueDate),
+        status = Value(status),
+        amount = Value(amount),
+        decidedAt = Value(decidedAt);
+  static Insertable<SipInstalmentRow> custom({
+    Expression<String>? id,
+    Expression<String>? vaultId,
+    Expression<String>? sipId,
+    Expression<String>? dueDate,
+    Expression<String>? status,
+    Expression<String>? amount,
+    Expression<String>? units,
+    Expression<String>? nav,
+    Expression<String>? tradeId,
+    Expression<int>? decidedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vaultId != null) 'vault_id': vaultId,
+      if (sipId != null) 'sip_id': sipId,
+      if (dueDate != null) 'due_date': dueDate,
+      if (status != null) 'status': status,
+      if (amount != null) 'amount': amount,
+      if (units != null) 'units': units,
+      if (nav != null) 'nav': nav,
+      if (tradeId != null) 'trade_id': tradeId,
+      if (decidedAt != null) 'decided_at': decidedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SipInstalmentsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? vaultId,
+      Value<String>? sipId,
+      Value<String>? dueDate,
+      Value<String>? status,
+      Value<Decimal>? amount,
+      Value<Decimal?>? units,
+      Value<Decimal?>? nav,
+      Value<String?>? tradeId,
+      Value<int>? decidedAt,
+      Value<int>? rowid}) {
+    return SipInstalmentsCompanion(
+      id: id ?? this.id,
+      vaultId: vaultId ?? this.vaultId,
+      sipId: sipId ?? this.sipId,
+      dueDate: dueDate ?? this.dueDate,
+      status: status ?? this.status,
+      amount: amount ?? this.amount,
+      units: units ?? this.units,
+      nav: nav ?? this.nav,
+      tradeId: tradeId ?? this.tradeId,
+      decidedAt: decidedAt ?? this.decidedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (vaultId.present) {
+      map['vault_id'] = Variable<String>(vaultId.value);
+    }
+    if (sipId.present) {
+      map['sip_id'] = Variable<String>(sipId.value);
+    }
+    if (dueDate.present) {
+      map['due_date'] = Variable<String>(dueDate.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<String>(
+          $SipInstalmentsTable.$converteramount.toSql(amount.value));
+    }
+    if (units.present) {
+      map['units'] = Variable<String>(
+          $SipInstalmentsTable.$converterunitsn.toSql(units.value));
+    }
+    if (nav.present) {
+      map['nav'] = Variable<String>(
+          $SipInstalmentsTable.$converternavn.toSql(nav.value));
+    }
+    if (tradeId.present) {
+      map['trade_id'] = Variable<String>(tradeId.value);
+    }
+    if (decidedAt.present) {
+      map['decided_at'] = Variable<int>(decidedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SipInstalmentsCompanion(')
+          ..write('id: $id, ')
+          ..write('vaultId: $vaultId, ')
+          ..write('sipId: $sipId, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('status: $status, ')
+          ..write('amount: $amount, ')
+          ..write('units: $units, ')
+          ..write('nav: $nav, ')
+          ..write('tradeId: $tradeId, ')
+          ..write('decidedAt: $decidedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -11599,6 +13002,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $BenchmarkSeriesTable(this);
   late final $NotificationDeliveriesTable notificationDeliveries =
       $NotificationDeliveriesTable(this);
+  late final $AllocationTargetsTable allocationTargets =
+      $AllocationTargetsTable(this);
+  late final $SipPlansTable sipPlans = $SipPlansTable(this);
+  late final $SipInstalmentsTable sipInstalments = $SipInstalmentsTable(this);
   late final TransactionDao transactionDao =
       TransactionDao(this as AppDatabase);
   late final CategoryDao categoryDao = CategoryDao(this as AppDatabase);
@@ -11620,6 +13027,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final NotificationDeliveryDao notificationDeliveryDao =
       NotificationDeliveryDao(this as AppDatabase);
   late final PortfolioDao portfolioDao = PortfolioDao(this as AppDatabase);
+  late final SipDao sipDao = SipDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -11648,7 +13056,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         dividends,
         fundHoldings,
         benchmarkSeries,
-        notificationDeliveries
+        notificationDeliveries,
+        allocationTargets,
+        sipPlans,
+        sipInstalments
       ];
 }
 
@@ -17014,6 +18425,21 @@ final class $$InstrumentsTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$SipPlansTable, List<SipPlanRow>>
+      _sipPlansRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.sipPlans,
+              aliasName: $_aliasNameGenerator(
+                  db.instruments.id, db.sipPlans.instrumentId));
+
+  $$SipPlansTableProcessedTableManager get sipPlansRefs {
+    final manager = $$SipPlansTableTableManager($_db, $_db.sipPlans)
+        .filter((f) => f.instrumentId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_sipPlansRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$InstrumentsTableFilterComposer
@@ -17134,6 +18560,27 @@ class $$InstrumentsTableFilterComposer
             $$DividendsTableFilterComposer(
               $db: $db,
               $table: $db.dividends,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> sipPlansRefs(
+      Expression<bool> Function($$SipPlansTableFilterComposer f) f) {
+    final $$SipPlansTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.sipPlans,
+        getReferencedColumn: (t) => t.instrumentId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SipPlansTableFilterComposer(
+              $db: $db,
+              $table: $db.sipPlans,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -17331,6 +18778,27 @@ class $$InstrumentsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> sipPlansRefs<T extends Object>(
+      Expression<T> Function($$SipPlansTableAnnotationComposer a) f) {
+    final $$SipPlansTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.sipPlans,
+        getReferencedColumn: (t) => t.instrumentId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SipPlansTableAnnotationComposer(
+              $db: $db,
+              $table: $db.sipPlans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$InstrumentsTableTableManager extends RootTableManager<
@@ -17345,7 +18813,10 @@ class $$InstrumentsTableTableManager extends RootTableManager<
     (InstrumentRow, $$InstrumentsTableReferences),
     InstrumentRow,
     PrefetchHooks Function(
-        {bool tradesRefs, bool instrumentPricesRefs, bool dividendsRefs})> {
+        {bool tradesRefs,
+        bool instrumentPricesRefs,
+        bool dividendsRefs,
+        bool sipPlansRefs})> {
   $$InstrumentsTableTableManager(_$AppDatabase db, $InstrumentsTable table)
       : super(TableManagerState(
           db: db,
@@ -17445,13 +18916,15 @@ class $$InstrumentsTableTableManager extends RootTableManager<
           prefetchHooksCallback: (
               {tradesRefs = false,
               instrumentPricesRefs = false,
-              dividendsRefs = false}) {
+              dividendsRefs = false,
+              sipPlansRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (tradesRefs) db.trades,
                 if (instrumentPricesRefs) db.instrumentPrices,
-                if (dividendsRefs) db.dividends
+                if (dividendsRefs) db.dividends,
+                if (sipPlansRefs) db.sipPlans
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
@@ -17491,6 +18964,18 @@ class $$InstrumentsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.instrumentId == item.id),
+                        typedResults: items),
+                  if (sipPlansRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $$InstrumentsTableReferences._sipPlansRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$InstrumentsTableReferences(db, table, p0)
+                                .sipPlansRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.instrumentId == item.id),
                         typedResults: items)
                 ];
               },
@@ -17511,7 +18996,10 @@ typedef $$InstrumentsTableProcessedTableManager = ProcessedTableManager<
     (InstrumentRow, $$InstrumentsTableReferences),
     InstrumentRow,
     PrefetchHooks Function(
-        {bool tradesRefs, bool instrumentPricesRefs, bool dividendsRefs})>;
+        {bool tradesRefs,
+        bool instrumentPricesRefs,
+        bool dividendsRefs,
+        bool sipPlansRefs})>;
 typedef $$TradesTableCreateCompanionBuilder = TradesCompanion Function({
   required String id,
   required String vaultId,
@@ -19367,6 +20855,975 @@ typedef $$NotificationDeliveriesTableProcessedTableManager
         ),
         NotificationDeliveryRow,
         PrefetchHooks Function()>;
+typedef $$AllocationTargetsTableCreateCompanionBuilder
+    = AllocationTargetsCompanion Function({
+  required String vaultId,
+  required String groupKey,
+  required int targetPct,
+  required int updatedAt,
+  Value<int> rowid,
+});
+typedef $$AllocationTargetsTableUpdateCompanionBuilder
+    = AllocationTargetsCompanion Function({
+  Value<String> vaultId,
+  Value<String> groupKey,
+  Value<int> targetPct,
+  Value<int> updatedAt,
+  Value<int> rowid,
+});
+
+class $$AllocationTargetsTableFilterComposer
+    extends Composer<_$AppDatabase, $AllocationTargetsTable> {
+  $$AllocationTargetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get groupKey => $composableBuilder(
+      column: $table.groupKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get targetPct => $composableBuilder(
+      column: $table.targetPct, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$AllocationTargetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AllocationTargetsTable> {
+  $$AllocationTargetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get groupKey => $composableBuilder(
+      column: $table.groupKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get targetPct => $composableBuilder(
+      column: $table.targetPct, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$AllocationTargetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AllocationTargetsTable> {
+  $$AllocationTargetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<String> get groupKey =>
+      $composableBuilder(column: $table.groupKey, builder: (column) => column);
+
+  GeneratedColumn<int> get targetPct =>
+      $composableBuilder(column: $table.targetPct, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$AllocationTargetsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $AllocationTargetsTable,
+    AllocationTargetRow,
+    $$AllocationTargetsTableFilterComposer,
+    $$AllocationTargetsTableOrderingComposer,
+    $$AllocationTargetsTableAnnotationComposer,
+    $$AllocationTargetsTableCreateCompanionBuilder,
+    $$AllocationTargetsTableUpdateCompanionBuilder,
+    (
+      AllocationTargetRow,
+      BaseReferences<_$AppDatabase, $AllocationTargetsTable,
+          AllocationTargetRow>
+    ),
+    AllocationTargetRow,
+    PrefetchHooks Function()> {
+  $$AllocationTargetsTableTableManager(
+      _$AppDatabase db, $AllocationTargetsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AllocationTargetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AllocationTargetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AllocationTargetsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> vaultId = const Value.absent(),
+            Value<String> groupKey = const Value.absent(),
+            Value<int> targetPct = const Value.absent(),
+            Value<int> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              AllocationTargetsCompanion(
+            vaultId: vaultId,
+            groupKey: groupKey,
+            targetPct: targetPct,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String vaultId,
+            required String groupKey,
+            required int targetPct,
+            required int updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              AllocationTargetsCompanion.insert(
+            vaultId: vaultId,
+            groupKey: groupKey,
+            targetPct: targetPct,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$AllocationTargetsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $AllocationTargetsTable,
+    AllocationTargetRow,
+    $$AllocationTargetsTableFilterComposer,
+    $$AllocationTargetsTableOrderingComposer,
+    $$AllocationTargetsTableAnnotationComposer,
+    $$AllocationTargetsTableCreateCompanionBuilder,
+    $$AllocationTargetsTableUpdateCompanionBuilder,
+    (
+      AllocationTargetRow,
+      BaseReferences<_$AppDatabase, $AllocationTargetsTable,
+          AllocationTargetRow>
+    ),
+    AllocationTargetRow,
+    PrefetchHooks Function()>;
+typedef $$SipPlansTableCreateCompanionBuilder = SipPlansCompanion Function({
+  required String id,
+  required String vaultId,
+  required String instrumentId,
+  required String name,
+  required String assetType,
+  required Decimal amount,
+  required int dayOfMonth,
+  required String startDate,
+  Value<int> stepUpPct,
+  Value<bool> remind,
+  Value<bool> active,
+  required int createdAt,
+  Value<int> rowid,
+});
+typedef $$SipPlansTableUpdateCompanionBuilder = SipPlansCompanion Function({
+  Value<String> id,
+  Value<String> vaultId,
+  Value<String> instrumentId,
+  Value<String> name,
+  Value<String> assetType,
+  Value<Decimal> amount,
+  Value<int> dayOfMonth,
+  Value<String> startDate,
+  Value<int> stepUpPct,
+  Value<bool> remind,
+  Value<bool> active,
+  Value<int> createdAt,
+  Value<int> rowid,
+});
+
+final class $$SipPlansTableReferences
+    extends BaseReferences<_$AppDatabase, $SipPlansTable, SipPlanRow> {
+  $$SipPlansTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $InstrumentsTable _instrumentIdTable(_$AppDatabase db) =>
+      db.instruments.createAlias(
+          $_aliasNameGenerator(db.sipPlans.instrumentId, db.instruments.id));
+
+  $$InstrumentsTableProcessedTableManager? get instrumentId {
+    if ($_item.instrumentId == null) return null;
+    final manager = $$InstrumentsTableTableManager($_db, $_db.instruments)
+        .filter((f) => f.id($_item.instrumentId!));
+    final item = $_typedResult.readTableOrNull(_instrumentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static MultiTypedResultKey<$SipInstalmentsTable, List<SipInstalmentRow>>
+      _sipInstalmentsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.sipInstalments,
+              aliasName: $_aliasNameGenerator(
+                  db.sipPlans.id, db.sipInstalments.sipId));
+
+  $$SipInstalmentsTableProcessedTableManager get sipInstalmentsRefs {
+    final manager = $$SipInstalmentsTableTableManager($_db, $_db.sipInstalments)
+        .filter((f) => f.sipId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_sipInstalmentsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$SipPlansTableFilterComposer
+    extends Composer<_$AppDatabase, $SipPlansTable> {
+  $$SipPlansTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get assetType => $composableBuilder(
+      column: $table.assetType, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get amount =>
+      $composableBuilder(
+          column: $table.amount,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<int> get dayOfMonth => $composableBuilder(
+      column: $table.dayOfMonth, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get startDate => $composableBuilder(
+      column: $table.startDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get stepUpPct => $composableBuilder(
+      column: $table.stepUpPct, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get remind => $composableBuilder(
+      column: $table.remind, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get active => $composableBuilder(
+      column: $table.active, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  $$InstrumentsTableFilterComposer get instrumentId {
+    final $$InstrumentsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableFilterComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<bool> sipInstalmentsRefs(
+      Expression<bool> Function($$SipInstalmentsTableFilterComposer f) f) {
+    final $$SipInstalmentsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.sipInstalments,
+        getReferencedColumn: (t) => t.sipId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SipInstalmentsTableFilterComposer(
+              $db: $db,
+              $table: $db.sipInstalments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$SipPlansTableOrderingComposer
+    extends Composer<_$AppDatabase, $SipPlansTable> {
+  $$SipPlansTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get assetType => $composableBuilder(
+      column: $table.assetType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get amount => $composableBuilder(
+      column: $table.amount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get dayOfMonth => $composableBuilder(
+      column: $table.dayOfMonth, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get startDate => $composableBuilder(
+      column: $table.startDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get stepUpPct => $composableBuilder(
+      column: $table.stepUpPct, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get remind => $composableBuilder(
+      column: $table.remind, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get active => $composableBuilder(
+      column: $table.active, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  $$InstrumentsTableOrderingComposer get instrumentId {
+    final $$InstrumentsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableOrderingComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$SipPlansTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SipPlansTable> {
+  $$SipPlansTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get assetType =>
+      $composableBuilder(column: $table.assetType, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<int> get dayOfMonth => $composableBuilder(
+      column: $table.dayOfMonth, builder: (column) => column);
+
+  GeneratedColumn<String> get startDate =>
+      $composableBuilder(column: $table.startDate, builder: (column) => column);
+
+  GeneratedColumn<int> get stepUpPct =>
+      $composableBuilder(column: $table.stepUpPct, builder: (column) => column);
+
+  GeneratedColumn<bool> get remind =>
+      $composableBuilder(column: $table.remind, builder: (column) => column);
+
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$InstrumentsTableAnnotationComposer get instrumentId {
+    final $$InstrumentsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.instrumentId,
+        referencedTable: $db.instruments,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$InstrumentsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.instruments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<T> sipInstalmentsRefs<T extends Object>(
+      Expression<T> Function($$SipInstalmentsTableAnnotationComposer a) f) {
+    final $$SipInstalmentsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.sipInstalments,
+        getReferencedColumn: (t) => t.sipId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SipInstalmentsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.sipInstalments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$SipPlansTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SipPlansTable,
+    SipPlanRow,
+    $$SipPlansTableFilterComposer,
+    $$SipPlansTableOrderingComposer,
+    $$SipPlansTableAnnotationComposer,
+    $$SipPlansTableCreateCompanionBuilder,
+    $$SipPlansTableUpdateCompanionBuilder,
+    (SipPlanRow, $$SipPlansTableReferences),
+    SipPlanRow,
+    PrefetchHooks Function({bool instrumentId, bool sipInstalmentsRefs})> {
+  $$SipPlansTableTableManager(_$AppDatabase db, $SipPlansTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SipPlansTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SipPlansTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SipPlansTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> vaultId = const Value.absent(),
+            Value<String> instrumentId = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> assetType = const Value.absent(),
+            Value<Decimal> amount = const Value.absent(),
+            Value<int> dayOfMonth = const Value.absent(),
+            Value<String> startDate = const Value.absent(),
+            Value<int> stepUpPct = const Value.absent(),
+            Value<bool> remind = const Value.absent(),
+            Value<bool> active = const Value.absent(),
+            Value<int> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SipPlansCompanion(
+            id: id,
+            vaultId: vaultId,
+            instrumentId: instrumentId,
+            name: name,
+            assetType: assetType,
+            amount: amount,
+            dayOfMonth: dayOfMonth,
+            startDate: startDate,
+            stepUpPct: stepUpPct,
+            remind: remind,
+            active: active,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String vaultId,
+            required String instrumentId,
+            required String name,
+            required String assetType,
+            required Decimal amount,
+            required int dayOfMonth,
+            required String startDate,
+            Value<int> stepUpPct = const Value.absent(),
+            Value<bool> remind = const Value.absent(),
+            Value<bool> active = const Value.absent(),
+            required int createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SipPlansCompanion.insert(
+            id: id,
+            vaultId: vaultId,
+            instrumentId: instrumentId,
+            name: name,
+            assetType: assetType,
+            amount: amount,
+            dayOfMonth: dayOfMonth,
+            startDate: startDate,
+            stepUpPct: stepUpPct,
+            remind: remind,
+            active: active,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) =>
+                  (e.readTable(table), $$SipPlansTableReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: (
+              {instrumentId = false, sipInstalmentsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (sipInstalmentsRefs) db.sipInstalments
+              ],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (instrumentId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.instrumentId,
+                    referencedTable:
+                        $$SipPlansTableReferences._instrumentIdTable(db),
+                    referencedColumn:
+                        $$SipPlansTableReferences._instrumentIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (sipInstalmentsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$SipPlansTableReferences
+                            ._sipInstalmentsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$SipPlansTableReferences(db, table, p0)
+                                .sipInstalmentsRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.sipId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$SipPlansTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SipPlansTable,
+    SipPlanRow,
+    $$SipPlansTableFilterComposer,
+    $$SipPlansTableOrderingComposer,
+    $$SipPlansTableAnnotationComposer,
+    $$SipPlansTableCreateCompanionBuilder,
+    $$SipPlansTableUpdateCompanionBuilder,
+    (SipPlanRow, $$SipPlansTableReferences),
+    SipPlanRow,
+    PrefetchHooks Function({bool instrumentId, bool sipInstalmentsRefs})>;
+typedef $$SipInstalmentsTableCreateCompanionBuilder = SipInstalmentsCompanion
+    Function({
+  required String id,
+  required String vaultId,
+  required String sipId,
+  required String dueDate,
+  required String status,
+  required Decimal amount,
+  Value<Decimal?> units,
+  Value<Decimal?> nav,
+  Value<String?> tradeId,
+  required int decidedAt,
+  Value<int> rowid,
+});
+typedef $$SipInstalmentsTableUpdateCompanionBuilder = SipInstalmentsCompanion
+    Function({
+  Value<String> id,
+  Value<String> vaultId,
+  Value<String> sipId,
+  Value<String> dueDate,
+  Value<String> status,
+  Value<Decimal> amount,
+  Value<Decimal?> units,
+  Value<Decimal?> nav,
+  Value<String?> tradeId,
+  Value<int> decidedAt,
+  Value<int> rowid,
+});
+
+final class $$SipInstalmentsTableReferences extends BaseReferences<
+    _$AppDatabase, $SipInstalmentsTable, SipInstalmentRow> {
+  $$SipInstalmentsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $SipPlansTable _sipIdTable(_$AppDatabase db) =>
+      db.sipPlans.createAlias(
+          $_aliasNameGenerator(db.sipInstalments.sipId, db.sipPlans.id));
+
+  $$SipPlansTableProcessedTableManager? get sipId {
+    if ($_item.sipId == null) return null;
+    final manager = $$SipPlansTableTableManager($_db, $_db.sipPlans)
+        .filter((f) => f.id($_item.sipId!));
+    final item = $_typedResult.readTableOrNull(_sipIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$SipInstalmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $SipInstalmentsTable> {
+  $$SipInstalmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get dueDate => $composableBuilder(
+      column: $table.dueDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get amount =>
+      $composableBuilder(
+          column: $table.amount,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get units =>
+      $composableBuilder(
+          column: $table.units,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get nav =>
+      $composableBuilder(
+          column: $table.nav,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<String> get tradeId => $composableBuilder(
+      column: $table.tradeId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get decidedAt => $composableBuilder(
+      column: $table.decidedAt, builder: (column) => ColumnFilters(column));
+
+  $$SipPlansTableFilterComposer get sipId {
+    final $$SipPlansTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.sipId,
+        referencedTable: $db.sipPlans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SipPlansTableFilterComposer(
+              $db: $db,
+              $table: $db.sipPlans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$SipInstalmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SipInstalmentsTable> {
+  $$SipInstalmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get vaultId => $composableBuilder(
+      column: $table.vaultId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get dueDate => $composableBuilder(
+      column: $table.dueDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get amount => $composableBuilder(
+      column: $table.amount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get units => $composableBuilder(
+      column: $table.units, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get nav => $composableBuilder(
+      column: $table.nav, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get tradeId => $composableBuilder(
+      column: $table.tradeId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get decidedAt => $composableBuilder(
+      column: $table.decidedAt, builder: (column) => ColumnOrderings(column));
+
+  $$SipPlansTableOrderingComposer get sipId {
+    final $$SipPlansTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.sipId,
+        referencedTable: $db.sipPlans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SipPlansTableOrderingComposer(
+              $db: $db,
+              $table: $db.sipPlans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$SipInstalmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SipInstalmentsTable> {
+  $$SipInstalmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vaultId =>
+      $composableBuilder(column: $table.vaultId, builder: (column) => column);
+
+  GeneratedColumn<String> get dueDate =>
+      $composableBuilder(column: $table.dueDate, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get units =>
+      $composableBuilder(column: $table.units, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get nav =>
+      $composableBuilder(column: $table.nav, builder: (column) => column);
+
+  GeneratedColumn<String> get tradeId =>
+      $composableBuilder(column: $table.tradeId, builder: (column) => column);
+
+  GeneratedColumn<int> get decidedAt =>
+      $composableBuilder(column: $table.decidedAt, builder: (column) => column);
+
+  $$SipPlansTableAnnotationComposer get sipId {
+    final $$SipPlansTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.sipId,
+        referencedTable: $db.sipPlans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SipPlansTableAnnotationComposer(
+              $db: $db,
+              $table: $db.sipPlans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$SipInstalmentsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SipInstalmentsTable,
+    SipInstalmentRow,
+    $$SipInstalmentsTableFilterComposer,
+    $$SipInstalmentsTableOrderingComposer,
+    $$SipInstalmentsTableAnnotationComposer,
+    $$SipInstalmentsTableCreateCompanionBuilder,
+    $$SipInstalmentsTableUpdateCompanionBuilder,
+    (SipInstalmentRow, $$SipInstalmentsTableReferences),
+    SipInstalmentRow,
+    PrefetchHooks Function({bool sipId})> {
+  $$SipInstalmentsTableTableManager(
+      _$AppDatabase db, $SipInstalmentsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SipInstalmentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SipInstalmentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SipInstalmentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> vaultId = const Value.absent(),
+            Value<String> sipId = const Value.absent(),
+            Value<String> dueDate = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<Decimal> amount = const Value.absent(),
+            Value<Decimal?> units = const Value.absent(),
+            Value<Decimal?> nav = const Value.absent(),
+            Value<String?> tradeId = const Value.absent(),
+            Value<int> decidedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SipInstalmentsCompanion(
+            id: id,
+            vaultId: vaultId,
+            sipId: sipId,
+            dueDate: dueDate,
+            status: status,
+            amount: amount,
+            units: units,
+            nav: nav,
+            tradeId: tradeId,
+            decidedAt: decidedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String vaultId,
+            required String sipId,
+            required String dueDate,
+            required String status,
+            required Decimal amount,
+            Value<Decimal?> units = const Value.absent(),
+            Value<Decimal?> nav = const Value.absent(),
+            Value<String?> tradeId = const Value.absent(),
+            required int decidedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SipInstalmentsCompanion.insert(
+            id: id,
+            vaultId: vaultId,
+            sipId: sipId,
+            dueDate: dueDate,
+            status: status,
+            amount: amount,
+            units: units,
+            nav: nav,
+            tradeId: tradeId,
+            decidedAt: decidedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$SipInstalmentsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({sipId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (sipId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.sipId,
+                    referencedTable:
+                        $$SipInstalmentsTableReferences._sipIdTable(db),
+                    referencedColumn:
+                        $$SipInstalmentsTableReferences._sipIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$SipInstalmentsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SipInstalmentsTable,
+    SipInstalmentRow,
+    $$SipInstalmentsTableFilterComposer,
+    $$SipInstalmentsTableOrderingComposer,
+    $$SipInstalmentsTableAnnotationComposer,
+    $$SipInstalmentsTableCreateCompanionBuilder,
+    $$SipInstalmentsTableUpdateCompanionBuilder,
+    (SipInstalmentRow, $$SipInstalmentsTableReferences),
+    SipInstalmentRow,
+    PrefetchHooks Function({bool sipId})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -19421,4 +21878,10 @@ class $AppDatabaseManager {
   $$NotificationDeliveriesTableTableManager get notificationDeliveries =>
       $$NotificationDeliveriesTableTableManager(
           _db, _db.notificationDeliveries);
+  $$AllocationTargetsTableTableManager get allocationTargets =>
+      $$AllocationTargetsTableTableManager(_db, _db.allocationTargets);
+  $$SipPlansTableTableManager get sipPlans =>
+      $$SipPlansTableTableManager(_db, _db.sipPlans);
+  $$SipInstalmentsTableTableManager get sipInstalments =>
+      $$SipInstalmentsTableTableManager(_db, _db.sipInstalments);
 }

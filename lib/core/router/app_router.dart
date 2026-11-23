@@ -10,6 +10,9 @@ import '../../features/import/screens/bank_import_screen.dart';
 import '../../features/insurance/screens/insurance_screen.dart';
 import '../../features/investments/screens/add_lot_screen.dart';
 import '../../features/investments/screens/import_lots_screen.dart';
+import '../../features/investments/screens/add_sip_screen.dart';
+import '../../features/investments/screens/allocation_screen.dart';
+import '../../features/investments/screens/sips_screen.dart';
 import '../../features/investments/screens/investments_screen.dart';
 import '../../features/investments/screens/analytics_screen.dart';
 import '../../features/investments/screens/portfolio_breakdown_screen.dart';
@@ -18,6 +21,7 @@ import '../../features/reports/screens/dashboard_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
 import '../../features/safety_net/screens/safety_net_screen.dart';
 import '../../features/score/screens/score_screen.dart';
+import 'package:khazana_domain/entities/sip.dart' show SipPlan;
 import 'package:khazana_domain/entities/transaction.dart' show Txn, TxnType;
 import '../../features/transactions/screens/add_transaction_screen.dart';
 import '../../features/accounts/screens/accounts_screen.dart';
@@ -48,6 +52,9 @@ abstract final class Routes {
   static const analytics = '/app/investments/analytics';
   static const investmentsAddLot = '/app/investments/add-lot';
   static const investmentsImportLots = '/app/investments/import-lots';
+  static const investmentsAllocation = '/app/investments/allocation';
+  static const investmentsSips = '/app/investments/sips';
+  static const investmentsAddSip = '/app/investments/sips/add';
   static const liabilities = '/app/liabilities';
   static const insurance = '/app/insurance';
   static const safetyNet = '/app/safety-net';
@@ -214,6 +221,24 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'import-lots',
                 builder: (context, state) => const ImportLotsScreen(),
+              ),
+              GoRoute(
+                path: 'allocation',
+                builder: (context, state) => const AllocationScreen(),
+              ),
+              GoRoute(
+                path: 'sips',
+                builder: (context, state) => const SipsScreen(),
+                routes: [
+                  // Also the edit screen: tapping a plan passes it as `extra`.
+                  GoRoute(
+                    path: 'add',
+                    builder: (context, state) => AddSipScreen(
+                      editing:
+                          state.extra is SipPlan ? state.extra as SipPlan : null,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

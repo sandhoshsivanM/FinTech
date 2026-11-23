@@ -23,6 +23,7 @@ import '../../../presentation/glass_card.dart';
 import '../providers/investment_providers.dart' show taxRuleEngineProvider;
 import '../../../core/di/data_providers.dart' show currentVaultIdProvider;
 import '../services/price_refresh_service.dart';
+import '../widgets/plan_links_card.dart';
 import '../widgets/market_data_card.dart';
 import '../widgets/holdings_table.dart';
 import '../widgets/portfolio_analytics.dart';
@@ -246,6 +247,8 @@ class _Body extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
             _StatGrid(snap: snap),
+            const SizedBox(height: AppSpacing.md),
+            const PlanLinksCard(),
             const SizedBox(height: AppSpacing.md),
             const _ImportBar(),
             const SizedBox(height: AppSpacing.md),
