@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 export default defineConfig({
   // Files in packages/ui-ts sit outside this app's tsconfig, so esbuild would
   // fall back to classic React.createElement JSX there. Next uses the
-  // automatic runtime everywhere; so does this.
-  esbuild: { jsx: 'automatic' },
+  // automatic runtime everywhere; so does this (Vite 8 compiles with oxc).
+  oxc: { jsx: { runtime: 'automatic' } },
   resolve: {
     // Mirror the tsconfig "@/*" -> "./src/*" path alias.
     alias: {
