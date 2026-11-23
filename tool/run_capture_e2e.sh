@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Runs integration_test/capture_e2e_test.dart on an Android emulator: the
-# sideload build, the real notification listener and the real SMS inbox.
+# play (default) or sideload build, the real notification listener and the real
+# SMS inbox.
 #
-#   tool/run_capture_e2e.sh [device-id]     (default: emulator-5554)
+#   tool/run_capture_e2e.sh [device-id] [flavor]   (default: emulator-5554 play)
 #
 # Seeds the emulator's SMS inbox with one bank SMS and one personal SMS, then
 # grants what a user would grant by hand (notification access and SMS can't be
@@ -11,8 +12,13 @@
 # the test waits for them. Emulator only: `adb emu` does not exist on a phone.
 set -euo pipefail
 device="${1:-emulator-5554}"
+flavor="${2:-play}"
 adb="${ANDROID_HOME:-$HOME/Library/Android/sdk}/platform-tools/adb -s $device"
-pkg=com.khazana.app.sideload
+case "$flavor" in
+  play) pkg=com.khazana.app ;;
+  sideload) pkg=com.khazana.app.sideload ;;
+  *) echo "flavor must be play or sideload (share has no SMS access)" >&2; exit 2 ;;
+esac
 
 today=$(date +%d-%m-%y)
 $adb emu sms send VM-HDFCBK "Rs 499.00 debited from a/c XX1234 at SMS E2E STORE on $today. UPI Ref 412345678999."
@@ -20,7 +26,7 @@ $adb emu sms send VM-HDFCBK "Rs 499.00 debited from a/c XX1234 at SMS E2E STORE 
 $adb emu sms send 9876543210 "Rs 100.00 debited from a/c XX1234 at PERSONAL SENDER on $today."
 
 $adb uninstall $pkg >/dev/null 2>&1 || true
-flutter test integration_test/capture_e2e_test.dart --flavor sideload -d "$device" &
+flutter test integration_test/capture_e2e_test.dart --flavor "$flavor" -d "$device" &
 test_pid=$!
 
 until $adb shell pm path $pkg 2>/dev/null | grep -q package:; do
