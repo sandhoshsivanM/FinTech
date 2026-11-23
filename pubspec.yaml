@@ -3,7 +3,7 @@ description: "Khazana — offline-first, privacy-total personal finance engine."
 publish_to: 'none'
 
 # App version. The numeric part is also encoded into the backup file format (PRD §11A).
-version: 1.0.0+2
+version: 1.1.0+3
 
 environment:
   sdk: ^3.10.7
