@@ -165,20 +165,27 @@ export const offlineCopy: ProductCopy = {
             with an app that holds this access, so Khazana can technically see all of them; it
             checks each one in memory for a bank or UPI payment alert and ignores the rest. The
             text is parsed on the device and thrown away straight away. Only the amount,
-            merchant and date of a payment alert are kept, in your encrypted vault, and only
-            after you approve the suggestion. Nothing is transmitted, shared or used for
+            merchant and date of a payment alert are kept, in your encrypted vault, either added
+            to your ledger with an Undo or held for your review, as you choose in Auto-capture.
+            Nothing is transmitted, shared or used for
             advertising. You grant this in system settings and can withdraw it there at any
             time (Settings, Notifications, Notification access); the feature is off until you
             turn it on.
           </li>
           <li>
-            <b className="text-ink">SMS — not requested.</b> Khazana does not ask for
-            <span className="font-mono"> READ_SMS</span> or
-            <span className="font-mono"> RECEIVE_SMS</span>, and cannot read your text messages.
-            An earlier build did, for banks that text rather than push a notification; it was
-            removed. Those are among the most sensitive permissions on the platform, and the
-            notification access above covers the same alerts without ever holding the keys to
-            your inbox.
+            <b className="text-ink">SMS</b> (optional, Android) — so the app can record bank and
+            UPI transaction texts for banks that send no app notification. Khazana asks for
+            <span className="font-mono"> RECEIVE_SMS</span> (new texts) and
+            <span className="font-mono"> READ_SMS</span> (catching up on texts that arrived while
+            the app was closed, and a past-90-days import only when you tap it). It is off until
+            you turn it on, and Khazana shows a full explanation and asks for your agreement
+            before Android&apos;s permission prompt. Texts from phone numbers are skipped before
+            they reach the app; only messages from bank sender IDs such as VM-HDFCBK are read.
+            Each is parsed on the device and the text is thrown away straight away. Only the
+            amount, direction, merchant, date, last digits of the account, reference number and
+            stated balance are kept, in your encrypted vault. Khazana never sends SMS, is not your
+            SMS app, and transmits nothing it reads. You can withdraw the permission at any time
+            in Android Settings, Apps, Khazana, Permissions.
           </li>
           <li>
             <b className="text-ink">Notifications</b> — to remind you about bills, renewals and

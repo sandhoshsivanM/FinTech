@@ -6,7 +6,7 @@ import android.content.Intent
 import android.provider.Telephony
 
 /**
- * Live path for bank SMS (sideload build only). Forwards the raw text to
+ * Live path for bank SMS (play and sideload builds). Forwards the raw text to
  * [CaptureBus] for on-device parsing; nothing is stored natively.
  *
  * This is the fast path, not the only one. If the app process is not running

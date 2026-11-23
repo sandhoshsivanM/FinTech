@@ -83,8 +83,9 @@ jobs:
           EOF
 
       - name: Build AAB
-        # --flavor play: the Play build, whose manifest carries no SMS permission
-        # (the sideload flavor adds it; see android/app/build.gradle.kts).
+        # --flavor play: the Play build. It reads bank SMS (src/sms, see
+        # android/app/build.gradle.kts), declared under Play's "SMS-based money
+        # management" exception; docs/play-store/sms-permission-declaration.md.
         run: flutter build appbundle --release --flavor play --dart-define=KHAZANA_CHANNEL=play
 
       # Belt and braces. R8 + the manifest merge are exactly where a permission
@@ -100,8 +101,10 @@ jobs:
           def forbid(s): assert s.encode() not in blob, f'PRESENT (must not be): {s}'
           need('android.permission.INTERNET')       # release builds lost this once
           need('allowBackup')                       # must be declared false
-          forbid('android.permission.READ_SMS')     # Play restricted permission; sideload flavor only
-          forbid('android.permission.RECEIVE_SMS')
+          need('android.permission.READ_SMS')       # bank SMS capture (declared to Play)
+          need('android.permission.RECEIVE_SMS')
+          need('android.permission.BROADCAST_SMS')  # guards SmsReceiver: only the OS may deliver SMS to it
+          forbid('android.permission.SEND_SMS')     # Khazana never sends SMS
           forbid('com.android.vending.BILLING')     # no in-app purchases; Khazana is free
           print('manifest OK')
           PY

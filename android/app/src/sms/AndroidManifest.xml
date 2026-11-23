@@ -1,11 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Sideload build only. Merged over src/main/AndroidManifest.xml, which
-         declares neither permission, so the Play build never carries them.
+    <!-- The play and sideload builds (wired in app/build.gradle.kts). Merged
+         over src/main/AndroidManifest.xml, which declares neither permission,
+         so the share build never carries them.
 
          Google Play's SMS/Call Log policy lists "SMS-based money management —
-         apps that track and manage budget" as a permitted exception for
-         READ_SMS and RECEIVE_SMS, granted after a Permissions Declaration
-         review. Until Khazana has that approval these live here, not in main. -->
+         apps that track and manage budget" as an exception for READ_SMS and
+         RECEIVE_SMS, granted case by case after a Permissions Declaration
+         review (docs/play-store/sms-permission-declaration.md). -->
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.READ_SMS"/>
 
