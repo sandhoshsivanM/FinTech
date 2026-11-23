@@ -27,6 +27,8 @@ import {
   type Account, type Posting, type Transfer, type PendingCapture,
   type WatchItem, type Dividend, type Alert, type FxRate,
 } from '@khazana/domain/types';
+import type { AllocationTargetRecord } from '@khazana/domain/allocation';
+import type { SipInstalment, SipPlan } from '@khazana/domain/sip';
 import { materialize, advance } from '@khazana/domain/recurrence';
 import { postingsForEntry, postingsForTransfer, accountBalances, liquidBalance } from '@khazana/domain/accountLedger';
 import Decimal from 'decimal.js';
@@ -390,6 +392,9 @@ interface Data {
   watchlist: WatchItem[];
   dividends: Dividend[];
   alerts: Alert[];
+  sipPlans: SipPlan[];
+  sipInstalments: SipInstalment[];
+  allocationTargets: AllocationTargetRecord[];
 }
 
 const emptyData: Data = {
@@ -397,7 +402,7 @@ const emptyData: Data = {
   liabilities: [], recurring: [], insurances: [], snapshots: [], importBatches: [], lots: [],
   accounts: [], postings: [], transfers: [], pendingCaptures: [],
   watchlist: [], dividends: [], alerts: [], unreadableRecords: [], attachmentIds: [],
-  fxRates: [],
+  fxRates: [], sipPlans: [], sipInstalments: [], allocationTargets: [],
 };
 
 interface AppState extends Data {
@@ -1018,7 +1023,7 @@ export const useApp = create<AppState>((set, get) => ({
     const [
       txnsAll, budgetsAll, goalsAll, holdingsAll, liabilitiesAll, recurringAll,
       insurancesAll, snapshotsAll, pendingAll, watchAll, dividendsAll, alertsAll,
-      transfersAll, batchesAll, lotsAll,
+      transfersAll, batchesAll, lotsAll, sipPlansAll, sipInstalmentsAll, allocTargetsAll,
     ] = await Promise.all([
         listRecords<Txn>(key, STORE.txn, vaultId, failures),
         listRecords<Budget>(key, STORE.budget, vaultId, failures),
@@ -1035,6 +1040,9 @@ export const useApp = create<AppState>((set, get) => ({
         listRecords<Transfer>(key, STORE.transfer, vaultId, failures),
         listRecords<ImportBatch>(key, STORE.importBatch, vaultId, failures),
         listRecords<HoldingLot>(key, STORE.lot, vaultId, failures),
+        listRecords<SipPlan>(key, STORE.sipPlan, vaultId, failures),
+        listRecords<SipInstalment>(key, STORE.sipInstalment, vaultId, failures),
+        listRecords<AllocationTargetRecord>(key, STORE.allocationTarget, vaultId, failures),
       ]);
 
     // Double-entry (v3): lazily backfill the active profile's chart of accounts
@@ -1083,6 +1091,9 @@ export const useApp = create<AppState>((set, get) => ({
       watchlist: watchAll.filter(inProfile).sort((a, b) => b.addedAt - a.addedAt),
       dividends: dividendsAll.filter(inProfile).sort((a, b) => b.payDate - a.payDate),
       alerts: alertsAll.filter(inProfile).sort((a, b) => b.createdAt - a.createdAt),
+      sipPlans: sipPlansAll.filter(inProfile).sort((a, b) => a.createdAt - b.createdAt),
+      sipInstalments: sipInstalmentsAll.filter(inProfile).sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
+      allocationTargets: allocTargetsAll.filter(inProfile),
       unreadableRecords: failures,
       attachmentIds: await listRecordIds(STORE.attachment, vaultId),
       // Not profile-filtered: the rupee's value against the dollar does not

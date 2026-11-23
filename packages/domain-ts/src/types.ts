@@ -612,6 +612,9 @@ export const STORE = {
   importBatch: 'importBatch',
   lot: 'lot',
   fxRate: 'fxRate',
+  sipPlan: 'sipPlan',
+  sipInstalment: 'sipInstalment',
+  allocationTarget: 'allocationTarget',
 } as const;
 
 // Entity types that are scoped to the active profile (category & profile are vault-wide).
@@ -620,4 +623,5 @@ export const PROFILE_SCOPED: string[] = [
   STORE.liability, STORE.recurring, STORE.insurance, STORE.snapshot,
   STORE.account, STORE.posting, STORE.transfer, STORE.pendingCapture, STORE.attachment,
   STORE.watchItem, STORE.dividend, STORE.alert, STORE.importBatch, STORE.lot,
+  STORE.sipPlan, STORE.sipInstalment, STORE.allocationTarget,
 ];

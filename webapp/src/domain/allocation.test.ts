@@ -2,12 +2,21 @@
 // __fixtures__/allocation_cases.json, a byte-identical copy of
 // test/fixtures/allocation_cases.json (the Dart suite checks the copy).
 import { describe, expect, test } from 'vitest';
-import { suggestTargets, targetVsActual, validateTargets } from '@khazana/domain/allocation';
+import { suggestTargets, targetVsActual, validateTargets, type AllocationTargets } from '@khazana/domain/allocation';
+import type { AssetType } from '@khazana/domain/types';
 import { ASSET_GROUP_META, ASSET_GROUP_OF } from '@khazana/domain/portfolio';
 import fixture from './__fixtures__/allocation_cases.json';
 
+interface Case {
+  name: string;
+  holdings: { type: AssetType; value: string }[];
+  targets: AllocationTargets;
+  tolerance?: number;
+  expect: { total: string; targetsTotal: number; hasTargets: boolean; suggested: AllocationTargets; rows: unknown[] };
+}
+
 describe('allocation fixture', () => {
-  for (const c of fixture.cases as any[]) {
+  for (const c of fixture.cases as unknown as Case[]) {
     test(c.name, () => {
       const r = targetVsActual(c.holdings, c.targets, c.tolerance ?? 2);
       const e = c.expect;

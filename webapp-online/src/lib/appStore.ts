@@ -33,6 +33,8 @@ import {
   type HoldingLot, type ImportBatch, type Insurance, type Liability, type NetWorthSnapshot, type PendingCapture,
   type Posting, type Profile, type ProfileKind, type RecurringRule, type Transfer, type WatchItem,
 } from '@khazana/domain/types';
+import type { AllocationTargetRecord } from '@khazana/domain/allocation';
+import type { SipInstalment, SipPlan } from '@khazana/domain/sip';
 import { toBase64 } from './crypto/bytes';
 import { decryptRecord, encryptRecord, KEY_VERSION } from './crypto/e2e';
 import { readLedger, type CardValue, type CreditCard } from './ledger';
@@ -85,6 +87,9 @@ export interface AppData {
   watchlist: WatchItem[];
   dividends: Dividend[];
   alerts: Alert[];
+  sipPlans: SipPlan[];
+  sipInstalments: SipInstalment[];
+  allocationTargets: AllocationTargetRecord[];
   fxRates: FxRate[];
 }
 
@@ -140,6 +145,7 @@ const emptyData = (): AppData => ({
   txns: [], categories: [], budgets: [], goals: [], holdings: [], liabilities: [], recurring: [], insurances: [],
   snapshots: [], importBatches: [], lots: [], accounts: [], postings: [], transfers: [], pendingCaptures: [],
   watchlist: [], dividends: [], alerts: [], fxRates: [],
+  sipPlans: [], sipInstalments: [], allocationTargets: [],
 });
 
 type Entity = EntityValue;
@@ -336,6 +342,9 @@ export function createAppStore(deps: AppDeps) {
         watchlist: mine(list<WatchItem>(STORE.watchItem)).sort((a, b) => b.addedAt - a.addedAt),
         dividends: mine(list<Dividend>(STORE.dividend)).sort((a, b) => b.payDate - a.payDate),
         alerts: mine(list<Alert>(STORE.alert)).sort((a, b) => b.createdAt - a.createdAt),
+        sipPlans: mine(list<SipPlan>(STORE.sipPlan)).sort((a, b) => a.createdAt - b.createdAt),
+        sipInstalments: mine(list<SipInstalment>(STORE.sipInstalment)).sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
+        allocationTargets: mine(list<AllocationTargetRecord>(STORE.allocationTarget)),
         fxRates: list<FxRate>(STORE.fxRate),
       });
     }
