@@ -45,7 +45,8 @@ manage budget is a permitted exception in the SMS and Call Log policy.
 **Why it can't be done another way:** bank alerts reach many users only as SMS.
 Banks offer no consumer API for them, and the notification listener misses
 alerts from banks that send no app notification. `READ_SMS` is used only to
-import past bank SMS when the user taps "Import last 90 days". `RECEIVE_SMS` is
+import past bank SMS when the user taps "Import" (1 day by default; the user can
+choose 2, 7, 30 or 90 days in Auto-capture). `RECEIVE_SMS` is
 used to record new ones as they arrive.
 
 **Is it the default handler?** No. Khazana does not send SMS and is not the
