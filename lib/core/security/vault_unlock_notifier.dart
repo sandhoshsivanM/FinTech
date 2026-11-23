@@ -206,11 +206,12 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
       return;
     }
 
-    final ok = await _biometric.authenticate();
-    if (!ok) {
+    final result = await _biometric.authenticate();
+    if (!result.ok) {
       state = locked.copyWith(
-        biometricFailures: locked.biometricFailures + 1,
-        lastError: 'Biometric failed. Use your PIN.',
+        biometricFailures:
+            locked.biometricFailures + (result.countsAsAttempt ? 1 : 0),
+        lastError: result.message,
       );
       return;
     }
@@ -242,18 +243,28 @@ class VaultUnlockNotifier extends StateNotifier<VaultState> {
   /// Requires an unlocked vault: the key comes from the live session, so
   /// enabling this can never be done by someone who has not already
   /// authenticated.
-  Future<bool> enableBiometricUnlock() async {
+  Future<BiometricResult> enableBiometricUnlock() async {
     final current = state;
-    if (current is! VaultUnlocked) return false;
+    if (current is! VaultUnlocked) {
+      return const BiometricResult.failed(BiometricFailure.couldNotStart);
+    }
+    // Prove the prompt works on this phone, with this person's finger or
+    // face, before saving anything. Enabling used to skip this, so a phone
+    // where the prompt could never appear still reported "on", and the
+    // failure surfaced only later at the lock screen. It also stops someone
+    // holding an unlocked phone from adding biometric unlock without the
+    // owner's biometric.
+    final check = await _biometric.authenticate();
+    if (!check.ok) return check;
     try {
       await _keyStore.storeDerivedKey(vaultId, current.session.key);
       await _credentials.setBiometricEnabled(vaultId, true);
-      return true;
+      return const BiometricResult.success();
     } on Object {
       // Leave the flag off, so a failed write cannot advertise an unlock method
       // that will not work.
       await _credentials.setBiometricEnabled(vaultId, false);
-      return false;
+      return const BiometricResult.failed(BiometricFailure.couldNotStart);
     }
   }
 

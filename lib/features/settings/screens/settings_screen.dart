@@ -608,10 +608,8 @@ class _BiometricUnlockTileState extends ConsumerState<_BiometricUnlockTile> {
     final notifier = ref.read(vaultUnlockProvider.notifier);
     String message;
     if (next) {
-      final ok = await notifier.enableBiometricUnlock();
-      message = ok
-          ? 'Biometric unlock is on.'
-          : 'Could not save the key, so biometric unlock stays off.';
+      final result = await notifier.enableBiometricUnlock();
+      message = result.setupMessage;
     } else {
       await notifier.disableBiometricUnlock();
       message = 'Biometric unlock is off. The saved key was removed.';

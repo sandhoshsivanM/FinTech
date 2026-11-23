@@ -8,7 +8,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
@@ -24,8 +24,14 @@ import javax.crypto.spec.PBEKeySpec
  *
  * SMS support is supplied per build flavor through [SmsCaptureImpl]: the Play
  * build's implementation is inert and its manifest declares no SMS permission.
+ *
+ * A [FlutterFragmentActivity], not a plain FlutterActivity: local_auth shows
+ * Android's BiometricPrompt, which needs a FragmentActivity host. On a plain
+ * FlutterActivity every authenticate() call fails with no_fragment_activity
+ * before any prompt appears, so biometric unlock can never work.
+ * test/unit/android_host_activity_test.dart keeps it that way.
  */
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
     private val methodChannelName = "khazana/capture"
     private val eventChannelName = "khazana/capture/events"
     private val smsPermissionRequest = 4107

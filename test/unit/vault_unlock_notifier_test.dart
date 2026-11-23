@@ -134,7 +134,8 @@ void main() {
     });
 
     test('success unlocks via stored key', () async {
-      when(() => biometric.authenticate()).thenAnswer((_) async => true);
+      when(() => biometric.authenticate())
+          .thenAnswer((_) async => const BiometricResult.success());
       final n = build();
       await n.initialize();
       await n.unlockWithBiometric();
@@ -142,7 +143,8 @@ void main() {
     });
 
     test('3 biometric failures exhaust biometrics', () async {
-      when(() => biometric.authenticate()).thenAnswer((_) async => false);
+      when(() => biometric.authenticate()).thenAnswer(
+          (_) async => const BiometricResult.failed(BiometricFailure.rejected));
       final n = build();
       await n.initialize();
       await n.unlockWithBiometric();
@@ -150,5 +152,77 @@ void main() {
       await n.unlockWithBiometric();
       expect((n.state as VaultLocked).biometricExhausted, isTrue);
     });
+
+    test('a phone with no fingerprint set up says so and burns no tries',
+        () async {
+      when(() => biometric.authenticate()).thenAnswer((_) async =>
+          const BiometricResult.failed(BiometricFailure.notEnrolled));
+      final n = build();
+      await n.initialize();
+      for (var i = 0; i < 3; i++) {
+        await n.unlockWithBiometric();
+      }
+      final s = n.state as VaultLocked;
+      expect(s.biometricExhausted, isFalse);
+      expect(s.lastError, contains('No fingerprint or face is set up'));
+    });
+
+    test('a prompt that cannot start is not reported as a failed match',
+        () async {
+      when(() => biometric.authenticate()).thenAnswer((_) async =>
+          const BiometricResult.failed(BiometricFailure.couldNotStart));
+      final n = build();
+      await n.initialize();
+      await n.unlockWithBiometric();
+      expect((n.state as VaultLocked).lastError,
+          'Biometrics could not start. Use your PIN.');
+    });
+  });
+
+  group('turning biometric unlock on', () {
+    Future<VaultUnlockNotifier> unlocked() async {
+      when(() => credentials.createSalt(any())).thenAnswer((_) async => salt);
+      when(() => kdf.deriveKeyAsync(
+          pin: any(named: 'pin'),
+          salt: any(named: 'salt'))).thenAnswer((_) async => correctKey);
+      when(() => credentials.storeVerifier(any(), any()))
+          .thenAnswer((_) async {});
+      when(() => keyStore.storeDerivedKey(any(), any()))
+          .thenAnswer((_) async {});
+      final n = build();
+      await n.createVault('1234');
+      return n;
+    }
+
+    test('needs a passing biometric check before the key is saved', () async {
+      when(() => biometric.authenticate())
+          .thenAnswer((_) async => const BiometricResult.success());
+      final n = await unlocked();
+      final result = await n.enableBiometricUnlock();
+      expect(result.ok, isTrue);
+      verify(() => keyStore.storeDerivedKey(any(), correctKey)).called(1);
+      verify(() => credentials.setBiometricEnabled(any(), true)).called(1);
+    });
+
+    test('a failed check saves nothing and leaves it off', () async {
+      when(() => biometric.authenticate()).thenAnswer((_) async =>
+          const BiometricResult.failed(BiometricFailure.couldNotStart));
+      final n = await unlocked();
+      final result = await n.enableBiometricUnlock();
+      expect(result.ok, isFalse);
+      verifyNever(() => keyStore.storeDerivedKey(any(), any()));
+      verifyNever(() => credentials.setBiometricEnabled(any(), true));
+    });
+  });
+
+  test('local_auth error codes map to the right reason', () {
+    expect(BiometricGate.failureFor('NotEnrolled'), BiometricFailure.notEnrolled);
+    expect(BiometricGate.failureFor('PasscodeNotSet'), BiometricFailure.noScreenLock);
+    expect(BiometricGate.failureFor('LockedOut'), BiometricFailure.lockedOut);
+    expect(BiometricGate.failureFor('PermanentlyLockedOut'),
+        BiometricFailure.permanentlyLockedOut);
+    expect(BiometricGate.failureFor('NotAvailable'), BiometricFailure.notAvailable);
+    expect(BiometricGate.failureFor('no_fragment_activity'),
+        BiometricFailure.couldNotStart);
   });
 }
