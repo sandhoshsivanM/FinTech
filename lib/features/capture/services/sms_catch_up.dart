@@ -62,7 +62,7 @@ class SmsCatchUp {
 
   /// Imports the last [window] of bank SMS. Captures it can't post confidently
   /// land in the review inbox like any other.
-  Future<SmsCatchUpResult> importHistory({Duration window = const Duration(days: 90)}) async {
+  Future<SmsCatchUpResult> importHistory({Duration window = const Duration(days: 1)}) async {
     if (!await _channel.isSmsPermissionGranted()) return const SmsCatchUpResult();
     final now = _clock();
     return _scan(now.subtract(window), now);

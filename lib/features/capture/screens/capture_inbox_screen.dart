@@ -594,7 +594,10 @@ class _SmsControlsState extends ConsumerState<_SmsControls> {
   Future<void> _import() async {
     setState(() => _importing = true);
     try {
-      final result = await ref.read(smsCatchUpProvider).importHistory();
+      final days = ref.read(captureSmsHistoryDaysProvider);
+      final result = await ref
+          .read(smsCatchUpProvider)
+          .importHistory(window: Duration(days: days));
       ref.read(lastSmsCatchUpProvider.notifier).state = result;
     } finally {
       if (mounted) setState(() => _importing = false);
@@ -606,6 +609,7 @@ class _SmsControlsState extends ConsumerState<_SmsControls> {
     final available = ref.watch(smsAvailableProvider).valueOrNull ?? false;
     if (!available) return const SizedBox.shrink();
     final granted = ref.watch(smsPermissionProvider).valueOrNull ?? false;
+    final days = ref.watch(captureSmsHistoryDaysProvider);
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Padding(
@@ -640,10 +644,44 @@ class _SmsControlsState extends ConsumerState<_SmsControls> {
                       ? const SizedBox(
                           width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.history, size: 18),
-                  label: Text(_importing ? 'Importing…' : 'Import last 90 days'),
+                  label: Text(_importing
+                      ? 'Importing…'
+                      : 'Import last ${smsHistoryLabel(days)}'),
                 ),
             ],
           ),
+          if (granted) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'How far back to read SMS',
+                    style: TextStyle(fontSize: 13, color: muted),
+                  ),
+                ),
+                DropdownButton<int>(
+                  key: const ValueKey('sms-history-days'),
+                  dropdownColor: AppTheme.menuSurface(context),
+                  value: days,
+                  onChanged: _importing
+                      ? null
+                      : (v) => v == null
+                          ? null
+                          : ref
+                              .read(captureSmsHistoryDaysProvider.notifier)
+                              .set(v),
+                  items: [
+                    // A value saved before the option list changed must still
+                    // be selectable, or the dropdown asserts.
+                    for (final d in ({...smsHistoryDayOptions, days}.toList()
+                      ..sort()))
+                      DropdownMenuItem(value: d, child: Text(smsHistoryLabel(d))),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

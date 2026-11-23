@@ -109,6 +109,11 @@ void main() {
     expect(cursor.at, now);
   });
 
+  test('with no window given, an import reads back one day, not ninety', () async {
+    await catchUp.importHistory();
+    expect(channel.reads.single, now.subtract(const Duration(days: 1)));
+  });
+
   test('without the permission nothing is read at all', () async {
     channel.granted = false;
     expect((await catchUp.importHistory()).isEmpty, isTrue);
