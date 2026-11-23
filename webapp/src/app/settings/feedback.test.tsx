@@ -3,7 +3,7 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useApp } from '@/lib/store';
+import { APP_VERSION, useApp } from '@/lib/store';
 import { ConfirmProvider } from '@khazana/screens/components/Confirm';
 import { FEEDBACK_EMAIL } from '@/lib/brand';
 import { clearErrorLog, recordError } from '@/lib/errorLog';
@@ -42,7 +42,7 @@ describe('Help & feedback card', () => {
     await waitFor(() => expect(send.getAttribute('href')).toContain('subject='));
     const href = send.getAttribute('href')!;
     expect(href.startsWith(`mailto:${FEEDBACK_EMAIL}?`)).toBe(true);
-    expect(decodeURIComponent(href)).toContain('Khazana feedback — 1.0.0 (web)');
+    expect(decodeURIComponent(href)).toContain(`Khazana feedback — ${APP_VERSION} (web)`);
 
     expect(screen.getByRole('link', { name: 'Report a problem by email' })).toBeInTheDocument();
   });
