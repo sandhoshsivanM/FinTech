@@ -104,6 +104,7 @@ jobs:
           need('android.permission.READ_SMS')       # bank SMS capture (declared to Play)
           need('android.permission.RECEIVE_SMS')
           need('android.permission.BROADCAST_SMS')  # guards SmsReceiver: only the OS may deliver SMS to it
+          need('android.hardware.telephony')        # declared required=false, or Play hides the app from tablets
           forbid('android.permission.SEND_SMS')     # Khazana never sends SMS
           forbid('com.android.vending.BILLING')     # no in-app purchases; Khazana is free
           print('manifest OK')

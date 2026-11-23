@@ -10,6 +10,15 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.READ_SMS"/>
 
+    <!-- Optional, not required. Requesting SMS permissions makes Play assume
+         the app needs telephony, and it then hides the app from every device
+         without it: tablets, Chromebooks, Wi-Fi-only phones (4,541 device
+         models dropped when 1.1.0+3 was uploaded). SMS capture is an optional
+         extra, so those devices keep the app and simply don't get it.
+         MainActivity reports SMS as unavailable when this feature is missing.
+         test/unit/android_sms_manifest_test.dart keeps it optional. -->
+    <uses-feature android:name="android.hardware.telephony" android:required="false"/>
+
     <application>
         <!-- Exported because the system delivers SMS_RECEIVED to it. The
              BROADCAST_SMS permission means only the OS's telephony stack can

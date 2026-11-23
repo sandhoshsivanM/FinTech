@@ -95,7 +95,7 @@ class MainActivity : FlutterFragmentActivity() {
                         startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                         result.success(null)
                     }
-                    "isSmsCaptureAvailable" -> result.success(sms.isAvailable)
+                    "isSmsCaptureAvailable" -> result.success(smsUsable())
                     "isSmsPermissionGranted" -> result.success(sms.hasPermission(this))
                     "requestSmsPermission" -> requestSmsPermission(result)
                     "readSmsSince" -> {
@@ -117,8 +117,17 @@ class MainActivity : FlutterFragmentActivity() {
             }
     }
 
+    /**
+     * SMS capture is compiled in ([SmsCapture.isAvailable]) AND this device can
+     * receive SMS at all. Telephony is declared optional in the manifest so
+     * tablets and Chromebooks can still install the app; on those, the SMS
+     * option is simply not offered.
+     */
+    private fun smsUsable(): Boolean =
+        sms.isAvailable && packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+
     private fun requestSmsPermission(result: MethodChannel.Result) {
-        if (!sms.isAvailable) return result.success(false)
+        if (!smsUsable()) return result.success(false)
         if (sms.hasPermission(this)) return result.success(true)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return result.success(true)
         // One request at a time; a second tap while the dialog is up just waits.
