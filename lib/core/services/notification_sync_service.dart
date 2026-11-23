@@ -3,9 +3,14 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:decimal/decimal.dart';
 import 'package:khazana_domain/entities/recurring_rule.dart';
+import 'package:khazana_domain/entities/transaction.dart';
 import 'package:khazana_domain/services/notification_scheduler.dart';
+import '../../features/capture/providers/capture_providers.dart';
+import '../../features/transactions/providers/transaction_providers.dart';
 import '../di/data_providers.dart';
+import '../utils/money_format.dart';
 import 'notification_providers.dart';
 
 /// Keeps the OS's pending reminders in step with the vault.
@@ -58,6 +63,7 @@ class NotificationSyncService {
       prefs: prefs,
       deliveries: _ref.read(deliveryLogProvider),
       dueEvents: await _collectDueEvents(),
+      today: _today(now),
       maxPending: maxPendingFor(
         isApplePlatform: defaultTargetPlatform == TargetPlatform.iOS ||
             defaultTargetPlatform == TargetPlatform.macOS,
@@ -82,6 +88,14 @@ class NotificationSyncService {
       kept: r.kept,
       truncated: plan.truncated,
     );
+  }
+
+  /// Today's ledger and review queue, for the evening digest.
+  TodayFact _today(DateTime now) {
+    final state = _ref.read(transactionListProvider);
+    final txns = state is TransactionData ? state.transactions : const <Txn>[];
+    final pending = _ref.read(pendingCaptureListProvider).valueOrNull?.length ?? 0;
+    return todayFactFrom(txns, now, toReview: pending);
   }
 
   /// Flattens the vault's dated records into the planner's one shape.
@@ -175,4 +189,30 @@ final notificationSyncProvider = Provider<NotificationSyncService>((ref) {
 extension NotificationReconcileOnWrite on Ref {
   void reconcileNotifications() =>
       read(notificationSyncProvider).scheduleReconcile();
+}
+
+/// Sums [txns] dated on [now]'s local day. Pure, so it is tested on its own.
+TodayFact todayFactFrom(Iterable<Txn> txns, DateTime now, {int toReview = 0}) {
+  var spent = Decimal.zero;
+  var received = Decimal.zero;
+  var spentCount = 0;
+  var receivedCount = 0;
+  for (final t in txns) {
+    final d = t.date;
+    if (d.year != now.year || d.month != now.month || d.day != now.day) continue;
+    if (t.type == TxnType.income) {
+      received += t.amount;
+      receivedCount++;
+    } else {
+      spent += t.amount;
+      spentCount++;
+    }
+  }
+  return TodayFact(
+    spentCount: spentCount,
+    receivedCount: receivedCount,
+    toReview: toReview,
+    spentText: Money.format(spent),
+    receivedText: Money.format(received),
+  );
 }

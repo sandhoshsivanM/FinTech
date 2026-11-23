@@ -19,6 +19,7 @@ import '../../../presentation/data_gate.dart';
 import '../../accounts/providers/account_providers.dart';
 import '../../accounts/services/ledger_writer.dart';
 import '../providers/category_providers.dart';
+import '../providers/recurring_income_providers.dart';
 import '../providers/transaction_providers.dart';
 import '../widgets/budget_strip.dart';
 import '../widgets/review_queue_banner.dart';
@@ -300,6 +301,7 @@ class _Ledger extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final recurring = ref.watch(recurringIncomeByIdProvider);
     return ListView.builder(
       padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: 128),
       itemCount: rows.length,
@@ -313,6 +315,7 @@ class _Ledger extends ConsumerWidget {
             onDelete: () =>
                 ref.read(transactionListProvider.notifier).remove(txn.id),
             onTap: () => context.push(Routes.editTransaction, extra: txn),
+            recurring: recurring[txn.id],
           ),
         };
       },

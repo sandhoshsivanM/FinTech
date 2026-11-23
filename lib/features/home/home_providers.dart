@@ -9,6 +9,7 @@ import 'package:khazana_domain/services/daily_flow.dart';
 import '../accounts/providers/account_providers.dart';
 import '../budget/providers/budget_providers.dart';
 import '../liabilities/providers/liability_providers.dart';
+import '../transactions/providers/recurring_income_providers.dart';
 import '../transactions/providers/transaction_providers.dart';
 
 /// What a wallet card shows. [balance] is as a person would say it: what is in
@@ -138,3 +139,19 @@ final fortnightFlowProvider = Provider<List<DayFlow>>((ref) {
 final weekFlowProvider = Provider<List<DayFlow>>(
   (ref) => ref.watch(fortnightFlowProvider).sublist(7),
 );
+
+/// Today's money in and out, and how much of the income was a regular
+/// payment (a salary, rent), so one payday does not read as a windfall.
+final todayFlowProvider = Provider<({DayFlow day, Decimal regularIncome})>((ref) {
+  final day = ref.watch(fortnightFlowProvider).last;
+  final regular = ref.watch(recurringIncomeByIdProvider);
+  final state = ref.watch(transactionListProvider);
+  final txns = state is TransactionData ? state.transactions : const <Txn>[];
+  var regularIncome = Decimal.zero;
+  for (final t in txns) {
+    if (t.type != TxnType.income || !regular.containsKey(t.id)) continue;
+    final d = t.date;
+    if (DateTime(d.year, d.month, d.day) == day.day) regularIncome += t.amount;
+  }
+  return (day: day, regularIncome: regularIncome);
+});

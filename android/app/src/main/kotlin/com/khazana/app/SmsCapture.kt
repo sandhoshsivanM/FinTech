@@ -4,11 +4,12 @@ import android.content.Context
 
 /**
  * SMS capture, as far as the shared code needs to know. Each build flavor
- * supplies [SmsCaptureImpl]: the `play` one is inert (no permission, no SMS
- * code in the binary), the `sideload` one reads bank SMS.
+ * supplies [SmsCaptureImpl]: `play` and `sideload` share the one in src/sms,
+ * which reads bank SMS; the `share` one is inert (no permission, no SMS code
+ * in the binary).
  */
 interface SmsCapture {
-    /** Whether this build can read SMS at all (sideload: yes, play: no). */
+    /** Whether this build can read SMS at all (play, sideload: yes; share: no). */
     val isAvailable: Boolean
 
     /** The runtime permissions to request, empty when unavailable. */

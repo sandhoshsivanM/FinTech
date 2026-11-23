@@ -6,12 +6,12 @@
          moment the app was built in release. -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
-    <!-- Deliberately absent: RECEIVE_SMS and READ_SMS. Both are Play "restricted
-         permissions", and "parse bank transaction texts" is the exact use case
-         the SMS/Call Log policy names as not permitted — an app declaring them
-         without being the default SMS handler is rejected. Bank-alert capture
-         runs through the notification listener below instead, which covers the
-         same alerts on any phone that shows them. -->
+    <!-- RECEIVE_SMS and READ_SMS are not declared here: they come from
+         src/sms/AndroidManifest.xml, merged into the play and sideload builds
+         only. Both are Play "restricted permissions", allowed for a budgeting
+         app under the "SMS-based money management" exception after a
+         Permissions Declaration review. The notification listener below works
+         alongside SMS and is the only capture path in the share build. -->
 
     <!-- Outbound local notifications: bill/renewal/goal reminders and budget
          alerts. Entirely on-device — the OS holds the alarm, nothing is pushed.

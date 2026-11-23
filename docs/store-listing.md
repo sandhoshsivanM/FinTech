@@ -229,9 +229,10 @@ to data collection:
 | `POST_NOTIFICATIONS`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED` | app | local reminders; the boot receiver restores scheduled alarms after a reboot. No exact-alarm permission is used |
 | `USE_BIOMETRIC`, `USE_FINGERPRINT` | `local_auth` plugin | optional unlock; the app gets only yes or no |
 | `BIND_NOTIFICATION_LISTENER_SERVICE` (on the service) | app | optional bank-alert auto-capture; see below |
+| `RECEIVE_SMS`, `READ_SMS` | app (`src/sms`) | optional bank-SMS auto-capture, off by default, behind a disclosure; declared under the "SMS-based money management" exception (`docs/play-store/sms-permission-declaration.md`) |
 | `<DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION>` | AndroidX | internal signature permission |
 
-Not requested: `READ_SMS`, `RECEIVE_SMS`, contacts, location, camera, storage,
+Not requested: `SEND_SMS`, contacts, location, camera, storage,
 `SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`, foreground-service permissions.
 
 ### Policy review: findings
@@ -296,8 +297,11 @@ The disclosure text, for the console and the review video:
   justification" below and offer a short screen recording: Settings, Auto-capture,
   Notification access, the dialog, Agree, the system screen.
 
-**SMS.** Correctly absent (`RECEIVE_SMS`/`READ_SMS` are Play restricted
-permissions; reading bank texts is not an allowed use).
+**SMS.** `RECEIVE_SMS`/`READ_SMS` are Play restricted permissions. Google lists
+"SMS-based money management (apps that track and manage budget)" as an exception
+for apps that are not the default SMS handler, granted case by case after the
+Permissions Declaration. Draft answers, demo-video script and data-handling
+statement: `docs/play-store/sms-permission-declaration.md`.
 
 **Exact alarms, foreground services, full-screen intents, `QUERY_ALL_PACKAGES`,
 `MANAGE_EXTERNAL_STORAGE`:** none present.
@@ -332,12 +336,13 @@ and a contact address (the page does).
 > what is read, why, that nothing leaves the device and how to switch it off, and
 > requires the user to tap "Agree and continue". The notification text is parsed
 > on the device, in memory, and discarded. Only the amount, merchant and date are
-> retained, and only after the user approves the suggestion. Nothing is
+> retained, either posted with an Undo or held for review, as the user chooses. Nothing is
 > transmitted: the app has no server and makes no network request related to
 > this feature.
 >
-> No less-broad API provides incoming transaction alerts. The app deliberately
-> does not request READ_SMS or RECEIVE_SMS.
+> No less-broad API provides incoming transaction alerts. SMS capture, for banks
+> that send no app notification, is declared separately under the SMS
+> permissions policy.
 
 **Other store-readiness notes**
 - `versionCode` is 1 (from `pubspec.yaml` `1.0.0+1`). Every upload needs a higher

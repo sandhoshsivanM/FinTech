@@ -18,7 +18,7 @@ import javax.crypto.spec.PBEKeySpec
 
 /**
  * Hosts the capture channels. [KhazanaNotificationListener] (every build) and
- * `SmsReceiver` (sideload build) forward unparsed raw text to [CaptureBus];
+ * `SmsReceiver` (play and sideload builds) forward unparsed raw text to [CaptureBus];
  * this activity relays it to Flutter over an EventChannel and answers
  * permission and inbox queries over a MethodChannel.
  *

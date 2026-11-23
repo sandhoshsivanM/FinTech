@@ -572,8 +572,8 @@ class _PermissionCard extends ConsumerWidget {
   }
 }
 
-/// SMS access and history import — shown only on the sideload build, which is
-/// the only one that can read SMS.
+/// SMS access and history import — shown only on builds that can read SMS
+/// (play and sideload, not share).
 class _SmsControls extends ConsumerStatefulWidget {
   const _SmsControls();
 

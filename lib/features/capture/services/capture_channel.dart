@@ -33,9 +33,9 @@ class CapturedMessage {
 ///
 /// Two sources:
 /// * **Notifications** — every Android build, through the notification listener.
-/// * **SMS** — the `sideload` build only ([isSmsAvailable]). The Play build
-///   declares no SMS permission until Play approves Khazana under the
-///   "SMS-based money management" exception of its SMS/Call Log policy.
+/// * **SMS** — the `play` and `sideload` builds ([isSmsAvailable]), declared to
+///   Play under the "SMS-based money management" exception of its SMS/Call
+///   Log policy. Not in the `share` build.
 class CaptureChannel {
   const CaptureChannel();
 
@@ -78,7 +78,7 @@ class CaptureChannel {
     await _method.invokeMethod<void>('openNotificationAccessSettings');
   }
 
-  /// Whether this build can read SMS at all (sideload: yes, Play: no).
+  /// Whether this build can read SMS at all (play, sideload: yes; share: no).
   Future<bool> isSmsAvailable() async {
     if (!supported) return false;
     try {

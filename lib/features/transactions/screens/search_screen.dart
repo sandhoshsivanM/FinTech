@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../presentation/data_gate.dart';
 import '../providers/category_providers.dart';
+import '../providers/recurring_income_providers.dart';
 import '../providers/search_providers.dart';
 import '../widgets/transaction_tile.dart';
 
@@ -31,6 +32,7 @@ class _SearchBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final results = ref.watch(searchResultsProvider);
+    final recurring = ref.watch(recurringIncomeByIdProvider);
     final categories = ref.watch(categoryListProvider).valueOrNull ?? const [];
     final byId = {for (final c in categories) c.id: c};
 
@@ -60,6 +62,7 @@ class _SearchBody extends ConsumerWidget {
                       txn: txns[i],
                       category: byId[txns[i].categoryId],
                       onTap: () => context.push(Routes.editTransaction, extra: txns[i]),
+                      recurring: recurring[txns[i].id],
                     ),
                   ),
             loading: () => const Center(child: CircularProgressIndicator()),

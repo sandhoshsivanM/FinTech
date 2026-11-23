@@ -4,6 +4,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/services/notification_sync_service.dart';
 import '../../../core/di/data_providers.dart';
 import 'package:khazana_domain/entities/pending_capture.dart';
 import 'package:khazana_domain/entities/transaction.dart';
@@ -113,8 +114,8 @@ final captureSupportedProvider = Provider<bool>((ref) => CaptureChannel.supporte
 final notificationCaptureAvailableProvider = FutureProvider<bool>(
     (ref) => ref.watch(captureChannelProvider).isNotificationCaptureAvailable());
 
-/// Whether this build reads SMS (the `sideload` flavor) — false on Play builds
-/// and off Android.
+/// Whether this build reads SMS (the `play` and `sideload` flavors) — false on
+/// the `share` build and off Android.
 final smsAvailableProvider = FutureProvider<bool>(
     (ref) => ref.watch(captureChannelProvider).isSmsAvailable());
 
@@ -175,6 +176,8 @@ final captureListenerProvider = Provider<void>((ref) {
     final result = await catchUp.run();
     if (!result.isEmpty) {
       ref.read(lastSmsCatchUpProvider.notifier).state = result;
+      // The evening digest quotes today's figures and the review queue.
+      ref.reconcileNotifications();
     }
   }).catchError((Object _) {});
   final sub = channel.events().listen(
@@ -183,6 +186,9 @@ final captureListenerProvider = Provider<void>((ref) {
         final outcome = await pipeline.ingest(msg);
         if (outcome.result == IngestResult.autoPosted) {
           ref.read(lastAutoPostedCaptureProvider.notifier).state = outcome.capture;
+        }
+        if (outcome.result == IngestResult.queued) {
+          ref.reconcileNotifications();
         }
       }).catchError((Object _) {
         // Capture is best-effort: one bad message must not stall the queue.

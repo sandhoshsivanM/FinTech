@@ -7,7 +7,7 @@ import android.os.Build
 import android.provider.Telephony
 
 /**
- * Reads bank SMS for the sideload build.
+ * Reads bank SMS for the play and sideload builds.
  *
  * The SMS inbox is also what makes capture reliable: alerts that arrive while
  * the app is closed or the vault is locked are still sitting in the inbox, so
