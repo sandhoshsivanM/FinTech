@@ -71,7 +71,7 @@ const STEPS: Step[] = [
   // largest groups in a typical book separable at a glance.
   { key: 'debt', label: 'Debt', hue: 280, chroma: 0.110, dark: 0.761, light: 0.606 },
   // Brass. Pinned: gold is gold.
-  { key: 'gold', label: 'Gold', hue: 88, chroma: 0.122, dark: 0.708, light: 0.604 },
+  { key: 'gold', label: 'Gold & commodities', hue: 88, chroma: 0.122, dark: 0.708, light: 0.604 },
   // Steel blue, pushed cold and away from emerald: those two converge under
   // tritanopia, and this pair was the binding constraint on the whole set.
   { key: 'real_estate', label: 'Real Estate', hue: 245, chroma: 0.100, dark: 0.688, light: 0.518 },

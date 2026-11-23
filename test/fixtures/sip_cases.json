@@ -1,0 +1,266 @@
+{
+  "_comment": [
+    "Shared parity cases for the SIP schedule. Dates are YYYY-MM-DD calendar dates.",
+    "Loaded by test/unit/sip_schedule_test.dart and webapp/src/domain/sip.test.ts; the __fixtures__ copy must stay byte-identical.",
+    "The step-up lands every 1 April after the start date."
+  ],
+  "plans": [
+    {
+      "id": "ppfas",
+      "assetType": "equity_mf",
+      "amount": "8000",
+      "dayOfMonth": 23,
+      "startDate": "2025-01-23",
+      "stepUpPct": 0,
+      "active": true
+    },
+    {
+      "id": "hdfc",
+      "assetType": "equity_mf",
+      "amount": "10000",
+      "dayOfMonth": 25,
+      "startDate": "2024-06-25",
+      "stepUpPct": 10,
+      "active": true
+    },
+    {
+      "id": "nifty",
+      "assetType": "equity_etf",
+      "amount": "6000",
+      "dayOfMonth": 1,
+      "startDate": "2026-01-01",
+      "stepUpPct": 0,
+      "active": true
+    },
+    {
+      "id": "gold",
+      "assetType": "gold_etf",
+      "amount": "4000",
+      "dayOfMonth": 31,
+      "startDate": "2026-12-05",
+      "stepUpPct": 0,
+      "active": true
+    },
+    {
+      "id": "paused",
+      "assetType": "debt_mf",
+      "amount": "5000",
+      "dayOfMonth": 10,
+      "startDate": "2025-05-10",
+      "stepUpPct": 0,
+      "active": false
+    }
+  ],
+  "instalments": [
+    {
+      "sipId": "ppfas",
+      "dueDate": "2026-10-23",
+      "status": "done",
+      "amount": "8000"
+    },
+    {
+      "sipId": "hdfc",
+      "dueDate": "2026-10-25",
+      "status": "done",
+      "amount": "12100"
+    },
+    {
+      "sipId": "hdfc",
+      "dueDate": "2026-04-25",
+      "status": "done",
+      "amount": "12100"
+    },
+    {
+      "sipId": "hdfc",
+      "dueDate": "2026-03-25",
+      "status": "done",
+      "amount": "11000"
+    },
+    {
+      "sipId": "nifty",
+      "dueDate": "2026-11-01",
+      "status": "skipped",
+      "amount": "0"
+    }
+  ],
+  "targets": {
+    "equity": 60,
+    "debt": 20,
+    "gold": 10,
+    "retirement": 5,
+    "cash": 5
+  },
+  "queries": [
+    {
+      "fn": "occurrences",
+      "plan": "gold",
+      "from": "2026-11-01",
+      "to": "2027-03-31",
+      "expect": [
+        "2026-12-31",
+        "2027-01-31",
+        "2027-02-28",
+        "2027-03-31"
+      ]
+    },
+    {
+      "fn": "occurrences",
+      "plan": "ppfas",
+      "from": "2026-08-01",
+      "to": "2026-11-23",
+      "expect": [
+        "2026-08-23",
+        "2026-09-23",
+        "2026-10-23",
+        "2026-11-23"
+      ]
+    },
+    {
+      "fn": "amountOn",
+      "plan": "hdfc",
+      "on": "2025-03-31",
+      "expect": "10000"
+    },
+    {
+      "fn": "amountOn",
+      "plan": "hdfc",
+      "on": "2025-04-01",
+      "expect": "11000"
+    },
+    {
+      "fn": "amountOn",
+      "plan": "hdfc",
+      "on": "2026-11-23",
+      "expect": "12100"
+    },
+    {
+      "fn": "amountOn",
+      "plan": "hdfc",
+      "on": "2027-04-25",
+      "expect": "13310"
+    },
+    {
+      "fn": "pendingDue",
+      "plan": "ppfas",
+      "today": "2026-11-23",
+      "expect": [
+        "2026-11-23"
+      ]
+    },
+    {
+      "fn": "pendingDue",
+      "plan": "hdfc",
+      "today": "2026-11-23",
+      "expect": []
+    },
+    {
+      "fn": "pendingDue",
+      "plan": "nifty",
+      "today": "2026-11-23",
+      "expect": []
+    },
+    {
+      "fn": "pendingDue",
+      "plan": "paused",
+      "today": "2026-11-23",
+      "expect": []
+    },
+    {
+      "fn": "pendingDue",
+      "plan": "gold",
+      "today": "2026-11-23",
+      "expect": []
+    },
+    {
+      "fn": "nextDue",
+      "plan": "ppfas",
+      "today": "2026-11-23",
+      "expect": "2026-12-23"
+    },
+    {
+      "fn": "nextDue",
+      "plan": "hdfc",
+      "today": "2026-11-23",
+      "expect": "2026-11-25"
+    },
+    {
+      "fn": "nextDue",
+      "plan": "gold",
+      "today": "2026-11-23",
+      "expect": "2026-12-31"
+    },
+    {
+      "fn": "nextDue",
+      "plan": "gold",
+      "today": "2027-01-31",
+      "expect": "2027-02-28"
+    },
+    {
+      "fn": "nextDue",
+      "plan": "paused",
+      "today": "2026-11-23",
+      "expect": null
+    },
+    {
+      "fn": "monthlyTotal",
+      "today": "2026-11-23",
+      "expect": "30100"
+    },
+    {
+      "fn": "investedThisFy",
+      "today": "2026-11-23",
+      "expect": "32200"
+    },
+    {
+      "fn": "unitsFor",
+      "amount": "5000",
+      "nav": "96.42",
+      "expect": "51.856"
+    },
+    {
+      "fn": "unitsFor",
+      "amount": "8000",
+      "nav": "74.3109",
+      "expect": "107.656"
+    },
+    {
+      "fn": "monthsToClose",
+      "gap": "60000",
+      "monthly": "5000",
+      "expect": 12
+    },
+    {
+      "fn": "monthsToClose",
+      "gap": "60001",
+      "monthly": "5000",
+      "expect": 13
+    },
+    {
+      "fn": "monthsToClose",
+      "gap": "0",
+      "monthly": "5000",
+      "expect": null
+    },
+    {
+      "fn": "sipMix",
+      "today": "2026-11-23",
+      "expect": {
+        "rows": [
+          {
+            "group": "equity",
+            "amount": "26100",
+            "sipPct": 87,
+            "targetPct": 60
+          },
+          {
+            "group": "gold",
+            "amount": "4000",
+            "sipPct": 13,
+            "targetPct": 10
+          }
+        ],
+        "warning": "equity"
+      }
+    }
+  ]
+}

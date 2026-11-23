@@ -1,0 +1,766 @@
+{
+  "_comment": [
+    "Shared parity cases for target-vs-actual allocation.",
+    "Loaded by test/unit/allocation_targets_test.dart (Dart) and webapp/src/domain/allocation.test.ts (TypeScript).",
+    "The copy in webapp/src/domain/__fixtures__/ must stay byte-identical; the Dart suite checks it.",
+    "Money is a Decimal string, percentages a Decimal string at 1 dp, targets whole percents."
+  ],
+  "cases": [
+    {
+      "name": "prototype sample: ₹10,00,000 across six groups",
+      "tolerance": 2,
+      "holdings": [
+        {
+          "type": "equity_mf",
+          "value": "200000"
+        },
+        {
+          "type": "equity_mf",
+          "value": "100000"
+        },
+        {
+          "type": "equity_mf",
+          "value": "50000"
+        },
+        {
+          "type": "equity_mf",
+          "value": "40000"
+        },
+        {
+          "type": "equity_mf",
+          "value": "20000"
+        },
+        {
+          "type": "equity_etf",
+          "value": "210000"
+        },
+        {
+          "type": "debt_mf",
+          "value": "90000"
+        },
+        {
+          "type": "bond",
+          "value": "50000"
+        },
+        {
+          "type": "digital_gold",
+          "value": "20000"
+        },
+        {
+          "type": "digital_gold",
+          "value": "14000"
+        },
+        {
+          "type": "gold_etf",
+          "value": "20000"
+        },
+        {
+          "type": "silver",
+          "value": "8000"
+        },
+        {
+          "type": "sgb",
+          "value": "3000"
+        },
+        {
+          "type": "ppf_epf",
+          "value": "60000"
+        },
+        {
+          "type": "nps",
+          "value": "20000"
+        },
+        {
+          "type": "cash",
+          "value": "45000"
+        },
+        {
+          "type": "fd",
+          "value": "0"
+        },
+        {
+          "type": "crypto",
+          "value": "20000"
+        },
+        {
+          "type": "cash",
+          "value": "30000"
+        }
+      ],
+      "targets": {
+        "equity": 60,
+        "debt": 20,
+        "gold": 10,
+        "retirement": 5,
+        "cash": 5,
+        "crypto": 0
+      },
+      "expect": {
+        "total": "1000000",
+        "targetsTotal": 100,
+        "hasTargets": true,
+        "suggested": {
+          "equity": 61,
+          "debt": 14,
+          "gold": 7,
+          "retirement": 8,
+          "crypto": 2,
+          "cash": 8
+        },
+        "rows": [
+          {
+            "group": "equity",
+            "value": "620000",
+            "actualPct": "62",
+            "targetPct": 60,
+            "targetValue": "600000",
+            "gapPct": "2",
+            "status": "on_track",
+            "amount": "0",
+            "children": [
+              {
+                "type": "equity_mf",
+                "value": "410000",
+                "actualPct": "41",
+                "count": 5
+              },
+              {
+                "type": "equity_etf",
+                "value": "210000",
+                "actualPct": "21",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "debt",
+            "value": "140000",
+            "actualPct": "14",
+            "targetPct": 20,
+            "targetValue": "200000",
+            "gapPct": "-6",
+            "status": "under",
+            "amount": "60000",
+            "children": [
+              {
+                "type": "debt_mf",
+                "value": "90000",
+                "actualPct": "9",
+                "count": 1
+              },
+              {
+                "type": "bond",
+                "value": "50000",
+                "actualPct": "5",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "gold",
+            "value": "65000",
+            "actualPct": "6.5",
+            "targetPct": 10,
+            "targetValue": "100000",
+            "gapPct": "-3.5",
+            "status": "under",
+            "amount": "35000",
+            "children": [
+              {
+                "type": "digital_gold",
+                "value": "34000",
+                "actualPct": "3.4",
+                "count": 2
+              },
+              {
+                "type": "gold_etf",
+                "value": "20000",
+                "actualPct": "2",
+                "count": 1
+              },
+              {
+                "type": "silver",
+                "value": "8000",
+                "actualPct": "0.8",
+                "count": 1
+              },
+              {
+                "type": "sgb",
+                "value": "3000",
+                "actualPct": "0.3",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "retirement",
+            "value": "80000",
+            "actualPct": "8",
+            "targetPct": 5,
+            "targetValue": "50000",
+            "gapPct": "3",
+            "status": "over",
+            "amount": "30000",
+            "children": [
+              {
+                "type": "ppf_epf",
+                "value": "60000",
+                "actualPct": "6",
+                "count": 1
+              },
+              {
+                "type": "nps",
+                "value": "20000",
+                "actualPct": "2",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "crypto",
+            "value": "20000",
+            "actualPct": "2",
+            "targetPct": 0,
+            "targetValue": "0",
+            "gapPct": "2",
+            "status": "on_track",
+            "amount": "0",
+            "children": [
+              {
+                "type": "crypto",
+                "value": "20000",
+                "actualPct": "2",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "cash",
+            "value": "75000",
+            "actualPct": "7.5",
+            "targetPct": 5,
+            "targetValue": "50000",
+            "gapPct": "2.5",
+            "status": "over",
+            "amount": "25000",
+            "children": [
+              {
+                "type": "cash",
+                "value": "75000",
+                "actualPct": "7.5",
+                "count": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "no targets yet: every holding group reads over, sum is 0",
+      "holdings": [
+        {
+          "type": "equity_etf",
+          "value": "750"
+        },
+        {
+          "type": "debt_mf",
+          "value": "250"
+        }
+      ],
+      "targets": {},
+      "expect": {
+        "total": "1000",
+        "targetsTotal": 0,
+        "hasTargets": false,
+        "suggested": {
+          "equity": 75,
+          "debt": 25
+        },
+        "rows": [
+          {
+            "group": "equity",
+            "value": "750",
+            "actualPct": "75",
+            "targetPct": 0,
+            "targetValue": "0",
+            "gapPct": "75",
+            "status": "over",
+            "amount": "750",
+            "children": [
+              {
+                "type": "equity_etf",
+                "value": "750",
+                "actualPct": "75",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "debt",
+            "value": "250",
+            "actualPct": "25",
+            "targetPct": 0,
+            "targetValue": "0",
+            "gapPct": "25",
+            "status": "over",
+            "amount": "250",
+            "children": [
+              {
+                "type": "debt_mf",
+                "value": "250",
+                "actualPct": "25",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a target with no holdings yet shows the whole target as Add",
+      "holdings": [
+        {
+          "type": "equity_mf",
+          "value": "95000"
+        },
+        {
+          "type": "cash",
+          "value": "5000"
+        }
+      ],
+      "targets": {
+        "equity": 80,
+        "real_estate": 10,
+        "cash": 10
+      },
+      "expect": {
+        "total": "100000",
+        "targetsTotal": 100,
+        "hasTargets": true,
+        "suggested": {
+          "equity": 95,
+          "cash": 5
+        },
+        "rows": [
+          {
+            "group": "equity",
+            "value": "95000",
+            "actualPct": "95",
+            "targetPct": 80,
+            "targetValue": "80000",
+            "gapPct": "15",
+            "status": "over",
+            "amount": "15000",
+            "children": [
+              {
+                "type": "equity_mf",
+                "value": "95000",
+                "actualPct": "95",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "real_estate",
+            "value": "0",
+            "actualPct": "0",
+            "targetPct": 10,
+            "targetValue": "10000",
+            "gapPct": "-10",
+            "status": "under",
+            "amount": "10000",
+            "children": []
+          },
+          {
+            "group": "cash",
+            "value": "5000",
+            "actualPct": "5",
+            "targetPct": 10,
+            "targetValue": "10000",
+            "gapPct": "-5",
+            "status": "under",
+            "amount": "5000",
+            "children": [
+              {
+                "type": "cash",
+                "value": "5000",
+                "actualPct": "5",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "exactly at the tolerance edge is on track",
+      "tolerance": 2,
+      "holdings": [
+        {
+          "type": "equity_mf",
+          "value": "58"
+        },
+        {
+          "type": "debt_mf",
+          "value": "22"
+        },
+        {
+          "type": "gold_etf",
+          "value": "20"
+        }
+      ],
+      "targets": {
+        "equity": 60,
+        "debt": 20,
+        "gold": 20
+      },
+      "expect": {
+        "total": "100",
+        "targetsTotal": 100,
+        "hasTargets": true,
+        "suggested": {
+          "equity": 58,
+          "debt": 22,
+          "gold": 20
+        },
+        "rows": [
+          {
+            "group": "equity",
+            "value": "58",
+            "actualPct": "58",
+            "targetPct": 60,
+            "targetValue": "60",
+            "gapPct": "-2",
+            "status": "on_track",
+            "amount": "0",
+            "children": [
+              {
+                "type": "equity_mf",
+                "value": "58",
+                "actualPct": "58",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "debt",
+            "value": "22",
+            "actualPct": "22",
+            "targetPct": 20,
+            "targetValue": "20",
+            "gapPct": "2",
+            "status": "on_track",
+            "amount": "0",
+            "children": [
+              {
+                "type": "debt_mf",
+                "value": "22",
+                "actualPct": "22",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "gold",
+            "value": "20",
+            "actualPct": "20",
+            "targetPct": 20,
+            "targetValue": "20",
+            "gapPct": "0",
+            "status": "on_track",
+            "amount": "0",
+            "children": [
+              {
+                "type": "gold_etf",
+                "value": "20",
+                "actualPct": "20",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "0.1 point past the tolerance edge is no longer on track",
+      "tolerance": 2,
+      "holdings": [
+        {
+          "type": "equity_mf",
+          "value": "57.9"
+        },
+        {
+          "type": "debt_mf",
+          "value": "22.1"
+        },
+        {
+          "type": "gold_etf",
+          "value": "20"
+        }
+      ],
+      "targets": {
+        "equity": 60,
+        "debt": 20,
+        "gold": 20
+      },
+      "expect": {
+        "total": "100",
+        "targetsTotal": 100,
+        "hasTargets": true,
+        "suggested": {
+          "equity": 58,
+          "debt": 22,
+          "gold": 20
+        },
+        "rows": [
+          {
+            "group": "equity",
+            "value": "57.9",
+            "actualPct": "57.9",
+            "targetPct": 60,
+            "targetValue": "60",
+            "gapPct": "-2.1",
+            "status": "under",
+            "amount": "2",
+            "children": [
+              {
+                "type": "equity_mf",
+                "value": "57.9",
+                "actualPct": "57.9",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "debt",
+            "value": "22.1",
+            "actualPct": "22.1",
+            "targetPct": 20,
+            "targetValue": "20",
+            "gapPct": "2.1",
+            "status": "over",
+            "amount": "2",
+            "children": [
+              {
+                "type": "debt_mf",
+                "value": "22.1",
+                "actualPct": "22.1",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "gold",
+            "value": "20",
+            "actualPct": "20",
+            "targetPct": 20,
+            "targetValue": "20",
+            "gapPct": "0",
+            "status": "on_track",
+            "amount": "0",
+            "children": [
+              {
+                "type": "gold_etf",
+                "value": "20",
+                "actualPct": "20",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "thirds round half-up to one decimal and amounts to the rupee",
+      "tolerance": 0,
+      "holdings": [
+        {
+          "type": "equity_mf",
+          "value": "100"
+        },
+        {
+          "type": "debt_mf",
+          "value": "100"
+        },
+        {
+          "type": "silver",
+          "value": "100"
+        }
+      ],
+      "targets": {
+        "equity": 50,
+        "debt": 25,
+        "gold": 25
+      },
+      "expect": {
+        "total": "300",
+        "targetsTotal": 100,
+        "hasTargets": true,
+        "suggested": {
+          "equity": 34,
+          "debt": 33,
+          "gold": 33
+        },
+        "rows": [
+          {
+            "group": "equity",
+            "value": "100",
+            "actualPct": "33.3",
+            "targetPct": 50,
+            "targetValue": "150",
+            "gapPct": "-16.7",
+            "status": "under",
+            "amount": "50",
+            "children": [
+              {
+                "type": "equity_mf",
+                "value": "100",
+                "actualPct": "33.3",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "debt",
+            "value": "100",
+            "actualPct": "33.3",
+            "targetPct": 25,
+            "targetValue": "75",
+            "gapPct": "8.3",
+            "status": "over",
+            "amount": "25",
+            "children": [
+              {
+                "type": "debt_mf",
+                "value": "100",
+                "actualPct": "33.3",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "gold",
+            "value": "100",
+            "actualPct": "33.3",
+            "targetPct": 25,
+            "targetValue": "75",
+            "gapPct": "8.3",
+            "status": "over",
+            "amount": "25",
+            "children": [
+              {
+                "type": "silver",
+                "value": "100",
+                "actualPct": "33.3",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "empty portfolio: nothing to compare, targets still listed",
+      "holdings": [],
+      "targets": {
+        "equity": 70,
+        "debt": 30
+      },
+      "expect": {
+        "total": "0",
+        "targetsTotal": 100,
+        "hasTargets": true,
+        "suggested": {},
+        "rows": [
+          {
+            "group": "equity",
+            "value": "0",
+            "actualPct": "0",
+            "targetPct": 70,
+            "targetValue": "0",
+            "gapPct": "-70",
+            "status": "under",
+            "amount": "0",
+            "children": []
+          },
+          {
+            "group": "debt",
+            "value": "0",
+            "actualPct": "0",
+            "targetPct": 30,
+            "targetValue": "0",
+            "gapPct": "-30",
+            "status": "under",
+            "amount": "0",
+            "children": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "wider tolerance turns a 3-point gap into on track",
+      "tolerance": 5,
+      "holdings": [
+        {
+          "type": "equity_etf",
+          "value": "63"
+        },
+        {
+          "type": "bond",
+          "value": "37"
+        }
+      ],
+      "targets": {
+        "equity": 60,
+        "debt": 40
+      },
+      "expect": {
+        "total": "100",
+        "targetsTotal": 100,
+        "hasTargets": true,
+        "suggested": {
+          "equity": 63,
+          "debt": 37
+        },
+        "rows": [
+          {
+            "group": "equity",
+            "value": "63",
+            "actualPct": "63",
+            "targetPct": 60,
+            "targetValue": "60",
+            "gapPct": "3",
+            "status": "on_track",
+            "amount": "0",
+            "children": [
+              {
+                "type": "equity_etf",
+                "value": "63",
+                "actualPct": "63",
+                "count": 1
+              }
+            ]
+          },
+          {
+            "group": "debt",
+            "value": "37",
+            "actualPct": "37",
+            "targetPct": 40,
+            "targetValue": "40",
+            "gapPct": "-3",
+            "status": "on_track",
+            "amount": "0",
+            "children": [
+              {
+                "type": "bond",
+                "value": "37",
+                "actualPct": "37",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -33,6 +33,8 @@ export const ASSET_META: Record<AssetType, { label: string; color: string }> = {
   sgb: { label: 'Sovereign Gold Bond', color: '#8a6d1f' },
   ulip: { label: 'ULIP', color: '#7a5b9a' },
   foreign_equity: { label: 'Foreign Equity', color: '#3d6b9a' },
+  digital_gold: { label: 'Digital Gold', color: '#a8761a' },
+  silver: { label: 'Silver', color: '#7d8590' },
 };
 
 /** Chart-facing buckets. Eleven asset types collapse to seven groups. */
@@ -61,6 +63,9 @@ export const ASSET_GROUP_OF: Record<AssetType, AssetGroup> = {
   // insurance leg is cover, tracked separately).
   ssy: 'retirement',
   sgb: 'gold',
+  // The gold group is labelled "Gold & commodities"; silver belongs beside it.
+  digital_gold: 'gold',
+  silver: 'gold',
   ulip: 'equity',
 };
 

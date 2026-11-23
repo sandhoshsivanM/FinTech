@@ -11,7 +11,9 @@ import 'holding.dart';
 enum AssetGroup {
   equity('Equity'),
   debt('Debt'),
-  gold('Gold'),
+  // Labelled "Gold & commodities" because silver sits here too. The enum
+  // name stays `gold`: it is a stored key (allocation targets, chart order).
+  gold('Gold & commodities'),
   realEstate('Real Estate'),
   retirement('Retirement'),
   crypto('Crypto'),
@@ -33,7 +35,11 @@ enum AssetGroup {
         // A sovereign gold bond IS gold exposure, whatever its wrapper — it
         // tracks the metal price and belongs beside the ETF in an allocation
         // chart, not in a "bonds" sleeve its name suggests.
-        AssetType.goldEtf || AssetType.sgb => AssetGroup.gold,
+        AssetType.goldEtf ||
+        AssetType.sgb ||
+        AssetType.digitalGold ||
+        AssetType.silver =>
+          AssetGroup.gold,
         AssetType.realEstate => AssetGroup.realEstate,
         // SSY is a long-lock government savings scheme with the same EEE
         // treatment as PPF, so it sits with the retirement bucket.
