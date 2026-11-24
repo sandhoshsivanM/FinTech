@@ -84,6 +84,46 @@ void main() {
     expect(find.text('Silver · 1'), findsOneWidget);
   });
 
+  // Regression: a childless ColoredBox under loose constraints paints at
+  // 0 px, which left both bars blank on a device while every text test passed.
+  testWidgets('both summary bars paint every segment at full height', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 4000);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(harness(_targets));
+    await tester.pumpAndSettle();
+
+    for (final key in ['allocation-bar-actual', 'allocation-bar-target']) {
+      final bar = find.byKey(Key(key));
+      expect(tester.getSize(bar).width, greaterThan(200), reason: key);
+      final segments = find.descendant(
+        of: bar,
+        matching: find.byType(ColoredBox),
+      );
+      expect(segments, findsWidgets, reason: key);
+      for (final e in segments.evaluate()) {
+        final size = tester.getSize(find.byWidget(e.widget));
+        expect(size.height, 14, reason: key);
+        expect(size.width, greaterThan(0), reason: key);
+      }
+    }
+  });
+
+  testWidgets('an empty target bar still shows its track', (tester) async {
+    tester.view.physicalSize = const Size(1080, 4000);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(harness(const {}));
+    await tester.pumpAndSettle();
+
+    final track = find.descendant(
+      of: find.byKey(const Key('allocation-bar-target')),
+      matching: find.byType(ColoredBox),
+    );
+    expect(tester.getSize(track).height, 14);
+    expect(tester.getSize(track).width, greaterThan(200));
+  });
+
   testWidgets('Save is disabled until the targets total 100', (tester) async {
     tester.view.physicalSize = const Size(1080, 4000);
     addTearDown(tester.view.reset);
