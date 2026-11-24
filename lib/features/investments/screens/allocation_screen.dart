@@ -338,13 +338,19 @@ class _BarsCard extends StatelessWidget {
         if ((targets[g] ?? 0) > 0) (g, (targets[g]!).toDouble()),
     ];
 
-    Widget bar(List<(AssetGroup, double)> parts) => ClipRRect(
+    Widget bar(String key, List<(AssetGroup, double)> parts) => ClipRRect(
       borderRadius: BorderRadius.circular(6),
+      // Full width and stretched rows: a childless ColoredBox takes the
+      // smallest size its constraints allow, so under the Column's loose
+      // width and the Row's loose height it would paint nothing.
       child: SizedBox(
+        key: Key(key),
         height: 14,
+        width: double.infinity,
         child: parts.isEmpty
             ? ColoredBox(color: Theme.of(context).dividerColor)
             : Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (final p in parts)
                     Expanded(
@@ -379,11 +385,11 @@ class _BarsCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text('Actual', style: text.labelSmall),
           const SizedBox(height: AppSpacing.xs),
-          bar(actual),
+          bar('allocation-bar-actual', actual),
           const SizedBox(height: AppSpacing.sm),
           Text('Target', style: text.labelSmall),
           const SizedBox(height: AppSpacing.xs),
-          bar(target),
+          bar('allocation-bar-target', target),
         ],
       ),
     );

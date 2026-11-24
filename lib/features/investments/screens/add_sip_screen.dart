@@ -243,6 +243,10 @@ class _AddSipScreenState extends ConsumerState<AddSipScreen> {
                           children: [
                             Expanded(
                               child: DropdownButtonFormField<int>(
+                                // Half a phone's width is too narrow for
+                                // "23 of month" at larger text sizes: fill the
+                                // field and ellipsize instead of overflowing.
+                                isExpanded: true,
                                 dropdownColor: AppTheme.menuSurface(context),
                                 initialValue: _day,
                                 decoration: const InputDecoration(
@@ -256,6 +260,8 @@ class _AddSipScreenState extends ConsumerState<AddSipScreen> {
                                         d >= 29
                                             ? '$d (or month end)'
                                             : '$d of month',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                 ],
