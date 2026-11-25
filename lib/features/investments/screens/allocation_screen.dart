@@ -9,10 +9,12 @@ import '../../../core/theme/semantic_colors.dart';
 import '../../../core/utils/money_format.dart';
 import 'package:khazana_domain/entities/asset_group.dart';
 import 'package:khazana_domain/services/allocation_targets.dart';
+import 'package:khazana_domain/services/asset_hints.dart';
 import 'package:khazana_domain/services/sip_schedule.dart';
 import '../../../presentation/asset_group_colors.dart';
 import '../../../presentation/data_gate.dart';
 import '../../../presentation/glass_card.dart';
+import '../providers/portfolio_providers.dart';
 import '../providers/sip_providers.dart';
 
 /// Target vs actual allocation, with targets edited in place.
@@ -144,6 +146,7 @@ class _AllocationScreenState extends ConsumerState<AllocationScreen> {
           )
         else
           _DriftBanner(report: r),
+        if (!editing) const _MisfiledCard(),
         if (v.unconverted.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -652,6 +655,69 @@ class _SipLinkCard extends ConsumerWidget {
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => context.go(Routes.investmentsSips),
+      ),
+    );
+  }
+}
+
+/// Import and Add lot start every row as Equity / ETF, so a GOLDBEES can sit
+/// in Equity and make every gap on this screen wrong. Offers the fix; changes
+/// nothing until it is tapped.
+class _MisfiledCard extends ConsumerWidget {
+  const _MisfiledCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final instruments = ref.watch(instrumentsProvider).valueOrNull ?? const [];
+    final misfiled = [
+      for (final i in instruments)
+        if (misfiledAs(i.kind, i.symbol ?? '', i.name) case final to?) (i, to),
+    ];
+    if (misfiled.isEmpty) return const SizedBox.shrink();
+    final text = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: GlassCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              misfiled.length == 1
+                  ? '1 holding looks misfiled'
+                  : '${misfiled.length} holdings look misfiled',
+              style: text.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Filed as equity, so they count toward Equity here and are '
+              'taxed as equity. Nothing changes until you choose.',
+              style: text.bodySmall,
+            ),
+            for (final (i, to) in misfiled)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${i.symbol ?? i.name}: ${i.kind.label} → ${to.label}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    TextButton(
+                      key: Key('refile-${i.id}'),
+                      onPressed: () => ref
+                          .read(portfolioActionsProvider)
+                          .setInstrumentKind(i.id, to),
+                      child: Text('File as ${to.label}'),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

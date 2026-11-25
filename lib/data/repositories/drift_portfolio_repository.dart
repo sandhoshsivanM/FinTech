@@ -98,6 +98,9 @@ class DriftPortfolioRepository {
   Future<void> setSectorOverride(String instrumentId, String? sector) =>
       _dao.setSectorOverride(instrumentId, sector);
 
+  Future<void> setInstrumentKind(String instrumentId, AssetType kind) =>
+      _dao.setInstrumentKind(instrumentId, kind.key);
+
   Future<void> setIndustryOverride(String instrumentId, String? industry) =>
       _dao.setIndustryOverride(instrumentId, industry);
 

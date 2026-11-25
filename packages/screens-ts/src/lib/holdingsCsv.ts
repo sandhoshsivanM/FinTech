@@ -10,6 +10,7 @@
  * dropping a position from an import is worse than importing nothing.
  */
 import type { AssetType, Holding } from '@khazana/domain/types';
+import { GENERIC_TYPES, suggestAssetType } from '@khazana/domain/assetHints';
 import { findHeaderRow, headerIndex, num, parseDelimited } from '@khazana/screens/lib/sheet';
 
 export interface CsvHolding {
@@ -132,7 +133,10 @@ export function parseHoldingsRows(grid: string[][], assetType: AssetType = 'equi
       avgCost: String(avg),
       lastPrice: Number.isFinite(ltp) && ltp > 0 ? String(ltp) : '',
       previousClose: Number.isFinite(prev) && prev > 0 ? String(prev) : '',
-      assetType,
+      // "Import as" Equity is the default, not a decision about every row: a
+      // GOLDBEES in a broker export is a gold ETF. A specific "import as" choice
+      // (Debt MF, say) is the user's and is kept.
+      assetType: GENERIC_TYPES.has(assetType) ? (suggestAssetType(symbol, '') ?? assetType) : assetType,
     });
   }
 

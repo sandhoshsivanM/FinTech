@@ -76,6 +76,12 @@ class PortfolioDao extends DatabaseAccessor<AppDatabase>
       (update(instruments)..where((t) => t.id.equals(instrumentId)))
           .write(InstrumentsCompanion(sectorOverride: Value(sector)));
 
+  /// Re-files an instrument (say a gold ETF imported as equity). Its trades,
+  /// prices and dividends stay attached; only the type changes.
+  Future<void> setInstrumentKind(String instrumentId, String kind) =>
+      (update(instruments)..where((t) => t.id.equals(instrumentId)))
+          .write(InstrumentsCompanion(kind: Value(kind)));
+
   Future<void> setIndustryOverride(String instrumentId, String? industry) =>
       (update(instruments)..where((t) => t.id.equals(instrumentId)))
           .write(InstrumentsCompanion(industryOverride: Value(industry)));

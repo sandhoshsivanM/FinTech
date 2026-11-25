@@ -1,0 +1,26 @@
+{
+  "about": "Asset-type hints for gold, silver and SGB holdings filed under a generic type. Run by test/unit/asset_hints_test.dart and webapp/src/domain/assetHints.test.ts; keep the webapp/src/domain/__fixtures__ copy byte-identical.",
+  "cases": [
+    { "name": "GOLDBEES by symbol", "symbol": "GOLDBEES", "title": "GOLDBEES", "expect": "gold_etf" },
+    { "name": "symbol is case- and suffix-insensitive", "symbol": "goldbees.ns", "title": "", "expect": "gold_etf" },
+    { "name": "exchange prefix is ignored", "symbol": "NSE:SETFGOLD", "title": "", "expect": "gold_etf" },
+    { "name": "SILVERBEES by symbol", "symbol": "SILVERBEES", "title": "SILVERBEES", "expect": "silver" },
+    { "name": "gold ETF by name", "symbol": "", "title": "Nippon India ETF Gold BeES", "expect": "gold_etf" },
+    { "name": "gold fund of funds by name", "symbol": "", "title": "SBI Gold Fund - Direct Growth", "expect": "gold_etf" },
+    { "name": "silver ETF by name", "symbol": "", "title": "ICICI Prudential Silver ETF", "expect": "silver" },
+    { "name": "SGB by symbol", "symbol": "SGBAUG29", "title": "", "expect": "sgb" },
+    { "name": "SGB by name", "symbol": "", "title": "Sovereign Gold Bond 2023-24 Series III", "expect": "sgb" },
+    { "name": "a stock is left alone", "symbol": "RELIANCE", "title": "Reliance Industries", "expect": null },
+    { "name": "a gold jeweller's stock is not a gold ETF", "symbol": "GOLDIAM", "title": "Goldiam International", "expect": null },
+    { "name": "Goldman Sachs is not gold", "symbol": "", "title": "Goldman Sachs India Equity Fund", "expect": null },
+    { "name": "Nifty ETF is left alone", "symbol": "NIFTYBEES", "title": "Nippon India ETF Nifty BeES", "expect": null },
+    { "name": "empty input", "symbol": "", "title": "", "expect": null }
+  ],
+  "misfiled": [
+    { "name": "gold ETF filed as equity ETF", "type": "equity_etf", "symbol": "GOLDBEES", "title": "GOLDBEES", "expect": "gold_etf" },
+    { "name": "gold fund filed as equity MF", "type": "equity_mf", "symbol": "", "title": "HDFC Gold Fund", "expect": "gold_etf" },
+    { "name": "already a gold ETF", "type": "gold_etf", "symbol": "GOLDBEES", "title": "GOLDBEES", "expect": null },
+    { "name": "a deliberate digital-gold choice is respected", "type": "digital_gold", "symbol": "", "title": "Gold ETF units", "expect": null },
+    { "name": "a stock filed as equity", "type": "equity_etf", "symbol": "RELIANCE", "title": "Reliance", "expect": null }
+  ]
+}

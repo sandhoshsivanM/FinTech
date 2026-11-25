@@ -1,3 +1,4 @@
+import 'package:khazana_domain/services/asset_hints.dart';
 import '../../../core/help/info_hint.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
@@ -44,6 +45,10 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
 
   TradeSide _side = TradeSide.buy;
   AssetType _kind = AssetType.equityEtf;
+
+  /// Until the user picks a type, a symbol or name like GOLDBEES picks Gold
+  /// for them: the default Equity / ETF is not a decision.
+  bool _kindTouched = false;
   String _exchange = 'NSE';
   DateTime _date = DateTime.now();
   bool _saving = false;
@@ -63,6 +68,13 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
       c.dispose();
     }
     super.dispose();
+  }
+
+  void _onIdentityChanged() {
+    setState(() {
+      if (_kindTouched) return;
+      _kind = suggestAssetType(_symbol.text, _name.text) ?? AssetType.equityEtf;
+    });
   }
 
   bool get _isFund => _kind == AssetType.equityMf || _kind == AssetType.debtMf;
@@ -184,6 +196,8 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<AssetType>(
+                      // Keyed on the value so an automatic pick shows.
+                      key: ValueKey(_kind),
                       dropdownColor: AppTheme.menuSurface(context),
                       initialValue: _kind,
                       decoration: const InputDecoration(
@@ -193,8 +207,10 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                         for (final t in AssetType.values)
                           DropdownMenuItem(value: t, child: Text(t.label)),
                       ],
-                      onChanged: (t) =>
-                          setState(() => _kind = t ?? AssetType.equityEtf),
+                      onChanged: (t) => setState(() {
+                        _kindTouched = true;
+                        _kind = t ?? AssetType.equityEtf;
+                      }),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
@@ -208,7 +224,7 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                             : 'Recognised: ${classified.sector}'
                                   ' · ${classified.industry}',
                       ),
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (_) => _onIdentityChanged(),
                       validator: (v) {
                         if (_isFund) return null;
                         return (v == null || v.trim().isEmpty)
@@ -222,6 +238,7 @@ class _AddLotScreenState extends ConsumerState<AddLotScreen> {
                       decoration: InputDecoration(
                         labelText: _isFund ? 'Scheme name' : 'Name (optional)',
                       ),
+                      onChanged: (_) => _onIdentityChanged(),
                       validator: (v) {
                         if (!_isFund) return null;
                         return (v == null || v.trim().isEmpty)
