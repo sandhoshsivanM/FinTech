@@ -21,7 +21,7 @@ import { short } from '@khazana/screens/lib/format';
 import type { GoalType } from '@khazana/domain/types';
 import { windowSummary, evaluateBudget, spentForCategory, budgetRollover } from '@khazana/domain/finance';
 import { dailyFlow, describeChange } from '@khazana/domain/dailyFlow';
-import { shiftMonths, type DateRange } from '@khazana/domain/period';
+import { shiftMonths, startOfDay, type DateRange } from '@khazana/domain/period';
 import {
   incomeBySource, monthlyFlow, dailySpend, monthElapsed, paceStatus, goalProgress, monthEndSeries, SHORT_MONTHS,
 } from '@khazana/domain/dashboardCharts';
@@ -134,13 +134,17 @@ export function useChartBoardWidgets({ month, now, netWorth, investments, liabil
   const prevLabel = SHORT_MONTHS[new Date(shiftMonths(month.start, -1).start).getMonth()];
   const isCurrent = now >= month.start && now <= month.end;
 
-  const data = useMemo(() => {
+  // The passes over every transaction only care which *day* it is, so they
+  // are keyed on the day rather than on `now`, which ticks every minute. The
+  // light per-minute bits (goal pace, month elapsed, trend tiles) are separate.
+  const today = startOfDay(now);
+  const heavy = useMemo(() => {
     const prevMonth = shiftMonths(month.start, -1);
     const sources = incomeBySource(txns, categories, month);
     const incomeNow = windowSummary(txns, month).income;
     const incomeBefore = windowSummary(txns, prevMonth).income;
 
-    const week = dailyFlow(txns, now, 14);
+    const week = dailyFlow(txns, today, 14);
     const thisWeek = week.slice(7);
     const weekTotal = thisWeek.reduce((s, d) => s.plus(d.expense), ZERO);
     const lastWeekTotal = week.slice(0, 7).reduce((s, d) => s.plus(d.expense), ZERO);
@@ -154,28 +158,36 @@ export function useChartBoardWidgets({ month, now, netWorth, investments, liabil
       catSpend.set(t.categoryId, (catSpend.get(t.categoryId) ?? ZERO).plus(D(t.amount)));
     }
 
-    const goalRows = goals.map((g) => goalProgress(g, now));
-    const elapsed = monthElapsed(month, now);
     const budgetRows = budgets
       .map((b) => evaluateBudget(b, spentForCategory(txns, b.categoryId, month), budgetRollover(b, txns, month)))
       .sort((a, b) => b.ratio - a.ratio)
       .slice(0, 4);
 
-    const days = dailySpend(txns, month, now);
+    const days = dailySpend(txns, month, today);
     const spentSoFar = days.reduce((s, d) => s.plus(d.spent ?? ZERO), ZERO);
     const daysGone = days.filter((d) => d.spent != null).length;
     const busiest = days.reduce<(typeof days)[number] | null>((m, d) => (d.spent && (!m || d.spent.gt(m.spent!)) ? d : m), null);
 
     return {
       sources, incomeNow, incomeBefore, thisWeek, weekTotal, lastWeekTotal, flow12, flow6, catSpend,
-      goalRows, elapsed, budgetRows, days, spentSoFar, daysGone, busiest,
-      trend: {
-        netWorth: monthEndSeries(snapshots, 'netWorth', now, 6, netWorth),
-        investments: monthEndSeries(snapshots, 'investments', now, 6, investments),
-        liabilities: monthEndSeries(snapshots, 'liabilities', now, 6, liabilities),
-      },
+      budgetRows, days, spentSoFar, daysGone, busiest,
     };
-  }, [txns, categories, goals, budgets, snapshots, month, now, netWorth, investments, liabilities]);
+  }, [txns, categories, budgets, month, today]);
+
+  // Decimals compared by value: the dashboard derives these each render.
+  const nwKey = netWorth.toString();
+  const invKey = investments.toString();
+  const liabKey = liabilities.toString();
+  const data = useMemo(() => ({
+    ...heavy,
+    goalRows: goals.map((g) => goalProgress(g, now)),
+    elapsed: monthElapsed(month, now),
+    trend: {
+      netWorth: monthEndSeries(snapshots, 'netWorth', now, 6, D(nwKey)),
+      investments: monthEndSeries(snapshots, 'investments', now, 6, D(invKey)),
+      liabilities: monthEndSeries(snapshots, 'liabilities', now, 6, D(liabKey)),
+    },
+  }), [heavy, goals, snapshots, month, now, nwKey, invKey, liabKey]);
 
   const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? 'Other';
   const spendSegs: DonutSeg[] = [...data.catSpend]

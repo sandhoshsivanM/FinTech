@@ -72,14 +72,76 @@ export async function listRecords<T>(
   failures?: ReadFailure[],
 ): Promise<T[]> {
   const rows = await db.records.where('[type+vaultId]').equals([type, vaultId]).toArray();
+  // Decrypts run concurrently; WebCrypto queues them off the main thread, and
+  // awaiting one at a time made a reload scale with round-trips, not work.
+  // Order is kept so callers see rows in index order, as before.
+  const settled = await Promise.allSettled(rows.map((r) => decryptJson<T>(key, r.enc)));
   const out: T[] = [];
-  for (const r of rows) {
-    try {
-      out.push(await decryptJson<T>(key, r.enc));
-    } catch {
-      failures?.push({ type, id: r.id });
-    }
+  settled.forEach((res, i) => {
+    if (res.status === 'fulfilled') out.push(res.value);
+    else failures?.push({ type, id: rows[i].id });
+  });
+  return out;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Read cache for whole-vault reloads                                         */
+/* -------------------------------------------------------------------------- */
+
+interface CachedRead { iv: string; ct: string; value: unknown }
+
+/**
+ * Decrypted values from the last reload, per session key and record id.
+ *
+ * A reload used to decrypt every record in the vault after every single write,
+ * and hand every screen brand-new objects, so nothing could stay memoised. A
+ * record whose stored ciphertext is byte-for-byte what it was last time is the
+ * same plaintext (AES-GCM, fresh IV per write), so its earlier value is reused.
+ * Both the IV *and* the ciphertext must match exactly: a tampered row is never
+ * served from here, it is decrypted and fails authentication as before.
+ *
+ * Keyed by the CryptoKey, so a different session key never sees these values,
+ * and cleared on lock so plaintext does not outlive the session in this map.
+ * Holds nothing the store does not already hold in memory while unlocked.
+ */
+let readCache: WeakMap<CryptoKey, Map<string, CachedRead>> = new WeakMap();
+
+export function clearReadCache(): void {
+  readCache = new WeakMap();
+}
+
+/**
+ * `listRecords` for the store's reload: unchanged records keep their object
+ * identity between reloads, so memoised screens skip work. Callers must treat
+ * the returned values as immutable — they are shared across reloads.
+ */
+export async function listRecordsShared<T>(
+  key: CryptoKey,
+  type: string,
+  vaultId: string,
+  failures?: ReadFailure[],
+): Promise<T[]> {
+  let cache = readCache.get(key);
+  if (!cache) {
+    cache = new Map();
+    readCache.set(key, cache);
   }
+  const rows = await db.records.where('[type+vaultId]').equals([type, vaultId]).toArray();
+  const settled = await Promise.allSettled(rows.map(async (r) => {
+    const hit = cache.get(r.id);
+    if (hit && hit.iv === r.enc.iv && hit.ct === r.enc.ct) return hit.value as T;
+    const value = await decryptJson<T>(key, r.enc);
+    cache.set(r.id, { iv: r.enc.iv, ct: r.enc.ct, value });
+    return value;
+  }));
+  const out: T[] = [];
+  settled.forEach((res, i) => {
+    if (res.status === 'fulfilled') out.push(res.value);
+    else {
+      cache.delete(rows[i].id);
+      failures?.push({ type, id: rows[i].id });
+    }
+  });
   return out;
 }
 

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
 /**
  * The current time, as React state.
@@ -15,17 +15,55 @@ import { useEffect, useState } from 'react';
  * as the epoch — `useNowReady` below is the usual guard.
  */
 export function useNow(intervalMs = 60_000): number {
-  const [now, setNow] = useState(0);
+  const clock = clockFor(intervalMs);
+  return useSyncExternalStore(clock.subscribe, clock.get, serverNow);
+}
 
-  useEffect(() => {
-    // Scheduled rather than called inline: a synchronous setState in an effect
-    // body cascades an extra render on every mount.
-    const first = setTimeout(() => setNow(Date.now()), 0);
-    const id = setInterval(() => setNow(Date.now()), intervalMs);
-    return () => { clearTimeout(first); clearInterval(id); };
-  }, [intervalMs]);
+/**
+ * One shared ticker per interval rather than one `setInterval` per caller.
+ * The dashboard alone mounted a dozen; each fired on its own schedule and
+ * re-rendered its corner of the page separately. Now every screen reading the
+ * clock updates in one batched render, and the timer stops when nobody reads.
+ */
+interface Clock { subscribe: (cb: () => void) => () => void; get: () => number }
+const clocks = new Map<number, Clock>();
+const serverNow = () => 0;
 
-  return now;
+function clockFor(intervalMs: number): Clock {
+  let clock = clocks.get(intervalMs);
+  if (clock) return clock;
+  let now = 0;
+  let timer: ReturnType<typeof setInterval> | undefined;
+  let first: ReturnType<typeof setTimeout> | undefined;
+  const listeners = new Set<() => void>();
+  const tick = () => {
+    now = Date.now();
+    for (const l of listeners) l();
+  };
+  clock = {
+    get: () => now,
+    subscribe: (cb) => {
+      listeners.add(cb);
+      if (listeners.size === 1) {
+        // Scheduled, not inline: the first reading lands one task after mount.
+        first = setTimeout(tick, 0);
+        timer = setInterval(tick, intervalMs);
+      }
+      return () => {
+        listeners.delete(cb);
+        if (listeners.size === 0) {
+          clearTimeout(first);
+          clearInterval(timer);
+          timer = undefined;
+          // Back to "not known yet", as a fresh mount always saw: a reading
+          // left over from an earlier visit could be hours old.
+          now = 0;
+        }
+      };
+    },
+  };
+  clocks.set(intervalMs, clock);
+  return clock;
 }
 
 /** Whole days from `now` until `then`. Null while the clock is not known. */

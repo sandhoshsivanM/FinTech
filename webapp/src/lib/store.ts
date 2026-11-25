@@ -10,7 +10,7 @@ import {
 } from '@khazana/screens/lib/capture';
 import { decodeBackup, encodeBackup } from './backupFormat';
 import {
-  clearVault, listRecords, listRecordIds, getRecord, putRecord, deleteRecord, applyMutations,
+  clearVault, listRecords, listRecordsShared, clearReadCache, listRecordIds, getRecord, putRecord, deleteRecord, applyMutations,
   applySync, listTombstones, observeStamp, userRecordCount,
   type Mutation, type ReadFailure,
 } from './repo';
@@ -395,6 +395,26 @@ interface Data {
   sipPlans: SipPlan[];
   sipInstalments: SipInstalment[];
   allocationTargets: AllocationTargetRecord[];
+}
+
+/**
+ * Keeps the previous array for any slice whose items are, one for one, the
+ * same objects as before. The reload's read cache returns the same object for
+ * an unchanged record, so after saving one entry only the slices that really
+ * changed get new references, and memoised screens over the rest skip their
+ * work instead of recomputing everything after every write.
+ */
+function keepUnchanged<T extends object>(prev: object, next: T): T {
+  const out = { ...next } as Record<string, unknown>;
+  const old = prev as Record<string, unknown>;
+  for (const k of Object.keys(out)) {
+    const a = old[k];
+    const b = out[k];
+    if (Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => v === b[i])) {
+      out[k] = a;
+    }
+  }
+  return out as T;
 }
 
 const emptyData: Data = {
@@ -894,7 +914,10 @@ export const useApp = create<AppState>((set, get) => ({
     }
   },
 
-  lock: () => set({ status: 'locked', key: null, ...emptyData, profiles: [] }),
+  lock: () => {
+    clearReadCache();
+    set({ status: 'locked', key: null, ...emptyData, profiles: [] });
+  },
   toggleGhost: () => set((s) => {
     const ghost = !s.ghost;
     lsSet(GHOST_KEY, ghost ? '1' : '0');
@@ -994,17 +1017,17 @@ export const useApp = create<AppState>((set, get) => ({
     if (!key) return;
 
     // Categories are vault-wide (shared across profiles); seed defaults once.
-    let categories = await listRecords<Category>(key, STORE.category, vaultId, failures);
+    let categories = await listRecordsShared<Category>(key, STORE.category, vaultId, failures);
     if (categories.length === 0) {
       for (const c of DEFAULT_CATEGORIES) {
         const cat: Category = { id: uid(), vaultId, name: c.name, icon: c.icon };
         await putRecord(key, STORE.category, vaultId, cat.id, cat);
       }
-      categories = await listRecords<Category>(key, STORE.category, vaultId, failures);
+      categories = await listRecordsShared<Category>(key, STORE.category, vaultId, failures);
     }
 
     // Profiles: seed a default if none exist.
-    let profiles = await listRecords<Profile>(key, STORE.profile, vaultId, failures);
+    let profiles = await listRecordsShared<Profile>(key, STORE.profile, vaultId, failures);
     if (profiles.length === 0) {
       const p: Profile = { id: uid(), vaultId, name: 'Personal', kind: 'self', createdAt: Date.now() };
       await putRecord(key, STORE.profile, vaultId, p.id, p);
@@ -1025,37 +1048,44 @@ export const useApp = create<AppState>((set, get) => ({
       insurancesAll, snapshotsAll, pendingAll, watchAll, dividendsAll, alertsAll,
       transfersAll, batchesAll, lotsAll, sipPlansAll, sipInstalmentsAll, allocTargetsAll,
     ] = await Promise.all([
-        listRecords<Txn>(key, STORE.txn, vaultId, failures),
-        listRecords<Budget>(key, STORE.budget, vaultId, failures),
-        listRecords<Goal>(key, STORE.goal, vaultId, failures),
-        listRecords<Holding>(key, STORE.holding, vaultId, failures),
-        listRecords<Liability>(key, STORE.liability, vaultId, failures),
-        listRecords<RecurringRule>(key, STORE.recurring, vaultId, failures),
-        listRecords<Insurance>(key, STORE.insurance, vaultId, failures),
-        listRecords<NetWorthSnapshot>(key, STORE.snapshot, vaultId, failures),
-        listRecords<PendingCapture>(key, STORE.pendingCapture, vaultId, failures),
-        listRecords<WatchItem>(key, STORE.watchItem, vaultId, failures),
-        listRecords<Dividend>(key, STORE.dividend, vaultId, failures),
-        listRecords<Alert>(key, STORE.alert, vaultId, failures),
-        listRecords<Transfer>(key, STORE.transfer, vaultId, failures),
-        listRecords<ImportBatch>(key, STORE.importBatch, vaultId, failures),
-        listRecords<HoldingLot>(key, STORE.lot, vaultId, failures),
-        listRecords<SipPlan>(key, STORE.sipPlan, vaultId, failures),
-        listRecords<SipInstalment>(key, STORE.sipInstalment, vaultId, failures),
-        listRecords<AllocationTargetRecord>(key, STORE.allocationTarget, vaultId, failures),
+        listRecordsShared<Txn>(key, STORE.txn, vaultId, failures),
+        listRecordsShared<Budget>(key, STORE.budget, vaultId, failures),
+        listRecordsShared<Goal>(key, STORE.goal, vaultId, failures),
+        listRecordsShared<Holding>(key, STORE.holding, vaultId, failures),
+        listRecordsShared<Liability>(key, STORE.liability, vaultId, failures),
+        listRecordsShared<RecurringRule>(key, STORE.recurring, vaultId, failures),
+        listRecordsShared<Insurance>(key, STORE.insurance, vaultId, failures),
+        listRecordsShared<NetWorthSnapshot>(key, STORE.snapshot, vaultId, failures),
+        listRecordsShared<PendingCapture>(key, STORE.pendingCapture, vaultId, failures),
+        listRecordsShared<WatchItem>(key, STORE.watchItem, vaultId, failures),
+        listRecordsShared<Dividend>(key, STORE.dividend, vaultId, failures),
+        listRecordsShared<Alert>(key, STORE.alert, vaultId, failures),
+        listRecordsShared<Transfer>(key, STORE.transfer, vaultId, failures),
+        listRecordsShared<ImportBatch>(key, STORE.importBatch, vaultId, failures),
+        listRecordsShared<HoldingLot>(key, STORE.lot, vaultId, failures),
+        listRecordsShared<SipPlan>(key, STORE.sipPlan, vaultId, failures),
+        listRecordsShared<SipInstalment>(key, STORE.sipInstalment, vaultId, failures),
+        listRecordsShared<AllocationTargetRecord>(key, STORE.allocationTarget, vaultId, failures),
       ]);
 
     // Double-entry (v3): lazily backfill the active profile's chart of accounts
     // + postings the first time it has none, then read them back.
-    let accountsAll = await listRecords<Account>(key, STORE.account, vaultId, failures);
+    let accountsAll = await listRecordsShared<Account>(key, STORE.account, vaultId, failures);
+    // The backfill rewrites this profile's entries (it stamps an accountId on
+    // each) and adds accounts, so only then are both read a second time. Reading them twice on
+    // every reload doubled the biggest decrypt and reported a bad entry twice.
+    let txnsReloaded = txnsAll;
     if (!accountsAll.some(inProfile)) {
       await backfillDoubleEntry(key, vaultId, active, categories, txnsAll.filter(inProfile));
-      accountsAll = await listRecords<Account>(key, STORE.account, vaultId, failures);
+      const kept = failures.filter((f) => f.type !== STORE.txn && f.type !== STORE.account);
+      failures.length = 0;
+      failures.push(...kept);
+      [accountsAll, txnsReloaded] = await Promise.all([
+        listRecordsShared<Account>(key, STORE.account, vaultId, failures),
+        listRecordsShared<Txn>(key, STORE.txn, vaultId, failures),
+      ]);
     }
-    const [txnsReloaded, postingsAll] = await Promise.all([
-      listRecords<Txn>(key, STORE.txn, vaultId, failures),
-      listRecords<Posting>(key, STORE.posting, vaultId, failures),
-    ]);
+    const postingsAll = await listRecordsShared<Posting>(key, STORE.posting, vaultId, failures);
 
     // A goal linked to an account reports that account's balance, not the
     // number someone last typed. Substituted here, in the one place the slice
@@ -1070,7 +1100,7 @@ export const useApp = create<AppState>((set, get) => ({
         : g
     ));
 
-    set({
+    set(keepUnchanged(get(), {
       categories,
       profiles,
       activeProfileId: active,
@@ -1098,8 +1128,8 @@ export const useApp = create<AppState>((set, get) => ({
       attachmentIds: await listRecordIds(STORE.attachment, vaultId),
       // Not profile-filtered: the rupee's value against the dollar does not
       // depend on whose portfolio is open.
-      fxRates: await listRecords<FxRate>(key, STORE.fxRate, vaultId, failures),
-    });
+      fxRates: await listRecordsShared<FxRate>(key, STORE.fxRate, vaultId, failures),
+    }));
   },
 
   put: async (type, value) => {
@@ -1733,6 +1763,7 @@ export const useApp = create<AppState>((set, get) => ({
     lsSet(PIN_FAILURES_KEY, '0');
     lsSet(LOCKOUT_UNTIL_KEY, '0');
     if (typeof localStorage !== 'undefined') localStorage.removeItem(ACTIVE_PROFILE_KEY);
+    clearReadCache();
     set({ key: null, pinFailures: 0, lockedOutUntil: 0, strandedRecords: 0, error: null, activeProfileId: '', status: 'uninitialized' });
   },
 

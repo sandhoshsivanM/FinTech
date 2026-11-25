@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useDeferredValue } from 'react';
 import Link from 'next/link';
 import {
   Shapes, Trash2, Plus, Pencil, Download, ArrowRightLeft, Inbox,
@@ -127,56 +127,56 @@ export default function TransactionsPage() {
     return ms == null ? null : ms + 86_399_999; // end of that day
   }, [to]);
 
-  const filtered = useMemo<Entry[]>(() => {
-    const q = search.trim().toLowerCase();
-    const entries: Entry[] = [
-      ...txns.map((t): Entry => ({ kind: 'txn', id: t.id, date: t.date, txn: t })),
-      ...transfers.map((t): Entry => ({ kind: 'transfer', id: t.id, date: t.date, transfer: t })),
-    ];
-    return entries
-      .sort((a, b) => b.date - a.date)
-      .filter((e) => {
-        if (filter !== 'all') {
-          if (filter === 'transfer' ? e.kind !== 'transfer' : e.kind !== 'txn' || e.txn.type !== filter) return false;
-        }
-        if (accountFilter !== 'all') {
-          const touches = e.kind === 'txn'
-            ? (e.txn.accountId ?? defaultCash) === accountFilter
-            : e.transfer.fromAccountId === accountFilter || e.transfer.toAccountId === accountFilter;
-          if (!touches) return false;
-        }
-        // Inclusive on both ends: "01/08 to 31/08" must contain the 31st, which
-        // is what anyone reconciling a monthly statement expects.
-        // A transfer has no category, so any category filter excludes it —
-        // filtering by "Food" and still seeing transfers would be noise.
-        if (categoryFilter !== 'all') {
-          if (e.kind !== 'txn' || e.txn.categoryId !== categoryFilter) return false;
-        }
-        if (fromMs != null && e.date < fromMs) return false;
-        if (toMs != null && e.date > toMs) return false;
-        if (!q) return true;
-        // Date in the app's own format, so what the row shows is what you can
-        // search — reconciling by date is as common as reconciling by amount.
-        const dateText = formatDate(e.date).toLowerCase();
-        if (e.kind === 'transfer') {
-          return (e.transfer.note ?? '').toLowerCase().includes(q)
-            || acctName(e.transfer.fromAccountId).toLowerCase().includes(q)
-            || acctName(e.transfer.toAccountId).toLowerCase().includes(q)
-            || dateText.includes(q)
-            || amountMatches(e.transfer.amount, q);
-        }
-        const cat = catById.get(e.txn.categoryId);
-        return (
-          (e.txn.merchant ?? '').toLowerCase().includes(q) ||
-          (e.txn.note ?? '').toLowerCase().includes(q) ||
-          (cat?.name ?? '').toLowerCase().includes(q) ||
-          acctName(e.txn.accountId).toLowerCase().includes(q) ||
-          dateText.includes(q) ||
-          amountMatches(e.txn.amount, q)
-        );
-      });
+  // Built once per change to the book, not on every keystroke: the merged,
+  // date-sorted list, and each row's lower-cased searchable text (formatting a
+  // date per row per keystroke was most of the cost of typing in search).
+  const sorted = useMemo<Entry[]>(() => [
+    ...txns.map((t): Entry => ({ kind: 'txn', id: t.id, date: t.date, txn: t })),
+    ...transfers.map((t): Entry => ({ kind: 'transfer', id: t.id, date: t.date, transfer: t })),
+  ].sort((a, b) => b.date - a.date), [txns, transfers]);
+  const haystacks = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const e of sorted) {
+      // Date in the app's own format, so what the row shows is what you can
+      // search — reconciling by date is as common as reconciling by amount.
+      const parts = e.kind === 'transfer'
+        ? [e.transfer.note ?? '', acctName(e.transfer.fromAccountId), acctName(e.transfer.toAccountId), formatDate(e.date)]
+        : [e.txn.merchant ?? '', e.txn.note ?? '', catById.get(e.txn.categoryId)?.name ?? '', acctName(e.txn.accountId), formatDate(e.date)];
+      // \u0000 between fields so a query never matches across two of them.
+      m.set(`${e.kind}:${e.id}`, parts.join('\u0000').toLowerCase());
+    }
+    return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- acctName is derived from acctById
-  }, [txns, transfers, filter, accountFilter, categoryFilter, search, catById, acctById, defaultCash, fromMs, toMs]);
+  }, [sorted, catById, acctById, defaultCash]);
+  // The input stays instant; the list catches up when React has a moment.
+  const deferredSearch = useDeferredValue(search);
+
+  const filtered = useMemo<Entry[]>(() => {
+    const q = deferredSearch.trim().toLowerCase();
+    return sorted.filter((e) => {
+      if (filter !== 'all') {
+        if (filter === 'transfer' ? e.kind !== 'transfer' : e.kind !== 'txn' || e.txn.type !== filter) return false;
+      }
+      if (accountFilter !== 'all') {
+        const touches = e.kind === 'txn'
+          ? (e.txn.accountId ?? defaultCash) === accountFilter
+          : e.transfer.fromAccountId === accountFilter || e.transfer.toAccountId === accountFilter;
+        if (!touches) return false;
+      }
+      // Inclusive on both ends: "01/08 to 31/08" must contain the 31st, which
+      // is what anyone reconciling a monthly statement expects.
+      // A transfer has no category, so any category filter excludes it —
+      // filtering by "Food" and still seeing transfers would be noise.
+      if (categoryFilter !== 'all') {
+        if (e.kind !== 'txn' || e.txn.categoryId !== categoryFilter) return false;
+      }
+      if (fromMs != null && e.date < fromMs) return false;
+      if (toMs != null && e.date > toMs) return false;
+      if (!q) return true;
+      if (haystacks.get(`${e.kind}:${e.id}`)?.includes(q)) return true;
+      return amountMatches(e.kind === 'transfer' ? e.transfer.amount : e.txn.amount, q);
+    });
+  }, [sorted, haystacks, filter, accountFilter, categoryFilter, deferredSearch, defaultCash, fromMs, toMs]);
 
   async function handleDelete(e: Entry) {
     const isTransfer = e.kind === 'transfer';
