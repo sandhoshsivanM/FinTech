@@ -451,14 +451,6 @@ export default function ReportsPage() {
             </GlassCard>
           )}
 
-          {/* Spending per day across the period, as a skyline */}
-          <GlassCard>
-            <SectionHeader title="Spend skyline" action={<span className="text-xs text-muted">{range.label}</span>} />
-            <div className="mt-4 @container">
-              <SpendSkylinePanel range={range} now={now} narrowWeeks={13} maxWeeks={53} />
-            </div>
-          </GlassCard>
-
           {/* Net worth trend */}
             <GlassCard>
               <SectionHeader title="Net Worth Trend" info="reports.netWorthTrend" action={<span className="text-xs text-muted">{range.label}</span>} />
@@ -488,6 +480,14 @@ export default function ReportsPage() {
                 </div>
               )}
             </GlassCard>
+
+          {/* Spending per day across the period, as a skyline */}
+          <GlassCard className="lg:col-span-2">
+            <SectionHeader title="Spend skyline" action={<span className="text-xs text-muted">{range.label}</span>} />
+            <div className="mt-4 @container">
+              <SpendSkylinePanel range={range} now={now} narrowWeeks={13} maxWeeks={53} />
+            </div>
+          </GlassCard>
           </div>
         </>
       )}

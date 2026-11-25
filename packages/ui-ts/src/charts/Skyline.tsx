@@ -132,9 +132,12 @@ function SkylineImpl({ cells, describe, label, mode = 'spend', narrowWeeks }: {
     const out: { week: number; label: string }[] = [];
     let last = -1;
     for (let w = 0; w < weeks; w++) {
-      const sat = shown.find((c) => c.week === w && c.weekday === 6);
-      if (!sat) continue;
-      const m = new Date(sat.day).getMonth();
+      // The week's last day that is in range: a padding day past the end
+      // of the period must not name a month the period never reaches.
+      const inWeek = shown.filter((c) => c.week === w && c.value != null);
+      const ref = inWeek[inWeek.length - 1] ?? (w === weeks - 1 ? null : shown.find((c) => c.week === w && c.weekday === 6));
+      if (!ref) continue;
+      const m = new Date(ref.day).getMonth();
       // Two labels a week apart collide; the later (the full month) wins.
       if (m !== last) {
         if (out.length && w - out[out.length - 1].week < 3) out.pop();
