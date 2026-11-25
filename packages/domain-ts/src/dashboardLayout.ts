@@ -52,6 +52,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: 'goals', title: 'Goals', size: 's', live: true },
   { id: 'budgets', title: 'Budgets', size: 's' },
   { id: 'dailySpend', title: 'Daily spending', size: 'xl', minSize: 'm' },
+  { id: 'spendSkyline', title: 'Spend skyline', size: 'xl', minSize: 'm', live: true },
   { id: 'netWorth', title: 'Net worth', size: 'xl', minSize: 'm', live: true },
   { id: 'thisMonth', title: 'This month', size: 'xl', minSize: 'm' },
   { id: 'performance', title: 'Portfolio performance', size: 'xl', minSize: 'm', live: true },

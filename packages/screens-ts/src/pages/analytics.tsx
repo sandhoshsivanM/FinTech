@@ -21,6 +21,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { LineChart as LineIcon, AlertTriangle } from 'lucide-react';
 import { useApp } from '@khazana/screens/store';
+import { PortfolioSkylinePanel } from '@khazana/screens/components/SkylinePanels';
+import { lastWeeks } from '@khazana/domain/skyline';
+import { startOfDay } from '@khazana/domain/period';
 import { useFmt } from '@khazana/screens/lib/useFmt';
 import { useDarkMode } from '@khazana/screens/lib/useDarkMode';
 import { useNow } from '@khazana/screens/lib/useNow';
@@ -148,6 +151,10 @@ export default function AnalyticsPage() {
       }),
     };
   }, [holdings, classify, dark]);
+
+  // The skyline's window moves once a day, not once a minute.
+  const today = startOfDay(now);
+  const portfolioRange = useMemo(() => lastWeeks(today, 26), [today]);
 
   // ---- Time series ---------------------------------------------------------
   // `useNow`, not `Date.now()`: reading the clock during render makes the
@@ -375,6 +382,17 @@ export default function AnalyticsPage() {
           </section>
         </StaggerItem>
       </div>
+
+      {/* ---- Daily movement, as a skyline ----------------------------------- */}
+      <StaggerItem>
+        <section className="card p-5 @container">
+          <CardTitle className="fs-16 font-medium tracking-[-0.01em]">Daily portfolio change</CardTitle>
+          <p className="text-xs text-muted mt-0.5">Last 26 weeks · {portfolioRange.label}</p>
+          <div className="mt-4">
+            <PortfolioSkylinePanel range={portfolioRange} now={now} narrowWeeks={13} />
+          </div>
+        </section>
+      </StaggerItem>
 
       {/* ---- Time, movement and shape ---------------------------------------- */}
       <div className="grid gap-6 min-[1100px]:grid-cols-3">
