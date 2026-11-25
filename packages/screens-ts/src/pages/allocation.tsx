@@ -15,7 +15,8 @@ import { ChevronRight, Target, Plus, Minus } from 'lucide-react';
 import { useApp } from '@khazana/screens/store';
 import { useFmt } from '@khazana/screens/lib/useFmt';
 import { useDarkMode } from '@khazana/screens/lib/useDarkMode';
-import { STORE } from '@khazana/domain/types';
+import { STORE, type Holding } from '@khazana/domain/types';
+import { misfiledAs } from '@khazana/domain/assetHints';
 import { ASSET_GROUP_META, ASSET_GROUP_ORDER, ASSET_META, portfolioSummary, type AssetGroup } from '@khazana/domain/portfolio';
 import {
   DEFAULT_ALLOCATION_TOLERANCE, allocationTargetId, suggestTargets, targetVsActual, validateTargets,
@@ -92,6 +93,18 @@ export default function AllocationPage() {
     setEditing({ ...editing, targets: { ...editing.targets, [g]: String(v) } });
   };
 
+  // Import and Add holding start every row as Equity / ETF, so a GOLDBEES can
+  // sit in Equity and make every gap above wrong. Offer the fix; change nothing
+  // until the user taps it.
+  const misfiled = useMemo(
+    () => holdings
+      .map((h) => ({ h, to: misfiledAs(h.assetType, h.symbol, h.name ?? '') }))
+      .filter((m): m is { h: Holding; to: NonNullable<typeof m.to> } => m.to !== null),
+    [holdings],
+  );
+  const refile = (h: Holding, to: Holding['assetType']) =>
+    put(STORE.holding, { ...h, assetType: to } as Holding & Record<string, unknown>);
+
   const under = report.rows.filter((r) => r.status === 'under');
   const dot = (g: AssetGroup) => (dark ? ASSET_GROUP_META[g].dark : ASSET_GROUP_META[g].light);
 
@@ -155,6 +168,30 @@ export default function AllocationPage() {
         </GlassCard>
       ) : (
         <>
+          {misfiled.length > 0 && (
+            <GlassCard>
+              <h2 className="fs-16 font-medium">
+                {misfiled.length === 1 ? '1 holding looks' : `${misfiled.length} holdings look`} misfiled
+              </h2>
+              <p className="text-xs text-muted mt-0.5">
+                Filed as equity, so they count toward Equity here and are taxed as equity. Nothing changes until you choose.
+              </p>
+              <ul className="mt-3 grid gap-2">
+                {misfiled.map(({ h, to }) => (
+                  <li key={h.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                    <span className="font-medium">{h.symbol}</span>
+                    <span className="text-muted">
+                      filed as {ASSET_META[h.assetType].label}
+                    </span>
+                    <Button variant="ghost" className="ml-auto" onClick={() => void refile(h, to)}>
+                      File as {ASSET_META[to].label}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </GlassCard>
+          )}
+
           <div className="grid gap-4 md:grid-cols-3">
             <div className="md:col-span-2">
               {!report.hasTargets ? (

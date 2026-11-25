@@ -1,3 +1,4 @@
+import 'package:khazana_domain/services/asset_hints.dart';
 import 'package:khazana_domain/entities/holding.dart';
 import 'package:khazana_domain/entities/portfolio.dart';
 import '../../import/lot_csv_parser.dart';
@@ -47,9 +48,16 @@ class LotImporter {
 
     for (final lot in parsed.lots) {
       final isFund = lot.schemeCode != null || lot.symbol == null;
+      final generic = isFund ? AssetType.equityMf : defaultKind;
+      // A generic default is not a decision about every row: GOLDBEES in a
+      // broker file is a gold ETF. ensureInstrument keeps an existing
+      // instrument's type, so this only classifies new ones.
+      final hinted = kGenericAssetTypes.contains(generic)
+          ? suggestAssetType(lot.symbol ?? '', lot.name ?? lot.label)
+          : null;
       final instrument = await _actions.ensureInstrument(
         name: lot.name ?? lot.label,
-        kind: lot.assetType ?? (isFund ? AssetType.equityMf : defaultKind),
+        kind: lot.assetType ?? hinted ?? generic,
         symbol: lot.symbol,
         isin: lot.isin,
         exchange: lot.exchange ?? (isFund ? null : 'NSE'),

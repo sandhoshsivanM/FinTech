@@ -250,6 +250,9 @@ class PortfolioActions {
   Future<void> setSectorOverride(String instrumentId, String? sector) =>
       _repo.setSectorOverride(instrumentId, sector);
 
+  Future<void> setInstrumentKind(String instrumentId, AssetType kind) =>
+      _repo.setInstrumentKind(instrumentId, kind);
+
   Future<void> recordManualPrice({
     required String instrumentId,
     required Decimal price,

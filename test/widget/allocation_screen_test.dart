@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khazana/core/di/data_providers.dart';
 import 'package:khazana/data/database/app_database.dart';
+import 'package:khazana/features/investments/providers/portfolio_providers.dart';
 import 'package:khazana/features/investments/providers/sip_providers.dart';
+import 'package:khazana_domain/entities/portfolio.dart';
 import 'package:khazana/features/investments/screens/allocation_screen.dart';
 import 'package:khazana_domain/entities/asset_group.dart';
 import 'package:khazana_domain/entities/holding.dart';
@@ -38,11 +40,15 @@ void main() {
   setUp(() => db = AppDatabase(NativeDatabase.memory()));
   tearDown(() => db.close());
 
-  Widget harness(Map<AssetGroup, int> targets) => ProviderScope(
+  Widget harness(
+    Map<AssetGroup, int> targets, {
+    List<Instrument> instruments = const [],
+  }) => ProviderScope(
     overrides: [
       appDatabaseProvider.overrideWith((ref) async => db),
       currentVaultIdProvider.overrideWithValue('v1'),
       sipPlansProvider.overrideWith((ref) => Stream.value(const [])),
+      instrumentsProvider.overrideWith((ref) => Stream.value(instruments)),
       allocationViewProvider.overrideWithValue(
         AsyncValue.data(
           AllocationView(
@@ -160,4 +166,54 @@ void main() {
     expect(find.text('Targets total 100%'), findsOneWidget);
     expect(saveButton(tester).onPressed, isNotNull);
   });
+
+  testWidgets('a gold ETF filed as equity is flagged; Fix re-files it', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 4000);
+    addTearDown(tester.view.reset);
+    const gold = Instrument(
+      id: 'g1',
+      vaultId: 'v1',
+      kind: AssetType.equityEtf,
+      name: 'GOLDBEES',
+      symbol: 'GOLDBEES',
+    );
+    final calls = <String>[];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          portfolioActionsProvider.overrideWithValue(_RecordingActions(calls)),
+        ],
+        child: harness(_targets, instruments: const [gold]),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 holding looks misfiled'), findsOneWidget);
+    expect(calls, isEmpty, reason: 'nothing changes until Fix is tapped');
+    await tester.tap(find.byKey(const Key('refile-g1')));
+    await tester.pump();
+    expect(calls, ['g1 -> gold_etf']);
+  });
+
+  testWidgets('no card when every type looks right', (tester) async {
+    tester.view.physicalSize = const Size(1080, 4000);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(harness(_targets));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('misfiled'), findsNothing);
+  });
+}
+
+class _RecordingActions implements PortfolioActions {
+  _RecordingActions(this.calls);
+  final List<String> calls;
+
+  @override
+  Future<void> setInstrumentKind(String instrumentId, AssetType kind) async =>
+      calls.add('$instrumentId -> ${kind.key}');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

@@ -125,3 +125,38 @@ describe('HoldingsPage edit flow', () => {
     expect(screen.getByLabelText('Quantity')).toHaveValue('100');
   });
 });
+
+describe('HoldingsPage asset-type hints', () => {
+  beforeEach(() => {
+    cleanup();
+    Element.prototype.scrollIntoView = vi.fn();
+    seed();
+  });
+
+  test('typing a gold ETF symbol in Add holding picks Gold', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('button', { name: /Add holding/ }));
+    await user.type(screen.getByLabelText('Symbol'), 'GOLDBEES');
+    expect(screen.getByLabelText('Asset type')).toHaveValue('gold_etf');
+  });
+
+  test('a type the user picked is not overridden by the symbol', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('button', { name: /Add holding/ }));
+    await user.selectOptions(screen.getByLabelText('Asset type'), 'debt_mf');
+    await user.type(screen.getByLabelText('Symbol'), 'GOLDBEES');
+    expect(screen.getByLabelText('Asset type')).toHaveValue('debt_mf');
+  });
+
+  test('editing a misfiled holding offers the fix but does not apply it', async () => {
+    useApp.setState({ holdings: [hold({ id: 'g', symbol: 'GOLDBEES' })] });
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole('button', { name: 'Edit GOLDBEES' }));
+    expect(screen.getByLabelText('Asset type')).toHaveValue('equity_etf');
+    await user.click(screen.getByRole('button', { name: 'File as Gold instead' }));
+    expect(screen.getByLabelText('Asset type')).toHaveValue('gold_etf');
+  });
+});

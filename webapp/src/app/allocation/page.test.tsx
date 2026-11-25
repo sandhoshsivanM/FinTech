@@ -84,3 +84,32 @@ describe('Allocation', () => {
     expect(rec.targets.debt).toBe(15);
   });
 });
+
+describe('misfiled holdings', () => {
+  const gold = { ...h('gb', 'equity_etf', '12094'), symbol: 'GOLDBEES' };
+  const stock = h('rel', 'equity_etf', '75000');
+
+  test('a gold ETF filed as equity is flagged and fixed only on tap', async () => {
+    const save = vi.fn(async (_t: string, value: Holding) => {
+      useApp.setState({ holdings: [stock, value] } as AppPatch);
+    });
+    useApp.setState({ holdings: [stock, gold], put: save } as AppPatch);
+    renderPage();
+
+    expect(screen.getByText('1 holding looks misfiled')).toBeInTheDocument();
+    expect(save).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'File as Gold' }));
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    const [store, rec] = save.mock.calls[0];
+    expect(store).toBe('holding');
+    // Only the type changes: quantity, cost and price are untouched.
+    expect(rec).toEqual({ ...gold, assetType: 'gold_etf' });
+    await vi.waitFor(() => expect(screen.queryByText(/misfiled/)).not.toBeInTheDocument());
+  });
+
+  test('nothing is flagged when every type looks right', () => {
+    renderPage();
+    expect(screen.queryByText(/misfiled/)).not.toBeInTheDocument();
+  });
+});

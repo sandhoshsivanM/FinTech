@@ -11,6 +11,7 @@ import { CheckCircle2, Upload, X, Trash2 } from 'lucide-react';
 import { useApp, uid } from '@khazana/screens/store';
 import { STORE, type AssetType, type Holding } from '@khazana/domain/types';
 import { ASSET_META } from '@khazana/domain/portfolio';
+import { misfiledAs, suggestAssetType } from '@khazana/domain/assetHints';
 import { MARKET_CAP_LABEL, SECTOR_SUGGESTIONS } from '@khazana/domain/instrumentMaster';
 import { parseHoldingsCsv, planImport, importCounts, type CsvHolding } from '@khazana/screens/lib/holdingsCsv';
 import { Button, Field, Input, Select, GlassCard, Chip } from '@khazana/ui/ui';
@@ -56,6 +57,17 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
     currency: editing.currency ?? 'INR',
     fxRateAtPurchase: editing.fxRateAtPurchase ?? '',
   } : BLANK));
+
+  // Until the user picks a type, typing a symbol or name like GOLDBEES picks
+  // Gold ETF for them; the default "Equity / ETF" is not a decision. Editing an
+  // existing holding never changes its type on its own: it only offers a fix.
+  const [typeTouched, setTypeTouched] = useState(Boolean(editing));
+  const setIdentity = (patch: { symbol?: string; name?: string }) => {
+    const next = { ...f, ...patch };
+    if (!typeTouched) next.assetType = suggestAssetType(next.symbol, next.name) ?? BLANK.assetType;
+    setF(next);
+  };
+  const suggested = misfiledAs(f.assetType, f.symbol, f.name);
 
   // A bond or FD is valued by accrual, not by price, so it needs a rate and a
   // term. Shown only for those types — asking a stock for its coupon would be
@@ -137,17 +149,26 @@ export function HoldingForm({ editing, onDone }: { editing?: Holding | null; onD
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="Symbol"><Input value={f.symbol} onChange={(e) => setF({ ...f, symbol: e.target.value })} placeholder="RELIANCE" /></Field>
-        <Field label="Company name" hint="Optional"><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Reliance Industries" /></Field>
+        <Field label="Symbol"><Input value={f.symbol} onChange={(e) => setIdentity({ symbol: e.target.value })} placeholder="RELIANCE" /></Field>
+        <Field label="Company name" hint="Optional"><Input value={f.name} onChange={(e) => setIdentity({ name: e.target.value })} placeholder="Reliance Industries" /></Field>
         <Field label="Exchange">
           <Select value={f.exchange} onChange={(e) => setF({ ...f, exchange: e.target.value })}>
             <option value="NSE">NSE</option><option value="BSE">BSE</option>
           </Select>
         </Field>
         <Field label="Asset type">
-          <Select value={f.assetType} onChange={(e) => setF({ ...f, assetType: e.target.value as AssetType })}>
+          <Select value={f.assetType} onChange={(e) => { setTypeTouched(true); setF({ ...f, assetType: e.target.value as AssetType }); }}>
             {Object.entries(ASSET_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </Select>
+          {suggested && (
+            <button
+              type="button"
+              onClick={() => { setTypeTouched(true); setF({ ...f, assetType: suggested }); }}
+              className="mt-1.5 fs-12 text-accent hover:underline focus-ring rounded"
+            >
+              File as {ASSET_META[suggested].label} instead
+            </button>
+          )}
         </Field>
         <Field label="Quantity"><NumberInput value={f.quantity} onChange={(v) => setF({ ...f, quantity: v })} placeholder="100" /></Field>
         <Field label="Average cost"><NumberInput value={f.avgCost} onChange={(v) => setF({ ...f, avgCost: v })} placeholder="2118.40" /></Field>
