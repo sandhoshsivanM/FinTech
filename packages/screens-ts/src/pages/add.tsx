@@ -364,7 +364,7 @@ export default function AddTransactionPage() {
               placeholder="0.00"
               value={amountRaw}
               onChange={setAmountRaw}
-              className="fs-44 font-light tracking-[-0.035em] font-display w-56 bg-transparent outline-none tnum text-center"
+              className="input-display fs-44 font-light tracking-[-0.035em] font-display w-56 bg-transparent outline-none tnum text-center"
               style={{ color: amountColor }}
               aria-label="Amount"
             />

@@ -42,9 +42,13 @@ html { -webkit-text-size-adjust: 100%; }
 /* iOS Safari zooms the page in whenever a focused field's text is under 16px,
    and leaves it zoomed afterwards — the PIN field did exactly that, so the app
    opened cropped on both sides after every unlock. 16px on touch devices only;
-   desktop keeps the compact sizes. */
+   desktop keeps the compact sizes.
+
+   `.input-display` opts out: a field already drawn larger than 16px (the big
+   amount on Add Transaction) does not trigger the zoom, and the !important
+   floor would otherwise shrink its 44px down to 16px on iPhone only. */
 @supports (-webkit-touch-callout: none) {
-  input, select, textarea { font-size: max(16px, 1em) !important; }
+  input:not(.input-display), select, textarea { font-size: max(16px, 1em) !important; }
 }
 
 body {
