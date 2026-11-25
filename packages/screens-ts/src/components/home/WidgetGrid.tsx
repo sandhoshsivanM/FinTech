@@ -65,7 +65,9 @@ export function WidgetGrid({ layout, widgets, editing, onChange, tagLive = false
         return (
           <motion.div
             key={w.id}
-            layout
+            // Layout animation measures every card on every render; outside
+            // edit mode nothing moves, so it only costs time there.
+            layout={editing}
             transition={{ type: 'spring', stiffness: 500, damping: 40 }}
             data-widget={w.id}
             style={{ '--span-md': md[w.id], '--span-lg': lg[w.id] } as React.CSSProperties}

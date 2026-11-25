@@ -2,6 +2,7 @@
 // Currency-aware money formatter. The ledger stores INR; this converts every
 // displayed amount into the user's chosen display currency (Settings → Display
 // currency). Use these instead of formatMoney/formatSigned directly in screens.
+import { useMemo } from 'react';
 import type Decimal from 'decimal.js';
 import { useApp } from '@khazana/screens/store';
 import { findCurrency, formatIn, fromInr } from '@khazana/domain/currency';
@@ -19,12 +20,16 @@ export interface Fmt {
 
 export function useFmt(): Fmt {
   const code = useApp((s) => s.currencyCode);
-  const cur = findCurrency(code);
-  return {
-    money: (v) => formatIn(v, cur),
-    signed: (v, isIncome) => (isIncome ? '+' : '-') + formatIn(typeof v === 'object' && 'abs' in v ? v.abs() : Math.abs(Number(v)), cur),
-    toNum: (v) => fromInr(v, cur).toNumber(),
-    code: cur.code,
-    symbol: cur.symbol,
-  };
+  // Memoised on the currency: a fresh object every render made every
+  // `useMemo(..., [fmt])` in the screens recompute on every render.
+  return useMemo(() => {
+    const cur = findCurrency(code);
+    return {
+      money: (v) => formatIn(v, cur),
+      signed: (v, isIncome) => (isIncome ? '+' : '-') + formatIn(typeof v === 'object' && 'abs' in v ? v.abs() : Math.abs(Number(v)), cur),
+      toNum: (v) => fromInr(v, cur).toNumber(),
+      code: cur.code,
+      symbol: cur.symbol,
+    };
+  }, [code]);
 }
