@@ -181,7 +181,7 @@ export default function AllocationPage() {
                   <li key={h.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                     <span className="font-medium">{h.symbol}</span>
                     <span className="text-muted">
-                      {ASSET_META[h.assetType].label} → {ASSET_META[to].label}
+                      filed as {ASSET_META[h.assetType].label}
                     </span>
                     <Button variant="ghost" className="ml-auto" onClick={() => void refile(h, to)}>
                       File as {ASSET_META[to].label}

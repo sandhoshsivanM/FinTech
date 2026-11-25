@@ -701,7 +701,7 @@ class _MisfiledCard extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        '${i.symbol ?? i.name}: ${i.kind.label} → ${to.label}',
+                        '${i.symbol ?? i.name}: filed as ${i.kind.label}',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
