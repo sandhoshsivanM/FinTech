@@ -21,6 +21,8 @@ import '../../../presentation/glass_card.dart';
 import '../../transactions/providers/category_providers.dart';
 import '../../transactions/providers/transaction_providers.dart';
 import '../providers/dashboard_providers.dart';
+import '../widgets/skyline_panels.dart';
+import 'package:khazana_domain/services/skyline.dart';
 
 // ---------------------------------------------------------------------------
 // Screen root
@@ -103,10 +105,59 @@ class _ReportsBody extends ConsumerWidget {
         _SpendingByCategoryCard(window: window),
         const SizedBox(height: AppSpacing.md),
 
+        // 2b. The same period, one bar per day.
+        _SpendSkylineCard(window: window),
+        const SizedBox(height: AppSpacing.md),
+
         // 3. Net worth sparkline.
         _NetWorthTrendCard(series: data.series),
         const SizedBox(height: AppSpacing.lg),
       ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Spend skyline
+// ---------------------------------------------------------------------------
+
+/// Spending per day over the selected window, newest 53 weeks at most.
+class _SpendSkylineCard extends StatelessWidget {
+  const _SpendSkylineCard({required this.window});
+
+  final TimeWindow window;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final start = DateTime(
+      today.year,
+      today.month,
+      today.day - window.duration.inDays,
+    );
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Spend skyline',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SpendSkylinePanel(
+            range: SkyRange(start, today),
+            today: today,
+            maxWeeks: 53,
+            narrowWeeks: 13,
+            card: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkSurface
+                : AppColors.lightSurface,
+          ),
+        ],
+      ),
     );
   }
 }

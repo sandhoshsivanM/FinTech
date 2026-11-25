@@ -8,6 +8,7 @@ import 'widgets/insight_card.dart';
 import 'widgets/latest_transactions.dart';
 import 'widgets/month_tiles.dart';
 import 'widgets/quick_actions.dart';
+import 'widgets/spend_skyline_card.dart';
 import 'widgets/wallet_stack.dart';
 import 'widgets/today_flow_card.dart';
 import 'widgets/week_flow_card.dart';
@@ -55,6 +56,8 @@ class HomeSheetContent extends StatelessWidget {
         Entrance(order: 2, child: TodayFlowCard()),
         SizedBox(height: AppSpacing.md),
         Entrance(order: 2, child: WeekFlowCard()),
+        SizedBox(height: AppSpacing.md),
+        Entrance(order: 2, child: SpendSkylineCard()),
         SizedBox(height: AppSpacing.md),
         Entrance(order: 3, child: InsightCard()),
         SizedBox(height: AppSpacing.md),
