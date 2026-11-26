@@ -152,14 +152,18 @@ class HomeTray extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
 
+  /// The well's fill, for painters that draw their own recess.
+  static Color colorFor(Brightness brightness) => brightness == Brightness.dark
+      ? const Color(0xFF17171A)
+      : const Color(0xFFECECEE);
+
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: dark ? const Color(0xFF17171A) : const Color(0xFFECECEE),
+        color: colorFor(Theme.of(context).brightness),
         borderRadius: BorderRadius.circular(18),
       ),
       child: child,

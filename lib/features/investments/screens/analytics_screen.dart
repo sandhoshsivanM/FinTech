@@ -20,6 +20,8 @@ import '../../../presentation/data_gate.dart';
 import '../../../presentation/empty_state.dart';
 import '../../reports/providers/dashboard_providers.dart';
 import '../providers/portfolio_providers.dart';
+import '../../reports/widgets/skyline_panels.dart';
+import 'package:khazana_domain/services/skyline.dart';
 
 /// Analytics — risk, asset spread and return quality.
 ///
@@ -153,6 +155,9 @@ class _Body extends ConsumerWidget {
         _NetWorthMovement(history: history),
         const SizedBox(height: AppSpacing.lg),
 
+        const _DailyPortfolioChange(),
+        const SizedBox(height: AppSpacing.lg),
+
         _ReturnDistribution(positions: positions),
         const SizedBox(height: AppSpacing.lg),
 
@@ -264,6 +269,26 @@ class _ScoreCard extends StatelessWidget {
             ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Daily change in portfolio value, one bar per day, from the snapshots.
+class _DailyPortfolioChange extends StatelessWidget {
+  const _DailyPortfolioChange();
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return KSectionCard(
+      title: 'Daily portfolio change',
+      subtitle: 'The last 26 weeks, from recorded snapshots',
+      child: PortfolioSkylinePanel(
+        range: lastWeeks(today, 26),
+        today: today,
+        narrowWeeks: 13,
       ),
     );
   }
