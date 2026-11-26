@@ -23,6 +23,7 @@ import {
 import { formatMonthShort, formatDate, toInputValue, todayInputValue, fromInputValue } from '@khazana/screens/lib/dateFormat';
 import { balanceSheet } from '@khazana/domain/statements';
 import { ExportReport } from '@khazana/screens/components/ExportReport';
+import { SpendSkylinePanel } from '@khazana/screens/components/SkylinePanels';
 import { CardTitle } from '@khazana/ui/Hint';
 import type Decimal from 'decimal.js';
 
@@ -479,6 +480,14 @@ export default function ReportsPage() {
                 </div>
               )}
             </GlassCard>
+
+          {/* Spending per day across the period, as a skyline */}
+          <GlassCard className="lg:col-span-2">
+            <SectionHeader title="Spend skyline" action={<span className="text-xs text-muted">{range.label}</span>} />
+            <div className="mt-4 @container">
+              <SpendSkylinePanel range={range} now={now} narrowWeeks={13} maxWeeks={53} />
+            </div>
+          </GlassCard>
           </div>
         </>
       )}
