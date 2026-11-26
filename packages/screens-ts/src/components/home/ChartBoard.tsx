@@ -36,6 +36,8 @@ import { TrendTile } from '@khazana/ui/charts/TrendTile';
 import { DotProgress } from '@khazana/ui/charts/DotProgress';
 import { PaceBars } from '@khazana/ui/charts/PaceBars';
 import { SpendCalendar } from '@khazana/ui/charts/SpendCalendar';
+import { SpendSkylinePanel } from '@khazana/screens/components/SkylinePanels';
+import { lastWeeks } from '@khazana/domain/skyline';
 
 const SOURCE_COLOURS = ['var(--data-blue)', 'var(--ink)', 'var(--data-green)', 'var(--data-amber)', 'var(--series-4)'];
 const GOAL_COLOURS = ['var(--data-blue)', 'var(--data-rose)', 'var(--data-green)', 'var(--data-amber)'];
@@ -201,6 +203,8 @@ export function useChartBoardWidgets({ month, now, netWorth, investments, liabil
     change: vals.length >= 2 ? trend(vals[vals.length - 1], vals[vals.length - 2], goodWhenUp) : null,
   });
   const nw = tile(data.trend.netWorth), inv = tile(data.trend.investments), li = tile(data.trend.liabilities, false);
+  // Keyed on the day so the panel's memos hold for the whole day.
+  const skyRange = useMemo(() => lastWeeks(today, 26), [today]);
   const todayLabel = `${new Date(now).getDate()} ${SHORT_MONTHS[new Date(now).getMonth()]}`;
   const pnlCount = `${holdings.length} position${holdings.length === 1 ? '' : 's'}`;
 
@@ -403,6 +407,11 @@ export function useChartBoardWidgets({ month, now, netWorth, investments, liabil
             )}
           </dl>
         </div>
+      </BoardCard>
+    ),
+      spendSkyline: (
+      <BoardCard title="Spend skyline" sub={`Last 26 weeks · ${skyRange.label}`} href="/calendar">
+        <SpendSkylinePanel range={skyRange} now={now} narrowWeeks={13} />
       </BoardCard>
     ),
   };
