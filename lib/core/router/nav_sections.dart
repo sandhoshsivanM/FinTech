@@ -156,6 +156,10 @@ const routesWithOwnPrimaryAction = <String>{
   Routes.budget,
   Routes.liabilities,
   Routes.insurance,
+  // The transaction form's Save is the action here. The raised + sat on top of
+  // it (worst with the keyboard up), and only reopened the same form.
+  Routes.addTransaction,
+  Routes.editTransaction,
 };
 
 /// Every route reachable from the bar, a section's sub-nav, or the avatar menu.
