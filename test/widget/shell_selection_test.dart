@@ -25,9 +25,9 @@ import 'package:khazana/presentation/desktop_shell.dart';
 /// exactly the complaint that prompted this file.
 void main() {
   /// Pumps AppShell inside a router, since it reads GoRouterState.
-  Future<void> pumpShell(WidgetTester tester) async {
+  Future<void> pumpShell(WidgetTester tester, {String at = Routes.dashboard}) async {
     final router = GoRouter(
-      initialLocation: Routes.dashboard,
+      initialLocation: at,
       routes: [
         ShellRoute(
           builder: (context, state, child) => AppShell(child: child),
@@ -36,6 +36,11 @@ void main() {
               path: Routes.dashboard,
               builder: (context, state) => const Text('dash'),
             ),
+            for (final path in [Routes.addTransaction, Routes.editTransaction])
+              GoRoute(
+                path: path,
+                builder: (context, state) => const Text('form'),
+              ),
           ],
         ),
       ],
@@ -141,5 +146,26 @@ void main() {
             reason: 'a tablet still wants touch targets');
       });
     });
+  });
+
+  group('centre + action', () {
+    final plus = find.byTooltip('New transaction');
+
+    testWidgets('shows on the dashboard', (tester) async {
+      await asPlatform(TargetPlatform.android, () async {
+        await pumpShell(tester);
+        expect(plus, findsOneWidget);
+      });
+    });
+
+    // The form's Save button sits where the docked + lands, so the + covered it.
+    for (final route in [Routes.addTransaction, Routes.editTransaction]) {
+      testWidgets('is hidden on $route', (tester) async {
+        await asPlatform(TargetPlatform.android, () async {
+          await pumpShell(tester, at: route);
+          expect(plus, findsNothing);
+        });
+      });
+    }
   });
 }
