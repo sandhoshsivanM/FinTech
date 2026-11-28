@@ -130,6 +130,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: visual-report
+          # .report/ and .results/ are dot-folders, which upload-artifact@v4
+          # skips by default: without this the report was never uploaded.
+          include-hidden-files: true
           path: |
             webapp/e2e/.report/
             webapp/e2e/.results/

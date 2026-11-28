@@ -57,6 +57,13 @@ export async function navigate(page: Page, path: string) {
 export async function settle(page: Page) {
   await page.waitForLoadState('networkidle');
   await page.evaluate(async () => {
+    // The reading fonts are `preload: false` + `display: swap`: a face is
+    // fetched only once text uses it, so one could swap in after
+    // `fonts.ready` had already resolved and change the shot. Load every
+    // declared face up front so nothing is still in flight.
+    const loads: Promise<unknown>[] = [];
+    document.fonts.forEach((f) => loads.push(f.load().catch(() => undefined)));
+    await Promise.all(loads);
     await document.fonts.ready;
     // Two frames: one for any state set in the last effect, one to paint it.
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
