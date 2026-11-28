@@ -23,13 +23,13 @@ const kAppName = 'Khazana';
 /// value, a `v1.0.0` tag would have published a release named "Khazana 0.1.0"
 /// containing backups stamped 1.0.0. `tool/check_versions.sh` asserts they
 /// agree, and CI runs it.
-const kAppVersion = '1.1.1';
+const kAppVersion = '1.1.2';
 
 /// [kAppVersion] split for the backup header, which stores three bytes rather
 /// than a string. Keep in step with the constant above.
 const kAppVersionMajor = 1;
 const kAppVersionMinor = 1;
-const kAppVersionPatch = 1;
+const kAppVersionPatch = 2;
 
 /// Short positioning line shown under the wordmark on the unlock screen.
 const kAppTagline = 'Your wealth. Your vault.';
